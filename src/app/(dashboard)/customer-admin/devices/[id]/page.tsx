@@ -82,7 +82,7 @@ export default async function DeviceDetailPage({ params }: { params: Promise<{ i
           <Button asChild>
             <Link href={`/customer-admin/devices/${device.id}/edit`}>
               <Pencil className="mr-2 h-4 w-4" />
-              Edit Device
+              Chỉnh sửa thiết bị
             </Link>
           </Button>
         </div>

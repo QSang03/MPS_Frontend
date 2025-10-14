@@ -69,15 +69,15 @@ export default async function EditDevicePage({ params }: { params: Promise<{ id:
           </Link>
         </Button>
         <div>
-          <h1 className="text-3xl font-bold">Edit Device</h1>
+          <h1 className="text-3xl font-bold">Chỉnh sửa thiết bị</h1>
           <p className="text-muted-foreground">{device.serialNumber}</p>
         </div>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Device Information</CardTitle>
-          <CardDescription>Update the device information</CardDescription>
+          <CardTitle>Thông tin thiết bị</CardTitle>
+          <CardDescription>Cập nhật thông tin thiết bị</CardDescription>
         </CardHeader>
         <CardContent>
           <DeviceForm mode="edit" customerId={session!.customerId} initialData={device} />

@@ -42,7 +42,7 @@ export function DeleteDialog({ title, description, onConfirm, trigger }: DeleteD
         {trigger || (
           <Button variant="destructive" size="sm">
             <Trash2 className="mr-2 h-4 w-4" />
-            Delete
+            Xóa
           </Button>
         )}
       </AlertDialogTrigger>
@@ -52,14 +52,14 @@ export function DeleteDialog({ title, description, onConfirm, trigger }: DeleteD
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={isDeleting}>Hủy</AlertDialogCancel>
           <AlertDialogAction
             onClick={handleConfirm}
             disabled={isDeleting}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
             {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {isDeleting ? 'Deleting...' : 'Delete'}
+            {isDeleting ? 'Đang xóa...' : 'Xóa'}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

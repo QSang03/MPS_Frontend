@@ -13,7 +13,7 @@ interface ReportHistoryProps {
 const mockReports = [
   {
     id: '1',
-    name: 'Monthly Usage Report - September 2025',
+    name: 'Báo cáo sử dụng hàng tháng - Tháng 9/2025',
     type: 'monthly-usage',
     createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
   },

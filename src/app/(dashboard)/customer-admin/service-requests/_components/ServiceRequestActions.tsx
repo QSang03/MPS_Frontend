@@ -34,7 +34,7 @@ export function ServiceRequestActions({ serviceRequest }: ServiceRequestActionsP
       router.refresh()
     },
     onError: (error: unknown) => {
-      const message = error instanceof Error ? error.message : 'Failed to delete service request'
+      const message = error instanceof Error ? error.message : 'Không thể xóa yêu cầu bảo trì'
       toast.error(message)
     },
   })
@@ -57,12 +57,12 @@ export function ServiceRequestActions({ serviceRequest }: ServiceRequestActionsP
         <DropdownMenuItem asChild>
           <Link href={`/customer-admin/service-requests/${serviceRequest.id}`}>
             <Eye className="mr-2 h-4 w-4" />
-            View Details
+            Xem chi tiết
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem>
           <Edit className="mr-2 h-4 w-4" />
-          Update Status
+          Cập nhật trạng thái
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DeleteDialog

@@ -85,9 +85,9 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
             <div className="flex items-start gap-3">
               <Printer className="text-muted-foreground mt-0.5 h-5 w-5" />
               <div className="flex-1">
-                <p className="text-muted-foreground text-sm">Total Devices</p>
+                <p className="text-muted-foreground text-sm">Tổng thiết bị</p>
                 <Badge variant="secondary" className="mt-1">
-                  {customer.deviceCount} devices
+                  {customer.deviceCount} thiết bị
                 </Badge>
               </div>
             </div>

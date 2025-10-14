@@ -10,7 +10,7 @@ import { CustomerActions } from './CustomerActions'
 export const columns: ColumnDef<Customer>[] = [
   {
     accessorKey: 'name',
-    header: 'Customer Name',
+    header: 'Tên khách hàng',
     cell: ({ row }) => (
       <Link
         href={`/system-admin/customers/${row.original.id}`}
@@ -22,17 +22,17 @@ export const columns: ColumnDef<Customer>[] = [
   },
   {
     accessorKey: 'address',
-    header: 'Address',
+    header: 'Địa chỉ',
     cell: ({ row }) => <div className="max-w-[300px] truncate">{row.original.address}</div>,
   },
   {
     accessorKey: 'deviceCount',
-    header: 'Devices',
+    header: 'Thiết bị',
     cell: ({ row }) => <Badge variant="secondary">{row.original.deviceCount || 0}</Badge>,
   },
   {
     accessorKey: 'createdAt',
-    header: 'Created Date',
+    header: 'Ngày tạo',
     cell: ({ row }) => formatDate(row.original.createdAt),
   },
   {

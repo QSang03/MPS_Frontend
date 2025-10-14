@@ -48,17 +48,17 @@ export async function login(
 
     // Create session with httpOnly cookie
     await createSession({
-      userId: data.user.id,
-      customerId: data.user.customerId,
-      role: data.user.role,
-      username: data.user.username,
-      email: data.user.email,
+      userId: data?.user?.id,
+      customerId: data?.user?.customerId,
+      role: data?.user?.role,
+      username: data?.user?.username,
+      email: data?.user?.email,
     })
 
     // Redirect based on role
-    if (data.user.role === UserRole.SYSTEM_ADMIN) {
+    if (data?.user?.role === UserRole.SYSTEM_ADMIN) {
       redirect(ROUTES.SYSTEM_ADMIN_CUSTOMERS)
-    } else if (data.user.role === UserRole.CUSTOMER_ADMIN) {
+    } else if (data?.user?.role === UserRole.CUSTOMER_ADMIN) {
       redirect(ROUTES.CUSTOMER_ADMIN)
     } else {
       redirect(ROUTES.USER_MY_DEVICES)
@@ -68,7 +68,9 @@ export async function login(
     return {
       error: {
         message:
-          error instanceof Error ? error.message : 'Login failed. Please check your credentials.',
+          error instanceof Error
+            ? error.message
+            : 'Đăng nhập thất bại. Vui lòng kiểm tra thông tin đăng nhập.',
       },
     }
   }

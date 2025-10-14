@@ -21,7 +21,7 @@ export default function LoginPage() {
     >
       <Card className="shadow-soft-2xl relative overflow-hidden border-0">
         {/* Gradient Background */}
-        <div className="from-brand-500 via-brand-600 to-brand-700 absolute inset-0 bg-gradient-to-br opacity-5" />
+        <div className="from-brand-500 via-brand-600 to-brand-700 pointer-events-none absolute inset-0 bg-gradient-to-br opacity-5" />
 
         <CardHeader className="relative space-y-4">
           <motion.div
@@ -82,7 +82,8 @@ export default function LoginPage() {
                 required
                 disabled={isPending}
                 autoComplete="username"
-                className={state?.error?.username ? 'border-destructive' : ''}
+                className={`relative z-10 ${state?.error?.username ? 'border-destructive' : ''}`}
+                style={{ pointerEvents: isPending ? 'none' : 'auto' }}
               />
               {state?.error?.username && (
                 <p className="text-destructive text-sm">{state.error.username[0]}</p>
@@ -100,7 +101,8 @@ export default function LoginPage() {
                 required
                 disabled={isPending}
                 autoComplete="current-password"
-                className={state?.error?.password ? 'border-destructive' : ''}
+                className={`relative z-10 ${state?.error?.password ? 'border-destructive' : ''}`}
+                style={{ pointerEvents: isPending ? 'none' : 'auto' }}
               />
               {state?.error?.password && (
                 <p className="text-destructive text-sm">{state.error.password[0]}</p>

@@ -67,7 +67,7 @@ export const columns: ColumnDef<ServiceRequest>[] = [
   },
   {
     accessorKey: 'createdAt',
-    header: 'Created',
+    header: 'Ngày tạo',
     cell: ({ row }) => formatRelativeTime(row.original.createdAt),
   },
   {

@@ -18,10 +18,10 @@ interface ReportGeneratorProps {
 }
 
 const reportTypes = [
-  { value: 'monthly-usage', label: 'Monthly Usage Report' },
-  { value: 'device-performance', label: 'Device Performance Report' },
-  { value: 'service-summary', label: 'Service Request Summary' },
-  { value: 'cost-analysis', label: 'Cost Analysis Report' },
+  { value: 'monthly-usage', label: 'Báo cáo sử dụng hàng tháng' },
+  { value: 'device-performance', label: 'Báo cáo hiệu suất thiết bị' },
+  { value: 'service-summary', label: 'Tóm tắt yêu cầu dịch vụ' },
+  { value: 'cost-analysis', label: 'Báo cáo phân tích chi phí' },
 ]
 
 export function ReportGenerator({}: ReportGeneratorProps) {

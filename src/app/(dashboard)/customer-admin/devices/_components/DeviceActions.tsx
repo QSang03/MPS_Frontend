@@ -34,7 +34,7 @@ export function DeviceActions({ device }: DeviceActionsProps) {
       router.refresh()
     },
     onError: (error: unknown) => {
-      const message = error instanceof Error ? error.message : 'Failed to delete device'
+      const message = error instanceof Error ? error.message : 'Không thể xóa thiết bị'
       toast.error(message)
     },
   })
@@ -57,7 +57,7 @@ export function DeviceActions({ device }: DeviceActionsProps) {
         <DropdownMenuItem asChild>
           <Link href={`/customer-admin/devices/${device.id}`}>
             <Eye className="mr-2 h-4 w-4" />
-            View Details
+            Xem chi tiết
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
@@ -72,7 +72,7 @@ export function DeviceActions({ device }: DeviceActionsProps) {
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DeleteDialog
-          title="Delete Device"
+          title="Xóa thiết bị"
           description={`Are you sure you want to delete device "${device.serialNumber}"? This action cannot be undone.`}
           onConfirm={handleDelete}
           trigger={
