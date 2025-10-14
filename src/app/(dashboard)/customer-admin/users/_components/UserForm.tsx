@@ -2,7 +2,7 @@
 
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
@@ -27,6 +27,8 @@ import {
 import { Switch } from '@/components/ui/switch'
 import { userSchema, type UserFormData } from '@/lib/validations/user.schema'
 import { accountService } from '@/lib/api/services/account.service'
+import { rolesClientService } from '@/lib/api/services/roles-client.service'
+import { departmentsClientService } from '@/lib/api/services/departments-client.service'
 import type { Account } from '@/types/models'
 import { UserRole } from '@/constants/roles'
 
@@ -41,6 +43,17 @@ export function UserForm({ initialData, customerId, mode, onSuccess }: UserFormP
   const router = useRouter()
   const queryClient = useQueryClient()
 
+  // Fetch roles and departments
+  const { data: roles = [], isLoading: isLoadingRoles } = useQuery({
+    queryKey: ['roles'],
+    queryFn: rolesClientService.getRoles,
+  })
+
+  const { data: departments = [], isLoading: isLoadingDepartments } = useQuery({
+    queryKey: ['departments'],
+    queryFn: departmentsClientService.getDepartments,
+  })
+
   const form = useForm<UserFormData>({
     resolver: zodResolver(userSchema),
     defaultValues: {
@@ -48,6 +61,7 @@ export function UserForm({ initialData, customerId, mode, onSuccess }: UserFormP
       email: initialData?.email || '',
       fullName: initialData?.fullName || '',
       role: initialData?.role || UserRole.USER,
+      departmentId: initialData?.departmentId || '',
       isActive: initialData?.isActive !== undefined ? initialData.isActive : true,
       phoneNumber: initialData?.phoneNumber || '',
     },
@@ -181,8 +195,22 @@ export function UserForm({ initialData, customerId, mode, onSuccess }: UserFormP
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value={UserRole.USER}>Người dùng</SelectItem>
-                    <SelectItem value={UserRole.CUSTOMER_ADMIN}>Quản trị viên</SelectItem>
+                    {isLoadingRoles ? (
+                      <SelectItem value="loading" disabled>
+                        Đang tải vai trò...
+                      </SelectItem>
+                    ) : roles.length > 0 ? (
+                      roles.map((role) => (
+                        <SelectItem key={role.id} value={role.id}>
+                          {role.name}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <>
+                        <SelectItem value={UserRole.USER}>Người dùng</SelectItem>
+                        <SelectItem value={UserRole.CUSTOMER_ADMIN}>Quản trị viên</SelectItem>
+                      </>
+                    )}
                   </SelectContent>
                 </Select>
                 <FormDescription>Vai trò của người dùng trong hệ thống</FormDescription>
@@ -193,19 +221,59 @@ export function UserForm({ initialData, customerId, mode, onSuccess }: UserFormP
 
           <FormField
             control={form.control}
-            name="phoneNumber"
+            name="departmentId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Số điện thoại</FormLabel>
-                <FormControl>
-                  <Input placeholder="0123456789" {...field} disabled={isPending} />
-                </FormControl>
-                <FormDescription>Số điện thoại liên hệ (tùy chọn)</FormDescription>
+                <FormLabel>Phòng ban</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                  disabled={isPending || isLoadingDepartments}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Chọn phòng ban" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {isLoadingDepartments ? (
+                      <SelectItem value="loading" disabled>
+                        Đang tải phòng ban...
+                      </SelectItem>
+                    ) : departments.length > 0 ? (
+                      departments.map((dept) => (
+                        <SelectItem key={dept.id} value={dept.id}>
+                          {dept.name}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="" disabled>
+                        Không có phòng ban
+                      </SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+                <FormDescription>Phòng ban của người dùng (tùy chọn)</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
         </div>
+
+        <FormField
+          control={form.control}
+          name="phoneNumber"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Số điện thoại</FormLabel>
+              <FormControl>
+                <Input placeholder="0123456789" {...field} disabled={isPending} />
+              </FormControl>
+              <FormDescription>Số điện thoại liên hệ (tùy chọn)</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <FormField
           control={form.control}

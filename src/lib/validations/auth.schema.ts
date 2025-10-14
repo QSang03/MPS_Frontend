@@ -4,13 +4,17 @@ import { z } from 'zod'
  * Login form validation schema
  */
 export const loginSchema = z.object({
-  username: z
+  email: z
     .string()
-    .min(1, 'Username is required')
-    .min(3, 'Username must be at least 3 characters'),
+    .min(1, 'Email is required')
+    .trim()
+    .min(1, 'Email cannot be empty')
+    .email('Invalid email format'),
   password: z
     .string()
     .min(1, 'Password is required')
+    .trim()
+    .min(1, 'Password cannot be empty')
     .min(6, 'Password must be at least 6 characters'),
 })
 

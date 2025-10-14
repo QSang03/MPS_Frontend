@@ -10,6 +10,7 @@ export interface Account {
   fullName: string
   role: UserRole
   customerId: string
+  departmentId?: string
   isActive: boolean
   phoneNumber?: string
   lastLogin?: string

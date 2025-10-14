@@ -2,9 +2,9 @@ import { getSession } from '@/lib/auth/session'
 import { getUserProfileForClient } from '@/lib/auth/server-actions'
 import { redirect } from 'next/navigation'
 import { ROUTES } from '@/constants/routes'
-import { ProfileClient } from './_components/ProfileClient'
+import { SettingsClient } from './_components/SettingsClient'
 
-export default async function ProfilePage() {
+export default async function SettingsPage() {
   // Check authentication
   const session = await getSession()
   if (!session) {
@@ -17,11 +17,11 @@ export default async function ProfilePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Hồ sơ cá nhân</h1>
-        <p className="text-muted-foreground">Quản lý thông tin tài khoản và cài đặt cá nhân</p>
+        <h1 className="text-3xl font-bold tracking-tight">Cài đặt</h1>
+        <p className="text-muted-foreground">Quản lý cài đặt tài khoản và thông báo</p>
       </div>
 
-      <ProfileClient initialProfile={profile} />
+      <SettingsClient initialProfile={profile} />
     </div>
   )
 }

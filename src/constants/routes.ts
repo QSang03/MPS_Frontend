@@ -23,6 +23,7 @@ export const ROUTES = {
   USER_MY_DEVICES: '/user/my-devices',
   USER_MY_REQUESTS: '/user/my-requests',
   USER_PROFILE: '/user/profile',
+  USER_SETTINGS: '/user/settings',
 
   // Error pages
   FORBIDDEN: '/403',

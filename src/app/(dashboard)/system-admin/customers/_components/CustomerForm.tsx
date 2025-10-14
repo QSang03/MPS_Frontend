@@ -25,9 +25,10 @@ import type { Customer } from '@/types/models'
 interface CustomerFormProps {
   initialData?: Customer
   mode: 'create' | 'edit'
+  onSuccess?: () => void
 }
 
-export function CustomerForm({ initialData, mode }: CustomerFormProps) {
+export function CustomerForm({ initialData, mode, onSuccess }: CustomerFormProps) {
   const router = useRouter()
   const queryClient = useQueryClient()
 

@@ -4,11 +4,21 @@
 export const API_ENDPOINTS = {
   // Auth
   AUTH: {
-    LOGIN: '/auth/login',
+    LOGIN: '/auth/signin',
     LOGOUT: '/auth/logout',
     REFRESH: '/auth/refresh',
     ME: '/auth/me',
+    PROFILE: '/profile',
   },
+
+  // Users
+  USERS: '/users',
+
+  // Roles
+  ROLES: '/roles',
+
+  // Departments
+  DEPARTMENTS: '/departments',
 
   // Customers
   CUSTOMERS: {

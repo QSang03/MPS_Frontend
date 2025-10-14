@@ -1,6 +1,7 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useActionState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { login, type LoginActionState } from '@/app/actions/auth'
 import { Button } from '@/components/ui/button'
@@ -8,10 +9,25 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { AlertCircle, Loader2, Printer, Sparkles } from 'lucide-react'
+import { AlertCircle, CheckCircle, Loader2, Printer, Sparkles } from 'lucide-react'
+import { ROUTES } from '@/constants/routes'
 
 export default function LoginPage() {
   const [state, formAction, isPending] = useActionState<LoginActionState, FormData>(login, null)
+  const router = useRouter()
+
+  // Redirect on successful login
+  useEffect(() => {
+    if (state?.success?.message && !isPending) {
+      // Show success message for 1.5 seconds then redirect
+      const timer = setTimeout(() => {
+        router.push(ROUTES.CUSTOMER_ADMIN)
+      }, 1500)
+
+      return () => clearTimeout(timer)
+    }
+    return undefined
+  }, [state, isPending, router])
 
   return (
     <motion.div
@@ -71,22 +87,30 @@ export default function LoginPage() {
               </Alert>
             )}
 
-            {/* Username field */}
+            {/* Success message */}
+            {state?.success?.message && (
+              <Alert variant="default" className="border-green-200 bg-green-50 text-green-800">
+                <CheckCircle className="h-4 w-4" />
+                <AlertDescription>{state.success.message}</AlertDescription>
+              </Alert>
+            )}
+
+            {/* Email field */}
             <div className="space-y-2">
-              <Label htmlFor="username">Tên đăng nhập</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
-                id="username"
-                name="username"
-                type="text"
-                placeholder="Nhập tên đăng nhập"
+                id="email"
+                name="email"
+                type="email"
+                placeholder="Nhập email"
                 required
                 disabled={isPending}
-                autoComplete="username"
-                className={`relative z-10 ${state?.error?.username ? 'border-destructive' : ''}`}
+                autoComplete="email"
+                className={`relative z-10 ${state?.error?.email ? 'border-destructive' : ''}`}
                 style={{ pointerEvents: isPending ? 'none' : 'auto' }}
               />
-              {state?.error?.username && (
-                <p className="text-destructive text-sm">{state.error.username[0]}</p>
+              {state?.error?.email && (
+                <p className="text-destructive text-sm">{state.error.email[0]}</p>
               )}
             </div>
 

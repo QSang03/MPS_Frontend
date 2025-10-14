@@ -14,6 +14,8 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { logout } from '@/app/actions/auth'
 import type { Session } from '@/types/auth'
 import { useUIStore } from '@/lib/store/uiStore'
+import { useRouter } from 'next/navigation'
+import { ROUTES } from '@/constants/routes'
 
 interface NavbarProps {
   session: Session
@@ -21,18 +23,28 @@ interface NavbarProps {
 
 export function Navbar({ session }: NavbarProps) {
   const { toggleSidebar } = useUIStore()
+  const router = useRouter()
 
   const handleLogout = async () => {
     await logout()
   }
 
+  const handleProfile = () => {
+    router.push(ROUTES.USER_PROFILE)
+  }
+
+  const handleSettings = () => {
+    router.push(ROUTES.USER_SETTINGS)
+  }
+
   // Get initials for avatar
-  const initials = session.username
-    .split(' ')
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2)
+  const initials =
+    session?.username
+      ?.split(' ')
+      ?.map((n) => n[0])
+      ?.join('')
+      ?.toUpperCase()
+      ?.slice(0, 2) || 'U'
 
   return (
     <header className="bg-background flex h-16 items-center justify-between border-b px-4">
@@ -56,32 +68,31 @@ export function Navbar({ session }: NavbarProps) {
 
         {/* User menu */}
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
+          <DropdownMenuTrigger asChild suppressHydrationWarning>
             <Button variant="ghost" className="gap-2">
               <Avatar className="h-8 w-8">
                 <AvatarFallback className="bg-primary text-primary-foreground text-xs">
                   {initials}
                 </AvatarFallback>
               </Avatar>
-              <span className="hidden md:inline">{session.username}</span>
+              <span className="hidden md:inline">{session.email}</span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuContent align="end" className="w-56" suppressHydrationWarning>
             <DropdownMenuLabel>
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium">{session.username}</p>
-                <p className="text-muted-foreground text-xs">{session.email}</p>
+                <p className="text-sm font-medium">{session.email}</p>
                 <p className="text-muted-foreground mt-1 text-xs">
                   Vai trò: <span className="font-medium">{session.role}</span>
                 </p>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={handleProfile}>
               <User className="mr-2 h-4 w-4" />
               Hồ sơ
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={handleSettings}>
               <Settings className="mr-2 h-4 w-4" />
               Cài đặt
             </DropdownMenuItem>

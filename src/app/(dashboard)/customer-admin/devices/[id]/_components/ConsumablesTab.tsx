@@ -120,6 +120,12 @@ export function ConsumablesTab({ deviceId }: ConsumablesTabProps) {
 
                 {/* Replacement Info */}
                 <div className="space-y-2 text-sm">
+                  {item.activationDate && (
+                    <div className="text-muted-foreground flex items-center space-x-2">
+                      <Calendar className="h-3 w-3" />
+                      <span>Ngày kích hoạt: {formatDate(item.activationDate)}</span>
+                    </div>
+                  )}
                   {item.lastReplaced && (
                     <div className="text-muted-foreground flex items-center space-x-2">
                       <Calendar className="h-3 w-3" />

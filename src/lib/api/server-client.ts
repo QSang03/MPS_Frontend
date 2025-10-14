@@ -1,9 +1,12 @@
 import axios from 'axios'
 import type { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios'
-import { getClientAccessToken } from '@/lib/auth/client-auth'
-import { refreshAccessTokenForClient } from '@/lib/auth/server-actions'
+import { getAccessToken, refreshAccessToken } from '@/lib/auth/session'
 
-const apiClient: AxiosInstance = axios.create({
+/**
+ * Server-side API client with token attachment
+ * This should only be used in server components and server actions
+ */
+const serverApiClient: AxiosInstance = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
   timeout: 30000,
   headers: {
@@ -11,11 +14,11 @@ const apiClient: AxiosInstance = axios.create({
   },
 })
 
-// Request interceptor - attach token
-apiClient.interceptors.request.use(
+// Request interceptor - attach token from server-side cookies
+serverApiClient.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
-    // Get access token from server-side cookies via server action
-    const token = await getClientAccessToken()
+    // Get access token from server-side cookies
+    const token = await getAccessToken()
 
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`
@@ -29,7 +32,7 @@ apiClient.interceptors.request.use(
 )
 
 // Response interceptor - handle errors, refresh token
-apiClient.interceptors.response.use(
+serverApiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & {
@@ -42,24 +45,26 @@ apiClient.interceptors.response.use(
 
       try {
         // Try to refresh access token
-        const newToken = await refreshAccessTokenForClient()
+        const newToken = await refreshAccessToken()
         if (newToken && originalRequest.headers) {
           originalRequest.headers.Authorization = `Bearer ${newToken}`
-          return apiClient(originalRequest)
+          return serverApiClient(originalRequest)
+        } else {
+          // Refresh token failed or expired - redirect to login
+          console.error('Token refresh failed - no new token received')
+          const { redirect } = await import('next/navigation')
+          redirect('/login')
+          return Promise.reject(new Error('Authentication failed'))
         }
       } catch (refreshError) {
         // Refresh failed - redirect to login
         console.error('Token refresh failed:', refreshError)
-        if (typeof window !== 'undefined') {
-          window.location.href = '/login'
-        }
         return Promise.reject(refreshError)
       }
     }
 
     // Handle 403 - forbidden
     if (error.response?.status === 403) {
-      // Show error toast
       console.error('You do not have permission to perform this action')
     }
 
@@ -68,7 +73,4 @@ apiClient.interceptors.response.use(
   }
 )
 
-export default apiClient
-
-// Named export for easier imports
-export const clientApiClient = apiClient
+export default serverApiClient

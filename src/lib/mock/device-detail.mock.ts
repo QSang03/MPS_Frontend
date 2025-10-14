@@ -26,6 +26,7 @@ export interface ConsumableItem {
   model: string
   currentLevel: number // percentage
   maxCapacity: number
+  activationDate?: string
   lastReplaced?: string
   nextReplacement?: string
   status: 'good' | 'low' | 'empty' | 'error'
@@ -120,6 +121,7 @@ export const mockConsumables: ConsumableItem[] = [
     model: 'HP 305A',
     currentLevel: 65,
     maxCapacity: 100,
+    activationDate: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
     lastReplaced: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
     nextReplacement: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toISOString(),
     status: 'good',
@@ -131,6 +133,7 @@ export const mockConsumables: ConsumableItem[] = [
     model: 'HP 305A',
     currentLevel: 25,
     maxCapacity: 100,
+    activationDate: new Date(Date.now() - 75 * 24 * 60 * 60 * 1000).toISOString(),
     lastReplaced: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
     nextReplacement: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
     status: 'low',
@@ -142,6 +145,7 @@ export const mockConsumables: ConsumableItem[] = [
     model: 'HP 305A',
     currentLevel: 80,
     maxCapacity: 100,
+    activationDate: new Date(Date.now() - 50 * 24 * 60 * 60 * 1000).toISOString(),
     lastReplaced: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
     nextReplacement: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(),
     status: 'good',
@@ -153,6 +157,7 @@ export const mockConsumables: ConsumableItem[] = [
     model: 'HP 305A',
     currentLevel: 90,
     maxCapacity: 100,
+    activationDate: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
     lastReplaced: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
     nextReplacement: new Date(Date.now() + 70 * 24 * 60 * 60 * 1000).toISOString(),
     status: 'good',
@@ -164,6 +169,7 @@ export const mockConsumables: ConsumableItem[] = [
     model: 'HP 305A',
     currentLevel: 40,
     maxCapacity: 100,
+    activationDate: new Date(Date.now() - 150 * 24 * 60 * 60 * 1000).toISOString(),
     lastReplaced: new Date(Date.now() - 120 * 24 * 60 * 60 * 1000).toISOString(),
     nextReplacement: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
     status: 'good',
@@ -175,6 +181,7 @@ export const mockConsumables: ConsumableItem[] = [
     model: 'HP 305A',
     currentLevel: 85,
     maxCapacity: 100,
+    activationDate: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString(),
     lastReplaced: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
     nextReplacement: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
     status: 'low',
