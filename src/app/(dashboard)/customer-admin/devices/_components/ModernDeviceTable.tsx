@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -43,6 +43,7 @@ import type { Device } from '@/types/models'
 import { cn } from '@/lib/utils/cn'
 import { DeviceExcelService } from '@/lib/utils/excel'
 import { toast } from 'sonner'
+import { DeviceFilterModal, DeviceFilterData } from './DeviceFilterModal'
 
 interface ModernDeviceTableProps {
   devices: Device[]
@@ -51,6 +52,7 @@ interface ModernDeviceTableProps {
   pageSize?: number
   totalCount?: number
   onPaginationChange?: (pagination: { pageIndex: number; pageSize: number }) => void
+  onFilterChange?: (filters: DeviceFilterData) => void
 }
 
 const statusConfig = {
@@ -87,7 +89,10 @@ export function ModernDeviceTable({
   pageSize = 10,
   totalCount = 0,
   onPaginationChange,
+  onFilterChange,
 }: ModernDeviceTableProps) {
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false)
+  const [activeFilters, setActiveFilters] = useState<DeviceFilterData>({})
   const totalPages = Math.ceil(totalCount / pageSize)
   const startItem = pageIndex * pageSize + 1
   const endItem = Math.min((pageIndex + 1) * pageSize, totalCount)
@@ -129,6 +134,20 @@ export function ModernDeviceTable({
       console.error('Template error:', error)
     }
   }, [])
+
+  const handleFilterApply = useCallback(
+    (filters: DeviceFilterData) => {
+      setActiveFilters(filters)
+      onFilterChange?.(filters)
+      toast.success('Bộ lọc đã được áp dụng')
+    },
+    [onFilterChange]
+  )
+
+  const getActiveFilterCount = () => {
+    return Object.values(activeFilters).filter((value) => value !== undefined && value !== '')
+      .length
+  }
   if (isLoading) {
     return (
       <Card className="shadow-soft-xl border-0">
@@ -152,10 +171,18 @@ export function ModernDeviceTable({
             <Button
               variant="outline"
               size="sm"
-              className="hover:border-brand-500 hover:bg-brand-50 hover:text-brand-700 gap-2 rounded-xl border-2"
+              onClick={() => setIsFilterModalOpen(true)}
+              className={`hover:border-brand-500 hover:bg-brand-50 hover:text-brand-700 gap-2 rounded-xl border-2 ${
+                getActiveFilterCount() > 0 ? 'bg-brand-50 border-brand-500 text-brand-700' : ''
+              }`}
             >
               <Filter className="h-4 w-4" />
               Lọc
+              {getActiveFilterCount() > 0 && (
+                <span className="bg-brand-500 ml-1 rounded-full px-1.5 py-0.5 text-xs text-white">
+                  {getActiveFilterCount()}
+                </span>
+              )}
             </Button>
 
             <Button
@@ -396,6 +423,14 @@ export function ModernDeviceTable({
           </div>
         </div>
       )}
+
+      {/* Filter Modal */}
+      <DeviceFilterModal
+        isOpen={isFilterModalOpen}
+        onClose={() => setIsFilterModalOpen(false)}
+        onApply={handleFilterApply}
+        initialFilters={activeFilters}
+      />
     </Card>
   )
 }
