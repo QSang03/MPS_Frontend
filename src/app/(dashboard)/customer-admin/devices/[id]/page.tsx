@@ -10,6 +10,9 @@ import { formatDate, formatNumber } from '@/lib/utils/formatters'
 import { DeviceStatus } from '@/constants/status'
 import { NavigationTracker } from '@/components/layout/NavigationTracker'
 import { mockDevices } from '@/lib/mock/devices.mock'
+import { UsageHistoryTab } from './_components/UsageHistoryTab'
+import { ServiceHistoryTab } from './_components/ServiceHistoryTab'
+import { ConsumablesTab } from './_components/ConsumablesTab'
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic'
@@ -192,45 +195,15 @@ export default async function DeviceDetailPage({ params }: { params: Promise<{ i
         </TabsContent>
 
         <TabsContent value="usage">
-          <Card>
-            <CardHeader>
-              <CardTitle>Lịch sử sử dụng</CardTitle>
-              <CardDescription>Dữ liệu sử dụng lịch sử của thiết bị này</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-muted-foreground flex h-64 items-center justify-center rounded-md border-2 border-dashed">
-                <p>Biểu đồ lịch sử sử dụng sẽ được triển khai tại đây...</p>
-              </div>
-            </CardContent>
-          </Card>
+          <UsageHistoryTab deviceId={device.id} />
         </TabsContent>
 
         <TabsContent value="service">
-          <Card>
-            <CardHeader>
-              <CardTitle>Lịch sử bảo trì</CardTitle>
-              <CardDescription>Các yêu cầu bảo trì và giải pháp trong quá khứ</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-muted-foreground flex h-64 items-center justify-center rounded-md border-2 border-dashed">
-                <p>Lịch sử bảo trì sẽ được triển khai tại đây...</p>
-              </div>
-            </CardContent>
-          </Card>
+          <ServiceHistoryTab deviceId={device.id} />
         </TabsContent>
 
         <TabsContent value="consumables">
-          <Card>
-            <CardHeader>
-              <CardTitle>Vật tư tiêu hao</CardTitle>
-              <CardDescription>Mức toner và trạng thái vật tư</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-muted-foreground flex h-64 items-center justify-center rounded-md border-2 border-dashed">
-                <p>Theo dõi vật tư tiêu hao sẽ được triển khai tại đây...</p>
-              </div>
-            </CardContent>
-          </Card>
+          <ConsumablesTab deviceId={device.id} />
         </TabsContent>
       </Tabs>
     </div>
