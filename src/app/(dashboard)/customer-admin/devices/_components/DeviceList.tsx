@@ -96,6 +96,7 @@ export function DeviceList({ customerId, searchQuery = '' }: DeviceListProps) {
       pageIndex={pagination.pageIndex}
       pageSize={pagination.pageSize}
       totalCount={data?.totalCount || 0}
+      customerId={customerId}
       onPaginationChange={setPagination}
       onFilterChange={handleFilterChange}
     />

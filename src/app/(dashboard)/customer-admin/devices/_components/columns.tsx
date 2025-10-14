@@ -16,7 +16,7 @@ const statusColorMap: Record<DeviceStatus, string> = {
     'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
 }
 
-export const columns: ColumnDef<Device>[] = [
+export const createColumns = (customerId: string): ColumnDef<Device>[] => [
   {
     accessorKey: 'serialNumber',
     header: 'Serial Number',
@@ -67,6 +67,6 @@ export const columns: ColumnDef<Device>[] = [
   },
   {
     id: 'actions',
-    cell: ({ row }) => <DeviceActions device={row.original} />,
+    cell: ({ row }) => <DeviceActions device={row.original} customerId={customerId} />,
   },
 ]

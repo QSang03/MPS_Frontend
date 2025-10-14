@@ -16,7 +16,6 @@ import {
   AlertCircle,
   Wrench,
   Eye,
-  Edit,
   Trash2,
   ChevronLeft,
   ChevronRight,
@@ -44,6 +43,7 @@ import { cn } from '@/lib/utils/cn'
 import { DeviceExcelService } from '@/lib/utils/excel'
 import { toast } from 'sonner'
 import { DeviceFilterModal, DeviceFilterData } from './DeviceFilterModal'
+import { DeviceEditModal } from './DeviceEditModal'
 
 interface ModernDeviceTableProps {
   devices: Device[]
@@ -51,6 +51,7 @@ interface ModernDeviceTableProps {
   pageIndex?: number
   pageSize?: number
   totalCount?: number
+  customerId: string
   onPaginationChange?: (pagination: { pageIndex: number; pageSize: number }) => void
   onFilterChange?: (filters: DeviceFilterData) => void
 }
@@ -88,6 +89,7 @@ export function ModernDeviceTable({
   pageIndex = 0,
   pageSize = 10,
   totalCount = 0,
+  customerId,
   onPaginationChange,
   onFilterChange,
 }: ModernDeviceTableProps) {
@@ -285,13 +287,7 @@ export function ModernDeviceTable({
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link
-                        href={`/customer-admin/devices/${device.id}/edit`}
-                        className="flex cursor-pointer items-center gap-2"
-                      >
-                        <Edit className="h-4 w-4" />
-                        Chỉnh sửa
-                      </Link>
+                      <DeviceEditModal device={device} customerId={customerId} />
                     </DropdownMenuItem>
                     <DropdownMenuItem className="text-error-600 flex cursor-pointer items-center gap-2">
                       <Trash2 className="h-4 w-4" />

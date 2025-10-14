@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { MoreHorizontal, Eye, Pencil, Trash2, Wrench } from 'lucide-react'
+import { MoreHorizontal, Eye, Trash2, Wrench } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -15,14 +15,16 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { DeleteDialog } from '@/components/shared/DeleteDialog'
+import { DeviceEditModal } from './DeviceEditModal'
 import { deviceService } from '@/lib/api/services/device.service'
 import type { Device } from '@/types/models'
 
 interface DeviceActionsProps {
   device: Device
+  customerId: string
 }
 
-export function DeviceActions({ device }: DeviceActionsProps) {
+export function DeviceActions({ device, customerId }: DeviceActionsProps) {
   const router = useRouter()
   const queryClient = useQueryClient()
 
@@ -61,10 +63,7 @@ export function DeviceActions({ device }: DeviceActionsProps) {
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href={`/customer-admin/devices/${device.id}/edit`}>
-            <Pencil className="mr-2 h-4 w-4" />
-            Edit
-          </Link>
+          <DeviceEditModal device={device} customerId={customerId} />
         </DropdownMenuItem>
         <DropdownMenuItem>
           <Wrench className="mr-2 h-4 w-4" />
