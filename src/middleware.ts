@@ -8,9 +8,6 @@ const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production'
 )
 
-// Development mode bypass
-const DEV_BYPASS_AUTH = process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === 'true'
-
 interface Session {
   userId: string
   customerId: string
@@ -26,34 +23,6 @@ interface Session {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // 🔧 DEV MODE: Bypass authentication
-  if (DEV_BYPASS_AUTH) {
-    // Skip login page in dev mode
-    if (pathname === ROUTES.LOGIN) {
-      return NextResponse.redirect(new URL(ROUTES.CUSTOMER_ADMIN, request.url))
-    }
-
-    // Mock session for dev mode
-    const mockSession: Session = {
-      userId: 'dev-user-1',
-      customerId: 'customer-1',
-      role: UserRole.CUSTOMER_ADMIN,
-      username: 'Dev User',
-      email: 'dev@test.com',
-    }
-
-    const requestHeaders = new Headers(request.headers)
-    requestHeaders.set('x-user-id', mockSession.userId)
-    requestHeaders.set('x-customer-id', mockSession.customerId)
-    requestHeaders.set('x-user-role', mockSession.role)
-
-    return NextResponse.next({
-      request: {
-        headers: requestHeaders,
-      },
-    })
-  }
-
   // Public routes - allow access without authentication
   if (pathname === ROUTES.LOGIN) {
     // If already logged in, redirect to appropriate dashboard
@@ -68,8 +37,12 @@ export async function middleware(request: NextRequest) {
   const session = await getSessionFromRequest(request)
 
   if (!session) {
-    // Not authenticated - redirect to login
-    return NextResponse.redirect(new URL(ROUTES.LOGIN, request.url))
+    // Not authenticated - redirect to login and clear any invalid cookies
+    const response = NextResponse.redirect(new URL(ROUTES.LOGIN, request.url))
+    response.cookies.delete('mps_session')
+    response.cookies.delete('access_token')
+    response.cookies.delete('refresh_token')
+    return response
   }
 
   // Role-based access control (RBAC)

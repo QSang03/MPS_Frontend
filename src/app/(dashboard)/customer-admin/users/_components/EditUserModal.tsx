@@ -30,9 +30,11 @@ import {
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Loader2, User, Mail, Building, Shield } from 'lucide-react'
-import { rolesClientService } from '@/lib/api/services/roles-client.service'
-import { departmentsClientService } from '@/lib/api/services/departments-client.service'
-import { usersClientService } from '@/lib/api/services/users-client.service'
+import {
+  getRolesForClient,
+  getDepartmentsForClient,
+  updateUserForClient,
+} from '@/lib/auth/data-actions'
 import type { User as UserType, UserRole, Department } from '@/types/users'
 import { toast } from 'sonner'
 
@@ -87,8 +89,8 @@ export function EditUserModal({ user, isOpen, onClose, onUserUpdated }: EditUser
   const loadRolesAndDepartments = async () => {
     try {
       const [rolesData, departmentsData] = await Promise.all([
-        rolesClientService.getRoles(),
-        departmentsClientService.getDepartments(),
+        getRolesForClient(),
+        getDepartmentsForClient(),
       ])
       setRoles(rolesData)
       setDepartments(departmentsData)
@@ -103,7 +105,7 @@ export function EditUserModal({ user, isOpen, onClose, onUserUpdated }: EditUser
 
     setIsLoading(true)
     try {
-      const updatedUser = await usersClientService.updateUser(user.id, {
+      const updatedUser = await updateUserForClient(user.id, {
         email: data.email,
         roleId: data.roleId,
         departmentId: data.departmentId,
@@ -203,15 +205,26 @@ export function EditUserModal({ user, isOpen, onClose, onUserUpdated }: EditUser
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Chọn phòng ban" />
+                        <SelectValue placeholder="Chọn phòng ban">
+                          {field.value && departments.find((d) => d.id === field.value) && (
+                            <div className="flex items-center gap-2">
+                              <span>{departments.find((d) => d.id === field.value)?.name}</span>
+                              <span className="text-muted-foreground text-sm">
+                                ({departments.find((d) => d.id === field.value)?.code})
+                              </span>
+                            </div>
+                          )}
+                        </SelectValue>
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
                       {departments.map((department) => (
                         <SelectItem key={department.id} value={department.id}>
-                          <div className="flex flex-col">
+                          <div className="flex flex-row items-center gap-2">
                             <span>{department.name}</span>
-                            <span className="text-muted-foreground text-sm">{department.code}</span>
+                            <span className="text-muted-foreground text-sm">
+                              ({department.code})
+                            </span>
                           </div>
                         </SelectItem>
                       ))}

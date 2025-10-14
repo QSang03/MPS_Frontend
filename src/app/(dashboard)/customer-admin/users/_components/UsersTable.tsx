@@ -153,18 +153,23 @@ export function UsersTable({ initialUsers }: UsersTableProps) {
     const filtered = applyFilters(allUsers, filters)
     setFilteredUsers(filtered)
 
-    // Update pagination
-    const totalPages = Math.ceil(filtered.length / pagination.limit)
-    const newPagination = {
-      ...pagination,
-      total: filtered.length,
-      totalPages,
-      page: 1, // Reset to first page when filtering
-    }
+    // Update pagination - use functional update to avoid dependency on pagination
+    setPagination((prevPagination) => {
+      const totalPages = Math.ceil(filtered.length / prevPagination.limit)
+      const newPagination = {
+        ...prevPagination,
+        total: filtered.length,
+        totalPages,
+        page: 1, // Reset to first page when filtering
+      }
+      return newPagination
+    })
+  }, [filters, allUsers])
 
-    setPagination(newPagination)
-    updateURL(filters, newPagination)
-  }, [filters, allUsers, pagination.limit, pagination, updateURL])
+  // Update URL when pagination changes (separate effect)
+  useEffect(() => {
+    updateURL(filters, pagination)
+  }, [filters, pagination, updateURL])
 
   const handleSearch = (value: string) => {
     setFilters((prev) => ({ ...prev, search: value }))

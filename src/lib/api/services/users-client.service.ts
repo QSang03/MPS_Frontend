@@ -4,6 +4,14 @@ import type { User } from '@/types/users'
 
 export const usersClientService = {
   /**
+   * Create user (client-side)
+   */
+  async createUser(userData: Partial<User>): Promise<User> {
+    const { data } = await clientApiClient.post<User>(API_ENDPOINTS.USERS, userData)
+    return data
+  },
+
+  /**
    * Update user (client-side)
    */
   async updateUser(id: string, userData: Partial<User>): Promise<User> {

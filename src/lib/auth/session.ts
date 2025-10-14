@@ -190,15 +190,13 @@ export async function refreshAccessToken(): Promise<string | null> {
 
     if (!response.ok) {
       console.error('Failed to refresh token:', response.status, response.statusText)
-      // If refresh fails, clear all auth data and redirect to login
+      // If refresh fails, clear all auth data
       const cookieStore = await cookies()
       cookieStore.delete(REFRESH_TOKEN_COOKIE_NAME)
       cookieStore.delete(ACCESS_TOKEN_COOKIE_NAME)
       cookieStore.delete(SESSION_COOKIE_NAME)
 
-      // Redirect to login
-      const { redirect } = await import('next/navigation')
-      redirect('/login')
+      // Return null instead of redirecting - let client handle redirect
       return null
     }
 

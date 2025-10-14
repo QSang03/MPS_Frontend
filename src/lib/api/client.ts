@@ -3,6 +3,9 @@ import type { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axio
 import { getClientAccessToken } from '@/lib/auth/client-auth'
 import { refreshAccessTokenForClient } from '@/lib/auth/server-actions'
 
+// Debug environment variable
+console.log('NEXT_PUBLIC_API_URL:', process.env.NEXT_PUBLIC_API_URL)
+
 const apiClient: AxiosInstance = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
   timeout: 30000,
@@ -17,8 +20,15 @@ apiClient.interceptors.request.use(
     // Get access token from server-side cookies via server action
     const token = await getClientAccessToken()
 
+    // Debug logging
+    console.log('Request interceptor - token:', token ? 'exists' : 'missing')
+    console.log('Request URL:', config.url)
+    console.log('Base URL:', config.baseURL)
+    console.log('Full URL:', (config.baseURL || '') + (config.url || ''))
+
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`
+      console.log('Authorization header set:', config.headers.Authorization)
     }
 
     return config

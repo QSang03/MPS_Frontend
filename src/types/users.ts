@@ -31,6 +31,10 @@ export interface User {
   id: string
   email: string
   password: string
+  username?: string
+  fullName?: string
+  isActive?: boolean
+  phoneNumber?: string
   attributes: {
     customField?: string
     [key: string]: unknown

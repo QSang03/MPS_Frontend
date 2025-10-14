@@ -7,7 +7,6 @@ export const API_ENDPOINTS = {
     LOGIN: '/auth/signin',
     LOGOUT: '/auth/logout',
     REFRESH: '/auth/refresh',
-    ME: '/auth/me',
     PROFILE: '/profile',
   },
 
@@ -19,24 +18,6 @@ export const API_ENDPOINTS = {
 
   // Departments
   DEPARTMENTS: '/departments',
-
-  // Customers
-  CUSTOMERS: {
-    LIST: '/customers',
-    DETAIL: (id: string) => `/customers/${id}`,
-    CREATE: '/customers',
-    UPDATE: (id: string) => `/customers/${id}`,
-    DELETE: (id: string) => `/customers/${id}`,
-  },
-
-  // Accounts
-  ACCOUNTS: {
-    LIST: '/accounts',
-    DETAIL: (id: string) => `/accounts/${id}`,
-    CREATE: '/accounts',
-    UPDATE: (id: string) => `/accounts/${id}`,
-    DELETE: (id: string) => `/accounts/${id}`,
-  },
 
   // Devices
   DEVICES: {

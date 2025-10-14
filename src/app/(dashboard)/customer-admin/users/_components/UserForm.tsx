@@ -26,32 +26,33 @@ import {
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { userSchema, type UserFormData } from '@/lib/validations/user.schema'
-import { accountService } from '@/lib/api/services/account.service'
-import { rolesClientService } from '@/lib/api/services/roles-client.service'
-import { departmentsClientService } from '@/lib/api/services/departments-client.service'
-import type { Account } from '@/types/models'
-import { UserRole } from '@/constants/roles'
+import {
+  getRolesForClient,
+  getDepartmentsForClient,
+  createUserForClient,
+  updateUserForClient,
+} from '@/lib/auth/data-actions'
+import type { User } from '@/types/users'
 
 interface UserFormProps {
-  initialData?: Account
-  customerId: string
+  initialData?: User
   mode: 'create' | 'edit'
   onSuccess?: () => void
 }
 
-export function UserForm({ initialData, customerId, mode, onSuccess }: UserFormProps) {
+export function UserForm({ initialData, mode, onSuccess }: UserFormProps) {
   const router = useRouter()
   const queryClient = useQueryClient()
 
   // Fetch roles and departments
   const { data: roles = [], isLoading: isLoadingRoles } = useQuery({
     queryKey: ['roles'],
-    queryFn: rolesClientService.getRoles,
+    queryFn: getRolesForClient,
   })
 
   const { data: departments = [], isLoading: isLoadingDepartments } = useQuery({
     queryKey: ['departments'],
-    queryFn: departmentsClientService.getDepartments,
+    queryFn: getDepartmentsForClient,
   })
 
   const form = useForm<UserFormData>({
@@ -60,7 +61,7 @@ export function UserForm({ initialData, customerId, mode, onSuccess }: UserFormP
       username: initialData?.username || '',
       email: initialData?.email || '',
       fullName: initialData?.fullName || '',
-      role: initialData?.role || UserRole.USER,
+      roleId: initialData?.roleId || '',
       departmentId: initialData?.departmentId || '',
       isActive: initialData?.isActive !== undefined ? initialData.isActive : true,
       phoneNumber: initialData?.phoneNumber || '',
@@ -68,9 +69,9 @@ export function UserForm({ initialData, customerId, mode, onSuccess }: UserFormP
   })
 
   const createMutation = useMutation({
-    mutationFn: accountService.create,
+    mutationFn: (data: UserFormData) => createUserForClient(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['accounts'] })
+      queryClient.invalidateQueries({ queryKey: ['users'] })
       toast.success('Tạo người dùng thành công!')
       form.reset()
       if (onSuccess) {
@@ -86,9 +87,9 @@ export function UserForm({ initialData, customerId, mode, onSuccess }: UserFormP
   })
 
   const updateMutation = useMutation({
-    mutationFn: (data: UserFormData) => accountService.update(initialData!.id, data),
+    mutationFn: (data: UserFormData) => updateUserForClient(initialData!.id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['accounts'] })
+      queryClient.invalidateQueries({ queryKey: ['users'] })
       toast.success('Cập nhật người dùng thành công!')
       form.reset()
       if (onSuccess) {
@@ -107,9 +108,8 @@ export function UserForm({ initialData, customerId, mode, onSuccess }: UserFormP
     if (mode === 'create') {
       createMutation.mutate({
         ...data,
-        customerId,
-        password: 'ChangeMe123!', // Default password - user should change on first login
-      })
+        password: 'Ainkczalov2!', // Default password - user should change on first login
+      } as UserFormData & { password: string })
     } else {
       updateMutation.mutate(data)
     }
@@ -180,7 +180,7 @@ export function UserForm({ initialData, customerId, mode, onSuccess }: UserFormP
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <FormField
             control={form.control}
-            name="role"
+            name="roleId"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Vai trò</FormLabel>
@@ -207,8 +207,7 @@ export function UserForm({ initialData, customerId, mode, onSuccess }: UserFormP
                       ))
                     ) : (
                       <>
-                        <SelectItem value={UserRole.USER}>Người dùng</SelectItem>
-                        <SelectItem value={UserRole.CUSTOMER_ADMIN}>Quản trị viên</SelectItem>
+                        <SelectItem value="">Không có vai trò</SelectItem>
                       </>
                     )}
                   </SelectContent>

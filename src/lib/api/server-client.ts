@@ -50,16 +50,14 @@ serverApiClient.interceptors.response.use(
           originalRequest.headers.Authorization = `Bearer ${newToken}`
           return serverApiClient(originalRequest)
         } else {
-          // Refresh token failed or expired - redirect to login
+          // Refresh token failed or expired - throw error to be handled by calling code
           console.error('Token refresh failed - no new token received')
-          const { redirect } = await import('next/navigation')
-          redirect('/login')
-          return Promise.reject(new Error('Authentication failed'))
+          return Promise.reject(new Error('Authentication failed - please login again'))
         }
       } catch (refreshError) {
-        // Refresh failed - redirect to login
+        // Refresh failed - throw error to be handled by calling code
         console.error('Token refresh failed:', refreshError)
-        return Promise.reject(refreshError)
+        return Promise.reject(new Error('Authentication failed - please login again'))
       }
     }
 

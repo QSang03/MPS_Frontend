@@ -1,5 +1,4 @@
 import { z } from 'zod'
-import { UserRole } from '@/constants/roles'
 
 /**
  * User form validation schema
@@ -20,7 +19,7 @@ export const userSchema = z.object({
     .min(1, 'Họ tên là bắt buộc')
     .min(2, 'Họ tên phải có ít nhất 2 ký tự')
     .max(100, 'Họ tên không được quá 100 ký tự'),
-  role: z.nativeEnum(UserRole),
+  roleId: z.string().min(1, 'Vai trò là bắt buộc'),
   departmentId: z.string().optional(),
   isActive: z.boolean(),
   phoneNumber: z
