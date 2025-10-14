@@ -47,6 +47,13 @@ const statusColorMap: Record<DeviceStatus, string> = {
   [DeviceStatus.MAINTENANCE]: 'bg-yellow-100 text-yellow-800',
 }
 
+const statusTextMap: Record<DeviceStatus, string> = {
+  [DeviceStatus.ACTIVE]: 'Hoạt động',
+  [DeviceStatus.INACTIVE]: 'Ngưng hoạt động',
+  [DeviceStatus.ERROR]: 'Lỗi',
+  [DeviceStatus.MAINTENANCE]: 'Bảo trì',
+}
+
 export default async function DeviceDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const device = await getDevice(id)
@@ -66,7 +73,7 @@ export default async function DeviceDetailPage({ params }: { params: Promise<{ i
           <Button variant="ghost" size="sm" asChild>
             <Link href="/customer-admin/devices">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Back
+              Quay lại
             </Link>
           </Button>
           <div>
@@ -77,7 +84,7 @@ export default async function DeviceDetailPage({ params }: { params: Promise<{ i
         <div className="flex gap-2">
           <Button variant="outline">
             <AlertCircle className="mr-2 h-4 w-4" />
-            Request Service
+            Yêu cầu dịch vụ
           </Button>
           <Button asChild>
             <Link href={`/customer-admin/devices/${device.id}/edit`}>
@@ -90,10 +97,10 @@ export default async function DeviceDetailPage({ params }: { params: Promise<{ i
 
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="usage">Usage History</TabsTrigger>
-          <TabsTrigger value="service">Service History</TabsTrigger>
-          <TabsTrigger value="consumables">Consumables</TabsTrigger>
+          <TabsTrigger value="overview">Tổng quan</TabsTrigger>
+          <TabsTrigger value="usage">Lịch sử sử dụng</TabsTrigger>
+          <TabsTrigger value="service">Lịch sử bảo trì</TabsTrigger>
+          <TabsTrigger value="consumables">Vật tư tiêu hao</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
@@ -101,14 +108,14 @@ export default async function DeviceDetailPage({ params }: { params: Promise<{ i
             {/* Device Information */}
             <Card>
               <CardHeader>
-                <CardTitle>Device Information</CardTitle>
-                <CardDescription>Basic device details and specifications</CardDescription>
+                <CardTitle>Thông tin thiết bị</CardTitle>
+                <CardDescription>Chi tiết cơ bản và thông số kỹ thuật của thiết bị</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-start gap-3">
                   <Printer className="text-muted-foreground mt-0.5 h-5 w-5" />
                   <div className="flex-1">
-                    <p className="text-muted-foreground text-sm">Serial Number</p>
+                    <p className="text-muted-foreground text-sm">Số serial</p>
                     <p className="font-mono font-medium">{device.serialNumber}</p>
                   </div>
                 </div>
@@ -124,7 +131,7 @@ export default async function DeviceDetailPage({ params }: { params: Promise<{ i
                 <div className="flex items-start gap-3">
                   <MapPin className="text-muted-foreground mt-0.5 h-5 w-5" />
                   <div className="flex-1">
-                    <p className="text-muted-foreground text-sm">Location</p>
+                    <p className="text-muted-foreground text-sm">Vị trí</p>
                     <p className="font-medium">{device.location}</p>
                   </div>
                 </div>
@@ -132,9 +139,9 @@ export default async function DeviceDetailPage({ params }: { params: Promise<{ i
                 <div className="flex items-start gap-3">
                   <Activity className="text-muted-foreground mt-0.5 h-5 w-5" />
                   <div className="flex-1">
-                    <p className="text-muted-foreground text-sm">Status</p>
+                    <p className="text-muted-foreground text-sm">Trạng thái</p>
                     <Badge className={statusColorMap[device.status]} variant="secondary">
-                      {device.status}
+                      {statusTextMap[device.status]}
                     </Badge>
                   </div>
                 </div>
@@ -144,14 +151,14 @@ export default async function DeviceDetailPage({ params }: { params: Promise<{ i
             {/* Usage Statistics */}
             <Card>
               <CardHeader>
-                <CardTitle>Usage Statistics</CardTitle>
-                <CardDescription>Device usage and maintenance info</CardDescription>
+                <CardTitle>Thống kê sử dụng</CardTitle>
+                <CardDescription>Thông tin sử dụng và bảo trì thiết bị</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-start gap-3">
                   <Printer className="text-muted-foreground mt-0.5 h-5 w-5" />
                   <div className="flex-1">
-                    <p className="text-muted-foreground text-sm">Total Pages Used</p>
+                    <p className="text-muted-foreground text-sm">Tổng trang đã in</p>
                     <p className="text-2xl font-bold">{formatNumber(device.totalPagesUsed)}</p>
                   </div>
                 </div>
@@ -159,11 +166,11 @@ export default async function DeviceDetailPage({ params }: { params: Promise<{ i
                 <div className="flex items-start gap-3">
                   <Calendar className="text-muted-foreground mt-0.5 h-5 w-5" />
                   <div className="flex-1">
-                    <p className="text-muted-foreground text-sm">Last Maintenance</p>
+                    <p className="text-muted-foreground text-sm">Bảo trì lần cuối</p>
                     <p className="font-medium">
                       {device.lastMaintenanceDate
                         ? formatDate(device.lastMaintenanceDate)
-                        : 'Never'}
+                        : 'Chưa có'}
                     </p>
                   </div>
                 </div>
@@ -171,11 +178,11 @@ export default async function DeviceDetailPage({ params }: { params: Promise<{ i
                 <div className="flex items-start gap-3">
                   <Calendar className="text-muted-foreground mt-0.5 h-5 w-5" />
                   <div className="flex-1">
-                    <p className="text-muted-foreground text-sm">Next Maintenance</p>
+                    <p className="text-muted-foreground text-sm">Bảo trì tiếp theo</p>
                     <p className="font-medium">
                       {device.nextMaintenanceDate
                         ? formatDate(device.nextMaintenanceDate)
-                        : 'Not scheduled'}
+                        : 'Chưa lên lịch'}
                     </p>
                   </div>
                 </div>
@@ -187,12 +194,12 @@ export default async function DeviceDetailPage({ params }: { params: Promise<{ i
         <TabsContent value="usage">
           <Card>
             <CardHeader>
-              <CardTitle>Usage History</CardTitle>
-              <CardDescription>Historical usage data for this device</CardDescription>
+              <CardTitle>Lịch sử sử dụng</CardTitle>
+              <CardDescription>Dữ liệu sử dụng lịch sử của thiết bị này</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="text-muted-foreground flex h-64 items-center justify-center rounded-md border-2 border-dashed">
-                <p>Usage history chart will be implemented here...</p>
+                <p>Biểu đồ lịch sử sử dụng sẽ được triển khai tại đây...</p>
               </div>
             </CardContent>
           </Card>
@@ -201,12 +208,12 @@ export default async function DeviceDetailPage({ params }: { params: Promise<{ i
         <TabsContent value="service">
           <Card>
             <CardHeader>
-              <CardTitle>Service History</CardTitle>
-              <CardDescription>Past service requests and resolutions</CardDescription>
+              <CardTitle>Lịch sử bảo trì</CardTitle>
+              <CardDescription>Các yêu cầu bảo trì và giải pháp trong quá khứ</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="text-muted-foreground flex h-64 items-center justify-center rounded-md border-2 border-dashed">
-                <p>Service history will be implemented here...</p>
+                <p>Lịch sử bảo trì sẽ được triển khai tại đây...</p>
               </div>
             </CardContent>
           </Card>
@@ -215,12 +222,12 @@ export default async function DeviceDetailPage({ params }: { params: Promise<{ i
         <TabsContent value="consumables">
           <Card>
             <CardHeader>
-              <CardTitle>Consumables</CardTitle>
-              <CardDescription>Toner levels and supply status</CardDescription>
+              <CardTitle>Vật tư tiêu hao</CardTitle>
+              <CardDescription>Mức toner và trạng thái vật tư</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="text-muted-foreground flex h-64 items-center justify-center rounded-md border-2 border-dashed">
-                <p>Consumables tracking will be implemented here...</p>
+                <p>Theo dõi vật tư tiêu hao sẽ được triển khai tại đây...</p>
               </div>
             </CardContent>
           </Card>
