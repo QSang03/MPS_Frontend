@@ -177,7 +177,7 @@ export function ServiceRequestForm({ customerId, onSuccess }: ServiceRequestForm
           <Button
             type="button"
             variant="outline"
-            onClick={() => router.back()}
+            onClick={onSuccess}
             disabled={createMutation.isPending}
           >
             Hủy

@@ -232,12 +232,7 @@ export function UserForm({ initialData, customerId, mode, onSuccess }: UserFormP
             {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {mode === 'create' ? 'Tạo người dùng' : 'Cập nhật người dùng'}
           </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => router.back()}
-            disabled={isPending}
-          >
+          <Button type="button" variant="outline" onClick={onSuccess} disabled={isPending}>
             Hủy
           </Button>
         </div>

@@ -121,7 +121,7 @@ export function CustomerForm({ initialData, mode }: CustomerFormProps) {
           <Button
             type="button"
             variant="outline"
-            onClick={() => router.back()}
+            onClick={onSuccess || (() => router.back())}
             disabled={isPending}
           >
             Hủy
