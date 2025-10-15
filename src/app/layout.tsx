@@ -27,7 +27,7 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'MPS - Managed Print Services',
+  title: 'MPS - CHÍNH NHÂN TECHNOLOGY - Managed Print Services',
   description: 'Comprehensive print management system',
 }
 

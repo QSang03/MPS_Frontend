@@ -34,9 +34,16 @@ interface DeviceFormProps {
   customerId: string
   mode: 'create' | 'edit'
   onSuccess?: () => void
+  onDeviceUpdate?: (updatedDevice: Device) => void
 }
 
-export function DeviceForm({ initialData, customerId, mode, onSuccess }: DeviceFormProps) {
+export function DeviceForm({
+  initialData,
+  customerId,
+  mode,
+  onSuccess,
+  onDeviceUpdate,
+}: DeviceFormProps) {
   const router = useRouter()
   const queryClient = useQueryClient()
 
@@ -71,7 +78,12 @@ export function DeviceForm({ initialData, customerId, mode, onSuccess }: DeviceF
 
   const updateMutation = useMutation({
     mutationFn: (data: DeviceFormData) => deviceService.update(initialData!.id, data),
-    onSuccess: () => {
+    onSuccess: (updatedDevice) => {
+      // Cập nhật trực tiếp device trong danh sách từ response API
+      if (updatedDevice && onDeviceUpdate) {
+        onDeviceUpdate(updatedDevice)
+      }
+
       queryClient.invalidateQueries({ queryKey: ['devices'] })
       toast.success('Cập nhật thiết bị thành công!')
       form.reset()

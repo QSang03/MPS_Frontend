@@ -59,7 +59,7 @@ export function Sidebar({ session }: SidebarProps) {
               <div className="bg-primary flex h-8 w-8 items-center justify-center rounded-lg">
                 <Printer className="text-primary-foreground h-5 w-5" />
               </div>
-              <span className="text-xl font-bold">MPS</span>
+              <span className="text-xl font-bold">MPS - CHÍNH NHÂN TECHNOLOGY</span>
             </div>
             <Button variant="ghost" size="sm" className="lg:hidden" onClick={toggleSidebar}>
               <ChevronLeft className="h-5 w-5" />

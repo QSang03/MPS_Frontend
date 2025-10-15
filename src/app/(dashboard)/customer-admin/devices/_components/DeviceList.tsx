@@ -7,6 +7,7 @@ import { deviceService } from '@/lib/api/services/device.service'
 import { getMockDevices } from '@/lib/mock/devices.mock'
 import { ModernDeviceTable } from './ModernDeviceTable'
 import { DeviceFilterData } from './DeviceFilterModal'
+import type { Device } from '@/types/models'
 
 interface DeviceListProps {
   customerId: string
@@ -19,6 +20,7 @@ export function DeviceList({ customerId, searchQuery = '' }: DeviceListProps) {
     pageSize: 10,
   })
   const [filters, setFilters] = useState<DeviceFilterData>({})
+  const [localDevices, setLocalDevices] = useState<typeof data>()
 
   const { data, isLoading } = useQuery({
     queryKey: ['devices', customerId, pagination, searchQuery, filters],
@@ -80,6 +82,13 @@ export function DeviceList({ customerId, searchQuery = '' }: DeviceListProps) {
     },
   })
 
+  // Sync local devices with query data
+  React.useEffect(() => {
+    if (data) {
+      setLocalDevices(data)
+    }
+  }, [data])
+
   // Reset to first page when search query or filters change
   React.useEffect(() => {
     setPagination((prev) => ({ ...prev, pageIndex: 0 }))
@@ -89,16 +98,32 @@ export function DeviceList({ customerId, searchQuery = '' }: DeviceListProps) {
     setFilters(newFilters)
   }
 
+  // Cập nhật device trong danh sách khi edit thành công
+  const handleDeviceUpdate = (updatedDevice: Device) => {
+    if (localDevices?.items) {
+      const updatedItems = localDevices.items.map((device) =>
+        device.id === updatedDevice.id ? updatedDevice : device
+      )
+      setLocalDevices({
+        ...localDevices,
+        items: updatedItems,
+      })
+    }
+  }
+
+  const displayData = localDevices || data
+
   return (
     <ModernDeviceTable
-      devices={data?.items || []}
+      devices={displayData?.items || []}
       isLoading={isLoading}
       pageIndex={pagination.pageIndex}
       pageSize={pagination.pageSize}
-      totalCount={data?.totalCount || 0}
+      totalCount={displayData?.totalCount || 0}
       customerId={customerId}
       onPaginationChange={setPagination}
       onFilterChange={handleFilterChange}
+      onDeviceUpdate={handleDeviceUpdate}
     />
   )
 }

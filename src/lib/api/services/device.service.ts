@@ -39,8 +39,12 @@ export const deviceService = {
    * Update existing device
    */
   async update(id: string, dto: UpdateDeviceDto): Promise<Device> {
-    const { data } = await apiClient.put<Device>(API_ENDPOINTS.DEVICES.UPDATE(id), dto)
-    return data
+    const { data } = await apiClient.put<{ success: boolean; device: Device }>(
+      API_ENDPOINTS.DEVICES.UPDATE(id),
+      dto
+    )
+    // API trả về { success: true, device: {...} }, nên lấy device từ response
+    return data.device || data
   },
 
   /**

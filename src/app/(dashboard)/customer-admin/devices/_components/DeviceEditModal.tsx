@@ -18,12 +18,13 @@ import type { Device } from '@/types/models/device'
 interface DeviceEditModalProps {
   device: Device
   customerId: string
+  onDeviceUpdate?: (updatedDevice: Device) => void
 }
 
 /**
  * Device Edit Form in a modal dialog
  */
-export function DeviceEditModal({ device, customerId }: DeviceEditModalProps) {
+export function DeviceEditModal({ device, customerId, onDeviceUpdate }: DeviceEditModalProps) {
   const [open, setOpen] = useState(false)
 
   return (
@@ -59,6 +60,7 @@ export function DeviceEditModal({ device, customerId }: DeviceEditModalProps) {
                   customerId={customerId}
                   initialData={device}
                   onSuccess={() => setOpen(false)}
+                  onDeviceUpdate={onDeviceUpdate}
                 />
               </div>
             </motion.div>

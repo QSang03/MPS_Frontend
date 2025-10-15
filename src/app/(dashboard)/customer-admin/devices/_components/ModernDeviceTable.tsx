@@ -54,6 +54,7 @@ interface ModernDeviceTableProps {
   customerId: string
   onPaginationChange?: (pagination: { pageIndex: number; pageSize: number }) => void
   onFilterChange?: (filters: DeviceFilterData) => void
+  onDeviceUpdate?: (updatedDevice: Device) => void
 }
 
 const statusConfig = {
@@ -92,6 +93,7 @@ export function ModernDeviceTable({
   customerId,
   onPaginationChange,
   onFilterChange,
+  onDeviceUpdate,
 }: ModernDeviceTableProps) {
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false)
   const [activeFilters, setActiveFilters] = useState<DeviceFilterData>({})
@@ -287,7 +289,11 @@ export function ModernDeviceTable({
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <DeviceEditModal device={device} customerId={customerId} />
+                      <DeviceEditModal
+                        device={device}
+                        customerId={customerId}
+                        onDeviceUpdate={onDeviceUpdate}
+                      />
                     </DropdownMenuItem>
                     <DropdownMenuItem className="text-error-600 flex cursor-pointer items-center gap-2">
                       <Trash2 className="h-4 w-4" />

@@ -42,8 +42,12 @@ export const usersService = {
    * Update user (server-side)
    */
   async updateUser(id: string, userData: Partial<User>): Promise<User> {
-    const { data } = await serverApiClient.put<User>(`${API_ENDPOINTS.USERS}/${id}`, userData)
-    return data
+    const { data } = await serverApiClient.put<{ success: boolean; user: User }>(
+      `${API_ENDPOINTS.USERS}/${id}`,
+      userData
+    )
+    // API trả về { success: true, user: {...} }, nên lấy user từ response
+    return data.user || data
   },
 
   /**

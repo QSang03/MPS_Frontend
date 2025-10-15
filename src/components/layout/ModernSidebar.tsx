@@ -113,8 +113,12 @@ export function ModernSidebar({ session }: SidebarProps) {
             <Printer className="h-6 w-6 text-white" />
           </div>
           <div className="flex-1">
-            <h1 className="font-display text-xl font-bold text-neutral-900 dark:text-white">MPS</h1>
-            <p className="text-xs text-neutral-600 dark:text-neutral-400">Manage Print Services</p>
+            <h1 className="font-display text-x font-bold text-orange-600 dark:text-orange-400">
+              CHÍNH NHÂN TECHNOLOGY
+            </h1>
+            <p className="text-brand-600 dark:text-brand-400 text-xs font-bold">
+              MPS - Managed Print Services
+            </p>
           </div>
           <Button variant="ghost" size="sm" className="lg:hidden" onClick={toggleSidebar}>
             <ChevronLeft className="h-5 w-5" />

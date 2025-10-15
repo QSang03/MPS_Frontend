@@ -222,7 +222,22 @@ export function UsersTable({ initialUsers }: UsersTableProps) {
   }
 
   const handleUserUpdated = (updatedUser: User) => {
-    setAllUsers((prev) => prev.map((user) => (user.id === updatedUser.id ? updatedUser : user)))
+    console.log('Updated user received:', updatedUser)
+
+    // Cập nhật user trong danh sách với dữ liệu mới từ API
+    setAllUsers((prev) =>
+      prev.map((user) => {
+        if (user.id === updatedUser.id) {
+          // Merge updated data with existing user to preserve nested objects
+          return {
+            ...user,
+            ...updatedUser,
+          }
+        }
+        return user
+      })
+    )
+
     setEditingUser(null)
     setIsEditModalOpen(false)
   }
@@ -393,16 +408,18 @@ export function UsersTable({ initialUsers }: UsersTableProps) {
                     </TableCell>
                     <TableCell>
                       <div className="space-y-1">
-                        <Badge className={getRoleBadgeColor(user.role.name)}>
-                          {user.role.name}
+                        <Badge className={getRoleBadgeColor(user.role?.name || '')}>
+                          {user.role?.name}
                         </Badge>
-                        <div className="text-muted-foreground text-sm">Level {user.role.level}</div>
+                        <div className="text-muted-foreground text-sm">
+                          Level {user.role?.level}
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-2">
                         <Building className="text-muted-foreground h-4 w-4" />
-                        <span>{user.department.name}</span>
+                        <span>{user.department?.name}</span>
                       </div>
                     </TableCell>
                     <TableCell>{getStatusBadge(user)}</TableCell>
