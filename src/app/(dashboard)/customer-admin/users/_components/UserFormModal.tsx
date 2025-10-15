@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -23,6 +24,7 @@ interface UserFormModalProps {
  */
 export function UserFormModal({ customerId }: UserFormModalProps) {
   const [open, setOpen] = useState(false)
+  const router = useRouter()
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -50,7 +52,15 @@ export function UserFormModal({ customerId }: UserFormModalProps) {
               </DialogHeader>
 
               <div className="mt-6">
-                <UserForm customerId={customerId} mode="create" onSuccess={() => setOpen(false)} />
+                <UserForm
+                  customerId={customerId}
+                  mode="create"
+                  onSuccess={() => {
+                    setOpen(false)
+                    // Refresh current route so server data is re-fetched and the new user appears
+                    router.refresh()
+                  }}
+                />
               </div>
             </motion.div>
           </DialogContent>

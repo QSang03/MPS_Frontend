@@ -23,11 +23,6 @@ export const PurchaseRequestForm = lazy(() =>
   )
 )
 
-export const CustomerForm = lazy(() =>
-  // CustomerForm component not present in this workspace; remove lazy import to avoid build error.
-  Promise.resolve({ default: () => null as any })
-)
-
 export const UserForm = lazy(() =>
   import('@/app/(dashboard)/customer-admin/users/_components/UserForm').then((m) => ({
     default: m.UserForm,
@@ -51,11 +46,6 @@ export const PurchaseRequestList = lazy(() =>
   import('@/app/(dashboard)/customer-admin/purchase-requests/_components/PurchaseRequestList').then(
     (m) => ({ default: m.PurchaseRequestList })
   )
-)
-
-export const CustomerList = lazy(() =>
-  // CustomerList not present in this workspace; stub with a no-op component to satisfy imports during build
-  Promise.resolve({ default: () => null as any })
 )
 
 export const UserList = lazy(() =>

@@ -19,6 +19,9 @@ export const API_ENDPOINTS = {
   // Departments
   DEPARTMENTS: '/departments',
 
+  // Customers
+  CUSTOMERS: '/customers',
+
   // Devices
   DEVICES: {
     LIST: '/devices',

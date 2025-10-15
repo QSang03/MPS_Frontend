@@ -24,7 +24,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Switch } from '@/components/ui/switch'
 import { userSchema, type UserFormData } from '@/lib/validations/user.schema'
 import {
   getRolesForClient,
@@ -64,14 +63,11 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
       fullName: initialData?.fullName || '',
       roleId: initialData?.roleId || '',
       departmentId: initialData?.departmentId || '',
-      isActive: initialData?.isActive !== undefined ? initialData.isActive : true,
-      phoneNumber: initialData?.phoneNumber || '',
     },
   })
 
   const createMutation = useMutation({
-    mutationFn: (data: UserFormData) =>
-      createUserForClient({ ...(data as Partial<User>), customerId }),
+    mutationFn: (data: UserFormData) => createUserForClient({ ...data, customerId }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] })
       toast.success('Tạo người dùng thành công!')
@@ -89,7 +85,8 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
   })
 
   const updateMutation = useMutation({
-    mutationFn: (data: UserFormData) => updateUserForClient(initialData!.id, data),
+    mutationFn: (data: UserFormData) =>
+      updateUserForClient(initialData!.id, { ...data, customerId: initialData?.customerId }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] })
       toast.success('Cập nhật người dùng thành công!')
@@ -260,41 +257,6 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
             )}
           />
         </div>
-
-        <FormField
-          control={form.control}
-          name="phoneNumber"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Số điện thoại</FormLabel>
-              <FormControl>
-                <Input placeholder="0123456789" {...field} disabled={isPending} />
-              </FormControl>
-              <FormDescription>Số điện thoại liên hệ (tùy chọn)</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="isActive"
-          render={({ field }) => (
-            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-              <div className="space-y-0.5">
-                <FormLabel className="text-base">Trạng thái hoạt động</FormLabel>
-                <FormDescription>Cho phép người dùng đăng nhập và sử dụng hệ thống</FormDescription>
-              </div>
-              <FormControl>
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                  disabled={isPending}
-                />
-              </FormControl>
-            </FormItem>
-          )}
-        />
 
         <div className="flex gap-4">
           <Button type="submit" disabled={isPending}>

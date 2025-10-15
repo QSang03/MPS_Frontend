@@ -21,11 +21,6 @@ export const userSchema = z.object({
     .max(100, 'Họ tên không được quá 100 ký tự'),
   roleId: z.string().min(1, 'Vai trò là bắt buộc'),
   departmentId: z.string().optional(),
-  isActive: z.boolean(),
-  phoneNumber: z
-    .string()
-    .regex(/^[0-9+\-\s()]+$/, 'Số điện thoại không hợp lệ')
-    .optional(),
 })
 
 export type UserFormData = z.infer<typeof userSchema>

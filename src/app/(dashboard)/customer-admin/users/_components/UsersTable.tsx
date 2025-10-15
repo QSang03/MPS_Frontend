@@ -23,7 +23,6 @@ import {
 } from '@/components/ui/select'
 import {
   Search,
-  Plus,
   Edit,
   Trash2,
   MoreHorizontal,
@@ -32,6 +31,7 @@ import {
   Calendar,
   RotateCcw,
 } from 'lucide-react'
+import type { Customer } from '@/types/models/customer'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,6 +40,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { formatDate } from '@/lib/utils/formatters'
 import { EditUserModal } from './EditUserModal'
+import { UserFormModal } from './UserFormModal'
 import type { User, UserFilters, UserPagination } from '@/types/users'
 // server-provided filter options are passed via props
 
@@ -47,47 +48,48 @@ interface UsersTableProps {
   initialUsers: User[]
   roles: { id: string; name: string }[]
   departments: { id: string; name: string }[]
+  customers?: Customer[]
 }
 
-export function UsersTable({ initialUsers, roles, departments }: UsersTableProps) {
+export function UsersTable({ initialUsers, roles, departments, customers }: UsersTableProps) {
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
   const [allUsers, setAllUsers] = useState<User[]>(initialUsers)
   const [filteredUsers, setFilteredUsers] = useState<User[]>(initialUsers)
-  // Stable list of customer codes derived from the initial server payload.
-  // When server navigates and returns filtered initialUsers (e.g., only one customer),
-  // we don't want the dropdown options to shrink. So capture the initial set once.
-  const [availableCustomerCodes, setAvailableCustomerCodes] = useState<string[]>(
-    () => [...new Set(initialUsers.map((u) => u.customer?.code).filter(Boolean))] as string[]
+  // Canonical list of customers is provided by the server (customers prop).
+  // Use that to populate the customer code dropdown and stable maps.
+  const [availableCustomerCodes, setAvailableCustomerCodes] = useState<string[]>(() =>
+    (customers || []).map((c) => ((c as any).code as string) || c.id)
   )
 
-  // Stable mapping code -> id derived from initialUsers. Use this to resolve customerId
-  // even when subsequent user lists are filtered and no longer contain users for a code.
-  // Make it mutable so we can add new mappings when a user is edited to a new customer.
-  const [customerCodeToId, setCustomerCodeToId] = useState<Record<string, string>>(() => {
+  const [customerCodeToId] = useState<Record<string, string>>(() => {
     const map: Record<string, string> = {}
-    for (const u of initialUsers) {
-      const code = u.customer?.code
-      const id = u.customer?.id
-      if (code && id && !map[code]) {
-        map[code] = id
-      }
+    for (const c of customers || []) {
+      const code = ((c as any).code as string) || c.id
+      if (code && c.id && !map[code]) map[code] = c.id
     }
     return map
   })
 
   useEffect(() => {
-    // Only initialize availableCustomerCodes the first time if it's empty.
-    if (!availableCustomerCodes || availableCustomerCodes.length === 0) {
-      setAvailableCustomerCodes([
-        ...new Set(initialUsers.map((u) => u.customer?.code).filter(Boolean)),
-      ] as string[])
+    if (customers && customers.length > 0) {
+      setAvailableCustomerCodes(customers.map((c) => ((c as any).code as string) || c.id))
     }
-    // Do not overwrite availableCustomerCodes on subsequent initialUsers updates intentionally
-    // to preserve the full dropdown options for the user.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialUsers])
+  }, [customers])
+
+  // Stable mapping id -> code for quick reverse lookup when API returns only customerId
+  const [customerIdToCode] = useState<Record<string, string>>(() => {
+    const map: Record<string, string> = {}
+    for (const c of customers || []) {
+      const code = ((c as any).code as string) || c.name || c.id
+      const id = c.id
+      if (code && id && !map[id]) {
+        map[id] = code
+      }
+    }
+    return map
+  })
 
   // Initialize filters from URL params
   const [filters, setFilters] = useState<UserFilters>(() => ({
@@ -284,40 +286,52 @@ export function UsersTable({ initialUsers, roles, departments }: UsersTableProps
   const handleUserUpdated = (updatedUser: User) => {
     console.log('Updated user received:', updatedUser)
 
-    // Enrich updated user data: ensure nested customer object exists when only customerId is returned
-    let enrichedUser: User = { ...updatedUser }
-
-    // If API returned full customer object, update our code->id map and available codes
-    if (updatedUser.customer && updatedUser.customer.code && updatedUser.customer.id) {
-      const { code, id } = updatedUser.customer
-      setCustomerCodeToId((prev) => ({ ...(prev || {}), [code]: id }))
-      setAvailableCustomerCodes((prev) => (prev.includes(code) ? prev : [...prev, code]))
-    } else if (updatedUser.customerId && !updatedUser.customer) {
-      // Try to resolve code from existing map (id -> code)
-      const foundCode = Object.keys(customerCodeToId).find(
-        (c) => customerCodeToId[c] === updatedUser.customerId
-      )
-      if (foundCode) {
-        enrichedUser = {
-          ...enrichedUser,
-          customer: { id: updatedUser.customerId, code: foundCode, name: foundCode },
-        }
-      } else {
-        // If we don't know the code, still attach the id so UI can show something and mapping can be
-        // reconciled later when a canonical customers list is available.
-        enrichedUser = {
-          ...enrichedUser,
-          customer: { id: updatedUser.customerId, code: '', name: '' },
-        }
-      }
-    }
-
-    // Merge updated/enriched user into lists so UI updates immediately
+    // Cập nhật user trong danh sách với dữ liệu mới từ API
     setAllUsers((prev) =>
-      prev.map((user) => (user.id === enrichedUser.id ? { ...user, ...enrichedUser } : user))
+      prev.map((user) => {
+        if (user.id === updatedUser.id) {
+          // Merge updated data with existing user to preserve nested objects
+          const merged = { ...user, ...updatedUser }
+
+          // Ensure customer nested object is updated when API returns only customerId
+          if (updatedUser.customerId) {
+            const resolvedCode = customerIdToCode[updatedUser.customerId]
+            if (resolvedCode) {
+              merged.customer = {
+                id: updatedUser.customerId,
+                code: resolvedCode,
+                name: resolvedCode,
+              }
+            } else if (updatedUser.customer) {
+              merged.customer = updatedUser.customer
+            }
+          }
+
+          return merged
+        }
+        return user
+      })
     )
+
+    // Also update filtered list so UI reflects change immediately
     setFilteredUsers((prev) =>
-      prev.map((u) => (u.id === enrichedUser.id ? { ...u, ...enrichedUser } : u))
+      prev.map((u) => {
+        if (u.id === updatedUser.id) {
+          const merged = { ...u, ...updatedUser }
+          if (updatedUser.customerId) {
+            const resolvedCode = customerIdToCode[updatedUser.customerId]
+            if (resolvedCode)
+              merged.customer = {
+                id: updatedUser.customerId,
+                code: resolvedCode,
+                name: resolvedCode,
+              }
+            else if (updatedUser.customer) merged.customer = updatedUser.customer
+          }
+          return merged
+        }
+        return u
+      })
     )
 
     setEditingUser(null)
@@ -439,10 +453,11 @@ export function UsersTable({ initialUsers, roles, departments }: UsersTableProps
                 <RotateCcw className="mr-2 h-4 w-4" />
                 Reset
               </Button>
-              <Button className="flex-1">
-                <Plus className="mr-2 h-4 w-4" />
-                Thêm
-              </Button>
+              <UserFormModal
+                customerId={
+                  filters.customerId && filters.customerId !== 'all' ? filters.customerId : ''
+                }
+              />
             </div>
           </div>
         </CardContent>
@@ -575,6 +590,7 @@ export function UsersTable({ initialUsers, roles, departments }: UsersTableProps
         customerCodes={availableCustomerCodes}
         customerCodeToId={customerCodeToId}
       />
+      {/* Create User Modal is rendered next to filters via UserFormModal trigger */}
     </div>
   )
 }
