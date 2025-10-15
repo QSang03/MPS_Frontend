@@ -38,11 +38,12 @@ import {
 import type { User as UserType, UserRole, Department } from '@/types/users'
 import { toast } from 'sonner'
 
-// Validation schema for editing user
+// Validation schema for editing user (include customerId)
 const editUserSchema = z.object({
   email: z.string().min(1, 'Email là bắt buộc').email('Email không hợp lệ'),
   roleId: z.string().min(1, 'Vai trò là bắt buộc'),
   departmentId: z.string().min(1, 'Phòng ban là bắt buộc'),
+  customerId: z.string().min(1, 'Khách hàng là bắt buộc'),
 })
 
 type EditUserFormData = z.infer<typeof editUserSchema>
@@ -52,9 +53,20 @@ interface EditUserModalProps {
   isOpen: boolean
   onClose: () => void
   onUserUpdated: (updatedUser: UserType) => void
+  // customerCodes: array of customer.code strings (for display)
+  customerCodes?: string[]
+  // mapping from code -> id (derived by parent)
+  customerCodeToId?: Record<string, string>
 }
 
-export function EditUserModal({ user, isOpen, onClose, onUserUpdated }: EditUserModalProps) {
+export function EditUserModal({
+  user,
+  isOpen,
+  onClose,
+  onUserUpdated,
+  customerCodes = [],
+  customerCodeToId = {},
+}: EditUserModalProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [roles, setRoles] = useState<UserRole[]>([])
   const [departments, setDepartments] = useState<Department[]>([])
@@ -65,6 +77,7 @@ export function EditUserModal({ user, isOpen, onClose, onUserUpdated }: EditUser
       email: '',
       roleId: '',
       departmentId: '',
+      customerId: '',
     },
   })
 
@@ -82,9 +95,11 @@ export function EditUserModal({ user, isOpen, onClose, onUserUpdated }: EditUser
         email: user.email,
         roleId: user.roleId,
         departmentId: user.departmentId,
+        customerId: user.customerId || '',
       })
     }
-  }, [user, form])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user])
 
   const loadRolesAndDepartments = async () => {
     try {
@@ -105,10 +120,17 @@ export function EditUserModal({ user, isOpen, onClose, onUserUpdated }: EditUser
 
     setIsLoading(true)
     try {
+      // Ensure we send a proper customerId (if the form value is a code, map it to id)
+      let customerIdToSend: string | undefined = data.customerId || undefined
+      if (customerIdToSend && customerCodeToId[customerIdToSend]) {
+        customerIdToSend = customerCodeToId[customerIdToSend]
+      }
+
       const updatedUser = await updateUserForClient(user.id, {
         email: data.email,
         roleId: data.roleId,
         departmentId: data.departmentId,
+        customerId: customerIdToSend,
       })
 
       toast.success('Cập nhật thông tin người dùng thành công')
@@ -226,6 +248,38 @@ export function EditUserModal({ user, isOpen, onClose, onUserUpdated }: EditUser
                               ({department.code})
                             </span>
                           </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Customer Field (show code, store id) */}
+            <FormField
+              control={form.control}
+              name="customerId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-2">Mã khách hàng</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Chọn mã khách hàng">
+                          {/* show selected code by reverse lookup */}
+                          {field.value &&
+                            Object.entries(customerCodeToId).find(
+                              ([, id]) => id === field.value
+                            )?.[0]}
+                        </SelectValue>
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {customerCodes.map((code) => (
+                        <SelectItem key={code} value={customerCodeToId[code] || code}>
+                          {code}
                         </SelectItem>
                       ))}
                     </SelectContent>

@@ -38,9 +38,10 @@ interface UserFormProps {
   initialData?: User
   mode: 'create' | 'edit'
   onSuccess?: () => void
+  customerId?: string
 }
 
-export function UserForm({ initialData, mode, onSuccess }: UserFormProps) {
+export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormProps) {
   const router = useRouter()
   const queryClient = useQueryClient()
 
@@ -69,7 +70,8 @@ export function UserForm({ initialData, mode, onSuccess }: UserFormProps) {
   })
 
   const createMutation = useMutation({
-    mutationFn: (data: UserFormData) => createUserForClient(data),
+    mutationFn: (data: UserFormData) =>
+      createUserForClient({ ...(data as Partial<User>), customerId }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] })
       toast.success('Tạo người dùng thành công!')

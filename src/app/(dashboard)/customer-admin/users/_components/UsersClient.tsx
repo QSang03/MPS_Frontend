@@ -91,20 +91,7 @@ export function UsersClient({ initialUsers }: UsersClientProps) {
     }
   }
 
-  const getStatusBadge = (user: User) => {
-    if (user.refreshToken && user.refreshTokenExpiresAt) {
-      const expiresAt = new Date(user.refreshTokenExpiresAt)
-      const now = new Date()
-      if (expiresAt > now) {
-        return (
-          <Badge variant="default" className="bg-green-100 text-green-800">
-            Online
-          </Badge>
-        )
-      }
-    }
-    return <Badge variant="secondary">Offline</Badge>
-  }
+  // (Removed) status badge helper
 
   return (
     <div className="space-y-6">
@@ -189,7 +176,7 @@ export function UsersClient({ initialUsers }: UsersClientProps) {
                   <TableHead>Người dùng</TableHead>
                   <TableHead>Vai trò</TableHead>
                   <TableHead>Phòng ban</TableHead>
-                  <TableHead>Trạng thái</TableHead>
+                  {/* Status column removed */}
                   <TableHead>Ngày tạo</TableHead>
                   <TableHead className="w-[50px]"></TableHead>
                 </TableRow>
@@ -222,7 +209,7 @@ export function UsersClient({ initialUsers }: UsersClientProps) {
                         <span>{user.department.name}</span>
                       </div>
                     </TableCell>
-                    <TableCell>{getStatusBadge(user)}</TableCell>
+                    {/* Status cell removed */}
                     <TableCell>
                       <div className="flex items-center space-x-2">
                         <Calendar className="text-muted-foreground h-4 w-4" />

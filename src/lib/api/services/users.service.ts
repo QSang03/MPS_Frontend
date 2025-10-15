@@ -14,6 +14,8 @@ export const usersService = {
     if (params?.search) searchParams.append('search', params.search)
     if (params?.roleId) searchParams.append('roleId', params.roleId)
     if (params?.departmentId) searchParams.append('departmentId', params.departmentId)
+    // Support filtering by customerId (server expects customerId query)
+    if (params?.customerId) searchParams.append('customerId', params.customerId)
 
     const queryString = searchParams.toString()
     const url = queryString ? `${API_ENDPOINTS.USERS}?${queryString}` : API_ENDPOINTS.USERS

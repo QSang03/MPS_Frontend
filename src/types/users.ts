@@ -25,6 +25,24 @@ export interface Department {
 }
 
 /**
+ * Customer information
+ */
+export interface Customer {
+  id: string
+  name: string
+  code: string
+  contactEmail?: string | null
+  contactPhone?: string | null
+  contactPerson?: string | null
+  address?: string | null
+  tier?: string | null
+  isActive?: boolean
+  description?: string | null
+  createdAt?: string
+  updatedAt?: string
+}
+
+/**
  * User information from API
  */
 export interface User {
@@ -41,12 +59,14 @@ export interface User {
   }
   refreshToken: string | null
   refreshTokenExpiresAt: string | null
+  customerId: string
   roleId: string
   departmentId: string
   createdAt: string
   updatedAt: string
   role: UserRole
   department: Department
+  customer?: Customer
 }
 
 /**
@@ -66,6 +86,7 @@ export interface UsersQueryParams {
   search?: string
   roleId?: string
   departmentId?: string
+  customerId?: string
 }
 
 /**
@@ -76,6 +97,9 @@ export interface UserFilters {
   roleId: string
   departmentId: string
   status: string
+  // customerCode is used for display in the UI; customerId is used for filtering/query
+  customerCode?: string
+  customerId?: string
 }
 
 /**

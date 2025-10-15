@@ -31,8 +31,6 @@ import {
   Building,
   Calendar,
   RotateCcw,
-  Wifi,
-  WifiOff,
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -43,29 +41,79 @@ import {
 import { formatDate } from '@/lib/utils/formatters'
 import { EditUserModal } from './EditUserModal'
 import type { User, UserFilters, UserPagination } from '@/types/users'
+// server-provided filter options are passed via props
 
 interface UsersTableProps {
   initialUsers: User[]
+  roles: { id: string; name: string }[]
+  departments: { id: string; name: string }[]
 }
 
-export function UsersTable({ initialUsers }: UsersTableProps) {
+export function UsersTable({ initialUsers, roles, departments }: UsersTableProps) {
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
   const [allUsers, setAllUsers] = useState<User[]>(initialUsers)
   const [filteredUsers, setFilteredUsers] = useState<User[]>(initialUsers)
+  // Stable list of customer codes derived from the initial server payload.
+  // When server navigates and returns filtered initialUsers (e.g., only one customer),
+  // we don't want the dropdown options to shrink. So capture the initial set once.
+  const [availableCustomerCodes, setAvailableCustomerCodes] = useState<string[]>(
+    () => [...new Set(initialUsers.map((u) => u.customer?.code).filter(Boolean))] as string[]
+  )
+
+  // Stable mapping code -> id derived from initialUsers. Use this to resolve customerId
+  // even when subsequent user lists are filtered and no longer contain users for a code.
+  // Make it mutable so we can add new mappings when a user is edited to a new customer.
+  const [customerCodeToId, setCustomerCodeToId] = useState<Record<string, string>>(() => {
+    const map: Record<string, string> = {}
+    for (const u of initialUsers) {
+      const code = u.customer?.code
+      const id = u.customer?.id
+      if (code && id && !map[code]) {
+        map[code] = id
+      }
+    }
+    return map
+  })
+
+  useEffect(() => {
+    // Only initialize availableCustomerCodes the first time if it's empty.
+    if (!availableCustomerCodes || availableCustomerCodes.length === 0) {
+      setAvailableCustomerCodes([
+        ...new Set(initialUsers.map((u) => u.customer?.code).filter(Boolean)),
+      ] as string[])
+    }
+    // Do not overwrite availableCustomerCodes on subsequent initialUsers updates intentionally
+    // to preserve the full dropdown options for the user.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialUsers])
 
   // Initialize filters from URL params
   const [filters, setFilters] = useState<UserFilters>(() => ({
     search: searchParams.get('search') || '',
     roleId: searchParams.get('roleId') || 'all',
     departmentId: searchParams.get('departmentId') || 'all',
-    status: searchParams.get('status') || 'all',
+    status: 'all',
+    customerCode: searchParams.get('customerCode') || 'all',
+    customerId: searchParams.get('customerId') || 'all',
   }))
+
+  // Local search input state for debouncing
+  const [searchInput, setSearchInput] = useState<string>(filters.search)
+
+  // Debounce effect: apply searchInput to filters.search after 1s of inactivity
+  useEffect(() => {
+    const handle = setTimeout(() => {
+      setFilters((prev) => ({ ...prev, search: searchInput }))
+    }, 1000)
+
+    return () => clearTimeout(handle)
+  }, [searchInput])
 
   const [pagination, setPagination] = useState<UserPagination>(() => ({
     page: parseInt(searchParams.get('page') || '1'),
-    limit: 10,
+    limit: parseInt(searchParams.get('limit') || '10'),
     total: initialUsers.length,
     totalPages: 1,
   }))
@@ -73,19 +121,14 @@ export function UsersTable({ initialUsers }: UsersTableProps) {
   // Edit modal state
   const [editingUser, setEditingUser] = useState<User | null>(null)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  // Avoid SSR/client hydration mismatches from Radix-generated IDs by
+  // rendering dynamic/ID-generating primitives only after client mount.
+  const [isMounted, setIsMounted] = useState(false)
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
-  // Mock roles and departments for filters
-  const roles = [
-    { id: '0199e08a-5838-7428-8375-48fee1676ffa', name: 'Super Admin' },
-    { id: '0199e08a-5844-7059-80f9-7e2430e4bf07', name: 'Manager' },
-    { id: '0199e08a-583d-7209-9283-e1780c48c003', name: 'Developer' },
-  ]
-
-  const departments = [
-    { id: '0199e08a-5834-7313-92e2-c1a4cbf7b2fd', name: 'Administration' },
-    { id: '0199e08a-582d-728d-902d-4072b4fb1293', name: 'Sales' },
-    { id: '0199e08a-57f6-77fa-ad7b-8b22429b0b03', name: 'Technology' },
-  ]
+  // Role and department options come from server props; no client fetch here
 
   // Filter logic
   const applyFilters = (users: User[], filters: UserFilters) => {
@@ -109,20 +152,19 @@ export function UsersTable({ initialUsers }: UsersTableProps) {
         return false
       }
 
-      // Status filter
-      if (filters.status && filters.status !== 'all') {
-        const isOnline =
-          user.refreshToken &&
-          user.refreshTokenExpiresAt &&
-          new Date(user.refreshTokenExpiresAt) > new Date()
-
-        if (filters.status === 'online' && !isOnline) {
-          return false
-        }
-        if (filters.status === 'offline' && isOnline) {
-          return false
-        }
+      // Customer filter: prefer matching by customerId (server-side filter),
+      // fallback to customerCode for existing client-only filters
+      if (filters.customerId && filters.customerId !== 'all') {
+        if (user.customerId !== filters.customerId) return false
+      } else if (
+        filters.customerCode &&
+        filters.customerCode !== 'all' &&
+        user.customer?.code !== filters.customerCode
+      ) {
+        return false
       }
+
+      // (Removed) Status filter
 
       return true
     })
@@ -137,43 +179,50 @@ export function UsersTable({ initialUsers }: UsersTableProps) {
       if (newFilters.roleId && newFilters.roleId !== 'all') params.set('roleId', newFilters.roleId)
       if (newFilters.departmentId && newFilters.departmentId !== 'all')
         params.set('departmentId', newFilters.departmentId)
-      if (newFilters.status && newFilters.status !== 'all') params.set('status', newFilters.status)
+      // (Removed) sync status to URL
+      // Prefer sending customerId to the server; keep customerCode for UI state/back-compat
+      if (newFilters.customerId && newFilters.customerId !== 'all') {
+        params.set('customerId', newFilters.customerId)
+      } else if (newFilters.customerCode && newFilters.customerCode !== 'all') {
+        params.set('customerCode', newFilters.customerCode)
+      }
       if (newPagination.page > 1) params.set('page', newPagination.page.toString())
+      if (newPagination.limit !== 10) params.set('limit', newPagination.limit.toString())
 
       const queryString = params.toString()
       const newURL = queryString ? `${pathname}?${queryString}` : pathname
+
+      // Avoid redundant navigations that retrigger data fetching
+      if (typeof window !== 'undefined') {
+        const currentQS = window.location.search.startsWith('?')
+          ? window.location.search.slice(1)
+          : window.location.search
+        if (currentQS === queryString) return
+      }
 
       router.replace(newURL, { scroll: false })
     },
     [pathname, router]
   )
 
-  // Apply filters when filters change
+  // When server props change via navigation, sync local state
   useEffect(() => {
-    const filtered = applyFilters(allUsers, filters)
-    setFilteredUsers(filtered)
-
-    // Update pagination - use functional update to avoid dependency on pagination
-    setPagination((prevPagination) => {
-      const totalPages = Math.ceil(filtered.length / prevPagination.limit)
-      const newPagination = {
-        ...prevPagination,
-        total: filtered.length,
-        totalPages,
-        page: 1, // Reset to first page when filtering
-      }
-      return newPagination
-    })
-  }, [filters, allUsers])
+    setAllUsers(initialUsers)
+    setFilteredUsers(initialUsers)
+    setPagination((prev) => ({ ...prev, total: initialUsers.length, totalPages: 1 }))
+  }, [initialUsers])
 
   // Update URL when pagination changes (separate effect)
   useEffect(() => {
     updateURL(filters, pagination)
   }, [filters, pagination, updateURL])
 
-  const handleSearch = (value: string) => {
-    setFilters((prev) => ({ ...prev, search: value }))
-  }
+  // Apply client-side filtering so the table updates immediately while server-side
+  // navigation may also happen. This uses `allUsers` and `applyFilters` so ESLint
+  // won't report them as unused.
+  useEffect(() => {
+    setFilteredUsers(applyFilters(allUsers, filters))
+  }, [allUsers, filters])
 
   const handleRoleFilter = (roleId: string) => {
     setFilters((prev) => ({ ...prev, roleId }))
@@ -183,8 +232,22 @@ export function UsersTable({ initialUsers }: UsersTableProps) {
     setFilters((prev) => ({ ...prev, departmentId }))
   }
 
-  const handleStatusFilter = (status: string) => {
-    setFilters((prev) => ({ ...prev, status }))
+  // (Removed) status filter handler
+
+  const handleCustomerCodeFilter = (customerCode: string) => {
+    // Resolve customerId from the stable map derived from initialUsers when possible
+    if (customerCode === 'all') {
+      setFilters((prev) => ({ ...prev, customerCode: 'all', customerId: 'all' }))
+      return
+    }
+
+    const resolvedId = customerCodeToId[customerCode]
+    if (resolvedId) {
+      setFilters((prev) => ({ ...prev, customerCode, customerId: resolvedId }))
+    } else {
+      // Fallback: if we somehow don't have the mapping, set only the code (legacy)
+      setFilters((prev) => ({ ...prev, customerCode, customerId: undefined as unknown as string }))
+    }
   }
 
   const handleResetFilters = () => {
@@ -193,6 +256,7 @@ export function UsersTable({ initialUsers }: UsersTableProps) {
       roleId: 'all',
       departmentId: 'all',
       status: 'all',
+      customerCode: 'all',
     }
     setFilters(resetFilters)
 
@@ -206,12 +270,8 @@ export function UsersTable({ initialUsers }: UsersTableProps) {
     updateURL(filters, newPagination)
   }
 
-  // Get current page users
-  const getCurrentPageUsers = () => {
-    const startIndex = (pagination.page - 1) * pagination.limit
-    const endIndex = startIndex + pagination.limit
-    return filteredUsers.slice(startIndex, endIndex)
-  }
+  // Server already paginates; show list directly
+  const getCurrentPageUsers = () => filteredUsers
 
   const currentPageUsers = getCurrentPageUsers()
 
@@ -224,18 +284,40 @@ export function UsersTable({ initialUsers }: UsersTableProps) {
   const handleUserUpdated = (updatedUser: User) => {
     console.log('Updated user received:', updatedUser)
 
-    // Cập nhật user trong danh sách với dữ liệu mới từ API
-    setAllUsers((prev) =>
-      prev.map((user) => {
-        if (user.id === updatedUser.id) {
-          // Merge updated data with existing user to preserve nested objects
-          return {
-            ...user,
-            ...updatedUser,
-          }
+    // Enrich updated user data: ensure nested customer object exists when only customerId is returned
+    let enrichedUser: User = { ...updatedUser }
+
+    // If API returned full customer object, update our code->id map and available codes
+    if (updatedUser.customer && updatedUser.customer.code && updatedUser.customer.id) {
+      const { code, id } = updatedUser.customer
+      setCustomerCodeToId((prev) => ({ ...(prev || {}), [code]: id }))
+      setAvailableCustomerCodes((prev) => (prev.includes(code) ? prev : [...prev, code]))
+    } else if (updatedUser.customerId && !updatedUser.customer) {
+      // Try to resolve code from existing map (id -> code)
+      const foundCode = Object.keys(customerCodeToId).find(
+        (c) => customerCodeToId[c] === updatedUser.customerId
+      )
+      if (foundCode) {
+        enrichedUser = {
+          ...enrichedUser,
+          customer: { id: updatedUser.customerId, code: foundCode, name: foundCode },
         }
-        return user
-      })
+      } else {
+        // If we don't know the code, still attach the id so UI can show something and mapping can be
+        // reconciled later when a canonical customers list is available.
+        enrichedUser = {
+          ...enrichedUser,
+          customer: { id: updatedUser.customerId, code: '', name: '' },
+        }
+      }
+    }
+
+    // Merge updated/enriched user into lists so UI updates immediately
+    setAllUsers((prev) =>
+      prev.map((user) => (user.id === enrichedUser.id ? { ...user, ...enrichedUser } : user))
+    )
+    setFilteredUsers((prev) =>
+      prev.map((u) => (u.id === enrichedUser.id ? { ...u, ...enrichedUser } : u))
     )
 
     setEditingUser(null)
@@ -247,7 +329,7 @@ export function UsersTable({ initialUsers }: UsersTableProps) {
     setIsEditModalOpen(false)
   }
 
-  const getRoleBadgeColor = (roleName: string) => {
+  const getRoleBadgeColor = (roleName?: string) => {
     switch (roleName) {
       case 'super-admin':
         return 'bg-red-100 text-red-800'
@@ -260,20 +342,7 @@ export function UsersTable({ initialUsers }: UsersTableProps) {
     }
   }
 
-  const getStatusBadge = (user: User) => {
-    if (user.refreshToken && user.refreshTokenExpiresAt) {
-      const expiresAt = new Date(user.refreshTokenExpiresAt)
-      const now = new Date()
-      if (expiresAt > now) {
-        return (
-          <Badge variant="default" className="bg-green-100 text-green-800">
-            Online
-          </Badge>
-        )
-      }
-    }
-    return <Badge variant="secondary">Offline</Badge>
-  }
+  // (Removed) status badge - column removed from table
 
   return (
     <div className="space-y-6">
@@ -286,15 +355,15 @@ export function UsersTable({ initialUsers }: UsersTableProps) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-5">
+          <div className="grid gap-4 md:grid-cols-6">
             <div className="space-y-2">
               <label className="text-sm font-medium">Tìm kiếm</label>
               <div className="relative">
                 <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
                 <Input
                   placeholder="Tìm theo email..."
-                  value={filters.search}
-                  onChange={(e) => handleSearch(e.target.value)}
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
                   className="pl-10"
                 />
               </div>
@@ -302,61 +371,68 @@ export function UsersTable({ initialUsers }: UsersTableProps) {
 
             <div className="space-y-2">
               <label className="text-sm font-medium">Vai trò</label>
-              <Select value={filters.roleId} onValueChange={handleRoleFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Chọn vai trò" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tất cả vai trò</SelectItem>
-                  {roles.map((role) => (
-                    <SelectItem key={role.id} value={role.id}>
-                      {role.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {isMounted ? (
+                <Select value={filters.roleId} onValueChange={handleRoleFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Chọn vai trò" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tất cả vai trò</SelectItem>
+                    {roles.map((role) => (
+                      <SelectItem key={role.id} value={role.id}>
+                        {role.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div className="h-9 w-full rounded-md border bg-transparent" />
+              )}
             </div>
 
             <div className="space-y-2">
               <label className="text-sm font-medium">Phòng ban</label>
-              <Select value={filters.departmentId} onValueChange={handleDepartmentFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Chọn phòng ban" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tất cả phòng ban</SelectItem>
-                  {departments.map((dept) => (
-                    <SelectItem key={dept.id} value={dept.id}>
-                      {dept.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {isMounted ? (
+                <Select value={filters.departmentId} onValueChange={handleDepartmentFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Chọn phòng ban" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tất cả phòng ban</SelectItem>
+                    {departments.map((dept) => (
+                      <SelectItem key={dept.id} value={dept.id}>
+                        {dept.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div className="h-9 w-full rounded-md border bg-transparent" />
+              )}
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Trạng thái</label>
-              <Select value={filters.status} onValueChange={handleStatusFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Chọn trạng thái" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                  <SelectItem value="online">
-                    <div className="flex items-center space-x-2">
-                      <Wifi className="h-4 w-4 text-green-600" />
-                      <span>Online</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="offline">
-                    <div className="flex items-center space-x-2">
-                      <WifiOff className="h-4 w-4 text-gray-600" />
-                      <span>Offline</span>
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+              <label className="text-sm font-medium">Mã khách hàng</label>
+              {isMounted ? (
+                <Select value={filters.customerCode} onValueChange={handleCustomerCodeFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Chọn mã KH" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tất cả mã KH</SelectItem>
+                    {availableCustomerCodes.map((code) => (
+                      <SelectItem key={code} value={code}>
+                        {code}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div className="h-9 w-full rounded-md border bg-transparent" />
+              )}
             </div>
+
+            {/* (Removed) Trạng thái filter UI */}
 
             <div className="flex items-end space-x-2">
               <Button variant="outline" onClick={handleResetFilters}>
@@ -385,9 +461,10 @@ export function UsersTable({ initialUsers }: UsersTableProps) {
                 <TableRow>
                   <TableHead className="w-[60px]">STT</TableHead>
                   <TableHead>Người dùng</TableHead>
+                  <TableHead>Mã khách hàng</TableHead>
                   <TableHead>Vai trò</TableHead>
                   <TableHead>Phòng ban</TableHead>
-                  <TableHead>Trạng thái</TableHead>
+                  {/* Trạng thái column removed */}
                   <TableHead>Ngày tạo</TableHead>
                   <TableHead className="w-[50px]"></TableHead>
                 </TableRow>
@@ -407,8 +484,13 @@ export function UsersTable({ initialUsers }: UsersTableProps) {
                       </div>
                     </TableCell>
                     <TableCell>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm font-medium">{user.customer?.code}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
                       <div className="space-y-1">
-                        <Badge className={getRoleBadgeColor(user.role?.name || '')}>
+                        <Badge className={getRoleBadgeColor(user.role?.name)}>
                           {user.role?.name}
                         </Badge>
                         <div className="text-muted-foreground text-sm">
@@ -422,7 +504,7 @@ export function UsersTable({ initialUsers }: UsersTableProps) {
                         <span>{user.department?.name}</span>
                       </div>
                     </TableCell>
-                    <TableCell>{getStatusBadge(user)}</TableCell>
+                    {/* Status cell removed */}
                     <TableCell>
                       <div className="flex items-center space-x-2">
                         <Calendar className="text-muted-foreground h-4 w-4" />
@@ -490,6 +572,8 @@ export function UsersTable({ initialUsers }: UsersTableProps) {
         isOpen={isEditModalOpen}
         onClose={handleCloseEditModal}
         onUserUpdated={handleUserUpdated}
+        customerCodes={availableCustomerCodes}
+        customerCodeToId={customerCodeToId}
       />
     </div>
   )

@@ -34,7 +34,10 @@ export async function getDepartmentsForClient(): Promise<Department[]> {
  */
 export async function updateUserForClient(id: string, userData: Partial<User>): Promise<User> {
   try {
-    return await usersService.updateUser(id, userData)
+    // Perform the update, then refetch the full user to ensure nested relations (role, department, customer)
+    await usersService.updateUser(id, userData)
+    const fullUser = await usersService.getUserById(id)
+    return fullUser
   } catch (error) {
     console.error('Failed to update user:', error)
     throw error
