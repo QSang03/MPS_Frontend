@@ -60,13 +60,13 @@ export function UsersTable({ initialUsers, roles, departments, customers }: User
   // Canonical list of customers is provided by the server (customers prop).
   // Use that to populate the customer code dropdown and stable maps.
   const [availableCustomerCodes, setAvailableCustomerCodes] = useState<string[]>(() =>
-    (customers || []).map((c) => ((c as any).code as string) || c.id)
+    (customers || []).map((c) => (c.code as string) || c.id)
   )
 
   const [customerCodeToId] = useState<Record<string, string>>(() => {
     const map: Record<string, string> = {}
     for (const c of customers || []) {
-      const code = ((c as any).code as string) || c.id
+      const code = (c.code as string) || c.id
       if (code && c.id && !map[code]) map[code] = c.id
     }
     return map
@@ -74,7 +74,7 @@ export function UsersTable({ initialUsers, roles, departments, customers }: User
 
   useEffect(() => {
     if (customers && customers.length > 0) {
-      setAvailableCustomerCodes(customers.map((c) => ((c as any).code as string) || c.id))
+      setAvailableCustomerCodes(customers.map((c) => (c.code as string) || c.id))
     }
   }, [customers])
 
@@ -82,7 +82,7 @@ export function UsersTable({ initialUsers, roles, departments, customers }: User
   const [customerIdToCode] = useState<Record<string, string>>(() => {
     const map: Record<string, string> = {}
     for (const c of customers || []) {
-      const code = ((c as any).code as string) || c.name || c.id
+      const code = (c.code as string) || c.name || c.id
       const id = c.id
       if (code && id && !map[id]) {
         map[id] = code
