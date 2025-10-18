@@ -8,6 +8,8 @@ import { ChevronLeft, Printer, UserCircle } from 'lucide-react'
 import type { Session } from '@/lib/auth/session'
 import { useUIStore } from '@/lib/store/uiStore'
 import { getNavigationItems } from '@/lib/nav/nav-items'
+import { ROUTES } from '@/constants/routes'
+import { Layers, ClipboardList } from 'lucide-react'
 
 interface SidebarProps {
   session: Session
@@ -17,7 +19,29 @@ export function Sidebar({ session }: SidebarProps) {
   const pathname = usePathname()
   const { sidebarOpen, toggleSidebar } = useUIStore()
 
-  const navigation = getNavigationItems(session.role)
+  const navigationFromConfig = getNavigationItems(session.role)
+
+  // Temporary fallback: ensure roles & departments nav items are present for all users
+  const navigation = [...navigationFromConfig]
+  try {
+    if (!navigation.some((it) => it.href === ROUTES.CUSTOMER_ADMIN_ROLES)) {
+      navigation.push({ href: ROUTES.CUSTOMER_ADMIN_ROLES, label: 'Quản lý vai trò', icon: Layers })
+    }
+    if (!navigation.some((it) => it.href === ROUTES.CUSTOMER_ADMIN_DEPARTMENTS)) {
+      navigation.push({
+        href: ROUTES.CUSTOMER_ADMIN_DEPARTMENTS,
+        label: 'Quản lý bộ phận',
+        icon: ClipboardList,
+      })
+    }
+
+    console.debug(
+      '[Sidebar] navigation items:',
+      navigation.map((i) => i.label)
+    )
+  } catch {
+    /* ignore */
+  }
 
   return (
     <>

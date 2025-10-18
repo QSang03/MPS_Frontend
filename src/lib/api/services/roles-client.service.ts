@@ -24,4 +24,53 @@ export const rolesClientService = {
     const { data, pagination } = response.data || { data: [], pagination: undefined }
     return { data: Array.isArray(data) ? data : [], pagination }
   },
+
+  /**
+   * Create role (client-side)
+   */
+  async createRole(roleData: Partial<UserRole>): Promise<UserRole> {
+    const response = await internalApiClient.post<{
+      success: boolean
+      data: UserRole
+      message?: string
+    }>('/api/roles', roleData)
+    const result = response.data
+    if (result.data) return result.data
+    return result as unknown as UserRole
+  },
+
+  /**
+   * Update role (client-side)
+   */
+  async updateRole(id: string, roleData: Partial<UserRole>): Promise<UserRole> {
+    const response = await internalApiClient.put<{
+      success: boolean
+      data: UserRole
+      message?: string
+    }>(`/api/roles/${id}`, roleData)
+    const result = response.data
+    if (result.data) return result.data
+    return result as unknown as UserRole
+  },
+
+  /**
+   * Delete role (client-side)
+   */
+  async deleteRole(id: string): Promise<void> {
+    await internalApiClient.delete(`/api/roles/${id}`)
+  },
+
+  /**
+   * Get role by ID (client-side)
+   */
+  async getRoleById(id: string): Promise<UserRole> {
+    const response = await internalApiClient.get<{
+      success: boolean
+      data: UserRole
+      message?: string
+    }>(`/api/roles/${id}`)
+    const result = response.data
+    if (result.data) return result.data
+    return result as unknown as UserRole
+  },
 }

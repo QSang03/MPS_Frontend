@@ -27,4 +27,53 @@ export const departmentsClientService = {
     const { data, pagination } = response.data || { data: [], pagination: undefined }
     return { data: Array.isArray(data) ? data : [], pagination }
   },
+
+  /**
+   * Create department (client-side)
+   */
+  async createDepartment(deptData: Partial<Department>): Promise<Department> {
+    const response = await internalApiClient.post<{
+      success: boolean
+      data: Department
+      message?: string
+    }>('/api/departments', deptData)
+    const result = response.data
+    if (result.data) return result.data
+    return result as unknown as Department
+  },
+
+  /**
+   * Update department (client-side)
+   */
+  async updateDepartment(id: string, deptData: Partial<Department>): Promise<Department> {
+    const response = await internalApiClient.put<{
+      success: boolean
+      data: Department
+      message?: string
+    }>(`/api/departments/${id}`, deptData)
+    const result = response.data
+    if (result.data) return result.data
+    return result as unknown as Department
+  },
+
+  /**
+   * Delete department (client-side)
+   */
+  async deleteDepartment(id: string): Promise<void> {
+    await internalApiClient.delete(`/api/departments/${id}`)
+  },
+
+  /**
+   * Get department by ID (client-side)
+   */
+  async getDepartmentById(id: string): Promise<Department> {
+    const response = await internalApiClient.get<{
+      success: boolean
+      data: Department
+      message?: string
+    }>(`/api/departments/${id}`)
+    const result = response.data
+    if (result.data) return result.data
+    return result as unknown as Department
+  },
 }

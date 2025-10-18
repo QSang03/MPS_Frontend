@@ -1,8 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { rolesClientService } from '@/lib/api/services/roles-client.service'
+import type { UserRole } from '@/types/users'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -22,6 +23,10 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
+import { RoleFormModal } from './RoleFormModal'
+import { toast } from 'sonner'
+import { Edit, Trash2, Plus } from 'lucide-react'
+import { DeleteDialog } from '@/components/shared/DeleteDialog'
 
 export function RolesTable() {
   const [search, setSearch] = useState('')
@@ -39,6 +44,49 @@ export function RolesTable() {
         isActive: isActive === 'all' ? undefined : isActive === 'true',
       }),
   })
+
+  const queryClient = useQueryClient()
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [editingRole, setEditingRole] = useState<UserRole | null>(null)
+
+  const openCreate = () => {
+    setEditingRole(null)
+    setIsModalOpen(true)
+  }
+
+  const openEdit = (role: UserRole) => {
+    setEditingRole(role)
+    setIsModalOpen(true)
+  }
+
+  const handleCreateOrUpdate = async (formData: any) => {
+    try {
+      if (editingRole) {
+        await rolesClientService.updateRole(editingRole.id, formData)
+        // optimistically update cache
+        queryClient.invalidateQueries({ queryKey: ['roles'] })
+        toast.success('Cập nhật vai trò thành công')
+      } else {
+        await rolesClientService.createRole(formData)
+        queryClient.invalidateQueries({ queryKey: ['roles'] })
+        toast.success('Tạo vai trò thành công')
+      }
+    } catch (err) {
+      console.error('Role create/update error', err)
+      toast.error('Có lỗi khi lưu vai trò')
+    }
+  }
+
+  const handleDelete = async (roleId: string) => {
+    try {
+      await rolesClientService.deleteRole(roleId)
+      queryClient.invalidateQueries({ queryKey: ['roles'] })
+      toast.success('Xóa vai trò thành công')
+    } catch (err) {
+      console.error('Delete role error', err)
+      toast.error('Có lỗi khi xóa vai trò')
+    }
+  }
 
   const roles = data?.data || []
   const pagination = data?.pagination || { page: 1, limit: 10, total: 0, totalPages: 1 }
@@ -66,6 +114,15 @@ export function RolesTable() {
             </SelectContent>
           </Select>
         </div>
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex-1" />
+          <div className="flex gap-2">
+            <Button variant="ghost" size="sm" onClick={openCreate}>
+              <Plus className="mr-2 h-4 w-4" /> Thêm vai trò
+            </Button>
+          </div>
+        </div>
+
         {isLoading ? (
           <Skeleton className="h-12 w-full" />
         ) : (
@@ -78,6 +135,7 @@ export function RolesTable() {
                 <TableHead>Level</TableHead>
                 <TableHead>Trạng thái</TableHead>
                 <TableHead>Ngày tạo</TableHead>
+                <TableHead>Hành động</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -89,6 +147,23 @@ export function RolesTable() {
                   <TableCell>{role.level}</TableCell>
                   <TableCell>{role.isActive ? 'Hoạt động' : 'Ngừng hoạt động'}</TableCell>
                   <TableCell>{new Date(role.createdAt).toLocaleDateString()}</TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="ghost" onClick={() => openEdit(role)}>
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <DeleteDialog
+                        title="Xóa vai trò"
+                        description={`Bạn có chắc chắn muốn xóa vai trò "${role.name}" không?`}
+                        onConfirm={() => handleDelete(role.id)}
+                        trigger={
+                          <Button size="sm" variant="ghost">
+                            <Trash2 className="text-destructive h-4 w-4" />
+                          </Button>
+                        }
+                      />
+                    </div>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -121,6 +196,12 @@ export function RolesTable() {
           </div>
         </div>
       </CardContent>
+      <RoleFormModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={handleCreateOrUpdate}
+        initialData={editingRole}
+      />
     </Card>
   )
 }
