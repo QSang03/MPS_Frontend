@@ -4,32 +4,13 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils/cn'
 import { Button } from '@/components/ui/button'
-import {
-  LayoutDashboard,
-  Printer,
-  FileText,
-  Users,
-  Settings,
-  ShoppingCart,
-  BarChart3,
-  ChevronLeft,
-  Building2,
-  UserCircle,
-} from 'lucide-react'
+import { ChevronLeft, Printer, UserCircle } from 'lucide-react'
 import type { Session } from '@/lib/auth/session'
 import { useUIStore } from '@/lib/store/uiStore'
-import { UserRole } from '@/constants/roles'
-import { ROUTES } from '@/constants/routes'
+import { getNavigationItems } from '@/lib/nav/nav-items'
 
 interface SidebarProps {
   session: Session
-}
-
-interface NavItem {
-  label: string
-  href: string
-  icon: React.ComponentType<{ className?: string }>
-  badge?: number
 }
 
 export function Sidebar({ session }: SidebarProps) {
@@ -121,40 +102,4 @@ export function Sidebar({ session }: SidebarProps) {
       </aside>
     </>
   )
-}
-
-function getNavigationItems(role: UserRole): NavItem[] {
-  if (role === UserRole.SYSTEM_ADMIN) {
-    return [
-      { label: 'Khách hàng', href: ROUTES.SYSTEM_ADMIN_CUSTOMERS, icon: Building2 },
-      { label: 'Tài khoản', href: ROUTES.SYSTEM_ADMIN_ACCOUNTS, icon: Users },
-      { label: 'Cài đặt', href: ROUTES.SYSTEM_ADMIN_SETTINGS, icon: Settings },
-    ]
-  }
-
-  if (role === UserRole.CUSTOMER_ADMIN) {
-    return [
-      { label: 'Tổng quan', href: ROUTES.CUSTOMER_ADMIN, icon: LayoutDashboard },
-      { label: 'Thiết bị', href: ROUTES.CUSTOMER_ADMIN_DEVICES, icon: Printer },
-      {
-        label: 'Yêu cầu bảo trì',
-        href: ROUTES.CUSTOMER_ADMIN_SERVICE_REQUESTS,
-        icon: FileText,
-      },
-      {
-        label: 'Yêu cầu mua hàng',
-        href: ROUTES.CUSTOMER_ADMIN_PURCHASE_REQUESTS,
-        icon: ShoppingCart,
-      },
-      { label: 'Người dùng', href: ROUTES.CUSTOMER_ADMIN_USERS, icon: Users },
-      { label: 'Báo cáo', href: ROUTES.CUSTOMER_ADMIN_REPORTS, icon: BarChart3 },
-    ]
-  }
-
-  // Regular User
-  return [
-    { label: 'Thiết bị của tôi', href: ROUTES.USER_MY_DEVICES, icon: Printer },
-    { label: 'Yêu cầu của tôi', href: ROUTES.USER_MY_REQUESTS, icon: FileText },
-    { label: 'Hồ sơ', href: ROUTES.USER_PROFILE, icon: Settings },
-  ]
 }

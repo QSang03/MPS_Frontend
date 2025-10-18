@@ -70,11 +70,23 @@ export interface User {
 }
 
 /**
+ * Pagination metadata
+ */
+export interface Pagination {
+  page: number
+  limit: number
+  total: number
+  totalPages: number
+}
+
+/**
  * Users API response
  */
 export interface UsersResponse {
   success: boolean
-  users: User[]
+  data: User[]
+  pagination: Pagination
+  message?: string
 }
 
 /**

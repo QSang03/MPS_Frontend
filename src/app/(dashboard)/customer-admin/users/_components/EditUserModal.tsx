@@ -126,6 +126,7 @@ export function EditUserModal({
         customerIdToSend = customerCodeToId[customerIdToSend]
       }
 
+      // Update user - API PUT returns full user object with role & department populated
       const updatedUser = await updateUserForClient(user.id, {
         email: data.email,
         roleId: data.roleId,

@@ -12,8 +12,15 @@ export const authService = {
    * Client-side version
    */
   async getProfile(): Promise<UserProfile> {
-    const { data } = await apiClient.get<UserProfile>(API_ENDPOINTS.AUTH.PROFILE)
-    return data
+    const response = await apiClient.get<UserProfile | { success: boolean; data: UserProfile }>(
+      API_ENDPOINTS.AUTH.PROFILE
+    )
+    const data = response.data
+    // Handle both response formats
+    if ('data' in data && data.data) {
+      return data.data
+    }
+    return data as UserProfile
   },
 
   /**
@@ -21,15 +28,30 @@ export const authService = {
    * For use in server components and server actions
    */
   async getProfileServer(): Promise<UserProfile> {
-    const { data } = await serverApiClient.get<UserProfile>(API_ENDPOINTS.AUTH.PROFILE)
-    return data
+    const response = await serverApiClient.get<
+      UserProfile | { success: boolean; data: UserProfile }
+    >(API_ENDPOINTS.AUTH.PROFILE)
+    const data = response.data
+    // Handle both response formats
+    if ('data' in data && data.data) {
+      return data.data
+    }
+    return data as UserProfile
   },
 
   /**
    * Update user profile
    */
   async updateProfile(profileData: Partial<UserProfile['user']>): Promise<UserProfile> {
-    const { data } = await apiClient.put<UserProfile>(API_ENDPOINTS.AUTH.PROFILE, profileData)
-    return data
+    const response = await apiClient.put<UserProfile | { success: boolean; data: UserProfile }>(
+      API_ENDPOINTS.AUTH.PROFILE,
+      profileData
+    )
+    const data = response.data
+    // Handle both response formats
+    if ('data' in data && data.data) {
+      return data.data
+    }
+    return data as UserProfile
   },
 }

@@ -10,7 +10,8 @@ import type { UserRole, Department, User } from '@/types/users'
  */
 export async function getRolesForClient(): Promise<UserRole[]> {
   try {
-    return await rolesService.getRoles()
+    const res = await rolesService.getRoles()
+    return res.data
   } catch (error) {
     console.error('Failed to get roles:', error)
     return []
@@ -22,7 +23,8 @@ export async function getRolesForClient(): Promise<UserRole[]> {
  */
 export async function getDepartmentsForClient(): Promise<Department[]> {
   try {
-    return await departmentsService.getDepartments()
+    const res = await departmentsService.getDepartments()
+    return res.data
   } catch (error) {
     console.error('Failed to get departments:', error)
     return []

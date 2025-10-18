@@ -1,6 +1,6 @@
 'use server'
 
-import { getAccessToken, refreshAccessToken } from './session'
+import { getAccessToken, refreshAccessToken, updateTokensInCookies } from './session'
 import { authService } from '@/lib/api/services/auth.service'
 import type { UserProfile } from '@/types/auth'
 
@@ -17,6 +17,17 @@ export async function getAccessTokenForClient(): Promise<string | null> {
  */
 export async function refreshAccessTokenForClient(): Promise<string | null> {
   return await refreshAccessToken()
+}
+
+/**
+ * Server action to update tokens in cookies
+ * Next.js 15 requires cookie modifications to be in Server Actions
+ */
+export async function updateTokensInCookiesAction(
+  accessToken: string,
+  refreshToken?: string
+): Promise<void> {
+  await updateTokensInCookies(accessToken, refreshToken)
 }
 
 /**

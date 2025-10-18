@@ -1,10 +1,6 @@
 import axios from 'axios'
 import type { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios'
 import { getClientAccessToken } from '@/lib/auth/client-auth'
-import { refreshAccessTokenForClient } from '@/lib/auth/server-actions'
-
-// Debug environment variable
-console.log('NEXT_PUBLIC_API_URL:', process.env.NEXT_PUBLIC_API_URL)
 
 const apiClient: AxiosInstance = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
@@ -20,15 +16,8 @@ apiClient.interceptors.request.use(
     // Get access token from server-side cookies via server action
     const token = await getClientAccessToken()
 
-    // Debug logging
-    console.log('Request interceptor - token:', token ? 'exists' : 'missing')
-    console.log('Request URL:', config.url)
-    console.log('Base URL:', config.baseURL)
-    console.log('Full URL:', (config.baseURL || '') + (config.url || ''))
-
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`
-      console.log('Authorization header set:', config.headers.Authorization)
     }
 
     return config
@@ -51,16 +40,38 @@ apiClient.interceptors.response.use(
       originalRequest._retry = true
 
       try {
-        // Try to refresh access token
-        const newToken = await refreshAccessTokenForClient()
-        if (newToken && originalRequest.headers) {
-          originalRequest.headers.Authorization = `Bearer ${newToken}`
+        console.log('Client: Access token đã hết hạn. Thử làm mới thông qua API route...')
+
+        // *** THAY ĐỔI: Gọi Route Handler thay vì Server Action ***
+        const refreshResponse = await fetch('/api/auth/refresh', {
+          method: 'POST',
+        })
+
+        if (!refreshResponse.ok) {
+          // Nếu chính route làm mới cũng thất bại (ví dụ: refresh token không hợp lệ), ném lỗi để đăng xuất.
+          throw new Error('Làm mới token từ API route thất bại.')
+        }
+
+        const { accessToken: newAccessToken } = await refreshResponse.json()
+
+        // Thử lại yêu cầu ban đầu với token mới
+        if (newAccessToken && originalRequest.headers) {
+          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`
           return apiClient(originalRequest)
+        } else {
+          throw new Error('Làm mới thành công nhưng không nhận được token mới.')
         }
       } catch (refreshError) {
-        // Refresh failed - redirect to login
-        console.error('Token refresh failed:', refreshError)
+        // Nếu làm mới thất bại vì bất kỳ lý do gì, chuyển hướng về trang đăng nhập.
+        console.error(
+          '[Client] Làm mới token thất bại, chuyển hướng về trang đăng nhập:',
+          refreshError
+        )
         if (typeof window !== 'undefined') {
+          // Xóa cookie cũ và chuyển hướng
+          document.cookie = 'mps_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
+          document.cookie = 'access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
+          document.cookie = 'refresh_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
           window.location.href = '/login'
         }
         return Promise.reject(refreshError)
@@ -69,11 +80,10 @@ apiClient.interceptors.response.use(
 
     // Handle 403 - forbidden
     if (error.response?.status === 403) {
-      // Show error toast
       console.error('You do not have permission to perform this action')
     }
 
-    // Throw error to be handled by React Query or component
+    // Ném ra các lỗi khác để React Query hoặc component xử lý
     return Promise.reject(error)
   }
 )

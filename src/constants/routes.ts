@@ -9,6 +9,8 @@ export const ROUTES = {
   SYSTEM_ADMIN: '/system-admin',
   SYSTEM_ADMIN_CUSTOMERS: '/system-admin/customers',
   SYSTEM_ADMIN_ACCOUNTS: '/system-admin/accounts',
+  SYSTEM_ADMIN_ROLES: '/system-admin/roles',
+  SYSTEM_ADMIN_DEPARTMENTS: '/system-admin/departments',
   SYSTEM_ADMIN_SETTINGS: '/system-admin/settings',
 
   // Customer Admin
@@ -16,7 +18,10 @@ export const ROUTES = {
   CUSTOMER_ADMIN_DEVICES: '/customer-admin/devices',
   CUSTOMER_ADMIN_SERVICE_REQUESTS: '/customer-admin/service-requests',
   CUSTOMER_ADMIN_PURCHASE_REQUESTS: '/customer-admin/purchase-requests',
+
   CUSTOMER_ADMIN_USERS: '/customer-admin/users',
+  CUSTOMER_ADMIN_ROLES: '/customer-admin/roles',
+  CUSTOMER_ADMIN_DEPARTMENTS: '/customer-admin/departments',
   CUSTOMER_ADMIN_REPORTS: '/customer-admin/reports',
 
   // User

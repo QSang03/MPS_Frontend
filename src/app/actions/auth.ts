@@ -60,19 +60,22 @@ export async function login(
 
   try {
     // Call backend auth API
-    const { data } = await serverApiClient.post<AuthResponse>(API_ENDPOINTS.AUTH.LOGIN, parsed.data)
+    const response = await serverApiClient.post<AuthResponse>(API_ENDPOINTS.AUTH.LOGIN, parsed.data)
+
+    // Extract data from response (API returns { success, data: { user, accessToken, refreshToken } })
+    const { data } = response.data
 
     // Create session with tokens and set httpOnly cookies
     await createSessionWithTokens({
       session: {
         userId: data?.user?.id || 'unknown',
-        customerId: data?.user?.attributes?.customField || 'default',
+        customerId: data?.user?.customerId || 'default',
         role: UserRole.CUSTOMER_ADMIN, // Set as customer admin for now
         username: data?.user?.email || 'User', // Use email as username with fallback
         email: data?.user?.email || 'user@example.com',
       },
-      accessToken: data?.accessToken,
-      refreshToken: data?.refreshToken,
+      accessToken: data?.accessToken || '',
+      refreshToken: data?.refreshToken || '',
     })
 
     // Return success state - redirect will be handled by the form

@@ -140,6 +140,38 @@ export async function getRefreshToken(): Promise<string | null> {
 }
 
 /**
+ * Update tokens in cookies
+ * This is a separate function to be called from Server Actions
+ * ⚠️ Next.js 15: cookies() is now async
+ */
+export async function updateTokensInCookies(
+  accessToken: string,
+  refreshToken?: string
+): Promise<void> {
+  const cookieStore = await cookies()
+
+  // Update access token cookie
+  cookieStore.set(ACCESS_TOKEN_COOKIE_NAME, accessToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 60 * 15, // 15 minutes
+    path: '/',
+  })
+
+  // If new refresh token is provided, update it too
+  if (refreshToken) {
+    cookieStore.set(REFRESH_TOKEN_COOKIE_NAME, refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      path: '/',
+    })
+  }
+}
+
+/**
  * Destroy current session and all tokens
  * ⚠️ Next.js 15: cookies() is now async
  */
@@ -150,11 +182,39 @@ export async function destroySession(): Promise<void> {
   cookieStore.delete(REFRESH_TOKEN_COOKIE_NAME)
 }
 
+// Global promise to prevent multiple concurrent refresh requests
+let refreshPromise: Promise<string | null> | null = null
+
 /**
  * Refresh access token using refresh token
+ * Uses axios directly to avoid circular dependency with serverApiClient
+ * Prevents multiple concurrent refresh calls
  */
 export async function refreshAccessToken(): Promise<string | null> {
+  // If there's already a refresh in progress, wait for it
+  if (refreshPromise) {
+    return refreshPromise
+  }
+
+  // Create new refresh promise
+  refreshPromise = doRefreshToken()
+
+  // Clear promise when done (success or error)
   try {
+    const result = await refreshPromise
+    return result
+  } finally {
+    refreshPromise = null
+  }
+}
+
+/**
+ * Internal function to perform token refresh
+ * Calls backend API directly and updates cookies
+ */
+async function doRefreshToken(): Promise<string | null> {
+  try {
+    // Get refresh token from cookies
     const refreshToken = await getRefreshToken()
 
     if (!refreshToken) {
@@ -162,106 +222,55 @@ export async function refreshAccessToken(): Promise<string | null> {
       return null
     }
 
-    // Call refresh API
+    // Call backend refresh API directly
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        refreshToken: refreshToken,
-      }),
+      body: JSON.stringify({ refreshToken }),
     })
 
-    // Handle case where refresh endpoint doesn't exist (404)
-    if (response.status === 404) {
-      console.error('Refresh endpoint not found - API may not be implemented')
-      // Clear all auth data and redirect to login
-      const cookieStore = await cookies()
-      cookieStore.delete(REFRESH_TOKEN_COOKIE_NAME)
-      cookieStore.delete(ACCESS_TOKEN_COOKIE_NAME)
-      cookieStore.delete(SESSION_COOKIE_NAME)
-
-      // Redirect to login
-      const { redirect } = await import('next/navigation')
-      redirect('/login')
-      return null
-    }
-
+    // Check response status
     if (!response.ok) {
-      console.error('Failed to refresh token:', response.status, response.statusText)
-      // If refresh fails, clear all auth data
+      console.error('Token refresh failed:', response.status, response.statusText)
+
+      // Clear cookies on failure
       const cookieStore = await cookies()
       cookieStore.delete(REFRESH_TOKEN_COOKIE_NAME)
       cookieStore.delete(ACCESS_TOKEN_COOKIE_NAME)
       cookieStore.delete(SESSION_COOKIE_NAME)
 
-      // Return null instead of redirecting - let client handle redirect
       return null
     }
 
-    const data = await response.json()
+    // Parse JSON response
+    const responseData = await response.json()
 
-    // Handle empty response or missing data
-    if (!data || Object.keys(data).length === 0) {
-      console.error('Empty response from refresh endpoint:', data)
-      // Clear all auth data and redirect to login
-      const cookieStore = await cookies()
-      cookieStore.delete(REFRESH_TOKEN_COOKIE_NAME)
-      cookieStore.delete(ACCESS_TOKEN_COOKIE_NAME)
-      cookieStore.delete(SESSION_COOKIE_NAME)
+    // Extract tokens from response (handle different formats)
+    let newAccessToken: string | undefined
+    let newRefreshToken: string | undefined
 
-      // Redirect to login
-      const { redirect } = await import('next/navigation')
-      redirect('/login')
-      return null
+    if ('data' in responseData && responseData.data) {
+      newAccessToken = responseData.data.accessToken
+      newRefreshToken = responseData.data.refreshToken
+    } else {
+      newAccessToken = responseData.accessToken || responseData.access_token
+      newRefreshToken = responseData.refreshToken || responseData.refresh_token
     }
-
-    const newAccessToken = data.accessToken || data.access_token || data.token
 
     if (!newAccessToken) {
-      console.error('No access token in refresh response:', data)
-      // Clear invalid refresh token and session
-      const cookieStore = await cookies()
-      cookieStore.delete(REFRESH_TOKEN_COOKIE_NAME)
-      cookieStore.delete(ACCESS_TOKEN_COOKIE_NAME)
-      cookieStore.delete(SESSION_COOKIE_NAME)
-
-      // Redirect to login
-      const { redirect } = await import('next/navigation')
-      redirect('/login')
+      console.error('No access token in refresh response')
       return null
     }
 
-    // Update access token cookie
-    const cookieStore = await cookies()
-    cookieStore.set(ACCESS_TOKEN_COOKIE_NAME, newAccessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 15, // 15 minutes
-      path: '/',
-    })
+    // Update cookies with new tokens
+    await updateTokensInCookies(newAccessToken, newRefreshToken)
 
+    // Return the new access token
     return newAccessToken
   } catch (error) {
-    console.error('Error refreshing access token:', error)
-    // Clear all auth data and redirect to login
-    try {
-      const cookieStore = await cookies()
-      cookieStore.delete(REFRESH_TOKEN_COOKIE_NAME)
-      cookieStore.delete(ACCESS_TOKEN_COOKIE_NAME)
-      cookieStore.delete(SESSION_COOKIE_NAME)
-
-      // Redirect to login
-      const { redirect } = await import('next/navigation')
-      redirect('/login')
-    } catch (cookieError) {
-      console.error('Error clearing auth data:', cookieError)
-      // Still redirect even if cookie clearing fails
-      const { redirect } = await import('next/navigation')
-      redirect('/login')
-    }
+    console.error('Error refreshing token:', error)
     return null
   }
 }

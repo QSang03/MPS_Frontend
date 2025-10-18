@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -49,6 +50,12 @@ const iconMap = {
 }
 
 export function RecentActivity() {
+  const [isClient, setIsClient] = useState(false)
+
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
+
   return (
     <Card>
       <CardHeader>
@@ -86,7 +93,9 @@ export function RecentActivity() {
                   </div>
                   <p className="text-muted-foreground text-sm">{activity.description}</p>
                   <p className="text-muted-foreground text-xs">
-                    {formatRelativeTime(activity.time)}
+                    {isClient
+                      ? formatRelativeTime(activity.time)
+                      : new Date(activity.time).toLocaleDateString('vi-VN')}
                   </p>
                 </div>
               </div>

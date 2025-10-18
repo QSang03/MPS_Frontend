@@ -20,19 +20,51 @@ export interface LoginCredentials {
 }
 
 /**
+ * User data in auth response
+ */
+export interface AuthUser {
+  id: string
+  email: string
+  customerId: string
+  attributes?: {
+    customField?: string
+    [key: string]: unknown
+  }
+  roleId: string
+  departmentId: string
+  createdAt: string
+  updatedAt: string
+  role?: {
+    id: string
+    name: string
+    description: string
+    level: number
+    isActive: boolean
+    attributeSchema?: Record<string, unknown>
+    createdAt: string
+    updatedAt: string
+  }
+  department?: {
+    id: string
+    name: string
+    code: string
+    description: string
+    isActive: boolean
+    createdAt: string
+    updatedAt: string
+  }
+}
+
+/**
  * Auth response from API
  */
 export interface AuthResponse {
   success: boolean
-  user: {
-    id: string
-    email: string
-    attributes: {
-      customField: string
-    }
+  data: {
+    user: AuthUser
+    accessToken: string
+    refreshToken: string
   }
-  accessToken: string
-  refreshToken: string
 }
 
 /**

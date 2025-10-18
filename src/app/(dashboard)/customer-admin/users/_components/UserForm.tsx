@@ -25,12 +25,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { userSchema, type UserFormData } from '@/lib/validations/user.schema'
-import {
-  getRolesForClient,
-  getDepartmentsForClient,
-  createUserForClient,
-  updateUserForClient,
-} from '@/lib/auth/data-actions'
+import { getRolesForClient, getDepartmentsForClient } from '@/lib/auth/data-actions'
+import { usersClientService } from '@/lib/api/services/users-client.service' // Thay đổi ở đây
 import type { User } from '@/types/users'
 
 interface UserFormProps {
@@ -66,8 +62,9 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
     },
   })
 
+  // Sử dụng usersClientService thay vì Server Action
   const createMutation = useMutation({
-    mutationFn: (data: UserFormData) => createUserForClient({ ...data, customerId }),
+    mutationFn: (data: UserFormData) => usersClientService.createUser({ ...data, customerId }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] })
       toast.success('Tạo người dùng thành công!')
@@ -84,9 +81,13 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
     },
   })
 
+  // Sử dụng usersClientService thay vì Server Action
   const updateMutation = useMutation({
     mutationFn: (data: UserFormData) =>
-      updateUserForClient(initialData!.id, { ...data, customerId: initialData?.customerId }),
+      usersClientService.updateUser(initialData!.id, {
+        ...data,
+        customerId: initialData?.customerId,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] })
       toast.success('Cập nhật người dùng thành công!')
@@ -104,11 +105,14 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
   })
 
   const onSubmit = (data: UserFormData) => {
+    // Thêm password mặc định khi tạo mới
+    const dataWithPassword = {
+      ...data,
+      ...(mode === 'create' && { password: 'Ainkczalov2!' }), // User nên đổi mật khẩu sau lần đăng nhập đầu tiên
+    }
+
     if (mode === 'create') {
-      createMutation.mutate({
-        ...data,
-        password: 'Ainkczalov2!', // Default password - user should change on first login
-      } as UserFormData & { password: string })
+      createMutation.mutate(dataWithPassword)
     } else {
       updateMutation.mutate(data)
     }

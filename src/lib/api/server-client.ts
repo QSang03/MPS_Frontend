@@ -1,6 +1,6 @@
 import axios from 'axios'
 import type { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios'
-import { getAccessToken, refreshAccessToken } from '@/lib/auth/session'
+import { getAccessToken } from '@/lib/auth/session'
 
 /**
  * Server-side API client with token attachment
@@ -31,7 +31,7 @@ serverApiClient.interceptors.request.use(
   }
 )
 
-// Response interceptor - handle errors, refresh token
+// Response interceptor - handle errors
 serverApiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
@@ -39,26 +39,12 @@ serverApiClient.interceptors.response.use(
       _retry?: boolean
     }
 
-    // Handle 401 - try refresh token once
+    // Handle 401 - KHÔNG thử làm mới token ở đây nữa.
+    // Ném ra một lỗi cụ thể để Server Component có thể bắt và xử lý.
     if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true
-
-      try {
-        // Try to refresh access token
-        const newToken = await refreshAccessToken()
-        if (newToken && originalRequest.headers) {
-          originalRequest.headers.Authorization = `Bearer ${newToken}`
-          return serverApiClient(originalRequest)
-        } else {
-          // Refresh token failed or expired - throw error to be handled by calling code
-          console.error('Token refresh failed - no new token received')
-          return Promise.reject(new Error('Authentication failed - please login again'))
-        }
-      } catch (refreshError) {
-        // Refresh failed - throw error to be handled by calling code
-        console.error('Token refresh failed:', refreshError)
-        return Promise.reject(new Error('Authentication failed - please login again'))
-      }
+      console.error('❌ Authentication failed on server-side request during page render.')
+      // Sử dụng một thông báo lỗi nhất quán là rất quan trọng.
+      return Promise.reject(new Error('Authentication failed - please login again'))
     }
 
     // Handle 403 - forbidden
@@ -66,7 +52,7 @@ serverApiClient.interceptors.response.use(
       console.error('You do not have permission to perform this action')
     }
 
-    // Throw error to be handled by React Query or component
+    // Ném ra các lỗi khác để được xử lý.
     return Promise.reject(error)
   }
 )

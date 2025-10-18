@@ -1,14 +1,20 @@
 import serverApiClient from '../server-client'
 import { API_ENDPOINTS } from '../endpoints'
 import type { Customer } from '@/types/models/customer'
+import type { ApiListResponse, ListPagination } from '@/types/api'
 
 export const customerService = {
-  async getAll(): Promise<Customer[]> {
-    const { data } = await serverApiClient.get(API_ENDPOINTS.CUSTOMERS)
-    // API may return { customers: [...] } or a raw array. Normalize to array.
-    if (!data) return []
-    if (Array.isArray(data)) return data as Customer[]
-    if (Array.isArray(data.customers)) return data.customers as Customer[]
-    return []
+  async getAll(params?: { page?: number; limit?: number }): Promise<{
+    data: Customer[]
+    pagination?: ListPagination
+  }> {
+    const response = await serverApiClient.get<ApiListResponse<Customer>>(API_ENDPOINTS.CUSTOMERS, {
+      params: {
+        page: params?.page ?? 1,
+        limit: params?.limit ?? 1000,
+      },
+    })
+    const { data, pagination } = response.data || { data: [], pagination: undefined }
+    return { data: Array.isArray(data) ? data : [], pagination }
   },
 }
