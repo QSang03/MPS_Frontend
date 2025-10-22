@@ -48,6 +48,9 @@ import { UserFormModal } from './UserFormModal'
 import type { User, UserFilters, UserPagination, UserRole, Department } from '@/types/users'
 import type { Customer } from '@/types/models/customer'
 import { Skeleton } from '@/components/ui/skeleton'
+import { toast } from 'sonner'
+import { DeleteDialog } from '@/components/shared/DeleteDialog'
+import { useQueryClient } from '@tanstack/react-query'
 
 export function UsersTable() {
   const searchParams = useSearchParams()
@@ -192,6 +195,7 @@ export function UsersTable() {
   const users = allUsers
   const paginationInfo = usersData?.pagination || { page: 1, limit: 10, total: 0, totalPages: 1 }
   const isLoading = isLoadingUsers || isLoadingRoles || isLoadingDepartments || isLoadingCustomers
+  const queryClient = useQueryClient()
 
   return (
     <div className="space-y-6">
@@ -394,10 +398,29 @@ export function UsersTable() {
                                 <Edit className="mr-2 h-4 w-4" />
                                 Chỉnh sửa
                               </DropdownMenuItem>
-                              <DropdownMenuItem className="text-destructive">
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Xóa
-                              </DropdownMenuItem>
+                              <DeleteDialog
+                                title="Xóa người dùng"
+                                description={`Bạn có chắc chắn muốn xóa người dùng "${user.email}" không?`}
+                                onConfirm={async () => {
+                                  try {
+                                    await usersClientService.deleteUser(user.id)
+                                    await queryClient.invalidateQueries({ queryKey: ['users'] })
+                                    toast.success('Xóa người dùng thành công')
+                                  } catch (err) {
+                                    console.error('Delete user error', err)
+                                    toast.error('Có lỗi khi xóa người dùng')
+                                  }
+                                }}
+                                trigger={
+                                  <DropdownMenuItem
+                                    className="text-destructive"
+                                    onSelect={(e) => e.preventDefault()}
+                                  >
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Xóa
+                                  </DropdownMenuItem>
+                                }
+                              />
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>
