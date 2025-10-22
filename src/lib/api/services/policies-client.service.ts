@@ -2,7 +2,28 @@ import internalApiClient from '../internal-client'
 import type { Policy } from '@/types/policies'
 import type { ApiListResponse, ListPagination } from '@/types/api'
 
+export interface PolicyOperator {
+  id: string
+  name: string
+  description?: string
+  appliesTo?: string[]
+}
+
 export const policiesClientService = {
+  async getPolicyOperators(appliesTo?: string): Promise<PolicyOperator[]> {
+    const response = await internalApiClient.get<{ data: PolicyOperator[] } | PolicyOperator[]>(
+      '/api/policy-operators',
+      {
+        params: appliesTo ? { appliesTo } : undefined,
+      }
+    )
+    // Handle different response shapes
+    if (Array.isArray(response.data)) return response.data
+    if (response.data && 'data' in response.data && Array.isArray(response.data.data))
+      return response.data.data
+    return []
+  },
+
   async getPolicies(params?: {
     page?: number
     limit?: number
@@ -24,25 +45,44 @@ export const policiesClientService = {
   },
 
   async createPolicy(policyData: Partial<Policy>): Promise<Policy> {
-    const response = await internalApiClient.post<{
-      success: boolean
-      data: Policy
-      message?: string
-    }>('/api/policies', policyData)
-    const result = response.data
-    if (result.data) return result.data
-    return result as unknown as Policy
+    try {
+      const response = await internalApiClient.post<{
+        success: boolean
+        data: Policy
+        message?: string
+      }>('/api/policies', policyData)
+      const result = response.data
+      if (result.data) return result.data
+      return result as unknown as Policy
+    } catch (err) {
+      // Enhance error messages for debugging
+      const ae = err as { response?: { status?: number; data?: any }; message?: string }
+      const status = ae.response?.status
+      const detail = ae.response?.data || ae.message
+      console.error('[policiesClientService] createPolicy error', status, detail)
+      if (status === 401) throw new Error(`Unauthorized: ${JSON.stringify(detail)}`)
+      throw err
+    }
   },
 
   async updatePolicy(id: string, policyData: Partial<Policy>): Promise<Policy> {
-    const response = await internalApiClient.put<{
-      success: boolean
-      data: Policy
-      message?: string
-    }>(`/api/policies/${id}`, policyData)
-    const result = response.data
-    if (result.data) return result.data
-    return result as unknown as Policy
+    try {
+      const response = await internalApiClient.put<{
+        success: boolean
+        data: Policy
+        message?: string
+      }>(`/api/policies/${id}`, policyData)
+      const result = response.data
+      if (result.data) return result.data
+      return result as unknown as Policy
+    } catch (err) {
+      const ae = err as { response?: { status?: number; data?: any }; message?: string }
+      const status = ae.response?.status
+      const detail = ae.response?.data || ae.message
+      console.error('[policiesClientService] updatePolicy error', status, detail)
+      if (status === 401) throw new Error(`Unauthorized: ${JSON.stringify(detail)}`)
+      throw err
+    }
   },
 
   async deletePolicy(id: string): Promise<void> {

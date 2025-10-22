@@ -7,6 +7,9 @@ export async function GET(request: NextRequest) {
   try {
     const cookieStore = await cookies()
     const accessToken = cookieStore.get('access_token')?.value
+    const hasAccess = !!cookieStore.get('access_token')
+    const hasRefresh = !!cookieStore.get('refresh_token')
+    console.debug('[api/policies] cookies present:', { hasAccess, hasRefresh })
 
     if (!accessToken) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -59,6 +62,8 @@ export async function POST(request: NextRequest) {
       | { message?: string; response?: { status?: number }; config?: { data?: unknown } }
       | undefined
     console.error('API Route /api/policies POST error:', err?.response?.status || err?.message)
+    if (err?.response)
+      console.debug('[api/policies] backend response data:', (err.response as any).data)
     // Retry on 401 using refresh token
     if (err?.response?.status === 401) {
       try {
@@ -71,6 +76,8 @@ export async function POST(request: NextRequest) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ refreshToken }),
         })
+
+        console.debug('[api/policies] refresh call status:', refreshResp.status)
 
         if (refreshResp.status !== 200) {
           cookieStore.delete('access_token')
