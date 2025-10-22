@@ -59,15 +59,15 @@ export function RolesTable() {
     setIsModalOpen(true)
   }
 
-  const handleCreateOrUpdate = async (formData: any) => {
+  const handleCreateOrUpdate = async (formData: unknown) => {
     try {
       if (editingRole) {
-        await rolesClientService.updateRole(editingRole.id, formData)
+        await rolesClientService.updateRole(editingRole.id, formData as Record<string, unknown>)
         // optimistically update cache
         queryClient.invalidateQueries({ queryKey: ['roles'] })
         toast.success('Cập nhật vai trò thành công')
       } else {
-        await rolesClientService.createRole(formData)
+        await rolesClientService.createRole(formData as Record<string, unknown>)
         queryClient.invalidateQueries({ queryKey: ['roles'] })
         toast.success('Tạo vai trò thành công')
       }

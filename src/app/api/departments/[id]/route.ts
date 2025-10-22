@@ -14,17 +14,18 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       headers: { Authorization: `Bearer ${accessToken}` },
     })
     return NextResponse.json(response.data)
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const err = error as { message?: string; response?: { status?: number } } | undefined
     console.error('API Route /api/departments/[id] GET error:', error)
     return NextResponse.json(
-      { error: error?.message || 'Internal Server Error' },
-      { status: error?.response?.status || 500 }
+      { error: err?.message || 'Internal Server Error' },
+      { status: err?.response?.status || 500 }
     )
   }
 }
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  let reqBody: any = undefined
+  let reqBody: unknown = undefined
   let id: string | undefined = undefined
   try {
     const paramsObj = await params
@@ -38,12 +39,15 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       headers: { Authorization: `Bearer ${accessToken}` },
     })
     return NextResponse.json(response.data)
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const err = error as
+      | { message?: string; response?: { status?: number }; config?: { data?: unknown } }
+      | undefined
     console.error(
       'API Route /api/departments/[id] PUT error:',
-      error?.response?.status || error?.message
+      err?.response?.status || err?.message
     )
-    if (error?.response?.status === 401) {
+    if (err?.response?.status === 401) {
       try {
         const cookieStore = await cookies()
         const refreshToken = cookieStore.get('refresh_token')?.value
@@ -94,8 +98,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         const originalBody =
           typeof reqBody !== 'undefined'
             ? reqBody
-            : error?.config?.data && typeof error.config.data === 'string'
-              ? JSON.parse(error.config.data)
+            : err?.config?.data && typeof err.config.data === 'string'
+              ? JSON.parse(String(err.config.data))
               : {}
         const retryResp = await backendApiClient.put(
           `${API_ENDPOINTS.DEPARTMENTS}/${id}`,
@@ -103,18 +107,19 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
           { headers: { Authorization: `Bearer ${newAccessToken}` } }
         )
         return NextResponse.json(retryResp.data)
-      } catch (retryErr: any) {
-        console.error('Retry after refresh failed:', retryErr?.message)
+      } catch (retryErr: unknown) {
+        const rerr = retryErr as { message?: string; response?: { status?: number } } | undefined
+        console.error('Retry after refresh failed:', rerr?.message)
         return NextResponse.json(
-          { error: retryErr?.message || 'Internal Server Error' },
-          { status: retryErr?.response?.status || 500 }
+          { error: rerr?.message || 'Internal Server Error' },
+          { status: rerr?.response?.status || 500 }
         )
       }
     }
 
     return NextResponse.json(
-      { error: error?.message || 'Internal Server Error' },
-      { status: error?.response?.status || 500 }
+      { error: (err as { message?: string })?.message || 'Internal Server Error' },
+      { status: (err as { response?: { status?: number } })?.response?.status || 500 }
     )
   }
 }
@@ -133,11 +138,12 @@ export async function DELETE(
       headers: { Authorization: `Bearer ${accessToken}` },
     })
     return NextResponse.json({ success: true })
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const err = error as { message?: string; response?: { status?: number } } | undefined
     console.error('API Route /api/departments/[id] DELETE error:', error)
     return NextResponse.json(
-      { error: error?.message || 'Internal Server Error' },
-      { status: error?.response?.status || 500 }
+      { error: err?.message || 'Internal Server Error' },
+      { status: err?.response?.status || 500 }
     )
   }
 }

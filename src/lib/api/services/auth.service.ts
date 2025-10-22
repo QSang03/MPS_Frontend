@@ -2,6 +2,7 @@ import apiClient from '../client'
 import serverApiClient from '../server-client'
 import { API_ENDPOINTS } from '../endpoints'
 import type { UserProfile } from '@/types/auth'
+import { withRefreshRetry } from '../server-retry'
 
 /**
  * Authentication API Service
@@ -28,9 +29,11 @@ export const authService = {
    * For use in server components and server actions
    */
   async getProfileServer(): Promise<UserProfile> {
-    const response = await serverApiClient.get<
-      UserProfile | { success: boolean; data: UserProfile }
-    >(API_ENDPOINTS.AUTH.PROFILE)
+    const response = await withRefreshRetry(() =>
+      serverApiClient.get<UserProfile | { success: boolean; data: UserProfile }>(
+        API_ENDPOINTS.AUTH.PROFILE
+      )
+    )
     const data = response.data
     // Handle both response formats
     if ('data' in data && data.data) {
@@ -53,5 +56,23 @@ export const authService = {
       return data.data
     }
     return data as UserProfile
+  },
+
+  /**
+   * Change user password
+   */
+  async changePassword(payload: { currentPassword: string; newPassword: string }) {
+    const response = await apiClient.put(API_ENDPOINTS.AUTH.CHANGE_PASSWORD, payload)
+    return response.data
+  },
+
+  /**
+   * Change user password (server-side)
+   */
+  async changePasswordServer(payload: { currentPassword: string; newPassword: string }) {
+    const response = await withRefreshRetry(() =>
+      serverApiClient.put(API_ENDPOINTS.AUTH.CHANGE_PASSWORD, payload)
+    )
+    return response.data
   },
 }

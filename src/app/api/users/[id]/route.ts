@@ -20,11 +20,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     })
 
     return NextResponse.json(response.data)
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const err = error as { message?: string; response?: { status?: number } } | undefined
     console.error('API Route /api/users/[id] GET error:', error)
     return NextResponse.json(
-      { error: error.message || 'Internal Server Error' },
-      { status: error.response?.status || 500 }
+      { error: err?.message || 'Internal Server Error' },
+      { status: err?.response?.status || 500 }
     )
   }
 }
@@ -48,11 +49,12 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     })
 
     return NextResponse.json(response.data)
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const err = error as { message?: string; response?: { status?: number } } | undefined
     console.error('API Route /api/users/[id] PUT error:', error)
     return NextResponse.json(
-      { error: error.message || 'Internal Server Error' },
-      { status: error.response?.status || 500 }
+      { error: err?.message || 'Internal Server Error' },
+      { status: err?.response?.status || 500 }
     )
   }
 }
@@ -77,11 +79,12 @@ export async function DELETE(
     })
 
     return NextResponse.json({ success: true })
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const err = error as { message?: string; response?: { status?: number } } | undefined
     console.error('API Route /api/users/[id] DELETE error:', error)
     return NextResponse.json(
-      { error: error.message || 'Internal Server Error' },
-      { status: error.response?.status || 500 }
+      { error: err?.message || 'Internal Server Error' },
+      { status: err?.response?.status || 500 }
     )
   }
 }

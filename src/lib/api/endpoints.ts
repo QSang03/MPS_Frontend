@@ -8,6 +8,7 @@ export const API_ENDPOINTS = {
     LOGOUT: '/auth/logout',
     REFRESH: '/auth/refresh',
     PROFILE: '/profile',
+    CHANGE_PASSWORD: '/auth/change-password',
   },
 
   // Users

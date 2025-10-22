@@ -1,6 +1,7 @@
 import serverApiClient from '../server-client'
 import { API_ENDPOINTS } from '../endpoints'
 import type { UsersResponse, UsersQueryParams, User } from '@/types/users'
+import { withRefreshRetry } from '../server-retry'
 
 export const usersService = {
   /**
@@ -20,7 +21,7 @@ export const usersService = {
     const queryString = searchParams.toString()
     const url = queryString ? `${API_ENDPOINTS.USERS}?${queryString}` : API_ENDPOINTS.USERS
 
-    const response = await serverApiClient.get<UsersResponse>(url)
+    const response = await withRefreshRetry(() => serverApiClient.get<UsersResponse>(url))
 
     return response.data
   },
@@ -29,8 +30,10 @@ export const usersService = {
    * Get user by ID (server-side)
    */
   async getUserById(id: string): Promise<User> {
-    const response = await serverApiClient.get<{ success: boolean; data: User; message?: string }>(
-      `${API_ENDPOINTS.USERS}/${id}`
+    const response = await withRefreshRetry(() =>
+      serverApiClient.get<{ success: boolean; data: User; message?: string }>(
+        `${API_ENDPOINTS.USERS}/${id}`
+      )
     )
     const result = response.data
     // New format: { success, data: User (with role & department populated), message }
@@ -44,9 +47,11 @@ export const usersService = {
    * Create new user (server-side)
    */
   async createUser(userData: Partial<User>): Promise<User> {
-    const response = await serverApiClient.post<{ success: boolean; data: User; message?: string }>(
-      API_ENDPOINTS.USERS,
-      userData
+    const response = await withRefreshRetry(() =>
+      serverApiClient.post<{ success: boolean; data: User; message?: string }>(
+        API_ENDPOINTS.USERS,
+        userData
+      )
     )
     const result = response.data
     // New format: { success, data: User (with role & department populated), message }
@@ -60,9 +65,11 @@ export const usersService = {
    * Update user (server-side)
    */
   async updateUser(id: string, userData: Partial<User>): Promise<User> {
-    const response = await serverApiClient.put<{ success: boolean; data: User; message?: string }>(
-      `${API_ENDPOINTS.USERS}/${id}`,
-      userData
+    const response = await withRefreshRetry(() =>
+      serverApiClient.put<{ success: boolean; data: User; message?: string }>(
+        `${API_ENDPOINTS.USERS}/${id}`,
+        userData
+      )
     )
     const result = response.data
     // New format: { success, data: User (with role & department populated), message }
@@ -76,6 +83,6 @@ export const usersService = {
    * Delete user (server-side)
    */
   async deleteUser(id: string): Promise<void> {
-    await serverApiClient.delete(`${API_ENDPOINTS.USERS}/${id}`)
+    await withRefreshRetry(() => serverApiClient.delete(`${API_ENDPOINTS.USERS}/${id}`))
   },
 }

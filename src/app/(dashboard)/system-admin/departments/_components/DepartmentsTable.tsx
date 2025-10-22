@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { DepartmentFormModal } from './DepartmentFormModal'
+import type { Department } from '@/types/users'
 import { toast } from 'sonner'
 import { Edit, Trash2, Plus } from 'lucide-react'
 import { DeleteDialog } from '@/components/shared/DeleteDialog'
@@ -44,23 +45,23 @@ export function DepartmentsTable() {
       }),
   })
 
-  const departments = data?.data || []
+  const departments = data?.data || ([] as Department[])
   const pagination = data?.pagination || { page: 1, limit: 10, total: 0, totalPages: 1 }
   const queryClient = useQueryClient()
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [editingDept, setEditingDept] = useState<any | null>(null)
+  const [editingDept, setEditingDept] = useState<Department | null>(null)
 
   const openCreate = () => {
     setEditingDept(null)
     setIsModalOpen(true)
   }
 
-  const openEdit = (dept: any) => {
+  const openEdit = (dept: Department) => {
     setEditingDept(dept)
     setIsModalOpen(true)
   }
 
-  const handleCreateOrUpdate = async (formData: any) => {
+  const handleCreateOrUpdate = async (formData: Partial<Department>) => {
     try {
       if (editingDept) {
         await departmentsClientService.updateDepartment(editingDept.id, formData)

@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { ROUTES } from '@/constants/routes'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -18,6 +20,7 @@ interface ProfileClientProps {
 export function ProfileClient({ initialProfile }: ProfileClientProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [profile] = useState(initialProfile)
+  const router = useRouter()
 
   if (!profile) {
     return (
@@ -160,6 +163,29 @@ export function ProfileClient({ initialProfile }: ProfileClientProps) {
                 >
                   Lưu thay đổi
                 </Button>
+              </div>
+            )}
+
+            {!isEditing && (
+              <div>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm">Bảo mật</CardTitle>
+                    <CardDescription>
+                      Thao tác liên quan tới mật khẩu và bảo mật tài khoản
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex justify-end">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        router.push(`${ROUTES.USER_SETTINGS}?tab=password`)
+                      }}
+                    >
+                      Đổi mật khẩu
+                    </Button>
+                  </CardContent>
+                </Card>
               </div>
             )}
           </CardContent>

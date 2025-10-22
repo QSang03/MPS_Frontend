@@ -4,7 +4,7 @@ import backendApiClient from '@/lib/api/backend-client'
 import { API_ENDPOINTS } from '@/lib/api/endpoints'
 
 export async function POST(request: NextRequest) {
-  let reqBody: any = undefined
+  let reqBody: unknown = undefined
   try {
     const cookieStore = await cookies()
     const accessToken = cookieStore.get('access_token')?.value
@@ -15,12 +15,12 @@ export async function POST(request: NextRequest) {
       headers: { Authorization: `Bearer ${accessToken}` },
     })
     return NextResponse.json(response.data)
-  } catch (error: any) {
-    console.error(
-      'API Route /api/departments POST error:',
-      error?.response?.status || error?.message
-    )
-    if (error?.response?.status === 401) {
+  } catch (error: unknown) {
+    const err = error as
+      | { message?: string; response?: { status?: number }; config?: { data?: unknown } }
+      | undefined
+    console.error('API Route /api/departments POST error:', err?.response?.status || err?.message)
+    if (err?.response?.status === 401) {
       try {
         const cookieStore = await cookies()
         const refreshToken = cookieStore.get('refresh_token')?.value
@@ -71,25 +71,26 @@ export async function POST(request: NextRequest) {
         const originalBody =
           typeof reqBody !== 'undefined'
             ? reqBody
-            : error?.config?.data && typeof error.config.data === 'string'
-              ? JSON.parse(error.config.data)
+            : err?.config?.data && typeof err.config.data === 'string'
+              ? JSON.parse(String(err.config.data))
               : {}
         const retryResp = await backendApiClient.post(API_ENDPOINTS.DEPARTMENTS, originalBody, {
           headers: { Authorization: `Bearer ${newAccessToken}` },
         })
         return NextResponse.json(retryResp.data)
-      } catch (retryErr: any) {
-        console.error('Retry after refresh failed:', retryErr?.message)
+      } catch (retryErr: unknown) {
+        const rerr = retryErr as { message?: string; response?: { status?: number } } | undefined
+        console.error('Retry after refresh failed:', rerr?.message)
         return NextResponse.json(
-          { error: retryErr?.message || 'Internal Server Error' },
-          { status: retryErr?.response?.status || 500 }
+          { error: rerr?.message || 'Internal Server Error' },
+          { status: rerr?.response?.status || 500 }
         )
       }
     }
 
     return NextResponse.json(
-      { error: error?.message || 'Internal Server Error' },
-      { status: error?.response?.status || 500 }
+      { error: err?.message || 'Internal Server Error' },
+      { status: err?.response?.status || 500 }
     )
   }
 }
@@ -119,11 +120,12 @@ export async function GET(request: NextRequest) {
     })
 
     return NextResponse.json(response.data)
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const err = error as { message?: string; response?: { status?: number } } | undefined
     console.error('API Route /api/departments error:', error)
     return NextResponse.json(
-      { error: error.message || 'Internal Server Error' },
-      { status: error.response?.status || 500 }
+      { error: err?.message || 'Internal Server Error' },
+      { status: err?.response?.status || 500 }
     )
   }
 }

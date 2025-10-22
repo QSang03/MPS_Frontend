@@ -1,6 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
+import { changePasswordForClient } from '@/lib/auth/server-actions'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -13,11 +15,28 @@ import type { UserProfile } from '@/types/auth'
 
 interface SettingsClientProps {
   initialProfile: UserProfile | null
+  initialTab?: 'account' | 'password' | 'notifications'
 }
 
-export function SettingsClient({ initialProfile }: SettingsClientProps) {
+export function SettingsClient({ initialProfile, initialTab = 'account' }: SettingsClientProps) {
   const [profile] = useState(initialProfile)
-  const [activeTab, setActiveTab] = useState<'account' | 'password' | 'notifications'>('account')
+  const [activeTab, setActiveTab] = useState<'account' | 'password' | 'notifications'>(initialTab)
+
+  const searchParams = useSearchParams()
+  const router = useRouter()
+
+  useEffect(() => {
+    try {
+      const tab = searchParams?.get('tab') as 'account' | 'password' | 'notifications' | null
+      if (tab) {
+        setActiveTab(tab)
+      }
+    } catch {
+      // ignore
+    }
+    // only run on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Form states
   const [firstName, setFirstName] = useState(profile?.user.firstName || '')
@@ -40,7 +59,11 @@ export function SettingsClient({ initialProfile }: SettingsClientProps) {
 
   // UI states
   const [isLoading, setIsLoading] = useState(false)
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [message, setMessage] = useState<{ success: boolean; text: string } | null>(null)
+  // Field-level errors
+  const [currentPasswordError, setCurrentPasswordError] = useState<string | null>(null)
+  const [newPasswordError, setNewPasswordError] = useState<string | null>(null)
+  const [confirmPasswordError, setConfirmPasswordError] = useState<string | null>(null)
 
   if (!profile) {
     return (
@@ -60,38 +83,146 @@ export function SettingsClient({ initialProfile }: SettingsClientProps) {
       // TODO: Implement update profile API call
       await new Promise((resolve) => setTimeout(resolve, 1000)) // Simulate API call
 
-      setMessage({ type: 'success', text: 'Cập nhật thông tin thành công!' })
+      setMessage({ success: true, text: 'Cập nhật thông tin thành công!' })
     } catch {
-      setMessage({ type: 'error', text: 'Có lỗi xảy ra khi cập nhật thông tin' })
+      setMessage({ success: false, text: 'Có lỗi xảy ra khi cập nhật thông tin' })
     } finally {
       setIsLoading(false)
     }
   }
 
   const handleChangePassword = async () => {
-    if (newPassword !== confirmPassword) {
-      setMessage({ type: 'error', text: 'Mật khẩu xác nhận không khớp' })
-      return
-    }
-
-    if (newPassword.length < 6) {
-      setMessage({ type: 'error', text: 'Mật khẩu phải có ít nhất 6 ký tự' })
-      return
-    }
-
-    setIsLoading(true)
+    // Clear previous errors
+    setCurrentPasswordError(null)
+    setNewPasswordError(null)
+    setConfirmPasswordError(null)
     setMessage(null)
 
-    try {
-      // TODO: Implement change password API call
-      await new Promise((resolve) => setTimeout(resolve, 1000)) // Simulate API call
+    // Client-side validations (set field errors)
+    let hasError = false
 
-      setMessage({ type: 'success', text: 'Đổi mật khẩu thành công!' })
-      setCurrentPassword('')
-      setNewPassword('')
-      setConfirmPassword('')
+    if (!currentPassword) {
+      setCurrentPasswordError('Mật khẩu hiện tại là bắt buộc')
+      hasError = true
+    }
+
+    if (newPassword !== confirmPassword) {
+      setConfirmPasswordError('Mật khẩu xác nhận không khớp')
+      hasError = true
+    }
+
+    // Enforce password complexity: minimum 8 chars, at least 1 lowercase, 1 uppercase, and 1 digit
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/
+    if (!passwordRegex.test(newPassword)) {
+      setNewPasswordError(
+        'Mật khẩu mới phải có ít nhất 8 ký tự, chứa 1 chữ thường, 1 chữ hoa và 1 số'
+      )
+      hasError = true
+    }
+
+    // Ensure new password is not the same as current password
+    if (currentPassword && currentPassword === newPassword) {
+      setNewPasswordError('Mật khẩu mới không được giống mật khẩu hiện tại')
+      hasError = true
+    }
+
+    if (hasError) return
+
+    setIsLoading(true)
+
+    try {
+      // Call server action which will call backend securely
+      const res = await changePasswordForClient({ currentPassword, newPassword })
+
+      // Narrow and inspect response safely
+      const isObj = (v: unknown): v is Record<string, unknown> =>
+        typeof v === 'object' && v !== null
+
+      if (isObj(res)) {
+        // If server indicates refresh token expired, force client to login
+        if ((res as Record<string, unknown>).authExpired === true) {
+          // navigate to login page
+          router.push('/auth/login')
+          return
+        }
+        const hasSuccess = Object.prototype.hasOwnProperty.call(res, 'success')
+        const payload = res as Record<string, unknown>
+
+        if (hasSuccess) {
+          if (payload.success === true) {
+            setMessage({
+              success: true,
+              text: String(payload.message || 'Đổi mật khẩu thành công!'),
+            })
+            setCurrentPassword('')
+            setNewPassword('')
+            setConfirmPassword('')
+          } else {
+            const errors = payload.errors as Record<string, unknown> | undefined
+            if (errors && typeof errors === 'object') {
+              if (errors.currentPassword) setCurrentPasswordError(String(errors.currentPassword))
+              if (errors.newPassword) setNewPasswordError(String(errors.newPassword))
+              if (errors.confirmPassword) setConfirmPasswordError(String(errors.confirmPassword))
+              if (payload.message) setMessage({ success: false, text: String(payload.message) })
+            } else {
+              const errText = String(payload.error || payload.message || 'Đổi mật khẩu thất bại')
+              const lower = errText.toLowerCase()
+              if (
+                lower.includes('current') ||
+                lower.includes('hiện tại') ||
+                lower.includes('incorrect')
+              ) {
+                setCurrentPasswordError(errText)
+              } else if (lower.includes('confirm') || lower.includes('xác nhận')) {
+                setConfirmPasswordError(errText)
+              } else if (lower.includes('new') || lower.includes('mới')) {
+                setNewPasswordError(errText)
+              } else {
+                setMessage({ success: false, text: errText })
+              }
+            }
+          }
+        } else {
+          const errors = payload.errors as Record<string, unknown> | undefined
+          if (errors && typeof errors === 'object') {
+            if (errors.currentPassword) setCurrentPasswordError(String(errors.currentPassword))
+            if (errors.newPassword) setNewPasswordError(String(errors.newPassword))
+            if (errors.confirmPassword) setConfirmPasswordError(String(errors.confirmPassword))
+            if (payload.message) setMessage({ success: false, text: String(payload.message) })
+          } else if (payload.error) {
+            const lower = String(payload.error).toLowerCase()
+            if (
+              lower.includes('current') ||
+              lower.includes('hiện tại') ||
+              lower.includes('incorrect')
+            ) {
+              setCurrentPasswordError(String(payload.error))
+            } else if (lower.includes('confirm') || lower.includes('xác nhận')) {
+              setConfirmPasswordError(String(payload.error))
+            } else if (lower.includes('new') || lower.includes('mới')) {
+              setNewPasswordError(String(payload.error))
+            } else {
+              setMessage({ success: false, text: String(payload.error) })
+            }
+          } else {
+            setMessage({
+              success: true,
+              text: String(payload.message || 'Đổi mật khẩu thành công!'),
+            })
+            setCurrentPassword('')
+            setNewPassword('')
+            setConfirmPassword('')
+          }
+        }
+      } else {
+        // Unexpected response shape — treat as success
+        setMessage({ success: true, text: 'Đổi mật khẩu thành công!' })
+        setCurrentPassword('')
+        setNewPassword('')
+        setConfirmPassword('')
+      }
     } catch {
-      setMessage({ type: 'error', text: 'Có lỗi xảy ra khi đổi mật khẩu' })
+      setMessage({ success: false, text: 'Có lỗi xảy ra khi đổi mật khẩu' })
     } finally {
       setIsLoading(false)
     }
@@ -105,9 +236,9 @@ export function SettingsClient({ initialProfile }: SettingsClientProps) {
       // TODO: Implement save notification settings API call
       await new Promise((resolve) => setTimeout(resolve, 1000)) // Simulate API call
 
-      setMessage({ type: 'success', text: 'Lưu cài đặt thông báo thành công!' })
+      setMessage({ success: true, text: 'Lưu cài đặt thông báo thành công!' })
     } catch {
-      setMessage({ type: 'error', text: 'Có lỗi xảy ra khi lưu cài đặt' })
+      setMessage({ success: false, text: 'Có lỗi xảy ra khi lưu cài đặt' })
     } finally {
       setIsLoading(false)
     }
@@ -123,11 +254,18 @@ export function SettingsClient({ initialProfile }: SettingsClientProps) {
     <div className="space-y-6">
       {/* Message Alert */}
       {message && (
-        <Alert variant={message.type === 'success' ? 'default' : 'destructive'}>
-          {message.type === 'success' ? (
-            <CheckCircle className="h-4 w-4" />
+        <Alert
+          variant={message.success ? 'default' : 'destructive'}
+          className={
+            message.success
+              ? 'border-green-200 bg-green-50 text-green-800'
+              : 'border-red-200 bg-red-50 text-red-800'
+          }
+        >
+          {message.success ? (
+            <CheckCircle className="h-4 w-4 text-green-600" />
           ) : (
-            <AlertCircle className="h-4 w-4" />
+            <AlertCircle className="h-4 w-4 text-red-600" />
           )}
           <AlertDescription>{message.text}</AlertDescription>
         </Alert>
@@ -243,6 +381,9 @@ export function SettingsClient({ initialProfile }: SettingsClientProps) {
                     onChange={(e) => setCurrentPassword(e.target.value)}
                     placeholder="Nhập mật khẩu hiện tại"
                   />
+                  {currentPasswordError && (
+                    <p className="mt-1 text-sm text-red-600">{currentPasswordError}</p>
+                  )}
                   <Button
                     type="button"
                     variant="ghost"
@@ -269,6 +410,9 @@ export function SettingsClient({ initialProfile }: SettingsClientProps) {
                     onChange={(e) => setNewPassword(e.target.value)}
                     placeholder="Nhập mật khẩu mới"
                   />
+                  {newPasswordError && (
+                    <p className="mt-1 text-sm text-red-600">{newPasswordError}</p>
+                  )}
                   <Button
                     type="button"
                     variant="ghost"
@@ -291,6 +435,9 @@ export function SettingsClient({ initialProfile }: SettingsClientProps) {
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Nhập lại mật khẩu mới"
                   />
+                  {confirmPasswordError && (
+                    <p className="mt-1 text-sm text-red-600">{confirmPasswordError}</p>
+                  )}
                   <Button
                     type="button"
                     variant="ghost"
