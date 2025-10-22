@@ -66,4 +66,6 @@ export const API_ENDPOINTS = {
     GENERATE: '/reports/generate',
     DOWNLOAD: (id: string) => `/reports/${id}/download`,
   },
+  // Policies
+  POLICIES: '/policies',
 } as const

@@ -19,6 +19,8 @@ export const ROUTES = {
   CUSTOMER_ADMIN_SERVICE_REQUESTS: '/customer-admin/service-requests',
   CUSTOMER_ADMIN_PURCHASE_REQUESTS: '/customer-admin/purchase-requests',
 
+  CUSTOMER_ADMIN_POLICIES: '/customer-admin/policies',
+
   CUSTOMER_ADMIN_USERS: '/customer-admin/users',
   CUSTOMER_ADMIN_ROLES: '/customer-admin/roles',
   CUSTOMER_ADMIN_DEPARTMENTS: '/customer-admin/departments',

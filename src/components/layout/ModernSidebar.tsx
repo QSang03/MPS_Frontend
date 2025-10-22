@@ -56,6 +56,7 @@ function getNavigationItems(role: UserRole): NavItem[] {
         icon: ShoppingCart,
       },
       { label: 'Người dùng', href: ROUTES.CUSTOMER_ADMIN_USERS, icon: Users },
+      { label: 'Quản lý policies', href: ROUTES.CUSTOMER_ADMIN_POLICIES, icon: FileText },
       // Temporary: show roles & departments to all accounts
       { label: 'Quản lý vai trò', href: ROUTES.CUSTOMER_ADMIN_ROLES, icon: Settings },
       { label: 'Quản lý bộ phận', href: ROUTES.CUSTOMER_ADMIN_DEPARTMENTS, icon: Building2 },
