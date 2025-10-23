@@ -24,6 +24,27 @@ export const policiesClientService = {
     return []
   },
 
+  async getResourceTypes(params?: {
+    search?: string
+    page?: number
+    limit?: number
+    isActive?: boolean
+  }) {
+    const response = await internalApiClient.get('/api/resource-types', {
+      params: {
+        page: params?.page ?? 1,
+        limit: params?.limit ?? 100,
+        search: params?.search,
+        isActive: typeof params?.isActive === 'boolean' ? params?.isActive : undefined,
+      },
+    })
+    // normalize response shapes
+    if (Array.isArray(response.data)) return response.data
+    if (response.data && 'data' in response.data && Array.isArray(response.data.data))
+      return response.data.data
+    return []
+  },
+
   async getPolicies(params?: {
     page?: number
     limit?: number

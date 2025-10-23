@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -28,6 +28,7 @@ import { useQuery } from '@tanstack/react-query'
 import { rolesClientService } from '@/lib/api/services/roles-client.service'
 import { departmentsClientService } from '@/lib/api/services/departments-client.service'
 import { policiesClientService } from '@/lib/api/services/policies-client.service'
+import { policyConditionsClientService } from '@/lib/api/services/policy-conditions-client.service'
 // Select component imports removed - not used in this file
 import { Checkbox } from '@/components/ui/checkbox'
 
@@ -43,6 +44,8 @@ const policySchema = z.object({
   roleNameManual: z.string().optional(),
   roleNameFromList: z.string().optional(),
   roleLevel: z.union([z.string(), z.number()]).optional(),
+  resourceOperator: z.string().optional(),
+  resourceTypeFromList: z.string().optional(),
   includeDepartment: z.boolean().optional(),
   deptMatchBy: z.enum(['name', 'code']).optional(),
   deptOperator: z.string().optional(),
@@ -51,7 +54,6 @@ const policySchema = z.object({
   deptNameManual: z.string().optional(),
   deptNameFromList: z.string().optional(),
   deptCodeFromList: z.string().optional(),
-  resource: z.string().optional(), // JSON
   conditions: z.string().optional(), // JSON
 })
 
@@ -89,8 +91,9 @@ export function PolicyFormModal({ isOpen, onClose, onSubmit, initialData }: Poli
       deptNameFromList: '',
       deptCodeFromList: '',
       deptValues: [],
-      resource: '',
       conditions: '',
+      resourceOperator: '$eq',
+      resourceTypeFromList: '',
     },
   })
 
@@ -206,6 +209,51 @@ export function PolicyFormModal({ isOpen, onClose, onSubmit, initialData }: Poli
     }
   }, [operatorsResp])
 
+  // resource types
+  const {
+    data: resourceTypesResp,
+    error: resourceTypesError,
+    isLoading: resourceTypesLoading,
+    refetch: refetchResourceTypes,
+  } = useQuery<any[], Error>({
+    queryKey: ['resource-types'],
+    queryFn: () => policiesClientService.getResourceTypes({ limit: 100 }),
+    staleTime: 1000 * 60 * 10,
+  })
+
+  // normalize resource types response (some services return { data: [] } while others return [] )
+  const resourceTypes = useMemo(() => {
+    if (!resourceTypesResp) return [] as any[]
+    if (Array.isArray(resourceTypesResp)) return resourceTypesResp
+    // if server returned an object like { data: [...] }
+    if (resourceTypesResp && typeof resourceTypesResp === 'object' && 'data' in resourceTypesResp)
+      return (resourceTypesResp as any).data || []
+    return []
+  }, [resourceTypesResp])
+
+  // When the modal opens, ensure resource types are fetched/refreshed
+  useEffect(() => {
+    if (isOpen) {
+      // attempt a fresh fetch and log result for debugging
+      refetchResourceTypes()
+        .then((res) => {
+          console.debug('[PolicyFormModal] refetchResourceTypes result', res)
+        })
+        .catch((err) => {
+          console.error('[PolicyFormModal] refetchResourceTypes error', err)
+        })
+    }
+  }, [isOpen, refetchResourceTypes])
+
+  useEffect(() => {
+    if (resourceTypesResp) {
+      console.debug('[PolicyFormModal] resourceTypesResp updated', resourceTypesResp)
+    }
+    if (resourceTypesError) {
+      console.error('[PolicyFormModal] resourceTypesError', resourceTypesError)
+    }
+  }, [resourceTypesResp, resourceTypesError])
+
   const formatOperatorLabel = (op: { name: string; description?: string }) => {
     if (!op) return ''
     return op.description ? `${op.name} — ${op.description}` : op.name
@@ -278,6 +326,73 @@ export function PolicyFormModal({ isOpen, onClose, onSubmit, initialData }: Poli
     return operatorsResp.filter(
       (op) => op.appliesTo?.includes('number') || op.appliesTo?.includes('array_number')
     )
+  }
+
+  // policy conditions (discovery)
+  const {
+    data: conditionsResp,
+    isLoading: conditionsLoading,
+    error: conditionsError,
+    refetch: refetchConditions,
+  } = useQuery({
+    queryKey: ['policy-conditions'],
+    queryFn: () => policyConditionsClientService.getPolicyConditions({ limit: 200 }),
+    staleTime: 1000 * 60 * 10,
+  })
+
+  // local state to track selected conditions and their operator/value
+  const [selectedConditions, setSelectedConditions] = useState<
+    Record<string, { operator?: string; value?: string }>
+  >({})
+  // per-condition validation errors (e.g. invalid IP format)
+  const [conditionErrors, setConditionErrors] = useState<Record<string, string | null>>({})
+  const [submitError, setSubmitError] = useState<string | null>(null)
+
+  const toggleCondition = (id: string) => {
+    setSelectedConditions((s) => {
+      const copy = { ...s }
+      if (id in copy) delete copy[id]
+      else copy[id] = { operator: '$eq', value: '' }
+      return copy
+    })
+  }
+
+  const setConditionOperator = (id: string, op: string) => {
+    setSelectedConditions((s) => ({ ...s, [id]: { ...(s[id] || {}), operator: op } }))
+  }
+
+  const setConditionValue = (id: string, val: string) => {
+    // validate while setting: for IP-specific conditions, allow multiple IPs and both IPv4/IPv6
+    const cond = (conditionsResp || []).find((c: any) => c.id === id)
+    if (cond && cond.name === 'ipAddress') {
+      const raw = String(val || '')
+      // split by comma or whitespace, allow entries separated by commas
+      const parts = raw
+        .split(',')
+        .map((p) => p.trim())
+        .filter((p) => p.length > 0)
+
+      if (parts.length === 0) {
+        setConditionErrors((s) => ({ ...s, [id]: null }))
+      } else {
+        // IPv4 regex
+        const ipv4 =
+          /^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$/
+        // IPv6 (simple) regex - accepts common IPv6 forms (not exhaustive but practical)
+        const ipv6 = /^([0-9a-fA-F]{1,4}:){2,7}[0-9a-fA-F]{1,4}$/
+        const invalid = parts.find((p) => !(ipv4.test(p) || ipv6.test(p)))
+        if (invalid) {
+          setConditionErrors((s) => ({
+            ...s,
+            [id]: 'Một hoặc nhiều IP không hợp lệ. Nhập IPv4 hoặc IPv6, cách nhau bằng dấu phẩy',
+          }))
+        } else {
+          setConditionErrors((s) => ({ ...s, [id]: null }))
+        }
+      }
+    }
+
+    setSelectedConditions((s) => ({ ...s, [id]: { ...(s[id] || {}), value: val } }))
   }
 
   const addArrayValue = (
@@ -380,8 +495,33 @@ export function PolicyFormModal({ isOpen, onClose, onSubmit, initialData }: Poli
         actions: (initialData.actions || []).join(', '),
         includeRole,
         includeDepartment,
-        resource: initialData.resource ? JSON.stringify(initialData.resource, null, 2) : '',
         conditions: initialData.conditions ? JSON.stringify(initialData.conditions, null, 2) : '',
+      }
+
+      // resource parsing: if structured like { type: { $eq: 'report' } } then pre-fill operator + selection
+      if (initialData.resource) {
+        try {
+          const r = initialData.resource as any
+          if (r && typeof r === 'object' && 'type' in r) {
+            const t = r.type
+            if (t && typeof t === 'object') {
+              const detectedOp = Object.keys(t).find((k) => String(k).startsWith('$'))
+              if (detectedOp) {
+                values.resourceOperator = detectedOp
+                const val = t[detectedOp]
+                if (typeof val === 'string' || typeof val === 'number')
+                  values.resourceTypeFromList = String(val)
+                else values.resourceTypeFromList = JSON.stringify(val)
+              }
+            } else if (typeof t === 'string' || typeof t === 'number') {
+              // no explicit operator present; default to $eq
+              values.resourceOperator = values.resourceOperator || '$eq'
+              values.resourceTypeFromList = String(t)
+            }
+          }
+        } catch {
+          // ignore parsing errors and leave defaults
+        }
       }
 
       // role parsing
@@ -425,10 +565,11 @@ export function PolicyFormModal({ isOpen, onClose, onSubmit, initialData }: Poli
 
       // department parsing
       if (includeDepartment) {
-        const deptNameKey = subj['department.name']
-          ? 'department.name'
-          : subj['attributes.department']
-            ? 'attributes.department'
+        // prefer attributes.department shape used by backend (attributes.department: { $eq: 'tech' })
+        const deptNameKey = subj['attributes.department']
+          ? 'attributes.department'
+          : subj['department.name']
+            ? 'department.name'
             : undefined
         if (deptNameKey) {
           values.deptMatchBy = 'name'
@@ -475,6 +616,13 @@ export function PolicyFormModal({ isOpen, onClose, onSubmit, initialData }: Poli
 
   const handleSubmit = async (data: PolicyFormData) => {
     setIsLoading(true)
+    // prevent submit when validation errors exist
+    const firstErr = Object.values(conditionErrors || {}).find((e) => !!e)
+    if (firstErr) {
+      setSubmitError('Vui lòng sửa lỗi trong điều kiện trước khi lưu')
+      setIsLoading(false)
+      return
+    }
     try {
       const parsed: Partial<Policy> = {
         name: data.name,
@@ -577,14 +725,47 @@ export function PolicyFormModal({ isOpen, onClose, onSubmit, initialData }: Poli
 
       parsed.subject = subjectObj
 
-      try {
-        parsed.resource = data.resource ? JSON.parse(data.resource) : {}
-      } catch {
-        parsed.resource = {}
+      // resource: structured selection (operator + resource type) will populate resource.type
+      if (data.resourceOperator && (data.resourceTypeFromList || '').trim().length > 0) {
+        parsed.resource = { type: { [data.resourceOperator]: data.resourceTypeFromList } }
       }
 
+      // Build parsed.conditions from selectedConditions map (keyed by condition id)
       try {
-        parsed.conditions = data.conditions ? JSON.parse(data.conditions) : {}
+        const condObj: Record<string, any> = {}
+        const entries = Object.entries(selectedConditions || {}) as Array<
+          [string, { operator?: string; value?: string }]
+        >
+        entries.forEach(([id, info]) => {
+          if (!info || !info.operator) return
+          const cond = (conditionsResp || []).find((c: any) => c.id === id)
+          if (!cond) return
+          const name = cond.name
+          let val: any = info.value
+          const dtype = String(cond.dataType || 'string')
+          if (dtype === 'number') {
+            const n = Number(val)
+            if (!Number.isNaN(n)) val = n
+          } else if (dtype === 'datetime') {
+            // normalize datetime-local 'YYYY-MM-DDTHH:MM' to ISO UTC string
+            try {
+              if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/.test(val)) {
+                // ensure seconds present
+                let v = val
+                if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(v)) v = v + ':00'
+                const iso = new Date(v)
+                if (!Number.isNaN(iso.getTime())) val = iso.toISOString()
+              }
+            } catch {
+              // leave as provided
+            }
+          }
+
+          if (!condObj[name]) condObj[name] = {}
+          condObj[name][info.operator as string] = val
+        })
+
+        parsed.conditions = condObj
       } catch {
         parsed.conditions = {}
       }
@@ -1321,41 +1502,191 @@ export function PolicyFormModal({ isOpen, onClose, onSubmit, initialData }: Poli
               })()}
             </div>
 
-            <FormField
-              control={form.control}
-              name="resource"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Resource (JSON)</FormLabel>
-                  <FormControl>
-                    <textarea
-                      className="input h-20 w-full resize-none rounded-md border p-2"
-                      placeholder='{"type": {"$eq": "report"}}'
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {/* Resource: Operator | ResourceType */}
+            <div className="grid grid-cols-2 gap-3">
+              <FormField
+                control={form.control}
+                name="resourceOperator"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Resource Operator</FormLabel>
+                    <FormControl>
+                      <select {...field} className="input w-full rounded-md border px-3 py-2">
+                        <option value="">-- chọn --</option>
+                        {(filterOperatorsByType('string') || []).map((op) => (
+                          <option key={op.id} value={op.name}>
+                            {formatOperatorLabel(op)}
+                          </option>
+                        ))}
+                      </select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <FormField
-              control={form.control}
-              name="conditions"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Conditions (JSON)</FormLabel>
-                  <FormControl>
-                    <textarea
-                      className="input h-20 w-full resize-none rounded-md border p-2"
-                      placeholder='{"environment.ipAddress": {"$regex": "^192\\.168\\."}}'
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              <FormField
+                control={form.control}
+                name="resourceTypeFromList"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Resource type</FormLabel>
+                    <FormControl>
+                      <select {...field} className="input w-full rounded-md border px-3 py-2">
+                        <option value="">-- chọn loại resource --</option>
+                        {resourceTypesLoading && <option disabled>Loading...</option>}
+                        {resourceTypesError && (
+                          <option disabled>Failed to load (see console)</option>
+                        )}
+                        {!resourceTypesLoading &&
+                          !resourceTypesError &&
+                          resourceTypes.length === 0 && (
+                            <option disabled>No resource types found</option>
+                          )}
+                        {resourceTypes.map((r: any) => (
+                          <option key={r.id} value={r.name}>
+                            {r.name}
+                          </option>
+                        ))}
+                      </select>
+                    </FormControl>
+                    {resourceTypesError && (
+                      <div className="mt-1 text-sm text-red-500">
+                        Failed to load resource types.{' '}
+                        <button
+                          type="button"
+                          className="underline"
+                          onClick={() => refetchResourceTypes()}
+                        >
+                          Retry
+                        </button>
+                      </div>
+                    )}
+                    {/* Debug: log fetched resource types */}
+                    {typeof window !== 'undefined' &&
+                      resourceTypes &&
+                      (console.debug('[PolicyFormModal] resourceTypes', resourceTypes), null)}
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormItem>
+              <FormLabel>Conditions</FormLabel>
+              <FormControl>
+                <div>
+                  {conditionsLoading && <div className="text-sm">Loading conditions...</div>}
+                  {conditionsError && (
+                    <div className="text-sm text-red-500">
+                      Failed to load conditions.{' '}
+                      <button
+                        type="button"
+                        className="underline"
+                        onClick={() => refetchConditions()}
+                      >
+                        Retry
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="max-h-48 overflow-auto rounded-md border p-2">
+                    {(conditionsResp || []).map((c: any) => {
+                      const dtype = String(c.dataType || 'string')
+                      const ops =
+                        filterOperatorsByType(dtype === 'number' ? 'number' : 'string') || []
+                      const sel = selectedConditions[c.id]
+                      return (
+                        <div key={c.id} className="grid grid-cols-3 items-center gap-3 py-1">
+                          <div className="flex items-start gap-2">
+                            <input
+                              type="checkbox"
+                              checked={!!sel}
+                              onChange={() => toggleCondition(c.id)}
+                            />
+                            <div className="text-sm">
+                              <div className="font-medium">{c.name}</div>
+                              {c.description && (
+                                <div className="text-xs text-slate-500">{c.description}</div>
+                              )}
+                            </div>
+                          </div>
+
+                          <div>
+                            <select
+                              className="input w-full rounded-md border px-3 py-2"
+                              disabled={!sel}
+                              value={(sel && sel.operator) || (ops[0] && ops[0].name) || ''}
+                              onChange={(e) => setConditionOperator(c.id, e.target.value)}
+                            >
+                              {ops.map((op) => (
+                                <option key={op.id} value={op.name}>
+                                  {formatOperatorLabel(op)}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div>
+                            {dtype === 'datetime' ? (
+                              // datetime-local expects value in "YYYY-MM-DDTHH:MM" (no seconds). Convert/accept as-is.
+                              <Input
+                                type="datetime-local"
+                                className="w-full"
+                                disabled={!sel}
+                                value={(sel && sel.value) || ''}
+                                onChange={(e) => setConditionValue(c.id, e.target.value)}
+                                placeholder="YYYY-MM-DDThh:mm"
+                              />
+                            ) : dtype === 'number' ? (
+                              <Input
+                                type="number"
+                                className="w-full"
+                                disabled={!sel}
+                                value={(sel && sel.value) || ''}
+                                onChange={(e) => setConditionValue(c.id, e.target.value)}
+                                placeholder="Số"
+                              />
+                            ) : (
+                              // default: string. For specific names like ipAddress we show a pattern hint
+                              <Input
+                                type="text"
+                                className="w-full"
+                                disabled={!sel}
+                                value={(sel && sel.value) || ''}
+                                onChange={(e) => setConditionValue(c.id, e.target.value)}
+                                placeholder={
+                                  c.name === 'ipAddress'
+                                    ? 'Ví dụ: 192.168.1.1, 2001:0db8::1'
+                                    : 'Chuỗi'
+                                }
+                                title={
+                                  c.name === 'ipAddress'
+                                    ? 'Cho phép nhiều IP, cách nhau bằng dấu phẩy. Hỗ trợ IPv4 và IPv6'
+                                    : undefined
+                                }
+                              />
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                  {/* inline condition errors */}
+                  <div className="mt-2">
+                    {Object.entries(conditionErrors || {}).map(([id, err]) =>
+                      err ? (
+                        <div key={id} className="text-sm text-red-600">
+                          {err}
+                        </div>
+                      ) : null
+                    )}
+                    {submitError && <div className="mt-1 text-sm text-red-600">{submitError}</div>}
+                  </div>
+                </div>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
 
             <DialogFooter className="gap-2">
               <Button type="button" variant="outline" onClick={onClose}>

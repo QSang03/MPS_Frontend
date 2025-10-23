@@ -142,7 +142,7 @@ export default function LoginPage() {
 
           <div className="text-muted-foreground mt-4 text-center text-sm">
             <p>Tài khoản demo:</p>
-            <p className="mt-1 text-xs">Admin: admin / admin123 | User: user / user123</p>
+            <p className="mt-1 text-xs">Admin: admin / Ainkczalov3 </p>
           </div>
         </CardContent>
       </Card>

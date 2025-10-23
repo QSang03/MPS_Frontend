@@ -42,10 +42,22 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
     id = params.id
     reqBody = await request.json()
+    // Debug: log incoming request body for troubleshooting missing fields
+    try {
+      console.debug('[api/policies/[id] PUT] incoming body:', JSON.stringify(reqBody))
+    } catch {
+      console.debug('[api/policies/[id] PUT] incoming body (non-serializable)')
+    }
 
     const response = await backendApiClient.put(`${API_ENDPOINTS.POLICIES}/${id}`, reqBody, {
       headers: { Authorization: `Bearer ${accessToken}` },
     })
+    // Log backend response for debugging persistence issues
+    try {
+      console.debug('[api/policies/[id] PUT] backend response:', JSON.stringify(response.data))
+    } catch {
+      console.debug('[api/policies/[id] PUT] backend response (non-serializable)')
+    }
     return NextResponse.json(response.data)
   } catch (error: unknown) {
     const err = error as

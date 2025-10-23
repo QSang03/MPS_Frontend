@@ -68,5 +68,7 @@ export const API_ENDPOINTS = {
   },
   // Policies
   POLICIES: '/policies',
+  RESOURCE_TYPES: '/resource-types',
   POLICY_OPERATORS: '/policy-operators',
+  POLICY_CONDITIONS: '/policy-conditions',
 } as const
