@@ -51,14 +51,23 @@ export function PoliciesTable() {
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingPolicy, setEditingPolicy] = useState<Policy | null>(null)
+  const [isViewing, setIsViewing] = useState(false)
 
   const openCreate = () => {
     setEditingPolicy(null)
+    setIsViewing(false)
     setIsModalOpen(true)
   }
 
   const openEdit = (policy: Policy) => {
     setEditingPolicy(policy)
+    setIsViewing(false)
+    setIsModalOpen(true)
+  }
+
+  const openView = (policy: Policy) => {
+    setEditingPolicy(policy)
+    setIsViewing(true)
     setIsModalOpen(true)
   }
 
@@ -156,7 +165,7 @@ export function PoliciesTable() {
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-2">
-                      <Button size="sm" variant="ghost">
+                      <Button size="sm" variant="ghost" onClick={() => openView(p)}>
                         <Eye className="h-4 w-4" />
                       </Button>
                       <Button size="sm" variant="ghost" onClick={() => openEdit(p)}>
@@ -209,9 +218,17 @@ export function PoliciesTable() {
       </CardContent>
       <PolicyFormModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false)
+          setIsViewing(false)
+        }}
         onSubmit={handleCreateOrUpdate}
         initialData={editingPolicy}
+        viewOnly={isViewing}
+        onRequestEdit={() => {
+          // parent will switch modal from view-only to edit mode
+          setIsViewing(false)
+        }}
       />
     </Card>
   )
