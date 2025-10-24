@@ -262,6 +262,20 @@ export function PolicyFormModal({
     }
   }, [isOpen, refetchResourceTypes])
 
+  // Defensive: when the dialog opens, ensure local view-only state mirrors prop
+  // (fixes cases where the modal remained non-interactive after being left idle)
+  useEffect(() => {
+    if (isOpen) {
+      setLocalViewOnly(!!viewOnly)
+      // small focus/tick to ensure interactive elements are enabled in the next paint
+      setTimeout(() => {
+        try {
+          if (typeof form.setFocus === 'function') form.setFocus('name')
+        } catch {}
+      }, 0)
+    }
+  }, [isOpen, viewOnly, form])
+
   useEffect(() => {
     if (resourceTypesResp) {
       console.debug('[PolicyFormModal] resourceTypesResp updated', resourceTypesResp)
@@ -828,7 +842,8 @@ export function PolicyFormModal({
         <Form {...form}>
           <form
             onSubmit={localViewOnly ? (e) => e.preventDefault() : form.handleSubmit(handleSubmit)}
-            className="space-y-4"
+            // increase vertical spacing between sections to improve readability
+            className="space-y-6"
           >
             {/* Disable all inputs when viewOnly is true using a fieldset */}
             <fieldset disabled={!!localViewOnly} style={{ border: 0, padding: 0, margin: 0 }}>
@@ -950,7 +965,7 @@ export function PolicyFormModal({
                       {includeRole && (
                         <div className="space-y-3">
                           {/* 3 cột: Match By | Operator | Value */}
-                          <div className="grid grid-cols-3 gap-3">
+                          <div className="grid grid-cols-3 gap-4">
                             {/* Cột 1: Match By */}
                             <FormField
                               control={form.control}
@@ -1308,7 +1323,7 @@ export function PolicyFormModal({
                       {includeDepartment && (
                         <div className="space-y-3">
                           {/* 3 cột: Match By | Operator | Value */}
-                          <div className="grid grid-cols-3 gap-3">
+                          <div className="grid grid-cols-3 gap-4">
                             {/* Cột 1: Match By */}
                             <FormField
                               control={form.control}
@@ -1553,7 +1568,7 @@ export function PolicyFormModal({
               </div>
 
               {/* Resource: Operator | ResourceType */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="resourceOperator"
