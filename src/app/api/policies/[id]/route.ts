@@ -12,7 +12,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     console.debug('[api/policies/[id] GET] cookies present:', { hasAccess, hasRefresh })
     if (!accessToken) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const id = params.id
+    const { id } = (await params) as { id: string }
     const response = await backendApiClient.get(`${API_ENDPOINTS.POLICIES}/${id}`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     })
@@ -40,7 +40,8 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     console.debug('[api/policies/[id] PUT] cookies present:', { hasAccess, hasRefresh })
     if (!accessToken) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    id = params.id
+    const resolvedParams = (await params) as { id: string }
+    id = resolvedParams.id
     reqBody = await request.json()
     // Debug: log incoming request body for troubleshooting missing fields
     try {
@@ -157,7 +158,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     console.debug('[api/policies/[id] DELETE] cookies present:', { hasAccess, hasRefresh })
     if (!accessToken) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const id = params.id
+    const { id } = (await params) as { id: string }
     const response = await backendApiClient.delete(`${API_ENDPOINTS.POLICIES}/${id}`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     })
