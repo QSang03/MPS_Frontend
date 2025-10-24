@@ -812,7 +812,7 @@ export function PolicyFormModal({
         className={
           initialData
             ? 'max-h-[80vh] !max-w-[80vw] overflow-auto'
-            : 'max-h-[80vh] overflow-auto sm:max-w-[600px]'
+            : 'max-h-[80vh] !max-w-[70vw] overflow-auto'
         }
       >
         <DialogHeader>
