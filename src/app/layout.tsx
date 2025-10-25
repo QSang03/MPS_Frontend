@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Inter, Poppins, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
 import { QueryProvider } from '@/components/providers/QueryProvider'
+import TokenRefreshProvider from '@/components/providers/TokenRefreshProvider'
 import { Toaster } from '@/components/ui/sonner'
 
 // Modern font stack for better Vietnamese support
@@ -43,8 +44,10 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <QueryProvider>
-          {children}
-          <Toaster />
+          <TokenRefreshProvider>
+            {children}
+            <Toaster />
+          </TokenRefreshProvider>
         </QueryProvider>
       </body>
     </html>

@@ -31,7 +31,9 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(response.data)
   } catch (error: unknown) {
-    const err = error as { message?: string; response?: { status?: number } } | undefined
+    const err = error as
+      | { message?: string; response?: { status?: number; data?: unknown } }
+      | undefined
     console.error('API Route /api/policies GET error:', error)
     return NextResponse.json(
       { error: err?.message || 'Internal Server Error' },
@@ -59,11 +61,18 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(response.data)
   } catch (error: unknown) {
     const err = error as
-      | { message?: string; response?: { status?: number }; config?: { data?: unknown } }
+      | {
+          message?: string
+          response?: { status?: number; data?: unknown }
+          config?: { data?: unknown }
+        }
       | undefined
     console.error('API Route /api/policies POST error:', err?.response?.status || err?.message)
     if (err?.response)
-      console.debug('[api/policies] backend response data:', (err.response as any).data)
+      console.debug(
+        '[api/policies] backend response data:',
+        (err.response as { data?: unknown })?.data
+      )
     // Retry on 401 using refresh token
     if (err?.response?.status === 401) {
       try {
@@ -128,7 +137,9 @@ export async function POST(request: NextRequest) {
         })
         return NextResponse.json(retryResp.data)
       } catch (retryErr: unknown) {
-        const rerr = retryErr as { message?: string; response?: { status?: number } } | undefined
+        const rerr = retryErr as
+          | { message?: string; response?: { status?: number; data?: unknown } }
+          | undefined
         console.error('Retry after refresh failed:', rerr?.message)
         return NextResponse.json(
           { error: rerr?.message || 'Internal Server Error' },
@@ -162,7 +173,11 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     return NextResponse.json(response.data)
   } catch (error: unknown) {
     const err = error as
-      | { message?: string; response?: { status?: number }; config?: { data?: unknown } }
+      | {
+          message?: string
+          response?: { status?: number; data?: unknown }
+          config?: { data?: unknown }
+        }
       | undefined
     console.error('API Route /api/policies PUT error:', err?.response?.status || err?.message)
     // retry on 401 same as POST
@@ -231,7 +246,9 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         )
         return NextResponse.json(retryResp.data)
       } catch (retryErr: unknown) {
-        const rerr = retryErr as { message?: string; response?: { status?: number } } | undefined
+        const rerr = retryErr as
+          | { message?: string; response?: { status?: number; data?: unknown } }
+          | undefined
         console.error('Retry after refresh failed:', rerr?.message)
         return NextResponse.json(
           { error: rerr?.message || 'Internal Server Error' },
@@ -264,7 +281,9 @@ export async function DELETE(
     })
     return NextResponse.json(response.data)
   } catch (error: unknown) {
-    const err = error as { message?: string; response?: { status?: number } } | undefined
+    const err = error as
+      | { message?: string; response?: { status?: number; data?: unknown } }
+      | undefined
     console.error('API Route /api/policies DELETE error:', err?.response?.status || err?.message)
     return NextResponse.json(
       { error: err?.message || 'Internal Server Error' },

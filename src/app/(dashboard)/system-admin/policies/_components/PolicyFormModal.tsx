@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useMemo } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import {
@@ -41,6 +41,7 @@ import { rolesClientService } from '@/lib/api/services/roles-client.service'
 import { departmentsClientService } from '@/lib/api/services/departments-client.service'
 import { policiesClientService } from '@/lib/api/services/policies-client.service'
 import { policyConditionsClientService } from '@/lib/api/services/policy-conditions-client.service'
+import type { PolicyCondition } from '@/lib/api/services/policy-conditions-client.service'
 import { Checkbox } from '@/components/ui/checkbox'
 
 const policySchema = z.object({
@@ -146,8 +147,16 @@ export function PolicyFormModal({
 
   const roleMatchBy = form.watch('roleMatchBy')
   const deptMatchBy = form.watch('deptMatchBy')
-  const roleValuesWatch = form.watch('roleValues') || []
-  const deptValuesWatch = form.watch('deptValues') || []
+  const _rawRoleValues = useWatch({ control: form.control, name: 'roleValues' })
+  const _rawDeptValues = useWatch({ control: form.control, name: 'deptValues' })
+  const roleValuesWatch = useMemo(
+    () => (Array.isArray(_rawRoleValues) ? (_rawRoleValues as string[]) : []),
+    [_rawRoleValues]
+  )
+  const deptValuesWatch = useMemo(
+    () => (Array.isArray(_rawDeptValues) ? (_rawDeptValues as string[]) : []),
+    [_rawDeptValues]
+  )
 
   const [roleArrayInput, setRoleArrayInput] = useState('')
   const [roleLevelInput, setRoleLevelInput] = useState('')
@@ -167,7 +176,10 @@ export function PolicyFormModal({
       return true
     }
 
-    const roleNames = (rolesResp || []).map((r: any) => String(r.name || '').toLowerCase())
+    const roleNames = (rolesResp || []).map((r: unknown) => {
+      const name = (r as Record<string, unknown>)?.name
+      return String(name ?? '').toLowerCase()
+    })
     const fromList: string[] = []
     const manual: string[] = []
     ;(roleValuesWatch || []).forEach((v: string) => {
@@ -181,8 +193,14 @@ export function PolicyFormModal({
     if (!arraysEqual(nextRoleFrom, roleValuesFromList)) setRoleValuesFromList(nextRoleFrom)
     if (!arraysEqual(nextRoleManual, roleValuesManual)) setRoleValuesManual(nextRoleManual)
 
-    const deptNames = (deptsResp || []).map((d: any) => String(d.name || '').toLowerCase())
-    const deptCodes = (deptsResp || []).map((d: any) => String(d.code || '').toLowerCase())
+    const deptNames = (deptsResp || []).map((d: unknown) => {
+      const name = (d as Record<string, unknown>)?.name
+      return String(name ?? '').toLowerCase()
+    })
+    const deptCodes = (deptsResp || []).map((d: unknown) => {
+      const code = (d as Record<string, unknown>)?.code
+      return String(code ?? '').toLowerCase()
+    })
     const dFromList: string[] = []
     const dManual: string[] = []
     ;(deptValuesWatch || []).forEach((v: string) => {
@@ -200,7 +218,17 @@ export function PolicyFormModal({
     const nextDeptManual = Array.from(new Set(dManual))
     if (!arraysEqual(nextDeptFrom, deptValuesFromList)) setDeptValuesFromList(nextDeptFrom)
     if (!arraysEqual(nextDeptManual, deptValuesManual)) setDeptValuesManual(nextDeptManual)
-  }, [rolesResp, deptsResp, roleValuesWatch, deptValuesWatch, deptMatchBy])
+  }, [
+    rolesResp,
+    deptsResp,
+    roleValuesWatch,
+    deptValuesWatch,
+    deptMatchBy,
+    roleValuesFromList,
+    roleValuesManual,
+    deptValuesFromList,
+    deptValuesManual,
+  ])
 
   const { data: roleOperators } = useQuery({
     queryKey: ['policy-operators', 'role', roleMatchBy],
@@ -243,10 +271,10 @@ export function PolicyFormModal({
   })
 
   const resourceTypes = useMemo(() => {
-    if (!resourceTypesResp) return [] as any[]
-    if (Array.isArray(resourceTypesResp)) return resourceTypesResp
+    if (!resourceTypesResp) return [] as Record<string, unknown>[]
+    if (Array.isArray(resourceTypesResp)) return resourceTypesResp as Record<string, unknown>[]
     if (resourceTypesResp && typeof resourceTypesResp === 'object' && 'data' in resourceTypesResp)
-      return (resourceTypesResp as any).data || []
+      return ((resourceTypesResp as { data?: unknown }).data as Record<string, unknown>[]) || []
     return []
   }, [resourceTypesResp])
 
@@ -378,7 +406,9 @@ export function PolicyFormModal({
   }
 
   const setConditionValue = (id: string, val: string) => {
-    const cond = (conditionsResp || []).find((c: any) => c.id === id)
+    const cond = (conditionsResp || []).find(
+      (c: unknown) => (c as Record<string, unknown>)?.id === id
+    ) as Record<string, unknown> | undefined
     if (cond && cond.name === 'ipAddress') {
       const raw = String(val || '')
       const parts = raw
@@ -485,7 +515,7 @@ export function PolicyFormModal({
 
   useEffect(() => {
     if (initialData) {
-      const subj = (initialData.subject as Record<string, any>) || {}
+      const subj = (initialData.subject as Record<string, unknown>) || {}
       const includeRole = Object.keys(subj).some((k) => k.includes('role'))
       const includeDepartment = Object.keys(subj).some(
         (k) => k.includes('department') || k.includes('attributes.department')
@@ -502,14 +532,14 @@ export function PolicyFormModal({
 
       if (initialData.resource) {
         try {
-          const r = initialData.resource as any
+          const r = initialData.resource as Record<string, unknown> | undefined
           if (r && typeof r === 'object' && 'type' in r) {
-            const t = r.type
+            const t = (r as Record<string, unknown>).type
             if (t && typeof t === 'object') {
               const detectedOp = Object.keys(t).find((k) => String(k).startsWith('$'))
               if (detectedOp) {
                 values.resourceOperator = detectedOp
-                const val = t[detectedOp]
+                const val = (t as Record<string, unknown>)[detectedOp]
                 if (typeof val === 'string' || typeof val === 'number')
                   values.resourceTypeFromList = String(val)
                 else values.resourceTypeFromList = JSON.stringify(val)
@@ -525,18 +555,18 @@ export function PolicyFormModal({
       if (includeRole) {
         if (subj['role.name']) {
           values.roleMatchBy = 'name'
-          const roleNameObj = subj['role.name']
+          const roleNameObj = subj['role.name'] as Record<string, unknown> | unknown
           const detectedOp =
             typeof roleNameObj === 'object' && roleNameObj !== null
               ? Object.keys(roleNameObj as object).find((k) => k.startsWith('$'))
               : undefined
           values.roleOperator = detectedOp || '$eq'
           const val =
-            detectedOp && (roleNameObj as any)[detectedOp]
-              ? (roleNameObj as any)[detectedOp]
+            detectedOp && (roleNameObj as Record<string, unknown>)[detectedOp]
+              ? (roleNameObj as Record<string, unknown>)[detectedOp]
               : roleNameObj
           if (Array.isArray(val)) {
-            values.roleValues = val.map((v: any) => String(v))
+            values.roleValues = val.map((v: unknown) => String(v as string))
             values.roleUseList = false
           } else {
             values.roleNameManual = typeof val === 'string' ? String(val) : ''
@@ -545,15 +575,15 @@ export function PolicyFormModal({
           }
         } else if (subj['role.level']) {
           values.roleMatchBy = 'level'
-          const roleLevelObj = subj['role.level']
+          const roleLevelObj = subj['role.level'] as Record<string, unknown> | unknown
           const detectedOp =
             typeof roleLevelObj === 'object' && roleLevelObj !== null
               ? Object.keys(roleLevelObj as object).find((k) => k.startsWith('$'))
               : undefined
           values.roleOperator = detectedOp || '$eq'
           const val =
-            detectedOp && (roleLevelObj as any)[detectedOp]
-              ? (roleLevelObj as any)[detectedOp]
+            detectedOp && (roleLevelObj as Record<string, unknown>)[detectedOp]
+              ? (roleLevelObj as Record<string, unknown>)[detectedOp]
               : roleLevelObj
           values.roleLevel = typeof val === 'number' ? String(val) : String(val)
         }
@@ -567,18 +597,18 @@ export function PolicyFormModal({
             : undefined
         if (deptNameKey) {
           values.deptMatchBy = 'name'
-          const deptNameObj = subj[deptNameKey]
+          const deptNameObj = subj[deptNameKey] as Record<string, unknown> | unknown
           const detectedOp =
             typeof deptNameObj === 'object' && deptNameObj !== null
               ? Object.keys(deptNameObj as object).find((k) => k.startsWith('$'))
               : undefined
           values.deptOperator = detectedOp || '$eq'
           const val =
-            detectedOp && (deptNameObj as any)[detectedOp]
-              ? (deptNameObj as any)[detectedOp]
+            detectedOp && (deptNameObj as Record<string, unknown>)[detectedOp]
+              ? (deptNameObj as Record<string, unknown>)[detectedOp]
               : deptNameObj
           if (Array.isArray(val)) {
-            values.deptValues = val.map((v: any) => String(v))
+            values.deptValues = val.map((v: unknown) => String(v as string))
             values.deptUseList = false
           } else {
             values.deptNameManual = typeof val === 'string' ? String(val) : ''
@@ -587,22 +617,22 @@ export function PolicyFormModal({
           }
         } else if (subj['department.code']) {
           values.deptMatchBy = 'code'
-          const deptCodeObj = subj['department.code']
+          const deptCodeObj = subj['department.code'] as Record<string, unknown> | unknown
           const detectedOp =
             typeof deptCodeObj === 'object' && deptCodeObj !== null
               ? Object.keys(deptCodeObj as object).find((k) => k.startsWith('$'))
               : undefined
           values.deptOperator = detectedOp || '$eq'
           const val =
-            detectedOp && (deptCodeObj as any)[detectedOp]
-              ? (deptCodeObj as any)[detectedOp]
+            detectedOp && (deptCodeObj as Record<string, unknown>)[detectedOp]
+              ? (deptCodeObj as Record<string, unknown>)[detectedOp]
               : deptCodeObj
           values.deptCodeFromList = typeof val === 'string' ? String(val) : ''
         }
       }
-      form.reset(values as any)
+      form.reset(values)
     } else {
-      form.reset(initialFormDefaults as any)
+      form.reset(initialFormDefaults)
       setSelectedConditions({})
       setConditionErrors({})
       setRoleArrayInput('')
@@ -633,7 +663,7 @@ export function PolicyFormModal({
         actions: data.actions ? data.actions.split(',').map((s) => s.trim()) : [],
       }
 
-      const subjectObj: Record<string, any> = {}
+      const subjectObj: Record<string, unknown> = {}
       if (data.includeRole) {
         const operator = data.roleOperator || '$eq'
         const opMeta = getOperatorByName(operator)
@@ -721,17 +751,20 @@ export function PolicyFormModal({
       }
 
       try {
-        const condObj: Record<string, any> = {}
+        const condObj: Record<string, Record<string, unknown>> = {}
         const entries = Object.entries(selectedConditions || {}) as Array<
           [string, { operator?: string; value?: string }]
         >
 
         entries.forEach(([id, info]) => {
           if (!info || !info.operator) return
-          const cond = (conditionsResp || []).find((c: any) => c.id === id)
+          const cond = (conditionsResp || []).find(
+            (c: unknown) => (c as Record<string, unknown>)?.id === id
+          ) as Record<string, unknown> | undefined
           if (!cond) return
-          const name = cond.name
-          let val: any = info.value
+          const name = String(cond.name ?? '')
+          if (!name) return
+          let val: unknown = info.value
           const dtype = String(cond.dataType || 'string')
           if (dtype === 'number') {
             const n = Number(val)
@@ -747,7 +780,8 @@ export function PolicyFormModal({
             } catch {}
           }
           if (!condObj[name]) condObj[name] = {}
-          condObj[name][info.operator as string] = val
+          const op = String(info.operator)
+          condObj[name][op] = val
         })
         parsed.conditions = condObj
       } catch {
@@ -1621,11 +1655,15 @@ export function PolicyFormModal({
                               resourceTypes.length === 0 && (
                                 <option disabled>No resource types found</option>
                               )}
-                            {resourceTypes.map((r: any) => (
-                              <option key={r.id || r.name} value={r.name}>
-                                {r.name}
-                              </option>
-                            ))}
+                            {resourceTypes.map((r: Record<string, unknown>) => {
+                              const key = String(r.id ?? r.name)
+                              const name = String(r.name ?? '')
+                              return (
+                                <option key={key} value={name}>
+                                  {name}
+                                </option>
+                              )
+                            })}
                           </select>
                         </FormControl>
                         {resourceTypesError && (
@@ -1676,30 +1714,32 @@ export function PolicyFormModal({
                 )}
 
                 <div className="space-y-3">
-                  {(conditionsResp || []).map((c: any) => {
+                  {(conditionsResp || []).map((c: PolicyCondition) => {
+                    const cid = String(c.id)
                     const dtype = String(c.dataType || 'string')
                     const ops =
                       filterOperatorsByType(dtype === 'number' ? 'number' : 'string') || []
-                    const sel = selectedConditions[c.id]
+                    const sel = selectedConditions[cid]
+
+                    const cname = String(c.name ?? '')
+                    const cdesc = c.description ? String(c.description) : undefined
 
                     return (
                       <div
-                        key={c.id}
+                        key={cid}
                         className="space-y-3 rounded-lg border border-purple-200 bg-white/60 p-4"
                       >
                         <div className="flex items-start gap-3">
                           <Checkbox
-                            checked={c.id in selectedConditions}
-                            onCheckedChange={() => toggleCondition(c.id)}
+                            checked={cid in selectedConditions}
+                            onCheckedChange={() => toggleCondition(cid)}
                             className="mt-1 data-[state=checked]:bg-purple-600"
                           />
                           <div className="flex-1">
                             <label className="cursor-pointer font-medium text-gray-800">
-                              {c.name}
+                              {cname}
                             </label>
-                            {c.description && (
-                              <p className="mt-0.5 text-xs text-gray-500">{c.description}</p>
-                            )}
+                            {cdesc && <p className="mt-0.5 text-xs text-gray-500">{cdesc}</p>}
                           </div>
                         </div>
 
@@ -1707,7 +1747,7 @@ export function PolicyFormModal({
                           <div className="ml-7 grid grid-cols-2 gap-3">
                             <select
                               value={sel.operator || ''}
-                              onChange={(e) => setConditionOperator(c.id, e.target.value)}
+                              onChange={(e) => setConditionOperator(cid, e.target.value)}
                               className="flex h-9 w-full rounded-md border border-gray-300 bg-white px-3 text-sm"
                             >
                               {ops.map((op) => (
@@ -1721,7 +1761,7 @@ export function PolicyFormModal({
                               <input
                                 type="datetime-local"
                                 value={sel.value || ''}
-                                onChange={(e) => setConditionValue(c.id, e.target.value)}
+                                onChange={(e) => setConditionValue(cid, e.target.value)}
                                 placeholder="YYYY-MM-DDThh:mm"
                                 className="flex h-9 w-full rounded-md border border-gray-300 bg-white px-3 text-sm"
                               />
@@ -1729,7 +1769,7 @@ export function PolicyFormModal({
                               <Input
                                 type="number"
                                 value={sel.value || ''}
-                                onChange={(e) => setConditionValue(c.id, e.target.value)}
+                                onChange={(e) => setConditionValue(cid, e.target.value)}
                                 placeholder="Số"
                                 className="h-9"
                               />
@@ -1737,14 +1777,14 @@ export function PolicyFormModal({
                               <Input
                                 type="text"
                                 value={sel.value || ''}
-                                onChange={(e) => setConditionValue(c.id, e.target.value)}
+                                onChange={(e) => setConditionValue(cid, e.target.value)}
                                 placeholder={
-                                  c.name === 'ipAddress'
+                                  cname === 'ipAddress'
                                     ? 'Ví dụ: 192.168.1.1, 2001:0db8::1'
                                     : 'Chuỗi'
                                 }
                                 title={
-                                  c.name === 'ipAddress'
+                                  cname === 'ipAddress'
                                     ? 'Cho phép nhiều IP, cách nhau bằng dấu phẩy. Hỗ trợ IPv4 và IPv6'
                                     : undefined
                                 }

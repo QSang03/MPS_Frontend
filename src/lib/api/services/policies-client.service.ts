@@ -77,7 +77,7 @@ export const policiesClientService = {
       return result as unknown as Policy
     } catch (err) {
       // Enhance error messages for debugging
-      const ae = err as { response?: { status?: number; data?: any }; message?: string }
+      const ae = err as { response?: { status?: number; data?: unknown }; message?: string }
       const status = ae.response?.status
       const detail = ae.response?.data || ae.message
       console.error('[policiesClientService] createPolicy error', status, detail)
@@ -97,7 +97,7 @@ export const policiesClientService = {
       if (result.data) return result.data
       return result as unknown as Policy
     } catch (err) {
-      const ae = err as { response?: { status?: number; data?: any }; message?: string }
+      const ae = err as { response?: { status?: number; data?: unknown }; message?: string }
       const status = ae.response?.status
       const detail = ae.response?.data || ae.message
       console.error('[policiesClientService] updatePolicy error', status, detail)

@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
 
     try {
       const data = await getWithRefresh(
-        request as any,
+        request,
         API_ENDPOINTS.POLICY_CONDITIONS,
         Object.keys(params).length ? params : undefined
       )
@@ -49,20 +49,24 @@ export async function GET(request: NextRequest) {
         )
       } catch {}
       return NextResponse.json(data)
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const e = err as { message?: string; status?: number } | undefined
       return NextResponse.json(
-        { error: err.message || 'Internal Server Error' },
-        { status: err.status || 500 }
+        { error: e?.message || 'Internal Server Error' },
+        { status: e?.status || 500 }
       )
     }
   } catch (error: unknown) {
     const err = error as
-      | { message?: string; response?: { status?: number; data?: any } }
+      | { message?: string; response?: { status?: number; data?: unknown } }
       | undefined
 
     console.error('API Route /api/policy-conditions GET error:', error)
     if (err?.response)
-      console.debug('[api/policy-conditions] backend response data:', err.response.data)
+      console.debug(
+        '[api/policy-conditions] backend response data:',
+        (err.response as { data?: unknown })?.data
+      )
     return NextResponse.json(
       { error: err?.message || 'Internal Server Error' },
       { status: err?.response?.status || 500 }

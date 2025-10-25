@@ -49,7 +49,7 @@ export function ProfileClient({ initialProfile }: ProfileClientProps) {
         }
       })()
     }
-  }, [])
+  }, [profile, router])
 
   if (!profile) {
     return (
@@ -71,15 +71,19 @@ export function ProfileClient({ initialProfile }: ProfileClientProps) {
     ? new Date(user.createdAt).toLocaleDateString('vi-VN')
     : new Date().toLocaleDateString('vi-VN')
 
-  // ✅ FIX: Access department from role or attributes
-  const departmentName =
-    (user as any).department?.name ||
-    user.role?.departmentId ||
-    (user.attributes as any)?.departmentName ||
-    'N/A'
+  // ✅ FIX: Access department from role or attributes (attributes values are unknown)
+  const attributes = user.attributes as Record<string, unknown> | undefined
+  const deptFromAttr =
+    typeof attributes?.departmentName === 'string' ? attributes.departmentName : undefined
+  const departmentName = deptFromAttr || user.role?.departmentId || 'N/A'
 
-  // ✅ FIX: Check isActive - may be in attributes or role
-  const isUserActive = (user as any).isActive ?? (user.attributes as any)?.isActive ?? true
+  // ✅ FIX: Check isActive - prefer role.isActive, then attributes.isActive if boolean, else default true
+  const isUserActive =
+    typeof user.role?.isActive === 'boolean'
+      ? user.role!.isActive
+      : typeof attributes?.isActive === 'boolean'
+        ? Boolean(attributes.isActive)
+        : true
 
   return (
     <div className="space-y-6">

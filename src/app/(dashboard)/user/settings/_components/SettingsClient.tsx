@@ -35,7 +35,7 @@ export function SettingsClient({ initialProfile, initialTab = 'account' }: Setti
     } catch {
       // ignore
     }
-  }, [])
+  }, [searchParams])
 
   useEffect(() => {
     if (!profile) {
@@ -56,7 +56,7 @@ export function SettingsClient({ initialProfile, initialTab = 'account' }: Setti
         }
       })()
     }
-  }, [])
+  }, [profile, router])
 
   // Form states
   const [firstName, setFirstName] = useState('')

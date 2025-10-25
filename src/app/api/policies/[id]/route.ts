@@ -18,10 +18,15 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     })
     return NextResponse.json(response.data)
   } catch (error: unknown) {
-    const err = error as { message?: string; response?: { status?: number } } | undefined
+    const err = error as
+      | { message?: string; response?: { status?: number; data?: unknown } }
+      | undefined
     console.error('API Route /api/policies/[id] GET error:', err?.response?.status || err?.message)
     if (err?.response)
-      console.debug('[api/policies/[id] GET] backend response data:', (err.response as any).data)
+      console.debug(
+        '[api/policies/[id] GET] backend response data:',
+        (err.response as { data?: unknown })?.data
+      )
     return NextResponse.json(
       { error: err?.message || 'Internal Server Error' },
       { status: err?.response?.status || 500 }
@@ -62,11 +67,18 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     return NextResponse.json(response.data)
   } catch (error: unknown) {
     const err = error as
-      | { message?: string; response?: { status?: number }; config?: { data?: unknown } }
+      | {
+          message?: string
+          response?: { status?: number; data?: unknown }
+          config?: { data?: unknown }
+        }
       | undefined
     console.error('API Route /api/policies/[id] PUT error:', err?.response?.status || err?.message)
     if (err?.response)
-      console.debug('[api/policies/[id] PUT] backend response data:', (err.response as any).data)
+      console.debug(
+        '[api/policies/[id] PUT] backend response data:',
+        (err.response as { data?: unknown })?.data
+      )
 
     if (err?.response?.status === 401) {
       try {
@@ -133,7 +145,9 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         )
         return NextResponse.json(retryResp.data)
       } catch (retryErr: unknown) {
-        const rerr = retryErr as { message?: string; response?: { status?: number } } | undefined
+        const rerr = retryErr as
+          | { message?: string; response?: { status?: number; data?: unknown } }
+          | undefined
         console.error('Retry after refresh failed:', rerr?.message)
         return NextResponse.json(
           { error: rerr?.message || 'Internal Server Error' },
@@ -164,13 +178,18 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     })
     return NextResponse.json(response.data)
   } catch (error: unknown) {
-    const err = error as { message?: string; response?: { status?: number } } | undefined
+    const err = error as
+      | { message?: string; response?: { status?: number; data?: unknown } }
+      | undefined
     console.error(
       'API Route /api/policies/[id] DELETE error:',
       err?.response?.status || err?.message
     )
     if (err?.response)
-      console.debug('[api/policies/[id] DELETE] backend response data:', (err.response as any).data)
+      console.debug(
+        '[api/policies/[id] DELETE] backend response data:',
+        (err.response as { data?: unknown })?.data
+      )
     return NextResponse.json(
       { error: err?.message || 'Internal Server Error' },
       { status: err?.response?.status || 500 }

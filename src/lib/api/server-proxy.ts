@@ -10,16 +10,16 @@ export async function getWithRefresh(
   let accessToken = cookieStore.get('access_token')?.value
   // Allow Authorization header as a fallback
   if (!accessToken) {
+    // Request should have headers.get available on the standard Request interface
     const authHeader =
-      (request as any).headers?.get?.('authorization') ||
-      (request as any).headers?.get?.('Authorization')
+      request.headers?.get('authorization') || request.headers?.get('Authorization')
     if (authHeader && String(authHeader).toLowerCase().startsWith('bearer ')) {
       accessToken = String(authHeader).slice(7).trim()
     }
   }
 
   if (!accessToken) {
-    const e: any = new Error('Unauthorized')
+    const e = new Error('Unauthorized') as Error & { status?: number }
     e.status = 401
     throw e
   }
@@ -30,14 +30,15 @@ export async function getWithRefresh(
       params: params && Object.keys(params).length ? params : undefined,
     })
     return resp.data
-  } catch (err: any) {
-    const status = err?.response?.status
+  } catch (err: unknown) {
+    const errObj = err as { response?: { status?: number; data?: unknown }; message?: string }
+    const status = errObj?.response?.status
     if (status === 401) {
       // attempt refresh
       try {
         const refreshToken = cookieStore.get('refresh_token')?.value
         if (!refreshToken) {
-          const e: any = new Error('Unauthorized')
+          const e = new Error('Unauthorized') as Error & { status?: number }
           e.status = 401
           throw e
         }
@@ -52,7 +53,7 @@ export async function getWithRefresh(
           cookieStore.delete('access_token')
           cookieStore.delete('refresh_token')
           cookieStore.delete('mps_session')
-          const e: any = new Error('Unauthorized')
+          const e = new Error('Unauthorized') as Error & { status?: number }
           e.status = 401
           throw e
         }
@@ -67,7 +68,7 @@ export async function getWithRefresh(
           cookieStore.delete('access_token')
           cookieStore.delete('refresh_token')
           cookieStore.delete('mps_session')
-          const e: any = new Error('Unauthorized')
+          const e = new Error('Unauthorized') as Error & { status?: number }
           e.status = 401
           throw e
         }
@@ -95,16 +96,19 @@ export async function getWithRefresh(
         })
         return retryResp.data
       } catch {
-        const e: any = new Error('Unauthorized')
+        const e = new Error('Unauthorized') as Error & { status?: number }
         e.status = 401
         throw e
       }
     }
 
     // other errors: rethrow with status if available
-    const e: any = new Error(err?.message || 'Backend error')
+    const e = new Error(errObj?.message || 'Backend error') as Error & {
+      status?: number
+      data?: unknown
+    }
     e.status = status || 500
-    e.data = err?.response?.data
+    e.data = errObj?.response?.data
     throw e
   }
 }

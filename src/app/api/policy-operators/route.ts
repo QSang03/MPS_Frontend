@@ -40,11 +40,14 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(response.data)
   } catch (error: unknown) {
     const err = error as
-      | { message?: string; response?: { status?: number; data?: any } }
+      | { message?: string; response?: { status?: number; data?: unknown } }
       | undefined
     console.error('API Route /api/policy-operators GET error:', error)
     if (err?.response)
-      console.debug('[api/policy-operators] backend response data:', err.response.data)
+      console.debug(
+        '[api/policy-operators] backend response data:',
+        (err.response as { data?: unknown })?.data
+      )
     return NextResponse.json(
       { error: err?.message || 'Internal Server Error' },
       { status: err?.response?.status || 500 }

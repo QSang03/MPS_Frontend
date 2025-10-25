@@ -11,7 +11,7 @@ function Input({
   ...props
 }: React.ComponentProps<'input'>) {
   // Normalize incoming value/defaultValue
-  const normalizedValue =
+  const normalizedValue: React.ComponentProps<'input'>['value'] =
     value === undefined ? (defaultValue === undefined ? '' : defaultValue) : value
 
   const shared = {
@@ -28,10 +28,10 @@ function Input({
   // If consumer provided onChange, render as controlled input with value.
   // Otherwise render as uncontrolled using defaultValue to avoid React warning about value without onChange.
   if (typeof onChange === 'function') {
-    return <input {...shared} value={normalizedValue as any} onChange={onChange} {...props} />
+    return <input {...shared} value={normalizedValue} onChange={onChange} {...props} />
   }
 
-  return <input {...shared} defaultValue={normalizedValue as any} {...props} />
+  return <input {...shared} defaultValue={normalizedValue} {...props} />
 }
 
 export { Input }

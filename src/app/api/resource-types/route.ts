@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(response.data)
     } catch (innerErr: unknown) {
       const ierr = innerErr as
-        | { response?: { status?: number; data?: any }; message?: string }
+        | { response?: { status?: number; data?: unknown }; message?: string }
         | undefined
       // If backend returned 401, attempt token refresh and retry once
       if (ierr?.response?.status === 401) {
@@ -119,10 +119,8 @@ export async function GET(request: NextRequest) {
           return NextResponse.json(retryResp.data)
         } catch (refreshErr: unknown) {
           // Suppress noisy stack traces for expected token-refresh failures and return 401
-          console.debug(
-            '[api/resource-types] token refresh or retry failed:',
-            (refreshErr as any)?.message
-          )
+          const r = refreshErr as { message?: string } | undefined
+          console.debug('[api/resource-types] token refresh or retry failed:', r?.message)
           return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
       }
@@ -130,7 +128,10 @@ export async function GET(request: NextRequest) {
       // Non-401 errors: log and return the backend status/message
       console.error('API Route /api/resource-types GET error:', ierr?.message || innerErr)
       if (ierr?.response)
-        console.debug('[api/resource-types] backend response data:', ierr.response.data)
+        console.debug(
+          '[api/resource-types] backend response data:',
+          (ierr.response as { data?: unknown })?.data
+        )
       return NextResponse.json(
         { error: ierr?.message || 'Internal Server Error' },
         { status: ierr?.response?.status || 500 }
@@ -138,11 +139,14 @@ export async function GET(request: NextRequest) {
     }
   } catch (error: unknown) {
     const err = error as
-      | { message?: string; response?: { status?: number; data?: any } }
+      | { message?: string; response?: { status?: number; data?: unknown } }
       | undefined
     console.error('API Route /api/resource-types GET error:', error)
     if (err?.response)
-      console.debug('[api/resource-types] backend response data:', err.response.data)
+      console.debug(
+        '[api/resource-types] backend response data:',
+        (err.response as { data?: unknown })?.data
+      )
     return NextResponse.json(
       { error: err?.message || 'Internal Server Error' },
       { status: err?.response?.status || 500 }
