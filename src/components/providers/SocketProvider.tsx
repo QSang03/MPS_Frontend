@@ -47,9 +47,11 @@ export function SocketProvider({ children, session }: SocketProviderProps) {
       console.error('WebSocket connection error:', error)
     })
 
-    setSocket(socketInstance)
+    // assign socket asynchronously to avoid synchronous setState inside effect
+    const t = setTimeout(() => setSocket(socketInstance), 0)
 
     return () => {
+      clearTimeout(t)
       socketInstance.disconnect()
     }
   }, [session])

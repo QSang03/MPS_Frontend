@@ -32,7 +32,7 @@ export function UserFormModal({ customerId = '' }: UserFormModalProps) {
       <DialogTrigger asChild>
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
           <Button className="gap-2 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 px-6 font-bold text-white shadow-lg transition-all duration-300 hover:from-purple-700 hover:to-pink-700 hover:shadow-xl">
-            <Plus className="h-5 w-5" />➕ Thêm người dùng
+            <Plus className="h-5 w-5" /> Thêm người dùng
           </Button>
         </motion.div>
       </DialogTrigger>
@@ -60,7 +60,7 @@ export function UserFormModal({ customerId = '' }: UserFormModalProps) {
                       <Users className="h-6 w-6 text-white" />
                     </div>
                     <DialogTitle className="text-2xl font-bold text-white">
-                      ➕ Tạo người dùng mới
+                      Tạo người dùng mới
                     </DialogTitle>
                   </div>
                   <DialogDescription className="text-sm font-medium text-pink-100">

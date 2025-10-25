@@ -30,6 +30,10 @@ export function DataTable<TData, TValue>({
   onPaginationChange,
   isLoading = false,
 }: DataTableProps<TData, TValue>) {
+  // `useReactTable` returns functions that cannot be safely memoized by React Compiler.
+  // Disable the incompatible-library rule here because TanStack Table intentionally returns
+  // functions (getHeaderGroups, getRowModel, etc.) which are used directly in render.
+  // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     data,
     columns,

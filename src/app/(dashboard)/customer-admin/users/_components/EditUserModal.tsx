@@ -163,7 +163,7 @@ export function EditUserModal({
                 <User className="h-6 w-6 text-white" />
               </div>
               <DialogTitle className="text-2xl font-bold text-white">
-                ✏️ Chỉnh sửa người dùng
+                Chỉnh sửa người dùng
               </DialogTitle>
             </div>
             <DialogDescription className="text-sm font-medium text-pink-100">

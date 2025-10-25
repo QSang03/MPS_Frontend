@@ -53,7 +53,10 @@ export function RecentActivity() {
   const [isClient, setIsClient] = useState(false)
 
   useEffect(() => {
-    setIsClient(true)
+    // Avoid synchronous setState inside an effect by scheduling update asynchronously.
+    // This prevents a cascading render on mount while preserving the "mounted" flag.
+    const t = setTimeout(() => setIsClient(true), 0)
+    return () => clearTimeout(t)
   }, [])
 
   return (

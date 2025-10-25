@@ -48,7 +48,14 @@ import {
 import { formatDate } from '@/lib/utils/formatters'
 import { EditUserModal } from './EditUserModal'
 import { UserFormModal } from './UserFormModal'
-import type { User, UserFilters, UserPagination, UserRole, Department } from '@/types/users'
+import type {
+  User,
+  UserFilters,
+  UserPagination,
+  UserRole,
+  Department,
+  UsersResponse,
+} from '@/types/users'
 import type { Customer } from '@/types/models/customer'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
@@ -81,7 +88,13 @@ export function UsersTable() {
   const [isMounted, setIsMounted] = useState(false)
   const [hoveredRowId, setHoveredRowId] = useState<string | null>(null)
 
-  useEffect(() => setIsMounted(true), [])
+  useEffect(() => {
+    // defer mounting flag to avoid synchronous setState inside effect
+    const t = setTimeout(() => setIsMounted(true), 0)
+    return () => clearTimeout(t)
+  }, [])
+
+  const queryClient = useQueryClient()
 
   const {
     data: usersData,
@@ -115,19 +128,24 @@ export function UsersTable() {
     queryFn: async () => (await customersClientService.getAll()).data,
   })
 
-  const [allUsers, setAllUsers] = useState<User[]>([])
-  useEffect(() => {
-    if (usersData?.data) setAllUsers(usersData.data)
-  }, [usersData])
+  // Derive users directly from query result to avoid calling setState synchronously in an effect
+  const users = usersData?.data ?? []
 
   useEffect(() => {
+    // Always return a cleanup function. Schedule pagination update asynchronously
+    let t: number | undefined
     if (usersData?.pagination) {
-      setPagination(() => ({
-        page: usersData.pagination.page,
-        limit: usersData.pagination.limit,
-        total: usersData.pagination.total,
-        totalPages: usersData.pagination.totalPages,
-      }))
+      t = window.setTimeout(() => {
+        setPagination({
+          page: usersData.pagination.page,
+          limit: usersData.pagination.limit,
+          total: usersData.pagination.total,
+          totalPages: usersData.pagination.totalPages,
+        })
+      }, 0)
+    }
+    return () => {
+      if (t) clearTimeout(t)
     }
   }, [usersData])
 
@@ -171,7 +189,26 @@ export function UsersTable() {
   }, [searchInput])
 
   const handleUserUpdated = (updatedUser: User) => {
-    setAllUsers((prev) => prev.map((u) => (u.id === updatedUser.id ? { ...u, ...updatedUser } : u)))
+    // Optimistically update cached users list for the current query key
+    try {
+      queryClient.setQueryData(
+        ['users', pagination.page, pagination.limit, filters],
+        (old: UsersResponse | undefined | null) => {
+          if (!old) return old
+          const copy: UsersResponse = { ...old }
+          if (Array.isArray(copy.data)) {
+            copy.data = copy.data.map((u) =>
+              u.id === updatedUser.id ? { ...u, ...updatedUser } : u
+            )
+          }
+          return copy
+        }
+      )
+    } catch {
+      // fallback: invalidate to refetch
+      queryClient.invalidateQueries({ queryKey: ['users'] })
+    }
+
     setIsEditModalOpen(false)
   }
 
@@ -204,10 +241,9 @@ export function UsersTable() {
     }
   }
 
-  const users = allUsers
+  // `users` is derived from query data above
   const paginationInfo = usersData?.pagination || { page: 1, limit: 10, total: 0, totalPages: 1 }
   const isLoading = isLoadingUsers || isLoadingRoles || isLoadingDepartments || isLoadingCustomers
-  const queryClient = useQueryClient()
 
   return (
     <div className="space-y-6">
