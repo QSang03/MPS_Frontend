@@ -344,6 +344,7 @@ export function RolesTable() {
                         )}
                       </TableCell>
                       <TableCell className="font-semibold whitespace-nowrap text-gray-600">
+                        &nbsp;&nbsp;&nbsp;
                         {new Date(role.createdAt).toLocaleDateString('vi-VN')}
                       </TableCell>
                       <TableCell>

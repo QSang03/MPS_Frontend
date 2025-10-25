@@ -342,6 +342,7 @@ export function DepartmentsTable() {
                         )}
                       </TableCell>
                       <TableCell className="font-semibold whitespace-nowrap text-gray-600">
+                        &nbsp;&nbsp;&nbsp;
                         {new Date(dept.createdAt).toLocaleDateString('vi-VN')}
                       </TableCell>
                       <TableCell>
