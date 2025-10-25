@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { policiesClientService } from '@/lib/api/services/policies-client.service'
 import type { Policy } from '@/types/policies'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import {
@@ -24,7 +24,22 @@ import {
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
-import { Edit, Trash2, Eye, Plus } from 'lucide-react'
+import {
+  Edit,
+  Trash2,
+  Eye,
+  Plus,
+  Search,
+  Filter,
+  Shield,
+  RefreshCw,
+  FileText,
+  Calendar,
+  CheckCircle2,
+  XCircle,
+  Zap,
+  Lock,
+} from 'lucide-react'
 import { DeleteDialog } from '@/components/shared/DeleteDialog'
 import { PolicyFormModal } from '@/app/(dashboard)/system-admin/policies/_components/PolicyFormModal'
 
@@ -35,7 +50,7 @@ export function PoliciesTable() {
   const [page, setPage] = useState(1)
   const [limit] = useState(10)
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, refetch } = useQuery({
     queryKey: ['policies', page, limit, search, effect, action],
     queryFn: () =>
       policiesClientService.getPolicies({
@@ -52,6 +67,7 @@ export function PoliciesTable() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingPolicy, setEditingPolicy] = useState<Policy | null>(null)
   const [isViewing, setIsViewing] = useState(false)
+  const [hoveredRowId, setHoveredRowId] = useState<string | null>(null)
 
   const openCreate = () => {
     setEditingPolicy(null)
@@ -103,119 +119,373 @@ export function PoliciesTable() {
   const pagination = data?.pagination || { page: 1, limit: 10, total: 0, totalPages: 1 }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Quản lý policies</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="mb-4 flex gap-4">
-          <Input
-            placeholder="Tìm kiếm tên policy"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-          <Select value={effect} onValueChange={setEffect}>
-            <SelectTrigger>
-              <SelectValue placeholder="Effect" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tất cả</SelectItem>
-              <SelectItem value="ALLOW">ALLOW</SelectItem>
-              <SelectItem value="DENY">DENY</SelectItem>
-            </SelectContent>
-          </Select>
-          <Input
-            placeholder="Filter by action (e.g. read)"
-            value={action}
-            onChange={(e) => setAction(e.target.value)}
-          />
-        </div>
-        <div className="mb-4 flex items-center justify-between">
-          <div className="flex-1" />
-          <div className="flex gap-2">
-            <Button variant="ghost" size="sm" onClick={openCreate}>
-              <Plus className="mr-2 h-4 w-4" /> Thêm policy
-            </Button>
-          </div>
+    <div className="overflow-hidden rounded-2xl border-0 bg-white shadow-2xl">
+      {/* PREMIUM HEADER */}
+      <div className="relative overflow-hidden border-0 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 p-0">
+        {/* Animated background shapes */}
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute top-0 left-0 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white"></div>
+          <div className="absolute right-0 bottom-0 h-96 w-96 translate-x-1/2 translate-y-1/2 rounded-full bg-white"></div>
         </div>
 
-        {isLoading ? (
-          <Skeleton className="h-12 w-full" />
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>STT</TableHead>
-                <TableHead>Tên</TableHead>
-                <TableHead>Effect</TableHead>
-                <TableHead>Actions</TableHead>
-                <TableHead>Ngày tạo</TableHead>
-                <TableHead>Hành động</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {policies.map((p, idx) => (
-                <TableRow key={p.id}>
-                  <TableCell>{(pagination.page - 1) * pagination.limit + idx + 1}</TableCell>
-                  <TableCell>{p.name}</TableCell>
-                  <TableCell>{p.effect}</TableCell>
-                  <TableCell>{(p.actions || []).join(', ')}</TableCell>
-                  <TableCell>
-                    {p.createdAt ? new Date(p.createdAt).toLocaleDateString() : '-'}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button size="sm" variant="ghost" onClick={() => openView(p)}>
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button size="sm" variant="ghost" onClick={() => openEdit(p)}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <DeleteDialog
-                        title="Xóa policy"
-                        description={`Bạn có chắc chắn muốn xóa policy "${p.name}" không?`}
-                        onConfirm={() => handleDelete(p.id)}
-                        trigger={
-                          <Button size="sm" variant="ghost">
-                            <Trash2 className="text-destructive h-4 w-4" />
+        <div className="relative flex items-center justify-between p-8">
+          <div className="flex items-center gap-4">
+            <div className="rounded-2xl border border-white/30 bg-white/20 p-4 shadow-xl backdrop-blur-lg">
+              <Shield className="h-8 w-8 animate-pulse text-white" />
+            </div>
+            <div className="text-white">
+              <h2 className="text-3xl font-bold tracking-tight">Quản lý Policies</h2>
+              <p className="mt-1 text-sm font-medium text-blue-100">
+                ⚡ {pagination.total} policies đang hoạt động
+              </p>
+            </div>
+          </div>
+
+          <Button
+            onClick={openCreate}
+            className="transform rounded-xl bg-white px-6 py-2 text-base font-bold text-blue-600 shadow-lg transition-all duration-300 hover:scale-105 hover:bg-blue-50 hover:shadow-2xl"
+          >
+            <Plus className="mr-2 h-5 w-5" />
+            Tạo Policy
+          </Button>
+        </div>
+      </div>
+
+      <CardContent className="space-y-6 bg-gradient-to-b from-gray-50 to-white p-8">
+        {/* FILTER SECTION - Premium Design */}
+        <div className="border-gradient-to-r space-y-4 rounded-2xl border-2 bg-white from-blue-200 to-purple-200 p-6 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl">
+          <div className="mb-5 flex items-center gap-2">
+            <div className="rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 p-2">
+              <Filter className="h-5 w-5 text-white" />
+            </div>
+            <h3 className="text-lg font-bold text-gray-800">Bộ lọc & Tìm kiếm</h3>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            {/* Search Input */}
+            <div className="group relative">
+              <Search className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-blue-400 transition-colors group-focus-within:text-blue-600" />
+              <Input
+                placeholder="🔍 Tìm kiếm policy..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="rounded-xl border-2 border-gray-200 bg-gradient-to-r from-gray-50 to-white py-2.5 pr-4 pl-12 text-base transition-all duration-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+              />
+            </div>
+
+            {/* Effect Filter */}
+            <div className="group relative">
+              <Select value={effect} onValueChange={setEffect}>
+                <SelectTrigger className="h-10 rounded-xl border-2 border-gray-200 bg-gradient-to-r from-gray-50 to-white text-base focus:border-purple-500 focus:ring-2 focus:ring-purple-200">
+                  <SelectValue placeholder="Chọn Effect" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">
+                    <span className="flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      Tất cả
+                    </span>
+                  </SelectItem>
+                  <SelectItem value="ALLOW">
+                    <span className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                      ALLOW
+                    </span>
+                  </SelectItem>
+                  <SelectItem value="DENY">
+                    <span className="flex items-center gap-2">
+                      <XCircle className="h-4 w-4 text-red-600" />
+                      DENY
+                    </span>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Action Filter */}
+            <div className="relative flex gap-2">
+              <Input
+                placeholder="🎯 Lọc theo action..."
+                value={action}
+                onChange={(e) => setAction(e.target.value)}
+                className="rounded-xl border-2 border-gray-200 bg-gradient-to-r from-gray-50 to-white py-2.5 pr-4 pl-4 text-base transition-all duration-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+              />
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => refetch()}
+                className="h-10 w-10 rounded-xl border-2 border-gray-200 transition-all duration-300 hover:border-blue-400 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50"
+                title="Làm mới dữ liệu"
+              >
+                <RefreshCw className="animate-spin-slow h-5 w-5" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Active Filters */}
+          {(search || effect !== 'all' || action) && (
+            <div className="flex items-center gap-3 border-t-2 border-gray-100 pt-4">
+              <span className="text-xs font-bold tracking-wider text-gray-600 uppercase">
+                Bộ lọc:
+              </span>
+              {search && (
+                <span className="inline-flex items-center gap-2 rounded-full border border-blue-300 bg-gradient-to-r from-blue-100 to-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700 shadow-sm">
+                  🔍 "{search}"
+                  <button
+                    onClick={() => setSearch('')}
+                    className="transition-transform hover:scale-110 hover:text-blue-900"
+                  >
+                    <XCircle className="h-3.5 w-3.5" />
+                  </button>
+                </span>
+              )}
+              {effect !== 'all' && (
+                <span className="inline-flex items-center gap-2 rounded-full border border-purple-300 bg-gradient-to-r from-purple-100 to-purple-50 px-3 py-1.5 text-xs font-bold text-purple-700 shadow-sm">
+                  {effect === 'ALLOW' ? '✓' : '✗'} {effect}
+                  <button
+                    onClick={() => setEffect('all')}
+                    className="transition-transform hover:scale-110 hover:text-purple-900"
+                  >
+                    <XCircle className="h-3.5 w-3.5" />
+                  </button>
+                </span>
+              )}
+              {action && (
+                <span className="inline-flex items-center gap-2 rounded-full border border-emerald-300 bg-gradient-to-r from-emerald-100 to-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700 shadow-sm">
+                  🎯 {action}
+                  <button
+                    onClick={() => setAction('')}
+                    className="transition-transform hover:scale-110 hover:text-emerald-900"
+                  >
+                    <XCircle className="h-3.5 w-3.5" />
+                  </button>
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* TABLE SECTION - Premium */}
+        <div className="overflow-hidden rounded-2xl border-2 border-gray-200 bg-white shadow-lg transition-all duration-300 hover:shadow-xl">
+          {isLoading ? (
+            <div className="space-y-4 p-8">
+              <Skeleton className="h-14 w-full rounded-xl" />
+              <Skeleton className="h-14 w-full rounded-xl" />
+              <Skeleton className="h-14 w-full rounded-xl" />
+              <Skeleton className="h-14 w-full rounded-xl" />
+            </div>
+          ) : policies.length === 0 ? (
+            <div className="p-16 text-center">
+              <div className="mb-4 mb-6 inline-flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200">
+                <Lock className="h-10 w-10 text-gray-400" />
+              </div>
+              <h3 className="mb-2 text-2xl font-bold text-gray-700">Không có policy nào</h3>
+              <p className="mb-8 text-base text-gray-500">
+                {search || effect !== 'all' || action
+                  ? '🔍 Thử điều chỉnh bộ lọc hoặc tạo policy mới'
+                  : '🚀 Bắt đầu bằng cách tạo policy đầu tiên'}
+              </p>
+              <Button
+                onClick={openCreate}
+                className="transform rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 px-8 py-3 font-bold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:from-blue-700 hover:to-purple-700 hover:shadow-xl"
+              >
+                <Plus className="mr-2 h-5 w-5" />
+                Tạo Policy Đầu Tiên
+              </Button>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table className="min-w-full">
+                <TableHeader className="border-b-2 border-gray-200 bg-gradient-to-r from-gray-100 via-blue-50 to-purple-50">
+                  <TableRow>
+                    <TableHead className="w-[80px] text-center font-bold text-gray-700">
+                      STT
+                    </TableHead>
+                    <TableHead className="min-w-[250px] font-bold text-gray-700">
+                      <div className="flex items-center gap-2">
+                        <FileText className="h-5 w-5 text-blue-600" />
+                        Policy
+                      </div>
+                    </TableHead>
+                    <TableHead className="w-[150px] font-bold text-gray-700">
+                      <div className="flex items-center gap-2">
+                        <Lock className="h-5 w-5 text-purple-600" />
+                        Tình trạng
+                      </div>
+                    </TableHead>
+                    <TableHead className="min-w-[220px] font-bold text-gray-700">
+                      <div className="flex items-center gap-2">
+                        <Zap className="h-5 w-5 text-amber-600" />
+                        Quyền
+                      </div>
+                    </TableHead>
+                    <TableHead className="w-[160px] text-center font-bold text-gray-700">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-5 w-5 text-pink-600" />
+                        Ngày tạo
+                      </div>
+                    </TableHead>
+                    <TableHead className="w-[150px] text-center font-bold text-gray-700">
+                      ⚙️ Thao tác
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {policies.map((p, idx) => (
+                    <TableRow
+                      key={p.id}
+                      onMouseEnter={() => setHoveredRowId(p.id)}
+                      onMouseLeave={() => setHoveredRowId(null)}
+                      className={`border-b border-gray-100 transition-all duration-300 ${
+                        hoveredRowId === p.id
+                          ? 'bg-gradient-to-r from-blue-50/80 via-purple-50/50 to-pink-50/30 shadow-md'
+                          : 'hover:bg-gray-50'
+                      }`}
+                    >
+                      <TableCell className="text-center text-base font-bold text-gray-600">
+                        <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-r from-blue-100 to-purple-100 text-blue-700">
+                          {(pagination.page - 1) * pagination.limit + idx + 1}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-base break-words text-gray-800">{p.name}</span>
+                      </TableCell>
+                      <TableCell>
+                        {p.effect === 'ALLOW' ? (
+                          <span className="inline-flex transform items-center gap-2 rounded-xl border-2 border-emerald-300 bg-gradient-to-r from-emerald-100 to-emerald-50 px-4 py-2 text-xs font-bold whitespace-nowrap text-emerald-700 shadow-sm transition-all duration-300 hover:scale-105 hover:shadow-md">
+                            <CheckCircle2 className="h-4 w-4" />
+                            Họat động
+                          </span>
+                        ) : (
+                          <span className="inline-flex transform items-center gap-2 rounded-xl border-2 border-red-300 bg-gradient-to-r from-red-100 to-red-50 px-4 py-2 text-xs font-bold whitespace-nowrap text-red-700 shadow-sm transition-all duration-300 hover:scale-105 hover:shadow-md">
+                            <XCircle className="h-4 w-4" />
+                            Khóa
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-2">
+                          {(p.actions || []).length > 0 ? (
+                            <>
+                              {(p.actions || []).slice(0, 3).map((act, i) => (
+                                <span
+                                  key={i}
+                                  className="inline-flex items-center rounded-lg border-2 border-blue-300 bg-gradient-to-r from-blue-100 to-blue-50 px-3 py-1.5 text-xs font-bold whitespace-nowrap text-blue-700 shadow-sm transition-all duration-300 hover:scale-105 hover:shadow-md"
+                                >
+                                  {act}
+                                </span>
+                              ))}
+                              {(p.actions || []).length > 3 && (
+                                <span className="inline-flex items-center rounded-lg border-2 border-gray-300 bg-gradient-to-r from-gray-100 to-gray-50 px-3 py-1.5 text-xs font-bold whitespace-nowrap text-gray-700 shadow-sm">
+                                  +{(p.actions || []).length - 3}
+                                </span>
+                              )}
+                            </>
+                          ) : (
+                            <span className="text-xs font-medium text-gray-400 italic">—</span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-semibold whitespace-nowrap text-gray-600">
+                        &nbsp;&nbsp;&nbsp;
+                        {p.createdAt ? new Date(p.createdAt).toLocaleDateString('vi-VN') : '—'}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center justify-end gap-1.5">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => openView(p)}
+                            className="transform rounded-lg transition-all duration-300 hover:scale-110 hover:bg-blue-100 hover:text-blue-700"
+                            title="Xem chi tiết"
+                          >
+                            <Eye className="h-4 w-4" />
                           </Button>
-                        }
-                      />
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-
-        <div className="mt-4 flex items-center justify-between">
-          <span>
-            Hiển thị {policies.length} / {pagination.total} policies
-          </span>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage(page - 1)}
-              disabled={page <= 1}
-            >
-              Trước
-            </Button>
-            <span>
-              Trang {pagination.page} / {pagination.totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage(page + 1)}
-              disabled={page >= pagination.totalPages}
-            >
-              Sau
-            </Button>
-          </div>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => openEdit(p)}
+                            className="transform rounded-lg transition-all duration-300 hover:scale-110 hover:bg-purple-100 hover:text-purple-700"
+                            title="Chỉnh sửa"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <DeleteDialog
+                            title="Xóa policy"
+                            description={`Bạn có chắc chắn muốn xóa policy "${p.name}" không?\n\nHành động này không thể hoàn tác.`}
+                            onConfirm={() => handleDelete(p.id)}
+                            trigger={
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="transform rounded-lg transition-all duration-300 hover:scale-110 hover:bg-red-100 hover:text-red-700"
+                                title="Xóa"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            }
+                          />
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </div>
+
+        {/* PAGINATION - Premium */}
+        {policies.length > 0 && (
+          <div className="border-gradient-to-r flex items-center justify-between rounded-2xl border-2 bg-gradient-to-r from-blue-200 from-white via-blue-50 to-purple-50 to-purple-200 p-5 shadow-lg transition-all duration-300 hover:shadow-xl">
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-bold tracking-widest text-gray-600 uppercase">
+                Hiển thị
+              </span>
+              <div className="rounded-xl border-2 border-blue-300 bg-gradient-to-r from-blue-100 to-purple-100 px-4 py-2">
+                <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-sm font-bold text-transparent">
+                  {policies.length}
+                </span>
+                <span className="text-sm text-gray-500"> / </span>
+                <span className="text-sm font-bold text-gray-700">{pagination.total}</span>
+              </div>
+              <span className="text-xs font-semibold text-gray-600">policies</span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage(page - 1)}
+                disabled={page <= 1}
+                className="transform rounded-lg border-2 border-gray-300 font-bold transition-all duration-300 hover:scale-105 hover:border-blue-400 hover:bg-blue-100 hover:text-blue-700 disabled:opacity-50"
+              >
+                ← Trước
+              </Button>
+
+              <div className="flex items-center gap-2 rounded-xl border-2 border-blue-300 bg-white px-5 py-2 shadow-md">
+                <span className="text-xs font-bold text-gray-600">Trang</span>
+                <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-base font-bold text-transparent">
+                  {pagination.page}
+                </span>
+                <span className="text-xs text-gray-400">/</span>
+                <span className="text-base font-bold text-gray-800">{pagination.totalPages}</span>
+              </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage(page + 1)}
+                disabled={page >= pagination.totalPages}
+                className="transform rounded-lg border-2 border-gray-300 font-bold transition-all duration-300 hover:scale-105 hover:border-purple-400 hover:bg-purple-100 hover:text-purple-700 disabled:opacity-50"
+              >
+                Sau →
+              </Button>
+            </div>
+          </div>
+        )}
       </CardContent>
+
       <PolicyFormModal
         isOpen={isModalOpen}
         onClose={() => {
@@ -226,10 +496,9 @@ export function PoliciesTable() {
         initialData={editingPolicy}
         viewOnly={isViewing}
         onRequestEdit={() => {
-          // parent will switch modal from view-only to edit mode
           setIsViewing(false)
         }}
       />
-    </Card>
+    </div>
   )
 }

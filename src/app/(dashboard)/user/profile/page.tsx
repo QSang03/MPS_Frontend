@@ -1,5 +1,4 @@
 import { getSession } from '@/lib/auth/session'
-import { getUserProfileForClient } from '@/lib/auth/server-actions'
 import { redirect } from 'next/navigation'
 import { ROUTES } from '@/constants/routes'
 import { ProfileClient } from './_components/ProfileClient'
@@ -11,8 +10,9 @@ export default async function ProfilePage() {
     redirect(ROUTES.LOGIN)
   }
 
-  // Get user profile
-  const profile = await getUserProfileForClient()
+  // Note: Do not attempt to refresh tokens during server render (cookies cannot be modified here).
+  // Fetching the profile is done on the client via a Server Action which can refresh tokens and update cookies.
+  const profile = null
 
   return (
     <div className="space-y-6">

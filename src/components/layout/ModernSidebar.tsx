@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils/cn'
 import { Button } from '@/components/ui/button'
-import { UserCircle, ChevronLeft, Sparkles, LogOut, Printer } from 'lucide-react'
+import { ChevronLeft, LogOut, Printer, Zap, Shield } from 'lucide-react'
 import type { Session } from '@/types/auth'
 import { useUIStore } from '@/lib/store/uiStore'
 import { logout } from '@/app/actions/auth'
@@ -56,8 +56,7 @@ function getNavigationItems(role: UserRole): NavItem[] {
         icon: ShoppingCart,
       },
       { label: 'Người dùng', href: ROUTES.CUSTOMER_ADMIN_USERS, icon: Users },
-      { label: 'Quản lý policies', href: ROUTES.CUSTOMER_ADMIN_POLICIES, icon: FileText },
-      // Temporary: show roles & departments to all accounts
+      { label: 'Quản lý policies', href: ROUTES.CUSTOMER_ADMIN_POLICIES, icon: Shield },
       { label: 'Quản lý vai trò', href: ROUTES.CUSTOMER_ADMIN_ROLES, icon: Settings },
       { label: 'Quản lý bộ phận', href: ROUTES.CUSTOMER_ADMIN_DEPARTMENTS, icon: Building2 },
       { label: 'Báo cáo', href: ROUTES.CUSTOMER_ADMIN_REPORTS, icon: BarChart3 },
@@ -107,51 +106,51 @@ export function ModernSidebar({ session }: SidebarProps) {
         }}
         transition={{ type: 'spring', damping: 25 }}
         className={cn(
-          'bg-background shadow-soft-xl fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r transition-transform duration-200 lg:static lg:translate-x-0',
-          'bg-gradient-to-b from-white to-neutral-50 dark:from-neutral-900 dark:to-neutral-950'
+          'fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-gray-200 transition-transform duration-300 lg:static lg:translate-x-0',
+          'bg-gradient-to-b from-white via-blue-50/20 to-white shadow-xl lg:shadow-lg'
         )}
       >
-        {/* Logo với Gradient */}
-        <div className="flex h-20 items-center gap-3 border-b px-6">
-          <div className="from-brand-500 to-brand-600 shadow-glow flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br">
-            <Printer className="h-6 w-6 text-white" />
+        {/* Logo Header - Premium Design */}
+        <motion.div
+          className="relative overflow-hidden border-b border-gray-200 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 p-0"
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          {/* Animated background shapes */}
+          <div className="absolute inset-0 opacity-20">
+            <div className="absolute top-0 right-0 h-40 w-40 translate-x-1/2 -translate-y-1/2 rounded-full bg-white"></div>
+            <div className="absolute bottom-0 left-0 h-32 w-32 -translate-x-1/2 translate-y-1/2 rounded-full bg-white"></div>
           </div>
-          <div className="flex-1">
-            <h1 className="font-display text-x font-bold text-orange-600 dark:text-orange-400">
-              CHÍNH NHÂN TECHNOLOGY
-            </h1>
-            <p className="text-brand-600 dark:text-brand-400 text-xs font-bold">
-              MPS - Managed Print Services
-            </p>
-          </div>
-          <Button variant="ghost" size="sm" className="lg:hidden" onClick={toggleSidebar}>
-            <ChevronLeft className="h-5 w-5" />
-          </Button>
-        </div>
 
-        {/* User Profile Card */}
-        <div className="from-brand-500 to-brand-600 shadow-soft-xl m-4 rounded-2xl bg-gradient-to-br p-4 text-white">
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
-              <UserCircle className="h-7 w-7" />
+          <div className="relative flex items-center justify-between gap-3 px-6 py-6">
+            <div className="flex min-w-0 flex-1 items-center gap-3">
+              <motion.div
+                className="flex-shrink-0 rounded-xl border border-white/30 bg-white/20 p-2.5 shadow-lg backdrop-blur-lg"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Printer className="h-6 w-6 text-white" />
+              </motion.div>
+              <div className="min-w-0 flex-1">
+                <h1 className="truncate text-sm font-bold text-white">MPS</h1>
+                <p className="truncate text-xs font-medium text-blue-100">CHÍNH NHÂN TECHNOLOGY</p>
+              </div>
             </div>
-            <div className="flex-1 overflow-hidden">
-              <p className="truncate font-semibold">{session.username}</p>
-              <p className="text-brand-100 truncate text-sm">{session.role}</p>
-            </div>
-            <motion.div
-              animate={{ rotate: [0, 10, -10, 0] }}
-              transition={{ duration: 2, repeat: Infinity }}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="flex-shrink-0 text-white hover:bg-white/20 lg:hidden"
+              onClick={toggleSidebar}
             >
-              <Sparkles className="text-brand-200 h-5 w-5" />
-            </motion.div>
+              <ChevronLeft className="h-5 w-5" />
+            </Button>
           </div>
-        </div>
+        </motion.div>
 
-        {/* Navigation */}
-        <nav className="flex-1 space-y-1 overflow-y-auto px-4">
+        {/* Navigation - Enhanced */}
+        <nav className="scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 flex-1 space-y-1.5 overflow-y-auto px-4 py-4">
           {navigation.map((item, index) => {
-            // Add submenu if this is the devices section and we have a current device
             const itemWithSubmenu = {
               ...item,
               submenu:
@@ -170,24 +169,51 @@ export function ModernSidebar({ session }: SidebarProps) {
                         : undefined,
             }
 
-            return <SidebarNavItem key={item.href} item={itemWithSubmenu} index={index} />
+            return (
+              <motion.div
+                key={item.href}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3, delay: index * 0.05 }}
+              >
+                <SidebarNavItem item={itemWithSubmenu} index={index} />
+              </motion.div>
+            )
           })}
         </nav>
 
-        {/* Footer */}
-        <div className="border-t p-4">
-          <button
+        {/* Divider */}
+        <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent" />
+
+        {/* Footer Section - Premium */}
+        <motion.div
+          className="space-y-3 border-t border-gray-200 bg-gradient-to-b from-white to-gray-50 p-4"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          {/* Logout Button */}
+          <motion.button
             onClick={handleLogout}
-            className="hover:bg-error-50 hover:text-error-600 dark:hover:bg-error-950 flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-neutral-700 transition-all dark:text-neutral-300"
+            className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-red-600 transition-all duration-300 hover:bg-red-50"
+            whileHover={{ scale: 1.02, x: 4 }}
+            whileTap={{ scale: 0.98 }}
           >
-            <LogOut className="h-5 w-5" />
-            Đăng xuất
-          </button>
-          <p className="text-muted-foreground mt-4 text-center text-xs">
-            MPS v1.0.0
-            <br />© 2025 All rights reserved
-          </p>
-        </div>
+            <LogOut className="h-5 w-5 flex-shrink-0" />
+            <span className="flex-1 text-left">Đăng xuất</span>
+          </motion.button>
+
+          {/* Footer Info - Premium Card */}
+          <div className="rounded-lg border-2 border-gray-100 bg-white p-3">
+            <div className="flex items-start gap-2">
+              <Zap className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-500" />
+              <div>
+                <p className="text-xs font-bold text-gray-800">MPS v1.0.0</p>
+                <p className="mt-0.5 text-xs text-gray-500">© 2025 Chính Nhân Technology</p>
+              </div>
+            </div>
+          </div>
+        </motion.div>
       </motion.aside>
     </>
   )

@@ -8,7 +8,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
@@ -38,7 +37,7 @@ import {
 import type { User as UserType, UserRole, Department } from '@/types/users'
 import { toast } from 'sonner'
 
-// Validation schema for editing user (include customerId)
+// Validation schema for editing user
 const editUserSchema = z.object({
   email: z.string().min(1, 'Email là bắt buộc').email('Email không hợp lệ'),
   roleId: z.string().min(1, 'Vai trò là bắt buộc'),
@@ -53,9 +52,7 @@ interface EditUserModalProps {
   isOpen: boolean
   onClose: () => void
   onUserUpdated: (updatedUser: UserType) => void
-  // customerCodes: array of customer.code strings (for display)
   customerCodes?: string[]
-  // mapping from code -> id (derived by parent)
   customerCodeToId?: Record<string, string>
 }
 
@@ -120,13 +117,13 @@ export function EditUserModal({
 
     setIsLoading(true)
     try {
-      // Ensure we send a proper customerId (if the form value is a code, map it to id)
+      // Ensure we send a proper customerId
       let customerIdToSend: string | undefined = data.customerId || undefined
       if (customerIdToSend && customerCodeToId[customerIdToSend]) {
         customerIdToSend = customerCodeToId[customerIdToSend]
       }
 
-      // Update user - API PUT returns full user object with role & department populated
+      // Update user
       const updatedUser = await updateUserForClient(user.id, {
         email: data.email,
         roleId: data.roleId,
@@ -134,12 +131,12 @@ export function EditUserModal({
         customerId: customerIdToSend,
       })
 
-      toast.success('Cập nhật thông tin người dùng thành công')
+      toast.success('✅ Cập nhật thông tin người dùng thành công')
       onUserUpdated(updatedUser)
       onClose()
     } catch (error) {
       console.error('Error updating user:', error)
-      toast.error('Có lỗi xảy ra khi cập nhật thông tin người dùng')
+      toast.error('❌ Có lỗi xảy ra khi cập nhật thông tin người dùng')
     } finally {
       setIsLoading(false)
     }
@@ -152,155 +149,204 @@ export function EditUserModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <User className="h-5 w-5" />
-            Chỉnh sửa thông tin người dùng
-          </DialogTitle>
-          <DialogDescription>Cập nhật thông tin và phân quyền cho người dùng</DialogDescription>
+      <DialogContent className="max-w-[550px] overflow-hidden rounded-2xl border-0 p-0 shadow-2xl">
+        {/* Premium Header */}
+        <DialogHeader className="relative overflow-hidden bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 p-0">
+          {/* Animated background shapes */}
+          <div className="absolute inset-0 opacity-20">
+            <div className="absolute top-0 right-0 h-40 w-40 translate-x-1/2 -translate-y-1/2 rounded-full bg-white"></div>
+          </div>
+
+          <div className="relative px-8 py-6">
+            <div className="mb-2 flex items-center gap-3">
+              <div className="rounded-xl border border-white/30 bg-white/20 p-2.5 backdrop-blur-lg">
+                <User className="h-6 w-6 text-white" />
+              </div>
+              <DialogTitle className="text-2xl font-bold text-white">
+                ✏️ Chỉnh sửa người dùng
+              </DialogTitle>
+            </div>
+            <DialogDescription className="text-sm font-medium text-pink-100">
+              Cập nhật thông tin và phân quyền cho người dùng
+            </DialogDescription>
+          </div>
         </DialogHeader>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {/* Email Field */}
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center gap-2">
-                    <Mail className="h-4 w-4" />
-                    Email
-                  </FormLabel>
-                  <FormControl>
-                    <Input placeholder="Nhập email người dùng" type="email" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Role Field */}
-            <FormField
-              control={form.control}
-              name="roleId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center gap-2">
-                    <Shield className="h-4 w-4" />
-                    Vai trò
-                  </FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+        {/* Form Content */}
+        <div className="space-y-5 bg-gradient-to-b from-gray-50 to-white px-8 py-6">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+              {/* Email Field */}
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2 text-sm font-bold text-gray-800">
+                      <Mail className="h-4 w-4 text-purple-600" />
+                      Email *
+                    </FormLabel>
                     <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Chọn vai trò" />
-                      </SelectTrigger>
+                      <Input
+                        placeholder="Nhập email người dùng"
+                        type="email"
+                        {...field}
+                        className="h-10 rounded-lg border-2 border-gray-200 text-base transition-all focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                      />
                     </FormControl>
-                    <SelectContent>
-                      {roles.map((role) => (
-                        <SelectItem key={role.id} value={role.id}>
-                          <div className="flex w-full items-center justify-between">
-                            <span>{role.name}</span>
-                            <span className="text-muted-foreground ml-2 text-sm">
-                              Level {role.level}
+                    <FormMessage className="mt-1 text-xs text-red-600" />
+                  </FormItem>
+                )}
+              />
+
+              {/* Grid: Role + Department */}
+              <div className="grid grid-cols-2 gap-4">
+                {/* Role Field */}
+                <FormField
+                  control={form.control}
+                  name="roleId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2 text-sm font-bold text-gray-800">
+                        <Shield className="h-4 w-4 text-pink-600" />
+                        Vai trò *
+                      </FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="h-10 rounded-lg border-2 border-gray-200 transition-all focus:border-pink-500 focus:ring-2 focus:ring-pink-200">
+                            <SelectValue placeholder="Chọn vai trò" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {roles.map((role) => (
+                            <SelectItem key={role.id} value={role.id}>
+                              <div className="flex items-center gap-2">
+                                <span className="font-semibold">{role.name}</span>
+                                <span className="text-sm text-gray-500">Level {role.level}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage className="mt-1 text-xs text-red-600" />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Department Field */}
+                <FormField
+                  control={form.control}
+                  name="departmentId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2 text-sm font-bold text-gray-800">
+                        <Building className="h-4 w-4 text-rose-600" />
+                        Phòng ban *
+                      </FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="h-10 rounded-lg border-2 border-gray-200 transition-all focus:border-rose-500 focus:ring-2 focus:ring-rose-200">
+                            <SelectValue placeholder="Chọn phòng ban">
+                              {field.value && departments.find((d) => d.id === field.value) && (
+                                <div className="flex items-center gap-1">
+                                  <span>{departments.find((d) => d.id === field.value)?.name}</span>
+                                  <span className="text-xs text-gray-500">
+                                    ({departments.find((d) => d.id === field.value)?.code})
+                                  </span>
+                                </div>
+                              )}
+                            </SelectValue>
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {departments.map((department) => (
+                            <SelectItem key={department.id} value={department.id}>
+                              <div className="flex items-center gap-2">
+                                <span className="font-semibold">{department.name}</span>
+                                <span className="text-xs text-gray-500">({department.code})</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage className="mt-1 text-xs text-red-600" />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Customer Field */}
+              <FormField
+                control={form.control}
+                name="customerId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2 text-sm font-bold text-gray-800">
+                      <span className="text-lg">🏪</span>
+                      Mã khách hàng *
+                    </FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="h-10 rounded-lg border-2 border-gray-200 transition-all focus:border-amber-500 focus:ring-2 focus:ring-amber-200">
+                          <SelectValue placeholder="Chọn mã khách hàng">
+                            {field.value &&
+                              Object.entries(customerCodeToId).find(
+                                ([, id]) => id === field.value
+                              )?.[0]}
+                          </SelectValue>
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {customerCodes.map((code) => (
+                          <SelectItem key={code} value={customerCodeToId[code] || code}>
+                            <span className="inline-block rounded bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700">
+                              {code}
                             </span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage className="mt-1 text-xs text-red-600" />
+                  </FormItem>
+                )}
+              />
 
-            {/* Department Field */}
-            <FormField
-              control={form.control}
-              name="departmentId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center gap-2">
-                    <Building className="h-4 w-4" />
-                    Phòng ban
-                  </FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Chọn phòng ban">
-                          {field.value && departments.find((d) => d.id === field.value) && (
-                            <div className="flex items-center gap-2">
-                              <span>{departments.find((d) => d.id === field.value)?.name}</span>
-                              <span className="text-muted-foreground text-sm">
-                                ({departments.find((d) => d.id === field.value)?.code})
-                              </span>
-                            </div>
-                          )}
-                        </SelectValue>
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {departments.map((department) => (
-                        <SelectItem key={department.id} value={department.id}>
-                          <div className="flex flex-row items-center gap-2">
-                            <span>{department.name}</span>
-                            <span className="text-muted-foreground text-sm">
-                              ({department.code})
-                            </span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              {/* Info card */}
+              <div className="rounded-lg border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-purple-50 p-4">
+                <p className="text-xs text-gray-700">
+                  <span className="font-bold text-blue-700">💡 Tip:</span> Các thay đổi sẽ được lưu
+                  ngay khi bạn nhấn "Cập nhật".
+                </p>
+              </div>
 
-            {/* Customer Field (show code, store id) */}
-            <FormField
-              control={form.control}
-              name="customerId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center gap-2">Mã khách hàng</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Chọn mã khách hàng">
-                          {/* show selected code by reverse lookup */}
-                          {field.value &&
-                            Object.entries(customerCodeToId).find(
-                              ([, id]) => id === field.value
-                            )?.[0]}
-                        </SelectValue>
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {customerCodes.map((code) => (
-                        <SelectItem key={code} value={customerCodeToId[code] || code}>
-                          {code}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <DialogFooter className="gap-2">
-              <Button type="button" variant="outline" onClick={handleClose}>
-                Hủy
-              </Button>
-              <Button type="submit" disabled={isLoading}>
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Cập nhật
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+              {/* Form Footer */}
+              <div className="mt-6 flex gap-3 border-t-2 border-gray-100 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleClose}
+                  className="flex-1 rounded-lg border-2 border-gray-300 font-medium transition-all hover:border-gray-400 hover:bg-gray-50"
+                >
+                  Hủy
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isLoading}
+                  className="min-w-[120px] flex-1 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 font-bold text-white shadow-lg transition-all hover:from-purple-700 hover:to-pink-700 hover:shadow-xl disabled:opacity-50"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Đang xử lý...
+                    </>
+                  ) : (
+                    <>💾 Cập nhật</>
+                  )}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </div>
       </DialogContent>
     </Dialog>
   )

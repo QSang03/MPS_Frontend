@@ -22,14 +22,25 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Loader2, Settings } from 'lucide-react'
+import {
+  Loader2,
+  Settings,
+  X,
+  Plus,
+  Shield,
+  Users,
+  Building2,
+  FileCode,
+  Filter,
+  AlertCircle,
+  CheckCircle2,
+} from 'lucide-react'
 import type { Policy } from '@/types/policies'
 import { useQuery } from '@tanstack/react-query'
 import { rolesClientService } from '@/lib/api/services/roles-client.service'
 import { departmentsClientService } from '@/lib/api/services/departments-client.service'
 import { policiesClientService } from '@/lib/api/services/policies-client.service'
 import { policyConditionsClientService } from '@/lib/api/services/policy-conditions-client.service'
-// Select component imports removed - not used in this file
 import { Checkbox } from '@/components/ui/checkbox'
 
 const policySchema = z.object({
@@ -54,7 +65,7 @@ const policySchema = z.object({
   deptNameManual: z.string().optional(),
   deptNameFromList: z.string().optional(),
   deptCodeFromList: z.string().optional(),
-  conditions: z.string().optional(), // JSON
+  conditions: z.string().optional(),
 })
 
 type PolicyFormData = z.infer<typeof policySchema>
@@ -77,8 +88,7 @@ export function PolicyFormModal({
   onRequestEdit,
 }: PolicyFormModalProps) {
   const [isLoading, setIsLoading] = useState(false)
-  // local view-only state to allow immediate switch to edit inside modal
-  const [localViewOnly, setLocalViewOnly] = useState<boolean>(!!viewOnly)
+  const [localViewOnly, setLocalViewOnly] = useState(!!viewOnly)
 
   useEffect(() => {
     setLocalViewOnly(!!viewOnly)
@@ -114,7 +124,7 @@ export function PolicyFormModal({
     defaultValues: initialFormDefaults,
   })
 
-  // fetch lists
+  // [KHU VỰC FETCH DATA - GIỮ NGUYÊN]
   const { data: rolesResp } = useQuery({
     queryKey: ['roles', 'for-policy'],
     queryFn: async () => (await rolesClientService.getRoles({ page: 1, limit: 1000 })).data,
@@ -139,17 +149,15 @@ export function PolicyFormModal({
   const roleValuesWatch = form.watch('roleValues') || []
   const deptValuesWatch = form.watch('deptValues') || []
 
-  // local temporary inputs for multi-value manual entry so we can disable selects while user types
   const [roleArrayInput, setRoleArrayInput] = useState('')
   const [roleLevelInput, setRoleLevelInput] = useState('')
   const [deptArrayInput, setDeptArrayInput] = useState('')
-  // keep separate lists so UI can render tags from list vs manual separately
   const [roleValuesFromList, setRoleValuesFromList] = useState<string[]>([])
   const [roleValuesManual, setRoleValuesManual] = useState<string[]>([])
   const [deptValuesFromList, setDeptValuesFromList] = useState<string[]>([])
   const [deptValuesManual, setDeptValuesManual] = useState<string[]>([])
 
-  // classify current form values into from-list vs manual by comparing against available options (case-insensitive)
+  // [TOÀN BỘ LOGIC USEEFFECT - GIỮ NGUYÊN]
   useEffect(() => {
     const arraysEqual = (a: string[], b: string[]) => {
       if (a === b) return true
@@ -158,7 +166,7 @@ export function PolicyFormModal({
       for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false
       return true
     }
-    // roles
+
     const roleNames = (rolesResp || []).map((r: any) => String(r.name || '').toLowerCase())
     const fromList: string[] = []
     const manual: string[] = []
@@ -173,7 +181,6 @@ export function PolicyFormModal({
     if (!arraysEqual(nextRoleFrom, roleValuesFromList)) setRoleValuesFromList(nextRoleFrom)
     if (!arraysEqual(nextRoleManual, roleValuesManual)) setRoleValuesManual(nextRoleManual)
 
-    // departments: choose comparison field based on deptMatchBy
     const deptNames = (deptsResp || []).map((d: any) => String(d.name || '').toLowerCase())
     const deptCodes = (deptsResp || []).map((d: any) => String(d.code || '').toLowerCase())
     const dFromList: string[] = []
@@ -208,14 +215,12 @@ export function PolicyFormModal({
   const { data: deptOperators } = useQuery({
     queryKey: ['policy-operators', 'dept', deptMatchBy],
     queryFn: () => {
-      // departments use string for both name and code
       return policiesClientService.getPolicyOperators('string')
     },
     enabled: !!deptMatchBy,
     staleTime: 1000 * 60 * 10,
   })
 
-  // DEBUG: temporarily log operators to verify backend vs frontend count
   useEffect(() => {
     if (operatorsResp) {
       console.debug(
@@ -226,32 +231,27 @@ export function PolicyFormModal({
     }
   }, [operatorsResp])
 
-  // resource types
   const {
     data: resourceTypesResp,
     error: resourceTypesError,
     isLoading: resourceTypesLoading,
     refetch: refetchResourceTypes,
-  } = useQuery<any[], Error>({
+  } = useQuery({
     queryKey: ['resource-types'],
     queryFn: () => policiesClientService.getResourceTypes({ limit: 100 }),
     staleTime: 1000 * 60 * 10,
   })
 
-  // normalize resource types response (some services return { data: [] } while others return [] )
   const resourceTypes = useMemo(() => {
     if (!resourceTypesResp) return [] as any[]
     if (Array.isArray(resourceTypesResp)) return resourceTypesResp
-    // if server returned an object like { data: [...] }
     if (resourceTypesResp && typeof resourceTypesResp === 'object' && 'data' in resourceTypesResp)
       return (resourceTypesResp as any).data || []
     return []
   }, [resourceTypesResp])
 
-  // When the modal opens, ensure resource types are fetched/refreshed
   useEffect(() => {
     if (isOpen) {
-      // attempt a fresh fetch and log result for debugging
       refetchResourceTypes()
         .then((res) => {
           console.debug('[PolicyFormModal] refetchResourceTypes result', res)
@@ -262,12 +262,9 @@ export function PolicyFormModal({
     }
   }, [isOpen, refetchResourceTypes])
 
-  // Defensive: when the dialog opens, ensure local view-only state mirrors prop
-  // (fixes cases where the modal remained non-interactive after being left idle)
   useEffect(() => {
     if (isOpen) {
       setLocalViewOnly(!!viewOnly)
-      // small focus/tick to ensure interactive elements are enabled in the next paint
       setTimeout(() => {
         try {
           if (typeof form.setFocus === 'function') form.setFocus('name')
@@ -292,7 +289,6 @@ export function PolicyFormModal({
 
   const getOperatorByName = (name?: string) => {
     if (!name) return null
-    // prefer operators from the filtered queries (role/dept) to match what's shown in the select
     const fromRole = (roleOperators || []).find((op) => op.name === name)
     if (fromRole) return fromRole
     const fromDept = (deptOperators || []).find((op) => op.name === name)
@@ -301,22 +297,17 @@ export function PolicyFormModal({
     return operatorsResp.find((op) => op.name === name)
   }
 
-  // When operator or matchBy changes, clear manual inputs that are no longer relevant
   useEffect(() => {
     const op = getOperatorByName(form.getValues('roleOperator'))
     const applies = op?.appliesTo || []
     const isArray = isArrayApplies(applies)
-
     if (isArray) {
-      // operator now expects arrays — clear single manual inputs so list/select remains enabled when appropriate
       if (form.getValues('roleNameManual')) form.setValue('roleNameManual', '')
       if (form.getValues('roleLevel')) form.setValue('roleLevel', '')
     } else {
-      // operator expects single — clear array/manual lists so they don't block single selects
       if (roleArrayInput) setRoleArrayInput('')
       if ((roleValuesManual || []).length > 0) {
         setRoleValuesManual([])
-        // restore any list-sourced values into the form if present
         form.setValue('roleValues', roleValuesFromList || [])
       }
     }
@@ -327,7 +318,6 @@ export function PolicyFormModal({
     const op = getOperatorByName(form.getValues('deptOperator'))
     const applies = op?.appliesTo || []
     const isArray = isArrayApplies(applies)
-
     if (isArray) {
       if (form.getValues('deptNameManual')) form.setValue('deptNameManual', '')
     } else {
@@ -348,18 +338,15 @@ export function PolicyFormModal({
   const filterOperatorsByType = (dataType: 'string' | 'number') => {
     if (!operatorsResp) return []
     if (dataType === 'string') {
-      // String type can use both string and array operators
       return operatorsResp.filter(
         (op) => op.appliesTo?.includes('string') || op.appliesTo?.includes('array_string')
       )
     }
-    // Number type can use both number and array_number operators
     return operatorsResp.filter(
       (op) => op.appliesTo?.includes('number') || op.appliesTo?.includes('array_number')
     )
   }
 
-  // policy conditions (discovery)
   const {
     data: conditionsResp,
     isLoading: conditionsLoading,
@@ -371,11 +358,9 @@ export function PolicyFormModal({
     staleTime: 1000 * 60 * 10,
   })
 
-  // local state to track selected conditions and their operator/value
   const [selectedConditions, setSelectedConditions] = useState<
     Record<string, { operator?: string; value?: string }>
   >({})
-  // per-condition validation errors (e.g. invalid IP format)
   const [conditionErrors, setConditionErrors] = useState<Record<string, string | null>>({})
   const [submitError, setSubmitError] = useState<string | null>(null)
 
@@ -393,23 +378,18 @@ export function PolicyFormModal({
   }
 
   const setConditionValue = (id: string, val: string) => {
-    // validate while setting: for IP-specific conditions, allow multiple IPs and both IPv4/IPv6
     const cond = (conditionsResp || []).find((c: any) => c.id === id)
     if (cond && cond.name === 'ipAddress') {
       const raw = String(val || '')
-      // split by comma or whitespace, allow entries separated by commas
       const parts = raw
         .split(',')
         .map((p) => p.trim())
         .filter((p) => p.length > 0)
-
       if (parts.length === 0) {
         setConditionErrors((s) => ({ ...s, [id]: null }))
       } else {
-        // IPv4 regex
         const ipv4 =
           /^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$/
-        // IPv6 (simple) regex - accepts common IPv6 forms (not exhaustive but practical)
         const ipv6 = /^([0-9a-fA-F]{1,4}:){2,7}[0-9a-fA-F]{1,4}$/
         const invalid = parts.find((p) => !(ipv4.test(p) || ipv6.test(p)))
         if (invalid) {
@@ -422,7 +402,6 @@ export function PolicyFormModal({
         }
       }
     }
-
     setSelectedConditions((s) => ({ ...s, [id]: { ...(s[id] || {}), value: val } }))
   }
 
@@ -434,9 +413,7 @@ export function PolicyFormModal({
     if (!value) return
     const cur: string[] = form.getValues(fieldName) || []
     if (cur.includes(value)) return
-
     if (source === 'manual') {
-      // build new manual-only list and clear list-sourced values
       if (fieldName === 'roleValues') {
         const nextManual = Array.from(new Set([...(roleValuesManual || []), value]))
         setRoleValuesManual(nextManual)
@@ -451,8 +428,6 @@ export function PolicyFormModal({
       }
       return
     }
-
-    // source is list (default) — append to existing form values and update fromList
     const next = [...cur, value]
     form.setValue(fieldName, next)
     if (fieldName === 'roleValues') {
@@ -477,13 +452,11 @@ export function PolicyFormModal({
     }
   }
 
-  // Ensure default subfield values when includeRole/includeDepartment toggled on
   const includeRoleWatch = form.watch('includeRole')
   const includeDepartmentWatch = form.watch('includeDepartment')
 
   useEffect(() => {
     if (includeRoleWatch) {
-      // ensure role subfields have defaults so UI shows correctly
       if (!form.getValues('roleMatchBy')) form.setValue('roleMatchBy', 'name')
       if (!form.getValues('roleOperator')) form.setValue('roleOperator', '$eq')
       if (typeof form.getValues('roleUseList') === 'undefined') form.setValue('roleUseList', true)
@@ -497,7 +470,6 @@ export function PolicyFormModal({
 
   useEffect(() => {
     if (includeDepartmentWatch) {
-      // ensure department subfields have defaults so UI shows correctly
       if (!form.getValues('deptMatchBy')) form.setValue('deptMatchBy', 'name')
       if (!form.getValues('deptOperator')) form.setValue('deptOperator', '$eq')
       if (typeof form.getValues('deptUseList') === 'undefined') form.setValue('deptUseList', true)
@@ -513,8 +485,7 @@ export function PolicyFormModal({
 
   useEffect(() => {
     if (initialData) {
-      // Map existing subject object into structured fields when possible
-      const subj = (initialData.subject as Record<string, unknown>) || {}
+      const subj = (initialData.subject as Record<string, any>) || {}
       const includeRole = Object.keys(subj).some((k) => k.includes('role'))
       const includeDepartment = Object.keys(subj).some(
         (k) => k.includes('department') || k.includes('attributes.department')
@@ -529,7 +500,6 @@ export function PolicyFormModal({
         conditions: initialData.conditions ? JSON.stringify(initialData.conditions, null, 2) : '',
       }
 
-      // resource parsing: if structured like { type: { $eq: 'report' } } then pre-fill operator + selection
       if (initialData.resource) {
         try {
           const r = initialData.resource as any
@@ -545,22 +515,17 @@ export function PolicyFormModal({
                 else values.resourceTypeFromList = JSON.stringify(val)
               }
             } else if (typeof t === 'string' || typeof t === 'number') {
-              // no explicit operator present; default to $eq
               values.resourceOperator = values.resourceOperator || '$eq'
               values.resourceTypeFromList = String(t)
             }
           }
-        } catch {
-          // ignore parsing errors and leave defaults
-        }
+        } catch {}
       }
 
-      // role parsing
       if (includeRole) {
         if (subj['role.name']) {
           values.roleMatchBy = 'name'
           const roleNameObj = subj['role.name']
-          // Detect operator: check keys like $eq, $ne, $in, etc.
           const detectedOp =
             typeof roleNameObj === 'object' && roleNameObj !== null
               ? Object.keys(roleNameObj as object).find((k) => k.startsWith('$'))
@@ -594,9 +559,7 @@ export function PolicyFormModal({
         }
       }
 
-      // department parsing
       if (includeDepartment) {
-        // prefer attributes.department shape used by backend (attributes.department: { $eq: 'tech' })
         const deptNameKey = subj['attributes.department']
           ? 'attributes.department'
           : subj['department.name']
@@ -637,10 +600,8 @@ export function PolicyFormModal({
           values.deptCodeFromList = typeof val === 'string' ? String(val) : ''
         }
       }
-
       form.reset(values as any)
     } else {
-      // switching to "create" mode — reset to defaults and clear local UI state
       form.reset(initialFormDefaults as any)
       setSelectedConditions({})
       setConditionErrors({})
@@ -651,7 +612,6 @@ export function PolicyFormModal({
       setRoleValuesManual([])
       setDeptValuesFromList([])
       setDeptValuesManual([])
-      // ensure local view-only mirrors prop (usually false for create)
       setLocalViewOnly(!!viewOnly)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -659,13 +619,13 @@ export function PolicyFormModal({
 
   const handleSubmit = async (data: PolicyFormData) => {
     setIsLoading(true)
-    // prevent submit when validation errors exist
     const firstErr = Object.values(conditionErrors || {}).find((e) => !!e)
     if (firstErr) {
       setSubmitError('Vui lòng sửa lỗi trong điều kiện trước khi lưu')
       setIsLoading(false)
       return
     }
+
     try {
       const parsed: Partial<Policy> = {
         name: data.name,
@@ -673,16 +633,13 @@ export function PolicyFormModal({
         actions: data.actions ? data.actions.split(',').map((s) => s.trim()) : [],
       }
 
-      // Build subject from structured fields
-      const subjectObj: Record<string, unknown> = {}
+      const subjectObj: Record<string, any> = {}
       if (data.includeRole) {
         const operator = data.roleOperator || '$eq'
         const opMeta = getOperatorByName(operator)
         const applies = opMeta?.appliesTo || []
-
         if (data.roleMatchBy === 'name') {
           if (isArrayApplies(applies)) {
-            // prefer manual-sourced tags when available, otherwise use list-sourced tags
             const manualVals = roleValuesManual || []
             const listVals = roleValuesFromList || []
             const fallback = data.roleValues || []
@@ -690,14 +647,12 @@ export function PolicyFormModal({
               manualVals.length > 0 ? manualVals : listVals.length > 0 ? listVals : fallback
             if (chosenVals.length) subjectObj['role.name'] = { [operator]: chosenVals }
           } else if (applies.includes('number')) {
-            // prefer manual input when provided, otherwise use selected list value
             const manual = (data.roleNameManual || '').toString().trim()
             const list = (data.roleNameFromList || '').toString().trim()
             const chosen = manual.length > 0 ? manual : list.length > 0 ? list : undefined
             if (typeof chosen !== 'undefined' && chosen !== '')
               subjectObj['role.name'] = { [operator]: Number(chosen) }
           } else {
-            // prefer manual input when provided, otherwise use selected list value
             const manual = (data.roleNameManual || '').toString().trim()
             const list = (data.roleNameFromList || '').toString().trim()
             const chosen = manual.length > 0 ? manual : list.length > 0 ? list : undefined
@@ -706,7 +661,6 @@ export function PolicyFormModal({
           }
         } else if (data.roleMatchBy === 'level') {
           if (isArrayApplies(applies)) {
-            // prefer manual-sourced tags when available, otherwise use list-sourced tags
             const manualVals = roleValuesManual || []
             const listVals = roleValuesFromList || []
             const fallback = data.roleValues || []
@@ -725,10 +679,8 @@ export function PolicyFormModal({
         const operator = data.deptOperator || '$eq'
         const opMeta = getOperatorByName(operator)
         const applies = opMeta?.appliesTo || []
-
         if (data.deptMatchBy === 'name') {
           if (isArrayApplies(applies)) {
-            // prefer manual-sourced tags when available, otherwise use list-sourced tags
             const manualVals = deptValuesManual || []
             const listVals = deptValuesFromList || []
             const fallback = data.deptValues || []
@@ -736,14 +688,12 @@ export function PolicyFormModal({
               manualVals.length > 0 ? manualVals : listVals.length > 0 ? listVals : fallback
             if (chosenVals.length) subjectObj['department.name'] = { [operator]: chosenVals }
           } else if (applies.includes('number')) {
-            // prefer manual input when provided, otherwise use selected list value
             const manual = (data.deptNameManual || '').toString().trim()
             const list = (data.deptNameFromList || '').toString().trim()
             const chosen = manual.length > 0 ? manual : list.length > 0 ? list : undefined
             if (typeof chosen !== 'undefined' && chosen !== '')
               subjectObj['department.name'] = { [operator]: Number(chosen) }
           } else {
-            // prefer manual input when provided, otherwise use selected list value
             const manual = (data.deptNameManual || '').toString().trim()
             const list = (data.deptNameFromList || '').toString().trim()
             const chosen = manual.length > 0 ? manual : list.length > 0 ? list : undefined
@@ -752,7 +702,6 @@ export function PolicyFormModal({
           }
         } else if (data.deptMatchBy === 'code') {
           if (isArrayApplies(applies)) {
-            // prefer manual-sourced tags when available, otherwise use list-sourced tags
             const manualVals = deptValuesManual || []
             const listVals = deptValuesFromList || []
             const fallback = data.deptValues || []
@@ -765,20 +714,18 @@ export function PolicyFormModal({
           }
         }
       }
-
       parsed.subject = subjectObj
 
-      // resource: structured selection (operator + resource type) will populate resource.type
       if (data.resourceOperator && (data.resourceTypeFromList || '').trim().length > 0) {
         parsed.resource = { type: { [data.resourceOperator]: data.resourceTypeFromList } }
       }
 
-      // Build parsed.conditions from selectedConditions map (keyed by condition id)
       try {
         const condObj: Record<string, any> = {}
         const entries = Object.entries(selectedConditions || {}) as Array<
           [string, { operator?: string; value?: string }]
         >
+
         entries.forEach(([id, info]) => {
           if (!info || !info.operator) return
           const cond = (conditionsResp || []).find((c: any) => c.id === id)
@@ -790,24 +737,18 @@ export function PolicyFormModal({
             const n = Number(val)
             if (!Number.isNaN(n)) val = n
           } else if (dtype === 'datetime') {
-            // normalize datetime-local 'YYYY-MM-DDTHH:MM' to ISO UTC string
             try {
               if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/.test(val)) {
-                // ensure seconds present
                 let v = val
                 if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(v)) v = v + ':00'
                 const iso = new Date(v)
                 if (!Number.isNaN(iso.getTime())) val = iso.toISOString()
               }
-            } catch {
-              // leave as provided
-            }
+            } catch {}
           }
-
           if (!condObj[name]) condObj[name] = {}
           condObj[name][info.operator as string] = val
         })
-
         parsed.conditions = condObj
       } catch {
         parsed.conditions = {}
@@ -820,105 +761,133 @@ export function PolicyFormModal({
     }
   }
 
+  // [PHẦN UI MỚI - THIẾT KẾ ĐẸP HƠN]
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent
-        className={
-          initialData
-            ? 'max-h-[80vh] !max-w-[80vw] overflow-auto'
-            : 'max-h-[80vh] !max-w-[70vw] overflow-auto'
-        }
-      >
+      <DialogContent className="max-h-[90vh] !max-w-[75vw] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Settings className="h-5 w-5" />
-            {viewOnly ? 'Xem chi tiết policy' : initialData ? 'Chỉnh sửa policy' : 'Thêm policy'}
-          </DialogTitle>
-          <DialogDescription>
-            {viewOnly ? 'Chế độ chỉ xem' : initialData ? 'Cập nhật policy' : 'Tạo policy mới'}
-          </DialogDescription>
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 p-2">
+              <Shield className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <DialogTitle className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-2xl font-bold text-transparent">
+                {viewOnly ? 'Chi tiết Policy' : initialData ? 'Chỉnh sửa Policy' : 'Tạo Policy Mới'}
+              </DialogTitle>
+              <DialogDescription className="text-muted-foreground mt-1 text-sm">
+                {viewOnly
+                  ? 'Chế độ xem chi tiết'
+                  : initialData
+                    ? 'Cập nhật thông tin policy'
+                    : 'Định nghĩa quy tắc truy cập và phân quyền'}
+              </DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
 
         <Form {...form}>
           <form
             onSubmit={localViewOnly ? (e) => e.preventDefault() : form.handleSubmit(handleSubmit)}
-            // increase vertical spacing between sections to improve readability
-            className="space-y-6"
+            className="space-y-8"
           >
-            {/* Disable all inputs when viewOnly is true using a fieldset */}
-            <fieldset disabled={!!localViewOnly} style={{ border: 0, padding: 0, margin: 0 }}>
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tên policy</FormLabel>
-                    <FormControl>
-                      <Input
-                        className="disabled:cursor-not-allowed disabled:bg-slate-50 disabled:opacity-60"
-                        placeholder="Tên policy"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="effect"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Effect</FormLabel>
-                    <FormControl>
-                      <select className="input w-full rounded-md border px-3 py-2" {...field}>
-                        <option value="ALLOW">ALLOW</option>
-                        <option value="DENY">DENY</option>
-                      </select>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="actions"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Actions (comma separated)</FormLabel>
-                    <FormControl>
-                      <Input
-                        className="disabled:cursor-not-allowed disabled:bg-slate-50 disabled:opacity-60"
-                        placeholder="read, write, delete"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Subject: Role / Department structured */}
-              <div className="space-y-2 rounded-md border p-3">
-                <div className="mb-2">
-                  <h4 className="text-sm font-medium">Subject</h4>
-                  <p className="text-xs text-slate-500">
-                    Định nghĩa đối tượng (subject) của policy: role / department rules
-                  </p>
+            <fieldset disabled={localViewOnly} className="space-y-8">
+              {/* SECTION: Thông tin cơ bản */}
+              <div className="space-y-5 rounded-xl border-2 border-blue-100 bg-gradient-to-br from-blue-50/50 to-purple-50/30 p-6">
+                <div className="mb-4 flex items-center gap-2">
+                  <FileCode className="h-5 w-5 text-blue-600" />
+                  <h3 className="text-lg font-semibold text-gray-800">Thông tin cơ bản</h3>
                 </div>
-                <div className="flex items-center gap-4">
+
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium text-gray-700">
+                        Tên Policy *
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          placeholder="Nhập tên policy (VD: allow-admin-access)"
+                          className="border-gray-300 transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="effect"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium text-gray-700">Effect</FormLabel>
+                        <FormControl>
+                          <select
+                            {...field}
+                            className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                          >
+                            <option value="ALLOW">✓ ALLOW (Cho phép)</option>
+                            <option value="DENY">✗ DENY (Từ chối)</option>
+                          </select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="actions"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium text-gray-700">Actions</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            placeholder="read, write, delete (ngăn cách bởi dấu phẩy)"
+                            className="border-gray-300 transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+
+              {/* SECTION: Subject (Role & Department) */}
+              <div className="space-y-5 rounded-xl border-2 border-emerald-100 bg-gradient-to-br from-emerald-50/50 to-teal-50/30 p-6">
+                <div className="mb-4 flex items-center gap-2">
+                  <Users className="h-5 w-5 text-emerald-600" />
+                  <h3 className="text-lg font-semibold text-gray-800">
+                    Subject (Đối tượng áp dụng)
+                  </h3>
+                </div>
+                <p className="mb-4 text-sm text-gray-600">
+                  Định nghĩa quy tắc dựa trên vai trò (role) hoặc phòng ban (department)
+                </p>
+
+                {/* Toggle checkboxes */}
+                <div className="flex gap-6">
                   <FormField
                     control={form.control}
                     name="includeRole"
                     render={({ field }) => (
-                      <FormItem className="flex items-center gap-2">
-                        <Checkbox
-                          checked={!!field.value}
-                          onCheckedChange={(v) => field.onChange(Boolean(v))}
-                        />
-                        <FormLabel>Role</FormLabel>
+                      <FormItem className="flex items-center gap-3 space-y-0">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={(v) => field.onChange(Boolean(v))}
+                            className="data-[state=checked]:bg-emerald-600"
+                          />
+                        </FormControl>
+                        <FormLabel className="cursor-pointer text-sm font-medium text-gray-700">
+                          🎭 Áp dụng theo Role
+                        </FormLabel>
                       </FormItem>
                     )}
                   />
@@ -927,18 +896,23 @@ export function PolicyFormModal({
                     control={form.control}
                     name="includeDepartment"
                     render={({ field }) => (
-                      <FormItem className="flex items-center gap-2">
-                        <Checkbox
-                          checked={!!field.value}
-                          onCheckedChange={(v) => field.onChange(Boolean(v))}
-                        />
-                        <FormLabel>Department</FormLabel>
+                      <FormItem className="flex items-center gap-3 space-y-0">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={(v) => field.onChange(Boolean(v))}
+                            className="data-[state=checked]:bg-emerald-600"
+                          />
+                        </FormControl>
+                        <FormLabel className="cursor-pointer text-sm font-medium text-gray-700">
+                          🏢 Áp dụng theo Department
+                        </FormLabel>
                       </FormItem>
                     )}
                   />
                 </div>
 
-                {/* watch values to decide what to render */}
+                {/* ROLE SECTION */}
                 {(() => {
                   const includeRole = form.watch('includeRole')
                   const includeDepartment = form.watch('includeDepartment')
@@ -948,14 +922,13 @@ export function PolicyFormModal({
                   const deptMatchBy = form.watch('deptMatchBy')
                   const deptValuesWatch = form.watch('deptValues') || []
 
-                  // disable list-selects when the manual input has content OR when there are manual-sourced tags
                   const roleManualHas =
                     String(roleArrayInput).trim().length > 0 || roleValuesManual.length > 0
                   const roleLevelManualHas =
                     String(roleLevelInput).trim().length > 0 || roleValuesManual.length > 0
                   const deptManualHas =
                     String(deptArrayInput).trim().length > 0 || deptValuesManual.length > 0
-                  // typing flags: when the typed/manual input has content we want to visually cross-out list-sourced tags
+
                   const roleTyping = String(roleArrayInput).trim().length > 0
                   const roleLevelTyping = String(roleLevelInput).trim().length > 0
                   const deptTyping = String(deptArrayInput).trim().length > 0
@@ -963,23 +936,29 @@ export function PolicyFormModal({
                   return (
                     <>
                       {includeRole && (
-                        <div className="space-y-3">
-                          {/* 3 cột: Match By | Operator | Value */}
+                        <div className="mt-4 space-y-4 rounded-lg border border-emerald-200 bg-white/70 p-5">
+                          <h4 className="flex items-center gap-2 font-semibold text-emerald-700">
+                            <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
+                            Role Configuration
+                          </h4>
+
                           <div className="grid grid-cols-3 gap-4">
-                            {/* Cột 1: Match By */}
+                            {/* Match By */}
                             <FormField
                               control={form.control}
                               name="roleMatchBy"
                               render={({ field }) => (
                                 <FormItem>
-                                  <FormLabel>Match by</FormLabel>
+                                  <FormLabel className="text-xs font-medium text-gray-600">
+                                    Match by
+                                  </FormLabel>
                                   <FormControl>
                                     <select
                                       {...field}
-                                      className="input w-full rounded-md border px-3 py-2"
+                                      className="flex h-9 w-full rounded-md border border-gray-300 bg-white px-3 py-1 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
                                     >
-                                      <option value="name">Name</option>
-                                      <option value="level">Level</option>
+                                      <option value="name">📛 Name</option>
+                                      <option value="level">🔢 Level</option>
                                     </select>
                                   </FormControl>
                                   <FormMessage />
@@ -987,7 +966,7 @@ export function PolicyFormModal({
                               )}
                             />
 
-                            {/* Cột 2: Operator */}
+                            {/* Operator */}
                             <FormField
                               control={form.control}
                               name="roleOperator"
@@ -999,15 +978,17 @@ export function PolicyFormModal({
                                   )
                                 return (
                                   <FormItem>
-                                    <FormLabel>Operator</FormLabel>
+                                    <FormLabel className="text-xs font-medium text-gray-600">
+                                      Operator
+                                    </FormLabel>
                                     <FormControl>
                                       <select
                                         {...field}
-                                        className="input w-full rounded-md border px-3 py-2"
+                                        className="flex h-9 w-full rounded-md border border-gray-300 bg-white px-3 py-1 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
                                       >
                                         <option value="">-- chọn --</option>
                                         {filteredOps.map((op) => (
-                                          <option key={op.id} value={op.name}>
+                                          <option key={op.name} value={op.name}>
                                             {formatOperatorLabel(op)}
                                           </option>
                                         ))}
@@ -1019,214 +1000,205 @@ export function PolicyFormModal({
                               }}
                             />
 
-                            {/* Cột 3: Value - hiển thị theo roleMatchBy */}
-                            <div className="space-y-2">
-                              {roleMatchBy === 'name' &&
-                                (() => {
-                                  const roleNameManualVal = form.watch('roleNameManual') || ''
-                                  const roleSelectDisabled =
-                                    String(roleNameManualVal).trim().length > 0
+                            {/* Value - Dynamic based on matchBy and operator */}
+                            {roleMatchBy === 'name' &&
+                              (() => {
+                                const roleNameManualVal = form.watch('roleNameManual') || ''
+                                const roleSelectDisabled =
+                                  String(roleNameManualVal).trim().length > 0
 
+                                const selectedOp = getOperatorByName(roleOperatorWatch)
+                                const applies = selectedOp?.appliesTo || []
+                                const isArray = isArrayApplies(applies)
+                                // const isNumber = applies.includes('number') && !isArray
+
+                                if (isArray) {
                                   return (
-                                    <>
-                                      {/* Operator appliesTo logic: if selected operator supports array, show tag multi-value UI */}
-                                      {(() => {
-                                        const selectedOp = getOperatorByName(roleOperatorWatch)
-                                        const applies = selectedOp?.appliesTo || []
-                                        const isArray = isArrayApplies(applies)
-                                        const isNumber = applies.includes('number') && !isArray
-
-                                        if (isArray) {
-                                          // show both select-from-list (with Add) and manual tag input for multi values
-                                          return (
-                                            <div>
-                                              <FormLabel>Values (multi)</FormLabel>
-                                              <div className="flex items-center gap-2">
-                                                <FormField
-                                                  control={form.control}
-                                                  name="roleNameFromList"
-                                                  render={({ field }) => (
-                                                    <FormItem>
-                                                      <FormControl>
-                                                        <select
-                                                          {...field}
-                                                          className="input w-full rounded-md border px-3 py-2"
-                                                          disabled={roleManualHas}
-                                                        >
-                                                          <option value="">
-                                                            -- chọn vai trò --
-                                                          </option>
-                                                          {(rolesResp || []).map((r) => (
-                                                            <option key={r.id} value={r.name}>
-                                                              {r.name}
-                                                            </option>
-                                                          ))}
-                                                        </select>
-                                                      </FormControl>
-                                                    </FormItem>
-                                                  )}
-                                                />
+                                    <FormItem className="col-span-1">
+                                      <FormLabel className="text-xs font-medium text-gray-600">
+                                        Values (multi)
+                                      </FormLabel>
+                                      <div className="space-y-2">
+                                        <div className="flex gap-2">
+                                          <FormField
+                                            control={form.control}
+                                            name="roleNameFromList"
+                                            render={({ field }) => (
+                                              <select
+                                                {...field}
+                                                disabled={roleManualHas}
+                                                className="flex h-9 flex-1 rounded-md border border-gray-300 bg-white px-2 text-sm disabled:opacity-50"
+                                              >
+                                                <option value="">-- chọn vai trò --</option>
+                                                {(rolesResp || []).map((r) => (
+                                                  <option key={r.id} value={r.name}>
+                                                    {r.name}
+                                                  </option>
+                                                ))}
+                                              </select>
+                                            )}
+                                          />
+                                          <Button
+                                            type="button"
+                                            size="sm"
+                                            onClick={() => {
+                                              const sel = form.getValues('roleNameFromList')
+                                              if (sel) {
+                                                addArrayValue('roleValues', String(sel), 'list')
+                                                form.setValue('roleNameFromList', '')
+                                              }
+                                            }}
+                                            disabled={roleManualHas}
+                                            className="bg-emerald-600 hover:bg-emerald-700"
+                                          >
+                                            <Plus className="h-4 w-4" />
+                                          </Button>
+                                        </div>
+                                        <Input
+                                          placeholder="Hoặc nhập thủ công (Enter để thêm)"
+                                          value={roleArrayInput}
+                                          onChange={(e) => setRoleArrayInput(e.target.value)}
+                                          onKeyDown={(e) => {
+                                            if (e.key === 'Enter' || e.key === ',') {
+                                              e.preventDefault()
+                                              const val = (e.target as HTMLInputElement).value
+                                                .trim()
+                                                .replace(/,$/, '')
+                                              if (val) {
+                                                addArrayValue('roleValues', val, 'manual')
+                                                setRoleArrayInput('')
+                                              }
+                                            }
+                                          }}
+                                          className="h-9 text-sm"
+                                        />
+                                        <div className="flex flex-wrap gap-1.5">
+                                          {(roleValuesWatch || []).map((v: string) => {
+                                            const isManual = roleValuesManual.includes(v)
+                                            const strike = !isManual && roleTyping
+                                            return (
+                                              <span
+                                                key={v}
+                                                className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${
+                                                  strike
+                                                    ? 'bg-gray-200 text-gray-400 line-through'
+                                                    : 'bg-emerald-100 text-emerald-700'
+                                                }`}
+                                              >
+                                                {v}
                                                 <button
                                                   type="button"
-                                                  className="btn rounded bg-slate-100 px-3 py-1"
-                                                  onClick={() => {
-                                                    const sel = form.getValues('roleNameFromList')
-                                                    if (sel) {
-                                                      addArrayValue(
-                                                        'roleValues',
-                                                        String(sel),
-                                                        'list'
-                                                      )
-                                                      form.setValue('roleNameFromList', '')
-                                                    }
-                                                  }}
-                                                  disabled={roleManualHas}
+                                                  onClick={() => removeArrayValue('roleValues', v)}
+                                                  className="hover:text-red-600"
                                                 >
-                                                  Add
+                                                  <X className="h-3 w-3" />
                                                 </button>
-
-                                                <Input
-                                                  placeholder="Nhập giá trị, nhấn Enter hoặc dấu ,"
-                                                  value={roleArrayInput}
-                                                  onChange={(e) =>
-                                                    setRoleArrayInput(e.target.value)
-                                                  }
-                                                  onKeyDown={(e) => {
-                                                    if (e.key === 'Enter' || e.key === ',') {
-                                                      e.preventDefault()
-                                                      const val = (
-                                                        e.target as HTMLInputElement
-                                                      ).value
-                                                        .trim()
-                                                        .replace(/,$/, '')
-                                                      if (val) {
-                                                        addArrayValue('roleValues', val)
-                                                        setRoleArrayInput('')
-                                                      }
-                                                    }
-                                                  }}
-                                                />
-                                              </div>
-                                              <div className="mt-2 flex flex-wrap gap-2">
-                                                {(roleValuesWatch || []).map((v: string) => {
-                                                  const isManual = roleValuesManual.includes(v)
-                                                  const strike = !isManual && roleTyping
-                                                  return (
-                                                    <span
-                                                      key={`${isManual ? 'manual' : 'list'}-${v}`}
-                                                      className={`inline-flex items-center gap-1 rounded px-2 py-1 text-sm ${isManual ? 'bg-blue-100' : 'bg-slate-100'} ${strike ? 'text-red-600 line-through decoration-red-500 opacity-90' : ''}`}
-                                                    >
-                                                      <span>{v}</span>
-                                                      <button
-                                                        type="button"
-                                                        onClick={() =>
-                                                          removeArrayValue('roleValues', v)
-                                                        }
-                                                      >
-                                                        ×
-                                                      </button>
-                                                    </span>
-                                                  )
-                                                })}
-                                              </div>
-                                            </div>
-                                          )
-                                        }
-
-                                        // else fallback to single selection/manual (string or number)
-                                        return (
-                                          <>
-                                            <FormField
-                                              control={form.control}
-                                              name="roleNameFromList"
-                                              render={({ field }) => (
-                                                <FormItem>
-                                                  <FormLabel>Role (from list)</FormLabel>
-                                                  <FormControl>
-                                                    <select
-                                                      {...field}
-                                                      disabled={roleSelectDisabled}
-                                                      className="input w-full rounded-md border px-3 py-2 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:opacity-60"
-                                                      onChange={(e) => {
-                                                        field.onChange(e.target.value)
-                                                        if (e.target.value)
-                                                          form.setValue('roleNameManual', '')
-                                                      }}
-                                                    >
-                                                      <option value="">-- chọn vai trò --</option>
-                                                      {(rolesResp || []).map((r) => (
-                                                        <option key={r.id} value={r.name}>
-                                                          {r.name}
-                                                        </option>
-                                                      ))}
-                                                    </select>
-                                                  </FormControl>
-                                                  <FormMessage />
-                                                </FormItem>
-                                              )}
-                                            />
-
-                                            <FormField
-                                              control={form.control}
-                                              name="roleNameManual"
-                                              render={({ field }) => (
-                                                <FormItem>
-                                                  <FormLabel>
-                                                    Role (manual){isNumber ? ' (number)' : ''}
-                                                  </FormLabel>
-                                                  <FormControl>
-                                                    <Input
-                                                      className="disabled:cursor-not-allowed disabled:bg-slate-50 disabled:opacity-60"
-                                                      placeholder={
-                                                        isNumber ? 'Gõ số' : 'Gõ tên role'
-                                                      }
-                                                      {...field}
-                                                      onChange={(e) => {
-                                                        const v = e.target.value
-                                                        field.onChange(v)
-                                                        if (String(v).trim().length > 0) {
-                                                          form.setValue('roleNameFromList', '')
-                                                        }
-                                                      }}
-                                                    />
-                                                  </FormControl>
-                                                  <FormMessage />
-                                                </FormItem>
-                                              )}
-                                            />
-                                          </>
-                                        )
-                                      })()}
-                                    </>
+                                              </span>
+                                            )
+                                          })}
+                                        </div>
+                                      </div>
+                                    </FormItem>
                                   )
-                                })()}
+                                }
 
-                              {roleMatchBy === 'level' &&
-                                (() => {
-                                  const selectedOp = getOperatorByName(roleOperatorWatch)
-                                  const applies = selectedOp?.appliesTo || []
-                                  const isArrayLevel = applies.includes('array_number')
+                                // Single value
+                                return (
+                                  <>
+                                    <div className="col-span-1 space-y-2">
+                                      <FormField
+                                        control={form.control}
+                                        name="roleNameFromList"
+                                        render={({ field }) => (
+                                          <FormItem>
+                                            <FormLabel className="text-xs font-medium text-gray-600">
+                                              Role (từ danh sách)
+                                            </FormLabel>
+                                            <FormControl>
+                                              <select
+                                                {...field}
+                                                disabled={roleSelectDisabled}
+                                                onChange={(e) => {
+                                                  field.onChange(e.target.value)
+                                                  if (e.target.value)
+                                                    form.setValue('roleNameManual', '')
+                                                }}
+                                                className="flex h-9 w-full rounded-md border border-gray-300 bg-white px-3 text-sm disabled:opacity-50"
+                                              >
+                                                <option value="">-- chọn vai trò --</option>
+                                                {(rolesResp || []).map((r) => (
+                                                  <option key={r.id} value={r.name}>
+                                                    {r.name}
+                                                  </option>
+                                                ))}
+                                              </select>
+                                            </FormControl>
+                                            <FormMessage />
+                                          </FormItem>
+                                        )}
+                                      />
 
-                                  if (isArrayLevel) {
-                                    return (
-                                      <div>
-                                        <FormLabel>Role level (multi)</FormLabel>
-                                        <div className="flex items-center gap-2">
+                                      <FormField
+                                        control={form.control}
+                                        name="roleNameManual"
+                                        render={({ field }) => (
+                                          <FormItem>
+                                            <FormLabel className="text-xs font-medium text-gray-600">
+                                              Role (nhập thủ công)
+                                            </FormLabel>
+                                            <FormControl>
+                                              <Input
+                                                {...field}
+                                                type="text"
+                                                placeholder="Hoặc nhập thủ công"
+                                                onChange={(e) => {
+                                                  const v = e.target.value
+                                                  field.onChange(v)
+                                                  if (String(v).trim().length > 0) {
+                                                    form.setValue('roleNameFromList', '')
+                                                  }
+                                                }}
+                                                className="h-9 text-sm"
+                                              />
+                                            </FormControl>
+                                            <FormMessage />
+                                          </FormItem>
+                                        )}
+                                      />
+                                    </div>
+                                  </>
+                                )
+                              })()}
+
+                            {roleMatchBy === 'level' &&
+                              (() => {
+                                const selectedOp = getOperatorByName(roleOperatorWatch)
+                                const applies = selectedOp?.appliesTo || []
+                                const isArrayLevel = applies.includes('array_number')
+
+                                if (isArrayLevel) {
+                                  return (
+                                    <FormItem className="col-span-1">
+                                      <FormLabel className="text-xs font-medium text-gray-600">
+                                        Role level (multi)
+                                      </FormLabel>
+                                      <div className="space-y-2">
+                                        <div className="flex gap-2">
                                           <select
                                             id="roleLevelSelect"
-                                            className="input rounded-md border px-3 py-2"
                                             disabled={roleLevelManualHas}
+                                            className="flex h-9 flex-1 rounded-md border border-gray-300 bg-white px-2 text-sm disabled:opacity-50"
                                           >
                                             <option value="">-- chọn level --</option>
                                             {Array.from({ length: 10 }).map((_, i) => (
-                                              <option key={i + 1} value={String(i + 1)}>
+                                              <option key={i + 1} value={i + 1}>
                                                 {i + 1}
                                               </option>
                                             ))}
                                           </select>
-                                          <button
+                                          <Button
                                             type="button"
-                                            className="btn rounded bg-slate-100 px-3 py-1"
+                                            size="sm"
                                             onClick={() => {
                                               const sel = (
                                                 document.getElementById(
@@ -1242,102 +1214,119 @@ export function PolicyFormModal({
                                               } catch {}
                                             }}
                                             disabled={roleLevelManualHas}
+                                            className="bg-emerald-600 hover:bg-emerald-700"
                                           >
-                                            Add
-                                          </button>
-
-                                          <Input
-                                            placeholder="Nhập số, nhấn Enter"
-                                            value={roleLevelInput}
-                                            onChange={(e) => setRoleLevelInput(e.target.value)}
-                                            onKeyDown={(e) => {
-                                              if (e.key === 'Enter') {
-                                                e.preventDefault()
-                                                const val = (
-                                                  e.target as HTMLInputElement
-                                                ).value.trim()
-                                                if (val) {
-                                                  addArrayValue('roleValues', val)
-                                                  setRoleLevelInput('')
-                                                }
-                                              }
-                                            }}
-                                          />
+                                            <Plus className="h-4 w-4" />
+                                          </Button>
                                         </div>
-                                        <div className="mt-2 flex flex-wrap gap-2">
+                                        <Input
+                                          placeholder="Hoặc nhập số level (Enter)"
+                                          type="number"
+                                          value={roleLevelInput}
+                                          onChange={(e) => setRoleLevelInput(e.target.value)}
+                                          onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                              e.preventDefault()
+                                              const val = (
+                                                e.target as HTMLInputElement
+                                              ).value.trim()
+                                              if (val) {
+                                                addArrayValue('roleValues', val, 'manual')
+                                                setRoleLevelInput('')
+                                              }
+                                            }
+                                          }}
+                                          className="h-9 text-sm"
+                                        />
+                                        <div className="flex flex-wrap gap-1.5">
                                           {(roleValuesWatch || []).map((v: string) => {
                                             const isManual = roleValuesManual.includes(v)
                                             const strike = !isManual && roleLevelTyping
                                             return (
                                               <span
-                                                key={`${isManual ? 'manual' : 'list'}-${v}`}
-                                                className={`inline-flex items-center gap-1 rounded px-2 py-1 text-sm ${isManual ? 'bg-blue-100' : 'bg-slate-100'} ${strike ? 'text-red-600 line-through decoration-red-500 opacity-90' : ''}`}
+                                                key={v}
+                                                className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${
+                                                  strike
+                                                    ? 'bg-gray-200 text-gray-400 line-through'
+                                                    : 'bg-emerald-100 text-emerald-700'
+                                                }`}
                                               >
-                                                <span>{v}</span>
+                                                {v}
                                                 <button
                                                   type="button"
                                                   onClick={() => removeArrayValue('roleValues', v)}
+                                                  className="hover:text-red-600"
                                                 >
-                                                  ×
+                                                  <X className="h-3 w-3" />
                                                 </button>
                                               </span>
                                             )
                                           })}
                                         </div>
                                       </div>
-                                    )
-                                  }
-
-                                  // fallback single select
-                                  return (
-                                    <FormField
-                                      control={form.control}
-                                      name="roleLevel"
-                                      render={({ field }) => (
-                                        <FormItem>
-                                          <FormLabel>Role level</FormLabel>
-                                          <FormControl>
-                                            <select
-                                              {...field}
-                                              className="input w-full rounded-md border px-3 py-2"
-                                            >
-                                              <option value="">Chọn level</option>
-                                              {Array.from({ length: 10 }).map((_, i) => (
-                                                <option key={i + 1} value={String(i + 1)}>
-                                                  {i + 1}
-                                                </option>
-                                              ))}
-                                            </select>
-                                          </FormControl>
-                                          <FormMessage />
-                                        </FormItem>
-                                      )}
-                                    />
+                                    </FormItem>
                                   )
-                                })()}
-                            </div>
+                                }
+
+                                // Single level
+                                return (
+                                  <FormField
+                                    control={form.control}
+                                    name="roleLevel"
+                                    render={({ field }) => (
+                                      <FormItem>
+                                        <FormLabel className="text-xs font-medium text-gray-600">
+                                          Role level
+                                        </FormLabel>
+                                        <FormControl>
+                                          <select
+                                            {...field}
+                                            value={String(field.value || '')}
+                                            className="flex h-9 w-full rounded-md border border-gray-300 bg-white px-3 text-sm"
+                                          >
+                                            <option value="">Chọn level</option>
+                                            {Array.from({ length: 10 }).map((_, i) => (
+                                              <option key={i + 1} value={i + 1}>
+                                                {i + 1}
+                                              </option>
+                                            ))}
+                                          </select>
+                                        </FormControl>
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
+                                  />
+                                )
+                              })()}
                           </div>
                         </div>
                       )}
 
+                      {/* DEPARTMENT SECTION */}
                       {includeDepartment && (
-                        <div className="space-y-3">
-                          {/* 3 cột: Match By | Operator | Value */}
+                        <div className="mt-4 space-y-4 rounded-lg border border-emerald-200 bg-white/70 p-5">
+                          <h4 className="flex items-center gap-2 font-semibold text-emerald-700">
+                            <Building2 className="h-4 w-4" />
+                            Department Configuration
+                          </h4>
+
                           <div className="grid grid-cols-3 gap-4">
-                            {/* Cột 1: Match By */}
+                            {/* Match By */}
                             <FormField
                               control={form.control}
                               name="deptMatchBy"
                               render={({ field }) => (
                                 <FormItem>
-                                  <FormLabel>Match by</FormLabel>
+                                  <FormLabel className="text-xs font-medium text-gray-600">
+                                    Match by
+                                  </FormLabel>
                                   <FormControl>
                                     <select
                                       {...field}
-                                      className="input w-full rounded-md border px-3 py-2"
+                                      className="flex h-9 w-full rounded-md border border-gray-300 bg-white px-3 py-1 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
                                     >
-                                      <option value="name">Name</option>
-                                      <option value="code">Code</option>
+                                      <option value="name">📛 Name</option>
+                                      <option value="code">🔖 Code</option>
                                     </select>
                                   </FormControl>
                                   <FormMessage />
@@ -1345,24 +1334,25 @@ export function PolicyFormModal({
                               )}
                             />
 
-                            {/* Cột 2: Operator */}
+                            {/* Operator */}
                             <FormField
                               control={form.control}
                               name="deptOperator"
                               render={({ field }) => {
-                                // Department name is string, code is also string
                                 const filteredOps = deptOperators || filterOperatorsByType('string')
                                 return (
                                   <FormItem>
-                                    <FormLabel>Operator</FormLabel>
+                                    <FormLabel className="text-xs font-medium text-gray-600">
+                                      Operator
+                                    </FormLabel>
                                     <FormControl>
                                       <select
                                         {...field}
-                                        className="input w-full rounded-md border px-3 py-2"
+                                        className="flex h-9 w-full rounded-md border border-gray-300 bg-white px-3 py-1 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
                                       >
                                         <option value="">-- chọn --</option>
                                         {filteredOps.map((op) => (
-                                          <option key={op.id} value={op.name}>
+                                          <option key={op.name} value={op.name}>
                                             {formatOperatorLabel(op)}
                                           </option>
                                         ))}
@@ -1374,123 +1364,29 @@ export function PolicyFormModal({
                               }}
                             />
 
-                            {/* Cột 3: Value - hiển thị theo deptMatchBy */}
-                            <div className="space-y-2">
-                              {deptMatchBy === 'name' &&
-                                (() => {
-                                  const selectedOp = getOperatorByName(
-                                    form.getValues('deptOperator')
-                                  )
-                                  const applies = selectedOp?.appliesTo || []
-                                  const isArray = isArrayApplies(applies)
+                            {/* Value */}
+                            {deptMatchBy === 'name' &&
+                              (() => {
+                                const selectedOp = getOperatorByName(form.getValues('deptOperator'))
+                                const applies = selectedOp?.appliesTo || []
+                                const isArray = isArrayApplies(applies)
 
-                                  if (isArray) {
-                                    return (
-                                      <div>
-                                        <FormLabel>Values (multi)</FormLabel>
-                                        <div className="flex items-center gap-2">
+                                if (isArray) {
+                                  return (
+                                    <FormItem className="col-span-1">
+                                      <FormLabel className="text-xs font-medium text-gray-600">
+                                        Values (multi)
+                                      </FormLabel>
+                                      <div className="space-y-2">
+                                        <div className="flex gap-2">
                                           <FormField
                                             control={form.control}
                                             name="deptNameFromList"
                                             render={({ field }) => (
-                                              <FormItem>
-                                                <FormControl>
-                                                  <select
-                                                    {...field}
-                                                    className="input w-full rounded-md border px-3 py-2"
-                                                    disabled={deptManualHas}
-                                                  >
-                                                    <option value="">-- chọn bộ phận --</option>
-                                                    {(deptsResp || []).map((d) => (
-                                                      <option key={d.id} value={d.name}>
-                                                        {d.name}
-                                                      </option>
-                                                    ))}
-                                                  </select>
-                                                </FormControl>
-                                              </FormItem>
-                                            )}
-                                          />
-                                          <button
-                                            type="button"
-                                            className="btn rounded bg-slate-100 px-3 py-1"
-                                            onClick={() => {
-                                              const sel = form.getValues('deptNameFromList')
-                                              if (sel) {
-                                                addArrayValue('deptValues', String(sel), 'list')
-                                                form.setValue('deptNameFromList', '')
-                                              }
-                                            }}
-                                            disabled={deptManualHas}
-                                          >
-                                            Add
-                                          </button>
-
-                                          <Input
-                                            placeholder="Thêm giá trị, nhấn Enter hoặc dấu ,"
-                                            value={deptArrayInput}
-                                            onChange={(e) => setDeptArrayInput(e.target.value)}
-                                            onKeyDown={(e) => {
-                                              if (e.key === 'Enter' || e.key === ',') {
-                                                e.preventDefault()
-                                                const val = (e.target as HTMLInputElement).value
-                                                  .trim()
-                                                  .replace(/,$/, '')
-                                                if (val) {
-                                                  addArrayValue('deptValues', val, 'manual')
-                                                  setDeptArrayInput('')
-                                                }
-                                              }
-                                            }}
-                                          />
-                                        </div>
-                                        <div className="mt-2 flex flex-wrap gap-2">
-                                          {(deptValuesWatch || []).map((v: string) => {
-                                            const isManual = deptValuesManual.includes(v)
-                                            const strike = !isManual && deptTyping
-                                            return (
-                                              <span
-                                                key={`${isManual ? 'manual' : 'list'}-${v}`}
-                                                className={`inline-flex items-center gap-1 rounded px-2 py-1 text-sm ${isManual ? 'bg-blue-100' : 'bg-slate-100'} ${strike ? 'text-red-600 line-through decoration-red-500 opacity-90' : ''}`}
-                                              >
-                                                <span>{v}</span>
-                                                <button
-                                                  type="button"
-                                                  onClick={() => removeArrayValue('deptValues', v)}
-                                                >
-                                                  ×
-                                                </button>
-                                              </span>
-                                            )
-                                          })}
-                                        </div>
-                                      </div>
-                                    )
-                                  }
-
-                                  // else single value
-                                  const deptNameManualVal = form.watch('deptNameManual') || ''
-                                  const deptSelectDisabled =
-                                    String(deptNameManualVal).trim().length > 0
-
-                                  return (
-                                    <>
-                                      <FormField
-                                        control={form.control}
-                                        name="deptNameFromList"
-                                        render={({ field }) => (
-                                          <FormItem>
-                                            <FormLabel>Department (from list)</FormLabel>
-                                            <FormControl>
                                               <select
                                                 {...field}
-                                                disabled={deptSelectDisabled}
-                                                className="input w-full rounded-md border px-3 py-2 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:opacity-60"
-                                                onChange={(e) => {
-                                                  field.onChange(e.target.value)
-                                                  if (e.target.value)
-                                                    form.setValue('deptNameManual', '')
-                                                }}
+                                                disabled={deptManualHas}
+                                                className="flex h-9 flex-1 rounded-md border border-gray-300 bg-white px-2 text-sm disabled:opacity-50"
                                               >
                                                 <option value="">-- chọn bộ phận --</option>
                                                 {(deptsResp || []).map((d) => (
@@ -1499,66 +1395,167 @@ export function PolicyFormModal({
                                                   </option>
                                                 ))}
                                               </select>
-                                            </FormControl>
-                                            <FormMessage />
-                                          </FormItem>
-                                        )}
-                                      />
-
-                                      <FormField
-                                        control={form.control}
-                                        name="deptNameManual"
-                                        render={({ field }) => (
-                                          <FormItem>
-                                            <FormLabel>Department (manual)</FormLabel>
-                                            <FormControl>
-                                              <Input
-                                                className="disabled:cursor-not-allowed disabled:bg-slate-50 disabled:opacity-60"
-                                                placeholder="Gõ tên bộ phận"
-                                                {...field}
-                                                onChange={(e) => {
-                                                  const v = e.target.value
-                                                  field.onChange(v)
-                                                  if (String(v).trim().length > 0) {
-                                                    form.setValue('deptNameFromList', '')
-                                                  }
-                                                }}
-                                              />
-                                            </FormControl>
-                                            <FormMessage />
-                                          </FormItem>
-                                        )}
-                                      />
-                                    </>
-                                  )
-                                })()}
-
-                              {deptMatchBy === 'code' && (
-                                <FormField
-                                  control={form.control}
-                                  name="deptCodeFromList"
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormLabel>Department code</FormLabel>
-                                      <FormControl>
-                                        <select
-                                          {...field}
-                                          className="input w-full rounded-md border px-3 py-2"
-                                        >
-                                          <option value="">-- chọn code --</option>
-                                          {(deptsResp || []).map((d) => (
-                                            <option key={d.id} value={d.code}>
-                                              {d.code} - {d.name}
-                                            </option>
-                                          ))}
-                                        </select>
-                                      </FormControl>
-                                      <FormMessage />
+                                            )}
+                                          />
+                                          <Button
+                                            type="button"
+                                            size="sm"
+                                            onClick={() => {
+                                              const sel = form.getValues('deptNameFromList')
+                                              if (sel) {
+                                                addArrayValue('deptValues', String(sel), 'list')
+                                                form.setValue('deptNameFromList', '')
+                                              }
+                                            }}
+                                            disabled={deptManualHas}
+                                            className="bg-emerald-600 hover:bg-emerald-700"
+                                          >
+                                            <Plus className="h-4 w-4" />
+                                          </Button>
+                                        </div>
+                                        <Input
+                                          placeholder="Hoặc nhập thủ công (Enter)"
+                                          value={deptArrayInput}
+                                          onChange={(e) => setDeptArrayInput(e.target.value)}
+                                          onKeyDown={(e) => {
+                                            if (e.key === 'Enter' || e.key === ',') {
+                                              e.preventDefault()
+                                              const val = (e.target as HTMLInputElement).value
+                                                .trim()
+                                                .replace(/,$/, '')
+                                              if (val) {
+                                                addArrayValue('deptValues', val, 'manual')
+                                                setDeptArrayInput('')
+                                              }
+                                            }
+                                          }}
+                                          className="h-9 text-sm"
+                                        />
+                                        <div className="flex flex-wrap gap-1.5">
+                                          {(deptValuesWatch || []).map((v: string) => {
+                                            const isManual = deptValuesManual.includes(v)
+                                            const strike = !isManual && deptTyping
+                                            return (
+                                              <span
+                                                key={v}
+                                                className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${
+                                                  strike
+                                                    ? 'bg-gray-200 text-gray-400 line-through'
+                                                    : 'bg-emerald-100 text-emerald-700'
+                                                }`}
+                                              >
+                                                {v}
+                                                <button
+                                                  type="button"
+                                                  onClick={() => removeArrayValue('deptValues', v)}
+                                                  className="hover:text-red-600"
+                                                >
+                                                  <X className="h-3 w-3" />
+                                                </button>
+                                              </span>
+                                            )
+                                          })}
+                                        </div>
+                                      </div>
                                     </FormItem>
-                                  )}
-                                />
-                              )}
-                            </div>
+                                  )
+                                }
+
+                                // Single value
+                                const deptNameManualVal = form.watch('deptNameManual') || ''
+                                const deptSelectDisabled =
+                                  String(deptNameManualVal).trim().length > 0
+                                return (
+                                  <>
+                                    <FormField
+                                      control={form.control}
+                                      name="deptNameFromList"
+                                      render={({ field }) => (
+                                        <FormItem>
+                                          <FormLabel className="text-xs font-medium text-gray-600">
+                                            Department (từ danh sách)
+                                          </FormLabel>
+                                          <FormControl>
+                                            <select
+                                              {...field}
+                                              disabled={deptSelectDisabled}
+                                              onChange={(e) => {
+                                                field.onChange(e.target.value)
+                                                if (e.target.value)
+                                                  form.setValue('deptNameManual', '')
+                                              }}
+                                              className="flex h-9 w-full rounded-md border border-gray-300 bg-white px-3 text-sm disabled:opacity-50"
+                                            >
+                                              <option value="">-- chọn bộ phận --</option>
+                                              {(deptsResp || []).map((d) => (
+                                                <option key={d.id} value={d.name}>
+                                                  {d.name}
+                                                </option>
+                                              ))}
+                                            </select>
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+
+                                    <FormField
+                                      control={form.control}
+                                      name="deptNameManual"
+                                      render={({ field }) => (
+                                        <FormItem>
+                                          <FormLabel className="text-xs font-medium text-gray-600">
+                                            Department (nhập thủ công)
+                                          </FormLabel>
+                                          <FormControl>
+                                            <Input
+                                              {...field}
+                                              placeholder="Hoặc nhập thủ công"
+                                              onChange={(e) => {
+                                                const v = e.target.value
+                                                field.onChange(v)
+                                                if (String(v).trim().length > 0) {
+                                                  form.setValue('deptNameFromList', '')
+                                                }
+                                              }}
+                                              className="h-9 text-sm"
+                                            />
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+                                  </>
+                                )
+                              })()}
+
+                            {deptMatchBy === 'code' && (
+                              <FormField
+                                control={form.control}
+                                name="deptCodeFromList"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel className="text-xs font-medium text-gray-600">
+                                      Department code
+                                    </FormLabel>
+                                    <FormControl>
+                                      <select
+                                        {...field}
+                                        className="flex h-9 w-full rounded-md border border-gray-300 bg-white px-3 text-sm"
+                                      >
+                                        <option value="">-- chọn code --</option>
+                                        {(deptsResp || []).map((d) => (
+                                          <option key={d.id} value={d.code}>
+                                            {d.code} - {d.name}
+                                          </option>
+                                        ))}
+                                      </select>
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            )}
                           </div>
                         </div>
                       )}
@@ -1567,226 +1564,272 @@ export function PolicyFormModal({
                 })()}
               </div>
 
-              {/* Resource: Operator | ResourceType */}
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="resourceOperator"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Resource Operator</FormLabel>
-                      <FormControl>
-                        <select {...field} className="input w-full rounded-md border px-3 py-2">
-                          <option value="">-- chọn --</option>
-                          {(filterOperatorsByType('string') || []).map((op) => (
-                            <option key={op.id} value={op.name}>
-                              {formatOperatorLabel(op)}
-                            </option>
-                          ))}
-                        </select>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              {/* SECTION: Resource */}
+              <div className="space-y-4 rounded-xl border-2 border-amber-100 bg-gradient-to-br from-amber-50/50 to-orange-50/30 p-6">
+                <div className="mb-4 flex items-center gap-2">
+                  <FileCode className="h-5 w-5 text-amber-600" />
+                  <h3 className="text-lg font-semibold text-gray-800">Resource (Tài nguyên)</h3>
+                </div>
 
-                <FormField
-                  control={form.control}
-                  name="resourceTypeFromList"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Resource type</FormLabel>
-                      <FormControl>
-                        <select {...field} className="input w-full rounded-md border px-3 py-2">
-                          <option value="">-- chọn loại resource --</option>
-                          {resourceTypesLoading && <option disabled>Loading...</option>}
-                          {resourceTypesError && (
-                            <option disabled>Failed to load (see console)</option>
-                          )}
-                          {!resourceTypesLoading &&
-                            !resourceTypesError &&
-                            resourceTypes.length === 0 && (
-                              <option disabled>No resource types found</option>
-                            )}
-                          {resourceTypes.map((r: any) => (
-                            <option key={r.id} value={r.name}>
-                              {r.name}
-                            </option>
-                          ))}
-                        </select>
-                      </FormControl>
-                      {resourceTypesError && (
-                        <div className="mt-1 text-sm text-red-500">
-                          Failed to load resource types.{' '}
-                          <button
-                            type="button"
-                            className="underline"
-                            onClick={() => refetchResourceTypes()}
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="resourceOperator"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium text-gray-700">
+                          Resource Operator
+                        </FormLabel>
+                        <FormControl>
+                          <select
+                            {...field}
+                            className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-amber-500 focus:ring-2 focus:ring-amber-200"
                           >
-                            Retry
-                          </button>
-                        </div>
-                      )}
-                      {/* Debug: log fetched resource types */}
-                      {typeof window !== 'undefined' &&
-                        resourceTypes &&
-                        (console.debug('[PolicyFormModal] resourceTypes', resourceTypes), null)}
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                            <option value="">-- chọn --</option>
+                            {(filterOperatorsByType('string') || []).map((op) => (
+                              <option key={op.name} value={op.name}>
+                                {formatOperatorLabel(op)}
+                              </option>
+                            ))}
+                          </select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="resourceTypeFromList"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium text-gray-700">
+                          Resource Type
+                        </FormLabel>
+                        <FormControl>
+                          <select
+                            {...field}
+                            className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-amber-500 focus:ring-2 focus:ring-amber-200"
+                          >
+                            <option value="">-- chọn loại resource --</option>
+                            {resourceTypesLoading && <option disabled>Loading...</option>}
+                            {resourceTypesError && (
+                              <option disabled>Failed to load (see console)</option>
+                            )}
+                            {!resourceTypesLoading &&
+                              !resourceTypesError &&
+                              resourceTypes.length === 0 && (
+                                <option disabled>No resource types found</option>
+                              )}
+                            {resourceTypes.map((r: any) => (
+                              <option key={r.id || r.name} value={r.name}>
+                                {r.name}
+                              </option>
+                            ))}
+                          </select>
+                        </FormControl>
+                        {resourceTypesError && (
+                          <p className="mt-1 text-xs text-red-600">
+                            Failed to load resource types.{' '}
+                            <button
+                              type="button"
+                              onClick={() => refetchResourceTypes()}
+                              className="font-medium underline hover:text-red-800"
+                            >
+                              Retry
+                            </button>
+                          </p>
+                        )}
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </div>
 
-              <FormItem>
-                <FormLabel>Conditions</FormLabel>
-                <FormControl>
-                  <div>
-                    {conditionsLoading && <div className="text-sm">Loading conditions...</div>}
-                    {conditionsError && (
-                      <div className="text-sm text-red-500">
-                        Failed to load conditions.{' '}
-                        <button
-                          type="button"
-                          className="underline"
-                          onClick={() => refetchConditions()}
-                        >
-                          Retry
-                        </button>
-                      </div>
-                    )}
+              {/* SECTION: Conditions */}
+              <div className="space-y-4 rounded-xl border-2 border-purple-100 bg-gradient-to-br from-purple-50/50 to-pink-50/30 p-6">
+                <div className="mb-4 flex items-center gap-2">
+                  <Filter className="h-5 w-5 text-purple-600" />
+                  <h3 className="text-lg font-semibold text-gray-800">
+                    Conditions (Điều kiện bổ sung)
+                  </h3>
+                </div>
 
-                    <div className="max-h-48 overflow-auto rounded-md border p-2">
-                      {(conditionsResp || []).map((c: any) => {
-                        const dtype = String(c.dataType || 'string')
-                        const ops =
-                          filterOperatorsByType(dtype === 'number' ? 'number' : 'string') || []
-                        const sel = selectedConditions[c.id]
-                        return (
-                          <div key={c.id} className="grid grid-cols-3 items-center gap-3 py-1">
-                            <div className="flex items-start gap-2">
-                              <input
-                                type="checkbox"
-                                checked={!!sel}
-                                onChange={() => toggleCondition(c.id)}
-                              />
-                              <div className="text-sm">
-                                <div className="font-medium">{c.name}</div>
-                                {c.description && (
-                                  <div className="text-xs text-slate-500">{c.description}</div>
-                                )}
-                              </div>
-                            </div>
-
-                            <div>
-                              <select
-                                className="input w-full rounded-md border px-3 py-2"
-                                disabled={!sel}
-                                value={(sel && sel.operator) || (ops[0] && ops[0].name) || ''}
-                                onChange={(e) => setConditionOperator(c.id, e.target.value)}
-                              >
-                                {ops.map((op) => (
-                                  <option key={op.id} value={op.name}>
-                                    {formatOperatorLabel(op)}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-
-                            <div>
-                              {dtype === 'datetime' ? (
-                                // datetime-local expects value in "YYYY-MM-DDTHH:MM" (no seconds). Convert/accept as-is.
-                                <Input
-                                  type="datetime-local"
-                                  className="w-full"
-                                  disabled={!sel}
-                                  value={(sel && sel.value) || ''}
-                                  onChange={(e) => setConditionValue(c.id, e.target.value)}
-                                  placeholder="YYYY-MM-DDThh:mm"
-                                />
-                              ) : dtype === 'number' ? (
-                                <Input
-                                  type="number"
-                                  className="w-full"
-                                  disabled={!sel}
-                                  value={(sel && sel.value) || ''}
-                                  onChange={(e) => setConditionValue(c.id, e.target.value)}
-                                  placeholder="Số"
-                                />
-                              ) : (
-                                // default: string. For specific names like ipAddress we show a pattern hint
-                                <Input
-                                  type="text"
-                                  className="w-full"
-                                  disabled={!sel}
-                                  value={(sel && sel.value) || ''}
-                                  onChange={(e) => setConditionValue(c.id, e.target.value)}
-                                  placeholder={
-                                    c.name === 'ipAddress'
-                                      ? 'Ví dụ: 192.168.1.1, 2001:0db8::1'
-                                      : 'Chuỗi'
-                                  }
-                                  title={
-                                    c.name === 'ipAddress'
-                                      ? 'Cho phép nhiều IP, cách nhau bằng dấu phẩy. Hỗ trợ IPv4 và IPv6'
-                                      : undefined
-                                  }
-                                />
-                              )}
-                            </div>
-                          </div>
-                        )
-                      })}
-                    </div>
-                    {/* inline condition errors */}
-                    <div className="mt-2">
-                      {Object.entries(conditionErrors || {}).map(([id, err]) =>
-                        err ? (
-                          <div key={id} className="text-sm text-red-600">
-                            {err}
-                          </div>
-                        ) : null
-                      )}
-                      {submitError && (
-                        <div className="mt-1 text-sm text-red-600">{submitError}</div>
-                      )}
-                    </div>
+                {conditionsLoading && (
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Loading conditions...
                   </div>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
+                )}
+                {conditionsError && (
+                  <div className="text-sm text-red-600">
+                    Failed to load conditions.{' '}
+                    <button
+                      type="button"
+                      onClick={() => refetchConditions()}
+                      className="font-medium underline hover:text-red-800"
+                    >
+                      Retry
+                    </button>
+                  </div>
+                )}
+
+                <div className="space-y-3">
+                  {(conditionsResp || []).map((c: any) => {
+                    const dtype = String(c.dataType || 'string')
+                    const ops =
+                      filterOperatorsByType(dtype === 'number' ? 'number' : 'string') || []
+                    const sel = selectedConditions[c.id]
+
+                    return (
+                      <div
+                        key={c.id}
+                        className="space-y-3 rounded-lg border border-purple-200 bg-white/60 p-4"
+                      >
+                        <div className="flex items-start gap-3">
+                          <Checkbox
+                            checked={c.id in selectedConditions}
+                            onCheckedChange={() => toggleCondition(c.id)}
+                            className="mt-1 data-[state=checked]:bg-purple-600"
+                          />
+                          <div className="flex-1">
+                            <label className="cursor-pointer font-medium text-gray-800">
+                              {c.name}
+                            </label>
+                            {c.description && (
+                              <p className="mt-0.5 text-xs text-gray-500">{c.description}</p>
+                            )}
+                          </div>
+                        </div>
+
+                        {sel && (
+                          <div className="ml-7 grid grid-cols-2 gap-3">
+                            <select
+                              value={sel.operator || ''}
+                              onChange={(e) => setConditionOperator(c.id, e.target.value)}
+                              className="flex h-9 w-full rounded-md border border-gray-300 bg-white px-3 text-sm"
+                            >
+                              {ops.map((op) => (
+                                <option key={op.name} value={op.name}>
+                                  {formatOperatorLabel(op)}
+                                </option>
+                              ))}
+                            </select>
+
+                            {dtype === 'datetime' ? (
+                              <input
+                                type="datetime-local"
+                                value={sel.value || ''}
+                                onChange={(e) => setConditionValue(c.id, e.target.value)}
+                                placeholder="YYYY-MM-DDThh:mm"
+                                className="flex h-9 w-full rounded-md border border-gray-300 bg-white px-3 text-sm"
+                              />
+                            ) : dtype === 'number' ? (
+                              <Input
+                                type="number"
+                                value={sel.value || ''}
+                                onChange={(e) => setConditionValue(c.id, e.target.value)}
+                                placeholder="Số"
+                                className="h-9"
+                              />
+                            ) : (
+                              <Input
+                                type="text"
+                                value={sel.value || ''}
+                                onChange={(e) => setConditionValue(c.id, e.target.value)}
+                                placeholder={
+                                  c.name === 'ipAddress'
+                                    ? 'Ví dụ: 192.168.1.1, 2001:0db8::1'
+                                    : 'Chuỗi'
+                                }
+                                title={
+                                  c.name === 'ipAddress'
+                                    ? 'Cho phép nhiều IP, cách nhau bằng dấu phẩy. Hỗ trợ IPv4 và IPv6'
+                                    : undefined
+                                }
+                                className="h-9"
+                              />
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+
+                {/* Condition errors */}
+                {Object.entries(conditionErrors || {}).map(([id, err]) =>
+                  err ? (
+                    <div
+                      key={id}
+                      className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3"
+                    >
+                      <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-red-600" />
+                      <p className="text-sm text-red-700">{err}</p>
+                    </div>
+                  ) : null
+                )}
+                {submitError && (
+                  <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3">
+                    <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-red-600" />
+                    <p className="text-sm text-red-700">{submitError}</p>
+                  </div>
+                )}
+              </div>
             </fieldset>
-            <DialogFooter className="gap-2">
-              <Button type="button" variant="outline" onClick={onClose}>
-                {viewOnly ? 'Đóng' : 'Hủy'}
-              </Button>
-              {localViewOnly ? (
-                // when viewing, allow switching to edit mode if parent provided handler
-                <Button
-                  type="button"
-                  onClick={() => {
-                    console.debug('[PolicyFormModal] onRequestEdit clicked')
-                    // enable locally for immediate UX
-                    setLocalViewOnly(false)
-                    try {
-                      // focus first field for convenience
-                      if (typeof form.setFocus === 'function') form.setFocus('name')
-                    } catch {}
-                    if (typeof onRequestEdit === 'function') onRequestEdit()
-                  }}
-                  style={{ pointerEvents: 'auto' }}
-                  aria-disabled={false}
-                >
-                  Chỉnh sửa
-                </Button>
-              ) : (
-                <Button type="submit" disabled={isLoading}>
-                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {initialData ? 'Lưu' : 'Tạo'}
-                </Button>
-              )}
-            </DialogFooter>
           </form>
         </Form>
+
+        <DialogFooter className="flex gap-3 border-t pt-6">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClose}
+            className="border-gray-300 hover:bg-gray-50"
+          >
+            {viewOnly ? 'Đóng' : 'Hủy'}
+          </Button>
+
+          {localViewOnly ? (
+            <Button
+              type="button"
+              onClick={() => {
+                console.debug('[PolicyFormModal] onRequestEdit clicked')
+                setLocalViewOnly(false)
+                try {
+                  if (typeof form.setFocus === 'function') form.setFocus('name')
+                } catch {}
+                if (typeof onRequestEdit === 'function') onRequestEdit()
+              }}
+              style={{ pointerEvents: 'auto' }}
+              aria-disabled={false}
+              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700"
+            >
+              <Settings className="mr-2 h-4 w-4" />
+              Chỉnh sửa
+            </Button>
+          ) : (
+            <Button
+              type="submit"
+              disabled={isLoading}
+              onClick={form.handleSubmit(handleSubmit)}
+              className="min-w-[120px] bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Đang xử lý...
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                  {initialData ? 'Lưu thay đổi' : 'Tạo Policy'}
+                </>
+              )}
+            </Button>
+          )}
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   )
