@@ -155,7 +155,7 @@ export async function POST(request: NextRequest) {
 }
 
 // Operations for specific policy id
-export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function PUT(request: NextRequest, context: { params: any }) {
   let reqBody: unknown = undefined
   let id: string | undefined = undefined
   try {
@@ -163,8 +163,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const accessToken = cookieStore.get('access_token')?.value
     if (!accessToken) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const paramsObj = await params
-    id = paramsObj.id
+    const paramsObj = await context.params
+    id = (paramsObj as { id: string }).id
     reqBody = await request.json()
 
     const response = await backendApiClient.put(`${API_ENDPOINTS.POLICIES}/${id}`, reqBody, {
@@ -263,18 +263,15 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   }
 }
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(request: NextRequest, context: { params: any }) {
   let id: string | undefined = undefined
   try {
     const cookieStore = await cookies()
     const accessToken = cookieStore.get('access_token')?.value
     if (!accessToken) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const paramsObj = await params
-    id = paramsObj.id
+    const paramsObj = await context.params
+    id = (paramsObj as { id: string }).id
 
     const response = await backendApiClient.delete(`${API_ENDPOINTS.POLICIES}/${id}`, {
       headers: { Authorization: `Bearer ${accessToken}` },

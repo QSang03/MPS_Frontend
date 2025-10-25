@@ -124,16 +124,43 @@ export function EditUserModal({
       }
 
       // Update user
-      const updatedUser = await updateUserForClient(user.id, {
+      const result = await updateUserForClient(user.id, {
         email: data.email,
         roleId: data.roleId,
         departmentId: data.departmentId,
         customerId: customerIdToSend,
       })
 
-      toast.success('✅ Cập nhật thông tin người dùng thành công')
-      onUserUpdated(updatedUser)
-      onClose()
+      // If backend returned the updated user object -> success
+      const isUser =
+        result && typeof result === 'object' && 'id' in (result as Record<string, unknown>)
+
+      if (isUser) {
+        const updatedUser = result as UserType
+        toast.success('✅ Cập nhật thông tin người dùng thành công')
+        onUserUpdated(updatedUser)
+        onClose()
+      } else {
+        // Handle structured error payload from backend (validation / 409)
+        const err = result as any
+        // Map field errors to react-hook-form if possible
+        if (err?.errors && typeof err.errors === 'object') {
+          Object.entries(err.errors).forEach(([field, messages]) => {
+            const message = Array.isArray(messages) ? String(messages[0]) : String(messages)
+            // Only set known form fields
+            if (['email', 'roleId', 'departmentId', 'customerId'].includes(field)) {
+              form.setError(field as any, { type: 'server', message })
+            }
+          })
+          toast.error('❌ Vui lòng kiểm tra các trường có lỗi')
+        } else if (err?.message) {
+          toast.error(String(err.message))
+        } else if (err?.authExpired) {
+          toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.')
+        } else {
+          toast.error('❌ Có lỗi xảy ra khi cập nhật thông tin người dùng')
+        }
+      }
     } catch (error) {
       console.error('Error updating user:', error)
       toast.error('❌ Có lỗi xảy ra khi cập nhật thông tin người dùng')

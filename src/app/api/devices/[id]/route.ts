@@ -3,31 +3,22 @@ import { cookies } from 'next/headers'
 import backendApiClient from '@/lib/api/backend-client'
 import { API_ENDPOINTS } from '@/lib/api/endpoints'
 
-export async function GET(request: NextRequest, context: { params: any }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const cookieStore = await cookies()
     const accessToken = cookieStore.get('access_token')?.value
-    const hasAccess = !!cookieStore.get('access_token')
-    const hasRefresh = !!cookieStore.get('refresh_token')
-    console.debug('[api/policies/[id] GET] cookies present:', { hasAccess, hasRefresh })
     if (!accessToken) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const paramsObj = await context.params
-    const { id } = paramsObj as { id: string }
-    const response = await backendApiClient.get(`${API_ENDPOINTS.POLICIES}/${id}`, {
+    const { id } = (await params) as { id: string }
+
+    const response = await backendApiClient.get(API_ENDPOINTS.DEVICES.DETAIL(id), {
       headers: { Authorization: `Bearer ${accessToken}` },
     })
+
     return NextResponse.json(response.data)
   } catch (error: unknown) {
-    const err = error as
-      | { message?: string; response?: { status?: number; data?: unknown } }
-      | undefined
-    console.error('API Route /api/policies/[id] GET error:', err?.response?.status || err?.message)
-    if (err?.response)
-      console.debug(
-        '[api/policies/[id] GET] backend response data:',
-        (err.response as { data?: unknown })?.data
-      )
+    const err = error as { message?: string; response?: { status?: number } } | undefined
+    console.error('API Route /api/devices/[id] GET error:', err?.response?.status || err?.message)
     return NextResponse.json(
       { error: err?.message || 'Internal Server Error' },
       { status: err?.response?.status || 500 }
@@ -35,36 +26,20 @@ export async function GET(request: NextRequest, context: { params: any }) {
   }
 }
 
-export async function PUT(request: NextRequest, context: { params: any }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   let reqBody: unknown = undefined
   let id: string | undefined = undefined
   try {
     const cookieStore = await cookies()
     const accessToken = cookieStore.get('access_token')?.value
-    const hasAccess = !!cookieStore.get('access_token')
-    const hasRefresh = !!cookieStore.get('refresh_token')
-    console.debug('[api/policies/[id] PUT] cookies present:', { hasAccess, hasRefresh })
     if (!accessToken) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-    const resolvedParams = await context.params
-    id = (resolvedParams as { id: string }).id
+    const resolvedParams = (await params) as { id: string }
+    id = resolvedParams.id
     reqBody = await request.json()
-    // Debug: log incoming request body for troubleshooting missing fields
-    try {
-      console.debug('[api/policies/[id] PUT] incoming body:', JSON.stringify(reqBody))
-    } catch {
-      console.debug('[api/policies/[id] PUT] incoming body (non-serializable)')
-    }
 
-    const response = await backendApiClient.put(`${API_ENDPOINTS.POLICIES}/${id}`, reqBody, {
+    const response = await backendApiClient.put(API_ENDPOINTS.DEVICES.UPDATE(id), reqBody, {
       headers: { Authorization: `Bearer ${accessToken}` },
     })
-    // Log backend response for debugging persistence issues
-    try {
-      console.debug('[api/policies/[id] PUT] backend response:', JSON.stringify(response.data))
-    } catch {
-      console.debug('[api/policies/[id] PUT] backend response (non-serializable)')
-    }
     return NextResponse.json(response.data)
   } catch (error: unknown) {
     const err = error as
@@ -74,12 +49,7 @@ export async function PUT(request: NextRequest, context: { params: any }) {
           config?: { data?: unknown }
         }
       | undefined
-    console.error('API Route /api/policies/[id] PUT error:', err?.response?.status || err?.message)
-    if (err?.response)
-      console.debug(
-        '[api/policies/[id] PUT] backend response data:',
-        (err.response as { data?: unknown })?.data
-      )
+    console.error('API Route /api/devices/[id] PUT error:', err?.response?.status || err?.message)
 
     if (err?.response?.status === 401) {
       try {
@@ -138,7 +108,7 @@ export async function PUT(request: NextRequest, context: { params: any }) {
               : {}
 
         const retryResp = await backendApiClient.put(
-          `${API_ENDPOINTS.POLICIES}/${id}`,
+          API_ENDPOINTS.DEVICES.UPDATE(id || ''),
           originalBody,
           {
             headers: { Authorization: `Bearer ${newAccessToken}` },
@@ -164,18 +134,18 @@ export async function PUT(request: NextRequest, context: { params: any }) {
   }
 }
 
-export async function DELETE(request: NextRequest, context: { params: any }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const cookieStore = await cookies()
     const accessToken = cookieStore.get('access_token')?.value
-    const hasAccess = !!cookieStore.get('access_token')
-    const hasRefresh = !!cookieStore.get('refresh_token')
-    console.debug('[api/policies/[id] DELETE] cookies present:', { hasAccess, hasRefresh })
     if (!accessToken) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const paramsObj = await context.params
-    const { id } = paramsObj as { id: string }
-    const response = await backendApiClient.delete(`${API_ENDPOINTS.POLICIES}/${id}`, {
+    const { id } = (await params) as { id: string }
+
+    const response = await backendApiClient.delete(API_ENDPOINTS.DEVICES.DELETE(id), {
       headers: { Authorization: `Bearer ${accessToken}` },
     })
     return NextResponse.json(response.data)
@@ -184,14 +154,9 @@ export async function DELETE(request: NextRequest, context: { params: any }) {
       | { message?: string; response?: { status?: number; data?: unknown } }
       | undefined
     console.error(
-      'API Route /api/policies/[id] DELETE error:',
+      'API Route /api/devices/[id] DELETE error:',
       err?.response?.status || err?.message
     )
-    if (err?.response)
-      console.debug(
-        '[api/policies/[id] DELETE] backend response data:',
-        (err.response as { data?: unknown })?.data
-      )
     return NextResponse.json(
       { error: err?.message || 'Internal Server Error' },
       { status: err?.response?.status || 500 }

@@ -661,6 +661,7 @@ export function PolicyFormModal({
         name: data.name,
         effect: data.effect,
         actions: data.actions ? data.actions.split(',').map((s) => s.trim()) : [],
+        resource: {}, // Initialize resource as empty object - required by backend
       }
 
       const subjectObj: Record<string, unknown> = {}

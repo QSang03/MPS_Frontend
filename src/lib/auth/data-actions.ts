@@ -34,11 +34,20 @@ export async function getDepartmentsForClient(): Promise<Department[]> {
 /**
  * Server action to update user for client-side use
  */
-export async function updateUserForClient(id: string, userData: Partial<User>): Promise<User> {
+export async function updateUserForClient(
+  id: string,
+  userData: Partial<User>
+): Promise<User | unknown> {
   try {
     return await usersService.updateUser(id, userData)
   } catch (error) {
     console.error('Failed to update user:', error)
+    // If backend returned structured error payload (validation / conflict), pass it through
+    const err = error as unknown
+    const data = (err as { response?: { data?: unknown } })?.response?.data
+    if (data) {
+      return data
+    }
     throw error
   }
 }
@@ -46,11 +55,16 @@ export async function updateUserForClient(id: string, userData: Partial<User>): 
 /**
  * Server action to create user for client-side use
  */
-export async function createUserForClient(userData: Partial<User>): Promise<User> {
+export async function createUserForClient(userData: Partial<User>): Promise<User | unknown> {
   try {
     return await usersService.createUser(userData)
   } catch (error) {
     console.error('Failed to create user:', error)
+    const err = error as unknown
+    const data = (err as { response?: { data?: unknown } })?.response?.data
+    if (data) {
+      return data
+    }
     throw error
   }
 }
