@@ -99,6 +99,7 @@ export function UsersTable() {
   const {
     data: usersData,
     isLoading: isLoadingUsers,
+    isFetching: isFetchingUsers,
     refetch: refetchUsers,
   } = useQuery({
     queryKey: ['users', pagination.page, pagination.limit, filters],
@@ -411,10 +412,10 @@ export function UsersTable() {
               variant="outline"
               size="icon"
               onClick={() => refetchUsers()}
-              className="border-white/30 bg-white/20 text-white transition-all hover:bg-white/30"
+              className="cursor-pointer border-white/30 bg-white/20 text-white transition-all hover:bg-white/30"
               title="Làm mới dữ liệu"
             >
-              <RefreshCw className="h-5 w-5" />
+              <RefreshCw className={`${isFetchingUsers ? 'animate-spin' : ''} h-5 w-5`} />
             </Button>
           </div>
         </div>

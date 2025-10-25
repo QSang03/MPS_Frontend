@@ -45,7 +45,7 @@ export function DepartmentsTable() {
   const [page, setPage] = useState(1)
   const [limit] = useState(10)
 
-  const { data, isLoading, refetch } = useQuery({
+  const { data, isLoading, isFetching, refetch } = useQuery({
     queryKey: ['departments', page, limit, search, isActive],
     queryFn: () =>
       departmentsClientService.getDepartments({
@@ -187,10 +187,10 @@ export function DepartmentsTable() {
                 variant="outline"
                 size="icon"
                 onClick={() => refetch()}
-                className="h-10 w-10 rounded-xl border-2 border-gray-200 transition-all duration-300 hover:border-blue-400 hover:bg-blue-50"
+                className="h-10 w-10 cursor-pointer rounded-xl border-2 border-gray-200 transition-all duration-300 hover:border-blue-400 hover:bg-blue-50"
                 title="Làm mới dữ liệu"
               >
-                <RefreshCw className="h-5 w-5" />
+                <RefreshCw className={`${isFetching ? 'animate-spin' : ''} h-5 w-5`} />
               </Button>
             </div>
           </div>

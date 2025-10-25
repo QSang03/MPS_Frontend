@@ -50,7 +50,7 @@ export function PoliciesTable() {
   const [page, setPage] = useState(1)
   const [limit] = useState(10)
 
-  const { data, isLoading, refetch } = useQuery({
+  const { data, isLoading, isFetching, refetch } = useQuery({
     queryKey: ['policies', page, limit, search, effect, action],
     queryFn: () =>
       policiesClientService.getPolicies({
@@ -214,10 +214,11 @@ export function PoliciesTable() {
                 variant="outline"
                 size="icon"
                 onClick={() => refetch()}
-                className="h-10 w-10 rounded-xl border-2 border-gray-200 transition-all duration-300 hover:border-blue-400 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50"
+                className="h-10 w-10 cursor-pointer rounded-xl border-2 border-gray-200 transition-all duration-300 hover:border-blue-400 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50"
                 title="Làm mới dữ liệu"
               >
-                <RefreshCw className="animate-spin-slow h-5 w-5" />
+                {/* Hiện animation xoay khi đang fetch (kể cả refetch); đổi con trỏ thành tay khi hover */}
+                <RefreshCw className={`${isFetching ? 'animate-spin' : ''} h-5 w-5`} />
               </Button>
             </div>
           </div>

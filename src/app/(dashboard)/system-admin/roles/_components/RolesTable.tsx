@@ -46,7 +46,7 @@ export function RolesTable() {
   const [page, setPage] = useState(1)
   const [limit] = useState(10)
 
-  const { data, isLoading, refetch } = useQuery({
+  const { data, isLoading, isFetching, refetch } = useQuery({
     queryKey: ['roles', page, limit, search, isActive],
     queryFn: () =>
       rolesClientService.getRoles({
@@ -189,10 +189,10 @@ export function RolesTable() {
                 variant="outline"
                 size="icon"
                 onClick={() => refetch()}
-                className="h-10 w-10 rounded-xl border-2 border-gray-200 transition-all duration-300 hover:border-emerald-400 hover:bg-emerald-50"
+                className="h-10 w-10 cursor-pointer rounded-xl border-2 border-gray-200 transition-all duration-300 hover:border-emerald-400 hover:bg-emerald-50"
                 title="Làm mới dữ liệu"
               >
-                <RefreshCw className="h-5 w-5" />
+                <RefreshCw className={`${isFetching ? 'animate-spin' : ''} h-5 w-5`} />
               </Button>
             </div>
           </div>
