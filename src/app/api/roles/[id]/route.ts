@@ -26,7 +26,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   let reqBody: unknown = undefined
   let id: string | undefined = undefined
   try {
@@ -37,7 +37,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     if (!accessToken) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     reqBody = await request.json()
-    const response = await backendApiClient.put(`${API_ENDPOINTS.ROLES}/${id}`, reqBody, {
+    const response = await backendApiClient.patch(`${API_ENDPOINTS.ROLES}/${id}`, reqBody, {
       headers: { Authorization: `Bearer ${accessToken}` },
     })
     return NextResponse.json(response.data)
@@ -100,9 +100,13 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
             : err?.config?.data && typeof err.config.data === 'string'
               ? JSON.parse(String(err.config.data))
               : {}
-        const retryResp = await backendApiClient.put(`${API_ENDPOINTS.ROLES}/${id}`, originalBody, {
-          headers: { Authorization: `Bearer ${newAccessToken}` },
-        })
+        const retryResp = await backendApiClient.patch(
+          `${API_ENDPOINTS.ROLES}/${id}`,
+          originalBody,
+          {
+            headers: { Authorization: `Bearer ${newAccessToken}` },
+          }
+        )
         return NextResponse.json(retryResp.data)
       } catch (retryErr: unknown) {
         const rerr = retryErr as { message?: string; response?: { status?: number } } | undefined

@@ -47,7 +47,7 @@ export const deviceService = {
    * Update existing device
    */
   async update(id: string, dto: UpdateDeviceDto): Promise<Device> {
-    const { data } = await apiClient.put<{ success: boolean; device: Device }>(
+    const { data } = await apiClient.patch<{ success: boolean; device: Device }>(
       API_ENDPOINTS.DEVICES.UPDATE(id),
       dto
     )

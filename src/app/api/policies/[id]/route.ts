@@ -35,7 +35,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
   }
 }
 
-export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   let reqBody: unknown = undefined
   let id: string | undefined = undefined
   try {
@@ -56,7 +56,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       console.debug('[api/policies/[id] PUT] incoming body (non-serializable)')
     }
 
-    const response = await backendApiClient.put(`${API_ENDPOINTS.POLICIES}/${id}`, reqBody, {
+    const response = await backendApiClient.patch(`${API_ENDPOINTS.POLICIES}/${id}`, reqBody, {
       headers: { Authorization: `Bearer ${accessToken}` },
     })
     // Log backend response for debugging persistence issues
@@ -137,7 +137,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
               ? JSON.parse(String(err.config.data))
               : {}
 
-        const retryResp = await backendApiClient.put(
+        const retryResp = await backendApiClient.patch(
           `${API_ENDPOINTS.POLICIES}/${id}`,
           originalBody,
           {

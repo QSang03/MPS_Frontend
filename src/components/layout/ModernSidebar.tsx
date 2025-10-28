@@ -44,7 +44,6 @@ function getNavigationItems(role: UserRole): NavItem[] {
   if (role === UserRole.CUSTOMER_ADMIN) {
     return [
       { label: 'Tổng quan', href: ROUTES.CUSTOMER_ADMIN, icon: LayoutDashboard },
-      { label: 'Thiết bị', href: ROUTES.CUSTOMER_ADMIN_DEVICES, icon: Printer },
       { label: 'Mẫu thiết bị', href: ROUTES.CUSTOMER_ADMIN_DEVICE_MODELS, icon: Building2 },
       {
         label: 'Loại vật tư tiêu hao',
@@ -61,7 +60,7 @@ function getNavigationItems(role: UserRole): NavItem[] {
         href: ROUTES.CUSTOMER_ADMIN_PURCHASE_REQUESTS,
         icon: ShoppingCart,
       },
-      { label: 'Người dùng', href: ROUTES.CUSTOMER_ADMIN_USERS, icon: Users },
+      { label: 'Quản lý người dùng', href: ROUTES.CUSTOMER_ADMIN_USERS, icon: Users },
       { label: 'Quản lý policies', href: ROUTES.CUSTOMER_ADMIN_POLICIES, icon: Shield },
       { label: 'Quản lý vai trò', href: ROUTES.CUSTOMER_ADMIN_ROLES, icon: Settings },
       { label: 'Quản lý bộ phận', href: ROUTES.CUSTOMER_ADMIN_DEPARTMENTS, icon: Building2 },

@@ -43,7 +43,7 @@ export const rolesClientService = {
    * Update role (client-side)
    */
   async updateRole(id: string, roleData: Partial<UserRole>): Promise<UserRole> {
-    const response = await internalApiClient.put<{
+    const response = await internalApiClient.patch<{
       success: boolean
       data: UserRole
       message?: string

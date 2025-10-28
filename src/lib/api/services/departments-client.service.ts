@@ -46,7 +46,7 @@ export const departmentsClientService = {
    * Update department (client-side)
    */
   async updateDepartment(id: string, deptData: Partial<Department>): Promise<Department> {
-    const response = await internalApiClient.put<{
+    const response = await internalApiClient.patch<{
       success: boolean
       data: Department
       message?: string

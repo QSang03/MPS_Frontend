@@ -58,7 +58,7 @@ export const deviceModelsClientService = {
   },
 
   async update(id: string, dto: UpdateDeviceModelDto) {
-    const response = await internalApiClient.put(`/api/device-models/${id}`, dto)
+    const response = await internalApiClient.patch(`/api/device-models/${id}`, dto)
     return response.data?.data
   },
 

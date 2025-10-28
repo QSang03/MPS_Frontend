@@ -63,7 +63,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   try {
     const cookieStore = await cookies()
@@ -73,7 +73,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     const body = await request.json()
-    const response = await backendApiClient.put(API_ENDPOINTS.CONSUMABLE_TYPES.UPDATE(id), body, {
+    const response = await backendApiClient.patch(API_ENDPOINTS.CONSUMABLE_TYPES.UPDATE(id), body, {
       headers: { Authorization: `Bearer ${accessToken}` },
     })
 
@@ -95,7 +95,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
           const newAccessToken = refreshResponse.data.data?.access_token
           if (newAccessToken) {
             const body = await request.json()
-            const retryResponse = await backendApiClient.put(
+            const retryResponse = await backendApiClient.patch(
               API_ENDPOINTS.CONSUMABLE_TYPES.UPDATE(id),
               body,
               { headers: { Authorization: `Bearer ${newAccessToken}` } }

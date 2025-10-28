@@ -30,7 +30,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
     const cookieStore = await cookies()
@@ -42,11 +42,15 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
     const body = await request.json()
 
-    const response = await backendApiClient.put(`${API_ENDPOINTS.DEVICE_MODELS.UPDATE(id)}`, body, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    })
+    const response = await backendApiClient.patch(
+      `${API_ENDPOINTS.DEVICE_MODELS.UPDATE(id)}`,
+      body,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    )
 
     return NextResponse.json(response.data)
   } catch (error: unknown) {

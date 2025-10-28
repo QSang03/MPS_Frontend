@@ -26,7 +26,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   let reqBody: unknown = undefined
   let id: string | undefined = undefined
   try {
@@ -37,7 +37,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     id = resolvedParams.id
     reqBody = await request.json()
 
-    const response = await backendApiClient.put(API_ENDPOINTS.DEVICES.UPDATE(id), reqBody, {
+    const response = await backendApiClient.patch(API_ENDPOINTS.DEVICES.UPDATE(id), reqBody, {
       headers: { Authorization: `Bearer ${accessToken}` },
     })
     return NextResponse.json(response.data)
@@ -107,7 +107,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
               ? JSON.parse(String(err.config.data))
               : {}
 
-        const retryResp = await backendApiClient.put(
+        const retryResp = await backendApiClient.patch(
           API_ENDPOINTS.DEVICES.UPDATE(id || ''),
           originalBody,
           {

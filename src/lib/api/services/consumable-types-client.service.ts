@@ -78,7 +78,7 @@ class ConsumableTypesClientService {
 
   async update(id: string, data: UpdateConsumableTypeDto): Promise<ConsumableType | null> {
     try {
-      const response = await internalApiClient.put<{ data: ConsumableType }>(
+      const response = await internalApiClient.patch<{ data: ConsumableType }>(
         `/api/consumable-types/${id}`,
         data
       )

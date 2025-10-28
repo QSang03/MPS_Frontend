@@ -88,7 +88,7 @@ export const policiesClientService = {
 
   async updatePolicy(id: string, policyData: Partial<Policy>): Promise<Policy> {
     try {
-      const response = await internalApiClient.put<{
+      const response = await internalApiClient.patch<{
         success: boolean
         data: Policy
         message?: string

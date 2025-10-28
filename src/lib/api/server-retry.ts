@@ -5,7 +5,7 @@ import { refreshAccessToken } from '@/lib/auth/session'
  * attempt to refresh the access token and retry the call once.
  *
  * Usage:
- * return await withRefreshRetry(() => serverApiClient.put(...))
+ * return await withRefreshRetry(() => serverApiClient.patch(...))
  */
 export class AuthExpiredError extends Error {
   constructor(message = 'Refresh token expired') {

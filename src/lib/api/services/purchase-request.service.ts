@@ -50,7 +50,7 @@ export const purchaseRequestService = {
    * Update purchase request
    */
   async update(id: string, dto: UpdatePurchaseRequestDto): Promise<PurchaseRequest> {
-    const { data } = await apiClient.put<PurchaseRequest>(
+    const { data } = await apiClient.patch<PurchaseRequest>(
       API_ENDPOINTS.PURCHASE_REQUESTS.UPDATE(id),
       dto
     )

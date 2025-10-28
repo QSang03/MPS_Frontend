@@ -46,7 +46,7 @@ export const authService = {
    * Update user profile
    */
   async updateProfile(profileData: Partial<UserProfile['user']>): Promise<UserProfile> {
-    const response = await apiClient.put<UserProfile | { success: boolean; data: UserProfile }>(
+    const response = await apiClient.patch<UserProfile | { success: boolean; data: UserProfile }>(
       API_ENDPOINTS.AUTH.PROFILE,
       profileData
     )
@@ -62,7 +62,7 @@ export const authService = {
    * Change user password
    */
   async changePassword(payload: { currentPassword: string; newPassword: string }) {
-    const response = await apiClient.put(API_ENDPOINTS.AUTH.CHANGE_PASSWORD, payload)
+    const response = await apiClient.patch(API_ENDPOINTS.AUTH.CHANGE_PASSWORD, payload)
     return response.data
   },
 
@@ -71,7 +71,7 @@ export const authService = {
    */
   async changePasswordServer(payload: { currentPassword: string; newPassword: string }) {
     const response = await withRefreshRetry(() =>
-      serverApiClient.put(API_ENDPOINTS.AUTH.CHANGE_PASSWORD, payload)
+      serverApiClient.patch(API_ENDPOINTS.AUTH.CHANGE_PASSWORD, payload)
     )
     return response.data
   },

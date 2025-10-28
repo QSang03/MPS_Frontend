@@ -66,7 +66,7 @@ export const usersService = {
    */
   async updateUser(id: string, userData: Partial<User>): Promise<User> {
     const response = await withRefreshRetry(() =>
-      serverApiClient.put<{ success: boolean; data: User; message?: string }>(
+      serverApiClient.patch<{ success: boolean; data: User; message?: string }>(
         `${API_ENDPOINTS.USERS}/${id}`,
         userData
       )

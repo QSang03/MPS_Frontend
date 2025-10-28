@@ -155,7 +155,7 @@ export async function POST(request: NextRequest) {
 }
 
 // Operations for specific policy id
-export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   let reqBody: unknown = undefined
   let id: string | undefined = undefined
   try {
@@ -167,7 +167,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     id = (paramsObj as { id: string }).id
     reqBody = await request.json()
 
-    const response = await backendApiClient.put(`${API_ENDPOINTS.POLICIES}/${id}`, reqBody, {
+    const response = await backendApiClient.patch(`${API_ENDPOINTS.POLICIES}/${id}`, reqBody, {
       headers: { Authorization: `Bearer ${accessToken}` },
     })
     return NextResponse.json(response.data)
@@ -237,7 +237,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
               ? JSON.parse(String(err.config.data))
               : {}
 
-        const retryResp = await backendApiClient.put(
+        const retryResp = await backendApiClient.patch(
           `${API_ENDPOINTS.POLICIES}/${id}`,
           originalBody,
           {

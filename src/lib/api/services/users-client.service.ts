@@ -32,7 +32,7 @@ export const usersClientService = {
    * Update user (client-side)
    */
   async updateUser(id: string, userData: Partial<User>): Promise<User> {
-    const response = await internalApiClient.put<{
+    const response = await internalApiClient.patch<{
       success: boolean
       data: User
       message?: string

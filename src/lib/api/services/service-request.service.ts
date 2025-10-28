@@ -49,7 +49,7 @@ export const serviceRequestService = {
    * Update service request
    */
   async update(id: string, dto: UpdateServiceRequestDto): Promise<ServiceRequest> {
-    const { data } = await apiClient.put<ServiceRequest>(
+    const { data } = await apiClient.patch<ServiceRequest>(
       API_ENDPOINTS.SERVICE_REQUESTS.UPDATE(id),
       dto
     )
