@@ -155,7 +155,7 @@ export async function POST(request: NextRequest) {
 }
 
 // Operations for specific policy id
-export async function PUT(request: NextRequest, context: { params: any }) {
+export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   let reqBody: unknown = undefined
   let id: string | undefined = undefined
   try {
@@ -263,7 +263,7 @@ export async function PUT(request: NextRequest, context: { params: any }) {
   }
 }
 
-export async function DELETE(request: NextRequest, context: { params: any }) {
+export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   let id: string | undefined = undefined
   try {
     const cookieStore = await cookies()

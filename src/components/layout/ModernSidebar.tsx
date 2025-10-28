@@ -45,6 +45,12 @@ function getNavigationItems(role: UserRole): NavItem[] {
     return [
       { label: 'Tổng quan', href: ROUTES.CUSTOMER_ADMIN, icon: LayoutDashboard },
       { label: 'Thiết bị', href: ROUTES.CUSTOMER_ADMIN_DEVICES, icon: Printer },
+      { label: 'Mẫu thiết bị', href: ROUTES.CUSTOMER_ADMIN_DEVICE_MODELS, icon: Building2 },
+      {
+        label: 'Loại vật tư tiêu hao',
+        href: ROUTES.CUSTOMER_ADMIN_CONSUMABLE_TYPES,
+        icon: ShoppingCart,
+      },
       {
         label: 'Yêu cầu bảo trì',
         href: ROUTES.CUSTOMER_ADMIN_SERVICE_REQUESTS,

@@ -3,7 +3,7 @@ import { cookies } from 'next/headers'
 import backendApiClient from '@/lib/api/backend-client'
 import { API_ENDPOINTS } from '@/lib/api/endpoints'
 
-export async function GET(request: NextRequest, context: { params: any }) {
+export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const cookieStore = await cookies()
     const accessToken = cookieStore.get('access_token')?.value
@@ -35,7 +35,7 @@ export async function GET(request: NextRequest, context: { params: any }) {
   }
 }
 
-export async function PUT(request: NextRequest, context: { params: any }) {
+export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   let reqBody: unknown = undefined
   let id: string | undefined = undefined
   try {
@@ -164,7 +164,7 @@ export async function PUT(request: NextRequest, context: { params: any }) {
   }
 }
 
-export async function DELETE(request: NextRequest, context: { params: any }) {
+export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const cookieStore = await cookies()
     const accessToken = cookieStore.get('access_token')?.value

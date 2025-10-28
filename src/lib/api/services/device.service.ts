@@ -11,7 +11,13 @@ export const deviceService = {
    * Get all devices with pagination and optional filtering
    */
   async getAll(
-    params: PaginationParams & { customerId?: string; status?: string; search?: string }
+    params: PaginationParams & {
+      customerId?: string
+      status?: string
+      search?: string
+      // allow filtering by device model id
+      deviceModelId?: string
+    }
   ): Promise<PaginatedResponse<Device>> {
     const { data } = await apiClient.get<PaginatedResponse<Device>>(API_ENDPOINTS.DEVICES.LIST, {
       params,
@@ -23,8 +29,10 @@ export const deviceService = {
    * Get device by ID
    */
   async getById(id: string): Promise<Device> {
-    const { data } = await apiClient.get<Device>(API_ENDPOINTS.DEVICES.DETAIL(id))
-    return data
+    const response = await apiClient.get<{ success: boolean; data: Device }>(
+      API_ENDPOINTS.DEVICES.DETAIL(id)
+    )
+    return response.data.data
   },
 
   /**

@@ -17,6 +17,7 @@ export function getNavigationItems(_role?: string): NavItem[] {
     { href: ROUTES.CUSTOMER_ADMIN_ROLES, label: 'Quản lý vai trò', icon: Layers },
     { href: ROUTES.CUSTOMER_ADMIN_DEPARTMENTS, label: 'Quản lý bộ phận', icon: ClipboardList },
     { href: ROUTES.CUSTOMER_ADMIN_DEVICES, label: 'Thiết bị', icon: Layout },
+    { href: ROUTES.CUSTOMER_ADMIN_DEVICE_MODELS, label: 'Mẫu thiết bị', icon: Layers },
     { href: ROUTES.CUSTOMER_ADMIN_REPORTS, label: 'Báo cáo', icon: Settings },
   ]
 

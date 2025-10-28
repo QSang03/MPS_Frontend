@@ -9,6 +9,8 @@ export const devicesClientService = {
     search?: string
     status?: string
     customerId?: string
+    // optional filter by device model id
+    deviceModelId?: string
   }) {
     const response = await internalApiClient.get<ApiListResponse<Device>>('/api/devices', {
       params: {
@@ -17,6 +19,7 @@ export const devicesClientService = {
         search: params?.search,
         status: params?.status,
         customerId: params?.customerId,
+        deviceModelId: params?.deviceModelId,
       },
     })
     const { data, pagination } = response.data || { data: [], pagination: undefined }
@@ -24,8 +27,26 @@ export const devicesClientService = {
   },
 
   async getById(id: string) {
-    const response = await internalApiClient.get<{ data: Device }>(`/api/devices/${id}`)
-    return response.data?.data
+    const response = await internalApiClient.get(`/api/devices/${id}`)
+    // Defensive: backend /api route may return { success: true, data: Device } or Device directly.
+    // Log raw response for debugging in browser console when needed.
+    try {
+      console.debug('[devicesClientService.getById] raw response:', response?.data)
+    } catch {
+      // ignore logging errors in some environments
+    }
+
+    const body = response.data
+    if (!body) return undefined
+
+    // If backend wraps device in { data: Device }
+    if (body.data && typeof body.data === 'object') return body.data as Device
+
+    // If backend returns device object directly
+    if (body.id) return body as Device
+
+    // Unknown shape
+    return undefined
   },
 
   async create(dto: CreateDeviceDto) {
@@ -40,6 +61,24 @@ export const devicesClientService = {
 
   async delete(id: string) {
     const response = await internalApiClient.delete(`/api/devices/${id}`)
+    return response.data
+  },
+
+  async getConsumables(id: string) {
+    const response = await internalApiClient.get(`/api/devices/${id}/consumables`)
+    // Defensive: backend may return { data: [...] } or the list directly
+    const body = response.data
+    if (!body) return []
+    if (Array.isArray(body)) return body
+    if (Array.isArray(body.data)) return body.data
+    return []
+  },
+
+  async installConsumable(deviceId: string, consumableId: string) {
+    const response = await internalApiClient.post(`/api/devices/${deviceId}/install-consumable`, {
+      consumableId,
+    })
+    // return body or success flag
     return response.data
   },
 }

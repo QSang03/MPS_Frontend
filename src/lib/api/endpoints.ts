@@ -33,6 +33,25 @@ export const API_ENDPOINTS = {
     STATS: (customerId: string) => `/devices/stats/${customerId}`,
   },
 
+  // Device Models
+  DEVICE_MODELS: {
+    LIST: '/device-models',
+    DETAIL: (id: string) => `/device-models/${id}`,
+    CREATE: '/device-models',
+    UPDATE: (id: string) => `/device-models/${id}`,
+    DELETE: (id: string) => `/device-models/${id}`,
+    COMPATIBLE_CONSUMABLES: (id: string) => `/device-models/${id}/compatible-consumables`,
+  },
+
+  // Consumable Types
+  CONSUMABLE_TYPES: {
+    LIST: '/consumable-types',
+    DETAIL: (id: string) => `/consumable-types/${id}`,
+    CREATE: '/consumable-types',
+    UPDATE: (id: string) => `/consumable-types/${id}`,
+    DELETE: (id: string) => `/consumable-types/${id}`,
+  },
+
   // Service Requests
   SERVICE_REQUESTS: {
     LIST: '/service-requests',

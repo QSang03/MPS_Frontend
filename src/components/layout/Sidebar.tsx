@@ -35,6 +35,21 @@ export function Sidebar({ session }: SidebarProps) {
       })
     }
 
+    // Ensure Device Models visible to all roles: insert after Thiết bị if possible
+    if (!navigation.some((it) => it.href === ROUTES.CUSTOMER_ADMIN_DEVICE_MODELS)) {
+      const deviceIndex = navigation.findIndex((it) => it.href === ROUTES.CUSTOMER_ADMIN_DEVICES)
+      const item = {
+        href: ROUTES.CUSTOMER_ADMIN_DEVICE_MODELS,
+        label: 'Mẫu thiết bị',
+        icon: Layers,
+      }
+      if (deviceIndex >= 0 && deviceIndex < navigation.length - 1) {
+        navigation.splice(deviceIndex + 1, 0, item)
+      } else {
+        navigation.push(item)
+      }
+    }
+
     console.debug(
       '[Sidebar] navigation items:',
       navigation.map((i) => i.label)
