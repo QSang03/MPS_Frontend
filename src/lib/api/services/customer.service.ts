@@ -13,7 +13,7 @@ export const customerService = {
       serverApiClient.get<ApiListResponse<Customer>>(API_ENDPOINTS.CUSTOMERS, {
         params: {
           page: params?.page ?? 1,
-          limit: params?.limit ?? 1000,
+          limit: params?.limit ?? 100,
         },
       })
     )

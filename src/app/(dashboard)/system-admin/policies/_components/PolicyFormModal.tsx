@@ -128,14 +128,14 @@ export function PolicyFormModal({
   // [KHU VỰC FETCH DATA - GIỮ NGUYÊN]
   const { data: rolesResp } = useQuery({
     queryKey: ['roles', 'for-policy'],
-    queryFn: async () => (await rolesClientService.getRoles({ page: 1, limit: 1000 })).data,
+    queryFn: async () => (await rolesClientService.getRoles({ page: 1, limit: 100 })).data,
     staleTime: 1000 * 60 * 5,
   })
 
   const { data: deptsResp } = useQuery({
     queryKey: ['departments', 'for-policy'],
     queryFn: async () =>
-      (await departmentsClientService.getDepartments({ page: 1, limit: 1000 })).data,
+      (await departmentsClientService.getDepartments({ page: 1, limit: 100 })).data,
     staleTime: 1000 * 60 * 5,
   })
 

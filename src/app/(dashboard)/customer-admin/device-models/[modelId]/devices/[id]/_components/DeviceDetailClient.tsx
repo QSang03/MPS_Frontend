@@ -77,10 +77,27 @@ export function DeviceDetailClient({ deviceId, modelId }: DeviceDetailClientProp
   const [expiryDate, setExpiryDate] = useState<string>('')
   const [activeTab, setActiveTab] = useState('overview')
   const router = useRouter()
+
+  // Edit consumable state
+  const [showEditConsumable, setShowEditConsumable] = useState(false)
+  const [editingConsumable, setEditingConsumable] = useState<any | null>(null)
+  const [editSerialNumber, setEditSerialNumber] = useState('')
+  const [editBatchNumber, setEditBatchNumber] = useState('')
+  const [editCapacity, setEditCapacity] = useState<number | ''>('')
+  const [editRemaining, setEditRemaining] = useState<number | ''>('')
+  const [editExpiryDate, setEditExpiryDate] = useState('')
+  const [editStatus, setEditStatus] = useState('ACTIVE')
+  const [updatingConsumable, setUpdatingConsumable] = useState(false)
+
   const remainingInvalid =
-    capacity !== '' &&
-    remaining !== '' &&
-    (Number(remaining) >= Number(capacity) || Number(remaining) < 0)
+    typeof remaining === 'number' &&
+    typeof capacity === 'number' &&
+    (remaining >= capacity || remaining < 0)
+
+  const editRemainingInvalid =
+    typeof editRemaining === 'number' &&
+    typeof editCapacity === 'number' &&
+    (editRemaining >= editCapacity || editRemaining < 0)
 
   useEffect(() => {
     const fetchDevice = async () => {
@@ -468,6 +485,7 @@ export function DeviceDetailClient({ deviceId, modelId }: DeviceDetailClientProp
                         <th className="px-4 py-3 text-left text-sm font-semibold">Mã / Model</th>
                         <th className="px-4 py-3 text-left text-sm font-semibold">Trạng thái</th>
                         <th className="px-4 py-3 text-right text-sm font-semibold">Thời gian</th>
+                        <th className="px-4 py-3 text-center text-sm font-semibold">Thao tác</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y">
@@ -533,6 +551,63 @@ export function DeviceDetailClient({ deviceId, modelId }: DeviceDetailClientProp
                                 : cons?.expiryDate
                                   ? new Date(cons.expiryDate).toLocaleDateString('vi-VN')
                                   : '—'}
+                            </td>
+                            <td className="space-x-2 px-4 py-3 text-center">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  const consumableData = cons ?? c
+                                  setEditingConsumable(consumableData)
+                                  setEditSerialNumber(consumableData?.serialNumber ?? '')
+                                  setEditBatchNumber(consumableData?.batchNumber ?? '')
+                                  setEditCapacity(consumableData?.capacity ?? '')
+                                  setEditRemaining(consumableData?.remaining ?? '')
+                                  const expiryDateValue = consumableData?.expiryDate
+                                    ? new Date(consumableData.expiryDate)
+                                        .toISOString()
+                                        .split('T')[0]
+                                    : ''
+                                  setEditExpiryDate(expiryDateValue ?? '')
+                                  setEditStatus(consumableData?.status ?? 'ACTIVE')
+                                  setShowEditConsumable(true)
+                                }}
+                                className="gap-2"
+                              >
+                                <Edit className="h-4 w-4" />
+                                Sửa
+                              </Button>
+
+                              <DeleteDialog
+                                title="Xóa vật tư"
+                                description="Bạn có chắc muốn xóa vật tư này? Hành động không thể hoàn tác."
+                                onConfirm={async () => {
+                                  try {
+                                    const idToDelete = c?.id ?? cons?.id
+                                    if (!idToDelete) throw new Error('Không tìm thấy id vật tư')
+                                    await consumablesClientService.delete(idToDelete)
+                                    toast.success('Đã xóa vật tư')
+                                    setConsumablesLoading(true)
+                                    const installed = await devicesClientService
+                                      .getConsumables(deviceId)
+                                      .catch(() => [])
+                                    setInstalledConsumables(
+                                      Array.isArray(installed) ? installed : []
+                                    )
+                                  } catch (err) {
+                                    console.error('Delete consumable failed', err)
+                                    toast.error('Xóa vật tư thất bại')
+                                  } finally {
+                                    setConsumablesLoading(false)
+                                  }
+                                }}
+                                trigger={
+                                  <Button variant="destructive" size="sm" className="gap-2">
+                                    <Trash2 className="h-4 w-4" />
+                                    Xóa
+                                  </Button>
+                                }
+                              />
                             </td>
                           </tr>
                         )
@@ -925,6 +1000,174 @@ export function DeviceDetailClient({ deviceId, modelId }: DeviceDetailClientProp
                 <>
                   <Plus className="mr-2 h-4 w-4" />
                   Tạo và lắp
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Consumable Modal - Modern Design */}
+      <Dialog open={showEditConsumable} onOpenChange={setShowEditConsumable}>
+        <DialogContent className="max-w-[640px] overflow-hidden rounded-2xl border-0 p-0 shadow-2xl">
+          <DialogHeader className="relative overflow-hidden bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600 p-0">
+            <div className="absolute inset-0 bg-black/10"></div>
+            <div className="relative z-10 px-6 py-5">
+              <div className="flex items-center gap-3">
+                <Edit className="h-6 w-6 text-white" />
+                <DialogTitle className="text-2xl font-bold text-white">
+                  Chỉnh sửa vật tư
+                </DialogTitle>
+              </div>
+              <DialogDescription className="mt-2 text-white/90">
+                Cập nhật thông tin vật tư{' '}
+                {editingConsumable?.serialNumber ?? editingConsumable?.consumableType?.name ?? ''}
+              </DialogDescription>
+            </div>
+          </DialogHeader>
+
+          <div className="space-y-5 bg-white px-6 py-6">
+            <div className="rounded-lg border border-blue-200 bg-gradient-to-r from-blue-50 to-cyan-50 p-4">
+              <p className="text-muted-foreground mb-1 text-sm font-medium">Loại vật tư</p>
+              <p className="text-lg font-bold text-blue-700">
+                {editingConsumable?.consumableType?.name ?? '—'}
+              </p>
+              {editingConsumable?.consumableType?.description && (
+                <p className="text-muted-foreground mt-1 text-sm">
+                  {editingConsumable.consumableType.description}
+                </p>
+              )}
+            </div>
+
+            <Separator />
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div>
+                <Label className="text-base font-semibold">Số Serial</Label>
+                <Input
+                  value={editSerialNumber}
+                  onChange={(e) => setEditSerialNumber(e.target.value)}
+                  placeholder="SN123456"
+                  className="mt-2 h-11"
+                />
+              </div>
+              <div>
+                <Label className="text-base font-semibold">Số lô (Batch)</Label>
+                <Input
+                  value={editBatchNumber}
+                  onChange={(e) => setEditBatchNumber(e.target.value)}
+                  placeholder="BATCH001"
+                  className="mt-2 h-11"
+                />
+              </div>
+              <div>
+                <Label className="text-base font-semibold">Dung lượng (Capacity)</Label>
+                <Input
+                  type="number"
+                  value={editCapacity?.toString() ?? ''}
+                  onChange={(e) => setEditCapacity(e.target.value ? Number(e.target.value) : '')}
+                  placeholder="1000"
+                  className="mt-2 h-11"
+                />
+              </div>
+              <div>
+                <Label className="text-base font-semibold">Còn lại (Remaining)</Label>
+                <Input
+                  type="number"
+                  value={editRemaining?.toString() ?? ''}
+                  onChange={(e) => setEditRemaining(e.target.value ? Number(e.target.value) : '')}
+                  placeholder="1000"
+                  className="mt-2 h-11"
+                />
+                {editRemainingInvalid && (
+                  <p className="text-destructive mt-2 text-xs">
+                    Giá trị Remaining phải nhỏ hơn Capacity và lớn hơn hoặc bằng 0
+                  </p>
+                )}
+              </div>
+              <div>
+                <Label className="text-base font-semibold">Ngày hết hạn</Label>
+                <Input
+                  type="date"
+                  value={editExpiryDate}
+                  onChange={(e) => setEditExpiryDate(e.target.value)}
+                  className="mt-2 h-11"
+                />
+              </div>
+              <div>
+                <Label className="text-base font-semibold">Trạng thái</Label>
+                <select
+                  value={editStatus}
+                  onChange={(e) => setEditStatus(e.target.value)}
+                  className="border-input bg-background ring-offset-background focus-visible:ring-ring mt-2 h-11 w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+                >
+                  <option value="ACTIVE">ACTIVE</option>
+                  <option value="INACTIVE">INACTIVE</option>
+                  <option value="EXPIRED">EXPIRED</option>
+                  <option value="DEPLETED">DEPLETED</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="border-t bg-gray-50 px-6 py-4">
+            <Button
+              variant="outline"
+              onClick={() => setShowEditConsumable(false)}
+              className="min-w-[100px]"
+            >
+              Hủy
+            </Button>
+            <Button
+              onClick={async () => {
+                if (!editingConsumable?.id) return
+                try {
+                  setUpdatingConsumable(true)
+                  const dto: any = {}
+                  if (editingConsumable.consumableType?.id) {
+                    dto.consumableTypeId = editingConsumable.consumableType.id
+                  }
+                  if (editSerialNumber) dto.serialNumber = editSerialNumber
+                  if (editBatchNumber) dto.batchNumber = editBatchNumber
+                  if (typeof editCapacity === 'number') dto.capacity = editCapacity
+                  if (typeof editRemaining === 'number') dto.remaining = editRemaining
+                  if (editExpiryDate) dto.expiryDate = new Date(editExpiryDate).toISOString()
+                  if (editStatus) dto.status = editStatus
+
+                  const updated = await consumablesClientService.update(editingConsumable.id, dto)
+                  if (updated) {
+                    toast.success('Cập nhật vật tư thành công')
+                    setShowEditConsumable(false)
+
+                    // Refresh installed consumables list
+                    setConsumablesLoading(true)
+                    const installed = await devicesClientService
+                      .getConsumables(deviceId)
+                      .catch(() => [])
+                    setInstalledConsumables(Array.isArray(installed) ? installed : [])
+                  } else {
+                    toast.error('Cập nhật vật tư thất bại')
+                  }
+                } catch (err) {
+                  console.error('Update consumable failed', err)
+                  toast.error('Không thể cập nhật vật tư')
+                } finally {
+                  setUpdatingConsumable(false)
+                  setConsumablesLoading(false)
+                }
+              }}
+              disabled={updatingConsumable || editRemainingInvalid}
+              className="min-w-[120px] bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+            >
+              {updatingConsumable ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Đang lưu...
+                </>
+              ) : (
+                <>
+                  <Edit className="mr-2 h-4 w-4" />
+                  Lưu thay đổi
                 </>
               )}
             </Button>

@@ -116,8 +116,7 @@ export function ConsumableTypeList() {
               <th className="px-4 py-3 text-left text-sm font-semibold">Tên</th>
               <th className="px-4 py-3 text-left text-sm font-semibold">Đơn vị</th>
               <th className="px-4 py-3 text-left text-sm font-semibold">Mô tả</th>
-              <th className="px-4 py-3 text-center text-sm font-semibold">Số lượng tồn</th>
-              <th className="px-4 py-3 text-center text-sm font-semibold">Ngưỡng cảnh báo</th>
+              {/* Số lượng tồn và Ngưỡng cảnh báo áp dụng ở mức Thiết bị, không phải loại vật tư. Hide here. */}
               <th className="px-4 py-3 text-left text-sm font-semibold">Trạng thái</th>
               <th className="px-4 py-3 text-right text-sm font-semibold">Thao tác</th>
             </tr>
@@ -125,15 +124,13 @@ export function ConsumableTypeList() {
           <tbody className="divide-y">
             {models.length === 0 ? (
               <tr>
-                <td colSpan={8} className="text-muted-foreground px-4 py-8 text-center text-sm">
+                <td colSpan={6} className="text-muted-foreground px-4 py-8 text-center text-sm">
                   Chưa có loại vật tư tiêu hao nào
                 </td>
               </tr>
             ) : (
               models.map((m, index) => {
-                const stock = m.stockItem
-                const isLowStock = stock && stock.quantity <= stock.lowStockThreshold
-
+                // stockItem is device-level inventory info; we don't show it here
                 return (
                   <tr key={m.id} className="hover:bg-muted/30">
                     <td className="px-4 py-3 text-sm">{(page - 1) * limit + index + 1}</td>
@@ -142,36 +139,13 @@ export function ConsumableTypeList() {
                     <td className="text-muted-foreground px-4 py-3 text-sm">
                       {m.description || '—'}
                     </td>
-                    <td className="px-4 py-3 text-center">
-                      {stock ? (
-                        <span
-                          className={`font-semibold ${isLowStock ? 'text-red-600' : 'text-green-600'}`}
-                        >
-                          {stock.quantity}
-                        </span>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      {stock ? (
-                        <span className="text-muted-foreground text-sm">
-                          {stock.lowStockThreshold}
-                        </span>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </td>
+                    {/* Removed stock columns (device-level) */}
                     <td className="px-4 py-3">
                       <div className="flex flex-col gap-1">
                         <Badge variant={m.isActive ? 'default' : 'secondary'} className="w-fit">
                           {m.isActive ? 'Hoạt động' : 'Không hoạt động'}
                         </Badge>
-                        {isLowStock && (
-                          <Badge variant="destructive" className="w-fit text-xs">
-                            Sắp hết
-                          </Badge>
-                        )}
+                        {/* low-stock badges are device-level, not shown here */}
                       </div>
                     </td>
                     <td className="px-4 py-3 text-right">

@@ -22,7 +22,7 @@ export const deviceModelsClientService = {
       {
         params: {
           page: params?.page ?? 1,
-          limit: params?.limit ?? 1000,
+          limit: params?.limit ?? 100,
           search: params?.search,
           isActive: typeof params?.isActive === 'boolean' ? params?.isActive : undefined,
         },

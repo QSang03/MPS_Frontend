@@ -19,7 +19,7 @@ export const departmentsService = {
       serverApiClient.get<ApiListResponse<Department>>(API_ENDPOINTS.DEPARTMENTS, {
         params: {
           page: params?.page ?? 1,
-          limit: params?.limit ?? 1000,
+          limit: params?.limit ?? 100,
         },
       })
     )

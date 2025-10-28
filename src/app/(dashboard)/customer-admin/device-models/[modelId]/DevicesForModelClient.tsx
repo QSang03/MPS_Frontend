@@ -73,7 +73,7 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
 
         const devResp = await devicesClientService.getAll({
           page: 1,
-          limit: 1000,
+          limit: 100,
           deviceModelId: model.id,
         })
         const fetchedDevices = devResp.data || []

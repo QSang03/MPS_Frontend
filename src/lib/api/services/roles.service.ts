@@ -19,7 +19,7 @@ export const rolesService = {
       serverApiClient.get<ApiListResponse<UserRole>>(API_ENDPOINTS.ROLES, {
         params: {
           page: params?.page ?? 1,
-          limit: params?.limit ?? 1000, // fetch many by default for filters
+          limit: params?.limit ?? 100, // fetch many by default for filters
         },
       })
     )

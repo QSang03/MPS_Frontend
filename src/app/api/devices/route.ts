@@ -10,13 +10,33 @@ export async function GET(request: NextRequest) {
     if (!accessToken) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const searchParams = request.nextUrl.searchParams
-    const params: Record<string, string> = {}
-    searchParams.forEach((value, key) => {
-      params[key] = value
-    })
+    const params: Record<string, string | number | boolean> = {}
+    const page = searchParams.get('page')
+    const limit = searchParams.get('limit')
+    const deviceModelId = searchParams.get('deviceModelId')
+    const customerId = searchParams.get('customerId')
+
+    if (page) {
+      const p = Number(page)
+      if (!Number.isNaN(p) && p > 0) params.page = p
+    }
+    if (limit) {
+      let l = Number(limit)
+      if (!Number.isNaN(l)) {
+        if (l > 100) {
+          console.debug('[api/devices] requested limit > 100, capping to 100')
+          l = 100
+        }
+        if (l > 0) params.limit = l
+      }
+    }
+    if (deviceModelId) params.deviceModelId = deviceModelId
+    if (customerId) params.customerId = customerId
+
+    console.debug('[api/devices] forwarding params:', params)
 
     const response = await backendApiClient.get(API_ENDPOINTS.DEVICES.LIST, {
-      params,
+      params: Object.keys(params).length ? params : undefined,
       headers: { Authorization: `Bearer ${accessToken}` },
     })
 
@@ -24,6 +44,13 @@ export async function GET(request: NextRequest) {
   } catch (error: unknown) {
     const err = error as { message?: string; response?: { status?: number } } | undefined
     console.error('API Route /api/devices GET error:', error)
+    // If backend returned structured error body, log and forward it to client for debugging
+    const respData = (err as any)?.response?.data
+    if (respData && typeof respData === 'object') {
+      console.debug('[api/devices] backend response data:', respData)
+      return NextResponse.json(respData, { status: (err as any).response?.status || 500 })
+    }
+
     return NextResponse.json(
       { error: err?.message || 'Internal Server Error' },
       { status: err?.response?.status || 500 }

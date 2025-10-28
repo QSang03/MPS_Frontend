@@ -14,7 +14,7 @@ export const customersClientService = {
     const response = await internalApiClient.get<ApiListResponse<Customer>>('/api/customers', {
       params: {
         page: params?.page ?? 1,
-        limit: params?.limit ?? 1000,
+        limit: params?.limit ?? 100,
       },
     })
     const { data, pagination } = response.data || { data: [], pagination: undefined }

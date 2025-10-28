@@ -28,8 +28,22 @@ export async function GET(request: NextRequest) {
     const limit = url.searchParams.get('limit')
     const search = url.searchParams.get('search')
     const isActive = url.searchParams.get('isActive')
-    if (page) params.page = Number(page)
-    if (limit) params.limit = Number(limit)
+
+    // normalize page and limit; backend enforces a maximum limit (100)
+    if (page) {
+      const p = Number(page)
+      if (!Number.isNaN(p) && p > 0) params.page = p
+    }
+    if (limit) {
+      let l = Number(limit)
+      if (!Number.isNaN(l)) {
+        if (l > 100) {
+          console.debug('[api/device-models] requested limit > 100, capping to 100')
+          l = 100
+        }
+        if (l > 0) params.limit = l
+      }
+    }
     if (search) params.search = search
     if (typeof isActive === 'string') params.isActive = isActive === 'true'
 

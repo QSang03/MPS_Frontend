@@ -19,6 +19,22 @@ class ConsumablesClientService {
     return body
   }
 
+  async update(id: string, dto: Partial<CreateConsumableDto>) {
+    const response = await internalApiClient.patch(`/api/consumables/${id}`, dto)
+    const body = response.data
+    if (!body) return null
+    if (body.data) return body.data
+    return body
+  }
+
+  async delete(id: string) {
+    const response = await internalApiClient.delete(`/api/consumables/${id}`)
+    const body = response.data
+    if (!body) return null
+    if (body.data) return body.data
+    return body
+  }
+
   // other consumable client methods can be added here later
 }
 

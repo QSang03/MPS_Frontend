@@ -51,7 +51,7 @@ export default function DeviceModelDevicesModal({
       setLoading(true)
       const resp = await devicesClientService.getAll({
         page: 1,
-        limit: 1000,
+        limit: 100,
         deviceModelId,
       })
       setDevices(resp.data || [])

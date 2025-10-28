@@ -43,7 +43,7 @@ export default function DeviceModelList() {
   const load = async () => {
     setLoading(true)
     try {
-      const resp = await deviceModelsClientService.getAll({ limit: 1000 })
+      const resp = await deviceModelsClientService.getAll({ limit: 100 })
       setModels(resp.data || [])
       setFilteredModels(resp.data || [])
     } catch (err) {
