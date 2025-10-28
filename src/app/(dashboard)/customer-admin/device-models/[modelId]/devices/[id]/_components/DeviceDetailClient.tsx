@@ -552,7 +552,7 @@ export function DeviceDetailClient({ deviceId, modelId }: DeviceDetailClientProp
                                   ? new Date(cons.expiryDate).toLocaleDateString('vi-VN')
                                   : '—'}
                             </td>
-                            <td className="space-x-2 px-4 py-3 text-center">
+                            <td className="px-4 py-3 text-center">
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -577,37 +577,6 @@ export function DeviceDetailClient({ deviceId, modelId }: DeviceDetailClientProp
                                 <Edit className="h-4 w-4" />
                                 Sửa
                               </Button>
-
-                              <DeleteDialog
-                                title="Xóa vật tư"
-                                description="Bạn có chắc muốn xóa vật tư này? Hành động không thể hoàn tác."
-                                onConfirm={async () => {
-                                  try {
-                                    const idToDelete = c?.id ?? cons?.id
-                                    if (!idToDelete) throw new Error('Không tìm thấy id vật tư')
-                                    await consumablesClientService.delete(idToDelete)
-                                    toast.success('Đã xóa vật tư')
-                                    setConsumablesLoading(true)
-                                    const installed = await devicesClientService
-                                      .getConsumables(deviceId)
-                                      .catch(() => [])
-                                    setInstalledConsumables(
-                                      Array.isArray(installed) ? installed : []
-                                    )
-                                  } catch (err) {
-                                    console.error('Delete consumable failed', err)
-                                    toast.error('Xóa vật tư thất bại')
-                                  } finally {
-                                    setConsumablesLoading(false)
-                                  }
-                                }}
-                                trigger={
-                                  <Button variant="destructive" size="sm" className="gap-2">
-                                    <Trash2 className="h-4 w-4" />
-                                    Xóa
-                                  </Button>
-                                }
-                              />
                             </td>
                           </tr>
                         )
