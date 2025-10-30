@@ -1,9 +1,9 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { consumableTypesClientService } from '@/lib/api/services/consumable-types-client.service'
-import type { ConsumableType } from '@/types/models/consumable-type'
-import ConsumableTypeFormModal from './ConsumableTypeFormModal'
+import { customersClientService } from '@/lib/api/services/customers-client.service'
+import type { Customer } from '@/types/models/customer'
+import CustomerFormModal from './CustomerFormModal'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -13,21 +13,18 @@ import { toast } from 'sonner'
 import { DeleteDialog } from '@/components/shared/DeleteDialog'
 import {
   Loader2,
-  Package,
   Search,
-  CheckCircle2,
-  AlertCircle,
+  Building2,
+  Users,
+  MapPin,
+  BarChart3,
   ChevronLeft,
   ChevronRight,
-  Hash,
-  BarChart3,
-  FileText,
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
 
-export function ConsumableTypeList() {
-  const [models, setModels] = useState<ConsumableType[]>([])
-  const [filteredModels, setFilteredModels] = useState<ConsumableType[]>([])
+export function CustomerList() {
+  const [items, setItems] = useState<Customer[]>([])
+  const [filtered, setFiltered] = useState<Customer[]>([])
   const [loading, setLoading] = useState(true)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
@@ -41,16 +38,16 @@ export function ConsumableTypeList() {
       const silent = opts?.silent === true
       try {
         if (!silent) setLoading(true)
-        const res = await consumableTypesClientService.getAll({ page: p, limit: l })
-        setModels(res.data)
-        setFilteredModels(res.data)
+        const res = await customersClientService.getAll({ page: p, limit: l })
+        setItems(res.data)
+        setFiltered(res.data)
         setTotal(res.pagination?.total ?? res.data.length)
         setTotalPages(res.pagination?.totalPages ?? 1)
         return res
       } catch (error: unknown) {
         const e = error as Error
-        console.error('Error loading consumable types:', e)
-        toast.error(e.message || 'Không thể tải danh sách')
+        console.error('Error loading customers:', e)
+        toast.error(e.message || 'Không thể tải danh sách khách hàng')
         return undefined
       } finally {
         if (!silent) setLoading(false)
@@ -63,50 +60,43 @@ export function ConsumableTypeList() {
     load(1, limit)
   }, [limit, load])
 
-  // Filter models based on search term
   useEffect(() => {
     if (!searchTerm.trim()) {
-      setFilteredModels(models)
+      setFiltered(items)
       return
     }
-
     const term = searchTerm.toLowerCase()
-    const filtered = models.filter((m) => {
+    const filtered = items.filter((c) => {
       return (
-        m.name?.toLowerCase().includes(term) ||
-        m.description?.toLowerCase().includes(term) ||
-        m.unit?.toLowerCase().includes(term)
+        (c.name || '').toLowerCase().includes(term) ||
+        ((c.code || '') as string).toLowerCase().includes(term) ||
+        ((c.address || '') as string).toLowerCase().includes(term)
       )
     })
-    setFilteredModels(filtered)
-  }, [searchTerm, models])
+    setFiltered(filtered)
+  }, [searchTerm, items])
 
-  const handleSaved = (m?: ConsumableType | null) => {
-    if (!m) {
+  const handleSaved = (c?: Customer | null) => {
+    if (!c) {
       load()
       return
     }
-    setModels((cur) => {
-      const exists = cur.find((it) => it.id === m.id)
-      if (exists) {
-        return cur.map((it) => (it.id === m.id ? m : it))
-      }
-      return [m, ...cur]
+    setItems((cur) => {
+      const exists = cur.find((it) => it.id === c.id)
+      if (exists) return cur.map((it) => (it.id === c.id ? c : it))
+      return [c, ...cur]
     })
   }
 
   const handleDelete = async (id: string) => {
-    const previous = models
+    const previous = items
     setDeletingId(id)
-
     try {
-      await consumableTypesClientService.delete(id)
-      toast.success('Xóa loại vật tư tiêu hao thành công')
-
+      await customersClientService.delete(id)
+      toast.success('Xóa khách hàng thành công')
       const newTotal = Math.max(0, total - 1)
       setTotal(newTotal)
       setTotalPages(Math.max(1, Math.ceil(newTotal / limit)))
-
       const res = await load(page, limit, { silent: true })
       const curCount = res?.data?.length ?? 0
       if (curCount === 0 && page > 1) {
@@ -116,16 +106,17 @@ export function ConsumableTypeList() {
       }
     } catch (error: unknown) {
       const e = error as Error
-      console.error('Error deleting consumable type:', e)
-      toast.error(e.message || 'Không thể xóa')
-      setModels(previous)
+      console.error('Error deleting customer:', e)
+      toast.error(e.message || 'Không thể xóa khách hàng')
+      setItems(previous)
     } finally {
       setDeletingId(null)
     }
   }
 
-  const activeCount = models.filter((m) => m.isActive).length
-  const inactiveCount = models.length - activeCount
+  const activeCount = items.filter((i) =>
+    Boolean((i as unknown as { isActive?: boolean }).isActive)
+  ).length
 
   if (loading) {
     return (
@@ -147,31 +138,29 @@ export function ConsumableTypeList() {
 
   return (
     <div className="space-y-6">
-      {/* Header with Gradient */}
       <div className="rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 p-6 text-white shadow-lg">
         <div className="flex items-center justify-between">
           <div className="space-y-2">
             <div className="flex items-center gap-3">
-              <Package className="h-10 w-10" />
+              <Building2 className="h-10 w-10" />
               <div>
-                <h1 className="text-2xl font-bold">Loại vật tư tiêu hao</h1>
-                <p className="mt-1 text-white/90">Quản lý các loại vật tư trong hệ thống</p>
+                <h1 className="text-2xl font-bold">Khách hàng</h1>
+                <p className="mt-1 text-white/90">Quản lý thông tin khách hàng</p>
               </div>
             </div>
           </div>
 
-          <ConsumableTypeFormModal mode="create" onSaved={handleSaved} />
+          <CustomerFormModal mode="create" onSaved={handleSaved} />
         </div>
 
-        {/* Quick Stats */}
         <div className="mt-6 grid grid-cols-3 gap-4">
           <div className="rounded-lg border border-white/20 bg-white/10 p-3 backdrop-blur-sm">
             <div className="flex items-center gap-3">
               <div className="rounded-lg bg-white/20 p-2">
-                <Package className="h-5 w-5" />
+                <Users className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-sm text-white/80">Tổng loại</p>
+                <p className="text-sm text-white/80">Tổng khách hàng</p>
                 <p className="text-2xl font-bold">{total}</p>
               </div>
             </div>
@@ -180,7 +169,7 @@ export function ConsumableTypeList() {
           <div className="rounded-lg border border-white/20 bg-white/10 p-3 backdrop-blur-sm">
             <div className="flex items-center gap-3">
               <div className="rounded-lg bg-green-500/20 p-2">
-                <CheckCircle2 className="h-5 w-5 text-green-300" />
+                <Users className="h-5 w-5 text-green-300" />
               </div>
               <div>
                 <p className="text-sm text-white/80">Hoạt động</p>
@@ -192,37 +181,33 @@ export function ConsumableTypeList() {
           <div className="rounded-lg border border-white/20 bg-white/10 p-3 backdrop-blur-sm">
             <div className="flex items-center gap-3">
               <div className="rounded-lg bg-gray-500/20 p-2">
-                <AlertCircle className="h-5 w-5 text-gray-300" />
+                <MapPin className="h-5 w-5 text-gray-300" />
               </div>
               <div>
-                <p className="text-sm text-white/80">Không hoạt động</p>
-                <p className="text-2xl font-bold">{inactiveCount}</p>
+                <p className="text-sm text-white/80">Địa chỉ mẫu</p>
+                <p className="text-2xl font-bold">{items.length}</p>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Main Content Card */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="flex items-center gap-2">
-                <Package className="h-5 w-5 text-emerald-600" />
-                Danh sách loại vật tư
+                <Building2 className="h-5 w-5 text-emerald-600" />
+                Danh sách khách hàng
               </CardTitle>
-              <CardDescription className="mt-1">
-                Quản lý và theo dõi tất cả loại vật tư tiêu hao
-              </CardDescription>
+              <CardDescription className="mt-1">Danh sách và quản lý khách hàng</CardDescription>
             </div>
 
-            {/* Search */}
-            {models.length > 0 && (
+            {items.length > 0 && (
               <div className="relative w-64">
                 <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
                 <Input
-                  placeholder="Tìm kiếm..."
+                  placeholder="Tìm kiếm tên, mã, địa chỉ..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-9"
@@ -237,98 +222,83 @@ export function ConsumableTypeList() {
               <thead className="bg-gradient-to-r from-emerald-50 to-teal-50">
                 <tr>
                   <th className="px-4 py-3 text-left text-sm font-semibold">#</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">
-                    <div className="flex items-center gap-2">
-                      <Package className="h-4 w-4 text-emerald-600" />
-                      Tên
-                    </div>
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">
-                    <div className="flex items-center gap-2">
-                      <Hash className="h-4 w-4 text-teal-600" />
-                      Đơn vị
-                    </div>
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">
-                    <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-cyan-600" />
-                      Mô tả
-                    </div>
-                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Tên</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Mã</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Địa chỉ</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold">Trạng thái</th>
                   <th className="px-4 py-3 text-right text-sm font-semibold">Thao tác</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {filteredModels.length === 0 ? (
+                {filtered.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="px-4 py-12 text-center">
                       <div className="text-muted-foreground flex flex-col items-center gap-3">
                         {searchTerm ? (
                           <>
                             <Search className="h-12 w-12 opacity-20" />
-                            <p>Không tìm thấy loại vật tư phù hợp</p>
+                            <p>Không tìm thấy khách hàng phù hợp</p>
                           </>
                         ) : (
                           <>
-                            <Package className="h-12 w-12 opacity-20" />
-                            <p>Chưa có loại vật tư tiêu hao nào</p>
-                            <ConsumableTypeFormModal mode="create" onSaved={handleSaved} />
+                            <Building2 className="h-12 w-12 opacity-20" />
+                            <p>Chưa có khách hàng nào</p>
+                            <CustomerFormModal mode="create" onSaved={handleSaved} />
                           </>
                         )}
                       </div>
                     </td>
                   </tr>
                 ) : (
-                  filteredModels.map((m, index) => (
+                  filtered.map((c, index) => (
                     <tr
-                      key={m.id}
+                      key={c.id}
                       className="transition-colors hover:bg-gradient-to-r hover:from-emerald-50/50 hover:to-teal-50/50"
                     >
                       <td className="text-muted-foreground px-4 py-3 text-sm">
                         {(page - 1) * limit + index + 1}
                       </td>
-                      <td className="px-4 py-3 font-semibold text-emerald-700">{m.name || '—'}</td>
+                      <td className="px-4 py-3 font-semibold text-emerald-700">{c.name || '—'}</td>
                       <td className="px-4 py-3">
                         <Badge variant="outline" className="font-mono text-xs">
-                          {m.unit || '—'}
+                          {c.code || c.id}
                         </Badge>
                       </td>
                       <td className="text-muted-foreground max-w-xs truncate px-4 py-3 text-sm">
-                        {m.description || '—'}
+                        {c.address || '—'}
                       </td>
                       <td className="px-4 py-3">
                         <Badge
-                          variant={m.isActive ? 'default' : 'secondary'}
-                          className={cn(
-                            'flex w-fit items-center gap-1.5',
-                            m.isActive
-                              ? 'bg-green-500 hover:bg-green-600'
-                              : 'bg-gray-400 hover:bg-gray-500'
-                          )}
+                          variant={
+                            (c as unknown as { isActive?: boolean }).isActive
+                              ? 'default'
+                              : 'secondary'
+                          }
+                          className={
+                            (c as unknown as { isActive?: boolean }).isActive
+                              ? 'bg-green-500'
+                              : 'bg-gray-400'
+                          }
                         >
-                          {m.isActive ? (
-                            <CheckCircle2 className="h-3 w-3" />
-                          ) : (
-                            <AlertCircle className="h-3 w-3" />
-                          )}
-                          {m.isActive ? 'Hoạt động' : 'Tạm dừng'}
+                          {(c as unknown as { isActive?: boolean }).isActive
+                            ? 'Hoạt động'
+                            : 'Tạm dừng'}
                         </Badge>
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-2">
-                          <ConsumableTypeFormModal mode="edit" model={m} onSaved={handleSaved} />
+                          <CustomerFormModal mode="edit" customer={c} onSaved={handleSaved} />
                           <DeleteDialog
-                            title="Xác nhận xóa loại vật tư"
-                            description={`Xác nhận xóa loại vật tư "${m.name || ''}"?`}
-                            onConfirm={async () => handleDelete(m.id)}
+                            title="Xác nhận xóa khách hàng"
+                            description={`Xác nhận xóa khách hàng "${c.name || ''}"?`}
+                            onConfirm={async () => handleDelete(c.id)}
                             trigger={
                               <Button
                                 variant="destructive"
                                 size="sm"
-                                disabled={deletingId === m.id}
+                                disabled={deletingId === c.id}
                               >
-                                {deletingId === m.id ? (
+                                {deletingId === c.id ? (
                                   <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                     Đang xóa...
@@ -348,12 +318,11 @@ export function ConsumableTypeList() {
             </table>
           </div>
 
-          {/* Pagination */}
           <div className="flex items-center justify-between border-t pt-4">
             <div className="text-muted-foreground flex items-center gap-2 text-sm">
               <BarChart3 className="h-4 w-4" />
               <span>
-                Trang {page} / {totalPages} — Hiển thị {filteredModels.length} / {total}
+                Trang {page} / {totalPages} — Hiển thị {filtered.length} / {total}
               </span>
             </div>
 
@@ -414,3 +383,5 @@ export function ConsumableTypeList() {
     </div>
   )
 }
+
+export default CustomerList

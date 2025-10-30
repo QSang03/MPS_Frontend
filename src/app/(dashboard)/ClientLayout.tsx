@@ -1,9 +1,15 @@
 'use client'
 
+import dynamic from 'next/dynamic'
 import { NavigationProvider } from '@/contexts/NavigationContext'
-import { ModernSidebar } from '@/components/layout/ModernSidebar'
 import { Navbar } from '@/components/layout/Navbar'
 import type { Session } from '@/types/auth'
+
+// Render sidebar only on the client to avoid SSR/client markup mismatches
+const ModernSidebar = dynamic(
+  () => import('@/components/layout/ModernSidebar').then((mod) => mod.ModernSidebar),
+  { ssr: false }
+)
 
 interface ClientLayoutProps {
   children: React.ReactNode

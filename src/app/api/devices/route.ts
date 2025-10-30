@@ -45,10 +45,13 @@ export async function GET(request: NextRequest) {
     const err = error as { message?: string; response?: { status?: number } } | undefined
     console.error('API Route /api/devices GET error:', error)
     // If backend returned structured error body, log and forward it to client for debugging
-    const respData = (err as any)?.response?.data
+    const respData = (err as unknown as { response?: { data?: unknown; status?: number } })
+      ?.response?.data
     if (respData && typeof respData === 'object') {
       console.debug('[api/devices] backend response data:', respData)
-      return NextResponse.json(respData, { status: (err as any).response?.status || 500 })
+      return NextResponse.json(respData as unknown as Record<string, unknown>, {
+        status: (err as unknown as { response?: { status?: number } })?.response?.status || 500,
+      })
     }
 
     return NextResponse.json(

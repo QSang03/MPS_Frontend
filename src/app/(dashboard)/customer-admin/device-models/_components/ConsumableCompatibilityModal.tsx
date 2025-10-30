@@ -92,7 +92,32 @@ export function ConsumableCompatibilityModal({
 
   const removeCompatibility = async (consumableTypeId: string) => {
     try {
-      await deviceModelsClientService.removeCompatibleConsumable(deviceModelId, consumableTypeId)
+      const res: any = await deviceModelsClientService.removeCompatibleConsumable(
+        deviceModelId,
+        consumableTypeId
+      )
+
+      // The API route may return a business-error payload with 200 status (e.g. { error: 'COMPATIBILITY_IN_USE', message: 'Cannot remove...'}).
+      // If payload contains an error/message, surface it to the user. Otherwise treat as success.
+      const payload = res ?? {}
+      if (payload && (payload.error || payload.message)) {
+        // Prefer Vietnamese user-facing message for known business error
+        if (
+          payload.error === 'COMPATIBILITY_IN_USE' ||
+          /compatibilit/i.test(String(payload.message))
+        ) {
+          toast.error(
+            'Không thể xóa liên kết — hiện có thiết bị đang sử dụng vật tư này. Vui lòng gỡ vật tư khỏi các thiết bị trước khi xóa liên kết.'
+          )
+        } else {
+          const msg = payload.message || payload.error || 'Không thể xóa liên kết'
+          toast.error(msg)
+        }
+
+        // don't refresh list since removal didn't happen
+        return
+      }
+
       toast.success('Đã xóa liên kết vật tư tiêu hao')
       await loadCompatibleConsumables()
     } catch (error: any) {
@@ -105,6 +130,7 @@ export function ConsumableCompatibilityModal({
       const msg = errPayload?.message || error?.message || 'Không thể xóa liên kết'
 
       if (code === 'COMPATIBILITY_IN_USE' || /compatibilit/i.test(String(msg))) {
+        // Show Vietnamese message for this business case
         toast.error(
           'Không thể xóa liên kết — hiện có thiết bị đang sử dụng vật tư này. Vui lòng gỡ vật tư khỏi các thiết bị trước khi xóa liên kết.'
         )

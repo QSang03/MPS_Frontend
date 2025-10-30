@@ -45,6 +45,7 @@ import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { consumablesClientService } from '@/lib/api/services/consumables-client.service'
+import type { CreateConsumableDto } from '@/lib/api/services/consumables-client.service'
 import { deviceModelsClientService } from '@/lib/api/services/device-models-client.service'
 import { cn } from '@/lib/utils'
 import { Separator } from '@/components/ui/separator'
@@ -52,9 +53,15 @@ import { Separator } from '@/components/ui/separator'
 interface DeviceDetailClientProps {
   deviceId: string
   modelId?: string
+  /**
+   * Optional override for the back link. If provided, all "Quay lại" links and
+   * post-delete navigation will use this value. This allows reusing the same
+   * component for both model-scoped pages and the global devices page.
+   */
+  backHref?: string
 }
 
-export function DeviceDetailClient({ deviceId, modelId }: DeviceDetailClientProps) {
+export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetailClientProps) {
   const [device, setDevice] = useState<Device | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -74,7 +81,10 @@ export function DeviceDetailClient({ deviceId, modelId }: DeviceDetailClientProp
   const [batchNumber, setBatchNumber] = useState('')
   const [capacity, setCapacity] = useState<number | ''>('')
   const [remaining, setRemaining] = useState<number | ''>('')
-  const [expiryDate, setExpiryDate] = useState<string>('')
+  // create-install specific fields
+  const [createInstalledAt, setCreateInstalledAt] = useState<string | null>(null)
+  const [createActualPagesPrinted, setCreateActualPagesPrinted] = useState<number | ''>('')
+  const [createPrice, setCreatePrice] = useState<number | ''>('')
   const [activeTab, setActiveTab] = useState('overview')
   const router = useRouter()
 
@@ -86,13 +96,12 @@ export function DeviceDetailClient({ deviceId, modelId }: DeviceDetailClientProp
   const [editCapacity, setEditCapacity] = useState<number | ''>('')
   const [editRemaining, setEditRemaining] = useState<number | ''>('')
   const [editExpiryDate, setEditExpiryDate] = useState('')
+  // new fields for device-consumable record
+  const [editRemovedAt, setEditRemovedAt] = useState<string | null>(null)
+  const [editActualPagesPrinted, setEditActualPagesPrinted] = useState<number | ''>('')
+  const [editPrice, setEditPrice] = useState<number | ''>('')
   const [editStatus, setEditStatus] = useState('ACTIVE')
   const [updatingConsumable, setUpdatingConsumable] = useState(false)
-
-  const remainingInvalid =
-    typeof remaining === 'number' &&
-    typeof capacity === 'number' &&
-    (remaining >= capacity || remaining < 0)
 
   const editRemainingInvalid =
     typeof editRemaining === 'number' &&
@@ -167,7 +176,8 @@ export function DeviceDetailClient({ deviceId, modelId }: DeviceDetailClientProp
       <div className="space-y-6">
         <Link
           href={
-            modelId ? `/customer-admin/device-models/${modelId}` : '/customer-admin/device-models'
+            backHref ??
+            (modelId ? `/customer-admin/device-models/${modelId}` : '/customer-admin/device-models')
           }
         >
           <Button variant="ghost" className="gap-2">
@@ -192,7 +202,8 @@ export function DeviceDetailClient({ deviceId, modelId }: DeviceDetailClientProp
       <div className="space-y-6">
         <Link
           href={
-            modelId ? `/customer-admin/device-models/${modelId}` : '/customer-admin/device-models'
+            backHref ??
+            (modelId ? `/customer-admin/device-models/${modelId}` : '/customer-admin/device-models')
           }
         >
           <Button variant="ghost" className="gap-2">
@@ -239,9 +250,10 @@ export function DeviceDetailClient({ deviceId, modelId }: DeviceDetailClientProp
             <div className="flex items-center gap-3">
               <Link
                 href={
-                  modelId
+                  backHref ??
+                  (modelId
                     ? `/customer-admin/device-models/${modelId}`
-                    : '/customer-admin/device-models'
+                    : '/customer-admin/device-models')
                 }
               >
                 <Button variant="ghost" className="gap-2 text-white hover:bg-white/20">
@@ -279,7 +291,9 @@ export function DeviceDetailClient({ deviceId, modelId }: DeviceDetailClientProp
                 try {
                   await devicesClientService.delete(deviceId)
                   toast.success('Xóa thiết bị thành công')
-                  if (modelId) router.push(`/customer-admin/device-models/${modelId}`)
+                  // navigate back to the provided backHref if present, otherwise fall back to model-based route
+                  if (backHref) router.push(backHref)
+                  else if (modelId) router.push(`/customer-admin/device-models/${modelId}`)
                   else router.push('/customer-admin/device-models')
                 } catch (err) {
                   console.error('Delete device failed', err)
@@ -514,9 +528,32 @@ export function DeviceDetailClient({ deviceId, modelId }: DeviceDetailClientProp
                             </td>
                             <td className="px-4 py-3">
                               <div className="space-y-1">
-                                <Badge variant={c.isActive ? 'default' : 'secondary'}>
-                                  {cons?.status ?? (c.isActive ? 'ACTIVE' : 'INACTIVE')}
-                                </Badge>
+                                {(() => {
+                                  const statusText =
+                                    cons?.status ?? (c.isActive ? 'ACTIVE' : 'EMPTY')
+                                  const statusClass =
+                                    statusText === 'ACTIVE'
+                                      ? 'bg-green-500 hover:bg-green-600'
+                                      : statusText === 'LOW'
+                                        ? 'bg-yellow-500 hover:bg-yellow-600'
+                                        : statusText === 'EMPTY'
+                                          ? 'bg-gray-400 hover:bg-gray-500'
+                                          : statusText === 'EXPIRED'
+                                            ? 'bg-red-500 hover:bg-red-600'
+                                            : 'bg-gray-400'
+
+                                  return (
+                                    <Badge
+                                      variant="default"
+                                      className={cn(
+                                        'flex items-center gap-1.5 px-3 py-1',
+                                        statusClass
+                                      )}
+                                    >
+                                      {statusText}
+                                    </Badge>
+                                  )
+                                })()}
                                 {usagePercent !== null && (
                                   <div className="flex items-center gap-2">
                                     <div className="h-2 flex-1 overflow-hidden rounded-full bg-gray-200">
@@ -570,6 +607,10 @@ export function DeviceDetailClient({ deviceId, modelId }: DeviceDetailClientProp
                                     : ''
                                   setEditExpiryDate(expiryDateValue ?? '')
                                   setEditStatus(consumableData?.status ?? 'ACTIVE')
+                                  // device-level fields
+                                  setEditRemovedAt(c?.removedAt ?? null)
+                                  setEditActualPagesPrinted(c?.actualPagesPrinted ?? '')
+                                  setEditPrice(c?.price ?? '')
                                   setShowEditConsumable(true)
                                 }}
                                 className="gap-2"
@@ -644,7 +685,9 @@ export function DeviceDetailClient({ deviceId, modelId }: DeviceDetailClientProp
                                 setBatchNumber('')
                                 setCapacity('')
                                 setRemaining('')
-                                setExpiryDate('')
+                                setCreateInstalledAt(null)
+                                setCreateActualPagesPrinted('')
+                                setCreatePrice('')
                                 setShowCreateConsumable(true)
                               }}
                               className="gap-2"
@@ -862,48 +905,44 @@ export function DeviceDetailClient({ deviceId, modelId }: DeviceDetailClientProp
                   className="mt-2 h-11"
                 />
               </div>
+              {/* Batch removed per spec */}
+              {/* Capacity input removed per request */}
+              {/* Remaining input removed per request */}
+              {/* Expiry date removed per spec */}
+
               <div>
-                <Label className="text-base font-semibold">Số lô (Batch)</Label>
+                <Label className="text-base font-semibold">Thời gian lắp đặt</Label>
                 <Input
-                  value={batchNumber}
-                  onChange={(e) => setBatchNumber(e.target.value)}
-                  placeholder="BATCH001"
-                  className="mt-2 h-11"
-                />
-              </div>
-              <div>
-                <Label className="text-base font-semibold">Dung lượng (Capacity)</Label>
-                <Input
-                  type="number"
-                  value={capacity?.toString() ?? ''}
-                  onChange={(e) => setCapacity(e.target.value ? Number(e.target.value) : '')}
-                  placeholder="1000"
-                  className="mt-2 h-11"
-                />
-              </div>
-              <div>
-                <Label className="text-base font-semibold">Còn lại (Remaining)</Label>
-                <Input
-                  type="number"
-                  value={remaining?.toString() ?? ''}
-                  onChange={(e) => setRemaining(e.target.value ? Number(e.target.value) : '')}
-                  placeholder="1000"
-                  className="mt-2 h-11"
-                />
-                {remainingInvalid && (
-                  <p className="text-destructive mt-2 text-xs">
-                    Giá trị Remaining phải nhỏ hơn Capacity và lớn hơn hoặc bằng 0
-                  </p>
-                )}
-              </div>
-              <div className="md:col-span-2">
-                <Label className="text-base font-semibold">Ngày hết hạn</Label>
-                <Input
-                  type="date"
-                  value={expiryDate ? expiryDate.split('T')[0] : ''}
+                  type="datetime-local"
+                  value={createInstalledAt ? createInstalledAt.split('Z')[0] : ''}
                   onChange={(e) =>
-                    setExpiryDate(e.target.value ? new Date(e.target.value).toISOString() : '')
+                    setCreateInstalledAt(
+                      e.target.value ? new Date(e.target.value).toISOString() : null
+                    )
                   }
+                  className="mt-2 h-11"
+                />
+              </div>
+              <div>
+                <Label className="text-base font-semibold">Số trang thực tế </Label>
+                <Input
+                  type="number"
+                  value={createActualPagesPrinted?.toString() ?? ''}
+                  onChange={(e) =>
+                    setCreateActualPagesPrinted(e.target.value ? Number(e.target.value) : '')
+                  }
+                  placeholder="0"
+                  className="mt-2 h-11"
+                />
+              </div>
+              <div>
+                <Label className="text-base font-semibold">Giá</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={createPrice?.toString() ?? ''}
+                  onChange={(e) => setCreatePrice(e.target.value ? Number(e.target.value) : '')}
+                  placeholder="150.5"
                   className="mt-2 h-11"
                 />
               </div>
@@ -923,20 +962,34 @@ export function DeviceDetailClient({ deviceId, modelId }: DeviceDetailClientProp
                 if (!selectedConsumableType) return
                 try {
                   setCreatingConsumable(true)
-                  const dto = {
+                  const dto: CreateConsumableDto = {
                     consumableTypeId: selectedConsumableType.id,
                     serialNumber: serialNumber || undefined,
                     batchNumber: batchNumber || undefined,
                     capacity: capacity || undefined,
                     remaining: remaining || undefined,
-                    expiryDate: expiryDate || undefined,
+                    // expiryDate removed per spec
                   }
+
                   const created = await consumablesClientService.create(dto)
                   if (!created || !created.id) {
                     toast.error('Tạo vật tư thất bại')
                     return
                   }
-                  await devicesClientService.installConsumable(deviceId, created.id)
+
+                  // Prepare install payload per API: installedAt, actualPagesPrinted, price
+                  const installPayload: Record<string, unknown> = {}
+                  if (createInstalledAt) installPayload.installedAt = createInstalledAt
+                  if (typeof createActualPagesPrinted === 'number')
+                    installPayload.actualPagesPrinted = createActualPagesPrinted
+                  if (typeof createPrice === 'number') installPayload.price = createPrice
+
+                  await devicesClientService.installConsumableWithPayload(
+                    deviceId,
+                    created.id,
+                    installPayload
+                  )
+
                   toast.success('Đã lắp vật tư vào thiết bị')
                   setShowCreateConsumable(false)
 
@@ -1020,46 +1073,50 @@ export function DeviceDetailClient({ deviceId, modelId }: DeviceDetailClientProp
                   className="mt-2 h-11"
                 />
               </div>
+              {/* Batch removed per spec */}
+              {/* removed capacity/remaining fields from edit form per request */}
               <div>
-                <Label className="text-base font-semibold">Số lô (Batch)</Label>
-                <Input
-                  value={editBatchNumber}
-                  onChange={(e) => setEditBatchNumber(e.target.value)}
-                  placeholder="BATCH001"
-                  className="mt-2 h-11"
-                />
-              </div>
-              <div>
-                <Label className="text-base font-semibold">Dung lượng (Capacity)</Label>
-                <Input
-                  type="number"
-                  value={editCapacity?.toString() ?? ''}
-                  onChange={(e) => setEditCapacity(e.target.value ? Number(e.target.value) : '')}
-                  placeholder="1000"
-                  className="mt-2 h-11"
-                />
-              </div>
-              <div>
-                <Label className="text-base font-semibold">Còn lại (Remaining)</Label>
-                <Input
-                  type="number"
-                  value={editRemaining?.toString() ?? ''}
-                  onChange={(e) => setEditRemaining(e.target.value ? Number(e.target.value) : '')}
-                  placeholder="1000"
-                  className="mt-2 h-11"
-                />
-                {editRemainingInvalid && (
-                  <p className="text-destructive mt-2 text-xs">
-                    Giá trị Remaining phải nhỏ hơn Capacity và lớn hơn hoặc bằng 0
-                  </p>
-                )}
-              </div>
-              <div>
-                <Label className="text-base font-semibold">Ngày hết hạn</Label>
+                <Label className="text-base font-semibold">Ngày dự kiến hết hạn</Label>
                 <Input
                   type="date"
                   value={editExpiryDate}
                   onChange={(e) => setEditExpiryDate(e.target.value)}
+                  className="mt-2 h-11"
+                />
+              </div>
+
+              {/* device-consumable specific fields */}
+              <div>
+                <Label className="text-base font-semibold">Ngày gỡ (removedAt)</Label>
+                <Input
+                  type="datetime-local"
+                  value={editRemovedAt ? editRemovedAt.split('Z')[0] : ''}
+                  onChange={(e) =>
+                    setEditRemovedAt(e.target.value ? new Date(e.target.value).toISOString() : null)
+                  }
+                  className="mt-2 h-11"
+                />
+              </div>
+              <div>
+                <Label className="text-base font-semibold">Số trang thực tế đã in</Label>
+                <Input
+                  type="number"
+                  value={editActualPagesPrinted?.toString() ?? ''}
+                  onChange={(e) =>
+                    setEditActualPagesPrinted(e.target.value ? Number(e.target.value) : '')
+                  }
+                  placeholder="1500"
+                  className="mt-2 h-11"
+                />
+              </div>
+              <div>
+                <Label className="text-base font-semibold">Giá (price)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={editPrice?.toString() ?? ''}
+                  onChange={(e) => setEditPrice(e.target.value ? Number(e.target.value) : '')}
+                  placeholder="150.5"
                   className="mt-2 h-11"
                 />
               </div>
@@ -1071,9 +1128,9 @@ export function DeviceDetailClient({ deviceId, modelId }: DeviceDetailClientProp
                   className="border-input bg-background ring-offset-background focus-visible:ring-ring mt-2 h-11 w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
                 >
                   <option value="ACTIVE">ACTIVE</option>
-                  <option value="INACTIVE">INACTIVE</option>
+                  <option value="LOW">LOW</option>
+                  <option value="EMPTY">EMPTY</option>
                   <option value="EXPIRED">EXPIRED</option>
-                  <option value="DEPLETED">DEPLETED</option>
                 </select>
               </div>
             </div>
@@ -1098,25 +1155,45 @@ export function DeviceDetailClient({ deviceId, modelId }: DeviceDetailClientProp
                   }
                   if (editSerialNumber) dto.serialNumber = editSerialNumber
                   if (editBatchNumber) dto.batchNumber = editBatchNumber
-                  if (typeof editCapacity === 'number') dto.capacity = editCapacity
-                  if (typeof editRemaining === 'number') dto.remaining = editRemaining
                   if (editExpiryDate) dto.expiryDate = new Date(editExpiryDate).toISOString()
                   if (editStatus) dto.status = editStatus
 
+                  // First: update consumable entity
                   const updated = await consumablesClientService.update(editingConsumable.id, dto)
-                  if (updated) {
-                    toast.success('Cập nhật vật tư thành công')
-                    setShowEditConsumable(false)
-
-                    // Refresh installed consumables list
-                    setConsumablesLoading(true)
-                    const installed = await devicesClientService
-                      .getConsumables(deviceId)
-                      .catch(() => [])
-                    setInstalledConsumables(Array.isArray(installed) ? installed : [])
-                  } else {
+                  if (!updated) {
                     toast.error('Cập nhật vật tư thất bại')
+                    return
                   }
+
+                  // Second: update device-consumable record (removedAt, actualPagesPrinted, price, isActive)
+                  try {
+                    const deviceDto: Record<string, unknown> = {}
+                    if (editRemovedAt) deviceDto.removedAt = editRemovedAt
+                    if (typeof editActualPagesPrinted === 'number')
+                      deviceDto.actualPagesPrinted = editActualPagesPrinted
+                    if (typeof editPrice === 'number') deviceDto.price = editPrice
+                    deviceDto.isActive = editStatus === 'ACTIVE'
+
+                    await devicesClientService.updateDeviceConsumable(
+                      deviceId,
+                      editingConsumable.id,
+                      deviceDto
+                    )
+                  } catch (err) {
+                    console.error('Update device-consumable failed', err)
+                    // Non-fatal: show warning but continue
+                    toast('Vật tư đã cập nhật (nhưng có lỗi khi cập nhật thông tin trên thiết bị)')
+                  }
+
+                  toast.success('Cập nhật vật tư thành công')
+                  setShowEditConsumable(false)
+
+                  // Refresh installed consumables list
+                  setConsumablesLoading(true)
+                  const installed = await devicesClientService
+                    .getConsumables(deviceId)
+                    .catch(() => [])
+                  setInstalledConsumables(Array.isArray(installed) ? installed : [])
                 } catch (err) {
                   console.error('Update consumable failed', err)
                   toast.error('Không thể cập nhật vật tư')

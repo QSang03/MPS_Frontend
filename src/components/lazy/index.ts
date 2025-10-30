@@ -5,11 +5,6 @@
 import { lazy } from 'react'
 
 // Form components
-export const DeviceForm = lazy(() =>
-  import('@/app/(dashboard)/customer-admin/devices/_components/DeviceForm').then((m) => ({
-    default: m.DeviceForm,
-  }))
-)
 
 export const ServiceRequestForm = lazy(() =>
   import('@/app/(dashboard)/customer-admin/service-requests/_components/ServiceRequestForm').then(
@@ -30,11 +25,6 @@ export const UserForm = lazy(() =>
 )
 
 // List components
-export const DeviceList = lazy(() =>
-  import('@/app/(dashboard)/customer-admin/devices/_components/DeviceList').then((m) => ({
-    default: m.DeviceList,
-  }))
-)
 
 export const ServiceRequestList = lazy(() =>
   import('@/app/(dashboard)/customer-admin/service-requests/_components/ServiceRequestList').then(

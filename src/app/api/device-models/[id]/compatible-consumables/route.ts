@@ -91,14 +91,25 @@ export async function DELETE(
 
     return NextResponse.json({ success: true })
   } catch (error: unknown) {
-    // If backend returned an axios error with response payload, forward that payload and status
+    // If backend returned an axios error with response payload, handle business errors specially
     const errAny = error as any
 
-    // Log structured info: backend status and response payload (if available).
-    // Avoid printing the full AxiosError object to reduce noisy stacks in the server log.
     if (errAny?.response && typeof errAny.response === 'object') {
       const status = errAny.response.status || 500
       const data = errAny.response.data ?? { error: errAny.message || 'Internal Server Error' }
+
+      // Map known business error 'COMPATIBILITY_IN_USE' to 200 (OK)
+      // Return 200 with the business payload so Next dev overlay won't treat it as an internal server error.
+      // The client can still inspect the returned payload.error to show an appropriate message.
+      if (data && data.error === 'COMPATIBILITY_IN_USE') {
+        console.debug(
+          'API Route /api/device-models/[id]/compatible-consumables DELETE business error mapped to 200 (business conflict):',
+          data
+        )
+        return NextResponse.json(data, { status: 200 })
+      }
+
+      // Otherwise forward original backend status and payload
       console.error(
         'API Route /api/device-models/[id]/compatible-consumables DELETE error:',
         'status=',

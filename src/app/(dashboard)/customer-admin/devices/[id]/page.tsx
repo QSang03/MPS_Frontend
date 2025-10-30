@@ -1,7 +1,13 @@
-import { redirect } from 'next/navigation'
+import { DeviceDetailClient } from '@/app/(dashboard)/customer-admin/device-models/[modelId]/devices/[id]/_components/DeviceDetailClient'
 
-// If the global devices route is removed from the UI, redirect accesses to the models list
-export default async function DeviceDetailPage() {
-  // Always redirect to device models table
-  redirect('/customer-admin/device-models')
+interface Props {
+  params: {
+    id: string
+  }
+}
+
+export default function DevicePage({ params }: Props) {
+  const { id } = params
+  // DeviceDetailClient is a client component that will fetch device details itself
+  return <DeviceDetailClient deviceId={id} backHref="/customer-admin/devices" />
 }

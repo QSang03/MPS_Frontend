@@ -1,56 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import backendApiClient from '@/lib/api/backend-client'
-import { API_ENDPOINTS } from '@/lib/api/endpoints'
 
-export async function GET(request: NextRequest) {
-  try {
-    const cookieStore = await cookies()
-    const accessToken = cookieStore.get('access_token')?.value
-
-    if (!accessToken) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    // Forward query params từ client
-    const searchParams = request.nextUrl.searchParams
-    const params: Record<string, string> = {}
-    searchParams.forEach((value, key) => {
-      params[key] = value
-    })
-
-    // Gọi backend API trực tiếp
-    const response = await backendApiClient.get(API_ENDPOINTS.CUSTOMERS, {
-      params,
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    })
-
-    return NextResponse.json(response.data)
-  } catch (error: unknown) {
-    const err = error as { message?: string; response?: { status?: number } } | undefined
-    console.error('API Route /api/customers error:', error)
-    return NextResponse.json(
-      { error: err?.message || 'Internal Server Error' },
-      { status: err?.response?.status || 500 }
-    )
-  }
-}
-
-export async function POST(request: NextRequest) {
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string; consumableId: string }> }
+) {
   let reqBody: unknown = undefined
+  let deviceId: string | undefined = undefined
+  let consumableId: string | undefined = undefined
   try {
+    const paramsObj = await params
+    deviceId = paramsObj.id
+    consumableId = paramsObj.consumableId
+
     const cookieStore = await cookies()
     const accessToken = cookieStore.get('access_token')?.value
     if (!accessToken) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     reqBody = await request.json()
 
-    const response = await backendApiClient.post(API_ENDPOINTS.CUSTOMERS, reqBody, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    })
-
+    const response = await backendApiClient.patch(
+      `/devices/${deviceId}/consumables/${consumableId}`,
+      reqBody,
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    )
     return NextResponse.json(response.data)
   } catch (error: unknown) {
     const err = error as
@@ -60,7 +34,11 @@ export async function POST(request: NextRequest) {
           config?: { data?: unknown }
         }
       | undefined
-    console.error('API Route /api/customers POST error:', err?.response?.status || err?.message)
+
+    console.error(
+      'API Route /api/devices/[id]/consumables/[consumableId] PATCH error:',
+      err?.response?.status || err?.message
+    )
 
     if (err?.response?.status === 401) {
       try {
@@ -118,23 +96,26 @@ export async function POST(request: NextRequest) {
               ? JSON.parse(String(err.config.data))
               : {}
 
-        const retryResp = await backendApiClient.post(API_ENDPOINTS.CUSTOMERS, originalBody, {
-          headers: { Authorization: `Bearer ${newAccessToken}` },
-        })
+        const retryResp = await backendApiClient.patch(
+          `/devices/${deviceId}/consumables/${consumableId}`,
+          originalBody,
+          { headers: { Authorization: `Bearer ${newAccessToken}` } }
+        )
         return NextResponse.json(retryResp.data)
       } catch (retryErr: unknown) {
-        const rerr = retryErr as { message?: string } | undefined
+        const rerr = retryErr as { message?: string; response?: { status?: number } } | undefined
         console.error('Retry after refresh failed:', rerr?.message)
         return NextResponse.json(
           { error: rerr?.message || 'Internal Server Error' },
-          { status: 500 }
+          { status: rerr?.response?.status || 500 }
         )
       }
     }
 
+    // If backend returned structured body, forward it
     if (err?.response?.data && typeof err.response.data === 'object') {
       return NextResponse.json(err.response.data as unknown as Record<string, unknown>, {
-        status: err?.response?.status || 500,
+        status: err.response?.status || 500,
       })
     }
 

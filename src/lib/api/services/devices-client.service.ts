@@ -81,4 +81,36 @@ export const devicesClientService = {
     // return body or success flag
     return response.data
   },
+
+  // Install consumable with additional device-level fields (installedAt, actualPagesPrinted, price)
+  async installConsumableWithPayload(
+    deviceId: string,
+    consumableId: string,
+    payload?: Record<string, unknown>
+  ) {
+    const body = Object.assign({ consumableId }, payload || {})
+    const response = await internalApiClient.post(
+      `/api/devices/${deviceId}/install-consumable`,
+      body
+    )
+    const resBody = response.data
+    if (!resBody) return null
+    if (resBody.data) return resBody.data
+    return resBody
+  },
+
+  async updateDeviceConsumable(
+    deviceId: string,
+    consumableId: string,
+    dto: Record<string, unknown>
+  ) {
+    const response = await internalApiClient.patch(
+      `/api/devices/${deviceId}/consumables/${consumableId}`,
+      dto
+    )
+    const body = response.data
+    if (!body) return null
+    if (body.data) return body.data
+    return body
+  },
 }

@@ -104,7 +104,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     // If backend provided structured error body, forward it
     if (err?.response?.data && typeof err.response.data === 'object') {
-      return NextResponse.json(err.response.data as any, { status: err.response?.status || 500 })
+      return NextResponse.json(err.response.data as unknown as Record<string, unknown>, {
+        status: err.response?.status || 500,
+      })
     }
 
     return NextResponse.json(
