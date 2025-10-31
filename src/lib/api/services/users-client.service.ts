@@ -69,4 +69,11 @@ export const usersClientService = {
   async deleteUser(id: string): Promise<void> {
     await internalApiClient.delete(`/api/users/${id}`)
   },
+
+  /**
+   * Reset user password to system default (client-side)
+   */
+  async resetPassword(id: string): Promise<void> {
+    await internalApiClient.post(`/api/users/${id}/reset-password`)
+  },
 }

@@ -152,7 +152,7 @@ export default function ConsumableTypeFormModal({ mode = 'create', model = null,
                   Mã/Part Number
                 </Label>
                 <Input
-                  value={(form as any).partNumber ?? ''}
+                  value={form.partNumber ?? ''}
                   onChange={(e) => setForm({ ...form, partNumber: e.target.value })}
                   placeholder="Nhập mã/part number (ví dụ: HP-CF410A)"
                   className="h-11"
@@ -166,9 +166,7 @@ export default function ConsumableTypeFormModal({ mode = 'create', model = null,
                 </Label>
                 <Input
                   type="number"
-                  value={
-                    typeof (form as any).capacity === 'number' ? String((form as any).capacity) : ''
-                  }
+                  value={typeof form.capacity === 'number' ? String(form.capacity) : ''}
                   onChange={(e) => {
                     const v = e.target.value
                     setForm({ ...form, capacity: v === '' ? undefined : Number(v) })

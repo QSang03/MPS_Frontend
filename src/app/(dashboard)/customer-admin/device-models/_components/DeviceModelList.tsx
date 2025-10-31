@@ -39,6 +39,8 @@ export default function DeviceModelList() {
     deviceModelId: string
     deviceModelName: string
   } | null>(null)
+  const [consumableCounts, setConsumableCounts] = useState<Record<string, number>>({})
+  const [countsLoading, setCountsLoading] = useState(false)
 
   const load = async () => {
     setLoading(true)
@@ -46,6 +48,8 @@ export default function DeviceModelList() {
       const resp = await deviceModelsClientService.getAll({ limit: 100 })
       setModels(resp.data || [])
       setFilteredModels(resp.data || [])
+      // load compatible consumable counts for each model (non-blocking)
+      loadConsumableCounts(resp.data || [])
     } catch (err) {
       console.error('Load device models failed', err)
       toast.error('Không thể tải danh sách model')
@@ -54,8 +58,33 @@ export default function DeviceModelList() {
     }
   }
 
+  const loadConsumableCounts = async (modelsToLoad: DeviceModel[]) => {
+    if (!Array.isArray(modelsToLoad) || modelsToLoad.length === 0) return
+    setCountsLoading(true)
+    try {
+      const promises = modelsToLoad.map((m) =>
+        deviceModelsClientService
+          .getCompatibleConsumables(m.id)
+          .then((res) => ({ id: m.id, count: Array.isArray(res) ? res.length : 0 }))
+      )
+      const results = await Promise.allSettled(promises)
+      const next: Record<string, number> = {}
+      for (const r of results) {
+        if (r.status === 'fulfilled') {
+          next[r.value.id] = r.value.count
+        }
+      }
+      setConsumableCounts((cur) => ({ ...cur, ...next }))
+    } catch (e) {
+      console.error('Failed to load consumable counts', e)
+    } finally {
+      setCountsLoading(false)
+    }
+  }
+
   useEffect(() => {
     load()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Filter models based on search term
@@ -239,6 +268,7 @@ export default function DeviceModelList() {
                     </div>
                   </th>
                   <th className="px-4 py-3 text-left text-sm font-semibold">Trạng thái</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Số loại tiêu hao</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold">Vật tư tiêu hao</th>
                   <th className="px-4 py-3 text-right text-sm font-semibold">Thao tác</th>
                 </tr>
@@ -306,6 +336,18 @@ export default function DeviceModelList() {
                           {m.isActive ? 'Active' : 'Inactive'}
                         </Badge>
                       </td>
+                      <td className="px-4 py-3">
+                        {countsLoading && consumableCounts[m.id] === undefined ? (
+                          <span className="text-muted-foreground text-sm">—</span>
+                        ) : (
+                          <Badge variant="outline" className="font-mono text-xs">
+                            {typeof consumableCounts[m.id] === 'number'
+                              ? consumableCounts[m.id]
+                              : 0}
+                          </Badge>
+                        )}
+                      </td>
+
                       <td className="px-4 py-3">
                         <Button
                           type="button"

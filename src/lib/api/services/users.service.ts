@@ -85,4 +85,13 @@ export const usersService = {
   async deleteUser(id: string): Promise<void> {
     await withRefreshRetry(() => serverApiClient.delete(`${API_ENDPOINTS.USERS}/${id}`))
   },
+
+  /**
+   * Reset user password to system default (server-side)
+   */
+  async resetPassword(id: string): Promise<void> {
+    await withRefreshRetry(() =>
+      serverApiClient.post(`${API_ENDPOINTS.USERS}/${id}/reset-password`)
+    )
+  },
 }

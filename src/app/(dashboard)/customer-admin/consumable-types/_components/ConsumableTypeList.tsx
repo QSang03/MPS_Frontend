@@ -3,8 +3,10 @@
 import { useEffect, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { consumableTypesClientService } from '@/lib/api/services/consumable-types-client.service'
+import { stockItemsClientService } from '@/lib/api/services/stock-items-client.service'
 import type { ConsumableType } from '@/types/models/consumable-type'
 import ConsumableTypeFormModal from './ConsumableTypeFormModal'
+import { EditStockModal } from './EditStockModal'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -23,6 +25,7 @@ import {
   Hash,
   BarChart3,
   FileText,
+  Pencil,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -36,6 +39,15 @@ export function ConsumableTypeList() {
   const [limit, setLimit] = useState(10)
   const [total, setTotal] = useState(0)
   const [totalPages, setTotalPages] = useState(1)
+
+  // Stock editing modal state
+  const [editStockModal, setEditStockModal] = useState<{
+    open: boolean
+    stockId: string
+    consumableName: string
+    quantity: number
+    threshold: number
+  } | null>(null)
 
   const queryClient = useQueryClient()
 
@@ -128,6 +140,40 @@ export function ConsumableTypeList() {
 
   const activeCount = models.filter((m) => m.isActive).length
   const inactiveCount = models.length - activeCount
+
+  const openEditStockModal = (
+    stockId: string,
+    consumableName: string,
+    quantity: number,
+    threshold: number
+  ) => {
+    setEditStockModal({
+      open: true,
+      stockId,
+      consumableName,
+      quantity,
+      threshold,
+    })
+  }
+
+  const handleSaveStock = async (stockId: string, quantity: number, threshold: number) => {
+    try {
+      await stockItemsClientService.updateStockItem(stockId, {
+        quantity,
+        lowStockThreshold: threshold,
+      })
+
+      toast.success('Cập nhật thông tin tồn kho thành công')
+
+      // Refetch data to get updated values
+      queryClient.invalidateQueries({ queryKey: ['consumable-types'] })
+    } catch (error: unknown) {
+      const e = error as Error
+      console.error('Error updating stock item:', e)
+      toast.error(e.message || 'Không thể cập nhật')
+      throw error
+    }
+  }
 
   if (loading) {
     return (
@@ -259,6 +305,7 @@ export function ConsumableTypeList() {
                   </th>
                   <th className="px-4 py-3 text-left text-sm font-semibold">Mã/Part</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold">Dung lượng</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Số lượng tồn</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold">Trạng thái</th>
                   <th className="px-4 py-3 text-right text-sm font-semibold">Thao tác</th>
                 </tr>
@@ -266,7 +313,7 @@ export function ConsumableTypeList() {
               <tbody className="divide-y">
                 {filteredModels.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-12 text-center">
+                    <td colSpan={7} className="px-4 py-12 text-center">
                       <div className="text-muted-foreground flex flex-col items-center gap-3">
                         {searchTerm ? (
                           <>
@@ -303,6 +350,40 @@ export function ConsumableTypeList() {
                       </td>
                       <td className="px-4 py-3 text-sm">{m.partNumber || '—'}</td>
                       <td className="px-4 py-3 text-sm">{m.capacity ?? '—'}</td>
+                      <td className="px-4 py-3">
+                        {m.stockItem?.id && m.stockItem?.quantity !== undefined ? (
+                          <div className="flex items-center gap-2">
+                            <Badge
+                              variant="outline"
+                              className={cn(
+                                'font-mono text-xs',
+                                m.stockItem.quantity <= (m.stockItem.lowStockThreshold ?? 0)
+                                  ? 'border-red-500 bg-red-50 text-red-700'
+                                  : 'border-green-500 bg-green-50 text-green-700'
+                              )}
+                            >
+                              {m.stockItem.quantity}
+                            </Badge>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() =>
+                                openEditStockModal(
+                                  m.stockItem!.id,
+                                  m.name || 'N/A',
+                                  m.stockItem!.quantity!,
+                                  m.stockItem!.lowStockThreshold ?? 0
+                                )
+                              }
+                              className="h-6 w-6 p-0"
+                            >
+                              <Pencil className="h-3 w-3 text-gray-500" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">—</span>
+                        )}
+                      </td>
                       <td className="px-4 py-3">
                         <Badge
                           variant={m.isActive ? 'default' : 'secondary'}
@@ -415,6 +496,23 @@ export function ConsumableTypeList() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Edit Stock Modal */}
+      {editStockModal && (
+        <EditStockModal
+          open={editStockModal.open}
+          onOpenChange={(open) => {
+            if (!open) {
+              setEditStockModal(null)
+            }
+          }}
+          stockId={editStockModal.stockId}
+          consumableName={editStockModal.consumableName}
+          currentQuantity={editStockModal.quantity}
+          currentThreshold={editStockModal.threshold}
+          onSave={handleSaveStock}
+        />
+      )}
     </div>
   )
 }

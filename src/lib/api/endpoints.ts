@@ -56,6 +56,11 @@ export const API_ENDPOINTS = {
     DELETE: (id: string) => `/consumable-types/${id}`,
   },
 
+  // Stock Items
+  STOCK_ITEMS: {
+    UPDATE: (id: string) => `/stock-items/${id}`,
+  },
+
   // Service Requests
   SERVICE_REQUESTS: {
     LIST: '/service-requests',
