@@ -20,6 +20,26 @@ const internalApiClient: AxiosInstance = axios.create({
 let isRefreshing = false
 let refreshPromise: Promise<string | null> | null = null
 
+// Request interceptor: if a refresh is in progress, pause new outgoing requests
+// until the refresh completes. This prevents a burst of requests from all
+// failing with 401 while a refresh is underway — they will wait and then
+// continue with the new session state.
+internalApiClient.interceptors.request.use(
+  async (config) => {
+    try {
+      if (isRefreshing && refreshPromise) {
+        // Wait for the refresh to finish (may throw if refresh failed)
+        await refreshPromise
+      }
+      return config
+    } catch (err) {
+      // If refresh failed, reject the request so callers can handle it.
+      return Promise.reject(err)
+    }
+  },
+  (error) => Promise.reject(error)
+)
+
 // Response interceptor - handle 401 và refresh token
 internalApiClient.interceptors.response.use(
   (response) => response,

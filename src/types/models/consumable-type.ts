@@ -12,6 +12,8 @@ export interface ConsumableType {
   name?: string
   description?: string
   unit?: string
+  partNumber?: string
+  capacity?: number
   isActive?: boolean
   createdAt?: string
   updatedAt?: string
@@ -23,6 +25,8 @@ export interface CreateConsumableTypeDto {
   name: string
   description?: string
   unit?: string
+  partNumber?: string
+  capacity?: number
   isActive?: boolean
 }
 

@@ -1,6 +1,7 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { consumableTypesClientService } from '@/lib/api/services/consumable-types-client.service'
 import type { ConsumableType } from '@/types/models/consumable-type'
 import ConsumableTypeFormModal from './ConsumableTypeFormModal'
@@ -36,32 +37,29 @@ export function ConsumableTypeList() {
   const [total, setTotal] = useState(0)
   const [totalPages, setTotalPages] = useState(1)
 
-  const load = useCallback(
-    async (p = page, l = limit, opts?: { silent?: boolean }) => {
-      const silent = opts?.silent === true
-      try {
-        if (!silent) setLoading(true)
-        const res = await consumableTypesClientService.getAll({ page: p, limit: l })
-        setModels(res.data)
-        setFilteredModels(res.data)
-        setTotal(res.pagination?.total ?? res.data.length)
-        setTotalPages(res.pagination?.totalPages ?? 1)
-        return res
-      } catch (error: unknown) {
-        const e = error as Error
-        console.error('Error loading consumable types:', e)
-        toast.error(e.message || 'Không thể tải danh sách')
-        return undefined
-      } finally {
-        if (!silent) setLoading(false)
-      }
-    },
-    [page, limit]
-  )
+  const queryClient = useQueryClient()
 
+  const queryKey = ['consumable-types', { page, limit }]
+
+  const {
+    data: queryData,
+    isLoading: queryLoading,
+    refetch,
+  } = useQuery({
+    queryKey,
+    queryFn: () => consumableTypesClientService.getAll({ page, limit }),
+  })
+
+  // Sync query result into local state for filtering and UI convenience
   useEffect(() => {
-    load(1, limit)
-  }, [limit, load])
+    if (queryData) {
+      setModels(queryData.data || [])
+      setFilteredModels(queryData.data || [])
+      setTotal(queryData.pagination?.total ?? queryData.data?.length ?? 0)
+      setTotalPages(queryData.pagination?.totalPages ?? 1)
+    }
+    setLoading(queryLoading)
+  }, [queryData, queryLoading])
 
   // Filter models based on search term
   useEffect(() => {
@@ -83,9 +81,12 @@ export function ConsumableTypeList() {
 
   const handleSaved = (m?: ConsumableType | null) => {
     if (!m) {
-      load()
+      // new/updated item saved on server: invalidate/refetch
+      queryClient.invalidateQueries({ queryKey: ['consumable-types'] })
       return
     }
+
+    // update local list optimistically
     setModels((cur) => {
       const exists = cur.find((it) => it.id === m.id)
       if (exists) {
@@ -107,12 +108,13 @@ export function ConsumableTypeList() {
       setTotal(newTotal)
       setTotalPages(Math.max(1, Math.ceil(newTotal / limit)))
 
-      const res = await load(page, limit, { silent: true })
-      const curCount = res?.data?.length ?? 0
+      // Refresh current page after deletion
+      const result = await refetch()
+      const curCount = result.data?.data?.length ?? 0
       if (curCount === 0 && page > 1) {
         const prevPage = page - 1
         setPage(prevPage)
-        await load(prevPage, limit, { silent: true })
+        // refetch will run automatically because queryKey depends on page
       }
     } catch (error: unknown) {
       const e = error as Error
@@ -255,6 +257,8 @@ export function ConsumableTypeList() {
                       Mô tả
                     </div>
                   </th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Mã/Part</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Dung lượng</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold">Trạng thái</th>
                   <th className="px-4 py-3 text-right text-sm font-semibold">Thao tác</th>
                 </tr>
@@ -297,6 +301,8 @@ export function ConsumableTypeList() {
                       <td className="text-muted-foreground max-w-xs truncate px-4 py-3 text-sm">
                         {m.description || '—'}
                       </td>
+                      <td className="px-4 py-3 text-sm">{m.partNumber || '—'}</td>
+                      <td className="px-4 py-3 text-sm">{m.capacity ?? '—'}</td>
                       <td className="px-4 py-3">
                         <Badge
                           variant={m.isActive ? 'default' : 'secondary'}
@@ -375,11 +381,10 @@ export function ConsumableTypeList() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={async () => {
+                onClick={() => {
                   if (page <= 1) return
                   const next = page - 1
                   setPage(next)
-                  await load(next, limit)
                 }}
                 disabled={page <= 1}
                 className="gap-1"
@@ -395,11 +400,10 @@ export function ConsumableTypeList() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={async () => {
+                onClick={() => {
                   if (page >= totalPages) return
                   const next = page + 1
                   setPage(next)
-                  await load(next, limit)
                 }}
                 disabled={page >= totalPages}
                 className="gap-1"

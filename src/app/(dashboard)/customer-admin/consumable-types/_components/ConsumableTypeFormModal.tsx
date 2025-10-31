@@ -35,6 +35,8 @@ export default function ConsumableTypeFormModal({ mode = 'create', model = null,
     name: model?.name || '',
     description: model?.description || '',
     unit: model?.unit || '',
+    partNumber: model?.partNumber || '',
+    capacity: model?.capacity ?? undefined,
     isActive: model?.isActive ?? true,
   })
 
@@ -44,6 +46,8 @@ export default function ConsumableTypeFormModal({ mode = 'create', model = null,
         name: model.name || '',
         description: model.description || '',
         unit: model.unit || '',
+        partNumber: model.partNumber || '',
+        capacity: model.capacity ?? undefined,
         isActive: model.isActive ?? true,
       })
     }
@@ -138,6 +142,38 @@ export default function ConsumableTypeFormModal({ mode = 'create', model = null,
                   value={form.unit}
                   onChange={(e) => setForm({ ...form, unit: e.target.value })}
                   placeholder="cái, hộp, lít..."
+                  className="h-11"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2 text-base font-semibold">
+                  <FileText className="h-4 w-4 text-cyan-600" />
+                  Mã/Part Number
+                </Label>
+                <Input
+                  value={(form as any).partNumber ?? ''}
+                  onChange={(e) => setForm({ ...form, partNumber: e.target.value })}
+                  placeholder="Nhập mã/part number (ví dụ: HP-CF410A)"
+                  className="h-11"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2 text-base font-semibold">
+                  <Sparkles className="h-4 w-4 text-emerald-600" />
+                  Dung lượng / Capacity
+                </Label>
+                <Input
+                  type="number"
+                  value={
+                    typeof (form as any).capacity === 'number' ? String((form as any).capacity) : ''
+                  }
+                  onChange={(e) => {
+                    const v = e.target.value
+                    setForm({ ...form, capacity: v === '' ? undefined : Number(v) })
+                  }}
+                  placeholder="Số lượng (ví dụ: 5000)"
                   className="h-11"
                 />
               </div>

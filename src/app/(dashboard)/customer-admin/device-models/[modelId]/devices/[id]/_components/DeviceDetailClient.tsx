@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useEffect, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import {
   ArrowLeft,
@@ -33,7 +34,6 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { devicesClientService } from '@/lib/api/services/devices-client.service'
 import { customersClientService } from '@/lib/api/services/customers-client.service'
 import type { Device } from '@/types/models/device'
-import type { Customer } from '@/types/models/customer'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -90,8 +90,12 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
   const [inactiveReasonOptionEdit, setInactiveReasonOptionEdit] = useState<string>('')
   const [inactiveReasonTextEdit, setInactiveReasonTextEdit] = useState<string>('')
   const [customerIdEdit, setCustomerIdEdit] = useState<string>('')
-  const [customers, setCustomers] = useState<Customer[]>([])
-  const [customersLoading, setCustomersLoading] = useState(false)
+  // customers list is a shared resource; use React Query to deduplicate requests
+  const { data: customersData, isLoading: customersLoading } = useQuery({
+    queryKey: ['customers', { page: 1, limit: 100 }],
+    queryFn: () => customersClientService.getAll({ page: 1, limit: 100 }).then((r) => r.data),
+  })
+  const customers = customersData ?? []
   const [installedConsumables, setInstalledConsumables] = useState<any[]>([])
   const [compatibleConsumables, setCompatibleConsumables] = useState<any[]>([])
   const [consumablesLoading, setConsumablesLoading] = useState(false)
@@ -184,20 +188,7 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
     }
   }, [deviceId, modelId])
 
-  useEffect(() => {
-    const loadCustomers = async () => {
-      setCustomersLoading(true)
-      try {
-        const res = await customersClientService.getAll({ page: 1, limit: 100 })
-        setCustomers(res.data || [])
-      } catch (err) {
-        console.error('load customers error', err)
-      } finally {
-        setCustomersLoading(false)
-      }
-    }
-    loadCustomers()
-  }, [])
+  // customers are loaded via React Query above; no local effect needed
 
   if (loading) {
     return (

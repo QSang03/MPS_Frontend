@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 import { useEffect, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -42,7 +43,7 @@ import { customersClientService } from '@/lib/api/services/customers-client.serv
 import { removeEmpty } from '@/lib/utils/clean'
 import { DEVICE_STATUS } from '@/constants/status'
 import { Switch } from '@/components/ui/switch'
-import type { Customer } from '@/types/models/customer'
+// removed unused Customer type import
 
 interface Props {
   mode?: 'create' | 'edit'
@@ -66,10 +67,19 @@ export default function DeviceFormModal({ mode = 'create', device = null, onSave
     inactiveReasonText: '',
     customerId: '',
   })
-  const [models, setModels] = useState<any[]>([])
-  const [modelsLoading, setModelsLoading] = useState(false)
-  const [customers, setCustomers] = useState<Customer[]>([])
-  const [customersLoading, setCustomersLoading] = useState(false)
+  // device models and customers are shared resources; use React Query to deduplicate
+  const { data: modelsData, isLoading: modelsLoading } = useQuery({
+    queryKey: ['device-models', { page: 1, limit: 100 }],
+    queryFn: () => deviceModelsClientService.getAll({ page: 1, limit: 100 }).then((r) => r.data),
+  })
+
+  const { data: customersData, isLoading: customersLoading } = useQuery({
+    queryKey: ['customers', { page: 1, limit: 100 }],
+    queryFn: () => customersClientService.getAll({ page: 1, limit: 100 }).then((r) => r.data),
+  })
+
+  const models = modelsData ?? []
+  const customers = customersData ?? []
 
   useEffect(() => {
     if (!device) return
@@ -90,35 +100,7 @@ export default function DeviceFormModal({ mode = 'create', device = null, onSave
     })
   }, [device])
 
-  useEffect(() => {
-    const load = async () => {
-      setModelsLoading(true)
-      try {
-        const res = await deviceModelsClientService.getAll({ page: 1, limit: 100 })
-        setModels(res.data || [])
-      } catch (err) {
-        console.error('load device models error', err)
-      } finally {
-        setModelsLoading(false)
-      }
-    }
-    load()
-  }, [])
-
-  useEffect(() => {
-    const loadCustomers = async () => {
-      setCustomersLoading(true)
-      try {
-        const res = await customersClientService.getAll({ page: 1, limit: 100 })
-        setCustomers(res.data || [])
-      } catch (err) {
-        console.error('load customers error', err)
-      } finally {
-        setCustomersLoading(false)
-      }
-    }
-    loadCustomers()
-  }, [])
+  // previous explicit loaders replaced by React Query above
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

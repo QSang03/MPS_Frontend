@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import {
   Dialog,
   DialogContent,
@@ -31,29 +32,25 @@ export function CustomerSelectDialog({
   onSelect,
   currentCustomerId,
 }: CustomerSelectDialogProps) {
-  const [customers, setCustomers] = useState<Customer[]>([])
-  const [loading, setLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
+  const query = useQuery({
+    queryKey: ['customers', { page: 1, limit: 100 }],
+    queryFn: () => customersClientService.getAll({ page: 1, limit: 100 }).then((r) => r.data),
+    enabled: open,
+  })
+
+  const { data: customersData, isLoading: loading, error } = query
+
+  // derive customers directly from the query result to avoid copying state inside an effect
+  const customers = (customersData as Customer[] | undefined) ?? []
 
   useEffect(() => {
-    if (open) {
-      fetchCustomers()
-    }
-  }, [open])
-
-  const fetchCustomers = async () => {
-    setLoading(true)
-    try {
-      const res = await customersClientService.getAll({ page: 1, limit: 100 })
-      setCustomers(res.data || [])
-    } catch (err) {
-      console.error('Failed to fetch customers', err)
+    if (error) {
+      console.error('Failed to fetch customers', error)
       toast.error('Không thể tải danh sách khách hàng')
-    } finally {
-      setLoading(false)
     }
-  }
+  }, [error])
 
   const filteredCustomers = customers.filter((c) => {
     const term = searchTerm.toLowerCase()
