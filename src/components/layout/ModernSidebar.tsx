@@ -37,6 +37,7 @@ function getNavigationItems(role: UserRole): NavItem[] {
     return [
       { label: 'Khách hàng', href: ROUTES.SYSTEM_ADMIN_CUSTOMERS, icon: Building2 },
       { label: 'Tài khoản', href: ROUTES.SYSTEM_ADMIN_ACCOUNTS, icon: Users },
+      { label: 'Cấu hình hệ thống', href: ROUTES.SYSTEM_ADMIN_SYSTEM_SETTINGS, icon: Settings },
       { label: 'Cài đặt', href: ROUTES.SYSTEM_ADMIN_SETTINGS, icon: Settings },
     ]
   }
@@ -67,6 +68,7 @@ function getNavigationItems(role: UserRole): NavItem[] {
       { label: 'Quản lý policies', href: ROUTES.CUSTOMER_ADMIN_POLICIES, icon: Shield },
       { label: 'Quản lý vai trò', href: ROUTES.CUSTOMER_ADMIN_ROLES, icon: Settings },
       { label: 'Quản lý bộ phận', href: ROUTES.CUSTOMER_ADMIN_DEPARTMENTS, icon: Building2 },
+      { label: 'Cấu hình hệ thống', href: ROUTES.CUSTOMER_ADMIN_SYSTEM_SETTINGS, icon: Settings },
       { label: 'Báo cáo', href: ROUTES.CUSTOMER_ADMIN_REPORTS, icon: BarChart3 },
     ]
   }
