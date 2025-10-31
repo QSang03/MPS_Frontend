@@ -9,6 +9,8 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { DeleteDialog } from '@/components/shared/DeleteDialog'
 import DeviceFormModal from './deviceformmodal'
 import { devicesClientService } from '@/lib/api/services/devices-client.service'
+import { CustomerSelectDialog } from './CustomerSelectDialog'
+import type { Customer } from '@/types/models/customer'
 import { toast } from 'sonner'
 import {
   Monitor,
@@ -19,6 +21,8 @@ import {
   Package,
   BarChart3,
   Users,
+  Edit2,
+  X,
 } from 'lucide-react'
 import { STATUS_DISPLAY, STATUS_ALLOWED_FOR_INACTIVE } from '@/constants/status'
 import type { DeviceStatusValue } from '@/constants/status'
@@ -39,6 +43,9 @@ export default function DevicesPageClient() {
   const [searchTerm, setSearchTerm] = useState('')
   const [showInactiveStatuses, setShowInactiveStatuses] = useState(false)
   const [statusFilter, setStatusFilter] = useState<string | null>(null)
+  const [showCustomerSelect, setShowCustomerSelect] = useState(false)
+  const [editingDeviceId, setEditingDeviceId] = useState<string | null>(null)
+  const [updatingCustomer, setUpdatingCustomer] = useState(false)
   const router = useRouter()
 
   const fetchDevices = async () => {
@@ -100,6 +107,71 @@ export default function DevicesPageClient() {
 
   const activeCount = devices.filter((d) => d.isActive).length
   const inactiveCount = devices.length - activeCount
+
+  const handleCustomerSelect = async (customer: Customer) => {
+    if (!editingDeviceId) return
+
+    setUpdatingCustomer(true)
+    try {
+      await devicesClientService.assignToCustomer(editingDeviceId, customer.id)
+      toast.success(`Đã gán thiết bị cho khách hàng ${customer.name}`)
+      await fetchDevices()
+    } catch (err) {
+      // Log raw error for debugging
+      console.error('Failed to assign customer', err)
+
+      // Try to extract backend error message (axios style)
+      try {
+        const e = err as { response?: { data?: unknown; status?: number }; message?: string }
+        const body = e?.response?.data
+        if (body) console.error('[assignToCustomer] backend response body:', body)
+        // Try to extract message from unknown body safely
+        type MsgBody = { message?: string; error?: string }
+        const maybe = (body as MsgBody) || {}
+        const message = maybe.message || maybe.error || e?.message
+        if (message) {
+          toast.error(String(message))
+        } else {
+          toast.error('Không thể gán khách hàng cho thiết bị')
+        }
+      } catch (parseErr) {
+        console.error('Error parsing assign error', parseErr)
+        toast.error('Không thể gán khách hàng cho thiết bị')
+      }
+    } finally {
+      setUpdatingCustomer(false)
+      setEditingDeviceId(null)
+    }
+  }
+
+  const handleRemoveCustomer = async (deviceId: string) => {
+    setUpdatingCustomer(true)
+    try {
+      await devicesClientService.returnToWarehouse(deviceId)
+      toast.success('Đã đưa thiết bị về kho (System)')
+      await fetchDevices()
+    } catch (err) {
+      console.error('Failed to return device to warehouse', err)
+      try {
+        const e = err as { response?: { data?: unknown; status?: number }; message?: string }
+        const body = e?.response?.data
+        if (body) console.error('[returnToWarehouse] backend response body:', body)
+        type MsgBody = { message?: string; error?: string }
+        const maybe = (body as MsgBody) || {}
+        const message = maybe.message || maybe.error || e?.message
+        if (message) {
+          toast.error(String(message))
+        } else {
+          toast.error('Không thể đưa thiết bị về kho')
+        }
+      } catch (parseErr) {
+        console.error('Error parsing return error', parseErr)
+        toast.error('Không thể đưa thiết bị về kho')
+      }
+    } finally {
+      setUpdatingCustomer(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -318,13 +390,48 @@ export default function DevicesPageClient() {
                         {d.deviceModel?.name || d.deviceModelId || '—'}
                       </td>
                       <td className="px-4 py-3 text-sm">
-                        {(d as unknown as { customer?: { name?: string } }).customer?.name ? (
-                          <span className="text-sm font-medium">
-                            {(d as unknown as { customer?: { name?: string } }).customer!.name}
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {(d as unknown as { customer?: { name?: string; id?: string } }).customer
+                            ?.name ? (
+                            <span className="text-sm font-medium">
+                              {(d as unknown as { customer?: { name?: string } }).customer!.name}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                          {/* Allow editing customer only if customer name is "System" */}
+                          {(d as unknown as { customer?: { name?: string; id?: string } }).customer
+                            ?.name === 'System' && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0 hover:bg-rose-100"
+                              onClick={() => {
+                                setEditingDeviceId(d.id)
+                                setShowCustomerSelect(true)
+                              }}
+                              title="Chỉnh sửa khách hàng"
+                            >
+                              <Edit2 className="h-3.5 w-3.5 text-rose-600" />
+                            </Button>
+                          )}
+                          {/* Allow removing customer (set back to System) only if customer is NOT "System" */}
+                          {(d as unknown as { customer?: { name?: string; id?: string } }).customer
+                            ?.name &&
+                            (d as unknown as { customer?: { name?: string; id?: string } }).customer
+                              ?.name !== 'System' && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 w-7 p-0 hover:bg-red-100"
+                                onClick={() => handleRemoveCustomer(d.id)}
+                                disabled={updatingCustomer}
+                                title="Xóa khách hàng (đưa về System)"
+                              >
+                                <X className="h-3.5 w-3.5 text-red-600" />
+                              </Button>
+                            )}
+                        </div>
                       </td>
                       <td className="px-4 py-3 text-sm">
                         <div className="flex items-center gap-2">
@@ -452,6 +559,20 @@ export default function DevicesPageClient() {
       </Card>
 
       {/* Navigation: clicking serial opens device detail page */}
+
+      {/* Customer Select Dialog */}
+      <CustomerSelectDialog
+        open={showCustomerSelect}
+        onOpenChange={setShowCustomerSelect}
+        onSelect={handleCustomerSelect}
+        currentCustomerId={
+          (
+            devices.find((d) => d.id === editingDeviceId) as unknown as {
+              customer?: { id?: string }
+            }
+          )?.customer?.id
+        }
+      />
     </div>
   )
 }

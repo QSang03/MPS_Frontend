@@ -33,6 +33,8 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string) => `/devices/${id}`,
     DELETE: (id: string) => `/devices/${id}`,
     STATS: (customerId: string) => `/devices/stats/${customerId}`,
+    ASSIGN_TO_CUSTOMER: (id: string) => `/devices/${id}/assign-to-customer`,
+    RETURN_TO_WAREHOUSE: (id: string) => `/devices/${id}/return-to-warehouse`,
   },
 
   // Device Models

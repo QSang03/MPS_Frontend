@@ -38,9 +38,11 @@ import {
 import { toast } from 'sonner'
 import { devicesClientService } from '@/lib/api/services/devices-client.service'
 import deviceModelsClientService from '@/lib/api/services/device-models-client.service'
+import { customersClientService } from '@/lib/api/services/customers-client.service'
 import { removeEmpty } from '@/lib/utils/clean'
 import { DEVICE_STATUS } from '@/constants/status'
 import { Switch } from '@/components/ui/switch'
+import type { Customer } from '@/types/models/customer'
 
 interface Props {
   mode?: 'create' | 'edit'
@@ -62,9 +64,12 @@ export default function DeviceFormModal({ mode = 'create', device = null, onSave
     status: 'ACTIVE',
     inactiveReasonOption: '',
     inactiveReasonText: '',
+    customerId: '',
   })
   const [models, setModels] = useState<any[]>([])
   const [modelsLoading, setModelsLoading] = useState(false)
+  const [customers, setCustomers] = useState<Customer[]>([])
+  const [customersLoading, setCustomersLoading] = useState(false)
 
   useEffect(() => {
     if (!device) return
@@ -81,6 +86,7 @@ export default function DeviceFormModal({ mode = 'create', device = null, onSave
         (device.isActive ? DEVICE_STATUS.ACTIVE : DEVICE_STATUS.DECOMMISSIONED),
       inactiveReasonOption: device.inactiveReason ? device.inactiveReason : '',
       inactiveReasonText: device.inactiveReason || '',
+      customerId: device.customerId || device.customer?.id || '',
     })
   }, [device])
 
@@ -97,6 +103,21 @@ export default function DeviceFormModal({ mode = 'create', device = null, onSave
       }
     }
     load()
+  }, [])
+
+  useEffect(() => {
+    const loadCustomers = async () => {
+      setCustomersLoading(true)
+      try {
+        const res = await customersClientService.getAll({ page: 1, limit: 100 })
+        setCustomers(res.data || [])
+      } catch (err) {
+        console.error('load customers error', err)
+      } finally {
+        setCustomersLoading(false)
+      }
+    }
+    loadCustomers()
   }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -147,6 +168,7 @@ export default function DeviceFormModal({ mode = 'create', device = null, onSave
         ipAddress: form.ipAddress || undefined,
         macAddress: form.macAddress || undefined,
         firmware: form.firmware || undefined,
+        customerId: form.customerId || undefined,
       }
 
       if (mode === 'edit') {
@@ -263,6 +285,59 @@ export default function DeviceFormModal({ mode = 'create', device = null, onSave
             </div>
 
             <Separator />
+
+            {/* Customer Section - Only show in edit mode when customer is System */}
+            {mode === 'edit' && device?.customer?.name === 'System' && (
+              <>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-rose-700">
+                    <Package className="h-4 w-4" />
+                    Thông tin Khách hàng
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2 text-base font-semibold">
+                      <Package className="h-4 w-4 text-rose-600" />
+                      Khách hàng
+                    </Label>
+                    <Select
+                      value={form.customerId}
+                      onValueChange={(v) => setForm((s: any) => ({ ...s, customerId: v }))}
+                    >
+                      <SelectTrigger className="h-11">
+                        <SelectValue
+                          placeholder={
+                            customersLoading ? 'Đang tải khách hàng...' : 'Chọn khách hàng'
+                          }
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {customersLoading && (
+                          <SelectItem value="__loading" disabled>
+                            <div className="flex items-center gap-2">
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              Đang tải...
+                            </div>
+                          </SelectItem>
+                        )}
+                        {!customersLoading && customers.length === 0 && (
+                          <SelectItem value="__empty" disabled>
+                            Không có khách hàng
+                          </SelectItem>
+                        )}
+                        {customers.map((c) => (
+                          <SelectItem key={c.id} value={c.id}>
+                            {c.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <Separator />
+              </>
+            )}
 
             {/* Basic Info Section */}
             <div className="space-y-4">

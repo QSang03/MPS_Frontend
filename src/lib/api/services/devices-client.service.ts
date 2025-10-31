@@ -128,4 +128,51 @@ export const devicesClientService = {
     if (body.data) return body.data
     return body
   },
+
+  // Assign device to customer
+  async assignToCustomer(deviceId: string, customerId: string) {
+    try {
+      const response = await internalApiClient.post(`/api/devices/${deviceId}/assign-to-customer`, {
+        customerId,
+      })
+      return response.data?.data
+    } catch (err: unknown) {
+      // Log full error details for debugging
+      try {
+        const e = err as { response?: { data?: unknown; status?: number }; message?: string }
+        console.error('[devicesClientService.assignToCustomer] Full error:', {
+          status: e?.response?.status,
+          errorBody: e?.response?.data,
+          message: e?.message,
+          deviceId,
+          customerId,
+        })
+      } catch {
+        console.error('[devicesClientService.assignToCustomer] error:', err)
+      }
+      throw err
+    }
+  },
+
+  // Return device to warehouse (assign back to System customer)
+  async returnToWarehouse(deviceId: string) {
+    try {
+      const response = await internalApiClient.post(`/api/devices/${deviceId}/return-to-warehouse`)
+      return response.data?.data
+    } catch (err: unknown) {
+      // Log full error details for debugging
+      try {
+        const e = err as { response?: { data?: unknown; status?: number }; message?: string }
+        console.error('[devicesClientService.returnToWarehouse] Full error:', {
+          status: e?.response?.status,
+          errorBody: e?.response?.data,
+          message: e?.message,
+          deviceId,
+        })
+      } catch {
+        console.error('[devicesClientService.returnToWarehouse] error:', err)
+      }
+      throw err
+    }
+  },
 }

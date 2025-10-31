@@ -31,7 +31,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { devicesClientService } from '@/lib/api/services/devices-client.service'
+import { customersClientService } from '@/lib/api/services/customers-client.service'
 import type { Device } from '@/types/models/device'
+import type { Customer } from '@/types/models/customer'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -87,6 +89,9 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
   const [statusEdit, setStatusEdit] = useState<string>('ACTIVE')
   const [inactiveReasonOptionEdit, setInactiveReasonOptionEdit] = useState<string>('')
   const [inactiveReasonTextEdit, setInactiveReasonTextEdit] = useState<string>('')
+  const [customerIdEdit, setCustomerIdEdit] = useState<string>('')
+  const [customers, setCustomers] = useState<Customer[]>([])
+  const [customersLoading, setCustomersLoading] = useState(false)
   const [installedConsumables, setInstalledConsumables] = useState<any[]>([])
   const [compatibleConsumables, setCompatibleConsumables] = useState<any[]>([])
   const [consumablesLoading, setConsumablesLoading] = useState(false)
@@ -148,6 +153,7 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
           )
           setInactiveReasonOptionEdit((data as any).inactiveReason ?? '')
           setInactiveReasonTextEdit((data as any).inactiveReason ?? '')
+          setCustomerIdEdit((data as any).customerId || (data as any).customer?.id || '')
         }
 
         try {
@@ -177,6 +183,21 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
       fetchDevice()
     }
   }, [deviceId, modelId])
+
+  useEffect(() => {
+    const loadCustomers = async () => {
+      setCustomersLoading(true)
+      try {
+        const res = await customersClientService.getAll({ page: 1, limit: 100 })
+        setCustomers(res.data || [])
+      } catch (err) {
+        console.error('load customers error', err)
+      } finally {
+        setCustomersLoading(false)
+      }
+    }
+    loadCustomers()
+  }, [])
 
   if (loading) {
     return (
@@ -921,6 +942,41 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                 />
               </div>
             </div>
+
+            {/* Customer editing - Only show when customer is System */}
+            {(device as any)?.customer?.name === 'System' && (
+              <div className="mt-4">
+                <Label className="text-base font-semibold">Khách hàng</Label>
+                <Select value={customerIdEdit} onValueChange={(v) => setCustomerIdEdit(v)}>
+                  <SelectTrigger className="mt-2 h-11">
+                    <SelectValue
+                      placeholder={customersLoading ? 'Đang tải...' : 'Chọn khách hàng'}
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {customersLoading && (
+                      <SelectItem value="__loading" disabled>
+                        <div className="flex items-center gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Đang tải...
+                        </div>
+                      </SelectItem>
+                    )}
+                    {!customersLoading && customers.length === 0 && (
+                      <SelectItem value="__empty" disabled>
+                        Không có khách hàng
+                      </SelectItem>
+                    )}
+                    {customers.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             {/* Status editing (allow toggling active/status and providing reason) */}
             <div className="mt-4">
               <div className="flex items-center justify-between">
@@ -1066,6 +1122,7 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                     isActive: finalIsActive,
                     status: finalStatus,
                     inactiveReason: chosenReason || undefined,
+                    customerId: customerIdEdit || undefined,
                   }
 
                   dto = removeEmpty(dto)
