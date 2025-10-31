@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import backendApiClient from '@/lib/api/backend-client'
+import { removeEmpty } from '@/lib/utils/clean'
 import { API_ENDPOINTS } from '@/lib/api/endpoints'
 
 export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
@@ -49,6 +50,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     const resolvedParams = await context.params
     id = (resolvedParams as { id: string }).id
     reqBody = await request.json()
+    const cleaned = removeEmpty(reqBody as Record<string, unknown>)
     // Debug: log incoming request body for troubleshooting missing fields
     try {
       console.debug('[api/policies/[id] PUT] incoming body:', JSON.stringify(reqBody))
@@ -56,7 +58,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       console.debug('[api/policies/[id] PUT] incoming body (non-serializable)')
     }
 
-    const response = await backendApiClient.patch(`${API_ENDPOINTS.POLICIES}/${id}`, reqBody, {
+    const response = await backendApiClient.patch(`${API_ENDPOINTS.POLICIES}/${id}`, cleaned, {
       headers: { Authorization: `Bearer ${accessToken}` },
     })
     // Log backend response for debugging persistence issues
@@ -136,10 +138,11 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
             : err?.config?.data && typeof err.config.data === 'string'
               ? JSON.parse(String(err.config.data))
               : {}
+        const cleanedOriginal = removeEmpty(originalBody as Record<string, unknown>)
 
         const retryResp = await backendApiClient.patch(
           `${API_ENDPOINTS.POLICIES}/${id}`,
-          originalBody,
+          cleanedOriginal,
           {
             headers: { Authorization: `Bearer ${newAccessToken}` },
           }

@@ -11,6 +11,7 @@ export type Action = 'create' | 'read' | 'update' | 'delete'
  */
 export type ResourceType =
   | 'device'
+  | 'contract'
   | 'serviceRequest'
   | 'purchaseRequest'
   | 'customer'

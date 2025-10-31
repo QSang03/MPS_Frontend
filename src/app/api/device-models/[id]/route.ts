@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import backendApiClient from '@/lib/api/backend-client'
+import removeEmpty from '@/lib/utils/clean'
 import { API_ENDPOINTS } from '@/lib/api/endpoints'
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -41,10 +42,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }
 
     const body = await request.json()
+    const cleaned = removeEmpty(body as Record<string, unknown>)
 
     const response = await backendApiClient.patch(
       `${API_ENDPOINTS.DEVICE_MODELS.UPDATE(id)}`,
-      body,
+      cleaned,
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,

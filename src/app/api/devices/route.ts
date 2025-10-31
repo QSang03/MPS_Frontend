@@ -70,6 +70,13 @@ export async function POST(request: NextRequest) {
 
     reqBody = await request.json()
 
+    // Log incoming request body for easier debugging of 4xx/5xx from backend
+    try {
+      console.debug('[api/devices] incoming POST body:', JSON.stringify(reqBody))
+    } catch {
+      console.debug('[api/devices] incoming POST body (non-serializable)')
+    }
+
     const response = await backendApiClient.post(API_ENDPOINTS.DEVICES.CREATE, reqBody, {
       headers: { Authorization: `Bearer ${accessToken}` },
     })
@@ -84,6 +91,25 @@ export async function POST(request: NextRequest) {
         }
       | undefined
     console.error('API Route /api/devices POST error:', err?.response?.status || err?.message)
+
+    // If we have the backend response body, log it so the frontend/devs can see the JSON error
+    const backendRespData = err?.response?.data
+    if (typeof backendRespData !== 'undefined') {
+      try {
+        // Prefer structured JSON logging when possible
+        console.error('[api/devices] backend response data:', JSON.stringify(backendRespData))
+      } catch {
+        // fallback to debug print when non-serializable
+        console.error('[api/devices] backend response data (unserializable):', backendRespData)
+      }
+    }
+
+    // Also log the original request body (if available) to help reproduce the error
+    try {
+      console.debug('[api/devices] original request body for failed call:', JSON.stringify(reqBody))
+    } catch {
+      /* ignore */
+    }
 
     // Retry on 401 using refresh token (same pattern used elsewhere)
     if (err?.response?.status === 401) {
@@ -156,6 +182,16 @@ export async function POST(request: NextRequest) {
           { status: rerr?.response?.status || 500 }
         )
       }
+    }
+
+    // Forward backend response body to client when available (object or string)
+    if (typeof backendRespData !== 'undefined') {
+      const status = err?.response?.status || 500
+      if (typeof backendRespData === 'object') {
+        return NextResponse.json(backendRespData as unknown as Record<string, unknown>, { status })
+      }
+      // if backend sent a string or other primitive, wrap it with { error: ... }
+      return NextResponse.json({ error: String(backendRespData) }, { status })
     }
 
     return NextResponse.json(

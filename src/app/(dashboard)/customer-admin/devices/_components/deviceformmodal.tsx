@@ -38,6 +38,9 @@ import {
 import { toast } from 'sonner'
 import { devicesClientService } from '@/lib/api/services/devices-client.service'
 import deviceModelsClientService from '@/lib/api/services/device-models-client.service'
+import { removeEmpty } from '@/lib/utils/clean'
+import { DEVICE_STATUS } from '@/constants/status'
+import { Switch } from '@/components/ui/switch'
 
 interface Props {
   mode?: 'create' | 'edit'
@@ -55,6 +58,10 @@ export default function DeviceFormModal({ mode = 'create', device = null, onSave
     ipAddress: '',
     macAddress: '',
     firmware: '',
+    isActive: true,
+    status: 'ACTIVE',
+    inactiveReasonOption: '',
+    inactiveReasonText: '',
   })
   const [models, setModels] = useState<any[]>([])
   const [modelsLoading, setModelsLoading] = useState(false)
@@ -68,6 +75,12 @@ export default function DeviceFormModal({ mode = 'create', device = null, onSave
       ipAddress: device.ipAddress || '',
       macAddress: device.macAddress || '',
       firmware: device.firmware || '',
+      isActive: typeof device.isActive === 'boolean' ? device.isActive : true,
+      status:
+        (device.status as string) ||
+        (device.isActive ? DEVICE_STATUS.ACTIVE : DEVICE_STATUS.DECOMMISSIONED),
+      inactiveReasonOption: device.inactiveReason ? device.inactiveReason : '',
+      inactiveReasonText: device.inactiveReason || '',
     })
   }, [device])
 
@@ -96,7 +109,38 @@ export default function DeviceFormModal({ mode = 'create', device = null, onSave
         return
       }
 
-      const payload = {
+      // Business rule: whenever isActive === false during edit, inactiveReason is required.
+      const requiresReason = mode === 'edit' && form.isActive === false
+      let chosenReason: string | undefined = undefined
+      if (requiresReason) {
+        if (form.inactiveReasonOption === '__other') {
+          chosenReason = form.inactiveReasonText
+        } else {
+          chosenReason = form.inactiveReasonOption
+        }
+        if (!chosenReason || String(chosenReason).trim() === '') {
+          toast.error('Vui lòng cung cấp lý do khi thay đổi trạng thái')
+          setSubmitting(false)
+          return
+        }
+      }
+
+      // Validate status consistent with isActive (only during edit mode)
+      if (mode === 'edit') {
+        const activeStatuses = ['ACTIVE', 'MAINTENANCE', 'ERROR', 'OFFLINE']
+        const inactiveStatuses = ['DECOMMISSIONED', 'DISABLED']
+        const allowedStatuses = form.isActive ? activeStatuses : inactiveStatuses
+        if (!allowedStatuses.includes(String(form.status))) {
+          toast.error(
+            `Trạng thái không hợp lệ khi isActive=${String(form.isActive)}. Vui lòng chọn trạng thái hợp lệ.`
+          )
+          setSubmitting(false)
+          return
+        }
+      }
+
+      // Build payload; exclude isActive/status/inactiveReason when creating a device
+      let payload: Record<string, unknown> = {
         deviceModelId: form.deviceModelId || undefined,
         serialNumber: form.serialNumber,
         location: form.location || undefined,
@@ -105,20 +149,35 @@ export default function DeviceFormModal({ mode = 'create', device = null, onSave
         firmware: form.firmware || undefined,
       }
 
+      if (mode === 'edit') {
+        payload.isActive = form.isActive
+        // status must reflect the chosen status and follow backend enum (uppercase)
+        payload.status = String(form.status).toUpperCase()
+        payload.inactiveReason = chosenReason || undefined
+      }
+      // remove empty fields (trim whitespace-only strings, empty arrays/objects)
+      payload = removeEmpty(payload) as typeof payload
+
       if (mode === 'create') {
-        const created = await devicesClientService.create(payload)
+        const created = await devicesClientService.create(payload as any)
         toast.success('Tạo thiết bị thành công')
         setOpen(false)
         onSaved?.(created)
       } else if (device && device.id) {
-        const updated = await devicesClientService.update(device.id, payload)
+        const updated = await devicesClientService.update(device.id, payload as any)
         toast.success('Cập nhật thiết bị thành công')
         setOpen(false)
         onSaved?.(updated)
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Device save error', err)
-      toast.error('Có lỗi khi lưu thiết bị')
+      // Try to extract backend error message from Axios-like error
+      const backendMessage = err?.response?.data?.message || err?.response?.data || err?.message
+      if (backendMessage) {
+        toast.error(String(backendMessage))
+      } else {
+        toast.error('Có lỗi khi lưu thiết bị')
+      }
     } finally {
       setSubmitting(false)
     }
@@ -254,6 +313,119 @@ export default function DeviceFormModal({ mode = 'create', device = null, onSave
                 </div>
               </div>
             </div>
+
+            {/* Active toggle & reason (only in edit mode) */}
+            {mode === 'edit' && (
+              <div className="mt-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-base font-semibold text-gray-700">
+                    <Package className="h-4 w-4 text-gray-600" />
+                    Trạng thái hoạt động
+                  </div>
+                  <div>
+                    <Switch
+                      checked={!!form.isActive}
+                      onCheckedChange={(v: any) =>
+                        setForm((s: any) => {
+                          const isActiveNew = !!v
+                          // adjust status default when toggling
+                          let newStatus = s.status
+                          if (!isActiveNew) {
+                            // switch to a safe inactive status if current is active-type
+                            if (
+                              ['ACTIVE', 'MAINTENANCE', 'ERROR', 'OFFLINE'].includes(
+                                String(s.status) as any
+                              )
+                            ) {
+                              newStatus = DEVICE_STATUS.DECOMMISSIONED
+                            }
+                          } else {
+                            // switching to active: if currently DECOMMISSIONED/DISABLED, set to ACTIVE
+                            if (
+                              [DEVICE_STATUS.DECOMMISSIONED, DEVICE_STATUS.DISABLED].includes(
+                                String(s.status) as any
+                              )
+                            ) {
+                              newStatus = DEVICE_STATUS.ACTIVE
+                            }
+                          }
+                          return {
+                            ...s,
+                            isActive: isActiveNew,
+                            status: newStatus,
+                            // clear reasons when re-activating
+                            inactiveReasonOption: isActiveNew ? '' : s.inactiveReasonOption,
+                            inactiveReasonText: isActiveNew ? '' : s.inactiveReasonText,
+                          }
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+
+                {/* Status selector */}
+                <div className="mt-3">
+                  <Label className="text-sm font-medium">Trạng thái</Label>
+                  <Select
+                    value={form.status}
+                    onValueChange={(v) => setForm((s: any) => ({ ...s, status: v }))}
+                  >
+                    <SelectTrigger className="h-11">
+                      <SelectValue placeholder="Chọn trạng thái" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {form.isActive ? (
+                        <>
+                          <SelectItem value="ACTIVE">Active</SelectItem>
+                          <SelectItem value="MAINTENANCE">Maintenance</SelectItem>
+                          <SelectItem value="ERROR">Error</SelectItem>
+                          <SelectItem value="OFFLINE">Offline</SelectItem>
+                        </>
+                      ) : (
+                        <>
+                          <SelectItem value="DECOMMISSIONED">Decommissioned</SelectItem>
+                          <SelectItem value="DISABLED">Disabled</SelectItem>
+                        </>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Show reason selector when isActive is false */}
+                {form.isActive === false && (
+                  <div className="mt-3 space-y-2">
+                    <Label className="text-sm font-medium">Lý do</Label>
+                    <Select
+                      value={form.inactiveReasonOption}
+                      onValueChange={(v) =>
+                        setForm((s: any) => ({ ...s, inactiveReasonOption: v }))
+                      }
+                    >
+                      <SelectTrigger className="h-11">
+                        <SelectValue placeholder="Chọn lý do hoặc chọn 'Tự nhập'" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Tạm dừng do lỗi">Tạm dừng do lỗi</SelectItem>
+                        <SelectItem value="Hủy HĐ">Hủy HĐ</SelectItem>
+                        <SelectItem value="Hoàn tất HĐ">Hoàn tất HĐ</SelectItem>
+                        <SelectItem value="__other">Tự nhập</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    {form.inactiveReasonOption === '__other' && (
+                      <Input
+                        value={form.inactiveReasonText}
+                        onChange={(e) =>
+                          setForm((s: any) => ({ ...s, inactiveReasonText: e.target.value }))
+                        }
+                        placeholder="Nhập lý do..."
+                        className="h-11"
+                      />
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
             <Separator />
 

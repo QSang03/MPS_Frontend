@@ -7,7 +7,7 @@ export const customersClientService = {
    * Get all customers (client-side)
    * Gọi Next.js API Route thay vì gọi trực tiếp backend để tránh CORS
    */
-  async getAll(params?: { page?: number; limit?: number }): Promise<{
+  async getAll(params?: { page?: number; limit?: number; search?: string }): Promise<{
     data: Customer[]
     pagination?: ListPagination
   }> {
@@ -15,6 +15,7 @@ export const customersClientService = {
       params: {
         page: params?.page ?? 1,
         limit: params?.limit ?? 100,
+        ...(params?.search ? { search: params.search } : {}),
       },
     })
     const { data, pagination } = response.data || { data: [], pagination: undefined }

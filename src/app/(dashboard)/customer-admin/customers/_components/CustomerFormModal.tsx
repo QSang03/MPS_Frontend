@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/select'
 import { toast } from 'sonner'
 import { customersClientService } from '@/lib/api/services/customers-client.service'
+import removeEmpty from '@/lib/utils/clean'
 import type { Customer } from '@/types/models/customer'
 
 type LocalCustomerForm = Partial<Customer> & {
@@ -58,6 +59,63 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved }:
     isActive: true,
     description: '',
   })
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+  const clearFieldError = (key: string) =>
+    setFieldErrors((prev) => {
+      if (!prev || !prev[key]) return prev
+      const copy = { ...prev }
+      delete copy[key]
+      return copy
+    })
+  // refs for inputs so we can autofocus the first invalid field
+  const nameRef = useRef<HTMLInputElement | null>(null)
+  const codeRef = useRef<HTMLInputElement | null>(null)
+  const contactEmailRef = useRef<HTMLInputElement | null>(null)
+  const contactPhoneRef = useRef<HTMLInputElement | null>(null)
+  const contactPersonRef = useRef<HTMLInputElement | null>(null)
+  const addressRef = useRef<HTMLInputElement | null>(null)
+  const descriptionRef = useRef<HTMLInputElement | null>(null)
+
+  // autofocus first invalid field when fieldErrors is set by server validation
+  useEffect(() => {
+    const keys = Object.keys(fieldErrors || {})
+    if (!keys.length) return
+    const order = [
+      'name',
+      'code',
+      'contactEmail',
+      'contactPhone',
+      'contactPerson',
+      'address',
+      'description',
+    ]
+
+    const refs: Record<string, React.RefObject<HTMLInputElement | null>> = {
+      name: nameRef,
+      code: codeRef,
+      contactEmail: contactEmailRef,
+      contactPhone: contactPhoneRef,
+      contactPerson: contactPersonRef,
+      address: addressRef,
+      description: descriptionRef,
+    }
+
+    for (const k of order) {
+      const r = refs[k]
+      if (fieldErrors[k] && r?.current) {
+        // focus after paint
+        setTimeout(() => {
+          try {
+            r.current?.focus()
+            r.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          } catch {
+            /* ignore */
+          }
+        }, 0)
+        break
+      }
+    }
+  }, [fieldErrors])
 
   useEffect(() => {
     if (!customer) return
@@ -80,9 +138,10 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved }:
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSubmitting(true)
+    setFieldErrors({})
 
     try {
-      const payload = { ...form }
+      const payload = removeEmpty({ ...form })
       if (mode === 'create') {
         const created = await customersClientService.create(payload as Partial<Customer>)
         toast.success('Tạo khách hàng thành công')
@@ -101,17 +160,86 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved }:
       console.error('Customer save error', err)
       let userMessage = 'Có lỗi khi lưu khách hàng'
       try {
-        const e = err as Error
-        const msg = e.message || ''
-        const jsonStart = msg.indexOf('{')
-        if (jsonStart !== -1) {
-          const jsonStr = msg.slice(jsonStart)
-          const parsed = JSON.parse(jsonStr)
-          userMessage = parsed?.error || parsed?.message || userMessage
-        } else if (msg) {
-          userMessage = msg
+        const anyErr = err as any
+        // Axios error shape: anyErr.response?.data
+        if (anyErr?.response?.data) {
+          const data = anyErr.response.data
+          const status = anyErr.response.status
+          // Prefer structured fields and show the backend message directly in the toast
+          const bodyMsg =
+            typeof data === 'string'
+              ? data
+              : data?.message ||
+                data?.error ||
+                (data?.data && (data.data.message || data.data.error)) ||
+                undefined
+
+          if (bodyMsg) {
+            // Show the backend message (e.g. "Customer with this name already exists")
+            userMessage = String(bodyMsg)
+          } else {
+            // Fallback: include status and raw body for debugging
+            userMessage = `${status} - ${JSON.stringify(data)}`
+          }
+        } else if (anyErr?.message) {
+          userMessage = String(anyErr.message)
+        } else if (err instanceof Error && err.message) {
+          userMessage = err.message
         }
-      } catch {}
+      } catch (parseErr) {
+        console.error('Error parsing API error message', parseErr)
+      }
+      // Try to extract field-level validation errors and show them inline
+      try {
+        const anyErr2 = err as any
+        const data = anyErr2?.response?.data
+        const maybeErrors =
+          data?.errors || data?.validation || data?.fieldErrors || data?.data?.errors
+        const details = data?.details || data?.data?.details
+        const newFieldErrors: Record<string, string> = {}
+
+        if (maybeErrors && typeof maybeErrors === 'object') {
+          // If it's an array of { field, message }
+          if (Array.isArray(maybeErrors)) {
+            for (const it of maybeErrors) {
+              if (it?.field && it?.message) newFieldErrors[it.field] = String(it.message)
+            }
+          } else {
+            // assume object map { field: message }
+            for (const k of Object.keys(maybeErrors)) {
+              const v = (maybeErrors as Record<string, any>)[k]
+              if (typeof v === 'string') newFieldErrors[k] = v
+              else if (Array.isArray(v) && v.length) newFieldErrors[k] = String(v[0])
+              else if (v?.message) newFieldErrors[k] = String(v.message)
+            }
+          }
+        }
+
+        // Some backends include a `details` object with field/target info
+        if (!Object.keys(newFieldErrors).length && details && typeof details === 'object') {
+          const fld = details.field || (Array.isArray(details.target) && details.target[0])
+          if (fld) {
+            newFieldErrors[fld] = String(data?.message || data?.error || userMessage)
+          }
+        } else if (data?.field && data?.message) {
+          newFieldErrors[data.field] = String(data.message)
+        } else if (userMessage && anyErr2?.response?.status === 409) {
+          // Common case: conflict on a specific field like name — attempt heuristic
+          if (/name/i.test(userMessage)) newFieldErrors['name'] = userMessage
+        }
+
+        // Heuristic: if API message mentions field names (e.g. 'name' or 'code'), map them to field errors as well
+        const msgLower = String(data?.message || data?.error || userMessage || '').toLowerCase()
+        if (/\bname\b/.test(msgLower) && !newFieldErrors['name'])
+          newFieldErrors['name'] = String(data?.message || userMessage)
+        if (/\bcode\b/.test(msgLower) && !newFieldErrors['code'])
+          newFieldErrors['code'] = String(data?.message || userMessage)
+
+        if (Object.keys(newFieldErrors).length) setFieldErrors(newFieldErrors)
+      } catch (innerErr) {
+        console.error('Error extracting field errors', innerErr)
+      }
+
       toast.error(userMessage)
     } finally {
       setSubmitting(false)
@@ -165,53 +293,88 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved }:
                 <div className="space-y-2">
                   <Label className="text-base font-semibold">Tên khách hàng *</Label>
                   <Input
+                    ref={nameRef}
                     value={form.name || ''}
-                    onChange={(e) => setForm((s) => ({ ...s, name: e.target.value }))}
+                    onChange={(e) => {
+                      setForm((s) => ({ ...s, name: e.target.value }))
+                      clearFieldError('name')
+                    }}
                     placeholder="Tên khách hàng"
-                    className="h-11"
+                    className={`h-11 ${fieldErrors.name ? 'border-destructive focus-visible:ring-destructive/50' : ''}`}
                     required
                   />
+                  {fieldErrors.name && (
+                    <p className="text-destructive mt-1 text-sm">{fieldErrors.name}</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
                   <Label className="text-base font-semibold">Mã (code)</Label>
                   <Input
+                    ref={codeRef}
                     value={form.code || ''}
-                    onChange={(e) => setForm((s) => ({ ...s, code: e.target.value }))}
+                    onChange={(e) => {
+                      setForm((s) => ({ ...s, code: e.target.value }))
+                      clearFieldError('code')
+                    }}
                     placeholder="Mã khách hàng (ví dụ ABC_CORP)"
-                    className="h-11"
+                    className={`h-11 ${fieldErrors.code ? 'border-destructive focus-visible:ring-destructive/50' : ''}`}
                   />
+                  {fieldErrors.code && (
+                    <p className="text-destructive mt-1 text-sm">{fieldErrors.code}</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
                   <Label className="text-base font-semibold">Email liên hệ</Label>
                   <Input
+                    ref={contactEmailRef}
                     value={form.contactEmail || ''}
-                    onChange={(e) => setForm((s) => ({ ...s, contactEmail: e.target.value }))}
+                    onChange={(e) => {
+                      setForm((s) => ({ ...s, contactEmail: e.target.value }))
+                      clearFieldError('contactEmail')
+                    }}
                     placeholder="contact@company.com"
-                    className="h-11"
+                    className={`h-11 ${fieldErrors.contactEmail ? 'border-destructive focus-visible:ring-destructive/50' : ''}`}
                     type="email"
                   />
+                  {fieldErrors.contactEmail && (
+                    <p className="text-destructive mt-1 text-sm">{fieldErrors.contactEmail}</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
                   <Label className="text-base font-semibold">Số điện thoại</Label>
                   <Input
+                    ref={contactPhoneRef}
                     value={form.contactPhone || ''}
-                    onChange={(e) => setForm((s) => ({ ...s, contactPhone: e.target.value }))}
+                    onChange={(e) => {
+                      setForm((s) => ({ ...s, contactPhone: e.target.value }))
+                      clearFieldError('contactPhone')
+                    }}
                     placeholder="+84123456789"
-                    className="h-11"
+                    className={`h-11 ${fieldErrors.contactPhone ? 'border-destructive focus-visible:ring-destructive/50' : ''}`}
                   />
+                  {fieldErrors.contactPhone && (
+                    <p className="text-destructive mt-1 text-sm">{fieldErrors.contactPhone}</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
                   <Label className="text-base font-semibold">Người liên hệ</Label>
                   <Input
+                    ref={contactPersonRef}
                     value={form.contactPerson || ''}
-                    onChange={(e) => setForm((s) => ({ ...s, contactPerson: e.target.value }))}
+                    onChange={(e) => {
+                      setForm((s) => ({ ...s, contactPerson: e.target.value }))
+                      clearFieldError('contactPerson')
+                    }}
                     placeholder="Tên người liên hệ"
-                    className="h-11"
+                    className={`h-11 ${fieldErrors.contactPerson ? 'border-destructive focus-visible:ring-destructive/50' : ''}`}
                   />
+                  {fieldErrors.contactPerson && (
+                    <p className="text-destructive mt-1 text-sm">{fieldErrors.contactPerson}</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -244,21 +407,35 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved }:
               <div className="space-y-2">
                 <Label className="text-base font-semibold">Địa chỉ</Label>
                 <Input
+                  ref={addressRef}
                   value={form.address || ''}
-                  onChange={(e) => setForm((s) => ({ ...s, address: e.target.value }))}
+                  onChange={(e) => {
+                    setForm((s) => ({ ...s, address: e.target.value }))
+                    clearFieldError('address')
+                  }}
                   placeholder="Địa chỉ công ty"
-                  className="h-11"
+                  className={`h-11 ${fieldErrors.address ? 'border-destructive focus-visible:ring-destructive/50' : ''}`}
                 />
+                {fieldErrors.address && (
+                  <p className="text-destructive mt-1 text-sm">{fieldErrors.address}</p>
+                )}
               </div>
 
               <div className="space-y-2">
                 <Label className="text-base font-semibold">Mô tả</Label>
                 <Input
+                  ref={descriptionRef}
                   value={form.description || ''}
-                  onChange={(e) => setForm((s) => ({ ...s, description: e.target.value }))}
+                  onChange={(e) => {
+                    setForm((s) => ({ ...s, description: e.target.value }))
+                    clearFieldError('description')
+                  }}
                   placeholder="Ghi chú thêm về khách hàng"
-                  className="h-11"
+                  className={`h-11 ${fieldErrors.description ? 'border-destructive focus-visible:ring-destructive/50' : ''}`}
                 />
+                {fieldErrors.description && (
+                  <p className="text-destructive mt-1 text-sm">{fieldErrors.description}</p>
+                )}
               </div>
             </div>
 

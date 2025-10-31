@@ -31,6 +31,7 @@ import {
 import { serviceRequestService } from '@/lib/api/services/service-request.service'
 import { deviceService } from '@/lib/api/services/device.service'
 import { Priority } from '@/constants/status'
+import { removeEmpty } from '@/lib/utils/clean'
 
 interface ServiceRequestFormProps {
   customerId: string
@@ -75,7 +76,8 @@ export function ServiceRequestForm({ customerId, onSuccess }: ServiceRequestForm
   })
 
   const onSubmit = (data: ServiceRequestFormData) => {
-    createMutation.mutate(data)
+    const payload = removeEmpty(data) as ServiceRequestFormData
+    createMutation.mutate(payload)
   }
 
   return (

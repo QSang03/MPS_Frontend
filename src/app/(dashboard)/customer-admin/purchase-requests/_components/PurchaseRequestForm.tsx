@@ -29,8 +29,10 @@ import {
   purchaseRequestSchema,
   type PurchaseRequestFormData,
 } from '@/lib/validations/purchase-request.schema'
+import { removeEmpty } from '@/lib/utils/clean'
 import { purchaseRequestService } from '@/lib/api/services/purchase-request.service'
 import type { PurchaseRequest } from '@/types/models'
+import type { CreatePurchaseRequestDto } from '@/types/models/purchase-request'
 import { Priority } from '@/constants/status'
 
 interface PurchaseRequestFormProps {
@@ -81,9 +83,7 @@ export function PurchaseRequestForm({
 
   const updateMutation = useMutation({
     mutationFn: (data: PurchaseRequestFormData) =>
-      purchaseRequestService.update(initialData!.id, {
-        notes: data.description,
-      }),
+      purchaseRequestService.update(initialData!.id, removeEmpty({ notes: data.description })),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['purchase-requests'] })
       toast.success('Cập nhật yêu cầu mua hàng thành công!')
@@ -101,15 +101,16 @@ export function PurchaseRequestForm({
   })
 
   const onSubmit = (data: PurchaseRequestFormData) => {
-    const requestData = {
+    // remove empty/whitespace-only fields before sending
+    const requestData = removeEmpty({
       ...data,
       customerId,
-    }
+    })
 
     if (mode === 'create') {
-      createMutation.mutate(requestData)
+      createMutation.mutate(requestData as unknown as CreatePurchaseRequestDto)
     } else {
-      updateMutation.mutate(requestData)
+      updateMutation.mutate(requestData as unknown as PurchaseRequestFormData)
     }
   }
 

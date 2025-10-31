@@ -12,6 +12,7 @@ import { serviceRequestService } from '@/lib/api/services/service-request.servic
 import { ServiceRequestStatus } from '@/constants/status'
 import { PermissionGuard } from '@/components/shared/PermissionGuard'
 import type { Session } from '@/lib/auth/session'
+import { removeEmpty } from '@/lib/utils/clean'
 
 interface Props {
   id: string
@@ -129,7 +130,11 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                 >
                   <Button
                     onClick={() =>
-                      updateMutation.mutate({ status: ServiceRequestStatus.IN_PROGRESS })
+                      updateMutation.mutate(
+                        removeEmpty({ status: ServiceRequestStatus.IN_PROGRESS }) as {
+                          status: ServiceRequestStatus
+                        }
+                      )
                     }
                     disabled={updating}
                   >
@@ -149,7 +154,13 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                 >
                   <Button
                     variant="outline"
-                    onClick={() => updateMutation.mutate({ status: ServiceRequestStatus.RESOLVED })}
+                    onClick={() =>
+                      updateMutation.mutate(
+                        removeEmpty({ status: ServiceRequestStatus.RESOLVED }) as {
+                          status: ServiceRequestStatus
+                        }
+                      )
+                    }
                     disabled={updating}
                   >
                     Đánh dấu đã xử lý

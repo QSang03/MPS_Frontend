@@ -25,6 +25,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { userSchema, type UserFormData } from '@/lib/validations/user.schema'
+import removeEmpty from '@/lib/utils/clean'
 import { getRolesForClient, getDepartmentsForClient } from '@/lib/auth/data-actions'
 import { usersClientService } from '@/lib/api/services/users-client.service' // Thay đổi ở đây
 import type { User } from '@/types/users'
@@ -111,10 +112,14 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
       ...(mode === 'create' && { password: 'Ainkczalov2!' }), // User nên đổi mật khẩu sau lần đăng nhập đầu tiên
     }
 
+    // Remove empty fields so backend won't receive blank strings
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const payload = removeEmpty(mode === 'create' ? (dataWithPassword as any) : (data as any))
+
     if (mode === 'create') {
-      createMutation.mutate(dataWithPassword)
+      createMutation.mutate(payload as UserFormData)
     } else {
-      updateMutation.mutate(data)
+      updateMutation.mutate(payload as UserFormData)
     }
   }
 

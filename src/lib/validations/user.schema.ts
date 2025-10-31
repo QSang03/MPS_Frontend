@@ -46,3 +46,25 @@ export const changePasswordSchema = z
   })
 
 export type ChangePasswordFormData = z.infer<typeof changePasswordSchema>
+
+/**
+ * Admin change password schema (for resetting/changing another user's password)
+ * Does not require currentPassword because admin sets a new password for the user.
+ */
+export const adminChangePasswordSchema = z
+  .object({
+    newPassword: z
+      .string()
+      .min(8, 'Mật khẩu mới phải có ít nhất 8 ký tự')
+      .regex(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+        'Mật khẩu phải chứa ít nhất 1 chữ thường, 1 chữ hoa và 1 số'
+      ),
+    confirmPassword: z.string().min(1, 'Xác nhận mật khẩu là bắt buộc'),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: 'Mật khẩu xác nhận không khớp',
+    path: ['confirmPassword'],
+  })
+
+export type AdminChangePasswordFormData = z.infer<typeof adminChangePasswordSchema>

@@ -27,7 +27,13 @@ function SelectTrigger({
   size?: 'sm' | 'default'
 }) {
   return (
+    // suppressHydrationWarning: Some browser extensions or third-party scripts
+    // may mutate the DOM between SSR and client hydration (e.g. adding attributes).
+    // Passing `suppressHydrationWarning` here silences the warning while keeping
+    // the component behavior unchanged. Use this only when the mismatch is
+    // caused by external mutation (not by real SSR/client logic bugs).
     <SelectPrimitive.Trigger
+      suppressHydrationWarning
       data-slot="select-trigger"
       data-size={size}
       className={cn(

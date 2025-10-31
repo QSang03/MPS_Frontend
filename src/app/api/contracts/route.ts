@@ -1,29 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import backendApiClient from '@/lib/api/backend-client'
-import { removeEmpty } from '@/lib/utils/clean'
 import { API_ENDPOINTS } from '@/lib/api/endpoints'
 
 export async function GET(request: NextRequest) {
   try {
     const cookieStore = await cookies()
     const accessToken = cookieStore.get('access_token')?.value
-    const hasAccess = !!cookieStore.get('access_token')
-    const hasRefresh = !!cookieStore.get('refresh_token')
-    console.debug('[api/policies] cookies present:', { hasAccess, hasRefresh })
 
     if (!accessToken) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Forward query params from client
     const searchParams = request.nextUrl.searchParams
     const params: Record<string, string> = {}
     searchParams.forEach((value, key) => {
       params[key] = value
     })
 
-    const response = await backendApiClient.get(API_ENDPOINTS.POLICIES, {
+    const response = await backendApiClient.get(API_ENDPOINTS.CONTRACTS, {
       params,
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -32,24 +27,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(response.data)
   } catch (error: unknown) {
-    const err = error as
-      | { message?: string; response?: { status?: number; data?: unknown } }
-      | undefined
-
-    console.error('API Route /api/policies GET error:', {
-      error,
-      message: err?.message,
-      status: err?.response?.status,
-      responseData: err?.response?.data,
-    })
-
-    // If backend returned structured error body, forward it to client
-    if (err?.response?.data && typeof err.response.data === 'object') {
-      return NextResponse.json(err.response.data as unknown as Record<string, unknown>, {
-        status: err.response.status || 500,
-      })
-    }
-
+    const err = error as { message?: string; response?: { status?: number } } | undefined
+    console.error('API Route /api/contracts error:', error)
     return NextResponse.json(
       { error: err?.message || 'Internal Server Error' },
       { status: err?.response?.status || 500 }
@@ -62,15 +41,11 @@ export async function POST(request: NextRequest) {
   try {
     const cookieStore = await cookies()
     const accessToken = cookieStore.get('access_token')?.value
-
-    if (!accessToken) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    if (!accessToken) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     reqBody = await request.json()
-    const cleaned = removeEmpty(reqBody as Record<string, unknown>)
 
-    const response = await backendApiClient.post(API_ENDPOINTS.POLICIES, cleaned, {
+    const response = await backendApiClient.post(API_ENDPOINTS.CONTRACTS, reqBody, {
       headers: { Authorization: `Bearer ${accessToken}` },
     })
 
@@ -83,21 +58,8 @@ export async function POST(request: NextRequest) {
           config?: { data?: unknown }
         }
       | undefined
+    console.error('API Route /api/contracts POST error:', err?.response?.status || err?.message)
 
-    console.error('API Route /api/policies POST error:', {
-      message: err?.message,
-      status: err?.response?.status,
-      responseData: err?.response?.data,
-    })
-
-    // If backend returned structured error body, return it to client
-    if (err?.response?.data && typeof err.response.data === 'object') {
-      return NextResponse.json(err.response.data as unknown as Record<string, unknown>, {
-        status: err.response.status || 500,
-      })
-    }
-
-    // Retry on 401 using refresh token (preserve previous behavior)
     if (err?.response?.status === 401) {
       try {
         const cookieStore = await cookies()
@@ -109,8 +71,6 @@ export async function POST(request: NextRequest) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ refreshToken }),
         })
-
-        console.debug('[api/policies] refresh call status:', refreshResp.status)
 
         if (refreshResp.status !== 200) {
           cookieStore.delete('access_token')
@@ -155,27 +115,25 @@ export async function POST(request: NextRequest) {
             : err?.config?.data && typeof err.config.data === 'string'
               ? JSON.parse(String(err.config.data))
               : {}
-        const cleanedOriginal = removeEmpty(originalBody as Record<string, unknown>)
 
-        const retryResp = await backendApiClient.post(API_ENDPOINTS.POLICIES, cleanedOriginal, {
+        const retryResp = await backendApiClient.post(API_ENDPOINTS.CONTRACTS, originalBody, {
           headers: { Authorization: `Bearer ${newAccessToken}` },
         })
         return NextResponse.json(retryResp.data)
       } catch (retryErr: unknown) {
-        const rerr = retryErr as
-          | { message?: string; response?: { status?: number; data?: unknown } }
-          | undefined
+        const rerr = retryErr as { message?: string } | undefined
         console.error('Retry after refresh failed:', rerr?.message)
-        if (rerr?.response?.data && typeof rerr.response.data === 'object') {
-          return NextResponse.json(rerr.response.data as unknown as Record<string, unknown>, {
-            status: rerr.response.status || 500,
-          })
-        }
         return NextResponse.json(
           { error: rerr?.message || 'Internal Server Error' },
-          { status: rerr?.response?.status || 500 }
+          { status: 500 }
         )
       }
+    }
+
+    if (err?.response?.data && typeof err.response.data === 'object') {
+      return NextResponse.json(err.response.data as unknown as Record<string, unknown>, {
+        status: err?.response?.status || 500,
+      })
     }
 
     return NextResponse.json(

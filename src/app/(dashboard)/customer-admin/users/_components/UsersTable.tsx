@@ -38,6 +38,7 @@ import {
   Users,
   RefreshCw,
   Filter,
+  Key,
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -47,6 +48,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { formatDate } from '@/lib/utils/formatters'
 import { EditUserModal } from './EditUserModal'
+import ChangeUserPasswordModal from './ChangeUserPasswordModal'
 import { UserFormModal } from './UserFormModal'
 import type {
   User,
@@ -85,6 +87,8 @@ export function UsersTable() {
   const [searchInput, setSearchInput] = useState<string>(filters.search)
   const [editingUser, setEditingUser] = useState<User | null>(null)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [changePasswordUser, setChangePasswordUser] = useState<User | null>(null)
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
   const [hoveredRowId, setHoveredRowId] = useState<string | null>(null)
 
@@ -216,6 +220,16 @@ export function UsersTable() {
   const handleEditUser = (user: User) => {
     setEditingUser(user)
     setIsEditModalOpen(true)
+  }
+
+  const handleOpenChangePassword = (user: User) => {
+    setChangePasswordUser(user)
+    setIsChangePasswordOpen(true)
+  }
+
+  const handleCloseChangePassword = () => {
+    setChangePasswordUser(null)
+    setIsChangePasswordOpen(false)
   }
 
   const handleCloseEditModal = () => {
@@ -556,6 +570,13 @@ export function UsersTable() {
                                 <Edit className="h-4 w-4" />
                                 Chỉnh sửa
                               </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleOpenChangePassword(user)}
+                                className="flex cursor-pointer items-center gap-2 py-2 transition-all hover:bg-purple-50 hover:text-purple-700"
+                              >
+                                <Key className="h-4 w-4" />
+                                Đổi mật khẩu
+                              </DropdownMenuItem>
                               <DeleteDialog
                                 title="Xóa người dùng"
                                 description={`Bạn có chắc chắn muốn xóa người dùng "${user.email}" không?\n\nHành động này không thể hoàn tác.`}
@@ -649,6 +670,16 @@ export function UsersTable() {
         onUserUpdated={handleUserUpdated}
         customerCodes={availableCustomerCodes}
         customerCodeToId={customerCodeToId}
+      />
+      <ChangeUserPasswordModal
+        user={changePasswordUser}
+        isOpen={isChangePasswordOpen}
+        onClose={handleCloseChangePassword}
+        onPasswordChanged={() => {
+          // After password changed, refresh users list and notify
+          queryClient.invalidateQueries({ queryKey: ['users'] })
+          toast.success('Mật khẩu người dùng đã được cập nhật')
+        }}
       />
     </div>
   )

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import backendApiClient from '@/lib/api/backend-client'
+import { removeEmpty } from '@/lib/utils/clean'
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -13,8 +14,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     const body = await request.json()
+    const cleaned = removeEmpty(body as Record<string, unknown>)
 
-    const response = await backendApiClient.post(`/devices/${id}/install-consumable`, body, {
+    const response = await backendApiClient.post(`/devices/${id}/install-consumable`, cleaned, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },

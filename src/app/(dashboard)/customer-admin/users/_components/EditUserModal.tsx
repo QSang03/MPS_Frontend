@@ -35,6 +35,7 @@ import {
   getDepartmentsForClient,
   updateUserForClient,
 } from '@/lib/auth/data-actions'
+import removeEmpty from '@/lib/utils/clean'
 import type { User as UserType, UserRole, Department } from '@/types/users'
 import { toast } from 'sonner'
 
@@ -124,13 +125,16 @@ export function EditUserModal({
         customerIdToSend = customerCodeToId[customerIdToSend]
       }
 
-      // Update user
-      const result = await updateUserForClient(user.id, {
+      // Build payload and remove empty fields so server won't receive blank strings
+      const payload = removeEmpty({
         email: data.email,
         roleId: data.roleId,
         departmentId: data.departmentId,
         customerId: customerIdToSend,
       })
+
+      // Update user
+      const result = await updateUserForClient(user.id, payload)
 
       // If backend returned the updated user object -> success
       const isUser =

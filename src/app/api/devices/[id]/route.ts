@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import backendApiClient from '@/lib/api/backend-client'
+import removeEmpty from '@/lib/utils/clean'
 import { API_ENDPOINTS } from '@/lib/api/endpoints'
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -36,8 +37,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const resolvedParams = (await params) as { id: string }
     id = resolvedParams.id
     reqBody = await request.json()
+    const cleaned = removeEmpty(reqBody as Record<string, unknown>)
 
-    const response = await backendApiClient.patch(API_ENDPOINTS.DEVICES.UPDATE(id), reqBody, {
+    const response = await backendApiClient.patch(API_ENDPOINTS.DEVICES.UPDATE(id), cleaned, {
       headers: { Authorization: `Bearer ${accessToken}` },
     })
     return NextResponse.json(response.data)
@@ -107,9 +109,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
               ? JSON.parse(String(err.config.data))
               : {}
 
+        const retryBody = removeEmpty(originalBody as Record<string, unknown>)
+
         const retryResp = await backendApiClient.patch(
           API_ENDPOINTS.DEVICES.UPDATE(id || ''),
-          originalBody,
+          retryBody,
           {
             headers: { Authorization: `Bearer ${newAccessToken}` },
           }

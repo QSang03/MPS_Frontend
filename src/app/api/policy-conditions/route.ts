@@ -31,29 +31,56 @@ export async function GET(request: NextRequest) {
     const isActive = url.searchParams.get('isActive')
     const dataType = url.searchParams.get('dataType')
     if (page) params.page = Number(page)
-    if (limit) params.limit = Number(limit)
+    if (limit) {
+      const limitNum = Number(limit)
+      // Backend giới hạn tối đa 100
+      params.limit = limitNum > 100 ? 100 : limitNum
+    }
     if (search) params.search = search
     if (typeof isActive === 'string') params.isActive = isActive === 'true'
     if (dataType) params.dataType = dataType
 
     try {
+      console.log('[api/policy-conditions] Calling backend with params:', params)
+      console.log('[api/policy-conditions] Endpoint:', API_ENDPOINTS.POLICY_CONDITIONS)
       const data = await getWithRefresh(
         request,
         API_ENDPOINTS.POLICY_CONDITIONS,
         Object.keys(params).length ? params : undefined
       )
-      try {
-        console.debug(
-          '[api/policy-conditions] backend returned',
-          Array.isArray(data) ? data.length : (data?.data?.length ?? 'unknown')
-        )
-      } catch {}
+      console.log('[api/policy-conditions] Success, returning data')
       return NextResponse.json(data)
     } catch (err: unknown) {
-      const e = err as { message?: string; status?: number } | undefined
+      const e = err as
+        | { message?: string; status?: number; response?: { data?: unknown; status?: number } }
+        | undefined
+
+      console.error('[api/policy-conditions] ❌ Error from backend:', {
+        message: e?.message,
+        status: e?.status || e?.response?.status,
+        responseData: e?.response?.data,
+      })
+
+      // Trả về chi tiết lỗi từ backend nếu có
+      if (e?.response?.data && typeof e.response.data === 'object') {
+        const backendError = e.response.data as {
+          statusCode?: number
+          message?: string
+          error?: string
+        }
+        console.error('[api/policy-conditions] Backend error details:', backendError)
+
+        return NextResponse.json(backendError, {
+          status: backendError.statusCode || e?.response?.status || e?.status || 500,
+        })
+      }
+
       return NextResponse.json(
-        { error: e?.message || 'Internal Server Error' },
-        { status: e?.status || 500 }
+        {
+          error: e?.message || 'Internal Server Error',
+          statusCode: e?.status || e?.response?.status || 500,
+        },
+        { status: e?.status || e?.response?.status || 500 }
       )
     }
   } catch (error: unknown) {
@@ -61,12 +88,25 @@ export async function GET(request: NextRequest) {
       | { message?: string; response?: { status?: number; data?: unknown } }
       | undefined
 
-    console.error('API Route /api/policy-conditions GET error:', error)
-    if (err?.response)
-      console.debug(
-        '[api/policy-conditions] backend response data:',
-        (err.response as { data?: unknown })?.data
+    console.error('API Route /api/policy-conditions GET error:', {
+      error: error,
+      message: err?.message,
+      status: err?.response?.status,
+      data: err?.response?.data,
+    })
+
+    if (err?.response?.data) {
+      console.error(
+        '[api/policy-conditions] Backend error response:',
+        JSON.stringify(err.response.data, null, 2)
       )
+    }
+
+    // Trả về chi tiết lỗi từ backend
+    if (err?.response?.data) {
+      return NextResponse.json(err.response.data, { status: err?.response?.status || 500 })
+    }
+
     return NextResponse.json(
       { error: err?.message || 'Internal Server Error' },
       { status: err?.response?.status || 500 }

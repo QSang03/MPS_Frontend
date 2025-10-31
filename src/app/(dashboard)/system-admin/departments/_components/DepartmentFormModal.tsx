@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import removeEmpty from '@/lib/utils/clean'
 import {
   Dialog,
   DialogContent,
@@ -72,7 +73,8 @@ export function DepartmentFormModal({
   const handleSubmit = async (data: DepartmentFormData) => {
     setIsLoading(true)
     try {
-      await onSubmit(data)
+      const payload = removeEmpty(data)
+      await onSubmit(payload as DepartmentFormData)
       onClose()
     } finally {
       setIsLoading(false)

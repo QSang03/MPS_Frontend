@@ -102,13 +102,17 @@ export async function getWithRefresh(
       }
     }
 
-    // other errors: rethrow with status if available
+    // other errors: rethrow with status and data if available
+    const responseData = errObj?.response?.data
     const e = new Error(errObj?.message || 'Backend error') as Error & {
       status?: number
-      data?: unknown
+      response?: { data?: unknown; status?: number }
     }
     e.status = status || 500
-    e.data = errObj?.response?.data
+    e.response = {
+      status: status || 500,
+      data: responseData,
+    }
     throw e
   }
 }

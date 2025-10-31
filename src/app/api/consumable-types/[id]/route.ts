@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import backendApiClient from '@/lib/api/backend-client'
+import removeEmpty from '@/lib/utils/clean'
 import { API_ENDPOINTS } from '@/lib/api/endpoints'
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -73,9 +74,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }
 
     const body = await request.json()
-    const response = await backendApiClient.patch(API_ENDPOINTS.CONSUMABLE_TYPES.UPDATE(id), body, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    })
+    const cleaned = removeEmpty(body as Record<string, unknown>)
+    const response = await backendApiClient.patch(
+      API_ENDPOINTS.CONSUMABLE_TYPES.UPDATE(id),
+      cleaned,
+      {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      }
+    )
 
     return NextResponse.json(response.data)
   } catch (error: any) {
@@ -95,9 +101,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
           const newAccessToken = refreshResponse.data.data?.access_token
           if (newAccessToken) {
             const body = await request.json()
+            const cleanedRetry = removeEmpty(body as Record<string, unknown>)
             const retryResponse = await backendApiClient.patch(
               API_ENDPOINTS.CONSUMABLE_TYPES.UPDATE(id),
-              body,
+              cleanedRetry,
               { headers: { Authorization: `Bearer ${newAccessToken}` } }
             )
 

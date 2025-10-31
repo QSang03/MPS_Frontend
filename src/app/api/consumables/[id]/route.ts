@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import backendApiClient from '@/lib/api/backend-client'
+import { removeEmpty } from '@/lib/utils/clean'
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   let reqBody: unknown = undefined
@@ -13,8 +14,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (!accessToken) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     reqBody = await request.json()
+    const cleaned = removeEmpty(reqBody as Record<string, unknown>)
 
-    const response = await backendApiClient.patch(`/consumables/${id}`, reqBody, {
+    const response = await backendApiClient.patch(`/consumables/${id}`, cleaned, {
       headers: { Authorization: `Bearer ${accessToken}` },
     })
     return NextResponse.json(response.data)
@@ -87,8 +89,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
             : err?.config?.data && typeof err.config.data === 'string'
               ? JSON.parse(String(err.config.data))
               : {}
+        const cleanedOriginal = removeEmpty(originalBody as Record<string, unknown>)
 
-        const retryResp = await backendApiClient.patch(`/consumables/${id}`, originalBody, {
+        const retryResp = await backendApiClient.patch(`/consumables/${id}`, cleanedOriginal, {
           headers: { Authorization: `Bearer ${newAccessToken}` },
         })
         return NextResponse.json(retryResp.data)

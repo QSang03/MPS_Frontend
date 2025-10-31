@@ -50,8 +50,23 @@ export const devicesClientService = {
   },
 
   async create(dto: CreateDeviceDto) {
-    const response = await internalApiClient.post('/api/devices', dto)
-    return response.data?.data
+    try {
+      const response = await internalApiClient.post('/api/devices', dto)
+      return response.data?.data
+    } catch (err: unknown) {
+      // Try to log backend error JSON if present to assist debugging
+      try {
+        const e = err as { response?: { data?: unknown; status?: number }; message?: string }
+        if (e?.response?.data) {
+          console.error('[devicesClientService.create] backend error body:', e.response.data)
+        } else {
+          console.error('[devicesClientService.create] error:', e?.message || err)
+        }
+      } catch {
+        console.error('[devicesClientService.create] error (failed to stringify):', err)
+      }
+      throw err
+    }
   },
 
   async update(id: string, dto: UpdateDeviceDto) {

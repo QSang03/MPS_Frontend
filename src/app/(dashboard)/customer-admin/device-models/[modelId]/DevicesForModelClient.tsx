@@ -103,7 +103,7 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
     }
     try {
       setCreating(true)
-      const dto = {
+      let dto = {
         deviceModelId: modelId,
         serialNumber,
         location: locationValue || undefined,
@@ -111,6 +111,8 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
         macAddress: macAddressValue || undefined,
         firmware: firmwareValue || undefined,
       }
+      // remove empty fields
+      dto = (await import('@/lib/utils/clean')).removeEmpty(dto) as typeof dto
       const created = await devicesClientService.create(dto as CreateDeviceDto)
       if (created) {
         setDevices((prev) => [created, ...prev])

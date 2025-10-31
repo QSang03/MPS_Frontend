@@ -28,10 +28,20 @@ function Input({
   // If consumer provided onChange, render as controlled input with value.
   // Otherwise render as uncontrolled using defaultValue to avoid React warning about value without onChange.
   if (typeof onChange === 'function') {
-    return <input {...shared} value={normalizedValue} onChange={onChange} {...props} />
+    return (
+      <input
+        {...shared}
+        suppressHydrationWarning={true}
+        value={normalizedValue}
+        onChange={onChange}
+        {...props}
+      />
+    )
   }
 
-  return <input {...shared} defaultValue={normalizedValue} {...props} />
+  return (
+    <input {...shared} suppressHydrationWarning={true} defaultValue={normalizedValue} {...props} />
+  )
 }
 
 export { Input }

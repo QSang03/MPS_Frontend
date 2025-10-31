@@ -43,6 +43,7 @@ import { policiesClientService } from '@/lib/api/services/policies-client.servic
 import { policyConditionsClientService } from '@/lib/api/services/policy-conditions-client.service'
 import type { PolicyCondition } from '@/lib/api/services/policy-conditions-client.service'
 import { Checkbox } from '@/components/ui/checkbox'
+import removeEmpty from '@/lib/utils/clean'
 
 const policySchema = z.object({
   name: z.string().min(1, 'Tên policy là bắt buộc'),
@@ -747,6 +748,37 @@ export function PolicyFormModal({
       }
       parsed.subject = subjectObj
 
+      // Client-side validation: ensure subject keys are valid and non-empty
+      const allowedSubjectKeys = [
+        'role.name',
+        'role.level',
+        'department.name',
+        'department.code',
+        'attributes.department',
+      ]
+      const invalidKeys = Object.keys(subjectObj).filter((k) => !allowedSubjectKeys.includes(k))
+      if (invalidKeys.length > 0) {
+        setSubmitError(`Subject contains invalid keys: ${invalidKeys.join(', ')}`)
+        setIsLoading(false)
+        return
+      }
+      // Ensure subject is not empty when includeRole/includeDepartment selected
+      if (data.includeRole === true && !Object.keys(subjectObj).some((k) => k.startsWith('role'))) {
+        setSubmitError('Vui lòng chọn hoặc nhập giá trị role hợp lệ')
+        setIsLoading(false)
+        return
+      }
+      if (
+        data.includeDepartment === true &&
+        !Object.keys(subjectObj).some(
+          (k) => k.startsWith('department') || k.startsWith('attributes.')
+        )
+      ) {
+        setSubmitError('Vui lòng chọn hoặc nhập giá trị department hợp lệ')
+        setIsLoading(false)
+        return
+      }
+
       if (data.resourceOperator && (data.resourceTypeFromList || '').trim().length > 0) {
         parsed.resource = { type: { [data.resourceOperator]: data.resourceTypeFromList } }
       }
@@ -789,7 +821,9 @@ export function PolicyFormModal({
         parsed.conditions = {}
       }
 
-      await onSubmit(parsed)
+      // Remove empty fields (empty strings, whitespace-only, empty arrays, empty objects)
+      const cleaned = removeEmpty(parsed as Record<string, unknown>) as Partial<Policy>
+      await onSubmit(cleaned)
       onClose()
     } finally {
       setIsLoading(false)

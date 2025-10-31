@@ -24,6 +24,8 @@ import {
   Box,
   BarChart3,
 } from 'lucide-react'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
+import { DEVICE_STATUS, STATUS_DISPLAY } from '@/constants/status'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -49,6 +51,7 @@ import type { CreateConsumableDto } from '@/lib/api/services/consumables-client.
 import { deviceModelsClientService } from '@/lib/api/services/device-models-client.service'
 import { cn } from '@/lib/utils'
 import { Separator } from '@/components/ui/separator'
+import { removeEmpty } from '@/lib/utils/clean'
 
 interface DeviceDetailClientProps {
   deviceId: string
@@ -222,6 +225,37 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
     )
   }
 
+  const renderStatusChip = () => {
+    const rawStatus =
+      (device as any)?.status ??
+      ((device as any)?.isActive ? DEVICE_STATUS.ACTIVE : DEVICE_STATUS.DISABLED)
+    const statusKey = String(rawStatus).toUpperCase() as keyof typeof STATUS_DISPLAY
+    const display = (STATUS_DISPLAY as any)[statusKey] ?? {
+      label: String(rawStatus),
+      color: 'gray',
+      icon: '',
+    }
+    const colorClass =
+      display.color === 'green'
+        ? 'bg-green-500 hover:bg-green-600'
+        : display.color === 'blue'
+          ? 'bg-blue-500 hover:bg-blue-600'
+          : display.color === 'red'
+            ? 'bg-red-500 hover:bg-red-600'
+            : display.color === 'orange'
+              ? 'bg-orange-500 hover:bg-orange-600'
+              : display.color === 'purple'
+                ? 'bg-purple-500 hover:bg-purple-600'
+                : 'bg-gray-400 hover:bg-gray-500'
+
+    return (
+      <Badge variant="default" className={cn('flex items-center gap-1.5 px-3 py-1', colorClass)}>
+        <span className="text-xs">{display.icon}</span>
+        <span className="text-sm font-medium">{display.label}</span>
+      </Badge>
+    )
+  }
+
   const getStatusBadge = (isActive?: boolean) => {
     return (
       <Badge
@@ -275,38 +309,72 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
 
           <div className="flex items-center gap-3">
             {getStatusBadge(device.isActive)}
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => setShowEdit(true)}
-              className="gap-2"
-            >
-              <Edit className="h-4 w-4" />
-              Chỉnh sửa
-            </Button>
-            <DeleteDialog
-              title="Xóa thiết bị"
-              description="Bạn có chắc muốn xóa thiết bị này? Hành động không thể hoàn tác."
-              onConfirm={async () => {
-                try {
-                  await devicesClientService.delete(deviceId)
-                  toast.success('Xóa thiết bị thành công')
-                  // navigate back to the provided backHref if present, otherwise fall back to model-based route
-                  if (backHref) router.push(backHref)
-                  else if (modelId) router.push(`/customer-admin/device-models/${modelId}`)
-                  else router.push('/customer-admin/device-models')
-                } catch (err) {
-                  console.error('Delete device failed', err)
-                  toast.error('Xóa thiết bị thất bại')
+            {renderStatusChip()}
+            {Boolean(device?.isActive) ? (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setShowEdit(true)}
+                className="gap-2"
+              >
+                <Edit className="h-4 w-4" />
+                Chỉnh sửa
+              </Button>
+            ) : (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div>
+                    <Button variant="secondary" size="sm" disabled className="gap-2">
+                      <Edit className="h-4 w-4" />
+                      Chỉnh sửa
+                    </Button>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent sideOffset={4}>
+                  {`Thiết bị không hoạt động. Lý do: ${(device as any)?.inactiveReason ?? 'Không rõ'}`}
+                </TooltipContent>
+              </Tooltip>
+            )}
+
+            {Boolean(device?.isActive) ? (
+              <DeleteDialog
+                title="Xóa thiết bị"
+                description="Bạn có chắc muốn xóa thiết bị này? Hành động không thể hoàn tác."
+                onConfirm={async () => {
+                  try {
+                    await devicesClientService.delete(deviceId)
+                    toast.success('Xóa thiết bị thành công')
+                    // navigate back to the provided backHref if present, otherwise fall back to model-based route
+                    if (backHref) router.push(backHref)
+                    else if (modelId) router.push(`/customer-admin/device-models/${modelId}`)
+                    else router.push('/customer-admin/device-models')
+                  } catch (err) {
+                    console.error('Delete device failed', err)
+                    toast.error('Xóa thiết bị thất bại')
+                  }
+                }}
+                trigger={
+                  <Button variant="destructive" size="sm" className="gap-2">
+                    <Trash2 className="h-4 w-4" />
+                    Xóa
+                  </Button>
                 }
-              }}
-              trigger={
-                <Button variant="destructive" size="sm" className="gap-2">
-                  <Trash2 className="h-4 w-4" />
-                  Xóa
-                </Button>
-              }
-            />
+              />
+            ) : (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div>
+                    <Button variant="destructive" size="sm" disabled className="gap-2">
+                      <Trash2 className="h-4 w-4" />
+                      Xóa
+                    </Button>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent sideOffset={4}>
+                  {`Thiết bị không hoạt động. Lý do: ${(device as any)?.inactiveReason ?? 'Không rõ'}`}
+                </TooltipContent>
+              </Tooltip>
+            )}
           </div>
         </div>
       </div>
@@ -446,7 +514,7 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                 <div className="rounded-xl border border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 p-4">
                   <p className="text-muted-foreground mb-2 text-sm font-medium">Trạng thái</p>
                   <p className="text-2xl font-bold text-green-700">
-                    {device.isActive ? 'Hoạt động' : 'Tạm dừng'}
+                    {Boolean(device?.isActive) ? 'Hoạt động' : 'Tạm dừng'}
                   </p>
                   <p className="text-muted-foreground mt-1 text-xs">hiện tại</p>
                 </div>
@@ -677,24 +745,40 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                             <Badge variant="outline">{ct.unit || '-'}</Badge>
                           </td>
                           <td className="px-4 py-3 text-right">
-                            <Button
-                              size="sm"
-                              onClick={() => {
-                                setSelectedConsumableType(ct)
-                                setSerialNumber('')
-                                setBatchNumber('')
-                                setCapacity('')
-                                setRemaining('')
-                                setCreateInstalledAt(null)
-                                setCreateActualPagesPrinted('')
-                                setCreatePrice('')
-                                setShowCreateConsumable(true)
-                              }}
-                              className="gap-2"
-                            >
-                              <Plus className="h-4 w-4" />
-                              Thêm
-                            </Button>
+                            {Boolean(device?.isActive) ? (
+                              <Button
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedConsumableType(ct)
+                                  setSerialNumber('')
+                                  setBatchNumber('')
+                                  setCapacity('')
+                                  setRemaining('')
+                                  setCreateInstalledAt(null)
+                                  setCreateActualPagesPrinted('')
+                                  setCreatePrice('')
+                                  setShowCreateConsumable(true)
+                                }}
+                                className="gap-2"
+                              >
+                                <Plus className="h-4 w-4" />
+                                Thêm
+                              </Button>
+                            ) : (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div>
+                                    <Button size="sm" disabled className="gap-2">
+                                      <Plus className="h-4 w-4" />
+                                      Thêm
+                                    </Button>
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent sideOffset={4}>
+                                  {`Thiết bị không hoạt động. Lý do: ${(device as any)?.inactiveReason ?? 'Không rõ'}`}
+                                </TooltipContent>
+                              </Tooltip>
+                            )}
                           </td>
                         </tr>
                       ))}
@@ -825,12 +909,13 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
               onClick={async () => {
                 try {
                   setEditing(true)
-                  const dto: Record<string, unknown> = {
+                  let dto: Record<string, unknown> = {
                     location: locationEdit || undefined,
                     ipAddress: ipEdit || undefined,
                     macAddress: macEdit || undefined,
                     firmware: firmwareEdit || undefined,
                   }
+                  dto = removeEmpty(dto)
                   const updated = await devicesClientService.update(deviceId, dto)
                   if (updated) {
                     setDevice(updated)
@@ -978,11 +1063,12 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                   }
 
                   // Prepare install payload per API: installedAt, actualPagesPrinted, price
-                  const installPayload: Record<string, unknown> = {}
+                  let installPayload: Record<string, unknown> = {}
                   if (createInstalledAt) installPayload.installedAt = createInstalledAt
                   if (typeof createActualPagesPrinted === 'number')
                     installPayload.actualPagesPrinted = createActualPagesPrinted
                   if (typeof createPrice === 'number') installPayload.price = createPrice
+                  installPayload = removeEmpty(installPayload)
 
                   await devicesClientService.installConsumableWithPayload(
                     deviceId,
@@ -1149,7 +1235,7 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                 if (!editingConsumable?.id) return
                 try {
                   setUpdatingConsumable(true)
-                  const dto: any = {}
+                  let dto: any = {}
                   if (editingConsumable.consumableType?.id) {
                     dto.consumableTypeId = editingConsumable.consumableType.id
                   }
@@ -1157,6 +1243,7 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                   if (editBatchNumber) dto.batchNumber = editBatchNumber
                   if (editExpiryDate) dto.expiryDate = new Date(editExpiryDate).toISOString()
                   if (editStatus) dto.status = editStatus
+                  dto = removeEmpty(dto)
 
                   // First: update consumable entity
                   const updated = await consumablesClientService.update(editingConsumable.id, dto)
@@ -1167,12 +1254,13 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
 
                   // Second: update device-consumable record (removedAt, actualPagesPrinted, price, isActive)
                   try {
-                    const deviceDto: Record<string, unknown> = {}
+                    let deviceDto: Record<string, unknown> = {}
                     if (editRemovedAt) deviceDto.removedAt = editRemovedAt
                     if (typeof editActualPagesPrinted === 'number')
                       deviceDto.actualPagesPrinted = editActualPagesPrinted
                     if (typeof editPrice === 'number') deviceDto.price = editPrice
                     deviceDto.isActive = editStatus === 'ACTIVE'
+                    deviceDto = removeEmpty(deviceDto)
 
                     await devicesClientService.updateDeviceConsumable(
                       deviceId,

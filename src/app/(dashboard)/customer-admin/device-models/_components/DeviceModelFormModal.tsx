@@ -24,6 +24,7 @@ import { Switch } from '@/components/ui/switch'
 import { Separator } from '@/components/ui/separator'
 import { toast } from 'sonner'
 import deviceModelsClientService from '@/lib/api/services/device-models-client.service'
+import { removeEmpty } from '@/lib/utils/clean'
 import type {
   DeviceModel,
   CreateDeviceModelDto,
@@ -81,10 +82,12 @@ export function DeviceModelFormModal({ mode = 'create', model = null, onSaved }:
     setSubmitting(true)
 
     try {
-      const payload = {
+      let payload = {
         ...form,
         type: (form.type as string | undefined)?.toUpperCase(),
       }
+      // remove empty fields before sending to API
+      payload = removeEmpty(payload) as typeof payload
 
       const ALLOWED_TYPES = ['PRINTER', 'SCANNER', 'COPIER', 'FAX', 'MULTIFUNCTION']
       if (payload.type && !ALLOWED_TYPES.includes(payload.type)) {

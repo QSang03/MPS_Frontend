@@ -22,6 +22,8 @@ export const API_ENDPOINTS = {
 
   // Customers
   CUSTOMERS: '/customers',
+  // Contracts
+  CONTRACTS: '/contracts',
 
   // Devices
   DEVICES: {

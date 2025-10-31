@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import type { Device } from '@/types/models/device'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { DeleteDialog } from '@/components/shared/DeleteDialog'
@@ -21,14 +20,25 @@ import {
   BarChart3,
   Users,
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { STATUS_DISPLAY, STATUS_ALLOWED_FOR_INACTIVE } from '@/constants/status'
+import type { DeviceStatusValue } from '@/constants/status'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { useRouter } from 'next/navigation'
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select'
 
 export default function DevicesPageClient() {
   const [devices, setDevices] = useState<Device[]>([])
   const [filteredDevices, setFilteredDevices] = useState<Device[]>([])
   const [loading, setLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
+  const [showInactiveStatuses, setShowInactiveStatuses] = useState(false)
+  const [statusFilter, setStatusFilter] = useState<string | null>(null)
   const router = useRouter()
 
   const fetchDevices = async () => {
@@ -38,7 +48,17 @@ export default function DevicesPageClient() {
       setDevices(res.data || [])
       setFilteredDevices(res.data || [])
     } catch (err) {
-      console.error('fetch devices error', err)
+      // If this is an AxiosError, log the JSON response body to help debugging
+      try {
+        const anyErr = err as unknown as { response?: { data?: unknown; status?: number } }
+        if (anyErr?.response?.data) {
+          console.error('fetch devices error - response body:', anyErr.response.data)
+        } else {
+          console.error('fetch devices error', err)
+        }
+      } catch {
+        console.error('fetch devices error (failed to inspect error object)', err)
+      }
       toast.error('Không thể tải danh sách thiết bị')
     } finally {
       setLoading(false)
@@ -51,22 +71,32 @@ export default function DevicesPageClient() {
 
   // Filter devices based on search term
   useEffect(() => {
-    if (!searchTerm.trim()) {
-      setFilteredDevices(devices)
-      return
-    }
-
-    const term = searchTerm.toLowerCase()
-    const filtered = devices.filter((d) => {
-      return (
+    const term = searchTerm.trim().toLowerCase()
+    let filtered = devices.filter((d) => {
+      const matchesSearch =
+        !term ||
         d.serialNumber?.toLowerCase().includes(term) ||
         d.location?.toLowerCase().includes(term) ||
         d.deviceModel?.name?.toLowerCase().includes(term) ||
         d.ipAddress?.toLowerCase().includes(term)
-      )
+      return matchesSearch
     })
+
+    // Filter out disabled/decommissioned/deleted by default
+    if (!showInactiveStatuses) {
+      filtered = filtered.filter(
+        (d) =>
+          !STATUS_ALLOWED_FOR_INACTIVE.includes(String(d.status) as unknown as DeviceStatusValue)
+      )
+    }
+
+    // Apply status filter if set
+    if (statusFilter) {
+      filtered = filtered.filter((d) => String(d.status) === statusFilter)
+    }
+
     setFilteredDevices(filtered)
-  }, [searchTerm, devices])
+  }, [searchTerm, devices, showInactiveStatuses, statusFilter])
 
   const activeCount = devices.filter((d) => d.isActive).length
   const inactiveCount = devices.length - activeCount
@@ -169,14 +199,40 @@ export default function DevicesPageClient() {
 
             {/* Search */}
             {devices.length > 0 && (
-              <div className="relative w-64">
-                <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-                <Input
-                  placeholder="Tìm kiếm..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9"
-                />
+              <div className="flex items-center gap-3">
+                <div className="relative w-64">
+                  <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+                  <Input
+                    placeholder="Tìm kiếm..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+                <Select
+                  value={statusFilter ?? 'ALL'}
+                  onValueChange={(v: string) => setStatusFilter(v === 'ALL' ? null : v)}
+                >
+                  <SelectTrigger className="h-9 w-48">
+                    <SelectValue placeholder="All statuses" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">All</SelectItem>
+                    {Object.entries(STATUS_DISPLAY).map(([key, meta]) => (
+                      <SelectItem key={key} value={key}>
+                        {meta.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <div className="flex items-center gap-2">
+                  <label className="text-sm">Hiện trạng thái Disabled/Decommissioned</label>
+                  <input
+                    type="checkbox"
+                    checked={showInactiveStatuses}
+                    onChange={(e) => setShowInactiveStatuses(e.target.checked)}
+                  />
+                </div>
               </div>
             )}
           </div>
@@ -283,22 +339,58 @@ export default function DevicesPageClient() {
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <Badge
-                          variant={d.isActive ? 'default' : 'secondary'}
-                          className={cn(
-                            'flex w-fit items-center gap-1.5',
-                            d.isActive
-                              ? 'bg-green-500 hover:bg-green-600'
-                              : 'bg-gray-400 hover:bg-gray-500'
-                          )}
-                        >
+                        <div className="flex items-center gap-3">
+                          {/* Status chip */}
+                          {(() => {
+                            const meta = STATUS_DISPLAY[
+                              String(d.status) as keyof typeof STATUS_DISPLAY
+                            ] || {
+                              label: String(d.status || 'Unknown'),
+                              color: 'gray',
+                              icon: '',
+                            }
+                            const colorClassMap: Record<string, string> = {
+                              green: 'bg-green-500 text-white',
+                              blue: 'bg-blue-500 text-white',
+                              red: 'bg-red-500 text-white',
+                              gray: 'bg-gray-400 text-white',
+                              orange: 'bg-orange-500 text-white',
+                              purple: 'bg-purple-600 text-white',
+                              black: 'bg-black text-white',
+                            }
+                            const cls = colorClassMap[meta.color] || 'bg-gray-400 text-white'
+                            return (
+                              <span
+                                className={`inline-flex items-center gap-1 rounded px-2 py-1 text-sm ${cls}`}
+                              >
+                                <span className="text-xs">{meta.icon}</span>
+                                <span className="font-medium">{meta.label}</span>
+                              </span>
+                            )
+                          })()}
+
+                          {/* Active badge with tooltip for inactive reason */}
                           {d.isActive ? (
-                            <CheckCircle2 className="h-3 w-3" />
+                            <span className="inline-flex items-center gap-1 rounded bg-green-500 px-2 py-1 text-sm text-white">
+                              <CheckCircle2 className="h-3 w-3" /> Hoạt động
+                            </span>
                           ) : (
-                            <AlertCircle className="h-3 w-3" />
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <span className="inline-flex cursor-help items-center gap-1 rounded bg-red-500 px-2 py-1 text-sm text-white">
+                                  <AlertCircle className="h-3 w-3" /> Tạm dừng
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <div className="max-w-xs text-xs">
+                                  Lý do:{' '}
+                                  {(d as unknown as { inactiveReason?: string }).inactiveReason ||
+                                    '—'}
+                                </div>
+                              </TooltipContent>
+                            </Tooltip>
                           )}
-                          {d.isActive ? 'Hoạt động' : 'Tạm dừng'}
-                        </Badge>
+                        </div>
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-2">

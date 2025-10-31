@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import removeEmpty from '@/lib/utils/clean'
 import {
   Dialog,
   DialogContent,
@@ -72,7 +73,9 @@ export function RoleFormModal({ isOpen, onClose, onSubmit, initialData }: RoleFo
   const handleSubmit = async (data: RoleFormData) => {
     setIsLoading(true)
     try {
-      await onSubmit(data)
+      // Clean data before submitting to avoid sending empty strings
+      const payload = removeEmpty(data)
+      await onSubmit(payload as RoleFormData)
       onClose()
     } finally {
       setIsLoading(false)
