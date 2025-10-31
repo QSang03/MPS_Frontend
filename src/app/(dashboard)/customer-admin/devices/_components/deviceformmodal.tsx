@@ -402,13 +402,13 @@ export default function DeviceFormModal({ mode = 'create', device = null, onSave
                       }
                     >
                       <SelectTrigger className="h-11">
-                        <SelectValue placeholder="Chọn lý do hoặc chọn 'Tự nhập'" />
+                        <SelectValue placeholder="Chọn lý do " />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Tạm dừng do lỗi">Tạm dừng do lỗi</SelectItem>
                         <SelectItem value="Hủy HĐ">Hủy HĐ</SelectItem>
                         <SelectItem value="Hoàn tất HĐ">Hoàn tất HĐ</SelectItem>
-                        <SelectItem value="__other">Tự nhập</SelectItem>
+                        <SelectItem value="__other">Khác</SelectItem>
                       </SelectContent>
                     </Select>
 

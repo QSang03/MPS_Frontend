@@ -35,6 +35,14 @@ import type { Device } from '@/types/models/device'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select'
+import { Switch } from '@/components/ui/switch'
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -74,6 +82,11 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
   const [ipEdit, setIpEdit] = useState('')
   const [macEdit, setMacEdit] = useState('')
   const [firmwareEdit, setFirmwareEdit] = useState('')
+  // device status editing fields
+  const [isActiveEdit, setIsActiveEdit] = useState<boolean | null>(null)
+  const [statusEdit, setStatusEdit] = useState<string>('ACTIVE')
+  const [inactiveReasonOptionEdit, setInactiveReasonOptionEdit] = useState<string>('')
+  const [inactiveReasonTextEdit, setInactiveReasonTextEdit] = useState<string>('')
   const [installedConsumables, setInstalledConsumables] = useState<any[]>([])
   const [compatibleConsumables, setCompatibleConsumables] = useState<any[]>([])
   const [consumablesLoading, setConsumablesLoading] = useState(false)
@@ -126,6 +139,15 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
           setIpEdit(data.ipAddress || '')
           setMacEdit(data.macAddress || '')
           setFirmwareEdit(data.firmware || '')
+          setIsActiveEdit(
+            typeof data.isActive === 'boolean' ? data.isActive : Boolean(data.isActive)
+          )
+          setStatusEdit(
+            (data.status as string) ||
+              (data.isActive ? DEVICE_STATUS.ACTIVE : DEVICE_STATUS.DECOMMISSIONED)
+          )
+          setInactiveReasonOptionEdit((data as any).inactiveReason ?? '')
+          setInactiveReasonTextEdit((data as any).inactiveReason ?? '')
         }
 
         try {
@@ -899,6 +921,96 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                 />
               </div>
             </div>
+            {/* Status editing (allow toggling active/status and providing reason) */}
+            <div className="mt-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-base font-semibold text-gray-700">
+                  <Package className="h-4 w-4 text-gray-600" />
+                  Trạng thái hoạt động
+                </div>
+                <div>
+                  <Switch
+                    checked={isActiveEdit === null ? Boolean(device?.isActive) : !!isActiveEdit}
+                    onCheckedChange={(v: any) => {
+                      const isActiveNew = !!v
+                      // adjust status default when toggling
+                      let newStatus = statusEdit
+                      if (!isActiveNew) {
+                        if (
+                          ['ACTIVE', 'MAINTENANCE', 'ERROR', 'OFFLINE'].includes(String(statusEdit))
+                        ) {
+                          newStatus = DEVICE_STATUS.DECOMMISSIONED
+                        }
+                      } else {
+                        if (['DECOMMISSIONED', 'DISABLED'].includes(String(statusEdit))) {
+                          newStatus = DEVICE_STATUS.ACTIVE
+                        }
+                      }
+                      setIsActiveEdit(isActiveNew)
+                      setStatusEdit(newStatus)
+                      if (isActiveNew) {
+                        setInactiveReasonOptionEdit('')
+                        setInactiveReasonTextEdit('')
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div className="mt-3">
+                <Label className="text-sm font-medium">Trạng thái</Label>
+                <Select value={statusEdit} onValueChange={(v) => setStatusEdit(v)}>
+                  <SelectTrigger className="h-11">
+                    <SelectValue placeholder="Chọn trạng thái" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(isActiveEdit === null ? Boolean(device?.isActive) : isActiveEdit) ? (
+                      <>
+                        <SelectItem value="ACTIVE">Active</SelectItem>
+                        <SelectItem value="MAINTENANCE">Maintenance</SelectItem>
+                        <SelectItem value="ERROR">Error</SelectItem>
+                        <SelectItem value="OFFLINE">Offline</SelectItem>
+                      </>
+                    ) : (
+                      <>
+                        <SelectItem value="DECOMMISSIONED">Decommissioned</SelectItem>
+                        <SelectItem value="DISABLED">Disabled</SelectItem>
+                      </>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Show reason selector when isActive is false */}
+              {(isActiveEdit === null ? Boolean(device?.isActive) : isActiveEdit) === false && (
+                <div className="mt-3 space-y-2">
+                  <Label className="text-sm font-medium">Lý do</Label>
+                  <Select
+                    value={inactiveReasonOptionEdit}
+                    onValueChange={(v) => setInactiveReasonOptionEdit(v)}
+                  >
+                    <SelectTrigger className="h-11">
+                      <SelectValue placeholder="Chọn lý do " />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Tạm dừng do lỗi">Tạm dừng do lỗi</SelectItem>
+                      <SelectItem value="Hủy HĐ">Hủy HĐ</SelectItem>
+                      <SelectItem value="Hoàn tất HĐ">Hoàn tất HĐ</SelectItem>
+                      <SelectItem value="__other">Khác</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  {inactiveReasonOptionEdit === '__other' && (
+                    <Input
+                      value={inactiveReasonTextEdit}
+                      onChange={(e) => setInactiveReasonTextEdit(e.target.value)}
+                      placeholder="Nhập lý do..."
+                      className="h-11"
+                    />
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           <DialogFooter className="border-t bg-gray-50 px-6 py-4">
@@ -909,12 +1021,53 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
               onClick={async () => {
                 try {
                   setEditing(true)
+
+                  // Determine final isActive/status values (fall back to device values if user didn't touch)
+                  const finalIsActive =
+                    isActiveEdit === null ? Boolean(device?.isActive) : !!isActiveEdit
+                  const finalStatus = String(
+                    statusEdit ||
+                      (device as any)?.status ||
+                      (finalIsActive ? DEVICE_STATUS.ACTIVE : DEVICE_STATUS.DECOMMISSIONED)
+                  ).toUpperCase()
+
+                  // If toggling to inactive, require a reason
+                  let chosenReason: string | undefined = undefined
+                  if (finalIsActive === false) {
+                    if (inactiveReasonOptionEdit === '__other') {
+                      chosenReason = inactiveReasonTextEdit
+                    } else {
+                      chosenReason = inactiveReasonOptionEdit
+                    }
+                    if (!chosenReason || String(chosenReason).trim() === '') {
+                      toast.error('Vui lòng cung cấp lý do khi thay đổi trạng thái')
+                      setEditing(false)
+                      return
+                    }
+                  }
+
+                  // Validate status consistent with isActive
+                  const activeStatuses = ['ACTIVE', 'MAINTENANCE', 'ERROR', 'OFFLINE']
+                  const inactiveStatuses = ['DECOMMISSIONED', 'DISABLED']
+                  const allowedStatuses = finalIsActive ? activeStatuses : inactiveStatuses
+                  if (!allowedStatuses.includes(finalStatus)) {
+                    toast.error(
+                      `Trạng thái không hợp lệ khi isActive=${String(finalIsActive)}. Vui lòng chọn trạng thái hợp lệ.`
+                    )
+                    setEditing(false)
+                    return
+                  }
+
                   let dto: Record<string, unknown> = {
                     location: locationEdit || undefined,
                     ipAddress: ipEdit || undefined,
                     macAddress: macEdit || undefined,
                     firmware: firmwareEdit || undefined,
+                    isActive: finalIsActive,
+                    status: finalStatus,
+                    inactiveReason: chosenReason || undefined,
                   }
+
                   dto = removeEmpty(dto)
                   const updated = await devicesClientService.update(deviceId, dto)
                   if (updated) {

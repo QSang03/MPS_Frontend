@@ -9,8 +9,11 @@ export interface Device {
   // legacy/simple model field used across UI
   model: string
   location: string
-  status: DeviceStatus
+  // status: may come as legacy enum or canonical uppercase values from backend
+  status: DeviceStatus | import('@/constants/status').DeviceStatusValue | string
   customerId: string
+  // optional human-readable/structured reason why device is inactive/decommissioned
+  inactiveReason?: string
   lastMaintenanceDate?: string
   nextMaintenanceDate?: string
   totalPagesUsed: number
@@ -50,6 +53,10 @@ export interface CreateDeviceDto {
   ipAddress?: string
   macAddress?: string
   firmware?: string
+  // optional status fields for updates/creation
+  isActive?: boolean
+  status?: import('@/constants/status').DeviceStatusValue | string
+  inactiveReason?: string
 }
 
 /**

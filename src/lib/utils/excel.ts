@@ -320,14 +320,28 @@ export class DeviceExcelService {
     return devices
   }
 
-  private static getStatusText(status: DeviceStatus): string {
-    const statusMap = {
-      [DeviceStatus.ACTIVE]: 'Hoạt động',
-      [DeviceStatus.INACTIVE]: 'Inactive',
-      [DeviceStatus.ERROR]: 'Lỗi',
-      [DeviceStatus.MAINTENANCE]: 'Bảo trì',
+  private static getStatusText(status: Device['status'] | string): string {
+    const raw = String(status || '')
+    // Normalize: support legacy DeviceStatus enum values (e.g. 'Active') and
+    // canonical uppercase values (e.g. 'ACTIVE') returned by backend.
+    const key = raw.toUpperCase()
+    const mapByKey: Record<string, string> = {
+      ACTIVE: 'Hoạt động',
+      MAINTENANCE: 'Bảo trì',
+      ERROR: 'Lỗi',
+      OFFLINE: 'Offline',
+      DISABLED: 'Disabled',
+      DECOMMISSIONED: 'Decommissioned',
     }
-    return statusMap[status] || 'Hoạt động'
+    // Also handle legacy enum names (first-letter capitalized)
+    const legacyMap: Record<string, string> = {
+      Active: 'Hoạt động',
+      Inactive: 'Inactive',
+      Error: 'Lỗi',
+      Maintenance: 'Bảo trì',
+    }
+
+    return mapByKey[key] || legacyMap[raw] || 'Hoạt động'
   }
 
   private static parseStatus(statusText: string): DeviceStatus {
