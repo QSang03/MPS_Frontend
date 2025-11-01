@@ -269,6 +269,7 @@ export default function DeviceModelList() {
                   </th>
                   <th className="px-4 py-3 text-left text-sm font-semibold">Trạng thái</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold">Số loại tiêu hao</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Số thiết bị</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold">Vật tư tiêu hao</th>
                   <th className="px-4 py-3 text-right text-sm font-semibold">Thao tác</th>
                 </tr>
@@ -276,7 +277,7 @@ export default function DeviceModelList() {
               <tbody className="divide-y">
                 {filteredModels.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-4 py-12 text-center">
+                    <td colSpan={8} className="px-4 py-12 text-center">
                       <div className="text-muted-foreground flex flex-col items-center gap-3">
                         {searchTerm ? (
                           <>
@@ -346,6 +347,12 @@ export default function DeviceModelList() {
                               : 0}
                           </Badge>
                         )}
+                      </td>
+
+                      <td className="px-4 py-3">
+                        <Badge variant="outline" className="font-mono text-xs">
+                          {typeof m.deviceCount === 'number' ? m.deviceCount : 0}
+                        </Badge>
                       </td>
 
                       <td className="px-4 py-3">

@@ -9,6 +9,7 @@ export interface DeviceModel {
   type?: string
   description?: string
   isActive?: boolean
+  deviceCount?: number
   createdAt?: string
   updatedAt?: string
 }
