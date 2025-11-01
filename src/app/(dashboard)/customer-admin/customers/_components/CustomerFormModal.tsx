@@ -43,9 +43,11 @@ interface Props {
   mode?: 'create' | 'edit'
   customer?: Customer | null
   onSaved?: (c?: Customer | null) => void
+  // optional custom trigger element (used to render an edit button inside the table)
+  trigger?: React.ReactNode
 }
 
-export function CustomerFormModal({ mode = 'create', customer = null, onSaved }: Props) {
+export function CustomerFormModal({ mode = 'create', customer = null, onSaved, trigger }: Props) {
   const [open, setOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [form, setForm] = useState<LocalCustomerForm>({
@@ -54,7 +56,7 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved }:
     contactEmail: '',
     contactPhone: '',
     contactPerson: '',
-    address: '',
+    address: [],
     tier: 'BASIC',
     isActive: true,
     description: '',
@@ -123,7 +125,12 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved }:
       setForm({
         name: customer.name,
         code: (customer as any).code,
-        address: customer.address,
+        // Normalize address to array
+        address: Array.isArray((customer as any).address)
+          ? (customer as any).address
+          : typeof (customer as any).address === 'string' && (customer as any).address
+            ? [(customer as any).address]
+            : [],
         description: (customer as any).description,
         contactEmail: (customer as any).contactEmail,
         contactPhone: (customer as any).contactPhone,
@@ -294,7 +301,9 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved }:
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        {mode === 'create' ? (
+        {trigger ? (
+          trigger
+        ) : mode === 'create' ? (
           <Button className="gap-2 bg-white text-violet-600 hover:bg-white/90">
             <Plus className="h-4 w-4" />
             Thêm khách hàng
@@ -451,16 +460,57 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved }:
 
               <div className="space-y-2">
                 <Label className="text-base font-semibold">Địa chỉ</Label>
-                <Input
-                  ref={addressRef}
-                  value={form.address || ''}
-                  onChange={(e) => {
-                    setForm((s) => ({ ...s, address: e.target.value }))
-                    clearFieldError('address')
-                  }}
-                  placeholder="Địa chỉ công ty"
-                  className={`h-11 ${fieldErrors.address ? 'border-destructive focus-visible:ring-destructive/50' : ''}`}
-                />
+                {(Array.isArray(form.address) && form.address.length > 0 ? form.address : ['']).map(
+                  (addr, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <Input
+                        ref={idx === 0 ? addressRef : undefined}
+                        value={addr || ''}
+                        onChange={(e) => {
+                          setForm((s) => {
+                            const arr = Array.isArray(s.address) ? [...s.address] : []
+                            arr[idx] = e.target.value
+                            return { ...s, address: arr }
+                          })
+                          clearFieldError('address')
+                        }}
+                        placeholder={`Địa chỉ ${idx + 1}`}
+                        className={`h-11 ${fieldErrors.address ? 'border-destructive focus-visible:ring-destructive/50' : ''} flex-1`}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        onClick={() =>
+                          setForm((s) => {
+                            const arr = Array.isArray(s.address) ? [...s.address] : []
+                            arr.splice(idx, 1)
+                            return { ...s, address: arr }
+                          })
+                        }
+                        disabled={!(Array.isArray(form.address) && form.address.length > 1)}
+                        className="min-w-[64px]"
+                      >
+                        Xóa
+                      </Button>
+                    </div>
+                  )
+                )}
+
+                <div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setForm((s) => ({
+                        ...(s || {}),
+                        address: [...(Array.isArray(s.address) ? s.address : []), ''],
+                      }))
+                    }
+                  >
+                    Thêm địa chỉ
+                  </Button>
+                </div>
                 {fieldErrors.address && (
                   <p className="text-destructive mt-1 text-sm">{fieldErrors.address}</p>
                 )}

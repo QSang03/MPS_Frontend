@@ -5,7 +5,7 @@ export interface Customer {
   id: string
   code?: string
   name: string
-  address: string
+  address?: string[]
   deviceCount?: number
   createdAt: string
   updatedAt: string
@@ -16,7 +16,7 @@ export interface Customer {
  */
 export interface CreateCustomerDto {
   name: string
-  address: string
+  address?: string[]
 }
 
 /**

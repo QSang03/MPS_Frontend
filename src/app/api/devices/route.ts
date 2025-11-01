@@ -15,6 +15,10 @@ export async function GET(request: NextRequest) {
     const limit = searchParams.get('limit')
     const deviceModelId = searchParams.get('deviceModelId')
     const customerId = searchParams.get('customerId')
+    const status = searchParams.get('status')
+    const search = searchParams.get('search')
+    const includeHidden = searchParams.get('includeHidden')
+    const isActive = searchParams.get('isActive')
 
     if (page) {
       const p = Number(page)
@@ -32,6 +36,18 @@ export async function GET(request: NextRequest) {
     }
     if (deviceModelId) params.deviceModelId = deviceModelId
     if (customerId) params.customerId = customerId
+    if (status) params.status = status
+    if (search) params.search = search
+    if (typeof includeHidden === 'string') {
+      // accept 'true'|'false'|'1'|'0'
+      const v = includeHidden.toLowerCase()
+      params.includeHidden = v === 'true' || v === '1'
+    }
+    if (typeof isActive === 'string') {
+      const v = isActive.toLowerCase()
+      // treat presence of isActive as boolean filter
+      params.isActive = v === 'true' || v === '1'
+    }
 
     console.debug('[api/devices] forwarding params:', params)
 

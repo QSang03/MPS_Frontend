@@ -41,6 +41,7 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
   const queryClient = useQueryClient()
 
   const form = useForm<ContractFormData>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- resolver typing from zodResolver is complex; keep as-is
     resolver: zodResolver(contractSchema as any),
     defaultValues: {
       customerId: initial?.customerId || '',
@@ -193,6 +194,35 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
                 </FormItem>
               )}
             />
+            <FormField
+              control={form.control}
+              name="status"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-2 text-base font-semibold">
+                    <Tag className="h-4 w-4 text-indigo-600" />
+                    Trạng thái
+                  </FormLabel>
+                  <FormControl>
+                    <Select
+                      value={field.value || ''}
+                      onValueChange={(v) => field.onChange(v === '' ? undefined : v)}
+                    >
+                      <SelectTrigger className="h-11">
+                        <SelectValue placeholder="Chọn trạng thái" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="PENDING">⏳ Chờ duyệt</SelectItem>
+                        <SelectItem value="ACTIVE">✅ Đang hoạt động</SelectItem>
+                        <SelectItem value="EXPIRED">⌛ Đã hết hạn</SelectItem>
+                        <SelectItem value="TERMINATED">🛑 Đã chấm dứt</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </div>
         </div>
 
@@ -277,8 +307,8 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
                         <SelectItem value="1">📅 1 năm</SelectItem>
                         <SelectItem value="2">📅 2 năm</SelectItem>
                         <SelectItem value="3">📅 3 năm</SelectItem>
+                        <SelectItem value="4">📅 4 năm</SelectItem>
                         <SelectItem value="5">📅 5 năm</SelectItem>
-                        <SelectItem value="10">📅 10 năm</SelectItem>
                       </SelectContent>
                     </Select>
                   </FormControl>

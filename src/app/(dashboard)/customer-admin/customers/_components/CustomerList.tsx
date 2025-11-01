@@ -20,6 +20,10 @@ import {
   BarChart3,
   ChevronLeft,
   ChevronRight,
+  Eye,
+  X,
+  Check,
+  Edit,
 } from 'lucide-react'
 
 export function CustomerList() {
@@ -116,6 +120,9 @@ export function CustomerList() {
   const activeCount = items.filter((i) =>
     Boolean((i as unknown as { isActive?: boolean }).isActive)
   ).length
+  const [editingAddressFor, setEditingAddressFor] = useState<string | null>(null)
+  const [editingAddressValue, setEditingAddressValue] = useState('')
+  const [savingAddressId, setSavingAddressId] = useState<string | null>(null)
 
   if (loading) {
     return (
@@ -264,7 +271,100 @@ export function CustomerList() {
                         </Badge>
                       </td>
                       <td className="text-muted-foreground max-w-xs truncate px-4 py-3 text-sm">
-                        {c.address || '—'}
+                        {(() => {
+                          const addresses = Array.isArray(c.address)
+                            ? c.address
+                            : c.address
+                              ? [String(c.address)]
+                              : []
+
+                          const first = addresses[0] || '—'
+
+                          return (
+                            <div className="flex items-center gap-2">
+                              {editingAddressFor === c.id ? (
+                                <div className="flex w-full items-center gap-2">
+                                  <Input
+                                    value={editingAddressValue}
+                                    onChange={(e) => setEditingAddressValue(e.target.value)}
+                                    className="h-9 flex-1"
+                                  />
+                                  <div className="flex items-center gap-2">
+                                    <Button
+                                      size="sm"
+                                      onClick={async () => {
+                                        try {
+                                          setSavingAddressId(c.id)
+                                          const payload: Partial<Customer> = {
+                                            address: [editingAddressValue].filter(Boolean),
+                                          }
+                                          const updated = await customersClientService.update(
+                                            c.id,
+                                            payload
+                                          )
+                                          if (updated) {
+                                            setItems((cur) =>
+                                              cur.map((it) => (it.id === updated.id ? updated : it))
+                                            )
+                                            toast.success('Cập nhật địa chỉ thành công')
+                                          }
+                                          setEditingAddressFor(null)
+                                        } catch (err) {
+                                          console.error('Update address failed', err)
+                                          toast.error('Không thể cập nhật địa chỉ')
+                                        } finally {
+                                          setSavingAddressId(null)
+                                        }
+                                      }}
+                                      disabled={savingAddressId === c.id}
+                                    >
+                                      {savingAddressId === c.id ? (
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                      ) : (
+                                        <Check className="h-4 w-4" />
+                                      )}
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={() => setEditingAddressFor(null)}
+                                    >
+                                      <X className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <>
+                                  <span className="block max-w-[260px] truncate">{first}</span>
+                                  {addresses.length > 1 ? (
+                                    <CustomerFormModal
+                                      mode="edit"
+                                      customer={c}
+                                      onSaved={handleSaved}
+                                      trigger={
+                                        <Button variant="ghost" size="sm" className="p-2">
+                                          <Eye className="h-4 w-4" />
+                                        </Button>
+                                      }
+                                    />
+                                  ) : (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        setEditingAddressFor(c.id)
+                                        setEditingAddressValue(first === '—' ? '' : String(first))
+                                      }}
+                                      aria-label="Chỉnh sửa địa chỉ"
+                                    >
+                                      <Edit className="h-4 w-4" />
+                                    </Button>
+                                  )}
+                                </>
+                              )}
+                            </div>
+                          )
+                        })()}
                       </td>
                       <td className="px-4 py-3">
                         <Badge

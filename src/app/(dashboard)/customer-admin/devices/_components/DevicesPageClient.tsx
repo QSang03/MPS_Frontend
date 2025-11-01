@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import type { Device } from '@/types/models/device'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -41,17 +41,39 @@ export default function DevicesPageClient() {
   const [filteredDevices, setFilteredDevices] = useState<Device[]>([])
   const [loading, setLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
-  const [showInactiveStatuses, setShowInactiveStatuses] = useState(false)
-  const [statusFilter, setStatusFilter] = useState<string | null>(null)
+  const [showInactiveStatuses, setShowInactiveStatuses] = useState<boolean>(() => {
+    try {
+      const v = localStorage.getItem('devices.showInactiveStatuses')
+      return v === 'true'
+    } catch {
+      return false
+    }
+  })
+  const [statusFilter, setStatusFilter] = useState<string | null>(() => {
+    try {
+      const v = localStorage.getItem('devices.statusFilter')
+      return v === 'null' || v === null ? null : (v ?? null)
+    } catch {
+      return null
+    }
+  })
   const [showCustomerSelect, setShowCustomerSelect] = useState(false)
   const [editingDeviceId, setEditingDeviceId] = useState<string | null>(null)
   const [updatingCustomer, setUpdatingCustomer] = useState(false)
   const router = useRouter()
 
-  const fetchDevices = async () => {
+  const fetchDevices = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await devicesClientService.getAll({ page: 1, limit: 100 })
+      const includeHidden =
+        showInactiveStatuses || statusFilter === 'DISABLED' || statusFilter === 'DECOMMISSIONED'
+
+      const res = await devicesClientService.getAll({
+        page: 1,
+        limit: 100,
+        status: statusFilter ?? undefined,
+        includeHidden,
+      })
       setDevices(res.data || [])
       setFilteredDevices(res.data || [])
     } catch (err) {
@@ -70,11 +92,29 @@ export default function DevicesPageClient() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [showInactiveStatuses, statusFilter])
 
   useEffect(() => {
     fetchDevices()
-  }, [])
+    // re-run when user toggles showing inactive statuses or changes status filter
+  }, [fetchDevices])
+
+  // persist filter preferences to localStorage so they survive navigation
+  useEffect(() => {
+    try {
+      localStorage.setItem('devices.showInactiveStatuses', String(showInactiveStatuses))
+    } catch {
+      /* ignore */
+    }
+  }, [showInactiveStatuses])
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('devices.statusFilter', String(statusFilter))
+    } catch {
+      /* ignore */
+    }
+  }, [statusFilter])
 
   // Filter devices based on search term
   useEffect(() => {

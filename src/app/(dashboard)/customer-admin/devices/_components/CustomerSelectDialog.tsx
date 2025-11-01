@@ -64,7 +64,13 @@ export function CustomerSelectDialog({
       !term ||
       c.name?.toLowerCase().includes(term) ||
       c.code?.toLowerCase().includes(term) ||
-      c.address?.toLowerCase().includes(term)
+      (Array.isArray(c.address)
+        ? c.address.some((a) =>
+            String(a || '')
+              .toLowerCase()
+              .includes(term)
+          )
+        : false)
     )
   })
 
@@ -157,7 +163,9 @@ export function CustomerSelectDialog({
                         </div>
                         {customer.address && (
                           <div className="text-muted-foreground mt-1 text-sm">
-                            {customer.address}
+                            {Array.isArray(customer.address)
+                              ? customer.address[0] || '—'
+                              : customer.address}
                           </div>
                         )}
                       </div>

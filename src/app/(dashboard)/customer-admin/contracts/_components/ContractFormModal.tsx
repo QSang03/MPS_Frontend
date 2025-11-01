@@ -35,7 +35,7 @@ export function ContractFormModal({ initial, onCreated }: ContractFormModalProps
 
       <AnimatePresence>
         {open && (
-          <DialogContent className="max-h-[90vh] max-w-3xl overflow-hidden rounded-2xl border-0 p-0 shadow-2xl">
+          <DialogContent className="max-h-[90vh] max-w-3xl rounded-2xl border-0 p-0 shadow-2xl">
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
