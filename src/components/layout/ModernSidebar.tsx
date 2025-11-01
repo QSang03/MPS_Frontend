@@ -53,16 +53,16 @@ function getNavigationItems(role: UserRole): NavItem[] {
         href: ROUTES.CUSTOMER_ADMIN_CONSUMABLE_TYPES,
         icon: ShoppingCart,
       },
-      {
-        label: 'Yêu cầu bảo trì',
-        href: ROUTES.CUSTOMER_ADMIN_SERVICE_REQUESTS,
-        icon: FileText,
-      },
-      {
-        label: 'Yêu cầu mua hàng',
-        href: ROUTES.CUSTOMER_ADMIN_PURCHASE_REQUESTS,
-        icon: ShoppingCart,
-      },
+      // {
+      //   label: 'Yêu cầu bảo trì',
+      //   href: ROUTES.CUSTOMER_ADMIN_SERVICE_REQUESTS,
+      //   icon: FileText,
+      // },
+      // {
+      //   label: 'Yêu cầu mua hàng',
+      //   href: ROUTES.CUSTOMER_ADMIN_PURCHASE_REQUESTS,
+      //   icon: ShoppingCart,
+      // },
       { label: 'Quản lý người dùng', href: ROUTES.CUSTOMER_ADMIN_USERS, icon: Users },
       { label: 'Khách hàng', href: ROUTES.CUSTOMER_ADMIN_CUSTOMERS, icon: Building2 },
       { label: 'Quản lý policies', href: ROUTES.CUSTOMER_ADMIN_POLICIES, icon: Shield },

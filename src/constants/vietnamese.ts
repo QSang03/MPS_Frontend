@@ -130,6 +130,8 @@ export const VN = {
     approved: 'Đã duyệt',
     rejected: 'Từ chối',
     completed: 'Hoàn thành',
+    expired: 'Hết hạn',
+    terminated: 'Đã chấm dứt',
   },
 
   // Priority

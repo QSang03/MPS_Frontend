@@ -27,6 +27,12 @@ export const contractSchema = z.object({
     .refine((v) => !Number.isNaN(Date.parse(v)), {
       message: 'End date must be a valid date string',
     }),
+  // Duration in years used to compute endDate client-side (optional)
+  durationYears: z.preprocess((v) => {
+    if (typeof v === 'string' && v.trim() === '') return undefined
+    if (typeof v === 'string' && /^\d+$/.test(v)) return Number(v)
+    return v
+  }, z.number().int().positive().optional()),
   description: z.string().optional(),
   // Allow empty string (user left the field blank) by preprocessing '' -> undefined
   documentUrl: z.preprocess(

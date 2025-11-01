@@ -135,10 +135,55 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved }:
     return () => clearTimeout(t)
   }, [customer])
 
+  // Client-side validation before submit
+  const validateForm = (): boolean => {
+    const errors: Record<string, string> = {}
+
+    // name is required
+    if (!form.name || String(form.name).trim().length === 0) {
+      errors.name = 'Tên khách hàng là bắt buộc'
+    }
+
+    // if email provided, basic email format check
+    if (form.contactEmail && String(form.contactEmail).trim().length > 0) {
+      const email = String(form.contactEmail).trim()
+      // stricter email check: require at least one dot in domain and TLD of letters (2-63)
+      // allows subdomains like a.b.example.com
+      const emailRe = /^[^\s@]+@([^.\s@]+\.)+[A-Za-z]{2,63}$/
+      if (!emailRe.test(email)) errors.contactEmail = 'Email không hợp lệ'
+    }
+
+    // if phone provided, basic check (digits, +, spaces, dashes)
+    if (form.contactPhone && String(form.contactPhone).trim().length > 0) {
+      const phone = String(form.contactPhone).trim()
+      const phoneRe = /^[+\d][\d ()-]{6,}$/
+      if (!phoneRe.test(phone)) errors.contactPhone = 'Số điện thoại không hợp lệ'
+    }
+
+    // code: optional but if present, ensure no spaces
+    if (form.code && String(form.code).includes(' ')) {
+      errors.code = 'Mã không được chứa dấu cách'
+    }
+
+    if (Object.keys(errors).length) {
+      setFieldErrors(errors)
+      return false
+    }
+    return true
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSubmitting(true)
     setFieldErrors({})
+
+    // run client-side validation first
+    const ok = validateForm()
+    if (!ok) {
+      // focus handled by useEffect when fieldErrors is set
+      setSubmitting(false)
+      return
+    }
 
     try {
       const payload = removeEmpty({ ...form })

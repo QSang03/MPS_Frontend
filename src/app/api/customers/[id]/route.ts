@@ -22,8 +22,17 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     return NextResponse.json(response.data)
   } catch (error: unknown) {
-    const err = error as { message?: string; response?: { status?: number } } | undefined
+    const err = error as
+      | { message?: string; response?: { status?: number; data?: unknown } }
+      | undefined
     console.error('API Route /api/customers/[id] GET error:', error)
+
+    if (err?.response?.data && typeof err.response.data === 'object') {
+      return NextResponse.json(err.response.data as unknown as Record<string, unknown>, {
+        status: err?.response?.status || 500,
+      })
+    }
+
     return NextResponse.json(
       { error: err?.message || 'Internal Server Error' },
       { status: err?.response?.status || 500 }
@@ -52,8 +61,17 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     return NextResponse.json(response.data)
   } catch (error: unknown) {
-    const err = error as { message?: string; response?: { status?: number } } | undefined
+    const err = error as
+      | { message?: string; response?: { status?: number; data?: unknown } }
+      | undefined
     console.error('API Route /api/customers/[id] PATCH error:', error)
+
+    if (err?.response?.data && typeof err.response.data === 'object') {
+      return NextResponse.json(err.response.data as unknown as Record<string, unknown>, {
+        status: err?.response?.status || 500,
+      })
+    }
+
     return NextResponse.json(
       { error: err?.message || 'Internal Server Error' },
       { status: err?.response?.status || 500 }
@@ -82,8 +100,17 @@ export async function DELETE(
 
     return NextResponse.json({ success: true })
   } catch (error: unknown) {
-    const err = error as { message?: string; response?: { status?: number } } | undefined
+    const err = error as
+      | { message?: string; response?: { status?: number; data?: unknown } }
+      | undefined
     console.error('API Route /api/customers/[id] DELETE error:', error)
+
+    if (err?.response?.data && typeof err.response.data === 'object') {
+      return NextResponse.json(err.response.data as unknown as Record<string, unknown>, {
+        status: err?.response?.status || 500,
+      })
+    }
+
     return NextResponse.json(
       { error: err?.message || 'Internal Server Error' },
       { status: err?.response?.status || 500 }
