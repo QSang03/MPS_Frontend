@@ -18,10 +18,21 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     return NextResponse.json(response.data)
   } catch (error: unknown) {
-    const err = error as { message?: string; response?: { status?: number } } | undefined
+    const err = error as
+      | {
+          message?: string
+          response?: {
+            status?: number
+            data?: { message?: string; error?: string; statusCode?: number }
+          }
+        }
+      | undefined
     console.error('API Route /api/devices/[id] GET error:', err?.response?.status || err?.message)
+
+    // Return backend error message if available
+    const backendMessage = err?.response?.data?.message || err?.message || 'Internal Server Error'
     return NextResponse.json(
-      { error: err?.message || 'Internal Server Error' },
+      { error: backendMessage, message: backendMessage },
       { status: err?.response?.status || 500 }
     )
   }
@@ -47,11 +58,18 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const err = error as
       | {
           message?: string
-          response?: { status?: number; data?: unknown }
+          response?: {
+            status?: number
+            data?: { message?: string; error?: string; statusCode?: number }
+          }
           config?: { data?: unknown }
         }
       | undefined
-    console.error('API Route /api/devices/[id] PUT error:', err?.response?.status || err?.message)
+    console.error('API Route /api/devices/[id] PATCH error:', {
+      status: err?.response?.status,
+      message: err?.message,
+      backendData: err?.response?.data,
+    })
 
     if (err?.response?.status === 401) {
       try {
@@ -121,18 +139,27 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         return NextResponse.json(retryResp.data)
       } catch (retryErr: unknown) {
         const rerr = retryErr as
-          | { message?: string; response?: { status?: number; data?: unknown } }
+          | {
+              message?: string
+              response?: { status?: number; data?: { message?: string; error?: string } }
+            }
           | undefined
         console.error('Retry after refresh failed:', rerr?.message)
+
+        // Return backend error message if available
+        const retryBackendMessage =
+          rerr?.response?.data?.message || rerr?.message || 'Internal Server Error'
         return NextResponse.json(
-          { error: rerr?.message || 'Internal Server Error' },
+          { error: retryBackendMessage, message: retryBackendMessage },
           { status: rerr?.response?.status || 500 }
         )
       }
     }
 
+    // Return backend error message if available
+    const backendMessage = err?.response?.data?.message || err?.message || 'Internal Server Error'
     return NextResponse.json(
-      { error: err?.message || 'Internal Server Error' },
+      { error: backendMessage, message: backendMessage },
       { status: err?.response?.status || 500 }
     )
   }
@@ -155,14 +182,20 @@ export async function DELETE(
     return NextResponse.json(response.data)
   } catch (error: unknown) {
     const err = error as
-      | { message?: string; response?: { status?: number; data?: unknown } }
+      | {
+          message?: string
+          response?: { status?: number; data?: { message?: string; error?: string } }
+        }
       | undefined
     console.error(
       'API Route /api/devices/[id] DELETE error:',
       err?.response?.status || err?.message
     )
+
+    // Return backend error message if available
+    const backendMessage = err?.response?.data?.message || err?.message || 'Internal Server Error'
     return NextResponse.json(
-      { error: err?.message || 'Internal Server Error' },
+      { error: backendMessage, message: backendMessage },
       { status: err?.response?.status || 500 }
     )
   }

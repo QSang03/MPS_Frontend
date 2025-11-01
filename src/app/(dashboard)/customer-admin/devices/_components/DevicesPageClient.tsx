@@ -108,12 +108,19 @@ export default function DevicesPageClient() {
   const activeCount = devices.filter((d) => d.isActive).length
   const inactiveCount = devices.length - activeCount
 
-  const handleCustomerSelect = async (customer: Customer) => {
+  const handleCustomerSelect = async (customer: Customer, customerLocation?: string) => {
     if (!editingDeviceId) return
 
     setUpdatingCustomer(true)
     try {
+      // Step 1: Assign customer
       await devicesClientService.assignToCustomer(editingDeviceId, customer.id)
+
+      // Step 2: Update location if provided (for non-warehouse customers)
+      if (customerLocation) {
+        await devicesClientService.update(editingDeviceId, { location: customerLocation })
+      }
+
       toast.success(`Đã gán thiết bị cho khách hàng ${customer.name}`)
       await fetchDevices()
     } catch (err) {
@@ -130,7 +137,12 @@ export default function DevicesPageClient() {
         const maybe = (body as MsgBody) || {}
         const message = maybe.message || maybe.error || e?.message
         if (message) {
-          toast.error(String(message))
+          // Handle array of messages
+          if (Array.isArray(message)) {
+            toast.error(message.join(', '))
+          } else {
+            toast.error(String(message))
+          }
         } else {
           toast.error('Không thể gán khách hàng cho thiết bị')
         }
@@ -141,6 +153,7 @@ export default function DevicesPageClient() {
     } finally {
       setUpdatingCustomer(false)
       setEditingDeviceId(null)
+      setShowCustomerSelect(false)
     }
   }
 
@@ -391,17 +404,23 @@ export default function DevicesPageClient() {
                       </td>
                       <td className="px-4 py-3 text-sm">
                         <div className="flex items-center gap-2">
-                          {(d as unknown as { customer?: { name?: string; id?: string } }).customer
-                            ?.name ? (
+                          {(
+                            d as unknown as {
+                              customer?: { name?: string; code?: string; id?: string }
+                            }
+                          ).customer?.name ? (
                             <span className="text-sm font-medium">
                               {(d as unknown as { customer?: { name?: string } }).customer!.name}
                             </span>
                           ) : (
                             <span className="text-muted-foreground">—</span>
                           )}
-                          {/* Allow editing customer only if customer name is "System" */}
-                          {(d as unknown as { customer?: { name?: string; id?: string } }).customer
-                            ?.name === 'System' && (
+                          {/* Allow editing customer only if customer is in warehouse (code === 'SYS') */}
+                          {(
+                            d as unknown as {
+                              customer?: { name?: string; code?: string; id?: string }
+                            }
+                          ).customer?.code === 'SYS' && (
                             <Button
                               variant="ghost"
                               size="sm"
@@ -415,18 +434,24 @@ export default function DevicesPageClient() {
                               <Edit2 className="h-3.5 w-3.5 text-rose-600" />
                             </Button>
                           )}
-                          {/* Allow removing customer (set back to System) only if customer is NOT "System" */}
-                          {(d as unknown as { customer?: { name?: string; id?: string } }).customer
-                            ?.name &&
-                            (d as unknown as { customer?: { name?: string; id?: string } }).customer
-                              ?.name !== 'System' && (
+                          {/* Allow removing customer (return to warehouse) only if customer is NOT in warehouse (code !== 'SYS') */}
+                          {(
+                            d as unknown as {
+                              customer?: { name?: string; code?: string; id?: string }
+                            }
+                          ).customer?.code &&
+                            (
+                              d as unknown as {
+                                customer?: { name?: string; code?: string; id?: string }
+                              }
+                            ).customer?.code !== 'SYS' && (
                               <Button
                                 variant="ghost"
                                 size="sm"
                                 className="h-7 w-7 p-0 hover:bg-red-100"
                                 onClick={() => handleRemoveCustomer(d.id)}
                                 disabled={updatingCustomer}
-                                title="Xóa khách hàng (đưa về System)"
+                                title="Gỡ về kho"
                               >
                                 <X className="h-3.5 w-3.5 text-red-600" />
                               </Button>

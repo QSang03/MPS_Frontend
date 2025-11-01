@@ -13,7 +13,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Loader2, Search, Building2, CheckCircle2 } from 'lucide-react'
+import { Loader2, Search, Building2, CheckCircle2, MapPin } from 'lucide-react'
 import { customersClientService } from '@/lib/api/services/customers-client.service'
 import type { Customer } from '@/types/models/customer'
 import { toast } from 'sonner'
@@ -22,7 +22,7 @@ import { cn } from '@/lib/utils'
 interface CustomerSelectDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onSelect: (customer: Customer) => void
+  onSelect: (customer: Customer, customerLocation?: string) => void
   currentCustomerId?: string
 }
 
@@ -34,6 +34,8 @@ export function CustomerSelectDialog({
 }: CustomerSelectDialogProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
+  const [customerLocation, setCustomerLocation] = useState('')
+
   const query = useQuery({
     queryKey: ['customers', { page: 1, limit: 100 }],
     queryFn: () => customersClientService.getAll({ page: 1, limit: 100 }).then((r) => r.data),
@@ -44,6 +46,10 @@ export function CustomerSelectDialog({
 
   // derive customers directly from the query result to avoid copying state inside an effect
   const customers = (customersData as Customer[] | undefined) ?? []
+
+  // Check if selected customer is warehouse (SYS code)
+  const isWarehouseCustomer = selectedCustomer?.code === 'SYS'
+  const requiresLocation = selectedCustomer && !isWarehouseCustomer
 
   useEffect(() => {
     if (error) {
@@ -63,12 +69,19 @@ export function CustomerSelectDialog({
   })
 
   const handleConfirm = () => {
-    if (selectedCustomer) {
-      onSelect(selectedCustomer)
-      onOpenChange(false)
-      setSelectedCustomer(null)
-      setSearchTerm('')
+    if (!selectedCustomer) return
+
+    // Validate customerLocation if required (not warehouse)
+    if (requiresLocation && !customerLocation.trim()) {
+      toast.error('Vui lòng nhập vị trí tại khách hàng')
+      return
     }
+
+    onSelect(selectedCustomer, customerLocation.trim() || undefined)
+    onOpenChange(false)
+    setSelectedCustomer(null)
+    setSearchTerm('')
+    setCustomerLocation('')
   }
 
   return (
@@ -155,6 +168,27 @@ export function CustomerSelectDialog({
               })
             )}
           </div>
+
+          {/* Customer Location Input - Show when customer is not warehouse */}
+          {requiresLocation && (
+            <div className="space-y-2 rounded-lg border border-blue-200 bg-blue-50/50 p-4">
+              <Label className="flex items-center gap-2 text-base font-semibold text-blue-900">
+                <MapPin className="h-4 w-4 text-blue-600" />
+                Vị trí tại khách hàng
+                <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                value={customerLocation}
+                onChange={(e) => setCustomerLocation(e.target.value)}
+                placeholder="Nhập vị trí lắp đặt tại khách hàng..."
+                className="h-11 border-blue-200 bg-white"
+                autoFocus
+              />
+              <p className="text-xs text-blue-700">
+                Nhập vị trí cụ thể của thiết bị tại khách hàng (phòng, tầng, khu vực...)
+              </p>
+            </div>
+          )}
         </div>
 
         <DialogFooter className="border-t bg-gray-50 px-6 py-4">
@@ -164,6 +198,7 @@ export function CustomerSelectDialog({
               onOpenChange(false)
               setSelectedCustomer(null)
               setSearchTerm('')
+              setCustomerLocation('')
             }}
             className="min-w-[100px]"
           >
@@ -171,7 +206,7 @@ export function CustomerSelectDialog({
           </Button>
           <Button
             onClick={handleConfirm}
-            disabled={!selectedCustomer}
+            disabled={!selectedCustomer || (!!requiresLocation && !customerLocation.trim())}
             className="min-w-[120px] bg-gradient-to-r from-rose-600 to-purple-600 hover:from-rose-700 hover:to-purple-700"
           >
             <CheckCircle2 className="mr-2 h-4 w-4" />

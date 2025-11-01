@@ -70,8 +70,25 @@ export const devicesClientService = {
   },
 
   async update(id: string, dto: UpdateDeviceDto) {
-    const response = await internalApiClient.patch(`/api/devices/${id}`, dto)
-    return response.data?.data
+    try {
+      const response = await internalApiClient.patch(`/api/devices/${id}`, dto)
+      return response.data?.data
+    } catch (err: unknown) {
+      // Log full error details for debugging
+      try {
+        const e = err as { response?: { data?: unknown; status?: number }; message?: string }
+        console.error('[devicesClientService.update] Full error:', {
+          status: e?.response?.status,
+          errorBody: e?.response?.data,
+          message: e?.message,
+          deviceId: id,
+          dto,
+        })
+      } catch {
+        console.error('[devicesClientService.update] error:', err)
+      }
+      throw err
+    }
   },
 
   async delete(id: string) {

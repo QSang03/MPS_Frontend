@@ -58,6 +58,7 @@ export default function DeviceFormModal({ mode = 'create', device = null, onSave
     deviceModelId: '',
     serialNumber: '',
     location: '',
+    customerLocation: '',
     ipAddress: '',
     macAddress: '',
     firmware: '',
@@ -87,6 +88,7 @@ export default function DeviceFormModal({ mode = 'create', device = null, onSave
       deviceModelId: device.deviceModelId || device.deviceModel?.id || '',
       serialNumber: device.serialNumber || '',
       location: device.location || '',
+      customerLocation: device.customerLocation || '',
       ipAddress: device.ipAddress || '',
       macAddress: device.macAddress || '',
       firmware: device.firmware || '',
@@ -110,6 +112,17 @@ export default function DeviceFormModal({ mode = 'create', device = null, onSave
         toast.error('Serial number là bắt buộc')
         setSubmitting(false)
         return
+      }
+
+      // Validate customerLocation when customer is not warehouse (SYS code) - Only in CREATE mode
+      if (mode === 'create') {
+        const selectedCustomer = customers.find((c) => c.id === form.customerId)
+        const isSystemWarehouse = selectedCustomer?.code === 'SYS'
+        if (selectedCustomer && !isSystemWarehouse && !form.customerLocation?.trim()) {
+          toast.error('Vị trí tại khách hàng là bắt buộc')
+          setSubmitting(false)
+          return
+        }
       }
 
       // Business rule: whenever isActive === false during edit, inactiveReason is required.
@@ -142,7 +155,7 @@ export default function DeviceFormModal({ mode = 'create', device = null, onSave
         }
       }
 
-      // Build payload; exclude isActive/status/inactiveReason when creating a device
+      // Build payload
       let payload: Record<string, unknown> = {
         deviceModelId: form.deviceModelId || undefined,
         serialNumber: form.serialNumber,
@@ -150,7 +163,13 @@ export default function DeviceFormModal({ mode = 'create', device = null, onSave
         ipAddress: form.ipAddress || undefined,
         macAddress: form.macAddress || undefined,
         firmware: form.firmware || undefined,
-        customerId: form.customerId || undefined,
+      }
+
+      // customerLocation and customerId are only used when creating a device
+      // For updating customer assignment, use assign-to-customer or return-to-warehouse endpoints
+      if (mode === 'create') {
+        payload.customerLocation = form.customerLocation || undefined
+        payload.customerId = form.customerId || undefined
       }
 
       if (mode === 'edit') {
@@ -176,12 +195,27 @@ export default function DeviceFormModal({ mode = 'create', device = null, onSave
     } catch (err: any) {
       console.error('Device save error', err)
       // Try to extract backend error message from Axios-like error
-      const backendMessage = err?.response?.data?.message || err?.response?.data || err?.message
-      if (backendMessage) {
-        toast.error(String(backendMessage))
-      } else {
-        toast.error('Có lỗi khi lưu thiết bị')
+      const backendData = err?.response?.data
+      let errorMessage = 'Có lỗi khi lưu thiết bị'
+
+      if (backendData?.message) {
+        // Handle array of messages
+        if (Array.isArray(backendData.message)) {
+          errorMessage = backendData.message.join(', ')
+        } else {
+          errorMessage = String(backendData.message)
+        }
+      } else if (backendData?.error) {
+        if (Array.isArray(backendData.error)) {
+          errorMessage = backendData.error.join(', ')
+        } else {
+          errorMessage = String(backendData.error)
+        }
+      } else if (err?.message) {
+        errorMessage = err.message
       }
+
+      toast.error(errorMessage)
     } finally {
       setSubmitting(false)
     }
@@ -268,8 +302,8 @@ export default function DeviceFormModal({ mode = 'create', device = null, onSave
 
             <Separator />
 
-            {/* Customer Section - Only show in edit mode when customer is System */}
-            {mode === 'edit' && device?.customer?.name === 'System' && (
+            {/* Customer Section - Only in CREATE mode */}
+            {mode === 'create' && (
               <>
                 <div className="space-y-4">
                   <div className="flex items-center gap-2 text-sm font-semibold text-rose-700">
@@ -314,9 +348,40 @@ export default function DeviceFormModal({ mode = 'create', device = null, onSave
                         ))}
                       </SelectContent>
                     </Select>
+                    <p className="text-xs text-gray-500">
+                      Chọn khách hàng để gán thiết bị. Để trong kho, chọn "Kho Công Ty"
+                    </p>
                   </div>
-                </div>
 
+                  {/* Customer Location - Only show when customer is NOT warehouse (SYS code) */}
+                  {(() => {
+                    const selectedCustomer = customers.find((c) => c.id === form.customerId)
+                    const isSystemWarehouse = selectedCustomer?.code === 'SYS'
+                    const showField = form.customerId && !isSystemWarehouse
+
+                    return showField ? (
+                      <div className="space-y-2">
+                        <Label className="flex items-center gap-2 text-base font-semibold">
+                          <MapPin className="h-4 w-4 text-rose-600" />
+                          Vị trí tại khách hàng
+                          <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
+                          value={form.customerLocation}
+                          onChange={(e) =>
+                            setForm((s: any) => ({ ...s, customerLocation: e.target.value }))
+                          }
+                          placeholder="Vị trí lắp đặt tại khách hàng..."
+                          className="h-11"
+                          required
+                        />
+                        <p className="text-xs text-gray-500">
+                          Nhập vị trí cụ thể của thiết bị tại khách hàng (phòng, tầng, khu vực...)
+                        </p>
+                      </div>
+                    ) : null
+                  })()}
+                </div>
                 <Separator />
               </>
             )}

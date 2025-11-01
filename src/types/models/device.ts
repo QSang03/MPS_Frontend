@@ -9,6 +9,7 @@ export interface Device {
   // legacy/simple model field used across UI
   model: string
   location: string
+  customerLocation?: string // Vị trí tại khách hàng
   // status: may come as legacy enum or canonical uppercase values from backend
   status: DeviceStatus | import('@/constants/status').DeviceStatusValue | string
   customerId: string
@@ -49,6 +50,7 @@ export interface CreateDeviceDto {
   model?: string
   deviceModelId?: string
   location?: string
+  customerLocation?: string // Vị trí tại khách hàng
   customerId?: string
   ipAddress?: string
   macAddress?: string

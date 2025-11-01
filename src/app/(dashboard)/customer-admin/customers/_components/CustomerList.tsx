@@ -33,28 +33,26 @@ export function CustomerList() {
   const [total, setTotal] = useState(0)
   const [totalPages, setTotalPages] = useState(1)
 
-  const load = useCallback(
-    async (p = page, l = limit, opts?: { silent?: boolean }) => {
-      const silent = opts?.silent === true
-      try {
-        if (!silent) setLoading(true)
-        const res = await customersClientService.getAll({ page: p, limit: l })
-        setItems(res.data)
-        setFiltered(res.data)
-        setTotal(res.pagination?.total ?? res.data.length)
-        setTotalPages(res.pagination?.totalPages ?? 1)
-        return res
-      } catch (error: unknown) {
-        const e = error as Error
-        console.error('Error loading customers:', e)
-        toast.error(e.message || 'Không thể tải danh sách khách hàng')
-        return undefined
-      } finally {
-        if (!silent) setLoading(false)
-      }
-    },
-    [page, limit]
-  )
+  // load is intentionally stable (no page/limit captured) — always pass explicit p and l
+  const load = useCallback(async (p = 1, l = 10, opts?: { silent?: boolean }) => {
+    const silent = opts?.silent === true
+    try {
+      if (!silent) setLoading(true)
+      const res = await customersClientService.getAll({ page: p, limit: l })
+      setItems(res.data)
+      setFiltered(res.data)
+      setTotal(res.pagination?.total ?? res.data.length)
+      setTotalPages(res.pagination?.totalPages ?? 1)
+      return res
+    } catch (error: unknown) {
+      const e = error as Error
+      console.error('Error loading customers:', e)
+      toast.error(e.message || 'Không thể tải danh sách khách hàng')
+      return undefined
+    } finally {
+      if (!silent) setLoading(false)
+    }
+  }, [])
 
   useEffect(() => {
     load(1, limit)
@@ -78,7 +76,8 @@ export function CustomerList() {
 
   const handleSaved = (c?: Customer | null) => {
     if (!c) {
-      load()
+      // reload current page after a create/update via explicit page/limit
+      load(page, limit)
       return
     }
     setItems((cur) => {
