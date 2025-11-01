@@ -190,7 +190,7 @@ export function CustomerList() {
                 <MapPin className="h-5 w-5 text-gray-300" />
               </div>
               <div>
-                <p className="text-sm text-white/80">Địa chỉ mẫu</p>
+                <p className="text-sm text-white/80">Địa chỉ lắp đặt</p>
                 <p className="text-2xl font-bold">{items.length}</p>
               </div>
             </div>

@@ -13,6 +13,13 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Loader2, Search, Building2, CheckCircle2, MapPin } from 'lucide-react'
 import { customersClientService } from '@/lib/api/services/customers-client.service'
 import type { Customer } from '@/types/models/customer'
@@ -35,6 +42,8 @@ export function CustomerSelectDialog({
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
   const [customerLocation, setCustomerLocation] = useState('')
+  const [customerAddresses, setCustomerAddresses] = useState<string[]>([])
+  const [loadingAddresses, setLoadingAddresses] = useState(false)
 
   const query = useQuery({
     queryKey: ['customers', { page: 1, limit: 100 }],
@@ -50,6 +59,40 @@ export function CustomerSelectDialog({
   // Check if selected customer is warehouse (SYS code)
   const isWarehouseCustomer = selectedCustomer?.code === 'SYS'
   const requiresLocation = selectedCustomer && !isWarehouseCustomer
+
+  // Fetch full customer details when a customer is selected to get addresses
+  useEffect(() => {
+    if (!selectedCustomer || isWarehouseCustomer) {
+      setCustomerAddresses([])
+      setCustomerLocation('')
+      return
+    }
+
+    const fetchCustomerDetails = async () => {
+      setLoadingAddresses(true)
+      try {
+        const details = await customersClientService.getById(selectedCustomer.id)
+        if (details?.address && Array.isArray(details.address)) {
+          setCustomerAddresses(details.address)
+          // Pre-select first address if available
+          if (details.address.length > 0 && details.address[0]) {
+            setCustomerLocation(details.address[0])
+          }
+        } else {
+          setCustomerAddresses([])
+          setCustomerLocation('')
+        }
+      } catch (err) {
+        console.error('Failed to fetch customer details', err)
+        toast.error('Không thể tải địa chỉ khách hàng')
+        setCustomerAddresses([])
+      } finally {
+        setLoadingAddresses(false)
+      }
+    }
+
+    fetchCustomerDetails()
+  }, [selectedCustomer, isWarehouseCustomer])
 
   useEffect(() => {
     if (error) {
@@ -88,6 +131,7 @@ export function CustomerSelectDialog({
     setSelectedCustomer(null)
     setSearchTerm('')
     setCustomerLocation('')
+    setCustomerAddresses([])
   }
 
   return (
@@ -185,15 +229,38 @@ export function CustomerSelectDialog({
                 Vị trí tại khách hàng
                 <span className="text-red-500">*</span>
               </Label>
-              <Input
-                value={customerLocation}
-                onChange={(e) => setCustomerLocation(e.target.value)}
-                placeholder="Nhập vị trí lắp đặt tại khách hàng..."
-                className="h-11 border-blue-200 bg-white"
-                autoFocus
-              />
+              {loadingAddresses ? (
+                <Select disabled>
+                  <SelectTrigger className="h-11 border-blue-200 bg-white">
+                    <SelectValue placeholder="Đang tải địa chỉ..." />
+                  </SelectTrigger>
+                </Select>
+              ) : customerAddresses.length > 0 ? (
+                <Select value={customerLocation} onValueChange={setCustomerLocation}>
+                  <SelectTrigger className="h-11 border-blue-200 bg-white">
+                    <SelectValue placeholder="Chọn địa chỉ..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {customerAddresses.map((addr, idx) => (
+                      <SelectItem key={idx} value={addr}>
+                        {addr}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Input
+                  value={customerLocation}
+                  onChange={(e) => setCustomerLocation(e.target.value)}
+                  placeholder="Nhập vị trí lắp đặt tại khách hàng..."
+                  className="h-11 border-blue-200 bg-white"
+                  autoFocus
+                />
+              )}
               <p className="text-xs text-blue-700">
-                Nhập vị trí cụ thể của thiết bị tại khách hàng (phòng, tầng, khu vực...)
+                {customerAddresses.length > 0
+                  ? 'Chọn địa chỉ từ danh sách hoặc liên hệ để cập nhật địa chỉ mới'
+                  : 'Nhập vị trí cụ thể của thiết bị tại khách hàng (phòng, tầng, khu vực...)'}
               </p>
             </div>
           )}
