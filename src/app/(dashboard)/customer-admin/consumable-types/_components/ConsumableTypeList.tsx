@@ -27,6 +27,7 @@ import {
   FileText,
   Pencil,
 } from 'lucide-react'
+import ImportExcelModal from './ImportExcelModal'
 import { cn } from '@/lib/utils'
 
 export function ConsumableTypeList() {
@@ -208,7 +209,10 @@ export function ConsumableTypeList() {
             </div>
           </div>
 
-          <ConsumableTypeFormModal mode="create" onSaved={handleSaved} />
+          <div className="flex items-center gap-2">
+            <ImportExcelModal />
+            <ConsumableTypeFormModal mode="create" onSaved={handleSaved} />
+          </div>
         </div>
 
         {/* Quick Stats */}

@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { DeleteDialog } from '@/components/shared/DeleteDialog'
 import DeviceFormModal from './deviceformmodal'
 import { devicesClientService } from '@/lib/api/services/devices-client.service'
+import { customersClientService } from '@/lib/api/services/customers-client.service'
 import { CustomerSelectDialog } from './CustomerSelectDialog'
 import type { Customer } from '@/types/models/customer'
 import { toast } from 'sonner'
@@ -202,6 +203,30 @@ export default function DevicesPageClient() {
     try {
       await devicesClientService.returnToWarehouse(deviceId)
       toast.success('Đã đưa thiết bị về kho (System)')
+      // After returning to warehouse, set device location to warehouse's default address (if available)
+      try {
+        const customersRes = await customersClientService.getAll({ page: 1, limit: 100 })
+        const sysCustomer = (customersRes.data || []).find((c) => c.code === 'SYS')
+        let warehouseAddress: string | undefined = undefined
+        if (sysCustomer) {
+          if (Array.isArray(sysCustomer.address) && sysCustomer.address.length > 0) {
+            warehouseAddress = sysCustomer.address[0]
+          } else if (typeof (sysCustomer.address as unknown) === 'string') {
+            warehouseAddress = sysCustomer.address as unknown as string
+          }
+        }
+
+        if (warehouseAddress) {
+          try {
+            await devicesClientService.update(deviceId, { location: warehouseAddress })
+          } catch (err) {
+            console.error('Failed to update device location to warehouse address', err)
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch system customer for warehouse address', err)
+      }
+
       await fetchDevices()
     } catch (err) {
       console.error('Failed to return device to warehouse', err)
