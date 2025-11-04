@@ -46,7 +46,7 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
     defaultValues: {
       customerId: initial?.customerId || '',
       contractNumber: initial?.contractNumber || '',
-      type: initial?.type ?? 'MPS',
+      type: initial?.type ?? 'MPS_CLICK_CHARGE',
       status: initial?.status ?? 'PENDING',
       startDate: initial?.startDate || new Date().toISOString().slice(0, 10),
       endDate: initial?.endDate || new Date().toISOString().slice(0, 10),
@@ -82,7 +82,7 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
       } catch {
         // ignore
       }
-      toast.success('✅ Cập nhật hợp đồng thành công')
+      toast.success('Cập nhật hợp đồng thành công')
       if (onSuccess) onSuccess(updated)
     },
     onError: (error: unknown) => {
@@ -184,9 +184,11 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
                         <SelectValue placeholder="Chọn loại hợp đồng" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="MPS">📋 MPS</SelectItem>
-                        <SelectItem value="CONSUMABLE_ONLY">🔄 CONSUMABLE_ONLY</SelectItem>
-                        <SelectItem value="REPAIR">🔧 REPAIR</SelectItem>
+                        <SelectItem value="MPS_CLICK_CHARGE">MPS_CLICK_CHARGE</SelectItem>
+                        <SelectItem value="MPS_CONSUMABLE">MPS_CONSUMABLE</SelectItem>
+                        <SelectItem value="CMPS_CLICK_CHARGE">CMPS_CLICK_CHARGE</SelectItem>
+                        <SelectItem value="CMPS_CONSUMABLE">CMPS_CONSUMABLE</SelectItem>
+                        <SelectItem value="PARTS_REPAIR_SERVICE">PARTS_REPAIR_SERVICE</SelectItem>
                       </SelectContent>
                     </Select>
                   </FormControl>
