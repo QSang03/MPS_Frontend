@@ -13,6 +13,10 @@ export const deviceModelsClientService = {
     limit?: number
     search?: string
     isActive?: boolean
+    manufacturer?: string
+    type?: 'PRINTER' | 'SCANNER' | 'COPIER' | 'FAX' | 'MULTIFUNCTION' | string
+    sortBy?: string
+    sortOrder?: 'asc' | 'desc'
   }): Promise<{
     data: DeviceModel[]
     pagination?: ListPagination
@@ -25,6 +29,10 @@ export const deviceModelsClientService = {
           limit: params?.limit ?? 100,
           search: params?.search,
           isActive: typeof params?.isActive === 'boolean' ? params?.isActive : undefined,
+          manufacturer: params?.manufacturer,
+          type: params?.type,
+          sortBy: params?.sortBy,
+          sortOrder: params?.sortOrder,
         },
       }
     )
@@ -68,16 +76,47 @@ export const deviceModelsClientService = {
   },
 
   async getCompatibleConsumables(id: string): Promise<ConsumableType[]> {
-    const response = await internalApiClient.get<{
-      data: Array<{
-        deviceModelId: string
-        consumableTypeId: string
-        createdAt: string
-        consumableType: ConsumableType
-      }>
-    }>(`/api/device-models/${id}/compatible-consumables`)
-    // Extract the nested consumableType from each compatibility record
-    return (response.data?.data ?? []).map((item) => item.consumableType)
+    // Simple in-flight request dedupe: if a request for the same id is
+    // already in progress, return the same promise so we don't issue
+    // duplicate HTTP calls (helps with React Strict Mode double-invoke).
+    // Use a typed holder for in-flight dedupe map to avoid `any` usage
+    const holder = deviceModelsClientService as unknown as {
+      _inflight?: Map<string, Promise<ConsumableType[]>>
+    }
+    holder._inflight = holder._inflight || new Map<string, Promise<ConsumableType[]>>()
+    const inflight: Map<string, Promise<ConsumableType[]>> = holder._inflight!
+    if (inflight.has(id)) {
+      return inflight.get(id) as Promise<ConsumableType[]>
+    }
+
+    const p = internalApiClient
+      .get<{
+        data: Array<{
+          deviceModelId: string
+          consumableTypeId: string
+          createdAt: string
+          consumableType: ConsumableType
+        }>
+      }>(`/api/device-models/${id}/compatible-consumables`)
+      .then((response) => {
+        const arr = (response.data?.data ?? []) as Array<{ consumableType: ConsumableType }>
+        return arr.map((item) => item.consumableType)
+      })
+      .catch((err) => {
+        // propagate error but remove inflight entry first
+        throw err
+      })
+      .finally(() => {
+        // remove inflight entry after settle
+        try {
+          inflight.delete(id)
+        } catch {
+          /* ignore */
+        }
+      })
+
+    inflight.set(id, p)
+    return p
   },
 
   async addCompatibleConsumable(id: string, consumableTypeId: string) {

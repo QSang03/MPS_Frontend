@@ -1,58 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import backendApiClient from '@/lib/api/backend-client'
-import { removeEmpty } from '@/lib/utils/clean'
 
-export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  try {
-    const cookieStore = await cookies()
-    const accessToken = cookieStore.get('access_token')?.value
-    if (!accessToken) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-    const { id } = (await params) as { id: string }
-
-    const response = await backendApiClient.get(`/consumables/${id}`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    })
-
-    return NextResponse.json(response.data)
-  } catch (error: unknown) {
-    const err = error as
-      | { message?: string; response?: { status?: number; data?: unknown } }
-      | undefined
-    console.error(
-      'API Route /api/consumables/[id] GET error:',
-      err?.response?.status || err?.message
-    )
-
-    // Return backend error message if available
-    const backendMessage =
-      (err?.response as unknown as { data?: { message?: string } })?.data?.message ||
-      err?.message ||
-      'Internal Server Error'
-    return NextResponse.json(
-      { error: backendMessage, message: backendMessage },
-      { status: err?.response?.status || 500 }
-    )
-  }
-}
-
-export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(request: NextRequest) {
   let reqBody: unknown = undefined
-  let id: string | undefined = undefined
   try {
-    const paramsObj = await params
-    id = paramsObj.id
     const cookieStore = await cookies()
     const accessToken = cookieStore.get('access_token')?.value
     if (!accessToken) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     reqBody = await request.json()
-    const cleaned = removeEmpty(reqBody as Record<string, unknown>)
 
-    const response = await backendApiClient.patch(`/consumables/${id}`, cleaned, {
+    const response = await backendApiClient.post('/consumables/bulk-create', reqBody, {
       headers: { Authorization: `Bearer ${accessToken}` },
     })
+
     return NextResponse.json(response.data)
   } catch (error: unknown) {
     const err = error as
@@ -62,10 +24,6 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
           config?: { data?: unknown }
         }
       | undefined
-    console.error(
-      'API Route /api/consumables/[id] PATCH error:',
-      err?.response?.status || err?.message
-    )
 
     // If 401 attempt refresh and retry once
     if (err?.response?.status === 401) {
@@ -123,15 +81,13 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
             : err?.config?.data && typeof err.config.data === 'string'
               ? JSON.parse(String(err.config.data))
               : {}
-        const cleanedOriginal = removeEmpty(originalBody as Record<string, unknown>)
 
-        const retryResp = await backendApiClient.patch(`/consumables/${id}`, cleanedOriginal, {
+        const retryResp = await backendApiClient.post('/consumables/bulk-create', originalBody, {
           headers: { Authorization: `Bearer ${newAccessToken}` },
         })
         return NextResponse.json(retryResp.data)
       } catch (retryErr: unknown) {
         const rerr = retryErr as { message?: string; response?: { status?: number } } | undefined
-        console.error('Retry after refresh failed:', rerr?.message)
         return NextResponse.json(
           { error: rerr?.message || 'Internal Server Error' },
           { status: rerr?.response?.status || 500 }
@@ -139,9 +95,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       }
     }
 
-    // If backend provided structured error body, forward it
     if (err?.response?.data && typeof err.response.data === 'object') {
-      return NextResponse.json(err.response.data as unknown as Record<string, unknown>, {
+      return NextResponse.json(err.response.data as Record<string, unknown>, {
         status: err.response?.status || 500,
       })
     }

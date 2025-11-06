@@ -1,6 +1,7 @@
 'use client'
 
 import { useForm } from 'react-hook-form'
+import { useState } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
@@ -14,7 +15,6 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import {
@@ -24,11 +24,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import CustomerSelect from '@/components/shared/CustomerSelect'
 import { userSchema, type UserFormData } from '@/lib/validations/user.schema'
 import removeEmpty from '@/lib/utils/clean'
 import { getRolesForClient, getDepartmentsForClient } from '@/lib/auth/data-actions'
 import { usersClientService } from '@/lib/api/services/users-client.service' // Thay đổi ở đây
 import type { User } from '@/types/users'
+
+type BackendDetails = {
+  errors?: Array<{ field?: string; message?: string }>
+  field?: string
+  message?: string
+  target?: string[]
+}
 
 interface UserFormProps {
   initialData?: User
@@ -55,17 +63,22 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
   const form = useForm<UserFormData>({
     resolver: zodResolver(userSchema),
     defaultValues: {
-      username: initialData?.username || '',
       email: initialData?.email || '',
       fullName: initialData?.fullName || '',
+      customerId: initialData?.customerId || customerId || '',
       roleId: initialData?.roleId || '',
       departmentId: initialData?.departmentId || '',
     },
   })
 
+  // Helper type for dynamic form field names returned by the server
+  type FormFieldName = Parameters<typeof form.setError>[0]
+
+  const [serverError, setServerError] = useState<string | null>(null)
+
   // Sử dụng usersClientService thay vì Server Action
   const createMutation = useMutation({
-    mutationFn: (data: UserFormData) => usersClientService.createUser({ ...data, customerId }),
+    mutationFn: (data: UserFormData) => usersClientService.createUser(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] })
       toast.success('Tạo người dùng thành công!')
@@ -77,18 +90,90 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
       }
     },
     onError: (error: unknown) => {
-      const message = error instanceof Error ? error.message : 'Tạo người dùng thất bại'
+      const resp = (error as unknown as { response?: { data?: unknown } })?.response?.data
+      // Normalize backend error shape to a typed view so we can read fields without `any`
+      type BackendDetails = {
+        errors?: Array<{ field?: string; message?: string }>
+        field?: string
+        message?: string
+        target?: string[]
+      }
+
+      const _backend = resp as unknown as {
+        message?: string
+        error?: string
+        details?: BackendDetails | undefined
+      }
+      const message =
+        _backend.message ||
+        _backend.error ||
+        (error instanceof Error ? error.message : 'Tạo người dùng thất bại')
+      const details = _backend.details as BackendDetails | undefined
+
+      setServerError(message)
+      // Collect a list of fields to mark as errored
+      const errorFields: string[] = []
+      if (Array.isArray(details?.errors) && details.errors.length > 0) {
+        for (const e of details.errors) {
+          if (e?.field) {
+            // per-field message if provided, otherwise fallback to overall message
+            const msg = e?.message || _backend.message || _backend.error || message
+            try {
+              form.setError(e.field as FormFieldName, { type: 'server', message: msg })
+            } catch {
+              // ignore
+            }
+            errorFields.push(e.field)
+          }
+        }
+      } else if (details?.field) {
+        // single field
+        const msg = details?.message || _backend.message || _backend.error || message
+        try {
+          form.setError(details.field as FormFieldName, { type: 'server', message: msg })
+        } catch {
+          // ignore
+        }
+        errorFields.push(details.field)
+      } else if (Array.isArray(details?.target) && details.target.length > 0) {
+        for (const t of details.target) {
+          const msg = _backend.message || _backend.error || message
+          try {
+            form.setError(t as FormFieldName, { type: 'server', message: msg })
+          } catch {
+            // ignore
+          }
+          errorFields.push(t)
+        }
+      }
+
+      // Focus the first errored field (slight delay to ensure DOM ready)
+      const first = errorFields[0]
+      if (first) {
+        try {
+          if (typeof form.setFocus === 'function') {
+            // small timeout so focus can occur reliably
+            setTimeout(() => {
+              ;(form.setFocus as unknown as (name: string) => void)(first)
+            }, 50)
+          } else if (typeof document !== 'undefined') {
+            setTimeout(() => {
+              const el = document.querySelector(`[name="${first}"]`) as HTMLElement | null
+              el?.focus()
+            }, 50)
+          }
+        } catch {
+          // ignore
+        }
+      }
+
       toast.error(message)
     },
   })
 
   // Sử dụng usersClientService thay vì Server Action
   const updateMutation = useMutation({
-    mutationFn: (data: UserFormData) =>
-      usersClientService.updateUser(initialData!.id, {
-        ...data,
-        customerId: initialData?.customerId,
-      }),
+    mutationFn: (data: UserFormData) => usersClientService.updateUser(initialData!.id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] })
       toast.success('Cập nhật người dùng thành công!')
@@ -100,21 +185,76 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
       }
     },
     onError: (error: unknown) => {
-      const message = error instanceof Error ? error.message : 'Cập nhật người dùng thất bại'
+      const resp = (error as unknown as { response?: { data?: unknown } })?.response?.data
+      const _backend = resp as unknown as {
+        message?: string
+        error?: string
+        details?: BackendDetails | undefined
+      }
+      const message =
+        _backend.message ||
+        (error instanceof Error ? error.message : 'Cập nhật người dùng thất bại')
+      const details = _backend.details as BackendDetails | undefined
+
+      setServerError(message)
+
+      const errorFields: string[] = []
+      if (Array.isArray(details?.errors) && details.errors.length > 0) {
+        for (const e of details.errors) {
+          if (e?.field) {
+            const msg = e?.message || message
+            try {
+              form.setError(e.field as FormFieldName, { type: 'server', message: msg })
+            } catch {
+              // ignore
+            }
+            errorFields.push(e.field)
+          }
+        }
+      } else if (details?.field) {
+        try {
+          form.setError(details.field as FormFieldName, { type: 'server', message })
+        } catch {
+          // ignore
+        }
+        errorFields.push(details.field)
+      } else if (Array.isArray(details?.target) && details.target.length > 0) {
+        for (const t of details.target) {
+          try {
+            form.setError(t as FormFieldName, { type: 'server', message })
+          } catch {
+            // ignore
+          }
+          errorFields.push(t)
+        }
+      }
+
+      const first = errorFields[0]
+      if (first) {
+        try {
+          if (typeof form.setFocus === 'function') {
+            setTimeout(() => {
+              ;(form.setFocus as unknown as (name: string) => void)(first)
+            }, 50)
+          } else if (typeof document !== 'undefined') {
+            setTimeout(() => {
+              const el = document.querySelector(`[name="${first}"]`) as HTMLElement | null
+              el?.focus()
+            }, 50)
+          }
+        } catch {
+          // ignore
+        }
+      }
+
       toast.error(message)
     },
   })
 
   const onSubmit = (data: UserFormData) => {
-    // Thêm password mặc định khi tạo mới
-    const dataWithPassword = {
-      ...data,
-      ...(mode === 'create' && { password: 'Ainkczalov2!' }), // User nên đổi mật khẩu sau lần đăng nhập đầu tiên
-    }
-
+    // Don't send password from client; let backend generate a default password when creating
     // Remove empty fields so backend won't receive blank strings
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const payload = removeEmpty(mode === 'create' ? (dataWithPassword as any) : (data as any))
+    const payload = removeEmpty(data as unknown as Record<string, unknown>)
 
     if (mode === 'create') {
       createMutation.mutate(payload as UserFormData)
@@ -128,27 +268,18 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        {/* Top-level error summary (show server/general + field errors) */}
+        {serverError || Object.keys(form.formState.errors).length > 0 ? (
+          <div className="border-destructive/60 bg-destructive/10 text-destructive rounded border-2 p-3 text-sm">
+            {serverError && <div className="mb-1 font-medium">{serverError}</div>}
+            <ul className="list-disc pl-5">
+              {Object.entries(form.formState.errors).map(([k, v]) => (
+                <li key={k}>{String(v?.message ?? k)}</li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <FormField
-            control={form.control}
-            name="username"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Tên đăng nhập</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="Nhập tên đăng nhập"
-                    {...field}
-                    disabled={isPending}
-                    className="font-mono"
-                  />
-                </FormControl>
-                <FormDescription>Tên đăng nhập duy nhất</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
           <FormField
             control={form.control}
             name="email"
@@ -164,7 +295,6 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
                   />
                 </FormControl>
                 <FormDescription>Địa chỉ email của người dùng</FormDescription>
-                <FormMessage />
               </FormItem>
             )}
           />
@@ -180,7 +310,25 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
                 <Input placeholder="Nhập họ tên đầy đủ" {...field} disabled={isPending} />
               </FormControl>
               <FormDescription>Họ tên đầy đủ của người dùng</FormDescription>
-              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="customerId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Khách hàng</FormLabel>
+              <FormControl>
+                <CustomerSelect
+                  {...field}
+                  value={(field.value as string) || ''}
+                  onChange={(id: string) => field.onChange(id)}
+                  disabled={isPending}
+                />
+              </FormControl>
+              <FormDescription>Khách hàng mà tài khoản thuộc về (tùy chọn)</FormDescription>
             </FormItem>
           )}
         />
@@ -221,7 +369,6 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
                   </SelectContent>
                 </Select>
                 <FormDescription>Vai trò của người dùng trong hệ thống</FormDescription>
-                <FormMessage />
               </FormItem>
             )}
           />
@@ -261,7 +408,6 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
                   </SelectContent>
                 </Select>
                 <FormDescription>Phòng ban của người dùng (tùy chọn)</FormDescription>
-                <FormMessage />
               </FormItem>
             )}
           />

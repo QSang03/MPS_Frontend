@@ -56,9 +56,17 @@ export const API_ENDPOINTS = {
     DELETE: (id: string) => `/consumable-types/${id}`,
   },
 
+  // Consumables
+  CONSUMABLES: {
+    LIST: '/consumables',
+    DETAIL: (id: string) => `/consumables/${id}`,
+    BULK_CREATE: '/consumables/bulk-create',
+  },
+
   // Stock Items
   STOCK_ITEMS: {
     UPDATE: (id: string) => `/stock-items/${id}`,
+    MOVEMENTS: (id: string) => `/stock-items/${id}/movements`,
   },
 
   // Service Requests

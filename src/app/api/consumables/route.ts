@@ -22,6 +22,10 @@ export async function GET(request: NextRequest) {
     const page = url.searchParams.get('page')
     const limit = url.searchParams.get('limit')
     const search = url.searchParams.get('search')
+    const customerId = url.searchParams.get('customerId')
+    const isOrphaned = url.searchParams.get('isOrphaned')
+    const typeId = url.searchParams.get('typeId')
+    const status = url.searchParams.get('status')
 
     if (page) {
       const p = Number(page)
@@ -35,6 +39,14 @@ export async function GET(request: NextRequest) {
       }
     }
     if (search) params.search = search
+    if (customerId) params.customerId = customerId
+    if (typeof isOrphaned === 'string') {
+      const normalized = isOrphaned.trim().toLowerCase()
+      if (normalized === 'true' || normalized === '1') params.isOrphaned = true
+      if (normalized === 'false' || normalized === '0') params.isOrphaned = false
+    }
+    if (typeId) params.typeId = typeId
+    if (status) params.status = status
 
     try {
       const response = await backendApiClient.get('/consumables', {

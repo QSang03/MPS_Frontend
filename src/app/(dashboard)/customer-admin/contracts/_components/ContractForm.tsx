@@ -1,6 +1,7 @@
 'use client'
 
 import { useForm, useWatch } from 'react-hook-form'
+import { useEffect } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
@@ -31,6 +32,7 @@ import type { Contract } from '@/types/models/contract'
 import { contractsClientService } from '@/lib/api/services/contracts-client.service'
 import { removeEmpty } from '@/lib/utils/clean'
 import { cn } from '@/lib/utils'
+import ContractDevicesSection from './ContractDevicesSection'
 
 interface ContractFormProps {
   initial?: Partial<ContractFormData>
@@ -102,10 +104,17 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
       const start = copy.startDate as string | undefined
       const years = copy.durationYears as number | undefined
       if (start && years && !Number.isNaN(Number(years))) {
-        const dt = new Date(start + 'T00:00:00')
-        dt.setFullYear(dt.getFullYear() + Number(years))
-        dt.setDate(dt.getDate() - 1)
-        copy.endDate = dt.toISOString().slice(0, 10)
+        // parse date parts and compute in UTC to avoid timezone shifts
+        const parts = String(start)
+          .split('-')
+          .map((v) => Number(v))
+        const sy = parts[0]!
+        const sm = parts[1]!
+        const sd = parts[2]!
+        // create UTC date at same month/day with year + years, then subtract 1 day in UTC
+        const endUtc = new Date(Date.UTC(sy + Number(years), sm - 1, sd))
+        endUtc.setUTCDate(endUtc.getUTCDate() - 1)
+        copy.endDate = endUtc.toISOString().slice(0, 10)
       }
       if ('durationYears' in copy) delete copy.durationYears
 
@@ -130,6 +139,28 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
   const id = (initial as unknown as { id?: string })?.id
   const watched = useWatch({ control: form.control })
   const errors = form.formState.errors
+
+  // keep the hidden endDate form value in sync with startDate + durationYears - 1 day
+  useEffect(() => {
+    try {
+      const s = watched.startDate
+      const years = watched.durationYears
+      if (!s || !years) return
+      const parts = String(s)
+        .split('-')
+        .map((v) => Number(v))
+      const sy = parts[0]!
+      const sm = parts[1]!
+      const sd = parts[2]!
+      if ([sy, sm, sd].some((n) => Number.isNaN(n))) return
+      const endUtc = new Date(Date.UTC(sy + Number(years), sm - 1, sd))
+      endUtc.setUTCDate(endUtc.getUTCDate() - 1)
+      const iso = endUtc.toISOString().slice(0, 10)
+      form.setValue('endDate', iso)
+    } catch {
+      // ignore
+    }
+  }, [watched.startDate, watched.durationYears, form])
 
   return (
     <Form {...form}>
@@ -342,13 +373,19 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
                   const s = watched.startDate
                   const years = watched.durationYears
                   if (!s) return '—'
-                  const start = new Date(s + 'T00:00:00')
-                  if (Number.isNaN(start.getTime())) return '❌ Ngày bắt đầu không hợp lệ'
                   if (!years) return '—'
-                  const end = new Date(start)
-                  end.setFullYear(end.getFullYear() + Number(years))
-                  end.setDate(end.getDate() - 1)
-                  return end.toISOString().slice(0, 10)
+                  const parts = String(s)
+                    .split('-')
+                    .map((v) => Number(v))
+                  const sy = parts[0]!
+                  const sm = parts[1]!
+                  const sd = parts[2]!
+                  if ([sy, sm, sd].some((n) => Number.isNaN(n)))
+                    return '❌ Ngày bắt đầu không hợp lệ'
+                  // compute using UTC arithmetic to match form value and avoid timezone shifts
+                  const endUtc = new Date(Date.UTC(sy + Number(years), sm - 1, sd))
+                  endUtc.setUTCDate(endUtc.getUTCDate() - 1)
+                  return endUtc.toISOString().slice(0, 10)
                 } catch {
                   return '—'
                 }
@@ -419,6 +456,13 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
           >
             ✕ Hủy
           </Button>
+        </div>
+
+        <Separator />
+
+        {/* Contract devices management (only available when editing an existing contract) */}
+        <div>
+          <ContractDevicesSection contractId={id} />
         </div>
 
         {/* Dev debug */}

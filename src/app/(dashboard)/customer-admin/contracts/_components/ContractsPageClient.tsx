@@ -34,6 +34,7 @@ import {
 } from '@/components/ui/dialog'
 import ContractFormModal from './ContractFormModal'
 import ContractForm from './ContractForm'
+import ContractDevicesModal from './ContractDevicesModal'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -56,6 +57,11 @@ export default function ContractsPageClient({ session }: Props) {
   const [searchTerm, setSearchTerm] = useState('')
   const [editingContract, setEditingContract] = useState<Contract | null>(null)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [isDevicesModalOpen, setIsDevicesModalOpen] = useState(false)
+  const [devicesModalContract, setDevicesModalContract] = useState<{
+    id: string
+    number?: string
+  } | null>(null)
   const [hoveredRowId, setHoveredRowId] = useState<string | null>(null)
 
   const fetchContracts = async () => {
@@ -380,6 +386,16 @@ export default function ContractsPageClient({ session }: Props) {
                                 <Edit className="h-4 w-4" />
                                 Chỉnh sửa
                               </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setDevicesModalContract({ id: c.id, number: c.contractNumber })
+                                  setIsDevicesModalOpen(true)
+                                }}
+                                className="flex cursor-pointer items-center gap-2 py-2 transition-all hover:bg-sky-50 hover:text-sky-700"
+                              >
+                                <Package className="h-4 w-4" />
+                                Gán thiết bị
+                              </DropdownMenuItem>
                             </PermissionGuard>
 
                             <DeleteDialog
@@ -491,6 +507,19 @@ export default function ContractsPageClient({ session }: Props) {
           </DialogContent>
         )}
       </Dialog>
+
+      {/* Devices Modal (opened from row menu) */}
+      {devicesModalContract && (
+        <ContractDevicesModal
+          open={isDevicesModalOpen}
+          onOpenChange={(v) => {
+            setIsDevicesModalOpen(v)
+            if (!v) setDevicesModalContract(null)
+          }}
+          contractId={devicesModalContract.id}
+          contractNumber={devicesModalContract.number}
+        />
+      )}
     </div>
   )
 }

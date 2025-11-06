@@ -25,6 +25,8 @@ import {
   Check,
   Edit,
 } from 'lucide-react'
+import ConsumablesModal from './ConsumablesModal'
+import { consumablesClientService } from '@/lib/api/services/consumables-client.service'
 
 export function CustomerList() {
   const [items, setItems] = useState<Customer[]>([])
@@ -123,6 +125,20 @@ export function CustomerList() {
   const [editingAddressFor, setEditingAddressFor] = useState<string | null>(null)
   const [editingAddressValue, setEditingAddressValue] = useState('')
   const [savingAddressId, setSavingAddressId] = useState<string | null>(null)
+  const [showConsumablesModal, setShowConsumablesModal] = useState(false)
+  interface ConsumableView {
+    id?: string
+    consumableType?: { name?: string }
+    serialNumber?: string
+    expiryDate?: string
+    deviceCount?: number
+    device?: { serialNumber?: string }
+  }
+
+  const [consumablesForCustomer, setConsumablesForCustomer] = useState<ConsumableView[]>([])
+  const [consumablesLoading, setConsumablesLoading] = useState(false)
+  const [viewCustomer, setViewCustomer] = useState<Customer | null>(null)
+  const [filterOrphaned, setFilterOrphaned] = useState<'all' | 'orphaned' | 'installed'>('orphaned')
 
   if (loading) {
     return (
@@ -386,6 +402,41 @@ export function CustomerList() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={async () => {
+                              try {
+                                setViewCustomer(c)
+                                setShowConsumablesModal(true)
+                                setConsumablesLoading(true)
+                                const params: Record<string, unknown> = {
+                                  customerId: c.id,
+                                  limit: 50,
+                                  page: 1,
+                                }
+                                if (filterOrphaned === 'orphaned') params.isOrphaned = true
+                                else if (filterOrphaned === 'installed') params.isOrphaned = false
+                                const res = await consumablesClientService.list(params)
+                                const items = (
+                                  Array.isArray(res?.items)
+                                    ? res.items
+                                    : Array.isArray(res)
+                                      ? res
+                                      : []
+                                ) as ConsumableView[]
+                                setConsumablesForCustomer(items)
+                              } catch (e) {
+                                console.error('Load consumables for customer failed', e)
+                                toast.error('Không tải được vật tư tiêu hao của khách hàng')
+                              } finally {
+                                setConsumablesLoading(false)
+                              }
+                            }}
+                          >
+                            <Eye className="mr-2 h-4 w-4" />
+                            Vật tư
+                          </Button>
                           <CustomerFormModal mode="edit" customer={c} onSaved={handleSaved} />
                           <DeleteDialog
                             title="Xác nhận xóa khách hàng"
@@ -479,6 +530,36 @@ export function CustomerList() {
           </div>
         </CardContent>
       </Card>
+
+      <ConsumablesModal
+        open={showConsumablesModal}
+        onOpenChange={setShowConsumablesModal}
+        viewCustomer={viewCustomer}
+        consumablesForCustomer={consumablesForCustomer}
+        consumablesLoading={consumablesLoading}
+        filterOrphaned={filterOrphaned}
+        onFilterChange={async (v: 'all' | 'orphaned' | 'installed') => {
+          setFilterOrphaned(v)
+          if (!viewCustomer?.id) return
+          try {
+            setConsumablesLoading(true)
+            const params: Record<string, unknown> = {
+              customerId: viewCustomer.id,
+              limit: 50,
+              page: 1,
+            }
+            if (v === 'orphaned') params.isOrphaned = true
+            else if (v === 'installed') params.isOrphaned = false
+            const res = await consumablesClientService.list(params)
+            const items = (
+              Array.isArray(res?.items) ? res.items : Array.isArray(res) ? res : []
+            ) as ConsumableView[]
+            setConsumablesForCustomer(items)
+          } finally {
+            setConsumablesLoading(false)
+          }
+        }}
+      />
     </div>
   )
 }

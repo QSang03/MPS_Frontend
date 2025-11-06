@@ -4,6 +4,8 @@ import backendApiClient from '@/lib/api/backend-client'
 import { API_ENDPOINTS } from '@/lib/api/endpoints'
 import axios from 'axios'
 
+type ApiErr = { response?: { data?: unknown; status?: number }; message?: string }
+
 export async function GET(request: NextRequest) {
   try {
     const cookieStore = await cookies()
@@ -30,12 +32,15 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(response.data)
   } catch (error: unknown) {
-    const err = error as { response?: { status?: number }; message?: string }
+    const err = error as unknown as ApiErr
     console.error('API Route /api/users error:', err)
-    return NextResponse.json(
-      { error: err.message || 'Internal Server Error' },
-      { status: err.response?.status || 500 }
-    )
+    const backendData = err?.response?.data
+    const status = err?.response?.status || 500
+    if (backendData) {
+      // Forward backend response body (may include message/details)
+      return NextResponse.json(backendData, { status })
+    }
+    return NextResponse.json({ error: err?.message || 'Internal Server Error' }, { status })
   }
 }
 
@@ -63,7 +68,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(response.data)
   } catch (error: unknown) {
-    const err = error as { response?: { status?: number }; message?: string }
+    const err = error as unknown as ApiErr
     console.error('API Route /api/users POST error:', err?.response?.status || err?.message)
 
     // Handle 401 from backend: try refresh token ONCE and retry create user
@@ -134,18 +139,24 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json(retryResp.data)
       } catch (retryErr: unknown) {
-        const retryError = retryErr as { response?: { status?: number }; message?: string }
+        const retryError = retryErr as unknown as ApiErr
         console.error('Retry after refresh failed:', retryError?.message)
+        const backendData = retryError?.response?.data
+        const status = retryError?.response?.status || 500
+        if (backendData) {
+          return NextResponse.json(backendData, { status })
+        }
         return NextResponse.json(
           { error: retryError?.message || 'Internal Server Error' },
-          { status: retryError?.response?.status || 500 }
+          { status }
         )
       }
     }
-
-    return NextResponse.json(
-      { error: err?.message || 'Internal Server Error' },
-      { status: err?.response?.status || 500 }
-    )
+    const backendData = err?.response?.data
+    const status = err?.response?.status || 500
+    if (backendData) {
+      return NextResponse.json(backendData, { status })
+    }
+    return NextResponse.json({ error: err?.message || 'Internal Server Error' }, { status })
   }
 }

@@ -28,6 +28,10 @@ export async function GET(request: NextRequest) {
     const limit = url.searchParams.get('limit')
     const search = url.searchParams.get('search')
     const isActive = url.searchParams.get('isActive')
+    const manufacturer = url.searchParams.get('manufacturer')
+    const type = url.searchParams.get('type')
+    const sortBy = url.searchParams.get('sortBy')
+    const sortOrder = url.searchParams.get('sortOrder')
 
     // normalize page and limit; backend enforces a maximum limit (100)
     if (page) {
@@ -46,6 +50,10 @@ export async function GET(request: NextRequest) {
     }
     if (search) params.search = search
     if (typeof isActive === 'string') params.isActive = isActive === 'true'
+    if (manufacturer) params.manufacturer = manufacturer
+    if (type) params.type = type
+    if (sortBy) params.sortBy = sortBy
+    if (sortOrder) params.sortOrder = sortOrder
 
     try {
       const response = await backendApiClient.get(API_ENDPOINTS.DEVICE_MODELS.LIST, {

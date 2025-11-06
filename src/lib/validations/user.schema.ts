@@ -4,15 +4,16 @@ import { z } from 'zod'
  * User form validation schema
  */
 export const userSchema = z.object({
+  // Username is optional in the client form (system may auto-generate it)
   username: z
     .string()
-    .min(1, 'Tên đăng nhập là bắt buộc')
     .min(3, 'Tên đăng nhập phải có ít nhất 3 ký tự')
     .max(50, 'Tên đăng nhập không được quá 50 ký tự')
     .regex(
       /^[a-zA-Z0-9_-]+$/,
       'Tên đăng nhập chỉ được chứa chữ cái, số, dấu gạch dưới và dấu gạch ngang'
-    ),
+    )
+    .optional(),
   email: z.string().min(1, 'Email là bắt buộc').email('Email không hợp lệ'),
   fullName: z
     .string()
@@ -21,6 +22,8 @@ export const userSchema = z.object({
     .max(100, 'Họ tên không được quá 100 ký tự'),
   roleId: z.string().min(1, 'Vai trò là bắt buộc'),
   departmentId: z.string().optional(),
+  // The customer the user belongs to (optional for system admins)
+  customerId: z.string().optional(),
 })
 
 export type UserFormData = z.infer<typeof userSchema>

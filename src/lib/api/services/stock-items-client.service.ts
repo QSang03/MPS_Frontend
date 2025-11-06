@@ -24,6 +24,27 @@ class StockItemsClientService {
       )
     }
   }
+
+  async getMovements(id: string, params?: { page?: number; limit?: number }) {
+    try {
+      const response = await internalApiClient.get(`/api/stock-items/${id}/movements`, {
+        params,
+      })
+      return response.data
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: unknown; status?: number }; message?: string }
+      console.error(
+        '[stockItemsClient] getMovements error',
+        e.response?.status,
+        e.response?.data || e.message
+      )
+      throw new Error(
+        e.response?.data
+          ? JSON.stringify(e.response.data)
+          : e.message || 'Failed to fetch stock item movements'
+      )
+    }
+  }
 }
 
 export const stockItemsClientService = new StockItemsClientService()

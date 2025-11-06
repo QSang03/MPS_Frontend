@@ -1,6 +1,11 @@
 import internalApiClient from '../internal-client'
 import type { Contract, CreateContractDto, UpdateContractDto } from '@/types/models/contract'
 import type { ApiListResponse, ListPagination } from '@/types/api'
+import type {
+  ContractDevice,
+  AttachDevicesDto,
+  DetachDevicesDto,
+} from '@/types/models/contract-device'
 
 export const contractsClientService = {
   async getAll(params?: { page?: number; limit?: number; search?: string }): Promise<{
@@ -37,6 +42,59 @@ export const contractsClientService = {
   async delete(id: string): Promise<boolean> {
     const response = await internalApiClient.delete(`/api/contracts/${id}`)
     return response.status === 200 || response.data?.success === true
+  },
+
+  /**
+   * Attach devices to a contract
+   */
+  async attachDevices(
+    contractId: string,
+    payload: AttachDevicesDto
+  ): Promise<ContractDevice | ContractDevice[] | null> {
+    const response = await internalApiClient.post(`/api/contracts/${contractId}/devices`, payload)
+    return response.data?.data ?? null
+  },
+
+  /**
+   * Detach devices from a contract
+   */
+  async detachDevices(contractId: string, payload: DetachDevicesDto): Promise<boolean> {
+    const response = await internalApiClient.delete(`/api/contracts/${contractId}/devices`, {
+      data: payload,
+    })
+    return response.status === 200 || response.data?.success === true
+  },
+
+  /**
+   * List devices attached to a contract with optional pagination and filters
+   */
+  async listDevices(
+    contractId: string,
+    params?: {
+      page?: number
+      limit?: number
+      search?: string
+      sortBy?: string
+      sortOrder?: string
+      activeMonth?: string
+    }
+  ): Promise<{ data: ContractDevice[]; pagination?: ListPagination }> {
+    const response = await internalApiClient.get<ApiListResponse<ContractDevice>>(
+      `/api/contracts/${contractId}/devices`,
+      {
+        params: {
+          page: params?.page ?? 1,
+          limit: params?.limit ?? 20,
+          search: params?.search,
+          sortBy: params?.sortBy,
+          sortOrder: params?.sortOrder,
+          activeMonth: params?.activeMonth,
+        },
+      }
+    )
+
+    const { data, pagination } = response.data || { data: [], pagination: undefined }
+    return { data: Array.isArray(data) ? data : [], pagination }
   },
 }
 

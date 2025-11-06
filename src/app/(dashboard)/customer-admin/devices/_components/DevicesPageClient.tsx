@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import type { Device } from '@/types/models/device'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -63,39 +63,45 @@ export default function DevicesPageClient() {
   const [updatingCustomer, setUpdatingCustomer] = useState(false)
   const router = useRouter()
 
-  const fetchDevices = useCallback(async () => {
-    setLoading(true)
-    try {
-      const includeHidden =
-        showInactiveStatuses || statusFilter === 'DISABLED' || statusFilter === 'DECOMMISSIONED'
-
-      const res = await devicesClientService.getAll({
-        page: 1,
-        limit: 100,
-        status: statusFilter ?? undefined,
-        includeHidden,
-      })
-      setDevices(res.data || [])
-      setFilteredDevices(res.data || [])
-    } catch (err) {
-      // If this is an AxiosError, log the JSON response body to help debugging
+  const fetchDevices = useCallback(
+    async (search?: string) => {
+      setLoading(true)
       try {
-        const anyErr = err as unknown as { response?: { data?: unknown; status?: number } }
-        if (anyErr?.response?.data) {
-          console.error('fetch devices error - response body:', anyErr.response.data)
-        } else {
-          console.error('fetch devices error', err)
+        const includeHidden =
+          showInactiveStatuses || statusFilter === 'DISABLED' || statusFilter === 'DECOMMISSIONED'
+
+        const res = await devicesClientService.getAll({
+          page: 1,
+          limit: 100,
+          status: statusFilter ?? undefined,
+          includeHidden,
+          // server expects `search` query param
+          search: search?.trim() ? search.trim() : undefined,
+        })
+        setDevices(res.data || [])
+        setFilteredDevices(res.data || [])
+      } catch (err) {
+        // If this is an AxiosError, log the JSON response body to help debugging
+        try {
+          const anyErr = err as unknown as { response?: { data?: unknown; status?: number } }
+          if (anyErr?.response?.data) {
+            console.error('fetch devices error - response body:', anyErr.response.data)
+          } else {
+            console.error('fetch devices error', err)
+          }
+        } catch {
+          console.error('fetch devices error (failed to inspect error object)', err)
         }
-      } catch {
-        console.error('fetch devices error (failed to inspect error object)', err)
+        toast.error('Không thể tải danh sách thiết bị')
+      } finally {
+        setLoading(false)
       }
-      toast.error('Không thể tải danh sách thiết bị')
-    } finally {
-      setLoading(false)
-    }
-  }, [showInactiveStatuses, statusFilter])
+    },
+    [showInactiveStatuses, statusFilter]
+  )
 
   useEffect(() => {
+    // initial load — no search
     fetchDevices()
     // re-run when user toggles showing inactive statuses or changes status filter
   }, [fetchDevices])
@@ -117,18 +123,20 @@ export default function DevicesPageClient() {
     }
   }, [statusFilter])
 
-  // Filter devices based on search term
+  // Client-side filtering when no server search is active.
+  // When user enters a search term we call the API (debounced) and the
+  // `devices` array will already be server-filtered, so avoid double-filtering.
   useEffect(() => {
     const term = searchTerm.trim().toLowerCase()
-    let filtered = devices.filter((d) => {
-      const matchesSearch =
-        !term ||
-        d.serialNumber?.toLowerCase().includes(term) ||
-        d.location?.toLowerCase().includes(term) ||
-        d.deviceModel?.name?.toLowerCase().includes(term) ||
-        d.ipAddress?.toLowerCase().includes(term)
-      return matchesSearch
-    })
+    if (term) {
+      // server-side search used; keep devices as returned by server
+      setFilteredDevices(devices)
+      return
+    }
+
+    // No search term: apply local filters (status/showInactive)
+    // start with a shallow copy of devices
+    let filtered = devices.slice()
 
     // Filter out disabled/decommissioned/deleted by default
     if (!showInactiveStatuses) {
@@ -145,6 +153,15 @@ export default function DevicesPageClient() {
 
     setFilteredDevices(filtered)
   }, [searchTerm, devices, showInactiveStatuses, statusFilter])
+
+  // Debounce ref for search API calls
+  const searchDebounceRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (searchDebounceRef.current) window.clearTimeout(searchDebounceRef.current)
+    }
+  }, [])
 
   const activeCount = devices.filter((d) => d.isActive).length
   const inactiveCount = devices.length - activeCount
@@ -347,44 +364,61 @@ export default function DevicesPageClient() {
               </CardDescription>
             </div>
 
-            {/* Search */}
-            {devices.length > 0 && (
-              <div className="flex items-center gap-3">
-                <div className="relative w-64">
-                  <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-                  <Input
-                    placeholder="Tìm kiếm..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-9"
-                  />
-                </div>
-                <Select
-                  value={statusFilter ?? 'ALL'}
-                  onValueChange={(v: string) => setStatusFilter(v === 'ALL' ? null : v)}
-                >
-                  <SelectTrigger className="h-9 w-48">
-                    <SelectValue placeholder="All statuses" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ALL">All</SelectItem>
-                    {Object.entries(STATUS_DISPLAY).map(([key, meta]) => (
-                      <SelectItem key={key} value={key}>
-                        {meta.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <div className="flex items-center gap-2">
-                  <label className="text-sm">Hiện trạng thái Disabled/Decommissioned</label>
-                  <input
-                    type="checkbox"
-                    checked={showInactiveStatuses}
-                    onChange={(e) => setShowInactiveStatuses(e.target.checked)}
-                  />
-                </div>
+            {/* Search (kept visible even when devices.length === 0 so user can adjust filters) */}
+            <div className="flex items-center gap-3">
+              <div className="relative w-64">
+                <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+                <Input
+                  placeholder="Tìm kiếm..."
+                  value={searchTerm}
+                  onChange={(e) => {
+                    const v = e.target.value
+                    setSearchTerm(v)
+
+                    // debounce API call: wait 2000ms after user stops typing
+                    if (searchDebounceRef.current) window.clearTimeout(searchDebounceRef.current)
+                    searchDebounceRef.current = window.setTimeout(() => {
+                      // when empty, pass undefined to fetch full list
+                      fetchDevices(v?.trim() ? v : undefined)
+                    }, 2000)
+                  }}
+                  onKeyDown={(e) => {
+                    // Submit immediately on Enter key
+                    if (e.key === 'Enter') {
+                      const v = (e.target as HTMLInputElement).value
+                      if (searchDebounceRef.current) window.clearTimeout(searchDebounceRef.current)
+                      // call immediately with current value (or undefined when empty)
+                      fetchDevices(v?.trim() ? v : undefined)
+                    }
+                  }}
+                  className="pl-9"
+                />
               </div>
-            )}
+              <Select
+                value={statusFilter ?? 'ALL'}
+                onValueChange={(v: string) => setStatusFilter(v === 'ALL' ? null : v)}
+              >
+                <SelectTrigger className="h-9 w-48">
+                  <SelectValue placeholder="All statuses" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">All</SelectItem>
+                  {Object.entries(STATUS_DISPLAY).map(([key, meta]) => (
+                    <SelectItem key={key} value={key}>
+                      {meta.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <div className="flex items-center gap-2">
+                <label className="text-sm">Hiện trạng thái Disabled/Decommissioned</label>
+                <input
+                  type="checkbox"
+                  checked={showInactiveStatuses}
+                  onChange={(e) => setShowInactiveStatuses(e.target.checked)}
+                />
+              </div>
+            </div>
           </div>
         </CardHeader>
         <CardContent>

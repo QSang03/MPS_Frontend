@@ -57,7 +57,6 @@ export default function DeviceFormModal({ mode = 'create', device = null, onSave
   const [form, setForm] = useState<any>({
     deviceModelId: '',
     serialNumber: '',
-    location: '',
     customerLocation: '',
     ipAddress: '',
     macAddress: '',
@@ -87,7 +86,6 @@ export default function DeviceFormModal({ mode = 'create', device = null, onSave
     setForm({
       deviceModelId: device.deviceModelId || device.deviceModel?.id || '',
       serialNumber: device.serialNumber || '',
-      location: device.location || '',
       customerLocation: device.customerLocation || '',
       ipAddress: device.ipAddress || '',
       macAddress: device.macAddress || '',
@@ -159,18 +157,17 @@ export default function DeviceFormModal({ mode = 'create', device = null, onSave
       let payload: Record<string, unknown> = {
         deviceModelId: form.deviceModelId || undefined,
         serialNumber: form.serialNumber,
-        location: form.location || undefined,
         ipAddress: form.ipAddress || undefined,
         macAddress: form.macAddress || undefined,
         firmware: form.firmware || undefined,
       }
 
-      // customerLocation and customerId are only used when creating a device
-      // For updating customer assignment, use assign-to-customer or return-to-warehouse endpoints
-      if (mode === 'create') {
-        payload.customerLocation = form.customerLocation || undefined
-        payload.customerId = form.customerId || undefined
-      }
+      // customerLocation and customerId: do NOT include them in the initial
+      // create payload to avoid double-assignment behavior. Instead, create
+      // the device first, then explicitly call assignToCustomer(deviceId, customerId)
+      // and update the device location if needed. This guarantees the
+      // `/devices/{id}/assign-to-customer` endpoint receives a payload of
+      // the form { customerId } only.
 
       if (mode === 'edit') {
         payload.isActive = form.isActive
@@ -183,6 +180,26 @@ export default function DeviceFormModal({ mode = 'create', device = null, onSave
 
       if (mode === 'create') {
         const created = await devicesClientService.create(payload as any)
+
+        // If a customer was selected, explicitly assign the created device to
+        // that customer using the assign endpoint (body: { customerId }).
+        // Then update device.location with customerLocation if provided.
+        try {
+          if (form.customerId) {
+            await devicesClientService.assignToCustomer(created.id, form.customerId)
+          }
+
+          if (form.customerLocation) {
+            // update location after assignment
+            await devicesClientService.update(created.id, { location: form.customerLocation })
+          }
+        } catch (assignErr) {
+          // If assignment fails, surface an error but keep device created.
+          console.error('Assign to customer after create failed', assignErr)
+          // show user-friendly message
+          toast.error('Thiết bị đã được tạo nhưng gán khách hàng thất bại')
+        }
+
         toast.success('Tạo thiết bị thành công')
         setOpen(false)
         onSaved?.(created)
@@ -366,17 +383,49 @@ export default function DeviceFormModal({ mode = 'create', device = null, onSave
                           Vị trí tại khách hàng
                           <span className="text-red-500">*</span>
                         </Label>
-                        <Input
-                          value={form.customerLocation}
-                          onChange={(e) =>
-                            setForm((s: any) => ({ ...s, customerLocation: e.target.value }))
+                        {/* If customer has address as array, show a Select so user can pick an address.
+                            If address is a string or missing, fall back to an Input. */}
+                        {(() => {
+                          const addr = (selectedCustomer as any)?.address
+                          if (Array.isArray(addr) && addr.length > 0) {
+                            return (
+                              <Select
+                                value={form.customerLocation}
+                                onValueChange={(v) =>
+                                  setForm((s: any) => ({ ...s, customerLocation: v }))
+                                }
+                              >
+                                <SelectTrigger className="h-11">
+                                  <SelectValue placeholder="Chọn địa chỉ khách hàng" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {addr.map((a: string, i: number) => (
+                                    <SelectItem key={i} value={a}>
+                                      {a}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            )
                           }
-                          placeholder="Vị trí lắp đặt tại khách hàng..."
-                          className="h-11"
-                          required
-                        />
+
+                          // fallback to text input for single-string addresses or missing addresses
+                          return (
+                            <Input
+                              value={form.customerLocation}
+                              onChange={(e) =>
+                                setForm((s: any) => ({ ...s, customerLocation: e.target.value }))
+                              }
+                              placeholder="Vị trí lắp đặt tại khách hàng..."
+                              className="h-11"
+                              required
+                            />
+                          )
+                        })()}
+
                         <p className="text-xs text-gray-500">
-                          Nhập vị trí cụ thể của thiết bị tại khách hàng (phòng, tầng, khu vực...)
+                          Chọn hoặc nhập vị trí cụ thể của thiết bị tại khách hàng (phòng, tầng, khu
+                          vực...)
                         </p>
                       </div>
                     ) : null
@@ -407,20 +456,7 @@ export default function DeviceFormModal({ mode = 'create', device = null, onSave
                 />
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label className="flex items-center gap-2 text-base font-semibold">
-                    <MapPin className="h-4 w-4 text-teal-600" />
-                    Vị trí
-                  </Label>
-                  <Input
-                    value={form.location}
-                    onChange={(e) => setForm((s: any) => ({ ...s, location: e.target.value }))}
-                    placeholder="Phòng/địa điểm..."
-                    className="h-11"
-                  />
-                </div>
-
+              <div className="grid gap-4 md:grid-cols-1">
                 <div className="space-y-2">
                   <Label className="flex items-center gap-2 text-base font-semibold">
                     <Settings className="h-4 w-4 text-indigo-600" />

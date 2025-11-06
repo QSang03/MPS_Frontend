@@ -26,9 +26,12 @@ import {
   BarChart3,
   FileText,
   Pencil,
+  Eye,
 } from 'lucide-react'
+import MovementHistoryModal from './MovementHistoryModal'
 import ImportExcelModal from './ImportExcelModal'
 import { cn } from '@/lib/utils'
+import BulkAssignModal from '../../consumables/_components/BulkAssignModal'
 
 export function ConsumableTypeList() {
   const [models, setModels] = useState<ConsumableType[]>([])
@@ -157,6 +160,16 @@ export function ConsumableTypeList() {
     })
   }
 
+  const [movementModal, setMovementModal] = useState<{
+    open: boolean
+    stockId: string
+    consumableName: string
+  } | null>(null)
+
+  const openMovementModal = (stockId: string, consumableName: string) => {
+    setMovementModal({ open: true, stockId, consumableName })
+  }
+
   const handleSaveStock = async (stockId: string, quantity: number, threshold: number) => {
     try {
       await stockItemsClientService.updateStockItem(stockId, {
@@ -211,6 +224,13 @@ export function ConsumableTypeList() {
 
           <div className="flex items-center gap-2">
             <ImportExcelModal />
+            <BulkAssignModal
+              trigger={
+                <Button className="bg-white text-emerald-700 hover:bg-white/90">
+                  Gán vật tư cho khách hàng
+                </Button>
+              }
+            />
             <ConsumableTypeFormModal mode="create" onSaved={handleSaved} />
           </div>
         </div>
@@ -383,6 +403,14 @@ export function ConsumableTypeList() {
                             >
                               <Pencil className="h-3 w-3 text-gray-500" />
                             </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => openMovementModal(m.stockItem!.id, m.name || 'N/A')}
+                              className="h-6 w-6 p-0"
+                            >
+                              <Eye className="h-3 w-3 text-gray-500" />
+                            </Button>
                           </div>
                         ) : (
                           <span className="text-muted-foreground text-sm">—</span>
@@ -515,6 +543,22 @@ export function ConsumableTypeList() {
           currentQuantity={editStockModal.quantity}
           currentThreshold={editStockModal.threshold}
           onSave={handleSaveStock}
+        />
+      )}
+
+      {/* Movement history modal */}
+      {movementModal && (
+        <MovementHistoryModal
+          open={movementModal.open}
+          onOpenChange={(open) => {
+            if (!open) {
+              setMovementModal(null)
+            } else {
+              setMovementModal((cur) => (cur ? { ...cur, open } : cur))
+            }
+          }}
+          stockId={movementModal.stockId}
+          consumableName={movementModal.consumableName}
         />
       )}
     </div>

@@ -100,9 +100,14 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
   const [compatibleConsumables, setCompatibleConsumables] = useState<any[]>([])
   const [consumablesLoading, setConsumablesLoading] = useState(false)
   const [showCreateConsumable, setShowCreateConsumable] = useState(false)
+  const [showAttachFromOrphaned, setShowAttachFromOrphaned] = useState(false)
   const [creatingConsumable, setCreatingConsumable] = useState(false)
   const [selectedConsumableType, setSelectedConsumableType] = useState<any | null>(null)
   const [serialNumber, setSerialNumber] = useState('')
+  const [orphanedList, setOrphanedList] = useState<any[]>([])
+  const [selectedOrphanedId, setSelectedOrphanedId] = useState<string>('')
+  const [orphanedSerial, setOrphanedSerial] = useState('')
+  const [orphanedExpiry, setOrphanedExpiry] = useState('')
   const [batchNumber, setBatchNumber] = useState('')
   const [capacity, setCapacity] = useState<number | ''>('')
   const [remaining, setRemaining] = useState<number | ''>('')
@@ -578,6 +583,40 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                   <CardDescription className="mt-1">
                     Danh sách vật tư hiện đang sử dụng
                   </CardDescription>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={async () => {
+                      try {
+                        setShowAttachFromOrphaned(true)
+                        const cid = (device as any)?.customerId || (device as any)?.customer?.id
+                        if (!cid) {
+                          toast.error('Thiết bị chưa có khách hàng')
+                          return
+                        }
+                        setConsumablesLoading(true)
+                        const list = await consumablesClientService.list({
+                          customerId: cid,
+                          isOrphaned: true,
+                        })
+                        const items = Array.isArray(list?.items)
+                          ? list.items
+                          : Array.isArray(list)
+                            ? list
+                            : []
+                        setOrphanedList(items)
+                      } catch (e) {
+                        console.error('Load orphaned consumables failed', e)
+                        toast.error('Không tải được vật tư đã xuất sẵn')
+                      } finally {
+                        setConsumablesLoading(false)
+                      }
+                    }}
+                  >
+                    Chọn từ vật tư đã xuất sẵn
+                  </Button>
                 </div>
               </div>
             </CardHeader>
@@ -1311,6 +1350,142 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                   Tạo và lắp
                 </>
               )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Attach From Orphaned Modal */}
+      <Dialog open={showAttachFromOrphaned} onOpenChange={setShowAttachFromOrphaned}>
+        <DialogContent className="max-w-[640px] overflow-hidden rounded-2xl border-0 p-0 shadow-2xl">
+          <DialogHeader className="relative overflow-hidden bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 p-0">
+            <div className="absolute inset-0 bg-black/10"></div>
+            <div className="relative z-10 px-6 py-5">
+              <div className="flex items-center gap-3">
+                <Plus className="h-6 w-6 text-white" />
+                <DialogTitle className="text-2xl font-bold text-white">
+                  Lắp vật tư đã xuất sẵn
+                </DialogTitle>
+              </div>
+              <DialogDescription className="mt-2 text-white/90">
+                Chọn vật tư đã xuất cho khách hàng và cập nhật thông tin trước khi lắp
+              </DialogDescription>
+            </div>
+          </DialogHeader>
+
+          <div className="space-y-5 bg-white px-6 py-6">
+            <div>
+              <Label className="text-base font-semibold">Chọn vật tư</Label>
+              <Select
+                value={selectedOrphanedId}
+                onValueChange={(v) => {
+                  setSelectedOrphanedId(v)
+                  const found = orphanedList.find((x: any) => String(x.id) === String(v))
+                  setOrphanedSerial(found?.serialNumber ?? '')
+                  setOrphanedExpiry(
+                    String(
+                      found?.expiryDate
+                        ? new Date(found.expiryDate).toISOString().split('T')[0]
+                        : ''
+                    )
+                  )
+                }}
+              >
+                <SelectTrigger className="mt-2 h-11">
+                  <SelectValue placeholder={consumablesLoading ? 'Đang tải...' : 'Chọn vật tư'} />
+                </SelectTrigger>
+                <SelectContent>
+                  {consumablesLoading && (
+                    <SelectItem value="__loading" disabled>
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Đang tải...
+                      </div>
+                    </SelectItem>
+                  )}
+                  {!consumablesLoading && orphanedList.length === 0 && (
+                    <SelectItem value="__empty" disabled>
+                      Không có vật tư trống
+                    </SelectItem>
+                  )}
+                  {orphanedList.map((c: any) => (
+                    <SelectItem key={c.id} value={String(c.id)}>
+                      {(c?.consumableType?.name || 'Vật tư') +
+                        (c?.serialNumber ? ` - ${c.serialNumber}` : '')}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div>
+                <Label className="text-base font-semibold">Số Serial</Label>
+                <Input
+                  value={orphanedSerial}
+                  onChange={(e) => setOrphanedSerial(e.target.value)}
+                  placeholder="SN123456"
+                  className="mt-2 h-11"
+                />
+              </div>
+              <div>
+                <Label className="text-base font-semibold">Ngày hết hạn</Label>
+                <Input
+                  type="date"
+                  value={orphanedExpiry}
+                  onChange={(e) => setOrphanedExpiry(e.target.value)}
+                  className="mt-2 h-11"
+                />
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="border-t bg-gray-50 px-6 py-4">
+            <Button
+              variant="outline"
+              onClick={() => setShowAttachFromOrphaned(false)}
+              className="min-w-[100px]"
+            >
+              Hủy
+            </Button>
+            <Button
+              onClick={async () => {
+                try {
+                  if (!selectedOrphanedId) {
+                    toast.error('Vui lòng chọn vật tư')
+                    return
+                  }
+                  // Update serial/expiry then install
+                  const dto: Record<string, unknown> = {}
+                  if (orphanedSerial) dto.serialNumber = orphanedSerial
+                  if (orphanedExpiry) dto.expiryDate = new Date(orphanedExpiry).toISOString()
+                  await consumablesClientService.update(selectedOrphanedId, dto)
+
+                  await devicesClientService.installConsumableWithPayload(
+                    deviceId,
+                    selectedOrphanedId,
+                    {}
+                  )
+
+                  toast.success('Đã lắp vật tư từ kho đã xuất sẵn')
+                  setShowAttachFromOrphaned(false)
+
+                  // Refresh installed and orphaned lists
+                  setConsumablesLoading(true)
+                  const installed = await devicesClientService
+                    .getConsumables(deviceId)
+                    .catch(() => [])
+                  setInstalledConsumables(Array.isArray(installed) ? installed : [])
+                } catch (e) {
+                  console.error('Attach orphaned consumable failed', e)
+                  toast.error('Không thể lắp vật tư')
+                } finally {
+                  setConsumablesLoading(false)
+                }
+              }}
+              className="min-w-[120px] bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700"
+            >
+              Lắp vào thiết bị
             </Button>
           </DialogFooter>
         </DialogContent>

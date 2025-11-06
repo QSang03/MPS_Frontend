@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -23,9 +23,17 @@ import {
   Hash,
   Settings,
   BarChart3,
+  Filter,
 } from 'lucide-react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select'
 
 export default function DeviceModelList() {
   const [models, setModels] = useState<DeviceModel[]>([])
@@ -42,14 +50,58 @@ export default function DeviceModelList() {
   const [consumableCounts, setConsumableCounts] = useState<Record<string, number>>({})
   const [countsLoading, setCountsLoading] = useState(false)
 
-  const load = async () => {
+  // Filter states
+  const [manufacturerFilter, setManufacturerFilter] = useState<string>('')
+  const [typeFilter, setTypeFilter] = useState<string>('')
+  const [isActiveFilter, setIsActiveFilter] = useState<string>('') // 'true', 'false', or ''
+  const [sortBy, setSortBy] = useState<string>('createdAt')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
+
+  const load = async (search?: string) => {
     setLoading(true)
     try {
-      const resp = await deviceModelsClientService.getAll({ limit: 100 })
-      setModels(resp.data || [])
-      setFilteredModels(resp.data || [])
-      // load compatible consumable counts for each model (non-blocking)
-      loadConsumableCounts(resp.data || [])
+      const resp = await deviceModelsClientService.getAll({
+        limit: 100,
+        search: search?.trim() || undefined,
+        manufacturer: manufacturerFilter || undefined,
+        type: typeFilter || undefined,
+        isActive: isActiveFilter === 'true' ? true : isActiveFilter === 'false' ? false : undefined,
+        sortBy: sortBy || undefined,
+        sortOrder: sortOrder || undefined,
+      })
+      const data = resp.data || []
+      setModels(data)
+      setFilteredModels(data)
+
+      // If backend already returned consumableTypeCount on each model, use
+      // that to populate counts and avoid per-model compatible-consumables
+      // requests. Only call per-model API for models that don't include it.
+      try {
+        const initialCounts: Record<string, number> = {}
+        const missingCountModels: typeof data = []
+        for (const m of data) {
+          // backend may include `consumableTypeCount` — guard via narrow cast
+          const maybeCount = (m as unknown as { consumableTypeCount?: number }).consumableTypeCount
+          if (typeof maybeCount === 'number') {
+            initialCounts[m.id] = maybeCount
+          } else {
+            missingCountModels.push(m)
+          }
+        }
+
+        if (Object.keys(initialCounts).length > 0) {
+          setConsumableCounts((cur) => ({ ...cur, ...initialCounts }))
+        }
+
+        // For models where backend didn't provide the count, fetch them (limited)
+        if (missingCountModels.length > 0) {
+          loadConsumableCounts(missingCountModels)
+        }
+      } catch (innerErr) {
+        console.error('Error parsing counts from backend', innerErr)
+        // fallback: still try to load counts for all models
+        loadConsumableCounts(data)
+      }
     } catch (err) {
       console.error('Load device models failed', err)
       toast.error('Không thể tải danh sách model')
@@ -59,20 +111,26 @@ export default function DeviceModelList() {
   }
 
   const loadConsumableCounts = async (modelsToLoad: DeviceModel[]) => {
+    // Avoid triggering a large number of parallel requests when there are
+    // many device models. Limit to a reasonable number (first N models) and
+    // load others lazily if needed. This reduces noise in network panel and
+    // load on backend.
     if (!Array.isArray(modelsToLoad) || modelsToLoad.length === 0) return
+    const MAX_CONCURRENT = 20 // fetch counts for at most this many models immediately
+    const toProcess = modelsToLoad.slice(0, MAX_CONCURRENT)
+
     setCountsLoading(true)
     try {
-      const promises = modelsToLoad.map((m) =>
+      const promises = toProcess.map((m) =>
         deviceModelsClientService
           .getCompatibleConsumables(m.id)
           .then((res) => ({ id: m.id, count: Array.isArray(res) ? res.length : 0 }))
+          .catch(() => ({ id: m.id, count: 0 }))
       )
-      const results = await Promise.allSettled(promises)
+      const results = await Promise.all(promises)
       const next: Record<string, number> = {}
       for (const r of results) {
-        if (r.status === 'fulfilled') {
-          next[r.value.id] = r.value.count
-        }
+        next[r.id] = r.count
       }
       setConsumableCounts((cur) => ({ ...cur, ...next }))
     } catch (e) {
@@ -82,28 +140,47 @@ export default function DeviceModelList() {
     }
   }
 
-  useEffect(() => {
-    load()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  // Helper to reload with current filter state
+  const reloadWithFilters = () => {
+    load(searchTerm?.trim() ? searchTerm : undefined)
+  }
 
-  // Filter models based on search term
+  // When filter/sort state changes, reload from server using current filters.
+  // This avoids relying on setTimeout hacks and guarantees the latest
+  // selected filter values are sent to the API immediately.
+  useEffect(() => {
+    reloadWithFilters()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [manufacturerFilter, typeFilter, isActiveFilter, sortBy, sortOrder])
+
+  // When searchTerm is set we call server-side search (debounced). If server
+  // search is active we show the `models` returned by server directly. When
+  // searchTerm is empty we fall back to client-side filtering.
   useEffect(() => {
     if (!searchTerm.trim()) {
       setFilteredModels(models)
       return
     }
 
-    const term = searchTerm.toLowerCase()
-    const filtered = models.filter((m) => {
-      return (
-        m.name?.toLowerCase().includes(term) ||
-        m.partNumber?.toLowerCase().includes(term) ||
-        m.manufacturer?.toLowerCase().includes(term)
-      )
-    })
-    setFilteredModels(filtered)
+    // while server search is used, show server-returned models
+    setFilteredModels(models)
   }, [searchTerm, models])
+
+  // Initial load on mount: fetch models when the component mounts so the
+  // list is populated the first time the page is opened.
+  useEffect(() => {
+    load()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // debounce ref for search
+  const searchDebounceRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (searchDebounceRef.current) window.clearTimeout(searchDebounceRef.current)
+    }
+  }, [])
 
   const handleDelete = async (id: string) => {
     // Optimistic UI: remove locally first, then call API
@@ -220,26 +297,147 @@ export default function DeviceModelList() {
       {/* Main Content Card */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Settings className="h-5 w-5 text-violet-600" />
-                Danh sách Device Models
-              </CardTitle>
-              <CardDescription className="mt-1">
-                Quản lý và theo dõi tất cả các mẫu thiết bị
-              </CardDescription>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Settings className="h-5 w-5 text-violet-600" />
+                  Danh sách Device Models
+                </CardTitle>
+                <CardDescription className="mt-1">
+                  Quản lý và theo dõi tất cả các mẫu thiết bị
+                </CardDescription>
+              </div>
+
+              {/* Search */}
+              <div className="relative w-64">
+                <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+                <Input
+                  placeholder="Tìm kiếm..."
+                  value={searchTerm}
+                  onChange={(e) => {
+                    const v = e.target.value
+                    setSearchTerm(v)
+
+                    // debounce server search by 2s
+                    if (searchDebounceRef.current) window.clearTimeout(searchDebounceRef.current)
+                    searchDebounceRef.current = window.setTimeout(() => {
+                      load(v?.trim() ? v : undefined)
+                    }, 2000)
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      const v = (e.target as HTMLInputElement).value
+                      if (searchDebounceRef.current) window.clearTimeout(searchDebounceRef.current)
+                      load(v?.trim() ? v : undefined)
+                    }
+                  }}
+                  className="pl-9"
+                />
+              </div>
             </div>
 
-            {/* Search */}
-            <div className="relative w-64">
-              <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-              <Input
-                placeholder="Tìm kiếm..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9"
-              />
+            {/* Filters */}
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4 text-violet-600" />
+                <span className="text-sm font-semibold">Bộ lọc:</span>
+              </div>
+
+              <Select
+                value={manufacturerFilter || 'ALL'}
+                onValueChange={(v) => setManufacturerFilter(v === 'ALL' ? '' : v)}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Nhà sản xuất" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">Tất cả NSX</SelectItem>
+                  <SelectItem value="HP">HP</SelectItem>
+                  <SelectItem value="Canon">Canon</SelectItem>
+                  <SelectItem value="Epson">Epson</SelectItem>
+                  <SelectItem value="Brother">Brother</SelectItem>
+                  <SelectItem value="Samsung">Samsung</SelectItem>
+                  <SelectItem value="Xerox">Xerox</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select
+                value={typeFilter || 'ALL'}
+                onValueChange={(v) => setTypeFilter(v === 'ALL' ? '' : v)}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Loại thiết bị" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">Tất cả loại</SelectItem>
+                  <SelectItem value="PRINTER">Máy in</SelectItem>
+                  <SelectItem value="SCANNER">Máy quét</SelectItem>
+                  <SelectItem value="COPIER">Máy photocopy</SelectItem>
+                  <SelectItem value="FAX">Máy fax</SelectItem>
+                  <SelectItem value="MULTIFUNCTION">Đa năng</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select
+                value={isActiveFilter || 'ALL'}
+                onValueChange={(v) => setIsActiveFilter(v === 'ALL' ? '' : v)}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Trạng thái" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">Tất cả</SelectItem>
+                  <SelectItem value="true">Đang hoạt động</SelectItem>
+                  <SelectItem value="false">Không hoạt động</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={sortBy} onValueChange={(v) => setSortBy(v)}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Sắp xếp theo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="createdAt">Ngày tạo</SelectItem>
+                  <SelectItem value="name">Tên</SelectItem>
+                  <SelectItem value="manufacturer">Nhà sản xuất</SelectItem>
+                  <SelectItem value="type">Loại</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={sortOrder} onValueChange={(v) => setSortOrder(v as 'asc' | 'desc')}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="Thứ tự" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="asc">Tăng dần</SelectItem>
+                  <SelectItem value="desc">Giảm dần</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {(manufacturerFilter ||
+                typeFilter ||
+                isActiveFilter ||
+                searchTerm ||
+                sortBy !== 'createdAt' ||
+                sortOrder !== 'desc') && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setManufacturerFilter('')
+                    setTypeFilter('')
+                    setIsActiveFilter('')
+                    setSearchTerm('')
+                    setSortBy('createdAt')
+                    setSortOrder('desc')
+                  }}
+                  className="gap-2"
+                >
+                  <XCircle className="h-4 w-4" />
+                  Xóa bộ lọc
+                </Button>
+              )}
             </div>
           </div>
         </CardHeader>

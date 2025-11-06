@@ -27,6 +27,7 @@ export function CustomerSelect({ value, onChange, disabled, placeholder }: Custo
   const [open, setOpen] = useState(false)
   const [selectedLabel, setSelectedLabel] = useState<string>('')
   const debounceRef = useRef<number | null>(null)
+  const containerRef = useRef<HTMLDivElement | null>(null)
   const listRef = useRef<HTMLDivElement | null>(null)
   const sentinelRef = useRef<HTMLDivElement | null>(null)
 
@@ -123,8 +124,21 @@ export function CustomerSelect({ value, onChange, disabled, placeholder }: Custo
     return () => observer.disconnect()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, pagination, loading, page])
+
+  // Close list when clicking outside the component
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (!open) return
+      const root = containerRef.current
+      if (root && e.target instanceof Node && !root.contains(e.target)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [open])
   return (
-    <div className="relative">
+    <div className="relative" ref={containerRef}>
       <Input
         value={selectedLabel || ''}
         onChange={(e) => {

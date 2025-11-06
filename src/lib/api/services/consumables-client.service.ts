@@ -10,6 +10,20 @@ export interface CreateConsumableDto {
 }
 
 class ConsumablesClientService {
+  async list(params?: Record<string, unknown>) {
+    const response = await internalApiClient.get('/api/consumables', { params })
+    const body = response.data
+    return body?.data ?? body
+  }
+
+  async bulkCreate(payload: {
+    customerId: string
+    items: Array<{ consumableTypeId: string; serialNumber?: string; expiryDate?: string }>
+  }) {
+    const response = await internalApiClient.post('/api/consumables/bulk-create', payload)
+    const body = response.data
+    return body?.data ?? body
+  }
   async create(dto: CreateConsumableDto) {
     const response = await internalApiClient.post('/api/consumables', dto)
     // backend may return { data: created } or created directly
@@ -25,6 +39,11 @@ class ConsumablesClientService {
     if (!body) return null
     if (body.data) return body.data
     return body
+  }
+
+  async getById(id: string) {
+    const response = await internalApiClient.get<{ data: unknown }>(`/api/consumables/${id}`)
+    return response.data?.data
   }
 
   // other consumable client methods can be added here later
