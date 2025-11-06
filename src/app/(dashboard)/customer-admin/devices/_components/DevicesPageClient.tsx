@@ -544,16 +544,26 @@ export default function DevicesPageClient() {
                                 customer?: { name?: string; code?: string; id?: string }
                               }
                             ).customer?.code !== 'SYS' && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-7 w-7 p-0 hover:bg-red-100"
-                                onClick={() => handleRemoveCustomer(d.id)}
-                                disabled={updatingCustomer}
-                                title="Gỡ về kho"
-                              >
-                                <X className="h-3.5 w-3.5 text-red-600" />
-                              </Button>
+                              <DeleteDialog
+                                title={`Gỡ khách hàng khỏi thiết bị ${d.serialNumber || d.id}`}
+                                description={
+                                  'Bạn có chắc muốn gỡ khách hàng khỏi thiết bị này? Thiết bị sẽ được chuyển về kho hệ thống.'
+                                }
+                                onConfirm={async () => {
+                                  await handleRemoveCustomer(d.id)
+                                }}
+                                trigger={
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-7 w-7 p-0 hover:bg-red-100"
+                                    disabled={updatingCustomer}
+                                    title="Gỡ về kho"
+                                  >
+                                    <X className="h-3.5 w-3.5 text-red-600" />
+                                  </Button>
+                                }
+                              />
                             )}
                         </div>
                       </td>
