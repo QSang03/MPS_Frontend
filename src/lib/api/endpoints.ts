@@ -102,9 +102,20 @@ export const API_ENDPOINTS = {
     GENERATE: '/reports/generate',
     DOWNLOAD: (id: string) => `/reports/${id}/download`,
   },
+
+  // Dashboard
+  DASHBOARD: {
+    ADMIN_OVERVIEW: '/dashboard/admin/overview',
+    DEVICE_DETAILS: (deviceId: string) => `/dashboard/devices/${deviceId}`,
+    CONSUMABLES: '/dashboard/consumables',
+  },
+
   // Policies
   POLICIES: '/policies',
   RESOURCE_TYPES: '/resource-types',
   POLICY_OPERATORS: '/policy-operators',
   POLICY_CONDITIONS: '/policy-conditions',
+
+  // System Settings
+  SYSTEM_SETTINGS: '/system-settings',
 } as const

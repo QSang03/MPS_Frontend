@@ -195,4 +195,48 @@ export const devicesClientService = {
       throw err
     }
   },
+
+  // Get active pricing for a device at a specific point in time (optional `at` ISO string)
+  async getActivePricing(id: string, at?: string) {
+    const response = await internalApiClient.get(`/api/devices/${id}/pricing/active`, {
+      params: { at },
+    })
+    const body = response.data
+    if (!body) return null
+    if (body.data) return body.data
+    return body
+  },
+
+  // Upsert (create or update) device pricing
+  async upsertPricing(
+    id: string,
+    dto: {
+      pricePerBWPage?: number
+      pricePerColorPage?: number
+      effectiveFrom?: string
+      effectiveTo?: string
+    }
+  ) {
+    try {
+      const response = await internalApiClient.patch(`/api/devices/${id}/pricing`, dto)
+      const body = response.data
+      if (!body) return null
+      if (body.data) return body.data
+      return body
+    } catch (err: unknown) {
+      try {
+        const e = err as { response?: { data?: unknown; status?: number }; message?: string }
+        console.error('[devicesClientService.upsertPricing] Full error:', {
+          status: e?.response?.status,
+          errorBody: e?.response?.data,
+          message: e?.message,
+          deviceId: id,
+          dto,
+        })
+      } catch {
+        console.error('[devicesClientService.upsertPricing] error:', err)
+      }
+      throw err
+    }
+  },
 }

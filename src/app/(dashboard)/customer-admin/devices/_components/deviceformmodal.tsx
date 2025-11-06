@@ -36,6 +36,7 @@ import {
   Package,
   CheckCircle2,
 } from 'lucide-react'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { toast } from 'sonner'
 import { devicesClientService } from '@/lib/api/services/devices-client.service'
 import deviceModelsClientService from '@/lib/api/services/device-models-client.service'
@@ -49,9 +50,16 @@ interface Props {
   mode?: 'create' | 'edit'
   device?: any | null
   onSaved?: (d?: any) => void
+  // When true, render compact icon-only trigger button (used in table action column)
+  compact?: boolean
 }
 
-export default function DeviceFormModal({ mode = 'create', device = null, onSaved }: Props) {
+export default function DeviceFormModal({
+  mode = 'create',
+  device = null,
+  onSaved,
+  compact = false,
+}: Props) {
   const [open, setOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [form, setForm] = useState<any>({
@@ -240,18 +248,38 @@ export default function DeviceFormModal({ mode = 'create', device = null, onSave
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {mode === 'create' ? (
+      {mode === 'create' ? (
+        <DialogTrigger asChild>
           <Button className="gap-2 bg-white text-blue-600 hover:bg-white/90">
             <Plus className="h-4 w-4" />
             Thêm thiết bị
           </Button>
-        ) : (
+        </DialogTrigger>
+      ) : compact ? (
+        <Tooltip>
+          <TooltipContent sideOffset={4}>Sửa</TooltipContent>
+          <TooltipTrigger asChild>
+            <DialogTrigger asChild>
+              <div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 rounded-full p-0"
+                  aria-label="Sửa"
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+              </div>
+            </DialogTrigger>
+          </TooltipTrigger>
+        </Tooltip>
+      ) : (
+        <DialogTrigger asChild>
           <Button variant="outline" size="sm" className="gap-2">
             <Edit className="h-4 w-4" />
           </Button>
-        )}
-      </DialogTrigger>
+        </DialogTrigger>
+      )}
 
       <DialogContent className="max-w-[700px] overflow-hidden rounded-2xl border-0 p-0 shadow-2xl">
         {/* Header with Gradient */}

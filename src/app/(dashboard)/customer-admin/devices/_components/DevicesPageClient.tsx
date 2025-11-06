@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { DeleteDialog } from '@/components/shared/DeleteDialog'
 import DeviceFormModal from './deviceformmodal'
+import DevicePricingModal from './DevicePricingModal'
 import { devicesClientService } from '@/lib/api/services/devices-client.service'
 import { customersClientService } from '@/lib/api/services/customers-client.service'
 import { CustomerSelectDialog } from './CustomerSelectDialog'
@@ -638,11 +639,15 @@ export default function DevicesPageClient() {
                           <DeviceFormModal
                             mode="edit"
                             device={d}
+                            compact
                             onSaved={() => {
                               toast.success('Cập nhật thiết bị thành công')
                               fetchDevices()
                             }}
                           />
+
+                          {/* Pricing modal */}
+                          <DevicePricingModal device={d} compact onSaved={() => fetchDevices()} />
 
                           <DeleteDialog
                             title={`Xóa thiết bị ${d.serialNumber || d.id}`}
