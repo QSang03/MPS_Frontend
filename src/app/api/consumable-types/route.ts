@@ -17,13 +17,16 @@ export async function GET(request: NextRequest) {
     const page = searchParams.get('page')
     const limit = searchParams.get('limit')
     const search = searchParams.get('search')
-    const isActive = searchParams.get('isActive')
+    const isActiveParam = searchParams.get('isActive')
 
     const params: any = {}
     if (page) params.page = page
     if (limit) params.limit = limit
     if (search) params.search = search
-    if (isActive !== null) params.isActive = isActive
+    if (isActiveParam !== null) {
+      // Convert string 'true'/'false' to boolean
+      params.isActive = isActiveParam === 'true'
+    }
 
     const response = await backendApiClient.get(API_ENDPOINTS.CONSUMABLE_TYPES.LIST, {
       headers: {
@@ -59,13 +62,16 @@ export async function GET(request: NextRequest) {
             const page = searchParams.get('page')
             const limit = searchParams.get('limit')
             const search = searchParams.get('search')
-            const isActive = searchParams.get('isActive')
+            const isActiveParam = searchParams.get('isActive')
 
             const params: any = {}
             if (page) params.page = page
             if (limit) params.limit = limit
             if (search) params.search = search
-            if (isActive !== null) params.isActive = isActive
+            if (isActiveParam !== null) {
+              // Convert string 'true'/'false' to boolean
+              params.isActive = isActiveParam === 'true'
+            }
 
             const retryResponse = await backendApiClient.get(API_ENDPOINTS.CONSUMABLE_TYPES.LIST, {
               headers: {

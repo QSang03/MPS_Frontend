@@ -30,7 +30,6 @@ import { consumablesClientService } from '@/lib/api/services/consumables-client.
 
 export function CustomerList() {
   const [items, setItems] = useState<Customer[]>([])
-  const [filtered, setFiltered] = useState<Customer[]>([])
   const [loading, setLoading] = useState(true)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
@@ -39,14 +38,17 @@ export function CustomerList() {
   const [total, setTotal] = useState(0)
   const [totalPages, setTotalPages] = useState(1)
 
-  // load is intentionally stable (no page/limit captured) — always pass explicit p and l
-  const load = useCallback(async (p = 1, l = 10, opts?: { silent?: boolean }) => {
+  // load with search support - pass search term to API
+  const load = useCallback(async (p = 1, l = 10, search = '', opts?: { silent?: boolean }) => {
     const silent = opts?.silent === true
     try {
       if (!silent) setLoading(true)
-      const res = await customersClientService.getAll({ page: p, limit: l })
+      const res = await customersClientService.getAll({
+        page: p,
+        limit: l,
+        ...(search.trim() && { search: search.trim() }),
+      })
       setItems(res.data)
-      setFiltered(res.data)
       setTotal(res.pagination?.total ?? res.data.length)
       setTotalPages(res.pagination?.totalPages ?? 1)
       return res
@@ -60,30 +62,29 @@ export function CustomerList() {
     }
   }, [])
 
+  // Load data when page, limit, or search changes
   useEffect(() => {
-    load(1, limit)
-  }, [limit, load])
+    // Debounce search: wait 2 seconds after user stops typing
+    const timer = setTimeout(() => {
+      setPage(1) // Reset to page 1 when searching
+      load(1, limit, searchTerm)
+    }, 2000)
 
-  useEffect(() => {
-    if (!searchTerm.trim()) {
-      setFiltered(items)
-      return
+    return () => clearTimeout(timer)
+  }, [searchTerm, limit, load])
+
+  // Handle Enter key press for immediate search
+  const handleSearchKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      setPage(1)
+      load(1, limit, searchTerm)
     }
-    const term = searchTerm.toLowerCase()
-    const filtered = items.filter((c) => {
-      return (
-        (c.name || '').toLowerCase().includes(term) ||
-        ((c.code || '') as string).toLowerCase().includes(term) ||
-        ((c.address || '') as string).toLowerCase().includes(term)
-      )
-    })
-    setFiltered(filtered)
-  }, [searchTerm, items])
+  }
 
   const handleSaved = (c?: Customer | null) => {
     if (!c) {
       // reload current page after a create/update via explicit page/limit
-      load(page, limit)
+      load(page, limit, searchTerm)
       return
     }
     setItems((cur) => {
@@ -102,12 +103,12 @@ export function CustomerList() {
       const newTotal = Math.max(0, total - 1)
       setTotal(newTotal)
       setTotalPages(Math.max(1, Math.ceil(newTotal / limit)))
-      const res = await load(page, limit, { silent: true })
+      const res = await load(page, limit, searchTerm, { silent: true })
       const curCount = res?.data?.length ?? 0
       if (curCount === 0 && page > 1) {
         const prevPage = page - 1
         setPage(prevPage)
-        await load(prevPage, limit, { silent: true })
+        await load(prevPage, limit, searchTerm, { silent: true })
       }
     } catch (error: unknown) {
       const e = error as Error
@@ -225,17 +226,16 @@ export function CustomerList() {
               <CardDescription className="mt-1">Danh sách và quản lý khách hàng</CardDescription>
             </div>
 
-            {items.length > 0 && (
-              <div className="relative w-64">
-                <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-                <Input
-                  placeholder="Tìm kiếm tên, mã, địa chỉ..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
-            )}
+            <div className="relative w-64">
+              <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+              <Input
+                placeholder="Tìm kiếm tên, mã, địa chỉ..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyPress={handleSearchKeyPress}
+                className="pl-9"
+              />
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -252,7 +252,7 @@ export function CustomerList() {
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {filtered.length === 0 ? (
+                {items.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="px-4 py-12 text-center">
                       <div className="text-muted-foreground flex flex-col items-center gap-3">
@@ -272,7 +272,7 @@ export function CustomerList() {
                     </td>
                   </tr>
                 ) : (
-                  filtered.map((c, index) => (
+                  items.map((c, index) => (
                     <tr
                       key={c.id}
                       className="transition-colors hover:bg-gradient-to-r hover:from-emerald-50/50 hover:to-teal-50/50"
@@ -472,7 +472,7 @@ export function CustomerList() {
             <div className="text-muted-foreground flex items-center gap-2 text-sm">
               <BarChart3 className="h-4 w-4" />
               <span>
-                Trang {page} / {totalPages} — Hiển thị {filtered.length} / {total}
+                Trang {page} / {totalPages} — Hiển thị {items.length} / {total}
               </span>
             </div>
 
@@ -498,7 +498,7 @@ export function CustomerList() {
                   if (page <= 1) return
                   const next = page - 1
                   setPage(next)
-                  await load(next, limit)
+                  await load(next, limit, searchTerm)
                 }}
                 disabled={page <= 1}
                 className="gap-1"
@@ -518,7 +518,7 @@ export function CustomerList() {
                   if (page >= totalPages) return
                   const next = page + 1
                   setPage(next)
-                  await load(next, limit)
+                  await load(next, limit, searchTerm)
                 }}
                 disabled={page >= totalPages}
                 className="gap-1"

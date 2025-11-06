@@ -60,6 +60,9 @@ export default function DevicesPageClient() {
     }
   })
   const [showCustomerSelect, setShowCustomerSelect] = useState(false)
+  const [customerFilter, setCustomerFilter] = useState<string | null>(null)
+  const [customers, setCustomers] = useState<Customer[]>([])
+  const [, setCustomersLoading] = useState(false)
   const [editingDeviceId, setEditingDeviceId] = useState<string | null>(null)
   const [updatingCustomer, setUpdatingCustomer] = useState(false)
   const router = useRouter()
@@ -75,6 +78,7 @@ export default function DevicesPageClient() {
           page: 1,
           limit: 100,
           status: statusFilter ?? undefined,
+          customerId: customerFilter ?? undefined,
           includeHidden,
           // server expects `search` query param
           search: search?.trim() ? search.trim() : undefined,
@@ -98,7 +102,7 @@ export default function DevicesPageClient() {
         setLoading(false)
       }
     },
-    [showInactiveStatuses, statusFilter]
+    [showInactiveStatuses, statusFilter, customerFilter]
   )
 
   useEffect(() => {
@@ -106,6 +110,28 @@ export default function DevicesPageClient() {
     fetchDevices()
     // re-run when user toggles showing inactive statuses or changes status filter
   }, [fetchDevices])
+
+  // Load customers for the customer filter select (first page, limit 100)
+  useEffect(() => {
+    let mounted = true
+    const loadCustomers = async () => {
+      setCustomersLoading(true)
+      try {
+        const res = await customersClientService.getAll({ page: 1, limit: 100 })
+        if (!mounted) return
+        setCustomers(res.data || [])
+      } catch (err) {
+        console.error('Failed to load customers for device filter', err)
+      } finally {
+        if (mounted) setCustomersLoading(false)
+      }
+    }
+
+    loadCustomers()
+    return () => {
+      mounted = false
+    }
+  }, [])
 
   // persist filter preferences to localStorage so they survive navigation
   useEffect(() => {
@@ -367,6 +393,19 @@ export default function DevicesPageClient() {
 
             {/* Search (kept visible even when devices.length === 0 so user can adjust filters) */}
             <div className="flex items-center gap-3">
+              <select
+                suppressHydrationWarning
+                value={customerFilter ?? ''}
+                onChange={(e) => setCustomerFilter(e.target.value ? e.target.value : null)}
+                className="rounded-md border px-3 py-2 text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none"
+              >
+                <option value="">Tất cả khách hàng</option>
+                {customers.map((cust) => (
+                  <option key={cust.id} value={cust.id}>
+                    {cust.name} {cust.code ? `(${cust.code})` : ''}
+                  </option>
+                ))}
+              </select>
               <div className="relative w-64">
                 <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
                 <Input
@@ -395,6 +434,7 @@ export default function DevicesPageClient() {
                   className="pl-9"
                 />
               </div>
+
               <Select
                 value={statusFilter ?? 'ALL'}
                 onValueChange={(v: string) => setStatusFilter(v === 'ALL' ? null : v)}
@@ -411,6 +451,32 @@ export default function DevicesPageClient() {
                   ))}
                 </SelectContent>
               </Select>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={async () => {
+                  // Clear all filters and fetch immediately
+                  setSearchTerm('')
+                  setCustomerFilter(null)
+                  setStatusFilter(null)
+                  setShowInactiveStatuses(false)
+
+                  setLoading(true)
+                  try {
+                    const res = await devicesClientService.getAll({ page: 1, limit: 100 })
+                    setDevices(res.data || [])
+                    setFilteredDevices(res.data || [])
+                  } catch (err) {
+                    console.error('Failed to clear device filters and fetch', err)
+                    toast.error('Không thể tải danh sách thiết bị')
+                  } finally {
+                    setLoading(false)
+                  }
+                }}
+                className="rounded-md border px-3 py-2 text-sm"
+              >
+                Xóa bộ lọc
+              </Button>
               <div className="flex items-center gap-2">
                 <label className="text-sm">Hiện trạng thái Disabled/Decommissioned</label>
                 <input

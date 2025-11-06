@@ -1,5 +1,5 @@
-import { RolesTable } from '../../system-admin/roles/_components/RolesTable'
+import { RolesTable } from './_components/RolesTable'
 
-export default function CustomerAdminRolesPage() {
+export default function RolesPage() {
   return <RolesTable />
 }

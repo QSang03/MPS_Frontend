@@ -41,6 +41,8 @@ import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Badge } from '@/components/ui/badge'
 import { contractsClientService } from '@/lib/api/services/contracts-client.service'
+import { customersClientService } from '@/lib/api/services/customers-client.service'
+import type { Customer } from '@/types/models/customer'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
@@ -52,9 +54,16 @@ interface Props {
 
 export default function ContractsPageClient({ session }: Props) {
   const [contracts, setContracts] = useState<Contract[]>([])
-  const [filteredContracts, setFilteredContracts] = useState<Contract[]>([])
   const [loading, setLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState<string | undefined>(undefined)
+  const [typeFilter, setTypeFilter] = useState<string | undefined>(undefined)
+  const [customerFilter, setCustomerFilter] = useState<string | undefined>(undefined)
+  const [customers, setCustomers] = useState<Customer[]>([])
+  const [, setCustomersLoading] = useState(false)
+  const [page, setPage] = useState(1)
+  const limit = 100
   const [editingContract, setEditingContract] = useState<Contract | null>(null)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDevicesModalOpen, setIsDevicesModalOpen] = useState(false)
@@ -64,42 +73,71 @@ export default function ContractsPageClient({ session }: Props) {
   } | null>(null)
   const [hoveredRowId, setHoveredRowId] = useState<string | null>(null)
 
-  const fetchContracts = async () => {
-    setLoading(true)
+  // Fetch contracts from server with filters (debouncedSearch)
+  const fetchContracts = async (opts?: { silent?: boolean }) => {
+    if (!opts?.silent) setLoading(true)
     try {
-      const res = await contractsClientService.getAll({ page: 1, limit: 100, search: '' })
+      const res = await contractsClientService.getAll({
+        page,
+        limit,
+        search: debouncedSearch || undefined,
+        status: statusFilter,
+        type: typeFilter,
+        customerId: customerFilter,
+      })
       setContracts(res.data || [])
-      setFilteredContracts(res.data || [])
     } catch (err) {
       console.error('fetch contracts error', err)
       toast.error('❌ Không thể tải danh sách hợp đồng')
     } finally {
-      setLoading(false)
+      if (!opts?.silent) setLoading(false)
     }
   }
 
+  // Initial load and reload when filters change
   useEffect(() => {
     fetchContracts()
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearch, statusFilter, typeFilter, customerFilter, page])
 
-  // Filter contracts based on search term
+  // Debounce search term (2s)
   useEffect(() => {
-    if (!searchTerm.trim()) {
-      setFilteredContracts(contracts)
-      return
+    const t = setTimeout(() => {
+      setDebouncedSearch(searchTerm)
+      setPage(1)
+    }, 2000)
+    return () => clearTimeout(t)
+  }, [searchTerm])
+
+  // Load customers for customer filter (simple: first page, limit 100)
+  useEffect(() => {
+    let mounted = true
+    const loadCustomers = async () => {
+      setCustomersLoading(true)
+      try {
+        const res = await customersClientService.getAll({ page: 1, limit: 100 })
+        if (!mounted) return
+        setCustomers(res.data || [])
+      } catch (err) {
+        console.error('Failed to load customers for filter', err)
+      } finally {
+        if (mounted) setCustomersLoading(false)
+      }
     }
 
-    const term = searchTerm.toLowerCase()
-    const filtered = contracts.filter((c) => {
-      return (
-        c.contractNumber?.toLowerCase().includes(term) ||
-        c.customer?.name?.toLowerCase().includes(term) ||
-        c.type?.toLowerCase().includes(term) ||
-        c.status?.toLowerCase().includes(term)
-      )
-    })
-    setFilteredContracts(filtered)
-  }, [searchTerm, contracts])
+    loadCustomers()
+    return () => {
+      mounted = false
+    }
+  }, [])
+
+  // Enter to search immediately
+  const handleSearchKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      setDebouncedSearch(searchTerm)
+      setPage(1)
+    }
+  }
 
   const getStatusColor = (status?: string) => {
     switch (status) {
@@ -232,21 +270,100 @@ export default function ContractsPageClient({ session }: Props) {
                 <FileText className="h-5 w-5 text-sky-600" />
                 Danh sách hợp đồng
               </CardTitle>
-              <CardDescription className="mt-1">
-                Tạo, chỉnh sửa và quản lý tất cả hợp đồng khách hàng
-              </CardDescription>
+              <CardDescription className="mt-1">quản lý tất cả hợp đồng khách hàng</CardDescription>
             </div>
 
             <div className="flex items-center gap-3">
+              {/* Filters: customer, status, type */}
+              <select
+                suppressHydrationWarning
+                value={customerFilter ?? ''}
+                onChange={(e) => {
+                  setCustomerFilter(e.target.value ? e.target.value : undefined)
+                  setPage(1)
+                }}
+                className="rounded-md border px-3 py-2 text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none"
+              >
+                <option value="">Tất cả khách hàng</option>
+                {customers.map((cust) => (
+                  <option key={cust.id} value={cust.id}>
+                    {cust.name} {cust.code ? `(${cust.code})` : ''}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                suppressHydrationWarning
+                value={statusFilter ?? ''}
+                onChange={(e) => {
+                  setStatusFilter(e.target.value ? e.target.value : undefined)
+                  setPage(1)
+                }}
+                className="rounded-md border px-3 py-2 text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none"
+              >
+                <option value="">Tất cả trạng thái</option>
+                <option value="PENDING">Chờ xử lý</option>
+                <option value="ACTIVE">Đang hoạt động</option>
+                <option value="EXPIRED">Hết hạn</option>
+                <option value="TERMINATED">Đã chấm dứt</option>
+              </select>
+
+              <select
+                suppressHydrationWarning
+                value={typeFilter ?? ''}
+                onChange={(e) => {
+                  setTypeFilter(e.target.value ? e.target.value : undefined)
+                  setPage(1)
+                }}
+                className="rounded-md border px-3 py-2 text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none"
+              >
+                <option value="">Tất cả loại</option>
+                <option value="MPS_CLICK_CHARGE">MPS_CLICK_CHARGE</option>
+                <option value="MPS_CONSUMABLE">MPS_CONSUMABLE</option>
+                <option value="CMPS_CLICK_CHARGE">CMPS_CLICK_CHARGE</option>
+                <option value="CMPS_CONSUMABLE">CMPS_CONSUMABLE</option>
+                <option value="PARTS_REPAIR_SERVICE">PARTS_REPAIR_SERVICE</option>
+              </select>
+
               <div className="relative w-64">
                 <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
                 <Input
                   placeholder="Tìm kiếm mã, khách hàng..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
+                  onKeyPress={handleSearchKeyPress}
                   className="pl-9"
                 />
               </div>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={async () => {
+                  // reset all filters and fetch immediately
+                  setSearchTerm('')
+                  setDebouncedSearch('')
+                  setStatusFilter(undefined)
+                  setTypeFilter(undefined)
+                  setCustomerFilter(undefined)
+                  setPage(1)
+
+                  setLoading(true)
+                  try {
+                    const res = await contractsClientService.getAll({ page: 1, limit })
+                    setContracts(res.data || [])
+                  } catch (err) {
+                    console.error('Failed to clear filters and fetch contracts', err)
+                    toast.error('Không thể tải danh sách hợp đồng')
+                  } finally {
+                    setLoading(false)
+                  }
+                }}
+                className="rounded-md border px-3 py-2 text-sm"
+              >
+                Xóa bộ lọc
+              </Button>
+
               <PermissionGuard session={session} action="create" resource={{ type: 'contract' }}>
                 <ContractFormModal onCreated={(c) => c && setContracts((prev) => [c, ...prev])} />
               </PermissionGuard>
@@ -288,7 +405,7 @@ export default function ContractsPageClient({ session }: Props) {
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {filteredContracts.length === 0 ? (
+                {contracts.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="px-4 py-12 text-center">
                       <div className="text-muted-foreground flex flex-col items-center gap-3">
@@ -316,7 +433,7 @@ export default function ContractsPageClient({ session }: Props) {
                     </td>
                   </tr>
                 ) : (
-                  filteredContracts.map((c, idx) => (
+                  contracts.map((c: Contract, idx: number) => (
                     <motion.tr
                       key={c.id}
                       onMouseEnter={() => setHoveredRowId(c.id)}
@@ -405,10 +522,10 @@ export default function ContractsPageClient({ session }: Props) {
                                 try {
                                   await contractsClientService.delete(c.id)
                                   setContracts((prev) => prev.filter((p) => p.id !== c.id))
-                                  toast.success('✅ Xóa hợp đồng thành công')
+                                  toast.success('Xóa hợp đồng thành công')
                                 } catch (err) {
                                   console.error('Delete contract error', err)
-                                  toast.error('❌ Có lỗi khi xóa hợp đồng')
+                                  toast.error('Có lỗi khi xóa hợp đồng')
                                 }
                               }}
                               trigger={
@@ -432,21 +549,17 @@ export default function ContractsPageClient({ session }: Props) {
           </div>
 
           {/* Footer Stats */}
-          {filteredContracts.length > 0 && (
+          {contracts.length > 0 && (
             <div className="text-muted-foreground mt-4 flex items-center justify-between text-sm">
               <div className="flex items-center gap-2">
                 <BarChart3 className="h-4 w-4" />
                 <span>
-                  Hiển thị{' '}
-                  <span className="text-foreground font-semibold">{filteredContracts.length}</span>
-                  {searchTerm && contracts.length !== filteredContracts.length && (
-                    <span> / {contracts.length}</span>
-                  )}{' '}
-                  hợp đồng
+                  Hiển thị <span className="text-foreground font-semibold">{contracts.length}</span>
+                  {searchTerm && <span> / {contracts.length}</span>} hợp đồng
                 </span>
               </div>
 
-              {searchTerm && contracts.length !== filteredContracts.length && (
+              {searchTerm && (
                 <Button variant="ghost" size="sm" onClick={() => setSearchTerm('')} className="h-8">
                   Xóa bộ lọc
                 </Button>

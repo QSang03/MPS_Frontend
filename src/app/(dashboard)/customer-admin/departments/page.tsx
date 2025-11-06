@@ -1,5 +1,5 @@
-import { DepartmentsTable } from '../../system-admin/departments/_components/DepartmentsTable'
+import { DepartmentsTable } from './_components/DepartmentsTable'
 
-export default function CustomerAdminDepartmentsPage() {
+export default function DepartmentsPage() {
   return <DepartmentsTable />
 }

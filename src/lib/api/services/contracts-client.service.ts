@@ -8,15 +8,30 @@ import type {
 } from '@/types/models/contract-device'
 
 export const contractsClientService = {
-  async getAll(params?: { page?: number; limit?: number; search?: string }): Promise<{
-    data: Contract[]
-    pagination?: ListPagination
-  }> {
+  async getAll(params?: {
+    page?: number
+    limit?: number
+    search?: string
+    type?: string
+    status?: string
+    customerId?: string
+    startDateFrom?: string
+    endDateTo?: string
+    sortBy?: string
+    sortOrder?: string
+  }): Promise<{ data: Contract[]; pagination?: ListPagination }> {
     const response = await internalApiClient.get<ApiListResponse<Contract>>('/api/contracts', {
       params: {
         page: params?.page ?? 1,
         limit: params?.limit ?? 100,
         search: params?.search,
+        type: params?.type,
+        status: params?.status,
+        customerId: params?.customerId,
+        startDateFrom: params?.startDateFrom,
+        endDateTo: params?.endDateTo,
+        sortBy: params?.sortBy,
+        sortOrder: params?.sortOrder,
       },
     })
 

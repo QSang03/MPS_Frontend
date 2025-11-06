@@ -35,10 +35,11 @@ import BulkAssignModal from '../../consumables/_components/BulkAssignModal'
 
 export function ConsumableTypeList() {
   const [models, setModels] = useState<ConsumableType[]>([])
-  const [filteredModels, setFilteredModels] = useState<ConsumableType[]>([])
   const [loading, setLoading] = useState(true)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [isActiveFilter, setIsActiveFilter] = useState<'all' | 'active' | 'inactive'>('all')
   const [page, setPage] = useState(1)
   const [limit, setLimit] = useState(10)
   const [total, setTotal] = useState(0)
@@ -55,7 +56,28 @@ export function ConsumableTypeList() {
 
   const queryClient = useQueryClient()
 
-  const queryKey = ['consumable-types', { page, limit }]
+  // Debounce search: wait 2 seconds after user stops typing
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm)
+      setPage(1) // Reset to page 1 when search changes
+    }, 2000)
+
+    return () => clearTimeout(timer)
+  }, [searchTerm])
+
+  // Handle Enter key for immediate search
+  const handleSearchKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      setDebouncedSearch(searchTerm)
+      setPage(1)
+    }
+  }
+
+  const queryKey = [
+    'consumable-types',
+    { page, limit, search: debouncedSearch, isActive: isActiveFilter },
+  ]
 
   const {
     data: queryData,
@@ -63,37 +85,24 @@ export function ConsumableTypeList() {
     refetch,
   } = useQuery({
     queryKey,
-    queryFn: () => consumableTypesClientService.getAll({ page, limit }),
+    queryFn: () =>
+      consumableTypesClientService.getAll({
+        page,
+        limit,
+        ...(debouncedSearch.trim() && { search: debouncedSearch.trim() }),
+        ...(isActiveFilter !== 'all' && { isActive: isActiveFilter === 'active' }),
+      }),
   })
 
-  // Sync query result into local state for filtering and UI convenience
+  // Sync query result into local state
   useEffect(() => {
     if (queryData) {
       setModels(queryData.data || [])
-      setFilteredModels(queryData.data || [])
       setTotal(queryData.pagination?.total ?? queryData.data?.length ?? 0)
       setTotalPages(queryData.pagination?.totalPages ?? 1)
     }
     setLoading(queryLoading)
   }, [queryData, queryLoading])
-
-  // Filter models based on search term
-  useEffect(() => {
-    if (!searchTerm.trim()) {
-      setFilteredModels(models)
-      return
-    }
-
-    const term = searchTerm.toLowerCase()
-    const filtered = models.filter((m) => {
-      return (
-        m.name?.toLowerCase().includes(term) ||
-        m.description?.toLowerCase().includes(term) ||
-        m.unit?.toLowerCase().includes(term)
-      )
-    })
-    setFilteredModels(filtered)
-  }, [searchTerm, models])
 
   const handleSaved = (m?: ConsumableType | null) => {
     if (!m) {
@@ -289,18 +298,32 @@ export function ConsumableTypeList() {
               </CardDescription>
             </div>
 
-            {/* Search */}
-            {models.length > 0 && (
+            {/* Search and Filters */}
+            <div className="flex items-center gap-3">
+              <select
+                value={isActiveFilter}
+                onChange={(e) => {
+                  setIsActiveFilter(e.target.value as 'all' | 'active' | 'inactive')
+                  setPage(1)
+                }}
+                className="rounded-md border px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+              >
+                <option value="all">Tất cả trạng thái</option>
+                <option value="active">Hoạt động</option>
+                <option value="inactive">Không hoạt động</option>
+              </select>
+
               <div className="relative w-64">
                 <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
                 <Input
-                  placeholder="Tìm kiếm..."
+                  placeholder="Tìm kiếm tên, mô tả, đơn vị..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
+                  onKeyPress={handleSearchKeyPress}
                   className="pl-9"
                 />
               </div>
-            )}
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -335,7 +358,7 @@ export function ConsumableTypeList() {
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {filteredModels.length === 0 ? (
+                {models.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="px-4 py-12 text-center">
                       <div className="text-muted-foreground flex flex-col items-center gap-3">
@@ -355,7 +378,7 @@ export function ConsumableTypeList() {
                     </td>
                   </tr>
                 ) : (
-                  filteredModels.map((m, index) => (
+                  models.map((m, index) => (
                     <tr
                       key={m.id}
                       className="transition-colors hover:bg-gradient-to-r hover:from-emerald-50/50 hover:to-teal-50/50"
@@ -472,7 +495,7 @@ export function ConsumableTypeList() {
             <div className="text-muted-foreground flex items-center gap-2 text-sm">
               <BarChart3 className="h-4 w-4" />
               <span>
-                Trang {page} / {totalPages} — Hiển thị {filteredModels.length} / {total}
+                Trang {page} / {totalPages} — Hiển thị {models.length} / {total}
               </span>
             </div>
 

@@ -79,7 +79,7 @@ export default function CustomerAdminDashboard() {
         />
 
         <div className="relative z-10">
-          <h1 className="font-display text-display-md font-bold">Dashboard Tổng quan �</h1>
+          <h1 className="font-display text-display-md font-bold">Dashboard Tổng quan</h1>
           <p className="text-brand-100 mt-2 text-lg">
             Theo dõi và quản lý hiệu suất hệ thống MPS của bạn
           </p>
