@@ -3,6 +3,7 @@
  * Handles API calls for dashboard endpoints via Next.js API routes
  */
 
+import internalApiClient from '../internal-client'
 import type {
   AdminOverviewResponse,
   AdminOverviewData,
@@ -26,36 +27,21 @@ class DashboardService {
     try {
       console.log('[DashboardService] Fetching admin overview for month:', month)
 
-      // Call Next.js API route (not backend directly)
-      const url = new URL('/api/dashboard/admin/overview', window.location.origin)
-      if (month) {
-        url.searchParams.set('month', month)
+      // Use internalApiClient (with auto token refresh interceptor)
+      const response = await internalApiClient.get<AdminOverviewResponse>(
+        '/api/dashboard/admin/overview',
+        {
+          params: month ? { month } : undefined,
+        }
+      )
+
+      console.log('[DashboardService] Response data:', response.data)
+
+      if (!response.data.success) {
+        throw new Error(response.data.error || 'Failed to fetch admin overview')
       }
 
-      const response = await fetch(url.toString(), {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include', // Important: send cookies
-      })
-
-      console.log('[DashboardService] Response status:', response.status)
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
-        throw new Error(errorData.error || `HTTP ${response.status}`)
-      }
-
-      const data = (await response.json()) as AdminOverviewResponse
-
-      console.log('[DashboardService] Response data:', data)
-
-      if (!data.success) {
-        throw new Error(data.error || 'Failed to fetch admin overview')
-      }
-
-      return data.data
+      return response.data.data
     } catch (error: unknown) {
       const err = error as { message?: string }
       console.error('[DashboardService] Error fetching admin overview:', {
@@ -76,31 +62,18 @@ class DashboardService {
     try {
       const { deviceId, customerId, from, to } = params
 
-      const url = new URL(`/api/dashboard/devices/${deviceId}`, window.location.origin)
-      url.searchParams.set('customerId', customerId)
-      url.searchParams.set('from', from)
-      url.searchParams.set('to', to)
+      const response = await internalApiClient.get<DeviceDashboardResponse>(
+        `/api/dashboard/devices/${deviceId}`,
+        {
+          params: { customerId, from, to },
+        }
+      )
 
-      const response = await fetch(url.toString(), {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
-        throw new Error(errorData.error || `HTTP ${response.status}`)
+      if (!response.data.success) {
+        throw new Error(response.data.error || 'Failed to fetch device dashboard')
       }
 
-      const data = (await response.json()) as DeviceDashboardResponse
-
-      if (!data.success) {
-        throw new Error(data.error || 'Failed to fetch device dashboard')
-      }
-
-      return data.data
+      return response.data.data
     } catch (error) {
       console.error('[DashboardService] Error fetching device details:', error)
       throw error
@@ -118,38 +91,24 @@ class DashboardService {
     params: ConsumableDashboardParams
   ): Promise<ConsumableDashboardData> {
     try {
-      const url = new URL('/api/dashboard/consumables', window.location.origin)
-      url.searchParams.set('customerId', params.customerId)
-      url.searchParams.set('from', params.from)
-      url.searchParams.set('to', params.to)
+      const response = await internalApiClient.get<ConsumableDashboardResponse>(
+        '/api/dashboard/consumables',
+        {
+          params: {
+            customerId: params.customerId,
+            from: params.from,
+            to: params.to,
+            ...(params.consumableTypeId && { consumableTypeId: params.consumableTypeId }),
+            ...(params.deviceModelId && { deviceModelId: params.deviceModelId }),
+          },
+        }
+      )
 
-      if (params.consumableTypeId) {
-        url.searchParams.set('consumableTypeId', params.consumableTypeId)
-      }
-      if (params.deviceModelId) {
-        url.searchParams.set('deviceModelId', params.deviceModelId)
-      }
-
-      const response = await fetch(url.toString(), {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
-        throw new Error(errorData.error || `HTTP ${response.status}`)
+      if (!response.data.success) {
+        throw new Error(response.data.error || 'Failed to fetch consumables dashboard')
       }
 
-      const data = (await response.json()) as ConsumableDashboardResponse
-
-      if (!data.success) {
-        throw new Error(data.error || 'Failed to fetch consumables dashboard')
-      }
-
-      return data.data
+      return response.data.data
     } catch (error) {
       console.error('[DashboardService] Error fetching consumables dashboard:', error)
       throw error

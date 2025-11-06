@@ -33,6 +33,8 @@ export function useAdminOverview(
     queryFn: () => dashboardService.getAdminOverview(month),
     staleTime: options?.staleTime ?? 5 * 60 * 1000, // 5 minutes default
     refetchInterval: options?.refetchInterval ?? 60 * 1000, // Auto-refetch every 1 minute
+    refetchOnMount: true, // Always refetch when component mounts
+    refetchOnWindowFocus: false, // Don't refetch on window focus
     enabled: options?.enabled ?? true,
   })
 }
