@@ -41,11 +41,6 @@ class ConsumablesClientService {
     return body
   }
 
-  async getById(id: string) {
-    const response = await internalApiClient.get<{ data: unknown }>(`/api/consumables/${id}`)
-    return response.data?.data
-  }
-
   // other consumable client methods can be added here later
 }
 

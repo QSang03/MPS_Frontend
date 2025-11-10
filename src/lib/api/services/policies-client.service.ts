@@ -81,6 +81,12 @@ export const policiesClientService = {
       const status = ae.response?.status
       const detail = ae.response?.data || ae.message
       console.error('[policiesClientService] createPolicy error', status, detail)
+      if (status && ae.response?.data && typeof ae.response.data === 'object') {
+        throw {
+          statusCode: status,
+          ...(ae.response.data as Record<string, unknown>),
+        }
+      }
       if (status === 401) throw new Error(`Unauthorized: ${JSON.stringify(detail)}`)
       throw err
     }
@@ -101,6 +107,12 @@ export const policiesClientService = {
       const status = ae.response?.status
       const detail = ae.response?.data || ae.message
       console.error('[policiesClientService] updatePolicy error', status, detail)
+      if (status && ae.response?.data && typeof ae.response.data === 'object') {
+        throw {
+          statusCode: status,
+          ...(ae.response.data as Record<string, unknown>),
+        }
+      }
       if (status === 401) throw new Error(`Unauthorized: ${JSON.stringify(detail)}`)
       throw err
     }

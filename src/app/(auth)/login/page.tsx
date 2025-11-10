@@ -19,6 +19,13 @@ export default function LoginPage() {
   // Redirect on successful login
   useEffect(() => {
     if (state?.success?.message && !isPending) {
+      // Check if user needs to change default password
+      if (state.success.isDefaultPassword) {
+        // Redirect to change password page immediately
+        router.push('/change-password?required=true')
+        return
+      }
+
       // Show success message for 1.5 seconds then redirect
       const timer = setTimeout(() => {
         router.push(ROUTES.CUSTOMER_ADMIN)

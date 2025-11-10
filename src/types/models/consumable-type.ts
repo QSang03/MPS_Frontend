@@ -19,6 +19,7 @@ export interface ConsumableType {
   updatedAt?: string
   deletedAt?: string | null
   stockItem?: StockItem
+  compatibleDeviceModels?: Array<{ id: string; name: string }>
 }
 
 export interface CreateConsumableTypeDto {

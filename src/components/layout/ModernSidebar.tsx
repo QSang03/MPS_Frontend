@@ -3,82 +3,26 @@
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils/cn'
 import { Button } from '@/components/ui/button'
-import { ChevronLeft, LogOut, Printer, Zap, Shield } from 'lucide-react'
+import { ChevronLeft, LogOut, Printer, Zap } from 'lucide-react'
 import type { Session } from '@/types/auth'
 import { useUIStore } from '@/lib/store/uiStore'
 import { logout } from '@/app/actions/auth'
 import { useNavigation } from '@/contexts/NavigationContext'
 import { SidebarNavItem } from '@/components/layout/SidebarWithSubmenu'
-import { UserRole } from '@/constants/roles'
-import { ROUTES } from '@/constants/routes'
-import {
-  LayoutDashboard,
-  Building2,
-  Users,
-  Settings,
-  ShoppingCart,
-  FileText,
-  BarChart3,
-} from 'lucide-react'
+import * as Icons from 'lucide-react'
+import { NAVIGATION_PAYLOAD } from '@/constants/navigation'
+import { Dialog, DialogTrigger, DialogContent } from '@/components/ui/dialog'
+import SettingsPanel from './SettingsPanel'
 
-interface NavItem {
-  label: string
-  href: string
-  icon: React.ComponentType<{ className?: string }>
-  badge?: number
-  submenu?: Array<{
-    label: string
-    href: string
-  }>
-}
-
-function getNavigationItems(role: UserRole): NavItem[] {
-  if (role === UserRole.SYSTEM_ADMIN) {
-    return [
-      { label: 'Khách hàng', href: ROUTES.SYSTEM_ADMIN_CUSTOMERS, icon: Building2 },
-      { label: 'Tài khoản', href: ROUTES.SYSTEM_ADMIN_ACCOUNTS, icon: Users },
-      { label: 'Cấu hình hệ thống', href: ROUTES.SYSTEM_ADMIN_SYSTEM_SETTINGS, icon: Settings },
-      { label: 'Cài đặt', href: ROUTES.SYSTEM_ADMIN_SETTINGS, icon: Settings },
-    ]
-  }
-
-  if (role === UserRole.CUSTOMER_ADMIN) {
-    return [
-      { label: 'Tổng quan', href: ROUTES.CUSTOMER_ADMIN, icon: LayoutDashboard },
-      { label: 'Thiết bị', href: ROUTES.CUSTOMER_ADMIN_DEVICES, icon: Printer },
-      { label: 'Mẫu thiết bị', href: ROUTES.CUSTOMER_ADMIN_DEVICE_MODELS, icon: Building2 },
-      { label: 'Hợp đồng', href: ROUTES.CUSTOMER_ADMIN_CONTRACTS, icon: FileText },
-      {
-        label: 'Loại vật tư tiêu hao',
-        href: ROUTES.CUSTOMER_ADMIN_CONSUMABLE_TYPES,
-        icon: ShoppingCart,
-      },
-      // {
-      //   label: 'Yêu cầu bảo trì',
-      //   href: ROUTES.CUSTOMER_ADMIN_SERVICE_REQUESTS,
-      //   icon: FileText,
-      // },
-      // {
-      //   label: 'Yêu cầu mua hàng',
-      //   href: ROUTES.CUSTOMER_ADMIN_PURCHASE_REQUESTS,
-      //   icon: ShoppingCart,
-      // },
-      { label: 'Quản lý người dùng', href: ROUTES.CUSTOMER_ADMIN_USERS, icon: Users },
-      { label: 'Khách hàng', href: ROUTES.CUSTOMER_ADMIN_CUSTOMERS, icon: Building2 },
-      { label: 'Quản lý policies', href: ROUTES.CUSTOMER_ADMIN_POLICIES, icon: Shield },
-      { label: 'Quản lý vai trò', href: ROUTES.CUSTOMER_ADMIN_ROLES, icon: Settings },
-      { label: 'Quản lý bộ phận', href: ROUTES.CUSTOMER_ADMIN_DEPARTMENTS, icon: Building2 },
-      { label: 'Cấu hình hệ thống', href: ROUTES.CUSTOMER_ADMIN_SYSTEM_SETTINGS, icon: Settings },
-      { label: 'Báo cáo', href: ROUTES.CUSTOMER_ADMIN_REPORTS, icon: BarChart3 },
-    ]
-  }
-
-  // Regular User
-  return [
-    { label: 'Thiết bị của tôi', href: ROUTES.USER_MY_DEVICES, icon: Printer },
-    { label: 'Yêu cầu của tôi', href: ROUTES.USER_MY_REQUESTS, icon: FileText },
-    { label: 'Hồ sơ', href: ROUTES.USER_PROFILE, icon: Settings },
-  ]
+// Icon mapping helper - map our string icon names to lucide-react components
+function getIconComponent(name?: string) {
+  if (!name) return Icons.LayoutDashboard
+  // Try to find the icon in lucide-react export map
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  const comp = Icons[name]
+  if (comp) return comp
+  return Icons.LayoutDashboard
 }
 
 interface SidebarProps {
@@ -89,7 +33,29 @@ export function ModernSidebar({ session }: SidebarProps) {
   const { sidebarOpen, toggleSidebar } = useUIStore()
   const { currentSubmenu } = useNavigation()
 
-  const navigation = getNavigationItems(session.role)
+  // mark session as used to avoid unused var lint when not needed yet
+  void session
+
+  const { items: navItems, loading: navLoading } = useNavigation()
+
+  // Build navigation list used by the sidebar. If backend hasn't returned
+  // permission-checked items yet, fall back to the static payload mapped to icons.
+  const navigation = (navLoading || !navItems ? NAVIGATION_PAYLOAD : navItems)
+    .filter(Boolean)
+    // Only include items that either are marked hasAccess === true or if not present include them (fallback)
+    .map((it: Record<string, unknown>) => ({
+      label: String(it.label ?? ''),
+      href: (it.route as string) || '#',
+      icon: getIconComponent(it.icon as string),
+      badge: undefined,
+      submenu: undefined,
+      hasAccess: Boolean(it.hasAccess),
+      raw: it,
+    }))
+    // If navItems is present (from backend), filter out denied items explicitly
+    .filter((it: Record<string, unknown>) =>
+      navItems ? (it.raw as Record<string, unknown>)?.hasAccess !== false : true
+    )
 
   const handleLogout = async () => {
     await logout()
@@ -135,13 +101,24 @@ export function ModernSidebar({ session }: SidebarProps) {
 
           <div className="relative flex items-center justify-between gap-3 px-6 py-6">
             <div className="flex min-w-0 flex-1 items-center gap-3">
-              <motion.div
-                className="flex-shrink-0 rounded-xl border border-white/30 bg-white/20 p-2.5 shadow-lg backdrop-blur-lg"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Printer className="h-6 w-6 text-white" />
-              </motion.div>
+              {/* make logo clickable to open settings */}
+              <Dialog>
+                <DialogTrigger asChild>
+                  <motion.button
+                    className="flex-shrink-0 rounded-xl border border-white/30 bg-white/20 p-2.5 shadow-lg backdrop-blur-lg"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    aria-label="Mở cài đặt giao diện"
+                  >
+                    <Printer className="h-6 w-6 text-white" />
+                  </motion.button>
+                </DialogTrigger>
+
+                <DialogContent className="max-w-lg">
+                  <SettingsPanel />
+                </DialogContent>
+              </Dialog>
+
               <div className="min-w-0 flex-1">
                 <h1 className="truncate text-sm font-bold text-white">MPS</h1>
                 <p className="truncate text-xs font-medium text-blue-100">CHÍNH NHÂN TECHNOLOGY</p>

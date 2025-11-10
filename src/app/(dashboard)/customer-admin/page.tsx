@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { usePageTitle } from '@/lib/hooks/usePageTitle'
 import { useAdminOverview, useCurrentMonth } from '@/lib/hooks/useDashboardData'
 import { KPICards } from './_components/KPICards'
 import { CostBreakdownChart } from './_components/CostBreakdownChart'
@@ -34,6 +35,7 @@ function DashboardSkeleton() {
 export default function CustomerAdminDashboard() {
   const currentMonth = useCurrentMonth()
   const [selectedMonth, setSelectedMonth] = useState(currentMonth)
+  usePageTitle('Dashboard Tổng quan')
 
   // Fetch admin overview data
   const { data: overviewData, isLoading, isError, error, refetch } = useAdminOverview(selectedMonth)
@@ -69,22 +71,6 @@ export default function CustomerAdminDashboard() {
   return (
     <div className="space-y-8">
       {/* Hero Section với Gradient */}
-      <div className="from-brand-500 via-brand-600 to-brand-700 shadow-soft-2xl relative overflow-hidden rounded-3xl bg-gradient-to-br p-8 text-white">
-        {/* Grid Pattern Background */}
-        <div
-          className="absolute inset-0 opacity-10"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-          }}
-        />
-
-        <div className="relative z-10">
-          <h1 className="font-display text-display-md font-bold">Dashboard Tổng quan</h1>
-          <p className="text-brand-100 mt-2 text-lg">
-            Theo dõi và quản lý hiệu suất hệ thống MPS của bạn
-          </p>
-        </div>
-      </div>
 
       {/* Date Range Selector */}
       <DateRangeSelector defaultMonth={selectedMonth} onChange={handleMonthChange} />

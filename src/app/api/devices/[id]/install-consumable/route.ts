@@ -24,8 +24,24 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     return NextResponse.json(response.data)
   } catch (error: unknown) {
-    const err = error as { message?: string; response?: { status?: number } } | undefined
+    const err = error as
+      | {
+          message?: string
+          response?: {
+            status?: number
+            data?: unknown
+          }
+        }
+      | undefined
+
     console.error('API Route /api/devices/[id]/install-consumable POST error:', error)
+
+    // Return full error response from backend if available
+    if (err?.response?.data) {
+      return NextResponse.json(err.response.data, { status: err.response.status || 500 })
+    }
+
+    // Fallback to simple error message
     return NextResponse.json(
       { error: err?.message || 'Internal Server Error' },
       { status: err?.response?.status || 500 }

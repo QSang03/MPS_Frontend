@@ -160,6 +160,13 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       }
     }
 
+    // If backend provided a structured error body, forward it to client with same status
+    if (err?.response?.data && typeof err.response.data === 'object') {
+      return NextResponse.json(err.response.data as unknown as Record<string, unknown>, {
+        status: err.response.status || 500,
+      })
+    }
+
     return NextResponse.json(
       { error: err?.message || 'Internal Server Error' },
       { status: err?.response?.status || 500 }

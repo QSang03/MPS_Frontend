@@ -40,6 +40,7 @@ import { useQuery } from '@tanstack/react-query'
 import { rolesClientService } from '@/lib/api/services/roles-client.service'
 import { departmentsClientService } from '@/lib/api/services/departments-client.service'
 import { policiesClientService } from '@/lib/api/services/policies-client.service'
+import type { PolicyOperator } from '@/lib/api/services/policies-client.service'
 import { policyConditionsClientService } from '@/lib/api/services/policy-conditions-client.service'
 import type { PolicyCondition } from '@/lib/api/services/policy-conditions-client.service'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -233,9 +234,20 @@ export function PolicyFormModal({
 
   const { data: roleOperators } = useQuery({
     queryKey: ['policy-operators', 'role', roleMatchBy],
-    queryFn: () => {
+    queryFn: async () => {
       const appliesTo = roleMatchBy === 'name' ? 'string' : 'number'
-      return policiesClientService.getPolicyOperators(appliesTo)
+      const ops = await policiesClientService.getPolicyOperators(appliesTo)
+      // Always include $exists as a special operator
+      const hasExists = ops.some((op) => op.name === '$exists')
+      if (!hasExists) {
+        ops.push({
+          id: '$exists',
+          name: '$exists',
+          description: 'Tồn tại (exists)',
+          appliesTo: ['string', 'number', 'boolean'],
+        })
+      }
+      return ops
     },
     enabled: !!roleMatchBy,
     staleTime: 1000 * 60 * 10,
@@ -243,8 +255,19 @@ export function PolicyFormModal({
 
   const { data: deptOperators } = useQuery({
     queryKey: ['policy-operators', 'dept', deptMatchBy],
-    queryFn: () => {
-      return policiesClientService.getPolicyOperators('string')
+    queryFn: async () => {
+      const ops = await policiesClientService.getPolicyOperators('string')
+      // Always include $exists as a special operator
+      const hasExists = ops.some((op) => op.name === '$exists')
+      if (!hasExists) {
+        ops.push({
+          id: '$exists',
+          name: '$exists',
+          description: 'Tồn tại (exists)',
+          appliesTo: ['string', 'number', 'boolean'],
+        })
+      }
+      return ops
     },
     enabled: !!deptMatchBy,
     staleTime: 1000 * 60 * 10,
@@ -366,14 +389,27 @@ export function PolicyFormModal({
 
   const filterOperatorsByType = (dataType: 'string' | 'number') => {
     if (!operatorsResp) return []
+    let filtered: PolicyOperator[] = []
     if (dataType === 'string') {
-      return operatorsResp.filter(
+      filtered = operatorsResp.filter(
         (op) => op.appliesTo?.includes('string') || op.appliesTo?.includes('array_string')
       )
+    } else {
+      filtered = operatorsResp.filter(
+        (op) => op.appliesTo?.includes('number') || op.appliesTo?.includes('array_number')
+      )
     }
-    return operatorsResp.filter(
-      (op) => op.appliesTo?.includes('number') || op.appliesTo?.includes('array_number')
-    )
+    // Always include $exists as a special operator
+    const hasExists = filtered.some((op) => op.name === '$exists')
+    if (!hasExists) {
+      filtered.push({
+        id: '$exists',
+        name: '$exists',
+        description: 'Tồn tại (exists)',
+        appliesTo: ['string', 'number', 'boolean'],
+      })
+    }
+    return filtered
   }
 
   const {
@@ -574,6 +610,26 @@ export function PolicyFormModal({
             values.roleUseList = true
             values.roleNameFromList = typeof val === 'string' ? String(val) : ''
           }
+        } else if (subj['attributes.role']) {
+          values.roleMatchBy = 'name'
+          const roleNameObj = subj['attributes.role'] as Record<string, unknown> | unknown
+          const detectedOp =
+            typeof roleNameObj === 'object' && roleNameObj !== null
+              ? Object.keys(roleNameObj as object).find((k) => k.startsWith('$'))
+              : undefined
+          values.roleOperator = detectedOp || '$eq'
+          const val =
+            detectedOp && (roleNameObj as Record<string, unknown>)[detectedOp]
+              ? (roleNameObj as Record<string, unknown>)[detectedOp]
+              : roleNameObj
+          if (Array.isArray(val)) {
+            values.roleValues = val.map((v: unknown) => String(v as string))
+            values.roleUseList = false
+          } else {
+            values.roleNameManual = typeof val === 'string' ? String(val) : ''
+            values.roleUseList = true
+            values.roleNameFromList = typeof val === 'string' ? String(val) : ''
+          }
         } else if (subj['role.level']) {
           values.roleMatchBy = 'level'
           const roleLevelObj = subj['role.level'] as Record<string, unknown> | unknown
@@ -586,7 +642,13 @@ export function PolicyFormModal({
             detectedOp && (roleLevelObj as Record<string, unknown>)[detectedOp]
               ? (roleLevelObj as Record<string, unknown>)[detectedOp]
               : roleLevelObj
-          values.roleLevel = typeof val === 'number' ? String(val) : String(val)
+          if (Array.isArray(val)) {
+            // Populate multi-select list for levels
+            values.roleValues = (val as unknown[]).map((v) => String(v as number))
+          } else {
+            // Populate single level
+            values.roleLevel = typeof val === 'number' ? String(val) : String(val)
+          }
         }
       }
 
@@ -666,70 +728,119 @@ export function PolicyFormModal({
       }
 
       const subjectObj: Record<string, unknown> = {}
+      // Helper to sanitize subject object entries to prevent sending {$eq: null}
+      const sanitizeSubject = (subject: Record<string, unknown>) => {
+        Object.keys(subject).forEach((k) => {
+          const v = subject[k]
+          if (v && typeof v === 'object' && !Array.isArray(v)) {
+            const opKeys = Object.keys(v as Record<string, unknown>).filter((op) =>
+              op.startsWith('$')
+            )
+            if (opKeys.length) {
+              opKeys.forEach((op) => {
+                const operand = (v as Record<string, unknown>)[op]
+                const emptyArray = Array.isArray(operand) && operand.length === 0
+                const emptyString = typeof operand === 'string' && operand.trim() === ''
+                const isNaNNumber = typeof operand === 'number' && Number.isNaN(operand)
+                const invalid =
+                  operand === null ||
+                  operand === undefined ||
+                  emptyArray ||
+                  emptyString ||
+                  isNaNNumber
+                if (invalid) {
+                  // Remove the whole key if operator value is invalid
+                  delete subject[k]
+                }
+              })
+            }
+            // If after cleanup object becomes empty, remove it
+            if (subject[k] && typeof subject[k] === 'object' && !Array.isArray(subject[k])) {
+              if (Object.keys(subject[k] as Record<string, unknown>).length === 0) delete subject[k]
+            }
+          } else if (v === null || v === undefined || (typeof v === 'string' && v.trim() === '')) {
+            delete subject[k]
+          }
+        })
+        return subject
+      }
       if (data.includeRole) {
-        const operator = data.roleOperator || '$eq'
-        const opMeta = getOperatorByName(operator)
+        let operator = data.roleOperator || '$eq'
+        let opMeta = getOperatorByName(operator)
         const applies = opMeta?.appliesTo || []
         if (data.roleMatchBy === 'name') {
+          // Ensure operator is compatible with string fields; fallback to $eq if not
+          const stringCompatible = applies.includes('string') || applies.includes('array_string')
+          if (!stringCompatible) {
+            operator = '$eq'
+            opMeta = getOperatorByName(operator)
+          }
           if (isArrayApplies(applies)) {
             const manualVals = roleValuesManual || []
             const listVals = roleValuesFromList || []
             const fallback = data.roleValues || []
-            const chosenVals =
+            const rawChosen =
               manualVals.length > 0 ? manualVals : listVals.length > 0 ? listVals : fallback
-            if (chosenVals.length) subjectObj['role.name'] = { [operator]: chosenVals }
-          } else if (applies.includes('number')) {
-            const manual = (data.roleNameManual || '').toString().trim()
-            const list = (data.roleNameFromList || '').toString().trim()
-            const chosen = manual.length > 0 ? manual : list.length > 0 ? list : undefined
-            if (typeof chosen !== 'undefined' && chosen !== '')
-              subjectObj['role.name'] = { [operator]: Number(chosen) }
+            const chosenVals = (rawChosen || []).filter(
+              (v) => v !== null && v !== undefined && String(v).trim() !== ''
+            )
+            if (chosenVals.length) subjectObj['attributes.role'] = { [operator]: chosenVals }
           } else {
             const manual = (data.roleNameManual || '').toString().trim()
             const list = (data.roleNameFromList || '').toString().trim()
             const chosen = manual.length > 0 ? manual : list.length > 0 ? list : undefined
-            if (typeof chosen !== 'undefined' && chosen !== '')
-              subjectObj['role.name'] = { [operator]: chosen }
+            if (typeof chosen !== 'undefined' && chosen !== '' && chosen !== null)
+              subjectObj['attributes.role'] = { [operator]: chosen }
           }
         } else if (data.roleMatchBy === 'level') {
           if (isArrayApplies(applies)) {
             const manualVals = roleValuesManual || []
             const listVals = roleValuesFromList || []
             const fallback = data.roleValues || []
-            const chosen =
+            const rawChosen =
               manualVals.length > 0 ? manualVals : listVals.length > 0 ? listVals : fallback
-            const vals = (chosen || []).map((v) => Number(v))
+            const chosen = (rawChosen || []).filter(
+              (v) => v !== null && v !== undefined && String(v).trim() !== ''
+            )
+            const vals = (chosen || []).map((v) => Number(v)).filter((n) => !Number.isNaN(n))
             if (vals.length) subjectObj['role.level'] = { [operator]: vals }
           } else {
-            if (typeof data.roleLevel !== 'undefined' && data.roleLevel !== '')
+            if (
+              typeof data.roleLevel !== 'undefined' &&
+              data.roleLevel !== '' &&
+              data.roleLevel !== null
+            )
               subjectObj['role.level'] = { [operator]: Number(data.roleLevel) }
           }
         }
       }
 
       if (data.includeDepartment) {
-        const operator = data.deptOperator || '$eq'
-        const opMeta = getOperatorByName(operator)
+        let operator = data.deptOperator || '$eq'
+        let opMeta = getOperatorByName(operator)
         const applies = opMeta?.appliesTo || []
         if (data.deptMatchBy === 'name') {
+          // Ensure operator is compatible with string fields; fallback to $eq if not
+          const stringCompatible = applies.includes('string') || applies.includes('array_string')
+          if (!stringCompatible) {
+            operator = '$eq'
+            opMeta = getOperatorByName(operator)
+          }
           if (isArrayApplies(applies)) {
             const manualVals = deptValuesManual || []
             const listVals = deptValuesFromList || []
             const fallback = data.deptValues || []
-            const chosenVals =
+            const rawChosen =
               manualVals.length > 0 ? manualVals : listVals.length > 0 ? listVals : fallback
+            const chosenVals = (rawChosen || []).filter(
+              (v) => v !== null && v !== undefined && String(v).trim() !== ''
+            )
             if (chosenVals.length) subjectObj['department.name'] = { [operator]: chosenVals }
-          } else if (applies.includes('number')) {
-            const manual = (data.deptNameManual || '').toString().trim()
-            const list = (data.deptNameFromList || '').toString().trim()
-            const chosen = manual.length > 0 ? manual : list.length > 0 ? list : undefined
-            if (typeof chosen !== 'undefined' && chosen !== '')
-              subjectObj['department.name'] = { [operator]: Number(chosen) }
           } else {
             const manual = (data.deptNameManual || '').toString().trim()
             const list = (data.deptNameFromList || '').toString().trim()
             const chosen = manual.length > 0 ? manual : list.length > 0 ? list : undefined
-            if (typeof chosen !== 'undefined' && chosen !== '')
+            if (typeof chosen !== 'undefined' && chosen !== '' && chosen !== null)
               subjectObj['department.name'] = { [operator]: chosen }
           }
         } else if (data.deptMatchBy === 'code') {
@@ -737,8 +848,11 @@ export function PolicyFormModal({
             const manualVals = deptValuesManual || []
             const listVals = deptValuesFromList || []
             const fallback = data.deptValues || []
-            const chosenVals =
+            const rawChosen =
               manualVals.length > 0 ? manualVals : listVals.length > 0 ? listVals : fallback
+            const chosenVals = (rawChosen || []).filter(
+              (v) => v !== null && v !== undefined && String(v).trim() !== ''
+            )
             if (chosenVals.length) subjectObj['department.code'] = { [operator]: chosenVals }
           } else {
             if (data.deptCodeFromList)
@@ -746,11 +860,14 @@ export function PolicyFormModal({
           }
         }
       }
-      parsed.subject = subjectObj
+      const cleanedSubject = sanitizeSubject(subjectObj)
+      if (Object.keys(cleanedSubject).length > 0) {
+        parsed.subject = cleanedSubject
+      }
 
       // Client-side validation: ensure subject keys are valid and non-empty
       const allowedSubjectKeys = [
-        'role.name',
+        'attributes.role',
         'role.level',
         'department.name',
         'department.code',
@@ -763,7 +880,12 @@ export function PolicyFormModal({
         return
       }
       // Ensure subject is not empty when includeRole/includeDepartment selected
-      if (data.includeRole === true && !Object.keys(subjectObj).some((k) => k.startsWith('role'))) {
+      if (
+        data.includeRole === true &&
+        !Object.keys(subjectObj).some(
+          (k) => k.startsWith('attributes.role') || k.startsWith('role.')
+        )
+      ) {
         setSubmitError('Vui lòng chọn hoặc nhập giá trị role hợp lệ')
         setIsLoading(false)
         return
@@ -823,8 +945,27 @@ export function PolicyFormModal({
 
       // Remove empty fields (empty strings, whitespace-only, empty arrays, empty objects)
       const cleaned = removeEmpty(parsed as Record<string, unknown>) as Partial<Policy>
-      await onSubmit(cleaned)
-      onClose()
+      try {
+        await onSubmit(cleaned)
+        onClose()
+      } catch (err: unknown) {
+        const eObj = err as Record<string, unknown>
+        const resp = (eObj.response as Record<string, unknown> | undefined) || undefined
+        const status =
+          (typeof eObj.statusCode === 'number' ? eObj.statusCode : undefined) ??
+          (typeof resp?.status === 'number' ? resp?.status : undefined)
+        const body = (resp?.data as unknown) ?? eObj
+        const bodyObj = (body as Record<string, unknown> | undefined) || undefined
+        const message =
+          (bodyObj && typeof bodyObj.message === 'string' && bodyObj.message) ||
+          (typeof eObj.message === 'string' && eObj.message) ||
+          'Có lỗi khi lưu policy'
+        const code = (bodyObj && typeof bodyObj.error === 'string' && bodyObj.error) || 'ERROR'
+        const details = bodyObj && bodyObj.details
+        const pretty = `[#${String(status ?? '??')}] ${code}: ${String(message)}`
+        setSubmitError(pretty + (details ? `\nChi tiết: ${JSON.stringify(details)}` : ''))
+        return
+      }
     } finally {
       setIsLoading(false)
     }

@@ -1,8 +1,10 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Bell, Menu, LogOut, User, Settings, ChevronDown, Zap } from 'lucide-react'
+import { Bell, Menu, LogOut, User, Settings, ChevronDown, Zap, LayoutDashboard } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { usePathname } from 'next/navigation'
+import { NAVIGATION_PAYLOAD } from '@/constants/navigation'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,6 +27,19 @@ interface NavbarProps {
 export function Navbar({ session }: NavbarProps) {
   const { toggleSidebar } = useUIStore()
   const router = useRouter()
+  const pageTitle = useUIStore((s) => s.pageTitle)
+  const pathname = usePathname()
+
+  // derive the best matching title from NAVIGATION_PAYLOAD by choosing the longest
+  // route that is a prefix of the current pathname. This ensures /customer-admin/devices
+  // matches the 'Thiết bị' entry instead of the more generic '/customer-admin' dashboard.
+  const derivedTitle = (() => {
+    if (!pathname) return null
+    const matches = NAVIGATION_PAYLOAD.filter((n) => n.route && pathname.startsWith(n.route))
+    if (!matches.length) return null
+    matches.sort((a, b) => (b.route?.length || 0) - (a.route?.length || 0))
+    return matches[0]?.label ?? null
+  })()
 
   const handleLogout = async () => {
     await logout()
@@ -66,11 +81,33 @@ export function Navbar({ session }: NavbarProps) {
             </Button>
           </motion.div>
 
-          {/* Center - Spacer/Breadcrumb area */}
-          <div className="hidden flex-1 lg:block" />
+          {/* Center - Page title (shows on large screens) */}
+          <div className="hidden flex-1 items-center lg:flex">
+            {derivedTitle || pageTitle ? (
+              <div className="ml-2 min-w-0">
+                <h2 className="font-display truncate text-lg font-bold text-gray-800">
+                  {derivedTitle || pageTitle}
+                </h2>
+              </div>
+            ) : (
+              <div className="flex-1" />
+            )}
+          </div>
 
           {/* Right side - Actions */}
           <div className="flex items-center gap-1 md:gap-3">
+            {/* Dashboard shortcut - show on md+ and align with user avatar */}
+            <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.98 }}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => router.push(ROUTES.CUSTOMER_ADMIN)}
+                className="hidden items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-300 hover:bg-blue-50 hover:text-blue-700 md:flex"
+              >
+                <LayoutDashboard className="h-4 w-4 text-blue-600" />
+                <span className="text-sm font-semibold text-gray-700">Tổng quan</span>
+              </Button>
+            </motion.div>
             {/* Notifications - Premium Bell */}
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Button

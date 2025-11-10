@@ -66,7 +66,6 @@ export const API_ENDPOINTS = {
   // Stock Items
   STOCK_ITEMS: {
     UPDATE: (id: string) => `/stock-items/${id}`,
-    MOVEMENTS: (id: string) => `/stock-items/${id}/movements`,
   },
 
   // Service Requests
@@ -102,20 +101,9 @@ export const API_ENDPOINTS = {
     GENERATE: '/reports/generate',
     DOWNLOAD: (id: string) => `/reports/${id}/download`,
   },
-
-  // Dashboard
-  DASHBOARD: {
-    ADMIN_OVERVIEW: '/dashboard/admin/overview',
-    DEVICE_DETAILS: (deviceId: string) => `/dashboard/devices/${deviceId}`,
-    CONSUMABLES: '/dashboard/consumables',
-  },
-
   // Policies
   POLICIES: '/policies',
   RESOURCE_TYPES: '/resource-types',
   POLICY_OPERATORS: '/policy-operators',
   POLICY_CONDITIONS: '/policy-conditions',
-
-  // System Settings
-  SYSTEM_SETTINGS: '/system-settings',
 } as const

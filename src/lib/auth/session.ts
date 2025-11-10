@@ -19,7 +19,8 @@ export interface Session {
   role: UserRole
   username: string
   email: string
-  [key: string]: string | UserRole // Index signature for JWT compatibility
+  isDefaultPassword?: boolean
+  [key: string]: string | UserRole | boolean | undefined // Index signature for JWT compatibility
 }
 
 /**

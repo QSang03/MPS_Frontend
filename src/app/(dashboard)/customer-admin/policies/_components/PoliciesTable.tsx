@@ -41,7 +41,7 @@ import {
   Lock,
 } from 'lucide-react'
 import { DeleteDialog } from '@/components/shared/DeleteDialog'
-import { PolicyFormModal } from '@/app/(dashboard)/system-admin/policies/_components/PolicyFormModal'
+import { PolicyFormModal } from './PolicyFormModal'
 
 export function PoliciesTable() {
   const [search, setSearch] = useState('')
@@ -98,9 +98,49 @@ export function PoliciesTable() {
       }
       queryClient.invalidateQueries({ queryKey: ['policies'] })
       setIsModalOpen(false)
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Policy create/update error', err)
-      toast.error('Có lỗi khi lưu policy')
+
+      type ApiBody = { statusCode?: number; message?: string; error?: string; details?: unknown }
+      type AxiosLike = { response?: { status?: number; data?: unknown }; message?: string }
+
+      const asAxios = (v: unknown): AxiosLike | null => {
+        if (typeof v === 'object' && v !== null && 'response' in v) return v as AxiosLike
+        return null
+      }
+
+      const normalizeToApiBody = (v: unknown): ApiBody | undefined => {
+        if (typeof v !== 'object' || v === null) return undefined
+        const r = v as Record<string, unknown>
+        const out: ApiBody = {}
+        if (typeof r['statusCode'] === 'number') out.statusCode = r['statusCode'] as number
+        if (typeof r['message'] === 'string') out.message = r['message'] as string
+        if (typeof r['error'] === 'string') out.error = r['error'] as string
+        if ('details' in r) out.details = r['details']
+        return out
+      }
+
+      const axiosLike = asAxios(err)
+      const candidate = axiosLike?.response?.data
+      const apiBody = normalizeToApiBody(candidate) ?? normalizeToApiBody(err)
+
+      const status = apiBody?.statusCode ?? axiosLike?.response?.status
+
+      let message: string | undefined
+      if (apiBody?.message) message = apiBody.message
+      else if (axiosLike && typeof axiosLike.message === 'string') message = axiosLike.message
+      else message = 'Có lỗi khi lưu policy'
+
+      const code = apiBody?.error ?? 'ERROR'
+      const details = apiBody?.details
+
+      const pretty = `[#${status ?? '??'}] ${code}: ${message}`
+      toast.error(pretty)
+      if (details) {
+        try {
+          console.error('Details:', details)
+        } catch {}
+      }
     }
   }
 
@@ -109,8 +149,13 @@ export function PoliciesTable() {
       await policiesClientService.deletePolicy(id)
       queryClient.invalidateQueries({ queryKey: ['policies'] })
       toast.success('Xóa policy thành công')
-    } catch (err) {
-      console.error('Delete policy error', err)
+    } catch (err: unknown) {
+      // Narrow error safely without using `any`
+      if (err instanceof Error) {
+        console.error('Delete policy error', err.message)
+      } else {
+        console.error('Delete policy error', err)
+      }
       toast.error('Có lỗi khi xóa policy')
     }
   }

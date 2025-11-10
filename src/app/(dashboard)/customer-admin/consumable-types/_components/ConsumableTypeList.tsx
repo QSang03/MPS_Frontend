@@ -22,24 +22,19 @@ import {
   AlertCircle,
   ChevronLeft,
   ChevronRight,
-  Hash,
   BarChart3,
-  FileText,
   Pencil,
-  Eye,
 } from 'lucide-react'
-import MovementHistoryModal from './MovementHistoryModal'
 import ImportExcelModal from './ImportExcelModal'
 import { cn } from '@/lib/utils'
 import BulkAssignModal from '../../consumables/_components/BulkAssignModal'
 
 export function ConsumableTypeList() {
   const [models, setModels] = useState<ConsumableType[]>([])
+  const [filteredModels, setFilteredModels] = useState<ConsumableType[]>([])
   const [loading, setLoading] = useState(true)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
-  const [debouncedSearch, setDebouncedSearch] = useState('')
-  const [isActiveFilter, setIsActiveFilter] = useState<'all' | 'active' | 'inactive'>('all')
   const [page, setPage] = useState(1)
   const [limit, setLimit] = useState(10)
   const [total, setTotal] = useState(0)
@@ -56,28 +51,7 @@ export function ConsumableTypeList() {
 
   const queryClient = useQueryClient()
 
-  // Debounce search: wait 2 seconds after user stops typing
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(searchTerm)
-      setPage(1) // Reset to page 1 when search changes
-    }, 2000)
-
-    return () => clearTimeout(timer)
-  }, [searchTerm])
-
-  // Handle Enter key for immediate search
-  const handleSearchKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      setDebouncedSearch(searchTerm)
-      setPage(1)
-    }
-  }
-
-  const queryKey = [
-    'consumable-types',
-    { page, limit, search: debouncedSearch, isActive: isActiveFilter },
-  ]
+  const queryKey = ['consumable-types', { page, limit }]
 
   const {
     data: queryData,
@@ -85,24 +59,37 @@ export function ConsumableTypeList() {
     refetch,
   } = useQuery({
     queryKey,
-    queryFn: () =>
-      consumableTypesClientService.getAll({
-        page,
-        limit,
-        ...(debouncedSearch.trim() && { search: debouncedSearch.trim() }),
-        ...(isActiveFilter !== 'all' && { isActive: isActiveFilter === 'active' }),
-      }),
+    queryFn: () => consumableTypesClientService.getAll({ page, limit }),
   })
 
-  // Sync query result into local state
+  // Sync query result into local state for filtering and UI convenience
   useEffect(() => {
     if (queryData) {
       setModels(queryData.data || [])
+      setFilteredModels(queryData.data || [])
       setTotal(queryData.pagination?.total ?? queryData.data?.length ?? 0)
       setTotalPages(queryData.pagination?.totalPages ?? 1)
     }
     setLoading(queryLoading)
   }, [queryData, queryLoading])
+
+  // Filter models based on search term
+  useEffect(() => {
+    if (!searchTerm.trim()) {
+      setFilteredModels(models)
+      return
+    }
+
+    const term = searchTerm.toLowerCase()
+    const filtered = models.filter((m) => {
+      return (
+        m.name?.toLowerCase().includes(term) ||
+        m.description?.toLowerCase().includes(term) ||
+        m.unit?.toLowerCase().includes(term)
+      )
+    })
+    setFilteredModels(filtered)
+  }, [searchTerm, models])
 
   const handleSaved = (m?: ConsumableType | null) => {
     if (!m) {
@@ -167,16 +154,6 @@ export function ConsumableTypeList() {
       quantity,
       threshold,
     })
-  }
-
-  const [movementModal, setMovementModal] = useState<{
-    open: boolean
-    stockId: string
-    consumableName: string
-  } | null>(null)
-
-  const openMovementModal = (stockId: string, consumableName: string) => {
-    setMovementModal({ open: true, stockId, consumableName })
   }
 
   const handleSaveStock = async (stockId: string, quantity: number, threshold: number) => {
@@ -298,32 +275,18 @@ export function ConsumableTypeList() {
               </CardDescription>
             </div>
 
-            {/* Search and Filters */}
-            <div className="flex items-center gap-3">
-              <select
-                value={isActiveFilter}
-                onChange={(e) => {
-                  setIsActiveFilter(e.target.value as 'all' | 'active' | 'inactive')
-                  setPage(1)
-                }}
-                className="rounded-md border px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-              >
-                <option value="all">Tất cả trạng thái</option>
-                <option value="active">Hoạt động</option>
-                <option value="inactive">Không hoạt động</option>
-              </select>
-
+            {/* Search */}
+            {models.length > 0 && (
               <div className="relative w-64">
                 <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
                 <Input
-                  placeholder="Tìm kiếm tên, mô tả, đơn vị..."
+                  placeholder="Tìm kiếm..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  onKeyPress={handleSearchKeyPress}
                   className="pl-9"
                 />
               </div>
-            </div>
+            )}
           </div>
         </CardHeader>
         <CardContent>
@@ -332,25 +295,14 @@ export function ConsumableTypeList() {
               <thead className="bg-gradient-to-r from-emerald-50 to-teal-50">
                 <tr>
                   <th className="px-4 py-3 text-left text-sm font-semibold">#</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Mã/Part</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold">
                     <div className="flex items-center gap-2">
                       <Package className="h-4 w-4 text-emerald-600" />
                       Tên
                     </div>
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">
-                    <div className="flex items-center gap-2">
-                      <Hash className="h-4 w-4 text-teal-600" />
-                      Đơn vị
-                    </div>
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">
-                    <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-cyan-600" />
-                      Mô tả
-                    </div>
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">Mã/Part</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Dòng tương thích</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold">Dung lượng</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold">Số lượng tồn</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold">Trạng thái</th>
@@ -358,9 +310,9 @@ export function ConsumableTypeList() {
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {models.length === 0 ? (
+                {filteredModels.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-4 py-12 text-center">
+                    <td colSpan={8} className="px-4 py-12 text-center">
                       <div className="text-muted-foreground flex flex-col items-center gap-3">
                         {searchTerm ? (
                           <>
@@ -378,7 +330,7 @@ export function ConsumableTypeList() {
                     </td>
                   </tr>
                 ) : (
-                  models.map((m, index) => (
+                  filteredModels.map((m, index) => (
                     <tr
                       key={m.id}
                       className="transition-colors hover:bg-gradient-to-r hover:from-emerald-50/50 hover:to-teal-50/50"
@@ -386,16 +338,15 @@ export function ConsumableTypeList() {
                       <td className="text-muted-foreground px-4 py-3 text-sm">
                         {(page - 1) * limit + index + 1}
                       </td>
-                      <td className="px-4 py-3 font-semibold text-emerald-700">{m.name || '—'}</td>
                       <td className="px-4 py-3">
                         <Badge variant="outline" className="font-mono text-xs">
-                          {m.unit || '—'}
+                          {m.partNumber || '—'}
                         </Badge>
                       </td>
+                      <td className="px-4 py-3 font-semibold text-emerald-700">{m.name || '—'}</td>
                       <td className="text-muted-foreground max-w-xs truncate px-4 py-3 text-sm">
-                        {m.description || '—'}
+                        {m.compatibleDeviceModels?.map((dm) => dm.name).join(', ') || '—'}
                       </td>
-                      <td className="px-4 py-3 text-sm">{m.partNumber || '—'}</td>
                       <td className="px-4 py-3 text-sm">{m.capacity ?? '—'}</td>
                       <td className="px-4 py-3">
                         {m.stockItem?.id && m.stockItem?.quantity !== undefined ? (
@@ -425,14 +376,6 @@ export function ConsumableTypeList() {
                               className="h-6 w-6 p-0"
                             >
                               <Pencil className="h-3 w-3 text-gray-500" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => openMovementModal(m.stockItem!.id, m.name || 'N/A')}
-                              className="h-6 w-6 p-0"
-                            >
-                              <Eye className="h-3 w-3 text-gray-500" />
                             </Button>
                           </div>
                         ) : (
@@ -495,7 +438,7 @@ export function ConsumableTypeList() {
             <div className="text-muted-foreground flex items-center gap-2 text-sm">
               <BarChart3 className="h-4 w-4" />
               <span>
-                Trang {page} / {totalPages} — Hiển thị {models.length} / {total}
+                Trang {page} / {totalPages} — Hiển thị {filteredModels.length} / {total}
               </span>
             </div>
 
@@ -566,22 +509,6 @@ export function ConsumableTypeList() {
           currentQuantity={editStockModal.quantity}
           currentThreshold={editStockModal.threshold}
           onSave={handleSaveStock}
-        />
-      )}
-
-      {/* Movement history modal */}
-      {movementModal && (
-        <MovementHistoryModal
-          open={movementModal.open}
-          onOpenChange={(open) => {
-            if (!open) {
-              setMovementModal(null)
-            } else {
-              setMovementModal((cur) => (cur ? { ...cur, open } : cur))
-            }
-          }}
-          stockId={movementModal.stockId}
-          consumableName={movementModal.consumableName}
         />
       )}
     </div>

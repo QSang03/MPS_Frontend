@@ -14,6 +14,7 @@ interface Session {
   role: UserRole
   username: string
   email: string
+  isDefaultPassword?: boolean
 }
 
 /**
@@ -24,10 +25,22 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Public routes - allow access without authentication
-  if (pathname === ROUTES.LOGIN) {
+  if (pathname === ROUTES.LOGIN || pathname === '/change-password') {
     // If already logged in, redirect to appropriate dashboard
     const session = await getSessionFromRequest(request)
     if (session) {
+      // If user has default password, force to change-password page
+      if (session.isDefaultPassword && pathname !== '/change-password') {
+        return NextResponse.redirect(new URL('/change-password?required=true', request.url))
+      }
+      // If already changed password, redirect to dashboard
+      if (!session.isDefaultPassword && pathname === '/change-password') {
+        return NextResponse.redirect(new URL(getDashboardPath(session.role), request.url))
+      }
+      // If on change-password with default password, allow access
+      if (pathname === '/change-password') {
+        return NextResponse.next()
+      }
       return NextResponse.redirect(new URL(getDashboardPath(session.role), request.url))
     }
     return NextResponse.next()
@@ -43,6 +56,11 @@ export async function middleware(request: NextRequest) {
     response.cookies.delete('access_token')
     response.cookies.delete('refresh_token')
     return response
+  }
+
+  // Check if user must change default password before accessing any protected route
+  if (session.isDefaultPassword && pathname !== '/change-password') {
+    return NextResponse.redirect(new URL('/change-password?required=true', request.url))
   }
 
   // Role-based access control (RBAC)

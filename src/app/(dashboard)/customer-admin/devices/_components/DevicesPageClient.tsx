@@ -10,6 +10,7 @@ import { DeleteDialog } from '@/components/shared/DeleteDialog'
 import DeviceFormModal from './deviceformmodal'
 import DevicePricingModal from './DevicePricingModal'
 import { devicesClientService } from '@/lib/api/services/devices-client.service'
+import ToggleActiveModal from './ToggleActiveModal'
 import { customersClientService } from '@/lib/api/services/customers-client.service'
 import { CustomerSelectDialog } from './CustomerSelectDialog'
 import type { Customer } from '@/types/models/customer'
@@ -19,6 +20,7 @@ import {
   Search,
   CheckCircle2,
   AlertCircle,
+  Power,
   MapPin,
   Package,
   BarChart3,
@@ -65,6 +67,9 @@ export default function DevicesPageClient() {
   const [, setCustomersLoading] = useState(false)
   const [editingDeviceId, setEditingDeviceId] = useState<string | null>(null)
   const [updatingCustomer, setUpdatingCustomer] = useState(false)
+  const [toggleModalOpen, setToggleModalOpen] = useState(false)
+  const [toggleTargetDevice, setToggleTargetDevice] = useState<Device | null>(null)
+  const [toggleTargetActive, setToggleTargetActive] = useState<boolean>(false)
   const router = useRouter()
 
   const fetchDevices = useCallback(
@@ -678,16 +683,39 @@ export default function DevicesPageClient() {
                           })()}
 
                           {/* Active badge with tooltip for inactive reason */}
+                          {/* Display On/Off style buttons: green 'On' when active, gray 'Off' with tooltip when inactive */}
                           {d.isActive ? (
-                            <span className="inline-flex items-center gap-1 rounded bg-green-500 px-2 py-1 text-sm text-white">
-                              <CheckCircle2 className="h-3 w-3" /> Hoạt động
-                            </span>
+                            <button
+                              type="button"
+                              aria-label="On"
+                              title="Hoạt động"
+                              className="inline-flex items-center justify-center rounded-full bg-green-500 p-2 text-white"
+                              onClick={() => {
+                                // device is currently active — clicking should open the "turn OFF" flow
+                                setToggleTargetDevice(d)
+                                setToggleTargetActive(false)
+                                setToggleModalOpen(true)
+                              }}
+                            >
+                              <Power className="h-4 w-4" />
+                            </button>
                           ) : (
                             <Tooltip>
-                              <TooltipTrigger>
-                                <span className="inline-flex cursor-help items-center gap-1 rounded bg-red-500 px-2 py-1 text-sm text-white">
-                                  <AlertCircle className="h-3 w-3" /> Tạm dừng
-                                </span>
+                              <TooltipTrigger asChild>
+                                <button
+                                  type="button"
+                                  aria-label="Off"
+                                  title="Tạm dừng"
+                                  className="inline-flex items-center justify-center rounded-full bg-gray-300 p-2 text-gray-700"
+                                  onClick={() => {
+                                    // device is currently inactive — clicking should open the "turn ON" flow
+                                    setToggleTargetDevice(d)
+                                    setToggleTargetActive(true)
+                                    setToggleModalOpen(true)
+                                  }}
+                                >
+                                  <Power className="h-4 w-4" />
+                                </button>
                               </TooltipTrigger>
                               <TooltipContent>
                                 <div className="max-w-xs text-xs">
@@ -777,6 +805,19 @@ export default function DevicesPageClient() {
             }
           )?.customer?.id
         }
+      />
+
+      {/* Toggle Active Modal (reused for both on/off) */}
+      <ToggleActiveModal
+        open={toggleModalOpen}
+        onOpenChange={setToggleModalOpen}
+        device={toggleTargetDevice}
+        targetActive={toggleTargetActive}
+        onSuccess={(updated) => {
+          // optimistic replace in devices list
+          setDevices((prev) => prev.map((p) => (p.id === updated.id ? updated : p)))
+          setFilteredDevices((prev) => prev.map((p) => (p.id === updated.id ? updated : p)))
+        }}
       />
     </div>
   )

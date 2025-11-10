@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useMemo } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, Sparkles, ShoppingCart, ArrowRight, Trash2, Loader2 } from 'lucide-react'
 import {
@@ -35,15 +36,6 @@ interface BulkAssignModalProps {
   trigger?: React.ReactNode
 }
 
-interface BulkCreateResult {
-  success?: boolean
-  message?: string
-  successCount?: number
-  failedCount?: number
-  totalCount?: number
-  errors?: Array<{ row?: number; field?: string; message?: string }>
-}
-
 // Hook debounce cơ bản
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState(value)
@@ -57,22 +49,41 @@ function useDebounce<T>(value: T, delay: number): T {
 }
 
 // Component con memo hóa quản lý input tìm kiếm và lọc loại vật tư
-const SearchableConsumableTypeSelect = React.memo(function SearchableConsumableTypeSelect({
+type SearchableConsumableTypeSelectProps = {
+  value: string
+  onChange: (val: string) => void
+  types: Record<string, unknown>[]
+  loading: boolean
+}
+
+function SearchableConsumableTypeSelectInner({
   value,
   onChange,
   types,
   loading,
-}: {
-  value: string
-  onChange: (val: string) => void
-  types: Array<{ id: string; name?: string }>
-  loading: boolean
-}) {
+}: SearchableConsumableTypeSelectProps) {
   const [search, setSearch] = useState('')
   const debouncedSearch = useDebounce(search, 250)
 
   const filteredTypes = useMemo(() => {
-    return types.filter((t) => (t.name || '').toLowerCase().includes(debouncedSearch.toLowerCase()))
+    if (!debouncedSearch.trim()) return types
+    const lowerSearch = debouncedSearch.toLowerCase()
+    return types.filter((t) => {
+      const tObj = t as Record<string, unknown>
+      const nameMatch = String(tObj.name ?? '')
+        .toLowerCase()
+        .includes(lowerSearch)
+      const partMatch = String(tObj.partNumber ?? '')
+        .toLowerCase()
+        .includes(lowerSearch)
+      const compatibleMatch = ((tObj.compatibleDeviceModels as unknown[] | undefined) || []).some(
+        (dm) =>
+          String((dm as Record<string, unknown>).name ?? '')
+            .toLowerCase()
+            .includes(lowerSearch)
+      )
+      return nameMatch || partMatch || compatibleMatch
+    })
   }, [types, debouncedSearch])
 
   return (
@@ -104,33 +115,52 @@ const SearchableConsumableTypeSelect = React.memo(function SearchableConsumableT
           </SelectItem>
         )}
 
-        {filteredTypes.map((t) => (
-          <SelectItem key={t.id} value={t.id}>
-            {t.name}
-          </SelectItem>
-        ))}
+        {filteredTypes.map((t) => {
+          const tObj = t as Record<string, unknown>
+          const compatibleModels = ((tObj.compatibleDeviceModels as unknown[] | undefined) || [])
+            .map((dm) => String((dm as Record<string, unknown>).name ?? ''))
+            .filter(Boolean)
+            .join(', ')
+          return (
+            <SelectItem key={String(tObj.id ?? '')} value={String(tObj.id ?? '')}>
+              <div className="flex flex-col">
+                <span>{String(tObj.name ?? '')}</span>
+                {compatibleModels && (
+                  <span className="text-muted-foreground text-xs">Dòng: {compatibleModels}</span>
+                )}
+              </div>
+            </SelectItem>
+          )
+        })}
       </SelectContent>
     </Select>
   )
-})
+}
 
+SearchableConsumableTypeSelectInner.displayName = 'SearchableConsumableTypeSelect'
+const SearchableConsumableTypeSelect = React.memo(
+  SearchableConsumableTypeSelectInner
+) as React.NamedExoticComponent<SearchableConsumableTypeSelectProps>
+;(SearchableConsumableTypeSelect as unknown as { displayName?: string }).displayName =
+  'SearchableConsumableTypeSelect'
 export default function BulkAssignModal({ trigger }: BulkAssignModalProps) {
+  const queryClient = useQueryClient()
   const [open, setOpen] = useState(false)
   const [customerId, setCustomerId] = useState<string>('')
   const [consumableTypeId, setConsumableTypeId] = useState<string>('')
   const [quantity, setQuantity] = useState<number>(1)
   const [rows, setRows] = useState<RowItem[]>([{}])
-  const [types, setTypes] = useState<Array<{ id: string; name?: string }>>([])
+  const [types, setTypes] = useState<Record<string, unknown>[]>([])
   const [loadingTypes, setLoadingTypes] = useState(false)
   const [submitting, setSubmitting] = useState(false)
-  const [result, setResult] = useState<BulkCreateResult | null>(null)
+  const [result, setResult] = useState<Record<string, unknown> | null>(null)
 
   const ensureTypes = async () => {
     if (types.length > 0 || loadingTypes) return
     setLoadingTypes(true)
     try {
       const res = await consumableTypesClientService.getAll({ page: 1, limit: 100 })
-      setTypes(res.data)
+      setTypes((res.data as unknown as Record<string, unknown>[]) || [])
     } finally {
       setLoadingTypes(false)
     }
@@ -176,9 +206,15 @@ export default function BulkAssignModal({ trigger }: BulkAssignModalProps) {
         expiryDate: r.expiryDate ? new Date(r.expiryDate).toISOString() : undefined,
       }))
       const res = await consumablesClientService.bulkCreate({ customerId, items })
-      setResult(res)
-      if (res?.success) toast.success(res?.message || 'Gán vật tư thành công')
-      else toast('Hoàn tất với một số lỗi')
+      setResult(res as Record<string, unknown>)
+      if ((res as Record<string, unknown>)?.success) {
+        toast.success(res?.message || 'Gán vật tư thành công')
+        // Invalidate queries to refresh stock and consumables
+        queryClient.invalidateQueries({ queryKey: ['consumable-types'] })
+        queryClient.invalidateQueries({ queryKey: ['consumables'] })
+      } else {
+        toast('Hoàn tất với một số lỗi')
+      }
     } catch (e) {
       console.error('Bulk create failed', e)
       toast.error('Không thể gán vật tư')
@@ -379,11 +415,15 @@ export default function BulkAssignModal({ trigger }: BulkAssignModalProps) {
                       </div>
                       {Array.isArray(result?.errors) && result!.errors!.length > 0 && (
                         <ul className="mt-2 list-disc pl-6 text-red-700">
-                          {result!.errors!.map((e, i) => (
-                            <li key={i}>
-                              Hàng {e.row}: {e.field} — {e.message}
-                            </li>
-                          ))}
+                          {(result!.errors as unknown[]).map((e: unknown, i: number) => {
+                            const eObj = e as Record<string, unknown>
+                            return (
+                              <li key={i}>
+                                Hàng {String(eObj.row ?? '')}: {String(eObj.field ?? '')} —{' '}
+                                {String(eObj.message ?? '')}
+                              </li>
+                            )
+                          })}
                         </ul>
                       )}
                     </motion.div>

@@ -20,6 +20,7 @@ export type LoginActionState = {
   }
   success?: {
     message?: string
+    isDefaultPassword?: boolean
   }
 } | null
 
@@ -62,7 +63,7 @@ export async function login(
     // Call backend auth API
     const response = await serverApiClient.post<AuthResponse>(API_ENDPOINTS.AUTH.LOGIN, parsed.data)
 
-    // Extract data from response (API returns { success, data: { user, accessToken, refreshToken } })
+    // Extract data from response (API returns { success, data: { user, accessToken, refreshToken, isDefaultPassword } })
     const { data } = response.data
 
     // Create session with tokens and set httpOnly cookies
@@ -73,15 +74,17 @@ export async function login(
         role: UserRole.CUSTOMER_ADMIN, // Set as customer admin for now
         username: data?.user?.email || 'User', // Use email as username with fallback
         email: data?.user?.email || 'user@example.com',
+        isDefaultPassword: data?.isDefaultPassword || false,
       },
       accessToken: data?.accessToken || '',
       refreshToken: data?.refreshToken || '',
     })
 
-    // Return success state - redirect will be handled by the form
+    // Return success state with isDefaultPassword flag - redirect will be handled by the form
     return {
       success: {
         message: 'Đăng nhập thành công!',
+        isDefaultPassword: data?.isDefaultPassword || false,
       },
     }
   } catch (error: unknown) {

@@ -1,6 +1,13 @@
 'use server'
 
-import { getAccessToken, refreshAccessToken, updateTokensInCookies } from './session'
+import {
+  getAccessToken,
+  getRefreshToken,
+  getSession,
+  refreshAccessToken,
+  updateTokensInCookies,
+  createSessionWithTokens,
+} from './session'
 import { authService } from '@/lib/api/services/auth.service'
 import { withRefreshRetry, AuthExpiredError } from '@/lib/api/server-retry'
 import type { UserProfile } from '@/types/auth'
@@ -52,6 +59,25 @@ export async function changePasswordForClient(payload: {
 }) {
   try {
     const res = await withRefreshRetry(() => authService.changePasswordServer(payload))
+
+    // If user just changed from default password, ensure session flag is updated
+    try {
+      const session = await getSession()
+      if (session?.isDefaultPassword) {
+        const [accessToken, refreshToken] = await Promise.all([getAccessToken(), getRefreshToken()])
+
+        if (accessToken && refreshToken) {
+          await createSessionWithTokens({
+            session: { ...session, isDefaultPassword: false },
+            accessToken,
+            refreshToken,
+          })
+        }
+      }
+    } catch (sessionError) {
+      console.error('Failed to update session after password change:', sessionError)
+    }
+
     return res
   } catch (error) {
     // If refresh token is expired, return an explicit payload so client can redirect
