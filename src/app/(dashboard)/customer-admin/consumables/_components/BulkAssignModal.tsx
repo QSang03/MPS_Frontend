@@ -63,28 +63,59 @@ function SearchableConsumableTypeSelectInner({
   loading,
 }: SearchableConsumableTypeSelectProps) {
   const [search, setSearch] = useState('')
-  const debouncedSearch = useDebounce(search, 250)
+  const debouncedSearch = useDebounce(search, 2000)
+  const [remoteTypes, setRemoteTypes] = useState<Record<string, unknown>[]>([])
+
+  // Shared remote search function (used by debounced effect and Enter key)
+  const fetchRemote = async (q: string) => {
+    const term = q.trim()
+    if (!term) {
+      // make state update async to avoid sync setState-in-effect warnings
+      setTimeout(() => setRemoteTypes([]), 0)
+      return
+    }
+    try {
+      const res = await consumableTypesClientService.getAll({ page: 1, limit: 50, search: term })
+      setRemoteTypes((res.data as unknown as Record<string, unknown>[]) || [])
+    } catch (err) {
+      console.error('Failed to search consumable types', err)
+      setRemoteTypes([])
+    }
+  }
+
+  useEffect(() => {
+    let active = true
+    const q = debouncedSearch.trim()
+    if (!q) {
+      // avoid synchronous setState inside effect
+      setTimeout(() => setRemoteTypes([]), 0)
+      return
+    }
+
+    // call fetchRemote but guard with active to avoid setting state after unmount
+    ;(async () => {
+      try {
+        const res = await consumableTypesClientService.getAll({ page: 1, limit: 50, search: q })
+        if (!active) return
+        setRemoteTypes((res.data as unknown as Record<string, unknown>[]) || [])
+      } catch (err) {
+        console.error('Failed to search consumable types', err)
+        if (!active) return
+        setRemoteTypes([])
+      }
+    })()
+
+    return () => {
+      active = false
+    }
+  }, [debouncedSearch])
 
   const filteredTypes = useMemo(() => {
-    if (!debouncedSearch.trim()) return types
-    const lowerSearch = debouncedSearch.toLowerCase()
-    return types.filter((t) => {
-      const tObj = t as Record<string, unknown>
-      const nameMatch = String(tObj.name ?? '')
-        .toLowerCase()
-        .includes(lowerSearch)
-      const partMatch = String(tObj.partNumber ?? '')
-        .toLowerCase()
-        .includes(lowerSearch)
-      const compatibleMatch = ((tObj.compatibleDeviceModels as unknown[] | undefined) || []).some(
-        (dm) =>
-          String((dm as Record<string, unknown>).name ?? '')
-            .toLowerCase()
-            .includes(lowerSearch)
-      )
-      return nameMatch || partMatch || compatibleMatch
-    })
-  }, [types, debouncedSearch])
+    // if there's a search term, prefer remote results
+    if (debouncedSearch.trim()) return remoteTypes
+    // otherwise show local types passed from parent
+    return types
+  }, [types, remoteTypes, debouncedSearch])
 
   return (
     <Select value={value} onValueChange={onChange}>
@@ -97,6 +128,12 @@ function SearchableConsumableTypeSelectInner({
             placeholder="Tìm kiếm loại..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                fetchRemote(search)
+              }
+            }}
             className="h-9"
           />
         </div>
@@ -117,17 +154,27 @@ function SearchableConsumableTypeSelectInner({
 
         {filteredTypes.map((t) => {
           const tObj = t as Record<string, unknown>
-          const compatibleModels = ((tObj.compatibleDeviceModels as unknown[] | undefined) || [])
-            .map((dm) => String((dm as Record<string, unknown>).name ?? ''))
-            .filter(Boolean)
-            .join(', ')
+          const partNumber = String(tObj.partNumber ?? '')
+          const compatibleMachineLine = String(tObj.compatibleMachineLine ?? '')
           return (
             <SelectItem key={String(tObj.id ?? '')} value={String(tObj.id ?? '')}>
-              <div className="flex flex-col">
-                <span>{String(tObj.name ?? '')}</span>
-                {compatibleModels && (
-                  <span className="text-muted-foreground text-xs">Dòng: {compatibleModels}</span>
-                )}
+              <div className="grid w-full grid-cols-[1fr,1.5fr] gap-3">
+                <div className="flex flex-col">
+                  <span className="font-medium">{String(tObj.name ?? '')}</span>
+                  {partNumber && (
+                    <span className="text-muted-foreground text-xs">P/N: {partNumber}</span>
+                  )}
+                </div>
+                <div className="flex flex-col border-l pl-3">
+                  <span className="text-muted-foreground text-xs font-semibold">
+                    Dòng tương thích:
+                  </span>
+                  <span className="text-xs">
+                    {compatibleMachineLine || (
+                      <span className="text-gray-400 italic">Chưa có thông tin</span>
+                    )}
+                  </span>
+                </div>
               </div>
             </SelectItem>
           )
@@ -170,10 +217,8 @@ export default function BulkAssignModal({ trigger }: BulkAssignModalProps) {
     setOpen(v)
     if (v) {
       await ensureTypes()
-      // Reset form mỗi lần mở
       setConsumableTypeId('')
       setCustomerId('')
-      setQuantity(1)
       setRows([{}])
       setResult(null)
     }

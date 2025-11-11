@@ -77,7 +77,7 @@ export default function DevicesPageClient() {
       setLoading(true)
       try {
         const includeHidden =
-          showInactiveStatuses || statusFilter === 'DISABLED' || statusFilter === 'DECOMMISSIONED'
+          showInactiveStatuses || statusFilter === 'SUSPENDED' || statusFilter === 'DECOMMISSIONED'
 
         const res = await devicesClientService.getAll({
           page: 1,
@@ -483,7 +483,7 @@ export default function DevicesPageClient() {
                 Xóa bộ lọc
               </Button>
               <div className="flex items-center gap-2">
-                <label className="text-sm">Hiện trạng thái Disabled/Decommissioned</label>
+                <label className="text-sm">Hiện trạng thái Suspended/Decommissioned</label>
                 <input
                   type="checkbox"
                   checked={showInactiveStatuses}
@@ -811,7 +811,7 @@ export default function DevicesPageClient() {
       <ToggleActiveModal
         open={toggleModalOpen}
         onOpenChange={setToggleModalOpen}
-        device={toggleTargetDevice}
+        device={toggleTargetDevice ?? undefined}
         targetActive={toggleTargetActive}
         onSuccess={(updated) => {
           // optimistic replace in devices list

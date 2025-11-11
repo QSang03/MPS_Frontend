@@ -330,7 +330,7 @@ export class DeviceExcelService {
       MAINTENANCE: 'Bảo trì',
       ERROR: 'Lỗi',
       OFFLINE: 'Offline',
-      DISABLED: 'Disabled',
+      SUSPENDED: 'Tạm ngưng',
       DECOMMISSIONED: 'Decommissioned',
     }
     // Also handle legacy enum names (first-letter capitalized)

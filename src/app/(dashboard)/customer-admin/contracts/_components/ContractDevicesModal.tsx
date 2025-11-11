@@ -36,7 +36,10 @@ export default function ContractDevicesModal({
   const [hideOuter, setHideOuter] = useState(false)
   const [selectedToAttach, setSelectedToAttach] = useState<string[]>([])
   // store inputs as strings (easier to bind to <Input />). We'll convert on submit.
-  const [monthlyRent, setMonthlyRent] = useState<string>('')
+  // Support VND/USD + exchangeRate like other modals: monthlyRent in USD will be computed
+  const [monthlyRentVNDRaw, setMonthlyRentVNDRaw] = useState<string>('')
+  const [monthlyRentUSDRaw, setMonthlyRentUSDRaw] = useState<string>('')
+  const [exchangeRateRaw, setExchangeRateRaw] = useState<string>('')
   const [activeFrom, setActiveFrom] = useState<string>('')
   const [activeTo, setActiveTo] = useState<string>('')
 
@@ -101,12 +104,42 @@ export default function ContractDevicesModal({
       toast.error('Vui lòng chọn ít nhất 1 thiết bị để đính kèm')
       return
     }
+    // compute monthly rent (USD) from inputs
+    const parseInput = (s: string) => {
+      if (typeof s !== 'string') return NaN
+      const normalized = s.replace(/,/g, '.').trim()
+      return Number(normalized)
+    }
+
+    let monthlyRentNum: number | undefined = undefined
+    if (monthlyRentVNDRaw) {
+      if (!exchangeRateRaw) {
+        toast.error('Vui lòng nhập tỷ giá khi nhập giá bằng VND')
+        return
+      }
+      const v = parseInput(monthlyRentVNDRaw)
+      const ex = parseInput(exchangeRateRaw)
+      if (!Number.isFinite(v) || !Number.isFinite(ex) || ex === 0) {
+        toast.error('Giá hoặc tỷ giá không hợp lệ')
+        return
+      }
+      monthlyRentNum = v / ex
+    } else if (monthlyRentUSDRaw) {
+      const v = parseInput(monthlyRentUSDRaw)
+      if (!Number.isFinite(v)) {
+        toast.error('Giá USD không hợp lệ')
+        return
+      }
+      monthlyRentNum = v
+    }
+
     const items = selectedToAttach.map((deviceId) => ({
       deviceId,
-      monthlyRent: monthlyRent === '' ? undefined : Number(monthlyRent),
+      monthlyRent: monthlyRentNum === undefined ? undefined : monthlyRentNum,
       activeFrom: activeFrom || undefined,
       activeTo: activeTo || undefined,
     }))
+
     await attachMutation.mutateAsync(items)
   }
 
@@ -228,13 +261,49 @@ export default function ContractDevicesModal({
                 </table>
               </div>
               <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-                <Input
-                  type="number"
-                  placeholder="Giá thuê/tháng"
-                  value={monthlyRent}
-                  onChange={(e) => setMonthlyRent(e.target.value)}
-                  className="h-11"
-                />
+                <div>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Giá (VND)"
+                      value={monthlyRentVNDRaw}
+                      onChange={(e) => {
+                        setMonthlyRentVNDRaw(e.target.value)
+                        // if user types VND, clear USD field to avoid confusion
+                        if (e.target.value) setMonthlyRentUSDRaw('')
+                      }}
+                      className="h-11"
+                    />
+                    <Input
+                      placeholder="Giá (USD)"
+                      value={monthlyRentUSDRaw}
+                      onChange={(e) => {
+                        setMonthlyRentUSDRaw(e.target.value)
+                        if (e.target.value) setMonthlyRentVNDRaw('')
+                      }}
+                      className="h-11"
+                    />
+                  </div>
+                  <div className="mt-2 flex items-center gap-2">
+                    <Input
+                      placeholder="Tỉ giá"
+                      value={exchangeRateRaw}
+                      onChange={(e) => setExchangeRateRaw(e.target.value)}
+                      className="h-9 w-36"
+                    />
+                    {/* Preview converted USD when VND + rate present */}
+                    {monthlyRentVNDRaw && exchangeRateRaw ? (
+                      <div className="text-muted-foreground text-sm">
+                        ≈ ${' '}
+                        {(() => {
+                          const v = Number(monthlyRentVNDRaw.toString().replace(/,/g, '.'))
+                          const ex = Number(exchangeRateRaw.toString().replace(/,/g, '.'))
+                          if (!Number.isFinite(v) || !Number.isFinite(ex) || ex === 0) return '-'
+                          return (v / ex).toFixed(2)
+                        })()}
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
                 <Input
                   type="date"
                   value={activeFrom}

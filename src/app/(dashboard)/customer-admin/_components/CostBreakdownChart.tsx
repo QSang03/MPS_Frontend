@@ -54,9 +54,9 @@ export function CostBreakdownChart({ costBreakdown, isLoading }: CostBreakdownCh
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <DollarSign className="h-5 w-5" />
-            Phân bổ chi phí
+            Doanh thu
           </CardTitle>
-          <CardDescription>Tỷ lệ phần trăm theo loại chi phí</CardDescription>
+          <CardDescription>Tỷ lệ phần trăm theo doanh thu</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex h-80 items-center justify-center">
@@ -123,9 +123,9 @@ export function CostBreakdownChart({ costBreakdown, isLoading }: CostBreakdownCh
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <DollarSign className="h-5 w-5 text-emerald-600" />
-            Phân bổ chi phí
+            Doanh thu
           </CardTitle>
-          <CardDescription>Tỷ lệ phần trăm theo loại chi phí trong tháng</CardDescription>
+          <CardDescription>Tỷ lệ phần trăm theo doanh thu trong tháng</CardDescription>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={320}>

@@ -13,10 +13,10 @@ interface TopCustomersTableProps {
 }
 
 function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('vi-VN', {
+  return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: 'VND',
-    maximumFractionDigits: 0,
+    currency: 'USD',
+    maximumFractionDigits: 2,
   }).format(amount)
 }
 
@@ -171,7 +171,7 @@ export function TopCustomersTable({ topCustomers, isLoading }: TopCustomersTable
                   {/* Cost & Percentage */}
                   <div className="text-right">
                     <p className="font-bold text-gray-900">{formatCurrency(customer.totalCost)}</p>
-                    <p className="text-xs text-gray-500">{percentage.toFixed(1)}% tổng chi phí</p>
+                    <p className="text-xs text-gray-500">{percentage.toFixed(1)}% tổng doanh thu</p>
                   </div>
                 </motion.div>
               )
@@ -182,7 +182,7 @@ export function TopCustomersTable({ topCustomers, isLoading }: TopCustomersTable
           {topCustomers.length > 0 && (
             <div className="mt-4 border-t pt-4">
               <div className="flex items-center justify-between text-sm">
-                <span className="font-medium text-gray-600">Tổng chi phí:</span>
+                <span className="font-medium text-gray-600">Tổng doanh thu:</span>
                 <span className="text-lg font-bold text-gray-900">{formatCurrency(totalCost)}</span>
               </div>
             </div>

@@ -20,6 +20,8 @@ import type { AdminOverviewKPIs } from '@/types/dashboard'
 interface KPICardsProps {
   kpis: AdminOverviewKPIs | undefined
   isLoading: boolean
+  onRevenueClick?: () => void
+  onContractsClick?: () => void
 }
 
 const kpiData = [
@@ -33,7 +35,7 @@ const kpiData = [
   },
   {
     id: 'cost',
-    title: 'Chi phí tháng này',
+    title: 'Doanh thu',
     icon: DollarSign,
     color: 'from-emerald-500 to-emerald-600',
     bgColor: 'bg-emerald-50 dark:bg-emerald-950',
@@ -100,14 +102,14 @@ function formatNumber(num: number): string {
 }
 
 function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('vi-VN', {
+  return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: 'VND',
-    maximumFractionDigits: 0,
+    currency: 'USD',
+    maximumFractionDigits: 2,
   }).format(amount)
 }
 
-export function KPICards({ kpis, isLoading }: KPICardsProps) {
+export function KPICards({ kpis, isLoading, onRevenueClick, onContractsClick }: KPICardsProps) {
   if (isLoading || !kpis) {
     return (
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -168,9 +170,9 @@ export function KPICards({ kpis, isLoading }: KPICardsProps) {
           const numValue = value as number
           displayValue =
             numValue >= 1000000000
-              ? `${(numValue / 1000000000).toFixed(1)}B VNĐ`
+              ? `$${(numValue / 1000000000).toFixed(1)}B`
               : numValue >= 1000000
-                ? `${(numValue / 1000000).toFixed(1)}M VNĐ`
+                ? `$${(numValue / 1000000).toFixed(1)}M`
                 : formatCurrency(numValue)
         } else if (index === 2) {
           // Pages - format as compact number
@@ -180,14 +182,35 @@ export function KPICards({ kpis, isLoading }: KPICardsProps) {
           displayValue = value.toString()
         }
 
+        const isRevenueCard = index === 1 // Index of revenue/cost card
+        const isContractsCard = index === 4 // Index of contracts card
+
         return (
           <motion.div
             key={kpi.id}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.05, duration: 0.3 }}
+            onClick={
+              isRevenueCard && onRevenueClick
+                ? onRevenueClick
+                : isContractsCard && onContractsClick
+                  ? onContractsClick
+                  : undefined
+            }
+            className={cn(
+              (isRevenueCard && onRevenueClick) || (isContractsCard && onContractsClick)
+                ? 'cursor-pointer'
+                : ''
+            )}
           >
-            <Card className="group shadow-soft-xl hover:shadow-soft-2xl relative overflow-hidden border-0 bg-white transition-all dark:bg-neutral-900">
+            <Card
+              className={cn(
+                'group shadow-soft-xl hover:shadow-soft-2xl relative overflow-hidden border-0 bg-white transition-all dark:bg-neutral-900',
+                ((isRevenueCard && onRevenueClick) || (isContractsCard && onContractsClick)) &&
+                  'hover:scale-[1.02]'
+              )}
+            >
               {/* Gradient Accent */}
               <div className={cn('absolute inset-x-0 top-0 h-1 bg-gradient-to-r', kpi.color)} />
 

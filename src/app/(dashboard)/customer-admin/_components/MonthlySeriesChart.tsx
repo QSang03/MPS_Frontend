@@ -27,7 +27,7 @@ interface MonthlySeriesChartProps {
 
 const METRIC_CONFIG = {
   cost: {
-    label: 'Chi phí (VNĐ)',
+    label: 'Doanh thu (USD)',
     color: '#10b981',
     strokeWidth: 3,
   },
@@ -70,13 +70,13 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
 
           const formatValue = (value: number, metric: string) => {
             if (metric === 'cost') {
-              return new Intl.NumberFormat('vi-VN', {
+              return new Intl.NumberFormat('en-US', {
                 style: 'currency',
-                currency: 'VND',
-                maximumFractionDigits: 0,
+                currency: 'USD',
+                maximumFractionDigits: 2,
               }).format(value)
             }
-            return new Intl.NumberFormat('vi-VN').format(value)
+            return new Intl.NumberFormat('en-US').format(value)
           }
 
           return (

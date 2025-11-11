@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import backendApiClient from '@/lib/api/backend-client'
-import { API_ENDPOINTS } from '@/lib/api/endpoints'
 
 export async function POST(request: NextRequest) {
   let reqBody: unknown = undefined
@@ -13,7 +12,7 @@ export async function POST(request: NextRequest) {
     reqBody = await request.json()
 
     // Forward to backend /navigation endpoint
-    const response = await backendApiClient.post(API_ENDPOINTS.NAVIGATION, reqBody, {
+    const response = await backendApiClient.post('/navigation', reqBody, {
       headers: { Authorization: `Bearer ${accessToken}` },
     })
 
@@ -77,14 +76,23 @@ export async function POST(request: NextRequest) {
             path: '/',
           })
 
-        const originalBody =
-          typeof reqBody !== 'undefined'
-            ? reqBody
-            : err?.config?.data && typeof err.config.data === 'string'
-              ? JSON.parse(String(err.config.data))
-              : {}
+        let originalBody: unknown = {}
+        if (typeof reqBody !== 'undefined') {
+          originalBody = reqBody
+        } else if (err?.config?.data) {
+          // err.config.data may be a string or an object or something else; try to parse safely
+          try {
+            originalBody =
+              typeof err.config.data === 'string'
+                ? JSON.parse(String(err.config.data))
+                : err.config.data
+          } catch {
+            // if parsing fails, fall back to sending the raw value
+            originalBody = err.config.data
+          }
+        }
 
-        const retryResp = await backendApiClient.post(API_ENDPOINTS.NAVIGATION, originalBody, {
+        const retryResp = await backendApiClient.post('/navigation', originalBody, {
           headers: { Authorization: `Bearer ${newAccessToken}` },
         })
         return NextResponse.json(retryResp.data)

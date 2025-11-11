@@ -31,6 +31,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Checkbox } from '@/components/ui/checkbox'
 import { devicesClientService } from '@/lib/api/services/devices-client.service'
 import { customersClientService } from '@/lib/api/services/customers-client.service'
 import type { Device } from '@/types/models/device'
@@ -114,7 +115,9 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
   // create-install specific fields
   const [createInstalledAt, setCreateInstalledAt] = useState<string | null>(null)
   const [createActualPagesPrinted, setCreateActualPagesPrinted] = useState<number | ''>('')
-  const [createPrice, setCreatePrice] = useState<number | ''>('')
+  const [createPriceVND, setCreatePriceVND] = useState<number | ''>('')
+  const [createPriceUSD, setCreatePriceUSD] = useState<number | ''>('')
+  const [createExchangeRate, setCreateExchangeRate] = useState<number | ''>('')
   const [activeTab, setActiveTab] = useState('overview')
   const router = useRouter()
 
@@ -127,16 +130,36 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
   const [editRemaining, setEditRemaining] = useState<number | ''>('')
   const [editExpiryDate, setEditExpiryDate] = useState('')
   // new fields for device-consumable record
+  const [editInstalledAt, setEditInstalledAt] = useState<string | null>(null)
   const [editRemovedAt, setEditRemovedAt] = useState<string | null>(null)
   const [editActualPagesPrinted, setEditActualPagesPrinted] = useState<number | ''>('')
-  const [editPrice, setEditPrice] = useState<number | ''>('')
-  const [editStatus, setEditStatus] = useState('ACTIVE')
+  const [editPriceVND, setEditPriceVND] = useState<number | ''>('')
+  const [editPriceUSD, setEditPriceUSD] = useState<number | ''>('')
+  const [editExchangeRate, setEditExchangeRate] = useState<number | ''>('')
+  // we only need the setter in places below; ignore the first tuple value to avoid unused-var lint
+  const [, setEditConsumableStatus] = useState('ACTIVE')
+  const [editShowRemovedAt, setEditShowRemovedAt] = useState(false) // Checkbox state
   const [updatingConsumable, setUpdatingConsumable] = useState(false)
 
   const editRemainingInvalid =
     typeof editRemaining === 'number' &&
     typeof editCapacity === 'number' &&
     (editRemaining >= editCapacity || editRemaining < 0)
+
+  // Helper: format an ISO datetime string into the local value expected by
+  // <input type="datetime-local" /> ("YYYY-MM-DDTHH:mm"). We display
+  // local time to the user but store ISO strings (UTC) in state.
+  const formatISOToLocalDatetime = (iso?: string | null) => {
+    if (!iso) return ''
+    const d = new Date(iso)
+    const pad = (n: number) => String(n).padStart(2, '0')
+    const yyyy = d.getFullYear()
+    const mm = pad(d.getMonth() + 1)
+    const dd = pad(d.getDate())
+    const hh = pad(d.getHours())
+    const min = pad(d.getMinutes())
+    return `${yyyy}-${mm}-${dd}T${hh}:${min}`
+  }
 
   useEffect(() => {
     const fetchDevice = async () => {
@@ -267,7 +290,7 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
   const renderStatusChip = () => {
     const rawStatus =
       (device as any)?.status ??
-      ((device as any)?.isActive ? DEVICE_STATUS.ACTIVE : DEVICE_STATUS.DISABLED)
+      ((device as any)?.isActive ? DEVICE_STATUS.ACTIVE : DEVICE_STATUS.SUSPENDED)
     const statusKey = String(rawStatus).toUpperCase() as keyof typeof STATUS_DISPLAY
     const display = (STATUS_DISPLAY as any)[statusKey] ?? {
       label: String(rawStatus),
@@ -639,6 +662,7 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                         <th className="px-4 py-3 text-left text-sm font-semibold">Tên</th>
                         <th className="px-4 py-3 text-left text-sm font-semibold">Mã / Model</th>
                         <th className="px-4 py-3 text-left text-sm font-semibold">Trạng thái</th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold">Tỉ giá</th>
                         <th className="px-4 py-3 text-right text-sm font-semibold">Thời gian</th>
                         <th className="px-4 py-3 text-center text-sm font-semibold">Thao tác</th>
                       </tr>
@@ -723,6 +747,9 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                                 )}
                               </div>
                             </td>
+                            <td className="px-4 py-3 text-left text-sm">
+                              {(c as any)?.exchangeRate ? String((c as any).exchangeRate) : '-'}
+                            </td>
                             <td className="text-muted-foreground px-4 py-3 text-right text-sm">
                               {c?.installedAt
                                 ? new Date(c.installedAt).toLocaleString('vi-VN')
@@ -747,11 +774,36 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                                         .split('T')[0]
                                     : ''
                                   setEditExpiryDate(expiryDateValue ?? '')
-                                  setEditStatus(consumableData?.status ?? 'ACTIVE')
+                                  setEditConsumableStatus(consumableData?.status ?? 'ACTIVE')
                                   // device-level fields
+                                  setEditInstalledAt(c?.installedAt ?? null)
                                   setEditRemovedAt(c?.removedAt ?? null)
                                   setEditActualPagesPrinted(c?.actualPagesPrinted ?? '')
-                                  setEditPrice(c?.price ?? '')
+
+                                  // Always default checkbox to unchecked
+                                  setEditShowRemovedAt(false)
+
+                                  // Set price fields: if exchangeRate exists, show VND mode
+                                  const existingPrice = c?.price
+                                  const existingExchangeRate = (c as any)?.exchangeRate
+
+                                  if (existingExchangeRate && existingPrice) {
+                                    // VND mode: calculate VND from price * exchangeRate
+                                    setEditPriceVND(existingPrice * existingExchangeRate)
+                                    setEditExchangeRate(existingExchangeRate)
+                                    setEditPriceUSD('')
+                                  } else if (existingPrice) {
+                                    // USD mode: use price directly
+                                    setEditPriceUSD(existingPrice)
+                                    setEditPriceVND('')
+                                    setEditExchangeRate('')
+                                  } else {
+                                    // No price data
+                                    setEditPriceVND('')
+                                    setEditPriceUSD('')
+                                    setEditExchangeRate('')
+                                  }
+
                                   setShowEditConsumable(true)
                                 }}
                                 className="gap-2"
@@ -829,7 +881,9 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                                   setRemaining('')
                                   setCreateInstalledAt(null)
                                   setCreateActualPagesPrinted('')
-                                  setCreatePrice('')
+                                  setCreatePriceVND('')
+                                  setCreatePriceUSD('')
+                                  setCreateExchangeRate('')
                                   setShowCreateConsumable(true)
                                 }}
                                 className="gap-2"
@@ -1239,7 +1293,7 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                 <Label className="text-base font-semibold">Thời gian lắp đặt</Label>
                 <Input
                   type="datetime-local"
-                  value={createInstalledAt ? createInstalledAt.split('Z')[0] : ''}
+                  value={formatISOToLocalDatetime(createInstalledAt)}
                   onChange={(e) =>
                     setCreateInstalledAt(
                       e.target.value ? new Date(e.target.value).toISOString() : null
@@ -1261,14 +1315,59 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                 />
               </div>
               <div>
-                <Label className="text-base font-semibold">Giá</Label>
+                <Label className="text-base font-semibold">Giá (VND)</Label>
                 <Input
                   type="number"
                   step="0.01"
-                  value={createPrice?.toString() ?? ''}
-                  onChange={(e) => setCreatePrice(e.target.value ? Number(e.target.value) : '')}
-                  placeholder="150.5"
+                  value={createPriceVND?.toString() ?? ''}
+                  onChange={(e) => {
+                    const value = e.target.value ? Number(e.target.value) : ''
+                    setCreatePriceVND(value)
+                    if (value) {
+                      setCreatePriceUSD('') // Clear USD when VND is filled
+                    }
+                  }}
+                  placeholder="3000000"
                   className="mt-2 h-11"
+                />
+              </div>
+              {createPriceVND && (
+                <div>
+                  <Label className="text-base font-semibold">Tỷ giá (Exchange Rate)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={createExchangeRate?.toString() ?? ''}
+                    onChange={(e) =>
+                      setCreateExchangeRate(e.target.value ? Number(e.target.value) : '')
+                    }
+                    placeholder="25000"
+                    className="mt-2 h-11"
+                  />
+                  {createExchangeRate && (
+                    <p className="mt-2 text-sm font-medium text-emerald-600">
+                      💵 Giá sau quy đổi: ${(createPriceVND / createExchangeRate).toFixed(2)} USD
+                    </p>
+                  )}
+                </div>
+              )}
+              <div>
+                <Label className="text-base font-semibold">Giá (USD)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={createPriceUSD?.toString() ?? ''}
+                  onChange={(e) => {
+                    const value = e.target.value ? Number(e.target.value) : ''
+                    setCreatePriceUSD(value)
+                    if (value) {
+                      setCreatePriceVND('') // Clear VND when USD is filled
+                      setCreateExchangeRate('') // Clear exchange rate when using USD
+                    }
+                  }}
+                  placeholder="120.5"
+                  className="mt-2 h-11"
+                  disabled={!!createPriceVND}
                 />
               </div>
             </div>
@@ -1302,12 +1401,22 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                     return
                   }
 
-                  // Prepare install payload per API: installedAt, actualPagesPrinted, price
+                  // Prepare install payload per API: installedAt, actualPagesPrinted, price, exchangeRate
                   let installPayload: Record<string, unknown> = {}
                   if (createInstalledAt) installPayload.installedAt = createInstalledAt
                   if (typeof createActualPagesPrinted === 'number')
                     installPayload.actualPagesPrinted = createActualPagesPrinted
-                  if (typeof createPrice === 'number') installPayload.price = createPrice
+
+                  // Calculate price based on VND or USD input
+                  if (createPriceVND && createExchangeRate) {
+                    // VND mode: price = VND / exchangeRate
+                    installPayload.price = createPriceVND / createExchangeRate
+                    installPayload.exchangeRate = createExchangeRate
+                  } else if (createPriceUSD) {
+                    // USD mode: price = USD directly
+                    installPayload.price = createPriceUSD
+                  }
+
                   installPayload = removeEmpty(installPayload)
 
                   await devicesClientService.installConsumableWithPayload(
@@ -1549,16 +1658,55 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
 
               {/* device-consumable specific fields */}
               <div>
-                <Label className="text-base font-semibold">Ngày gỡ (removedAt)</Label>
+                <Label className="text-base font-semibold">Ngày lắp đặt (installedAt)</Label>
                 <Input
                   type="datetime-local"
-                  value={editRemovedAt ? editRemovedAt.split('Z')[0] : ''}
+                  value={formatISOToLocalDatetime(editInstalledAt)}
                   onChange={(e) =>
-                    setEditRemovedAt(e.target.value ? new Date(e.target.value).toISOString() : null)
+                    setEditInstalledAt(
+                      e.target.value ? new Date(e.target.value).toISOString() : null
+                    )
                   }
                   className="mt-2 h-11"
                 />
               </div>
+
+              {/* Checkbox to show/hide removedAt */}
+              <div className="flex items-center space-x-2 md:col-span-2">
+                <Checkbox
+                  id="showRemovedAt"
+                  checked={editShowRemovedAt}
+                  onCheckedChange={(checked) => {
+                    setEditShowRemovedAt(!!checked)
+                    if (!checked) {
+                      setEditRemovedAt(null) // Clear removedAt when unchecked
+                    }
+                  }}
+                />
+                <Label
+                  htmlFor="showRemovedAt"
+                  className="cursor-pointer text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Vật tư đã được gỡ (nhập ngày gỡ)
+                </Label>
+              </div>
+
+              {editShowRemovedAt && (
+                <div>
+                  <Label className="text-base font-semibold">Ngày gỡ (removedAt)</Label>
+                  <Input
+                    type="datetime-local"
+                    value={formatISOToLocalDatetime(editRemovedAt)}
+                    onChange={(e) =>
+                      setEditRemovedAt(
+                        e.target.value ? new Date(e.target.value).toISOString() : null
+                      )
+                    }
+                    className="mt-2 h-11"
+                  />
+                </div>
+              )}
+
               <div>
                 <Label className="text-base font-semibold">Số trang thực tế đã in</Label>
                 <Input
@@ -1571,30 +1719,68 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                   className="mt-2 h-11"
                 />
               </div>
-              <div>
-                <Label className="text-base font-semibold">Giá (price)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={editPrice?.toString() ?? ''}
-                  onChange={(e) => setEditPrice(e.target.value ? Number(e.target.value) : '')}
-                  placeholder="150.5"
-                  className="mt-2 h-11"
-                />
-              </div>
-              <div>
-                <Label className="text-base font-semibold">Trạng thái</Label>
-                <select
-                  value={editStatus}
-                  onChange={(e) => setEditStatus(e.target.value)}
-                  className="border-input bg-background ring-offset-background focus-visible:ring-ring mt-2 h-11 w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
-                >
-                  <option value="ACTIVE">ACTIVE</option>
-                  <option value="LOW">LOW</option>
-                  <option value="EMPTY">EMPTY</option>
-                  <option value="EXPIRED">EXPIRED</option>
-                </select>
-              </div>
+
+              {/* Hide price fields when removedAt checkbox is checked */}
+              {!editShowRemovedAt && (
+                <>
+                  <div>
+                    <Label className="text-base font-semibold">Giá (VND)</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={editPriceVND?.toString() ?? ''}
+                      onChange={(e) => {
+                        const value = e.target.value ? Number(e.target.value) : ''
+                        setEditPriceVND(value)
+                        if (value) {
+                          setEditPriceUSD('') // Clear USD when VND is filled
+                        }
+                      }}
+                      placeholder="3000000"
+                      className="mt-2 h-11"
+                    />
+                  </div>
+                  {editPriceVND && (
+                    <div>
+                      <Label className="text-base font-semibold">Tỷ giá (Exchange Rate)</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={editExchangeRate?.toString() ?? ''}
+                        onChange={(e) =>
+                          setEditExchangeRate(e.target.value ? Number(e.target.value) : '')
+                        }
+                        placeholder="25000"
+                        className="mt-2 h-11"
+                      />
+                      {editExchangeRate && (
+                        <p className="mt-2 text-sm font-medium text-blue-600">
+                          💵 Giá sau quy đổi: ${(editPriceVND / editExchangeRate).toFixed(2)} USD
+                        </p>
+                      )}
+                    </div>
+                  )}
+                  <div>
+                    <Label className="text-base font-semibold">Giá (USD)</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={editPriceUSD?.toString() ?? ''}
+                      onChange={(e) => {
+                        const value = e.target.value ? Number(e.target.value) : ''
+                        setEditPriceUSD(value)
+                        if (value) {
+                          setEditPriceVND('') // Clear VND when USD is filled
+                          setEditExchangeRate('') // Clear exchange rate when using USD
+                        }
+                      }}
+                      placeholder="120.5"
+                      className="mt-2 h-11"
+                      disabled={!!editPriceVND}
+                    />
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
@@ -1609,6 +1795,26 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
             <Button
               onClick={async () => {
                 if (!editingConsumable?.id) return
+
+                // Validation: installedAt must be strictly before removedAt and expiryDate
+                if (editInstalledAt && editRemovedAt) {
+                  const installedDate = new Date(editInstalledAt).getTime()
+                  const removedDate = new Date(editRemovedAt).getTime()
+                  if (installedDate >= removedDate) {
+                    toast.error('Ngày lắp đặt phải nhỏ hơn ngày gỡ (không được bằng)')
+                    return
+                  }
+                }
+
+                if (editInstalledAt && editExpiryDate) {
+                  const installedDate = new Date(editInstalledAt).getTime()
+                  const expiryDate = new Date(editExpiryDate + 'T23:59:59').getTime()
+                  if (installedDate >= expiryDate) {
+                    toast.error('Ngày lắp đặt phải nhỏ hơn ngày hết hạn (không được bằng)')
+                    return
+                  }
+                }
+
                 try {
                   setUpdatingConsumable(true)
                   let dto: any = {}
@@ -1618,7 +1824,6 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                   if (editSerialNumber) dto.serialNumber = editSerialNumber
                   if (editBatchNumber) dto.batchNumber = editBatchNumber
                   if (editExpiryDate) dto.expiryDate = new Date(editExpiryDate).toISOString()
-                  if (editStatus) dto.status = editStatus
                   dto = removeEmpty(dto)
 
                   // First: update consumable entity
@@ -1628,14 +1833,27 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                     return
                   }
 
-                  // Second: update device-consumable record (removedAt, actualPagesPrinted, price, isActive)
+                  // Second: update device-consumable record (installedAt, removedAt, actualPagesPrinted, price, exchangeRate)
                   try {
                     let deviceDto: Record<string, unknown> = {}
+                    if (editInstalledAt) deviceDto.installedAt = editInstalledAt
                     if (editRemovedAt) deviceDto.removedAt = editRemovedAt
                     if (typeof editActualPagesPrinted === 'number')
                       deviceDto.actualPagesPrinted = editActualPagesPrinted
-                    if (typeof editPrice === 'number') deviceDto.price = editPrice
-                    deviceDto.isActive = editStatus === 'ACTIVE'
+
+                    // Only include price if removedAt is not being set (checkbox not checked)
+                    if (!editShowRemovedAt) {
+                      // Calculate price based on VND or USD input
+                      if (editPriceVND && editExchangeRate) {
+                        // VND mode: price = VND / exchangeRate
+                        deviceDto.price = editPriceVND / editExchangeRate
+                        deviceDto.exchangeRate = editExchangeRate
+                      } else if (editPriceUSD) {
+                        // USD mode: price = USD directly
+                        deviceDto.price = editPriceUSD
+                      }
+                    }
+
                     deviceDto = removeEmpty(deviceDto)
 
                     await devicesClientService.updateDeviceConsumable(

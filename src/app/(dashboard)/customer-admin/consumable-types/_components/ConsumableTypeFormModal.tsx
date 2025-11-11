@@ -38,6 +38,9 @@ export default function ConsumableTypeFormModal({ mode = 'create', model = null,
     partNumber: model?.partNumber || '',
     capacity: model?.capacity ?? undefined,
     isActive: model?.isActive ?? true,
+    compatibleMachineLine: String(
+      (model as unknown as Record<string, unknown>)?.compatibleMachineLine ?? ''
+    ),
   })
 
   React.useEffect(() => {
@@ -49,6 +52,9 @@ export default function ConsumableTypeFormModal({ mode = 'create', model = null,
         partNumber: model.partNumber || '',
         capacity: model.capacity ?? undefined,
         isActive: model.isActive ?? true,
+        compatibleMachineLine: String(
+          (model as unknown as Record<string, unknown>)?.compatibleMachineLine ?? ''
+        ),
       })
     }
   }, [model])
@@ -155,6 +161,19 @@ export default function ConsumableTypeFormModal({ mode = 'create', model = null,
                   value={form.partNumber ?? ''}
                   onChange={(e) => setForm({ ...form, partNumber: e.target.value })}
                   placeholder="Nhập mã/part number (ví dụ: HP-CF410A)"
+                  className="h-11"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2 text-base font-semibold">
+                  <FileText className="h-4 w-4 text-cyan-600" />
+                  compatibleMachineLine
+                </Label>
+                <Input
+                  value={form.compatibleMachineLine ?? ''}
+                  onChange={(e) => setForm({ ...form, compatibleMachineLine: e.target.value })}
+                  placeholder="Nhập dòng máy tương thích (ví dụ: LaserJet Pro M404, ...)"
                   className="h-11"
                 />
               </div>

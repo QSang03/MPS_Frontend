@@ -110,7 +110,7 @@ export default function CustomerDetailClient({ customerId }: Props) {
                             )}
                           </td>
                           <td className="px-4 py-3">
-                            {String(d.status ?? ((d.isActive as boolean) ? 'ACTIVE' : 'DISABLED'))}
+                            {String(d.status ?? ((d.isActive as boolean) ? 'ACTIVE' : 'SUSPENDED'))}
                           </td>
                           <td className="px-4 py-3">
                             {d.createdAt

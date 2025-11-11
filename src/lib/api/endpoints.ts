@@ -66,6 +66,7 @@ export const API_ENDPOINTS = {
   // Stock Items
   STOCK_ITEMS: {
     UPDATE: (id: string) => `/stock-items/${id}`,
+    MOVEMENTS: (id: string) => `/stock-items/${id}/movements`,
   },
 
   // Service Requests

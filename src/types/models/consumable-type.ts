@@ -20,6 +20,7 @@ export interface ConsumableType {
   deletedAt?: string | null
   stockItem?: StockItem
   compatibleDeviceModels?: Array<{ id: string; name: string }>
+  compatibleMachineLine?: string
 }
 
 export interface CreateConsumableTypeDto {
@@ -29,6 +30,7 @@ export interface CreateConsumableTypeDto {
   partNumber?: string
   capacity?: number
   isActive?: boolean
+  compatibleMachineLine?: string
 }
 
 export type UpdateConsumableTypeDto = Partial<CreateConsumableTypeDto>

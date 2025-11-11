@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import type { Device } from '@/types/models/device'
 import {
   Dialog,
   DialogContent,
@@ -25,11 +26,11 @@ import { DEVICE_STATUS } from '@/constants/status'
 import { CheckCircle2, XCircle } from 'lucide-react'
 
 interface Props {
-  device?: Record<string, unknown>
+  device?: Device | null
   targetActive: boolean
   open: boolean
   onOpenChange: (open: boolean) => void
-  onSuccess?: (updated: Record<string, unknown>) => void
+  onSuccess?: (updated: Device) => void
 }
 
 export default function ToggleActiveModal({
@@ -82,7 +83,7 @@ export default function ToggleActiveModal({
       const updated = (await devicesClientService.update(
         String(device.id),
         payload as unknown as Record<string, unknown>
-      )) as Record<string, unknown>
+      )) as Device
       toast.success('Cập nhật trạng thái thiết bị thành công')
       onSuccess?.(updated)
       onOpenChange(false)
@@ -151,7 +152,7 @@ export default function ToggleActiveModal({
                 ) : (
                   <>
                     <SelectItem value="DECOMMISSIONED">Decommissioned</SelectItem>
-                    <SelectItem value="DISABLED">Disabled</SelectItem>
+                    <SelectItem value="SUSPENDED">Suspended</SelectItem>
                   </>
                 )}
               </SelectContent>

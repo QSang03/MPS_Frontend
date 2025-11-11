@@ -11,7 +11,7 @@ export const devicesClientService = {
     customerId?: string
     // optional filter by device model id
     deviceModelId?: string
-    // include devices with hidden statuses (DECOMMISSIONED/DISABLED)
+    // include devices with hidden statuses (DECOMMISSIONED/SUSPENDED)
     includeHidden?: boolean
   }) {
     const response = await internalApiClient.get<ApiListResponse<Device>>('/api/devices', {
@@ -214,7 +214,6 @@ export const devicesClientService = {
       pricePerBWPage?: number
       pricePerColorPage?: number
       effectiveFrom?: string
-      effectiveTo?: string
     }
   ) {
     try {

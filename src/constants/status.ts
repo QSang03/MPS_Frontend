@@ -14,7 +14,7 @@ export const DEVICE_STATUS = {
   MAINTENANCE: 'MAINTENANCE',
   ERROR: 'ERROR',
   OFFLINE: 'OFFLINE',
-  DISABLED: 'DISABLED',
+  SUSPENDED: 'SUSPENDED',
   DECOMMISSIONED: 'DECOMMISSIONED',
   DELETED: 'DELETED',
 } as const
@@ -29,7 +29,7 @@ export const STATUS_ALLOWED_FOR_ACTIVE: DeviceStatusValue[] = [
 ]
 
 export const STATUS_ALLOWED_FOR_INACTIVE: DeviceStatusValue[] = [
-  DEVICE_STATUS.DISABLED,
+  DEVICE_STATUS.SUSPENDED,
   DEVICE_STATUS.DECOMMISSIONED,
 ]
 
@@ -41,7 +41,7 @@ export const STATUS_DISPLAY: Record<
   [DEVICE_STATUS.MAINTENANCE]: { label: 'Maintenance', color: 'blue', icon: '🛠️' },
   [DEVICE_STATUS.ERROR]: { label: 'Error', color: 'red', icon: '⚠️' },
   [DEVICE_STATUS.OFFLINE]: { label: 'Offline', color: 'gray', icon: '⏸️' },
-  [DEVICE_STATUS.DISABLED]: { label: 'Disabled', color: 'orange', icon: '🚫' },
+  [DEVICE_STATUS.SUSPENDED]: { label: 'Suspended', color: 'orange', icon: '🚫' },
   [DEVICE_STATUS.DECOMMISSIONED]: { label: 'Decommissioned', color: 'purple', icon: '🗄️' },
   [DEVICE_STATUS.DELETED]: { label: 'Deleted', color: 'black', icon: '✖' },
 }

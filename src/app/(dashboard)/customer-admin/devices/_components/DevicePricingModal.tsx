@@ -53,12 +53,18 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
     pricePerBWPage: '',
     pricePerColorPage: '',
     effectiveFrom: '',
-    effectiveTo: '',
   })
-  const [focused, setFocused] = useState<{ bw: boolean; color: boolean }>({
-    bw: false,
-    color: false,
-  })
+  // Support VND/USD entry per-page + exchange rate similar to consumable edit modal
+  const [pricePerBWPageVND, setPricePerBWPageVND] = useState<number | ''>('')
+  const [pricePerBWPageVNDRaw, setPricePerBWPageVNDRaw] = useState<string>('')
+  const [pricePerBWPageUSDRaw, setPricePerBWPageUSDRaw] = useState<string>('')
+  const [pricePerColorPageVND, setPricePerColorPageVND] = useState<number | ''>('')
+  const [pricePerColorPageVNDRaw, setPricePerColorPageVNDRaw] = useState<string>('')
+  const [pricePerColorPageUSDRaw, setPricePerColorPageUSDRaw] = useState<string>('')
+  const [exchangeRate, setExchangeRate] = useState<number | ''>('')
+  const [exchangeRateRaw, setExchangeRateRaw] = useState<string>('')
+  // store current effectiveFrom from backend (ISO) to enforce new > old
+  const [currentEffectiveFromISO, setCurrentEffectiveFromISO] = useState<string | null>(null)
 
   useEffect(() => {
     if (!open || !device?.id) return
@@ -79,14 +85,42 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
             data.pricePerColorPage !== undefined && data.pricePerColorPage !== null
               ? String(data.pricePerColorPage)
               : ''
+          // Populate USD fields from existing active pricing (backend stores USD prices)
           setForm({
             pricePerBWPage: bw,
             pricePerColorPage: color,
             effectiveFrom: isoToLocalDatetimeInput(data.effectiveFrom),
-            effectiveTo: isoToLocalDatetimeInput(data.effectiveTo),
           })
+          setPricePerBWPageUSDRaw(
+            data.pricePerBWPage !== undefined && data.pricePerBWPage !== null
+              ? String(data.pricePerBWPage)
+              : ''
+          )
+          setPricePerColorPageUSDRaw(
+            data.pricePerColorPage !== undefined && data.pricePerColorPage !== null
+              ? String(data.pricePerColorPage)
+              : ''
+          )
+          setPricePerBWPageVND('')
+          setPricePerColorPageVND('')
+          setExchangeRate((data as any)?.exchangeRate ?? '')
+          setExchangeRateRaw(
+            ((data as any)?.exchangeRate ?? '') === ''
+              ? ''
+              : String((data as any)?.exchangeRate ?? '')
+          )
+          setCurrentEffectiveFromISO((data as any)?.effectiveFrom ?? null)
         } else {
-          setForm({ pricePerBWPage: '', pricePerColorPage: '', effectiveFrom: '', effectiveTo: '' })
+          setForm({ pricePerBWPage: '', pricePerColorPage: '', effectiveFrom: '' })
+          setPricePerBWPageVND('')
+          setPricePerBWPageVNDRaw('')
+          setPricePerBWPageUSDRaw('')
+          setPricePerColorPageVND('')
+          setPricePerColorPageVNDRaw('')
+          setPricePerColorPageUSDRaw('')
+          setExchangeRate('')
+          setExchangeRateRaw('')
+          setCurrentEffectiveFromISO(null)
         }
       } catch (err) {
         console.error('Failed to load active pricing', err)
@@ -107,60 +141,120 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
     return Number(normalized)
   }
 
-  const formatNumberDisplay = (v: string) => {
-    if (v === '' || v === undefined || v === null) return ''
-    const normalized = String(v).replace(/,/g, '.').trim()
-    if (normalized === '') return ''
-    const num = Number(normalized)
-    if (!Number.isFinite(num)) return String(v)
-    const idx = normalized.indexOf('.')
-    const fracDigits = idx >= 0 ? Math.min(normalized.length - idx - 1, 4) : 0
-    const nf = new Intl.NumberFormat('en-US', {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: fracDigits,
-    })
-    return nf.format(num)
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!device?.id) return
     setSubmitting(true)
     try {
       const payload: any = {}
-      if (form.pricePerBWPage !== '') payload.pricePerBWPage = parseNum(form.pricePerBWPage)
-      if (form.pricePerColorPage !== '')
-        payload.pricePerColorPage = parseNum(form.pricePerColorPage)
-      const MAX_ABS = 1_000_000
-      if (
-        payload.pricePerBWPage !== undefined &&
-        (!Number.isFinite(payload.pricePerBWPage) || Math.abs(payload.pricePerBWPage) >= MAX_ABS)
-      ) {
-        toast.error('Giá B/W không hợp lệ hoặc quá lớn')
-        setSubmitting(false)
-        return
+
+      // Helper: validate decimal places (after dot) <= 8
+      const validateDecimals = (raw: string) => {
+        const idx = raw.indexOf('.')
+        if (idx === -1) return true
+        const decimals = raw.length - idx - 1
+        return decimals <= 8
       }
-      if (
-        payload.pricePerColorPage !== undefined &&
-        (!Number.isFinite(payload.pricePerColorPage) ||
-          Math.abs(payload.pricePerColorPage) >= MAX_ABS)
-      ) {
-        toast.error('Giá màu không hợp lệ hoặc quá lớn')
-        setSubmitting(false)
-        return
-      }
-      const ef = localInputToIso(form.effectiveFrom)
-      const et = localInputToIso(form.effectiveTo)
-      if (ef) payload.effectiveFrom = ef
-      if (et) payload.effectiveTo = et
-      if (payload.effectiveFrom && payload.effectiveTo) {
-        const from = new Date(payload.effectiveFrom)
-        const to = new Date(payload.effectiveTo)
-        if (isNaN(from.getTime()) || isNaN(to.getTime()) || from.getTime() >= to.getTime()) {
-          toast.error('Khoảng thời gian hiệu lực không hợp lệ (effectiveFrom < effectiveTo)')
+
+      // Validate and compute B/W price
+      if (pricePerBWPageVNDRaw) {
+        if (!validateDecimals(pricePerBWPageVNDRaw)) {
+          toast.error('Số chữ số sau dấu thập phân cho VND phải ≤ 8')
           setSubmitting(false)
           return
         }
+        const v = Number(pricePerBWPageVNDRaw)
+        if (!Number.isFinite(v) || Math.abs(v) > 250000) {
+          toast.error('Giá VND không hợp lệ hoặc vượt quá 250000')
+          setSubmitting(false)
+          return
+        }
+        if (!exchangeRateRaw) {
+          toast.error('Vui lòng nhập tỷ giá khi nhập giá bằng VND')
+          setSubmitting(false)
+          return
+        }
+        if (!validateDecimals(exchangeRateRaw)) {
+          toast.error('Số chữ số sau dấu thập phân cho tỷ giá phải ≤ 8')
+          setSubmitting(false)
+          return
+        }
+        const ex = Number(exchangeRateRaw)
+        payload.pricePerBWPage = v / ex
+        payload.exchangeRate = ex
+      } else if (pricePerBWPageUSDRaw) {
+        if (!validateDecimals(pricePerBWPageUSDRaw)) {
+          toast.error('Số chữ số sau dấu thập phân cho USD phải ≤ 8')
+          setSubmitting(false)
+          return
+        }
+        const v = Number(pricePerBWPageUSDRaw)
+        if (!Number.isFinite(v) || Math.abs(v) > 10) {
+          toast.error('Giá USD không hợp lệ hoặc vượt quá 10')
+          setSubmitting(false)
+          return
+        }
+        payload.pricePerBWPage = v
+      } else if (form.pricePerBWPage !== '') {
+        payload.pricePerBWPage = parseNum(form.pricePerBWPage)
+      }
+
+      // Validate and compute Color price
+      if (pricePerColorPageVNDRaw) {
+        if (!validateDecimals(pricePerColorPageVNDRaw)) {
+          toast.error('Số chữ số sau dấu thập phân cho VND phải ≤ 8')
+          setSubmitting(false)
+          return
+        }
+        const v = Number(pricePerColorPageVNDRaw)
+        if (!Number.isFinite(v) || Math.abs(v) > 250000) {
+          toast.error('Giá VND không hợp lệ hoặc vượt quá 250000')
+          setSubmitting(false)
+          return
+        }
+        if (!exchangeRateRaw) {
+          toast.error('Vui lòng nhập tỷ giá khi nhập giá bằng VND')
+          setSubmitting(false)
+          return
+        }
+        if (!validateDecimals(exchangeRateRaw)) {
+          toast.error('Số chữ số sau dấu thập phân cho tỷ giá phải ≤ 8')
+          setSubmitting(false)
+          return
+        }
+        const ex = Number(exchangeRateRaw)
+        payload.pricePerColorPage = v / ex
+        payload.exchangeRate = ex
+      } else if (pricePerColorPageUSDRaw) {
+        if (!validateDecimals(pricePerColorPageUSDRaw)) {
+          toast.error('Số chữ số sau dấu thập phân cho USD phải ≤ 8')
+          setSubmitting(false)
+          return
+        }
+        const v = Number(pricePerColorPageUSDRaw)
+        if (!Number.isFinite(v) || Math.abs(v) > 10) {
+          toast.error('Giá USD không hợp lệ hoặc vượt quá 10')
+          setSubmitting(false)
+          return
+        }
+        payload.pricePerColorPage = v
+      } else if (form.pricePerColorPage !== '') {
+        payload.pricePerColorPage = parseNum(form.pricePerColorPage)
+      }
+
+      // effectiveFrom validation: if backend had existing effectiveFrom, new one must be greater
+      const ef = localInputToIso(form.effectiveFrom)
+      if (ef) {
+        if (currentEffectiveFromISO) {
+          const oldTs = new Date(currentEffectiveFromISO).getTime()
+          const newTs = new Date(ef).getTime()
+          if (isNaN(oldTs) || isNaN(newTs) || newTs <= oldTs) {
+            toast.error('Nếu đã có giá cũ thì effectiveFrom mới phải lớn hơn giá hiện tại')
+            setSubmitting(false)
+            return
+          }
+        }
+        payload.effectiveFrom = ef
       }
       await devicesClientService.upsertPricing(device.id, payload)
       toast.success('Cập nhật giá thiết bị thành công')
@@ -243,37 +337,89 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
                 <div className="grid grid-cols-2 gap-5">
                   <div className="space-y-2">
                     <Label>Giá mỗi trang trắng đen</Label>
-                    <Input
-                      inputMode="decimal"
-                      value={
-                        focused.bw ? form.pricePerBWPage : formatNumberDisplay(form.pricePerBWPage)
-                      }
-                      onFocus={() => setFocused((s) => ({ ...s, bw: true }))}
-                      onBlur={() => setFocused((s) => ({ ...s, bw: false }))}
-                      onChange={(e) =>
-                        setForm((s: any) => ({ ...s, pricePerBWPage: e.target.value }))
-                      }
-                      placeholder="0.2"
-                      className="h-11 text-base"
-                    />
+                    <div className="grid grid-cols-2 gap-2">
+                      <Input
+                        inputMode="decimal"
+                        value={pricePerBWPageVNDRaw}
+                        onChange={(e) => {
+                          const raw = e.target.value
+                          setPricePerBWPageVNDRaw(raw)
+                          const v = raw ? Number(raw) : ''
+                          setPricePerBWPageVND(v)
+                          if (v) {
+                            setPricePerBWPageUSDRaw('')
+                          }
+                        }}
+                        placeholder="VND"
+                        className="h-11 text-base"
+                      />
+                      <Input
+                        inputMode="decimal"
+                        value={pricePerBWPageUSDRaw}
+                        onChange={(e) => {
+                          const raw = e.target.value
+                          setPricePerBWPageUSDRaw(raw)
+                          if (raw) {
+                            setPricePerBWPageVND('')
+                            setPricePerBWPageVNDRaw('')
+                            setExchangeRate('')
+                            setExchangeRateRaw('')
+                          }
+                        }}
+                        placeholder="USD"
+                        className="h-11 text-base"
+                        disabled={!!pricePerBWPageVND}
+                      />
+                    </div>
+                    {exchangeRate && pricePerBWPageVND ? (
+                      <p className="mt-1 text-sm font-medium text-emerald-600">
+                        💵 Giá B/W sau quy đổi: $ {(pricePerBWPageVND / exchangeRate).toFixed(2)}{' '}
+                        USD
+                      </p>
+                    ) : null}
                   </div>
                   <div className="space-y-2">
                     <Label>Giá mỗi trang màu</Label>
-                    <Input
-                      inputMode="decimal"
-                      value={
-                        focused.color
-                          ? form.pricePerColorPage
-                          : formatNumberDisplay(form.pricePerColorPage)
-                      }
-                      onFocus={() => setFocused((s) => ({ ...s, color: true }))}
-                      onBlur={() => setFocused((s) => ({ ...s, color: false }))}
-                      onChange={(e) =>
-                        setForm((s: any) => ({ ...s, pricePerColorPage: e.target.value }))
-                      }
-                      placeholder="1.5"
-                      className="h-11 text-base"
-                    />
+                    <div className="grid grid-cols-2 gap-2">
+                      <Input
+                        inputMode="decimal"
+                        value={pricePerColorPageVNDRaw}
+                        onChange={(e) => {
+                          const raw = e.target.value
+                          setPricePerColorPageVNDRaw(raw)
+                          const v = raw ? Number(raw) : ''
+                          setPricePerColorPageVND(v)
+                          if (v) {
+                            setPricePerColorPageUSDRaw('')
+                          }
+                        }}
+                        placeholder="VND"
+                        className="h-11 text-base"
+                      />
+                      <Input
+                        inputMode="decimal"
+                        value={pricePerColorPageUSDRaw}
+                        onChange={(e) => {
+                          const raw = e.target.value
+                          setPricePerColorPageUSDRaw(raw)
+                          if (raw) {
+                            setPricePerColorPageVND('')
+                            setPricePerColorPageVNDRaw('')
+                            setExchangeRate('')
+                            setExchangeRateRaw('')
+                          }
+                        }}
+                        placeholder="USD"
+                        className="h-11 text-base"
+                        disabled={!!pricePerColorPageVND}
+                      />
+                    </div>
+                    {exchangeRate && pricePerColorPageVND ? (
+                      <p className="mt-1 text-sm font-medium text-emerald-600">
+                        💵 Giá Color sau quy đổi: ${' '}
+                        {(pricePerColorPageVND / exchangeRate).toFixed(2)} USD
+                      </p>
+                    ) : null}
                   </div>
                 </div>
                 <Separator />
@@ -290,13 +436,24 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Hiệu lực đến</Label>
+                    <Label>Tỷ giá (nếu nhập VND)</Label>
                     <Input
-                      type="datetime-local"
-                      value={form.effectiveTo}
-                      onChange={(e) => setForm((s: any) => ({ ...s, effectiveTo: e.target.value }))}
+                      type="number"
+                      step="0.01"
+                      value={exchangeRateRaw}
+                      onChange={(e) => {
+                        const raw = e.target.value
+                        setExchangeRateRaw(raw)
+                        setExchangeRate(raw ? Number(raw) : '')
+                      }}
+                      placeholder="25000"
                       className="h-11"
                     />
+                    {(exchangeRate || pricePerBWPageVND || pricePerColorPageVND) && (
+                      <p className="text-muted-foreground mt-2 text-sm">
+                        Nếu nhập giá bằng VND, giá sẽ được quy đổi sang USD bằng tỷ giá trên.
+                      </p>
+                    )}
                   </div>
                 </div>
               </>

@@ -27,6 +27,8 @@ const nextConfig: NextConfig = {
     ],
   },
 
+  // Note: Next 15 uses SWC internally and Turbopack for dev; avoid deprecated swcMinify in config.
+
   // Enable compression
   compress: true,
 

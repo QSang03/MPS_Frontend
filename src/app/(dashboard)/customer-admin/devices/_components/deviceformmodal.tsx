@@ -150,7 +150,7 @@ export default function DeviceFormModal({
       // Validate status consistent with isActive (only during edit mode)
       if (mode === 'edit') {
         const activeStatuses = ['ACTIVE', 'MAINTENANCE', 'ERROR', 'OFFLINE']
-        const inactiveStatuses = ['DECOMMISSIONED', 'DISABLED']
+        const inactiveStatuses = ['DECOMMISSIONED', 'SUSPENDED']
         const allowedStatuses = form.isActive ? activeStatuses : inactiveStatuses
         if (!allowedStatuses.includes(String(form.status))) {
           toast.error(
@@ -526,9 +526,9 @@ export default function DeviceFormModal({
                               newStatus = DEVICE_STATUS.DECOMMISSIONED
                             }
                           } else {
-                            // switching to active: if currently DECOMMISSIONED/DISABLED, set to ACTIVE
+                            // switching to active: if currently DECOMMISSIONED/SUSPENDED, set to ACTIVE
                             if (
-                              [DEVICE_STATUS.DECOMMISSIONED, DEVICE_STATUS.DISABLED].includes(
+                              [DEVICE_STATUS.DECOMMISSIONED, DEVICE_STATUS.SUSPENDED].includes(
                                 String(s.status) as any
                               )
                             ) {
@@ -570,7 +570,7 @@ export default function DeviceFormModal({
                       ) : (
                         <>
                           <SelectItem value="DECOMMISSIONED">Decommissioned</SelectItem>
-                          <SelectItem value="DISABLED">Disabled</SelectItem>
+                          <SelectItem value="SUSPENDED">Suspended</SelectItem>
                         </>
                       )}
                     </SelectContent>

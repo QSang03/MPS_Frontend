@@ -10,6 +10,8 @@ import { TopCustomersTable } from './_components/TopCustomersTable'
 import { AlertsSummary } from './_components/AlertsSummary'
 import { DateRangeSelector } from './_components/DateRangeSelector'
 import { RecentActivity } from './_components/RecentActivity'
+import { CustomerDetailsModal } from './_components/CustomerDetailsModal'
+import { ContractsModal } from './_components/ContractsModal'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AlertCircle, RefreshCw } from 'lucide-react'
@@ -35,6 +37,8 @@ function DashboardSkeleton() {
 export default function CustomerAdminDashboard() {
   const currentMonth = useCurrentMonth()
   const [selectedMonth, setSelectedMonth] = useState(currentMonth)
+  const [showCustomersModal, setShowCustomersModal] = useState(false)
+  const [showContractsModal, setShowContractsModal] = useState(false)
   usePageTitle('Dashboard Tổng quan')
 
   // Fetch admin overview data
@@ -76,7 +80,23 @@ export default function CustomerAdminDashboard() {
       <DateRangeSelector defaultMonth={selectedMonth} onChange={handleMonthChange} />
 
       {/* KPI Cards - 8 Cards Grid */}
-      <KPICards kpis={overviewData?.kpis} isLoading={isLoading} />
+      <KPICards
+        kpis={overviewData?.kpis}
+        isLoading={isLoading}
+        onRevenueClick={() => setShowCustomersModal(true)}
+        onContractsClick={() => setShowContractsModal(true)}
+      />
+
+      {/* Customer Details Modal */}
+      <CustomerDetailsModal
+        open={showCustomersModal}
+        onOpenChange={setShowCustomersModal}
+        topCustomers={overviewData?.topCustomers || []}
+        month={selectedMonth}
+      />
+
+      {/* Contracts Modal */}
+      <ContractsModal open={showContractsModal} onOpenChange={setShowContractsModal} />
 
       {/* Row 1: Cost Breakdown + Alerts Summary */}
       <div className="grid gap-6 lg:grid-cols-2">

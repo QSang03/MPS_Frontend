@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -15,8 +15,19 @@ import { ROUTES } from '@/constants/routes'
 
 export default function ChangePasswordPage() {
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const isRequired = searchParams.get('required') === 'true'
+  const [isRequired, setIsRequired] = useState(false)
+
+  // Avoid using `useSearchParams()` at the top-level page (it causes a CSR bailout
+  // that Next expects to be wrapped in a Suspense boundary). Read the query
+  // params directly from window.location on the client instead.
+  useEffect(() => {
+    try {
+      const sp = new URLSearchParams(window.location.search)
+      setIsRequired(sp.get('required') === 'true')
+    } catch {
+      setIsRequired(false)
+    }
+  }, [])
 
   const [oldPassword, setOldPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')

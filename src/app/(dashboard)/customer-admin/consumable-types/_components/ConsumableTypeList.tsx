@@ -345,7 +345,9 @@ export function ConsumableTypeList() {
                       </td>
                       <td className="px-4 py-3 font-semibold text-emerald-700">{m.name || '—'}</td>
                       <td className="text-muted-foreground max-w-xs truncate px-4 py-3 text-sm">
-                        {m.compatibleDeviceModels?.map((dm) => dm.name).join(', ') || '—'}
+                        {m.compatibleMachineLine?.trim()
+                          ? m.compatibleMachineLine
+                          : m.compatibleDeviceModels?.map((dm) => dm.name).join(', ') || '—'}
                       </td>
                       <td className="px-4 py-3 text-sm">{m.capacity ?? '—'}</td>
                       <td className="px-4 py-3">
