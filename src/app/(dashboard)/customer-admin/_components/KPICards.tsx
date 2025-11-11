@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import type { AdminOverviewKPIs } from '@/types/dashboard'
+// no direct fetch here; the revenue modal will fetch top-customers when opened
 
 interface KPICardsProps {
   kpis: AdminOverviewKPIs | undefined
@@ -133,6 +134,8 @@ export function KPICards({ kpis, isLoading, onRevenueClick, onContractsClick }: 
 
   const costChangePercent = kpis.costChangePercent ?? 0
 
+  // Note: top-customers is fetched inside the modal when opened. Keep KPI card simple.
+
   const subtitles = [
     `${kpis.activeDevices ?? 0} hoạt động, ${kpis.errorDevices ?? 0} lỗi`,
     `${costChangePercent > 0 ? '+' : ''}${costChangePercent.toFixed(1)}% so với tháng trước`,
@@ -166,8 +169,9 @@ export function KPICards({ kpis, isLoading, onRevenueClick, onContractsClick }: 
         // Format display value
         let displayValue: string
         if (index === 1) {
-          // Cost - format as currency (compact)
+          // Cost - show KPI totalCost (modal will fetch top-customers when opened)
           const numValue = value as number
+
           displayValue =
             numValue >= 1000000000
               ? `$${(numValue / 1000000000).toFixed(1)}B`

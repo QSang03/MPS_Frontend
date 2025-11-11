@@ -31,7 +31,6 @@ import internalApiClient from '@/lib/api/internal-client'
 interface CustomerDetailsModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  topCustomers: TopCustomer[]
   month: string
 }
 
@@ -80,14 +79,19 @@ function formatNumber(num: number): string {
   return new Intl.NumberFormat('en-US').format(num)
 }
 
-export function CustomerDetailsModal({
-  open,
-  onOpenChange,
-  topCustomers,
-  month,
-}: CustomerDetailsModalProps) {
+export function CustomerDetailsModal({ open, onOpenChange, month }: CustomerDetailsModalProps) {
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null)
-
+  // Fetch top customers when modal is opened. Use React Query to manage cache.
+  const { data: topCustomers } = useQuery({
+    queryKey: ['reports', 'top-customers', month],
+    queryFn: async () => {
+      const resp = await internalApiClient.get('/api/reports/costs/top-customers', {
+        params: { page: 1, limit: 20, month },
+      })
+      return (resp.data?.data as TopCustomer[]) || []
+    },
+    enabled: !!open,
+  })
   const { data: customerDetails, isLoading: isLoadingDetails } = useQuery({
     queryKey: ['customer-overview', selectedCustomerId, month],
     queryFn: async () => {
@@ -126,13 +130,14 @@ export function CustomerDetailsModal({
                   Top khách hàng
                 </DialogTitle>
                 <DialogDescription>
-                  Danh sách {topCustomers.length} khách hàng chi tiêu cao nhất trong tháng {month}
+                  Danh sách {(topCustomers ?? []).length} khách hàng chi tiêu cao nhất trong tháng{' '}
+                  {month}
                 </DialogDescription>
               </DialogHeader>
 
               <div className="mt-6 space-y-3">
-                {topCustomers.map((customer, index) => {
-                  const totalCost = topCustomers.reduce((sum, c) => sum + c.totalCost, 0)
+                {(topCustomers ?? []).map((customer, index) => {
+                  const totalCost = (topCustomers ?? []).reduce((sum, c) => sum + c.totalCost, 0)
                   const percentage = totalCost > 0 ? (customer.totalCost / totalCost) * 100 : 0
 
                   return (
@@ -213,7 +218,10 @@ export function CustomerDetailsModal({
                   <div>
                     <DialogTitle className="text-2xl">Chi tiết khách hàng</DialogTitle>
                     <DialogDescription>
-                      {topCustomers.find((c) => c.customerId === selectedCustomerId)?.customerName}
+                      {
+                        (topCustomers ?? []).find((c) => c.customerId === selectedCustomerId)
+                          ?.customerName
+                      }
                     </DialogDescription>
                   </div>
                 </div>

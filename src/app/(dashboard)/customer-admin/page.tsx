@@ -91,7 +91,6 @@ export default function CustomerAdminDashboard() {
       <CustomerDetailsModal
         open={showCustomersModal}
         onOpenChange={setShowCustomersModal}
-        topCustomers={overviewData?.topCustomers || []}
         month={selectedMonth}
       />
 
