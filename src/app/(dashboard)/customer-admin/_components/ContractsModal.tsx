@@ -85,7 +85,11 @@ const STATUS_COLORS: Record<string, string> = {
   TERMINATED: 'bg-red-100 text-red-700 border-red-300',
 }
 
-export function ContractsModal({ open, onOpenChange }: ContractsModalProps) {
+export function ContractsModal({
+  open,
+  onOpenChange,
+  onOpenContractDetail,
+}: ContractsModalProps & { onOpenContractDetail?: (id: string) => void }) {
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
@@ -202,6 +206,10 @@ export function ContractsModal({ open, onOpenChange }: ContractsModalProps) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
                 className="group cursor-pointer rounded-lg border-2 border-gray-200 bg-white p-4 transition-all hover:border-indigo-300 hover:shadow-lg"
+                onClick={() => {
+                  // delegate opening detail to parent so parent can close this modal
+                  if (typeof onOpenContractDetail === 'function') onOpenContractDetail(contract.id)
+                }}
               >
                 <div className="flex items-start gap-4">
                   {/* Icon */}
@@ -297,6 +305,7 @@ export function ContractsModal({ open, onOpenChange }: ContractsModalProps) {
             </div>
           </div>
         )}
+        {/* Contract Detail is opened by parent page to allow closing this modal while detail is open */}
       </DialogContent>
     </Dialog>
   )

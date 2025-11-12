@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import type { Contract } from '@/types/models/contract'
 import type { Session } from '@/lib/auth/session'
 import { PermissionGuard } from '@/components/shared/PermissionGuard'
@@ -55,6 +55,21 @@ interface Props {
 }
 
 export default function ContractsPageClient({ session }: Props) {
+  const extractApiMessage = (err: unknown): string | undefined => {
+    if (!err) return undefined
+    if (typeof err === 'string') return err
+    if (typeof err !== 'object') return undefined
+    const e = err as {
+      responseData?: { message?: string }
+      response?: { data?: { message?: string } }
+      message?: unknown
+    }
+    if (e.responseData && typeof e.responseData.message === 'string') return e.responseData.message
+    if (e.response && e.response.data && typeof e.response.data.message === 'string')
+      return e.response.data.message
+    if (typeof e.message === 'string') return e.message
+    return undefined
+  }
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
@@ -78,38 +93,64 @@ export default function ContractsPageClient({ session }: Props) {
   } | null>(null)
   const [hoveredRowId, setHoveredRowId] = useState<string | null>(null)
 
-  // Fetch contracts from server with filters (debouncedSearch)
-  const fetchContracts = async (opts?: { silent?: boolean }) => {
+  // Fetch contracts from server with filters (debouncedSearch).
+  // Accept an explicit customerId so effects can drive the authoritative
+  // value from URL (searchParamsString) and avoid races between effects.
+  const fetchContracts = async (
+    customerIdArg?: string | undefined,
+    opts?: { silent?: boolean }
+  ) => {
     if (!opts?.silent) setLoading(true)
     try {
-      const res = customerFilter
-        ? await contractsClientService.getByCustomer(customerFilter, {
-            page,
-            limit,
-            search: debouncedSearch || undefined,
-          })
-        : await contractsClientService.getAll({
-            page,
-            limit,
-            search: debouncedSearch || undefined,
-            status: statusFilter,
-            type: typeFilter,
-            customerId: customerFilter,
-          })
+      const cid = customerIdArg ?? customerFilter
+      // Always call getAll and pass the current filters as query params.
+      // This keeps behavior simple: whatever the UI state is, we send it to
+      // the /contracts endpoint and let the backend filter.
+      const res = await contractsClientService.getAll({
+        page,
+        limit,
+        search: debouncedSearch || undefined,
+        status: statusFilter,
+        type: typeFilter,
+        customerId: cid,
+      })
       setContracts(res.data || [])
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('fetch contracts error', err)
-      toast.error('❌ Không thể tải danh sách hợp đồng')
+      const apiMsg = extractApiMessage(err)
+      toast.error(apiMsg || '❌ Không thể tải danh sách hợp đồng')
     } finally {
       if (!opts?.silent) setLoading(false)
     }
   }
 
-  // Initial load and reload when filters change
+  // Load contracts whenever any filter or the URL search params change.
+  // We use the stringified search params (`searchParamsString`) as the
+  // authoritative source for customerId so Back/Forward navigation (which
+  // updates the URL) will fetch correctly.
+  // Use useMemo to compute a stable string representation of search params.
+  // Using a memo hook ensures the hooks order/length is constant between renders
+  // which avoids the "dependency array changed size" runtime warning.
+  const searchParamsString = useMemo(() => {
+    try {
+      return searchParams?.toString() ?? ''
+    } catch {
+      return ''
+    }
+    // depend directly on searchParams reference
+  }, [searchParams])
+
   useEffect(() => {
-    fetchContracts()
+    const cid = searchParams?.get('customerId') ?? undefined
+
+    // keep UI in sync
+    setCustomerFilter(cid)
+    setPage(1)
+
+    // fetch using the cid read from URL (authoritative)
+    fetchContracts(cid)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearch, statusFilter, typeFilter, customerFilter, page])
+  }, [debouncedSearch, statusFilter, typeFilter, page, searchParamsString])
 
   // Debounce search term (2s)
   useEffect(() => {
@@ -119,16 +160,6 @@ export default function ContractsPageClient({ session }: Props) {
     }, 2000)
     return () => clearTimeout(t)
   }, [searchTerm])
-
-  // Initialize filters from URL (e.g., customerId passed from other screens)
-  useEffect(() => {
-    const cid = searchParams?.get('customerId')
-    if (cid) {
-      setCustomerFilter(cid)
-      setPage(1)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
   const applyCustomerFilter = (cid: string) => {
     setCustomerFilter(cid)
@@ -148,7 +179,7 @@ export default function ContractsPageClient({ session }: Props) {
         const res = await customersClientService.getAll({ page: 1, limit: 100 })
         if (!mounted) return
         setCustomers(res.data || [])
-      } catch (err) {
+      } catch (err: unknown) {
         console.error('Failed to load customers for filter', err)
       } finally {
         if (mounted) setCustomersLoading(false)
@@ -384,7 +415,8 @@ export default function ContractsPageClient({ session }: Props) {
                     setContracts(res.data || [])
                   } catch (err) {
                     console.error('Failed to clear filters and fetch contracts', err)
-                    toast.error('Không thể tải danh sách hợp đồng')
+                    const apiMsg = extractApiMessage(err)
+                    toast.error(apiMsg || 'Không thể tải danh sách hợp đồng')
                   } finally {
                     setLoading(false)
                   }
@@ -574,9 +606,10 @@ export default function ContractsPageClient({ session }: Props) {
                                   await contractsClientService.delete(c.id)
                                   setContracts((prev) => prev.filter((p) => p.id !== c.id))
                                   toast.success('Xóa hợp đồng thành công')
-                                } catch (err) {
+                                } catch (err: unknown) {
                                   console.error('Delete contract error', err)
-                                  toast.error('Có lỗi khi xóa hợp đồng')
+                                  const apiMsg = extractApiMessage(err)
+                                  toast.error(apiMsg || 'Có lỗi khi xóa hợp đồng')
                                 }
                               }}
                               trigger={

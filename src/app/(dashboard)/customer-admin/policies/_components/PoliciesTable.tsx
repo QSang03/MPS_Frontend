@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { policiesClientService } from '@/lib/api/services/policies-client.service'
 import type { Policy } from '@/types/policies'
@@ -45,22 +45,36 @@ import { PolicyFormModal } from './PolicyFormModal'
 
 export function PoliciesTable() {
   const [search, setSearch] = useState('')
+  // debouncedSearch is the value actually used for querying the API.
+  // It updates 2s after the user stops typing, or immediately when the user
+  // presses Enter. This prevents excessive API calls while typing.
+  const [debouncedSearch, setDebouncedSearch] = useState('')
   const [effect, setEffect] = useState('all')
   const [action, setAction] = useState('')
   const [page, setPage] = useState(1)
   const [limit] = useState(10)
 
   const { data, isLoading, isFetching, refetch } = useQuery({
-    queryKey: ['policies', page, limit, search, effect, action],
+    queryKey: ['policies', page, limit, debouncedSearch, effect, action],
     queryFn: () =>
       policiesClientService.getPolicies({
         page,
         limit,
-        search: search || undefined,
+        search: debouncedSearch || undefined,
         effect: effect === 'all' ? undefined : effect,
         action: action || undefined,
       }),
   })
+
+  // Sync debouncedSearch with search after a 2s pause in typing.
+  useEffect(() => {
+    const id = setTimeout(() => {
+      // only update if value actually changed to avoid needless refetch
+      setDebouncedSearch((prev) => (prev === search ? prev : search))
+      setPage(1)
+    }, 2000)
+    return () => clearTimeout(id)
+  }, [search])
 
   const queryClient = useQueryClient()
 
@@ -214,6 +228,13 @@ export function PoliciesTable() {
                 placeholder="🔍 Tìm kiếm policy..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => {
+                  // trigger immediate search on Enter
+                  if (e.key === 'Enter') {
+                    setDebouncedSearch(search)
+                    setPage(1)
+                  }
+                }}
                 className="rounded-xl border-2 border-gray-200 bg-gradient-to-r from-gray-50 to-white py-2.5 pr-4 pl-12 text-base transition-all duration-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
               />
             </div>
@@ -278,7 +299,11 @@ export function PoliciesTable() {
                 <span className="inline-flex items-center gap-2 rounded-full border border-blue-300 bg-gradient-to-r from-blue-100 to-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700 shadow-sm">
                   🔍 "{search}"
                   <button
-                    onClick={() => setSearch('')}
+                    onClick={() => {
+                      setSearch('')
+                      setDebouncedSearch('')
+                      setPage(1)
+                    }}
                     className="transition-transform hover:scale-110 hover:text-blue-900"
                   >
                     <XCircle className="h-3.5 w-3.5" />

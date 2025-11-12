@@ -27,8 +27,19 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(response.data)
   } catch (error: unknown) {
-    const err = error as { message?: string; response?: { status?: number } } | undefined
+    const err = error as
+      | { message?: string; response?: { status?: number; data?: unknown } }
+      | undefined
     console.error('API Route /api/contracts error:', error)
+
+    // If the backend returned a structured error body, forward it as-is so
+    // the client receives the same detailed response (statusCode/message/etc.).
+    if (err?.response?.data && typeof err.response.data === 'object') {
+      return NextResponse.json(err.response.data as unknown as Record<string, unknown>, {
+        status: err?.response?.status || 500,
+      })
+    }
+
     return NextResponse.json(
       { error: err?.message || 'Internal Server Error' },
       { status: err?.response?.status || 500 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { departmentsClientService } from '@/lib/api/services/departments-client.service'
 import { CardContent, CardTitle } from '@/components/ui/card'
@@ -41,20 +41,31 @@ import { DeleteDialog } from '@/components/shared/DeleteDialog'
 
 export function DepartmentsTable() {
   const [search, setSearch] = useState('')
+  // debouncedSearch updates 2s after user stops typing, or immediately on Enter
+  const [debouncedSearch, setDebouncedSearch] = useState('')
   const [isActive, setIsActive] = useState('all')
   const [page, setPage] = useState(1)
   const [limit] = useState(10)
 
   const { data, isLoading, isFetching, refetch } = useQuery({
-    queryKey: ['departments', page, limit, search, isActive],
+    queryKey: ['departments', page, limit, debouncedSearch, isActive],
     queryFn: () =>
       departmentsClientService.getDepartments({
         page,
         limit,
-        search: search || undefined,
+        search: debouncedSearch || undefined,
         isActive: isActive === 'all' ? undefined : isActive === 'true',
       }),
   })
+
+  // Sync debouncedSearch with search after a 2s pause in typing.
+  useEffect(() => {
+    const id = setTimeout(() => {
+      setDebouncedSearch((prev) => (prev === search ? prev : search))
+      setPage(1)
+    }, 2000)
+    return () => clearTimeout(id)
+  }, [search])
 
   const departments = data?.data || ([] as Department[])
   const pagination = data?.pagination || { page: 1, limit: 10, total: 0, totalPages: 1 }
@@ -152,6 +163,12 @@ export function DepartmentsTable() {
                 placeholder="🔍 Tìm kiếm tên hoặc mã bộ phận..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    setDebouncedSearch(search)
+                    setPage(1)
+                  }
+                }}
                 className="rounded-xl border-2 border-gray-200 bg-gradient-to-r from-gray-50 to-white py-2.5 pr-4 pl-12 text-base transition-all duration-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
               />
             </div>
@@ -205,7 +222,11 @@ export function DepartmentsTable() {
                 <span className="inline-flex items-center gap-2 rounded-full border border-blue-300 bg-gradient-to-r from-blue-100 to-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700 shadow-sm">
                   🔍 "{search}"
                   <button
-                    onClick={() => setSearch('')}
+                    onClick={() => {
+                      setSearch('')
+                      setDebouncedSearch('')
+                      setPage(1)
+                    }}
                     className="transition-transform hover:scale-110 hover:text-blue-900"
                   >
                     <XCircle className="h-3.5 w-3.5" />

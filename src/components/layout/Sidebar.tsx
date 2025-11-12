@@ -8,7 +8,10 @@ import { ChevronLeft, Printer, UserCircle } from 'lucide-react'
 import type { Session } from '@/lib/auth/session'
 import { useUIStore } from '@/lib/store/uiStore'
 import { getNavigationItems } from '@/lib/nav/nav-items'
+import { useNavigation } from '@/contexts/NavigationContext'
+import * as Icons from 'lucide-react'
 import { ROUTES } from '@/constants/routes'
+import type { ComponentType } from 'react'
 import { Layers, ClipboardList } from 'lucide-react'
 
 interface SidebarProps {
@@ -20,33 +23,77 @@ export function Sidebar({ session }: SidebarProps) {
   const { sidebarOpen, toggleSidebar } = useUIStore()
 
   const navigationFromConfig = getNavigationItems(session.role)
+  // Try to use navigation items computed by the backend (permission-checked)
+  const { items: navItems, loading: navLoading } = useNavigation()
 
-  // Temporary fallback: ensure roles & departments nav items are present for all users
-  const navigation = [...navigationFromConfig]
+  // Icon mapping helper - map our string icon names to lucide-react components
+  type IconComp = ComponentType<Record<string, unknown>>
+  const getIconComponent = (name?: string): IconComp => {
+    if (!name) return Icons.LayoutDashboard as unknown as IconComp
+    const comp = (Icons as unknown as Record<string, IconComp>)[name]
+    if (comp) return comp
+    return Icons.LayoutDashboard as unknown as IconComp
+  }
+
+  // Build navigation list; prefer backend-provided `navItems` when available
+  type SidebarNavItem = {
+    href: string
+    label: string
+    icon: ComponentType<{ className?: string }>
+    badge?: number
+    raw?: Record<string, unknown>
+  }
+
+  const navigation: SidebarNavItem[] =
+    navLoading || !navItems
+      ? // cast static items into SidebarNavItem shape
+        (navigationFromConfig as unknown as SidebarNavItem[])
+      : (navItems || [])
+          .filter((it) => (it as unknown as Record<string, unknown>)?.hasAccess !== false)
+          .map((it) => {
+            const item = it as unknown as Record<string, unknown>
+            return {
+              href: (item.route as string) || (item.href as string) || '#',
+              label: String(item.label ?? ''),
+              icon: getIconComponent(item.icon as string),
+              badge: undefined,
+              // keep raw for any downstream use
+              raw: item,
+            }
+          })
   try {
-    if (!navigation.some((it) => it.href === ROUTES.CUSTOMER_ADMIN_ROLES)) {
-      navigation.push({ href: ROUTES.CUSTOMER_ADMIN_ROLES, label: 'Quản lý vai trò', icon: Layers })
-    }
-    if (!navigation.some((it) => it.href === ROUTES.CUSTOMER_ADMIN_DEPARTMENTS)) {
-      navigation.push({
-        href: ROUTES.CUSTOMER_ADMIN_DEPARTMENTS,
-        label: 'Quản lý bộ phận',
-        icon: ClipboardList,
-      })
-    }
-
-    // Ensure Device Models visible to all roles: insert after Thiết bị if possible
-    if (!navigation.some((it) => it.href === ROUTES.CUSTOMER_ADMIN_DEVICE_MODELS)) {
-      const deviceIndex = navigation.findIndex((it) => it.href === ROUTES.CUSTOMER_ADMIN_DEVICES)
-      const item = {
-        href: ROUTES.CUSTOMER_ADMIN_DEVICE_MODELS,
-        label: 'Mẫu thiết bị',
-        icon: Layers,
+    // Only apply static fallbacks when backend navigation is not available.
+    // If backend provided `navItems`, we must respect its hasAccess flags and
+    // not re-insert items that were explicitly denied.
+    if (navLoading || !navItems) {
+      if (!navigation.some((it) => it.href === ROUTES.CUSTOMER_ADMIN_ROLES)) {
+        navigation.push({
+          href: ROUTES.CUSTOMER_ADMIN_ROLES,
+          label: 'Quản lý vai trò',
+          icon: Layers,
+        })
       }
-      if (deviceIndex >= 0 && deviceIndex < navigation.length - 1) {
-        navigation.splice(deviceIndex + 1, 0, item)
-      } else {
-        navigation.push(item)
+      if (!navigation.some((it) => it.href === ROUTES.CUSTOMER_ADMIN_DEPARTMENTS)) {
+        navigation.push({
+          href: ROUTES.CUSTOMER_ADMIN_DEPARTMENTS,
+          label: 'Quản lý bộ phận',
+          icon: ClipboardList,
+        })
+      }
+
+      // Ensure Device Models visible to all roles: insert after Thiết bị if possible
+      if (!navigation.some((it) => it.href === ROUTES.CUSTOMER_ADMIN_DEVICE_MODELS)) {
+        const deviceIndex = navigation.findIndex((it) => it.href === ROUTES.CUSTOMER_ADMIN_DEVICES)
+        const item: SidebarNavItem = {
+          href: ROUTES.CUSTOMER_ADMIN_DEVICE_MODELS,
+          label: 'Mẫu thiết bị',
+          icon: Layers,
+        }
+        if (deviceIndex >= 0 && deviceIndex < navigation.length - 1) {
+          navigation.splice(deviceIndex + 1, 0, item)
+        } else {
+          navigation.push(item)
+        }
       }
     }
 

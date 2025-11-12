@@ -137,8 +137,12 @@ export function CustomerDetailsModal({ open, onOpenChange, month }: CustomerDeta
 
               <div className="mt-6 space-y-3">
                 {(topCustomers ?? []).map((customer, index) => {
-                  const totalCost = (topCustomers ?? []).reduce((sum, c) => sum + c.totalCost, 0)
-                  const percentage = totalCost > 0 ? (customer.totalCost / totalCost) * 100 : 0
+                  const totalRevenue = (topCustomers ?? []).reduce(
+                    (sum, c) => sum + c.totalRevenue,
+                    0
+                  )
+                  const percentage =
+                    totalRevenue > 0 ? (customer.totalRevenue / totalRevenue) * 100 : 0
 
                   return (
                     <motion.div
@@ -179,20 +183,21 @@ export function CustomerDetailsModal({ open, onOpenChange, month }: CustomerDeta
                         </div>
                         <div className="text-right">
                           <p className="text-lg font-bold text-gray-900">
-                            {formatCurrency(customer.totalCost)}
+                            {formatCurrency(customer.totalRevenue)}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            Chi phí: {formatCurrency(customer.totalCogs)}
                           </p>
                           <p
                             className={cn(
                               'text-xs font-semibold',
-                              percentage > 0 ? 'text-red-600' : 'text-green-600'
+                              customer.grossProfit >= 0 ? 'text-green-600' : 'text-red-600'
                             )}
                           >
-                            {percentage.toFixed(1)}% so với tháng trước
-                            {percentage > 0 ? (
-                              <TrendingUp className="inline h-4 w-4" />
-                            ) : (
-                              <TrendingDown className="inline h-4 w-4" />
-                            )}
+                            Lợi nhuận: {formatCurrency(customer.grossProfit)}
+                          </p>
+                          <p className="mt-1 text-xs text-gray-400">
+                            {percentage.toFixed(1)}% tổng doanh thu
                           </p>
                         </div>
                       </div>

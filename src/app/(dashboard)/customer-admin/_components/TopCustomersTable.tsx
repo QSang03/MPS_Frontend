@@ -76,8 +76,8 @@ export function TopCustomersTable({ topCustomers, isLoading }: TopCustomersTable
     )
   }
 
-  // Calculate total cost for percentage
-  const totalCost = topCustomers.reduce((sum, customer) => sum + customer.totalCost, 0)
+  // Calculate total revenue for percentage
+  const totalRevenue = topCustomers.reduce((sum, customer) => sum + customer.totalRevenue, 0)
 
   return (
     <motion.div
@@ -98,7 +98,7 @@ export function TopCustomersTable({ topCustomers, isLoading }: TopCustomersTable
         <CardContent>
           <div className="space-y-3">
             {topCustomers.map((customer, index) => {
-              const percentage = totalCost > 0 ? (customer.totalCost / totalCost) * 100 : 0
+              const percentage = totalRevenue > 0 ? (customer.totalRevenue / totalRevenue) * 100 : 0
               const rankConfig = RANK_ICONS[index]
 
               return (
@@ -168,10 +168,25 @@ export function TopCustomersTable({ topCustomers, isLoading }: TopCustomersTable
                     </div>
                   </div>
 
-                  {/* Cost & Percentage */}
+                  {/* Revenue, COGS, Profit & Percentage */}
                   <div className="text-right">
-                    <p className="font-bold text-gray-900">{formatCurrency(customer.totalCost)}</p>
-                    <p className="text-xs text-gray-500">{percentage.toFixed(1)}% tổng doanh thu</p>
+                    <p className="font-bold text-gray-900">
+                      {formatCurrency(customer.totalRevenue)}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      Chi phí: {formatCurrency(customer.totalCogs)}
+                    </p>
+                    <p
+                      className={cn(
+                        'text-xs font-semibold',
+                        customer.grossProfit >= 0 ? 'text-green-600' : 'text-red-600'
+                      )}
+                    >
+                      Lợi nhuận: {formatCurrency(customer.grossProfit)}
+                    </p>
+                    <p className="mt-1 text-xs text-gray-400">
+                      {percentage.toFixed(1)}% tổng doanh thu
+                    </p>
                   </div>
                 </motion.div>
               )
@@ -181,9 +196,36 @@ export function TopCustomersTable({ topCustomers, isLoading }: TopCustomersTable
           {/* Summary Footer */}
           {topCustomers.length > 0 && (
             <div className="mt-4 border-t pt-4">
-              <div className="flex items-center justify-between text-sm">
-                <span className="font-medium text-gray-600">Tổng doanh thu:</span>
-                <span className="text-lg font-bold text-gray-900">{formatCurrency(totalCost)}</span>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-medium text-gray-600">Tổng doanh thu:</span>
+                  <span className="text-lg font-bold text-gray-900">
+                    {formatCurrency(totalRevenue)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-medium text-gray-600">Tổng chi phí:</span>
+                  <span className="text-lg font-bold text-gray-900">
+                    {formatCurrency(
+                      topCustomers.reduce((sum, customer) => sum + customer.totalCogs, 0)
+                    )}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-medium text-gray-600">Tổng lợi nhuận gộp:</span>
+                  <span
+                    className={cn(
+                      'text-lg font-bold',
+                      topCustomers.reduce((sum, customer) => sum + customer.grossProfit, 0) >= 0
+                        ? 'text-green-600'
+                        : 'text-red-600'
+                    )}
+                  >
+                    {formatCurrency(
+                      topCustomers.reduce((sum, customer) => sum + customer.grossProfit, 0)
+                    )}
+                  </span>
+                </div>
               </div>
             </div>
           )}

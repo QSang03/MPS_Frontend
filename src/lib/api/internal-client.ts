@@ -106,6 +106,32 @@ internalApiClient.interceptors.response.use(
       console.error('[Internal Client] Forbidden: Không có quyền truy cập')
     }
 
+    // Attach response data/message to the thrown error so callers can show
+    // a more descriptive message to the user instead of the generic
+    // "Request failed with status code X".
+    try {
+      const respData = error.response?.data
+      if (respData) {
+        const e = error as unknown as Record<string, unknown>
+        e.responseData = respData
+
+        // Prefer a human message from the API when available
+        const maybeMessage = (respData as Record<string, unknown>)?.['message']
+        if (typeof maybeMessage === 'string' && maybeMessage.length > 0) {
+          error.message = maybeMessage
+        } else {
+          // fallback: stringify the error body for debugging
+          try {
+            error.message = JSON.stringify(respData)
+          } catch {
+            // ignore stringify failures
+          }
+        }
+      }
+    } catch {
+      // ignore
+    }
+
     return Promise.reject(error)
   }
 )

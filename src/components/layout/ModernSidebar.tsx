@@ -38,24 +38,25 @@ export function ModernSidebar({ session }: SidebarProps) {
 
   const { items: navItems, loading: navLoading } = useNavigation()
 
-  // Build navigation list used by the sidebar. If backend hasn't returned
-  // permission-checked items yet, fall back to the static payload mapped to icons.
-  const navigation = (navLoading || !navItems ? NAVIGATION_PAYLOAD : navItems)
+  // Build navigation list used by the sidebar.
+  // Important behaviour:
+  // - While nav is loading, don't render the static NAVIGATION_PAYLOAD (avoid briefly showing items the user may not have access to).
+  // - If backend returns permission-checked `navItems`, use them and filter out items with hasAccess === false.
+  // - If backend finished loading but returned no navItems (null/undefined), fall back to static NAVIGATION_PAYLOAD.
+  const source = navLoading ? [] : (navItems ?? NAVIGATION_PAYLOAD)
+
+  const navigation = (source as Array<Record<string, unknown>>)
     .filter(Boolean)
-    // Only include items that either are marked hasAccess === true or if not present include them (fallback)
-    .map((it: Record<string, unknown>) => ({
+    .map((it) => ({
       label: String(it.label ?? ''),
-      href: (it.route as string) || '#',
+      href: (it.route as string) || (it.href as string) || '#',
       icon: getIconComponent(it.icon as string),
       badge: undefined,
       submenu: undefined,
-      hasAccess: Boolean(it.hasAccess),
       raw: it,
     }))
     // If navItems is present (from backend), filter out denied items explicitly
-    .filter((it: Record<string, unknown>) =>
-      navItems ? (it.raw as Record<string, unknown>)?.hasAccess !== false : true
-    )
+    .filter((it) => (navItems ? (it.raw as Record<string, unknown>)?.hasAccess !== false : true))
 
   const handleLogout = async () => {
     await logout()

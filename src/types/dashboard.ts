@@ -65,22 +65,32 @@ export interface CostBreakdown {
 }
 
 /**
- * Top Customer by Total Cost
+ * Top Customer by Revenue
  */
 export interface TopCustomer {
   customerId: string
   customerName: string
-  totalCost: number
+  totalRevenue: number // doanh thu
+  totalCogs: number // chi phí
+  grossProfit: number // lợi nhuận gộp
 }
 
 /**
  * Monthly Time-Series Data
- * Flexible structure for various metrics over time
+ * Thống kê theo tháng
  */
 export interface MonthlySeries {
-  [metricName: string]: Array<{
+  points: Array<{
     month: string // Format: YYYY-MM
-    value: number
+    revenueRental: number
+    revenueRepair: number
+    revenuePageBW: number
+    revenuePageColor: number
+    totalRevenue: number // doanh thu
+    cogsConsumable: number
+    cogsRepair: number
+    totalCogs: number // chi phí
+    grossProfit: number // lợi nhuận gộp
   }>
 }
 

@@ -26,25 +26,50 @@ interface MonthlySeriesChartProps {
 }
 
 const METRIC_CONFIG = {
-  cost: {
-    label: 'Doanh thu (USD)',
+  totalRevenue: {
+    label: 'Tổng doanh thu',
     color: '#10b981',
     strokeWidth: 3,
   },
-  devices: {
-    label: 'Số thiết bị',
+  revenueRental: {
+    label: 'Doanh thu thuê máy',
     color: '#3b82f6',
     strokeWidth: 2,
   },
-  pages: {
-    label: 'Số trang in',
-    color: '#8b5cf6',
-    strokeWidth: 2,
-  },
-  serviceRequests: {
-    label: 'Yêu cầu dịch vụ',
+  revenueRepair: {
+    label: 'Doanh thu sửa chữa',
     color: '#f59e0b',
     strokeWidth: 2,
+  },
+  revenuePageBW: {
+    label: 'Doanh thu trang BW',
+    color: '#6b7280',
+    strokeWidth: 2,
+  },
+  revenuePageColor: {
+    label: 'Doanh thu trang màu',
+    color: '#ec4899',
+    strokeWidth: 2,
+  },
+  totalCogs: {
+    label: 'Tổng chi phí',
+    color: '#ef4444',
+    strokeWidth: 2,
+  },
+  cogsConsumable: {
+    label: 'Chi phí vật tư',
+    color: '#dc2626',
+    strokeWidth: 2,
+  },
+  cogsRepair: {
+    label: 'Chi phí sửa chữa',
+    color: '#b91c1c',
+    strokeWidth: 2,
+  },
+  grossProfit: {
+    label: 'Lợi nhuận gộp',
+    color: '#059669',
+    strokeWidth: 3,
   },
 }
 
@@ -68,22 +93,20 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
           const config = METRIC_CONFIG[entry.dataKey as keyof typeof METRIC_CONFIG]
           if (!config) return null
 
-          const formatValue = (value: number, metric: string) => {
-            if (metric === 'cost') {
-              return new Intl.NumberFormat('en-US', {
-                style: 'currency',
-                currency: 'USD',
-                maximumFractionDigits: 2,
-              }).format(value)
-            }
-            return new Intl.NumberFormat('en-US').format(value)
+          const formatValue = (value: number) => {
+            // Format all metrics as currency since they're all monetary values
+            return new Intl.NumberFormat('en-US', {
+              style: 'currency',
+              currency: 'USD',
+              maximumFractionDigits: 2,
+            }).format(value)
           }
 
           return (
             <div key={entry.dataKey} className="flex items-center gap-2 text-sm">
               <div className="h-3 w-3 rounded-full" style={{ backgroundColor: entry.color }} />
               <span className="text-gray-600">{config.label}:</span>
-              <span className="font-semibold">{formatValue(entry.value, entry.dataKey)}</span>
+              <span className="font-semibold">{formatValue(entry.value)}</span>
             </div>
           )
         })}
@@ -96,10 +119,9 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
 export function MonthlySeriesChart({ monthlySeries, isLoading }: MonthlySeriesChartProps) {
   const [chartType, setChartType] = useState<ChartType>('area')
   const [visibleMetrics, setVisibleMetrics] = useState<string[]>([
-    'cost',
-    'devices',
-    'pages',
-    'serviceRequests',
+    'totalRevenue',
+    'totalCogs',
+    'grossProfit',
   ])
 
   if (isLoading || !monthlySeries) {
@@ -122,30 +144,19 @@ export function MonthlySeriesChart({ monthlySeries, isLoading }: MonthlySeriesCh
   }
 
   // Transform data for recharts
-  // Assuming monthlySeries has structure: { cost: [{month, value}], devices: [{month, value}], ... }
-  const transformedData = (() => {
-    const months = new Set<string>()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    Object.values(monthlySeries).forEach((series: any) => {
-      if (Array.isArray(series)) {
-        series.forEach((point) => months.add(point.month))
-      }
-    })
-
-    const sortedMonths = Array.from(months).sort()
-    return sortedMonths.map((month) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const dataPoint: any = { month }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      Object.entries(monthlySeries).forEach(([key, series]: [string, any]) => {
-        if (Array.isArray(series)) {
-          const point = series.find((p) => p.month === month)
-          dataPoint[key] = point?.value ?? 0
-        }
-      })
-      return dataPoint
-    })
-  })()
+  // monthlySeries has structure: { points: [{month, revenueRental, revenueRepair, ...}] }
+  const transformedData = monthlySeries.points.map((point) => ({
+    month: point.month,
+    revenueRental: point.revenueRental,
+    revenueRepair: point.revenueRepair,
+    revenuePageBW: point.revenuePageBW,
+    revenuePageColor: point.revenuePageColor,
+    totalRevenue: point.totalRevenue,
+    cogsConsumable: point.cogsConsumable,
+    cogsRepair: point.cogsRepair,
+    totalCogs: point.totalCogs,
+    grossProfit: point.grossProfit,
+  }))
 
   // Toggle metric visibility
   const toggleMetric = (metric: string) => {

@@ -12,6 +12,7 @@ import { DateRangeSelector } from './_components/DateRangeSelector'
 import { RecentActivity } from './_components/RecentActivity'
 import { CustomerDetailsModal } from './_components/CustomerDetailsModal'
 import { ContractsModal } from './_components/ContractsModal'
+import ContractDetailModal from './_components/ContractDetailModal'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AlertCircle, RefreshCw, PlayCircle } from 'lucide-react'
@@ -41,6 +42,8 @@ export default function CustomerAdminDashboard() {
   const [selectedMonth, setSelectedMonth] = useState(currentMonth)
   const [showCustomersModal, setShowCustomersModal] = useState(false)
   const [showContractsModal, setShowContractsModal] = useState(false)
+  const [showContractDetail, setShowContractDetail] = useState(false)
+  const [selectedContractId, setSelectedContractId] = useState<string | null>(null)
   const [isAggregating, setIsAggregating] = useState(false)
   usePageTitle('Dashboard Tổng quan')
 
@@ -128,7 +131,30 @@ export default function CustomerAdminDashboard() {
       />
 
       {/* Contracts Modal */}
-      <ContractsModal open={showContractsModal} onOpenChange={setShowContractsModal} />
+      <ContractsModal
+        open={showContractsModal}
+        onOpenChange={setShowContractsModal}
+        onOpenContractDetail={(id: string) => {
+          // Close the contracts modal, open detail modal at page level
+          setShowContractsModal(false)
+          setSelectedContractId(id)
+          setShowContractDetail(true)
+        }}
+      />
+
+      {/* Contract Detail Modal (rendered at page level so it can stay open when list modal is closed) */}
+      <ContractDetailModal
+        open={showContractDetail}
+        onOpenChange={(open: boolean) => {
+          setShowContractDetail(open)
+          if (!open) {
+            // when detail closes, reopen the contracts modal
+            setShowContractsModal(true)
+            setSelectedContractId(null)
+          }
+        }}
+        contractId={selectedContractId}
+      />
 
       {/* Row 1: Cost Breakdown + Alerts Summary */}
       <div className="grid gap-6 lg:grid-cols-2">

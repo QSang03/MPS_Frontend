@@ -34,12 +34,27 @@ export function NavigationProvider({ children }: { children: ReactNode }) {
     try {
       // Send FE navigation payload to backend to check permissions
       const resp = await navigationClientService.check(NAVIGATION_PAYLOAD)
-      // Backend expected shape: { success, data: [ { ...item, hasAccess, actions: [{...hasAccess}] } ] }
-      const data = resp?.data || resp
+      // Backend expected shapes supported:
+      // 1) Array directly: [ { ...item } ]
+      // 2) { data: [ ... ] }
+      // 3) { items: [ ... ] } (some backends return data.items)
+      // 4) { data: { items: [ ... ] } }
+      const data = resp?.data ?? resp
       if (Array.isArray(data)) {
         setItems(data as NavigationItem[])
-      } else if (data?.data && Array.isArray(data.data)) {
-        setItems(data.data as NavigationItem[])
+      } else if (typeof data === 'object' && data !== null) {
+        const d = data as Record<string, unknown>
+        if (Array.isArray(d.items)) {
+          setItems(d.items as NavigationItem[])
+        } else if (Array.isArray(d.data)) {
+          setItems(d.data as NavigationItem[])
+        } else if (typeof d.data === 'object' && d.data !== null) {
+          const inner = d.data as Record<string, unknown>
+          if (Array.isArray(inner.items)) setItems(inner.items as NavigationItem[])
+          else setItems(null)
+        } else {
+          setItems(null)
+        }
       } else {
         setItems(null)
       }
