@@ -14,8 +14,10 @@ import { CustomerDetailsModal } from './_components/CustomerDetailsModal'
 import { ContractsModal } from './_components/ContractsModal'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { AlertCircle, RefreshCw } from 'lucide-react'
+import { AlertCircle, RefreshCw, PlayCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
+import internalApiClient from '@/lib/api/internal-client'
 
 function DashboardSkeleton() {
   return (
@@ -39,6 +41,7 @@ export default function CustomerAdminDashboard() {
   const [selectedMonth, setSelectedMonth] = useState(currentMonth)
   const [showCustomersModal, setShowCustomersModal] = useState(false)
   const [showContractsModal, setShowContractsModal] = useState(false)
+  const [isAggregating, setIsAggregating] = useState(false)
   usePageTitle('Dashboard Tổng quan')
 
   // Fetch admin overview data
@@ -47,6 +50,26 @@ export default function CustomerAdminDashboard() {
   // Handle month change
   const handleMonthChange = (newMonth: string) => {
     setSelectedMonth(newMonth)
+  }
+
+  // Handle monthly aggregation
+  const handleMonthlyAggregation = async () => {
+    setIsAggregating(true)
+    try {
+      await internalApiClient.post('/api/reports/jobs/monthly-aggregation')
+      toast.success('Tổng hợp dữ liệu tháng thành công')
+      // Refetch dashboard data after aggregation
+      refetch()
+    } catch (err: unknown) {
+      console.error('Error running monthly aggregation:', err)
+      const maybeErr = err as
+        | { response?: { data?: { error?: string } }; message?: unknown }
+        | undefined
+      const msg = maybeErr?.response?.data?.error ?? (maybeErr?.message as string | undefined)
+      toast.error(msg ? String(msg) : 'Không thể chạy tổng hợp dữ liệu')
+    } finally {
+      setIsAggregating(false)
+    }
   }
 
   // Error state
@@ -76,8 +99,18 @@ export default function CustomerAdminDashboard() {
     <div className="space-y-8">
       {/* Hero Section với Gradient */}
 
-      {/* Date Range Selector */}
-      <DateRangeSelector defaultMonth={selectedMonth} onChange={handleMonthChange} />
+      {/* Date Range Selector + Aggregation Button */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <DateRangeSelector defaultMonth={selectedMonth} onChange={handleMonthChange} />
+        <Button
+          onClick={handleMonthlyAggregation}
+          disabled={isAggregating}
+          className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+        >
+          <PlayCircle className="mr-2 h-4 w-4" />
+          {isAggregating ? 'Đang tổng hợp...' : 'Tổng hợp dữ liệu tháng'}
+        </Button>
+      </div>
 
       {/* KPI Cards - 8 Cards Grid */}
       <KPICards

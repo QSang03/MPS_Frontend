@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import Link from 'next/link'
 import { customersClientService } from '@/lib/api/services/customers-client.service'
 import type { Customer } from '@/types/models/customer'
 import CustomerFormModal from './CustomerFormModal'
@@ -36,17 +37,20 @@ export function CustomerList() {
   const [loading, setLoading] = useState(true)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
   const [page, setPage] = useState(1)
   const [limit, setLimit] = useState(10)
   const [total, setTotal] = useState(0)
   const [totalPages, setTotalPages] = useState(1)
 
   // load is intentionally stable (no page/limit captured) — always pass explicit p and l
-  const load = useCallback(async (p = 1, l = 10, opts?: { silent?: boolean }) => {
+  const load = useCallback(async (p = 1, l = 10, search?: string, opts?: { silent?: boolean }) => {
     const silent = opts?.silent === true
     try {
       if (!silent) setLoading(true)
-      const res = await customersClientService.getAll({ page: p, limit: l })
+      const params: { page?: number; limit?: number; search?: string } = { page: p, limit: l }
+      if (search) params.search = search
+      const res = await customersClientService.getAll(params)
       setItems(res.data)
       setFiltered(res.data)
       setTotal(res.pagination?.total ?? res.data.length)
@@ -63,24 +67,18 @@ export function CustomerList() {
   }, [])
 
   useEffect(() => {
-    load(1, limit)
-  }, [limit, load])
+    load(1, limit, debouncedSearch)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [limit, debouncedSearch])
 
+  // Debounce searchTerm and send to API (server-side search)
   useEffect(() => {
-    if (!searchTerm.trim()) {
-      setFiltered(items)
-      return
-    }
-    const term = searchTerm.toLowerCase()
-    const filtered = items.filter((c) => {
-      return (
-        (c.name || '').toLowerCase().includes(term) ||
-        ((c.code || '') as string).toLowerCase().includes(term) ||
-        ((c.address || '') as string).toLowerCase().includes(term)
-      )
-    })
-    setFiltered(filtered)
-  }, [searchTerm, items])
+    const t = setTimeout(() => {
+      setDebouncedSearch(searchTerm.trim())
+      setPage(1)
+    }, 500)
+    return () => clearTimeout(t)
+  }, [searchTerm])
 
   const handleSaved = (c?: Customer | null) => {
     if (!c) {
@@ -104,12 +102,12 @@ export function CustomerList() {
       const newTotal = Math.max(0, total - 1)
       setTotal(newTotal)
       setTotalPages(Math.max(1, Math.ceil(newTotal / limit)))
-      const res = await load(page, limit, { silent: true })
+      const res = await load(page, limit, undefined, { silent: true })
       const curCount = res?.data?.length ?? 0
       if (curCount === 0 && page > 1) {
         const prevPage = page - 1
         setPage(prevPage)
-        await load(prevPage, limit, { silent: true })
+        await load(prevPage, limit, undefined, { silent: true })
       }
     } catch (error: unknown) {
       const e = error as Error
@@ -275,7 +273,14 @@ export function CustomerList() {
                       <td className="text-muted-foreground px-4 py-3 text-sm">
                         {(page - 1) * limit + index + 1}
                       </td>
-                      <td className="px-4 py-3 font-semibold text-emerald-700">{c.name || '—'}</td>
+                      <td className="px-4 py-3">
+                        <Link
+                          href={`/customer-admin/customers/${c.id}`}
+                          className="font-semibold text-emerald-700 hover:text-emerald-800 hover:underline"
+                        >
+                          {c.name || '—'}
+                        </Link>
+                      </td>
                       <td className="px-4 py-3">
                         <Badge variant="outline" className="font-mono text-xs">
                           {c.code || c.id}

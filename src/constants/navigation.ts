@@ -47,6 +47,18 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
     actions: [],
   },
   {
+    id: 'revenue',
+    label: 'Doanh thu',
+    icon: 'BarChart3',
+    route: '/customer-admin/revenue',
+    description: 'Báo cáo doanh thu theo thiết bị và theo tháng',
+    requiredPermissions: {
+      strategy: 'all',
+      resources: [{ resource: 'reports', action: 'read' }],
+    },
+    actions: [],
+  },
+  {
     id: 'devices',
     name: 'devices',
     label: 'Thiết bị',

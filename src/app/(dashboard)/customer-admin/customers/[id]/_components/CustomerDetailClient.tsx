@@ -9,6 +9,8 @@ import { consumablesClientService } from '@/lib/api/services/consumables-client.
 import { Loader2 } from 'lucide-react'
 // import Table component removed because not used in this component
 import Link from 'next/link'
+import { contractsClientService } from '@/lib/api/services/contracts-client.service'
+import type { Contract } from '@/types/models/contract'
 
 type Props = {
   customerId: string
@@ -19,6 +21,8 @@ export default function CustomerDetailClient({ customerId }: Props) {
   const [consumables, setConsumables] = useState<Record<string, unknown>[]>([])
   const [loadingDevices, setLoadingDevices] = useState(true)
   const [loadingConsumables, setLoadingConsumables] = useState(true)
+  const [contracts, setContracts] = useState<Contract[]>([])
+  const [loadingContracts, setLoadingContracts] = useState(true)
 
   useEffect(() => {
     let mounted = true
@@ -49,6 +53,19 @@ export default function CustomerDetailClient({ customerId }: Props) {
         setLoadingConsumables(false)
       }
     })()
+    ;(async () => {
+      try {
+        setLoadingContracts(true)
+        const res = await contractsClientService.getAll({ customerId, page: 1, limit: 50 })
+        if (!mounted) return
+        setContracts(res.data || [])
+      } catch (err: unknown) {
+        console.error('Load contracts for customer failed', err)
+        setContracts([])
+      } finally {
+        setLoadingContracts(false)
+      }
+    })()
 
     return () => {
       mounted = false
@@ -65,9 +82,10 @@ export default function CustomerDetailClient({ customerId }: Props) {
       </div>
 
       <Tabs defaultValue="devices">
-        <TabsList className="mb-4 grid w-full grid-cols-2">
+        <TabsList className="mb-4 grid w-full grid-cols-3">
           <TabsTrigger value="devices">Thiết bị</TabsTrigger>
           <TabsTrigger value="consumables">Vật tư</TabsTrigger>
+          <TabsTrigger value="contracts">Hợp đồng</TabsTrigger>
         </TabsList>
 
         <TabsContent value="devices">
@@ -162,7 +180,6 @@ export default function CustomerDetailClient({ customerId }: Props) {
                         <th className="px-4 py-3 text-left text-sm font-semibold">Dung lượng</th>
                         <th className="px-4 py-3 text-left text-sm font-semibold">Đã sử dụng</th>
                         <th className="px-4 py-3 text-left text-sm font-semibold">Trạng thái</th>
-                        <th className="px-4 py-3 text-left text-sm font-semibold">Hành động</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y">
@@ -206,13 +223,58 @@ export default function CustomerDetailClient({ customerId }: Props) {
                             )}
                           </td>
                           <td className="px-4 py-3">{String(c.status ?? '-')}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="contracts">
+          <Card>
+            <CardHeader>
+              <CardTitle>Hợp đồng của khách hàng</CardTitle>
+              <CardDescription>Danh sách hợp đồng thuộc khách hàng này</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loadingContracts ? (
+                <div className="flex items-center justify-center p-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-sky-600" />
+                </div>
+              ) : contracts.length === 0 ? (
+                <div className="text-muted-foreground p-8 text-center">Chưa có hợp đồng</div>
+              ) : (
+                <div className="overflow-hidden rounded-lg border">
+                  <table className="w-full">
+                    <thead className="bg-gradient-to-r from-sky-50 to-blue-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-sm font-semibold">#</th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold">Mã hợp đồng</th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold">Loại</th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold">Trạng thái</th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold">Thời gian</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {contracts.map((c: Contract, idx: number) => (
+                        <tr key={c.id} className="hover:bg-muted/30 transition-colors">
+                          <td className="px-4 py-3 text-sm">{idx + 1}</td>
                           <td className="px-4 py-3">
                             <Link
-                              href={`/customer-admin/consumables/${String(c.id ?? '')}`}
-                              className="text-sm text-emerald-600"
+                              href={`/customer-admin/contracts/${c.id}`}
+                              className="text-sky-700 hover:underline"
                             >
-                              Chi tiết
+                              {c.contractNumber}
                             </Link>
+                          </td>
+                          <td className="px-4 py-3 text-sm">{c.type}</td>
+                          <td className="px-4 py-3 text-sm">{c.status}</td>
+                          <td className="px-4 py-3 text-sm">
+                            {new Date(c.startDate).toLocaleDateString('vi-VN')} —{' '}
+                            {new Date(c.endDate).toLocaleDateString('vi-VN')}
                           </td>
                         </tr>
                       ))}

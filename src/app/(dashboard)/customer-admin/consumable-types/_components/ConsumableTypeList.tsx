@@ -31,10 +31,10 @@ import BulkAssignModal from '../../consumables/_components/BulkAssignModal'
 
 export function ConsumableTypeList() {
   const [models, setModels] = useState<ConsumableType[]>([])
-  const [filteredModels, setFilteredModels] = useState<ConsumableType[]>([])
   const [loading, setLoading] = useState(true)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
   const [page, setPage] = useState(1)
   const [limit, setLimit] = useState(10)
   const [total, setTotal] = useState(0)
@@ -51,7 +51,7 @@ export function ConsumableTypeList() {
 
   const queryClient = useQueryClient()
 
-  const queryKey = ['consumable-types', { page, limit }]
+  const queryKey = ['consumable-types', { page, limit, search: debouncedSearch }]
 
   const {
     data: queryData,
@@ -59,37 +59,31 @@ export function ConsumableTypeList() {
     refetch,
   } = useQuery({
     queryKey,
-    queryFn: () => consumableTypesClientService.getAll({ page, limit }),
+    queryFn: () => {
+      const params: { page?: number; limit?: number; search?: string } = { page, limit }
+      if (debouncedSearch) params.search = debouncedSearch
+      return consumableTypesClientService.getAll(params)
+    },
   })
 
   // Sync query result into local state for filtering and UI convenience
   useEffect(() => {
     if (queryData) {
       setModels(queryData.data || [])
-      setFilteredModels(queryData.data || [])
       setTotal(queryData.pagination?.total ?? queryData.data?.length ?? 0)
       setTotalPages(queryData.pagination?.totalPages ?? 1)
     }
     setLoading(queryLoading)
   }, [queryData, queryLoading])
 
-  // Filter models based on search term
+  // Debounce search term by 2s, reset page when searching
   useEffect(() => {
-    if (!searchTerm.trim()) {
-      setFilteredModels(models)
-      return
-    }
-
-    const term = searchTerm.toLowerCase()
-    const filtered = models.filter((m) => {
-      return (
-        m.name?.toLowerCase().includes(term) ||
-        m.description?.toLowerCase().includes(term) ||
-        m.unit?.toLowerCase().includes(term)
-      )
-    })
-    setFilteredModels(filtered)
-  }, [searchTerm, models])
+    const t = setTimeout(() => {
+      setDebouncedSearch(searchTerm.trim())
+      setPage(1)
+    }, 2000)
+    return () => clearTimeout(t)
+  }, [searchTerm])
 
   const handleSaved = (m?: ConsumableType | null) => {
     if (!m) {
@@ -276,17 +270,21 @@ export function ConsumableTypeList() {
             </div>
 
             {/* Search */}
-            {models.length > 0 && (
-              <div className="relative w-64">
-                <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-                <Input
-                  placeholder="Tìm kiếm..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
-            )}
+            <div className="relative w-64">
+              <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+              <Input
+                placeholder="Tìm kiếm..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    setDebouncedSearch(searchTerm.trim())
+                    setPage(1)
+                  }
+                }}
+                className="pl-9"
+              />
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -310,11 +308,11 @@ export function ConsumableTypeList() {
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {filteredModels.length === 0 ? (
+                {models.length === 0 ? (
                   <tr>
                     <td colSpan={8} className="px-4 py-12 text-center">
                       <div className="text-muted-foreground flex flex-col items-center gap-3">
-                        {searchTerm ? (
+                        {debouncedSearch ? (
                           <>
                             <Search className="h-12 w-12 opacity-20" />
                             <p>Không tìm thấy loại vật tư phù hợp</p>
@@ -330,7 +328,7 @@ export function ConsumableTypeList() {
                     </td>
                   </tr>
                 ) : (
-                  filteredModels.map((m, index) => (
+                  models.map((m, index) => (
                     <tr
                       key={m.id}
                       className="transition-colors hover:bg-gradient-to-r hover:from-emerald-50/50 hover:to-teal-50/50"
@@ -440,7 +438,7 @@ export function ConsumableTypeList() {
             <div className="text-muted-foreground flex items-center gap-2 text-sm">
               <BarChart3 className="h-4 w-4" />
               <span>
-                Trang {page} / {totalPages} — Hiển thị {filteredModels.length} / {total}
+                Trang {page} / {totalPages} — Hiển thị {models.length} / {total}
               </span>
             </div>
 

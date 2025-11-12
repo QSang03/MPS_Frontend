@@ -39,6 +39,32 @@ export const contractsClientService = {
     return { data: Array.isArray(data) ? data : [], pagination }
   },
 
+  async getByCustomer(
+    customerId: string,
+    params?: {
+      page?: number
+      limit?: number
+      search?: string
+      sortBy?: string
+      sortOrder?: string
+    }
+  ): Promise<{ data: Contract[]; pagination?: ListPagination }> {
+    const response = await internalApiClient.get<ApiListResponse<Contract>>(
+      `/api/customers/${customerId}/contracts`,
+      {
+        params: {
+          page: params?.page ?? 1,
+          limit: params?.limit ?? 100,
+          search: params?.search,
+          sortBy: params?.sortBy,
+          sortOrder: params?.sortOrder,
+        },
+      }
+    )
+    const { data, pagination } = response.data || { data: [], pagination: undefined }
+    return { data: Array.isArray(data) ? data : [], pagination }
+  },
+
   async create(payload: CreateContractDto): Promise<Contract | null> {
     const response = await internalApiClient.post('/api/contracts', payload)
     return response.data?.data ?? null

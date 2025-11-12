@@ -47,12 +47,17 @@ import { toast } from 'sonner'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { VN } from '@/constants/vietnamese'
+import Link from 'next/link'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 
 interface Props {
   session: Session | null
 }
 
 export default function ContractsPageClient({ session }: Props) {
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const pathname = usePathname()
   const [contracts, setContracts] = useState<Contract[]>([])
   const [loading, setLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
@@ -77,14 +82,20 @@ export default function ContractsPageClient({ session }: Props) {
   const fetchContracts = async (opts?: { silent?: boolean }) => {
     if (!opts?.silent) setLoading(true)
     try {
-      const res = await contractsClientService.getAll({
-        page,
-        limit,
-        search: debouncedSearch || undefined,
-        status: statusFilter,
-        type: typeFilter,
-        customerId: customerFilter,
-      })
+      const res = customerFilter
+        ? await contractsClientService.getByCustomer(customerFilter, {
+            page,
+            limit,
+            search: debouncedSearch || undefined,
+          })
+        : await contractsClientService.getAll({
+            page,
+            limit,
+            search: debouncedSearch || undefined,
+            status: statusFilter,
+            type: typeFilter,
+            customerId: customerFilter,
+          })
       setContracts(res.data || [])
     } catch (err) {
       console.error('fetch contracts error', err)
@@ -108,6 +119,25 @@ export default function ContractsPageClient({ session }: Props) {
     }, 2000)
     return () => clearTimeout(t)
   }, [searchTerm])
+
+  // Initialize filters from URL (e.g., customerId passed from other screens)
+  useEffect(() => {
+    const cid = searchParams?.get('customerId')
+    if (cid) {
+      setCustomerFilter(cid)
+      setPage(1)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const applyCustomerFilter = (cid: string) => {
+    setCustomerFilter(cid)
+    setPage(1)
+    const params = new URLSearchParams(searchParams?.toString() || '')
+    if (cid) params.set('customerId', cid)
+    else params.delete('customerId')
+    router.replace(`${pathname}?${params.toString()}`)
+  }
 
   // Load customers for customer filter (simple: first page, limit 100)
   useEffect(() => {
@@ -451,11 +481,32 @@ export default function ContractsPageClient({ session }: Props) {
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <code className="rounded bg-sky-100 px-2 py-1 text-sm font-semibold text-sky-700">
-                          {c.contractNumber}
-                        </code>
+                        <Link
+                          href={`/customer-admin/contracts/${c.id}`}
+                          className="hover:underline"
+                        >
+                          <code className="rounded bg-sky-100 px-2 py-1 text-sm font-semibold text-sky-700">
+                            {c.contractNumber}
+                          </code>
+                        </Link>
                       </td>
-                      <td className="px-4 py-3 font-medium">{c.customer?.name ?? '—'}</td>
+                      <td className="px-4 py-3 font-medium">
+                        {(() => {
+                          const cid = c.customer?.id || c.customerId
+                          const name = c.customer?.name ?? '—'
+                          return cid ? (
+                            <button
+                              type="button"
+                              onClick={() => applyCustomerFilter(cid)}
+                              className="text-sky-700 underline-offset-2 hover:underline"
+                            >
+                              {name}
+                            </button>
+                          ) : (
+                            name
+                          )
+                        })()}
+                      </td>
                       <td className="px-4 py-3">
                         <Badge className={`border-2 ${getTypeColor(c.type)}`}>{c.type}</Badge>
                       </td>

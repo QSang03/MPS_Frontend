@@ -54,3 +54,34 @@ export interface ApiError {
   statusCode: number
   error?: string
 }
+
+/**
+ * Monthly usage pages item
+ */
+export interface MonthlyUsagePagesItem {
+  deviceId: string
+  month: string // YYYY-MM format
+  bwPages: number
+  colorPages: number
+  totalPages: number
+  bwPagesA4?: number
+  colorPagesA4?: number
+  totalPagesA4?: number
+  deviceModelName?: string
+  serialNumber?: string
+  partNumber?: string
+}
+
+/**
+ * Monthly usage pages response
+ */
+export interface MonthlyUsagePagesResponse {
+  success: boolean
+  data: {
+    items: MonthlyUsagePagesItem[]
+  }
+  message?: string
+  error?: string
+  code?: string
+  statusCode?: number
+}

@@ -101,6 +101,7 @@ export const API_ENDPOINTS = {
     LIST: '/reports',
     GENERATE: '/reports/generate',
     DOWNLOAD: (id: string) => `/reports/${id}/download`,
+    USAGE_PAGES_MONTHLY: '/reports/usage/pages/monthly',
   },
   // Policies
   POLICIES: '/policies',

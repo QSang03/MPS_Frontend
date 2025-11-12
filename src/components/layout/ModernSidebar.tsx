@@ -135,38 +135,111 @@ export function ModernSidebar({ session }: SidebarProps) {
           </div>
         </motion.div>
 
-        {/* Navigation - Enhanced */}
-        <nav className="scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 flex-1 space-y-1.5 overflow-y-auto px-4 py-4">
-          {navigation.map((item, index) => {
-            const itemWithSubmenu = {
-              ...item,
-              submenu:
-                item.href === '/customer-admin/devices' &&
-                currentSubmenu?.href.includes('/devices/')
-                  ? [currentSubmenu]
-                  : item.href === '/customer-admin/service-requests' &&
-                      currentSubmenu?.href.includes('/service-requests/')
-                    ? [currentSubmenu]
-                    : item.href === '/customer-admin/purchase-requests' &&
-                        currentSubmenu?.href.includes('/purchase-requests/')
-                      ? [currentSubmenu]
-                      : item.href === '/customer-admin/users' &&
-                          currentSubmenu?.href.includes('/users/')
-                        ? [currentSubmenu]
-                        : undefined,
+        {/* Navigation - Enhanced with grouping */}
+        <nav className="scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 flex-1 overflow-y-auto px-4 py-4">
+          {(() => {
+            // Group items by semantic section based on route prefix
+            type Item = {
+              label: string
+              href: string
+              icon: React.ComponentType<{ className?: string }>
+              badge?: number
+              submenu?: unknown
             }
-
-            return (
-              <motion.div
-                key={item.href}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.3, delay: index * 0.05 }}
-              >
-                <SidebarNavItem item={itemWithSubmenu} index={index} />
-              </motion.div>
+            const sections: { key: string; title: string; matcher: (href: string) => boolean }[] = [
+              { key: 'overview', title: 'Tổng quan', matcher: (h) => h === '/customer-admin' },
+              {
+                key: 'devices',
+                title: 'Thiết bị',
+                matcher: (h) =>
+                  h.startsWith('/customer-admin/devices') ||
+                  h.startsWith('/customer-admin/device-models'),
+              },
+              {
+                key: 'consumables',
+                title: 'Vật tư',
+                matcher: (h) =>
+                  h.startsWith('/customer-admin/consumables') ||
+                  h.startsWith('/customer-admin/consumable-types'),
+              },
+              {
+                key: 'customers',
+                title: 'Khách hàng',
+                matcher: (h) => h.startsWith('/customer-admin/customers'),
+              },
+              {
+                key: 'contracts',
+                title: 'Hợp đồng',
+                matcher: (h) => h.startsWith('/customer-admin/contracts'),
+              },
+              {
+                key: 'reports',
+                title: 'Báo cáo',
+                matcher: (h) =>
+                  h.startsWith('/customer-admin/reports') ||
+                  h.startsWith('/customer-admin/revenue'),
+              },
+            ]
+            const grouped = new Map<string, Item[]>()
+            const otherKey = 'others'
+            const getSectionKey = (href: string) => {
+              const found = sections.find((s) => s.matcher(href))
+              return found ? found.key : otherKey
+            }
+            navigation.forEach((item) => {
+              const key = getSectionKey(item.href)
+              const arr = grouped.get(key) ?? []
+              arr.push(item as unknown as Item)
+              grouped.set(key, arr)
+            })
+            const orderedKeys = [...sections.map((s) => s.key), otherKey].filter((k) =>
+              grouped.has(k)
             )
-          })}
+            let renderIndex = 0
+            return orderedKeys.map((key) => {
+              const title = sections.find((s) => s.key === key)?.title ?? 'Khác'
+              const items = grouped.get(key) ?? []
+              return (
+                <div key={key} className="mb-4">
+                  <div className="text-muted-foreground mb-2 px-2 text-xs font-medium tracking-wider uppercase">
+                    {title}
+                  </div>
+                  <div className="space-y-1.5">
+                    {items.map((item) => {
+                      const itemWithSubmenu = {
+                        ...item,
+                        submenu:
+                          item.href === '/customer-admin/devices' &&
+                          currentSubmenu?.href.includes('/devices/')
+                            ? [currentSubmenu]
+                            : item.href === '/customer-admin/service-requests' &&
+                                currentSubmenu?.href.includes('/service-requests/')
+                              ? [currentSubmenu]
+                              : item.href === '/customer-admin/purchase-requests' &&
+                                  currentSubmenu?.href.includes('/purchase-requests/')
+                                ? [currentSubmenu]
+                                : item.href === '/customer-admin/users' &&
+                                    currentSubmenu?.href.includes('/users/')
+                                  ? [currentSubmenu]
+                                  : undefined,
+                      }
+                      const myIndex = renderIndex++
+                      return (
+                        <motion.div
+                          key={item.href}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ duration: 0.3, delay: myIndex * 0.05 }}
+                        >
+                          <SidebarNavItem item={itemWithSubmenu} index={myIndex} />
+                        </motion.div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )
+            })
+          })()}
         </nav>
 
         {/* Divider */}

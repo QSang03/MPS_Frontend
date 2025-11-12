@@ -13,6 +13,7 @@ export default function ConsumablesList() {
   const [consumables, setConsumables] = useState<Record<string, unknown>[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
   const [page, setPage] = useState(1)
   const [limit] = useState(20)
   const [total, setTotal] = useState(0)
@@ -22,7 +23,9 @@ export default function ConsumablesList() {
     async (p = 1) => {
       try {
         setLoading(true)
-        const res = await consumablesClientService.list({ page: p, limit })
+        const params: Record<string, unknown> = { page: p, limit }
+        if (debouncedSearch) params.search = debouncedSearch
+        const res = await consumablesClientService.list(params)
         const items = Array.isArray(res?.items) ? res.items : Array.isArray(res) ? res : []
         setConsumables(items as unknown as Record<string, unknown>[])
         setTotal(res?.total ?? items.length)
@@ -34,26 +37,23 @@ export default function ConsumablesList() {
         setLoading(false)
       }
     },
-    [limit]
+    [limit, debouncedSearch]
   )
 
   useEffect(() => {
     void loadConsumables(page)
   }, [page, loadConsumables])
 
-  const filteredConsumables = searchTerm
-    ? consumables.filter((c) => {
-        const term = searchTerm.toLowerCase()
-        const serial = String(c.serialNumber ?? '')
-        const name = String((c.consumableType as Record<string, unknown>)?.name ?? '')
-        const status = String(c.status ?? '')
-        return (
-          serial.toLowerCase().includes(term) ||
-          name.toLowerCase().includes(term) ||
-          status.toLowerCase().includes(term)
-        )
-      })
-    : consumables
+  // Debounce input by 2s
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setDebouncedSearch(searchTerm.trim())
+      setPage(1)
+    }, 2000)
+    return () => clearTimeout(t)
+  }, [searchTerm])
+
+  const filteredConsumables = consumables
 
   return (
     <Card>
@@ -69,6 +69,12 @@ export default function ConsumablesList() {
               placeholder="Tìm kiếm vật tư..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  setDebouncedSearch(searchTerm.trim())
+                  setPage(1)
+                }
+              }}
               className="pl-9"
             />
           </div>

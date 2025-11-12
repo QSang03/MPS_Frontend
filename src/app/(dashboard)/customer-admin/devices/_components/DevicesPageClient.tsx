@@ -11,6 +11,7 @@ import DeviceFormModal from './deviceformmodal'
 import DevicePricingModal from './DevicePricingModal'
 import { devicesClientService } from '@/lib/api/services/devices-client.service'
 import ToggleActiveModal from './ToggleActiveModal'
+import A4EquivalentModal from './A4EquivalentModal'
 import { customersClientService } from '@/lib/api/services/customers-client.service'
 import { CustomerSelectDialog } from './CustomerSelectDialog'
 import type { Customer } from '@/types/models/customer'
@@ -70,6 +71,8 @@ export default function DevicesPageClient() {
   const [toggleModalOpen, setToggleModalOpen] = useState(false)
   const [toggleTargetDevice, setToggleTargetDevice] = useState<Device | null>(null)
   const [toggleTargetActive, setToggleTargetActive] = useState<boolean>(false)
+  const [a4ModalOpen, setA4ModalOpen] = useState(false)
+  const [a4ModalDevice, setA4ModalDevice] = useState<Device | null>(null)
   const router = useRouter()
 
   const fetchDevices = useCallback(
@@ -743,6 +746,20 @@ export default function DevicesPageClient() {
                           {/* Pricing modal */}
                           <DevicePricingModal device={d} compact onSaved={() => fetchDevices()} />
 
+                          {/* A4 equivalent snapshot modal (manual edit) */}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 w-7 bg-sky-50 p-0 text-sky-600 hover:bg-sky-100"
+                            onClick={() => {
+                              setA4ModalDevice(d)
+                              setA4ModalOpen(true)
+                            }}
+                            title="Ghi/Chỉnh sửa snapshot A4"
+                          >
+                            <BarChart3 className="h-3.5 w-3.5" />
+                          </Button>
+
                           <DeleteDialog
                             title={`Xóa thiết bị ${d.serialNumber || d.id}`}
                             description={`Bạn có chắc muốn xóa thiết bị ${d.serialNumber || d.id}?`}
@@ -818,6 +835,14 @@ export default function DevicesPageClient() {
           setDevices((prev) => prev.map((p) => (p.id === updated.id ? updated : p)))
           setFilteredDevices((prev) => prev.map((p) => (p.id === updated.id ? updated : p)))
         }}
+      />
+
+      {/* A4 equivalent manual snapshot modal */}
+      <A4EquivalentModal
+        device={a4ModalDevice ?? undefined}
+        open={a4ModalOpen}
+        onOpenChange={(v) => setA4ModalOpen(v)}
+        onSaved={() => fetchDevices()}
       />
     </div>
   )

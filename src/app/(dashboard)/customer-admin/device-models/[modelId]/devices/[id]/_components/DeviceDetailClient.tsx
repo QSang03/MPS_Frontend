@@ -23,11 +23,15 @@ import {
   Wrench,
   Sparkles,
   Box,
+  Search,
+  RefreshCw,
   BarChart3,
 } from 'lucide-react'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { DEVICE_STATUS, STATUS_DISPLAY } from '@/constants/status'
 import { Button } from '@/components/ui/button'
+import A4EquivalentModal from '@/app/(dashboard)/customer-admin/devices/_components/A4EquivalentModal'
+import ConsumableHistoryModal from './ConsumableHistoryModal'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -63,6 +67,8 @@ import { deviceModelsClientService } from '@/lib/api/services/device-models-clie
 import { cn } from '@/lib/utils'
 import { Separator } from '@/components/ui/separator'
 import { removeEmpty } from '@/lib/utils/clean'
+import type { MonthlyUsagePagesItem, MonthlyUsagePagesResponse } from '@/types/api'
+import internalApiClient from '@/lib/api/internal-client'
 
 interface DeviceDetailClientProps {
   deviceId: string
@@ -99,6 +105,12 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
   const customers = customersData ?? []
   const [installedConsumables, setInstalledConsumables] = useState<any[]>([])
   const [compatibleConsumables, setCompatibleConsumables] = useState<any[]>([])
+  const [selectedConsumableId, setSelectedConsumableId] = useState<string | null>(null)
+  const [showConsumableHistoryModal, setShowConsumableHistoryModal] = useState(false)
+  // derive selected consumable info for display in modal header
+  // (We compute the object inside the modal component when needed to avoid
+  // keeping an unused local variable and triggering lint errors.)
+
   const [consumablesLoading, setConsumablesLoading] = useState(false)
   const [showCreateConsumable, setShowCreateConsumable] = useState(false)
   const [showAttachFromOrphaned, setShowAttachFromOrphaned] = useState(false)
@@ -121,6 +133,68 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
   const [activeTab, setActiveTab] = useState('overview')
   const router = useRouter()
 
+  // Monthly usage pages state
+  // Helper function to get default date range (last 12 months)
+  const getDefaultDateRange = () => {
+    const now = new Date()
+    const toMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+    const fromDate = new Date(now)
+    fromDate.setMonth(now.getMonth() - 11) // 12 months ago (11 months + current month)
+    const fromMonth = `${fromDate.getFullYear()}-${String(fromDate.getMonth() + 1).padStart(2, '0')}`
+    return { fromMonth, toMonth }
+  }
+
+  const defaultDateRange = getDefaultDateRange()
+  const [usageFromMonth, setUsageFromMonth] = useState<string>(defaultDateRange.fromMonth)
+  const [usageToMonth, setUsageToMonth] = useState<string>(defaultDateRange.toMonth)
+
+  // Get customerId from device (safe access)
+  const customerId = device ? device.customerId || '' : ''
+
+  // Fetch monthly usage pages data
+  const {
+    data: monthlyUsageData,
+    isLoading: monthlyUsageLoading,
+    isError: monthlyUsageError,
+    refetch: refetchMonthlyUsage,
+  } = useQuery<MonthlyUsagePagesResponse, unknown, MonthlyUsagePagesResponse>({
+    queryKey: ['monthly-usage-pages', deviceId, customerId, usageFromMonth, usageToMonth],
+    queryFn: async () => {
+      try {
+        if (!customerId || !usageFromMonth || !usageToMonth || !deviceId) {
+          return { success: false, data: { items: [] } } as MonthlyUsagePagesResponse
+        }
+
+        const params = new URLSearchParams({
+          customerId,
+          from: usageFromMonth,
+          to: usageToMonth,
+          deviceId,
+        })
+
+        const response = await internalApiClient.get<MonthlyUsagePagesResponse>(
+          `/api/reports/usage/pages/monthly?${params.toString()}`
+        )
+        return response.data
+      } catch (err) {
+        console.error('Failed to fetch monthly usage pages:', err)
+        toast.error('Không thể tải dữ liệu sử dụng theo tháng')
+        throw err
+      }
+    },
+    enabled: Boolean(device && customerId && usageFromMonth && usageToMonth && deviceId),
+    staleTime: 30000, // Cache for 30 seconds
+  })
+
+  const monthlyUsageItems: MonthlyUsagePagesItem[] = monthlyUsageData?.data?.items || []
+
+  // Safe number formatters for monthly usage table (handles undefined/null)
+  const fmtNumber = (v?: number | null) => (typeof v === 'number' ? v.toLocaleString('vi-VN') : '0')
+  const fmtNumberA4 = (v?: number | null) =>
+    typeof v === 'number'
+      ? v.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      : '0,00'
+
   // Edit consumable state
   const [showEditConsumable, setShowEditConsumable] = useState(false)
   const [editingConsumable, setEditingConsumable] = useState<any | null>(null)
@@ -140,6 +214,7 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
   const [, setEditConsumableStatus] = useState('ACTIVE')
   const [editShowRemovedAt, setEditShowRemovedAt] = useState(false) // Checkbox state
   const [updatingConsumable, setUpdatingConsumable] = useState(false)
+  const [a4ModalOpen, setA4ModalOpen] = useState(false)
 
   const editRemainingInvalid =
     typeof editRemaining === 'number' &&
@@ -172,20 +247,26 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
         setDevice(data ?? null)
 
         if (data) {
-          setLocationEdit(data.location || '')
-          setIpEdit(data.ipAddress || '')
-          setMacEdit(data.macAddress || '')
-          setFirmwareEdit(data.firmware || '')
+          // data is expected to be Device, but narrow via unknown to avoid `any` casts
+          const d = data as unknown as Record<string, unknown>
+          setLocationEdit((d['location'] as string) || '')
+          setIpEdit((d['ipAddress'] as string) || '')
+          setMacEdit((d['macAddress'] as string) || '')
+          setFirmwareEdit((d['firmware'] as string) || '')
           setIsActiveEdit(
-            typeof data.isActive === 'boolean' ? data.isActive : Boolean(data.isActive)
+            typeof d['isActive'] === 'boolean'
+              ? Boolean(d['isActive'])
+              : Boolean((data as any).isActive)
           )
           setStatusEdit(
-            (data.status as string) ||
-              (data.isActive ? DEVICE_STATUS.ACTIVE : DEVICE_STATUS.DECOMMISSIONED)
+            (String(d['status'] || (data as any).status || '') as string) ||
+              ((data as any).isActive ? DEVICE_STATUS.ACTIVE : DEVICE_STATUS.DECOMMISSIONED)
           )
-          setInactiveReasonOptionEdit((data as any).inactiveReason ?? '')
-          setInactiveReasonTextEdit((data as any).inactiveReason ?? '')
-          setCustomerIdEdit((data as any).customerId || (data as any).customer?.id || '')
+          setInactiveReasonOptionEdit((d['inactiveReason'] as string) ?? '')
+          setInactiveReasonTextEdit((d['inactiveReason'] as string) ?? '')
+          setCustomerIdEdit(
+            (d['customerId'] as string) || ((d['customer'] as any)?.id as string) || ''
+          )
         }
 
         try {
@@ -289,10 +370,12 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
 
   const renderStatusChip = () => {
     const rawStatus =
-      (device as any)?.status ??
-      ((device as any)?.isActive ? DEVICE_STATUS.ACTIVE : DEVICE_STATUS.SUSPENDED)
+      (device as Device | null)?.status ??
+      ((device as Device | null)?.isActive ? DEVICE_STATUS.ACTIVE : DEVICE_STATUS.SUSPENDED)
     const statusKey = String(rawStatus).toUpperCase() as keyof typeof STATUS_DISPLAY
-    const display = (STATUS_DISPLAY as any)[statusKey] ?? {
+    const display = (
+      STATUS_DISPLAY as unknown as Record<string, { label: string; color: string; icon: string }>
+    )[statusKey] ?? {
       label: String(rawStatus),
       color: 'gray',
       icon: '',
@@ -372,6 +455,16 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
           <div className="flex items-center gap-3">
             {getStatusBadge(device.isActive)}
             {renderStatusChip()}
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setA4ModalOpen(true)}
+              className="gap-2 bg-white text-black"
+              title="Ghi/Chỉnh sửa snapshot A4"
+            >
+              <BarChart3 className="h-4 w-4 text-black" />
+              A4
+            </Button>
             {Boolean(device?.isActive) ? (
               <Button
                 variant="secondary"
@@ -393,7 +486,7 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                   </div>
                 </TooltipTrigger>
                 <TooltipContent sideOffset={4}>
-                  {`Thiết bị không hoạt động. Lý do: ${(device as any)?.inactiveReason ?? 'Không rõ'}`}
+                  {`Thiết bị không hoạt động. Lý do: ${device?.inactiveReason ?? 'Không rõ'}`}
                 </TooltipContent>
               </Tooltip>
             )}
@@ -433,7 +526,7 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                   </div>
                 </TooltipTrigger>
                 <TooltipContent sideOffset={4}>
-                  {`Thiết bị không hoạt động. Lý do: ${(device as any)?.inactiveReason ?? 'Không rõ'}`}
+                  {`Thiết bị không hoạt động. Lý do: ${device?.inactiveReason ?? 'Không rõ'}`}
                 </TooltipContent>
               </Tooltip>
             )}
@@ -443,7 +536,7 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="mb-6 grid w-full grid-cols-3">
+        <TabsList className="mb-6 grid w-full grid-cols-4">
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <Info className="h-4 w-4" />
             Tổng quan
@@ -455,6 +548,10 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
           <TabsTrigger value="maintenance" className="flex items-center gap-2">
             <Wrench className="h-4 w-4" />
             Bảo trì
+          </TabsTrigger>
+          <TabsTrigger value="history" className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Lịch sử vật tư
           </TabsTrigger>
         </TabsList>
 
@@ -591,6 +688,166 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
               </div>
             </CardContent>
           </Card>
+
+          {/* Monthly Usage Pages */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5 text-indigo-600" />
+                    Sử dụng trang theo tháng
+                  </CardTitle>
+                  <CardDescription>Thống kê số trang in theo tháng</CardDescription>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => refetchMonthlyUsage()}
+                  className="gap-2"
+                  disabled={monthlyUsageLoading}
+                >
+                  <RefreshCw className={cn('h-4 w-4', monthlyUsageLoading && 'animate-spin')} />
+                  Làm mới
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Date Range Filters */}
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+                <div className="flex-1">
+                  <Label className="text-sm font-medium">Từ tháng</Label>
+                  <Input
+                    type="month"
+                    value={usageFromMonth}
+                    onChange={(e) => setUsageFromMonth(e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+                <div className="flex-1">
+                  <Label className="text-sm font-medium">Đến tháng</Label>
+                  <Input
+                    type="month"
+                    value={usageToMonth}
+                    onChange={(e) => setUsageToMonth(e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+                <Button
+                  onClick={() => {
+                    const range = getDefaultDateRange()
+                    setUsageFromMonth(range.fromMonth)
+                    setUsageToMonth(range.toMonth)
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                >
+                  Mặc định (12 tháng)
+                </Button>
+              </div>
+
+              {/* Monthly Usage Table */}
+              {monthlyUsageLoading ? (
+                <div className="flex items-center justify-center p-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                </div>
+              ) : monthlyUsageError ? (
+                <div className="text-muted-foreground p-8 text-center">
+                  <AlertCircle className="mx-auto mb-3 h-12 w-12 text-red-500 opacity-20" />
+                  <p className="text-red-600">Đã xảy ra lỗi khi tải dữ liệu</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => refetchMonthlyUsage()}
+                    className="mt-4"
+                  >
+                    Thử lại
+                  </Button>
+                </div>
+              ) : !customerId ? (
+                <div className="text-muted-foreground p-8 text-center">
+                  <AlertCircle className="mx-auto mb-3 h-12 w-12 opacity-20" />
+                  <p>Thiết bị chưa có khách hàng</p>
+                </div>
+              ) : monthlyUsageItems.length === 0 ? (
+                <div className="text-muted-foreground p-8 text-center">
+                  <BarChart3 className="mx-auto mb-3 h-12 w-12 opacity-20" />
+                  <p>Chưa có dữ liệu sử dụng trong khoảng thời gian này</p>
+                </div>
+              ) : (
+                <div className="overflow-hidden rounded-lg border">
+                  <div className="overflow-x-auto">
+                    <table className="w-full min-w-[900px]">
+                      <thead className="bg-gradient-to-r from-indigo-50 to-purple-50">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-sm font-semibold">Tháng</th>
+                          <th className="px-4 py-3 text-left text-sm font-semibold">Tên model</th>
+                          <th className="px-4 py-3 text-left text-sm font-semibold">Số serial</th>
+                          <th className="px-4 py-3 text-left text-sm font-semibold">Mã phần</th>
+                          <th className="px-4 py-3 text-right text-sm font-semibold">
+                            Trang đen trắng
+                          </th>
+                          <th className="px-4 py-3 text-right text-sm font-semibold">Trang màu</th>
+                          <th className="px-4 py-3 text-right text-sm font-semibold">Tổng trang</th>
+                          <th className="px-4 py-3 text-right text-sm font-semibold">
+                            Trang đen trắng A4
+                          </th>
+                          <th className="px-4 py-3 text-right text-sm font-semibold">
+                            Trang màu A4
+                          </th>
+                          <th className="px-4 py-3 text-right text-sm font-semibold">
+                            Tổng trang A4
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {monthlyUsageItems
+                          .sort((a, b) => b.month.localeCompare(a.month))
+                          .map((item, idx) => {
+                            // Format month: YYYY-MM -> Tháng MM/YYYY
+                            const [year, month] = item.month.split('-')
+                            const monthDisplay = `Tháng ${month}/${year}`
+
+                            return (
+                              <tr
+                                key={`${item.deviceId}-${item.month}-${idx}`}
+                                className="hover:bg-muted/30 transition-colors"
+                              >
+                                <td className="px-4 py-3 font-medium">{monthDisplay}</td>
+                                <td className="px-4 py-3 text-sm">{item.deviceModelName || '-'}</td>
+                                <td className="px-4 py-3 font-mono text-sm">
+                                  {item.serialNumber || '-'}
+                                </td>
+                                <td className="px-4 py-3 text-sm">{item.partNumber || '-'}</td>
+                                <td className="px-4 py-3 text-right text-sm">
+                                  {fmtNumber(item.bwPages)}
+                                </td>
+                                <td className="px-4 py-3 text-right text-sm">
+                                  {fmtNumber(item.colorPages)}
+                                </td>
+                                <td className="px-4 py-3 text-right text-sm font-semibold">
+                                  {fmtNumber(item.totalPages)}
+                                </td>
+                                <td className="px-4 py-3 text-right text-sm text-blue-600">
+                                  {fmtNumberA4(item.bwPagesA4)}
+                                </td>
+                                <td className="px-4 py-3 text-right text-sm text-blue-600">
+                                  {fmtNumberA4(item.colorPagesA4)}
+                                </td>
+                                <td className="px-4 py-3 text-right text-sm font-semibold text-blue-600">
+                                  {fmtNumberA4(item.totalPagesA4)}
+                                </td>
+                              </tr>
+                            )
+                          })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Consumables Tab */}
@@ -614,7 +871,7 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                     onClick={async () => {
                       try {
                         setShowAttachFromOrphaned(true)
-                        const cid = (device as any)?.customerId || (device as any)?.customer?.id
+                        const cid = device?.customerId
                         if (!cid) {
                           toast.error('Thiết bị chưa có khách hàng')
                           return
@@ -758,59 +1015,82 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                                   : '—'}
                             </td>
                             <td className="px-4 py-3 text-center">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                  const consumableData = cons ?? c
-                                  setEditingConsumable(consumableData)
-                                  setEditSerialNumber(consumableData?.serialNumber ?? '')
-                                  setEditBatchNumber(consumableData?.batchNumber ?? '')
-                                  setEditCapacity(consumableData?.capacity ?? '')
-                                  setEditRemaining(consumableData?.remaining ?? '')
-                                  const expiryDateValue = consumableData?.expiryDate
-                                    ? new Date(consumableData.expiryDate)
-                                        .toISOString()
-                                        .split('T')[0]
-                                    : ''
-                                  setEditExpiryDate(expiryDateValue ?? '')
-                                  setEditConsumableStatus(consumableData?.status ?? 'ACTIVE')
-                                  // device-level fields
-                                  setEditInstalledAt(c?.installedAt ?? null)
-                                  setEditRemovedAt(c?.removedAt ?? null)
-                                  setEditActualPagesPrinted(c?.actualPagesPrinted ?? '')
+                              <div className="flex items-center justify-center gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => {
+                                    // open modal to show consumable history for this consumable
+                                    const selectedId = cons?.id ?? c?.id
+                                    if (selectedId) {
+                                      setSelectedConsumableId(String(selectedId))
+                                      setShowConsumableHistoryModal(true)
+                                    } else {
+                                      toast.error('Không tìm thấy ID vật tư')
+                                    }
+                                  }}
+                                  className="gap-2"
+                                >
+                                  Lịch sử
+                                </Button>
 
-                                  // Always default checkbox to unchecked
-                                  setEditShowRemovedAt(false)
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    const consumableData = cons ?? c
+                                    setEditingConsumable(consumableData)
+                                    setEditSerialNumber(consumableData?.serialNumber ?? '')
+                                    setEditBatchNumber(consumableData?.batchNumber ?? '')
+                                    setEditCapacity(consumableData?.capacity ?? '')
+                                    setEditRemaining(consumableData?.remaining ?? '')
+                                    const expiryDateValue = consumableData?.expiryDate
+                                      ? new Date(consumableData.expiryDate)
+                                          .toISOString()
+                                          .split('T')[0]
+                                      : ''
+                                    setEditExpiryDate(expiryDateValue ?? '')
+                                    setEditConsumableStatus(consumableData?.status ?? 'ACTIVE')
+                                    // device-level fields
+                                    setEditInstalledAt(c?.installedAt ?? null)
+                                    setEditRemovedAt(c?.removedAt ?? null)
+                                    setEditActualPagesPrinted(c?.actualPagesPrinted ?? '')
 
-                                  // Set price fields: if exchangeRate exists, show VND mode
-                                  const existingPrice = c?.price
-                                  const existingExchangeRate = (c as any)?.exchangeRate
+                                    // Always default checkbox to unchecked
+                                    setEditShowRemovedAt(false)
 
-                                  if (existingExchangeRate && existingPrice) {
-                                    // VND mode: calculate VND from price * exchangeRate
-                                    setEditPriceVND(existingPrice * existingExchangeRate)
-                                    setEditExchangeRate(existingExchangeRate)
-                                    setEditPriceUSD('')
-                                  } else if (existingPrice) {
-                                    // USD mode: use price directly
-                                    setEditPriceUSD(existingPrice)
-                                    setEditPriceVND('')
-                                    setEditExchangeRate('')
-                                  } else {
-                                    // No price data
-                                    setEditPriceVND('')
-                                    setEditPriceUSD('')
-                                    setEditExchangeRate('')
-                                  }
+                                    // Set price fields: if exchangeRate exists, show VND mode
+                                    const existingPrice = c?.price
+                                    const existingExchangeRate = Number(
+                                      (c as unknown as Record<string, unknown>)['exchangeRate'] ??
+                                        ''
+                                    )
 
-                                  setShowEditConsumable(true)
-                                }}
-                                className="gap-2"
-                              >
-                                <Edit className="h-4 w-4" />
-                                Sửa
-                              </Button>
+                                    if (existingExchangeRate && existingPrice) {
+                                      // VND mode: calculate VND from price * exchangeRate
+                                      setEditPriceVND(existingPrice * existingExchangeRate)
+                                      setEditExchangeRate(existingExchangeRate)
+                                      setEditPriceUSD('')
+                                    } else if (existingPrice) {
+                                      // USD mode: use price directly
+                                      setEditPriceUSD(existingPrice)
+                                      setEditPriceVND('')
+                                      setEditExchangeRate('')
+                                    } else {
+                                      // No price data
+                                      setEditPriceVND('')
+                                      setEditPriceUSD('')
+                                      setEditExchangeRate('')
+                                    }
+
+                                    setShowEditConsumable(true)
+                                  }}
+                                  className="gap-2"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                  Sửa
+                                </Button>
+                              </div>
                             </td>
                           </tr>
                         )
@@ -964,6 +1244,25 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                   </div>
                 </div>
               )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* History Tab - Consumable Usage History */}
+        <TabsContent value="history" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="h-5 w-5 text-emerald-600" />
+                Lịch sử sử dụng vật tư
+              </CardTitle>
+              <CardDescription>Lịch sử thay thế/tiêu hao vật tư theo thiết bị</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ConsumableUsageHistory
+                deviceId={deviceId}
+                consumableId={selectedConsumableId ?? undefined}
+              />
             </CardContent>
           </Card>
         </TabsContent>
@@ -1600,6 +1899,35 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
         </DialogContent>
       </Dialog>
 
+      {/* A4 Equivalent modal (manual snapshot edit) */}
+      <A4EquivalentModal
+        device={device}
+        open={a4ModalOpen}
+        onOpenChange={(v) => setA4ModalOpen(v)}
+        onSaved={async () => {
+          try {
+            // refresh device data after saving snapshot
+            const updated = await devicesClientService.getById(deviceId)
+            setDevice(updated ?? null)
+            toast.success('Cập nhật dữ liệu thiết bị sau khi lưu snapshot A4')
+          } catch (err) {
+            console.error('Failed to refresh device after A4 save', err)
+          }
+        }}
+      />
+
+      {/* Consumable history modal (extracted component) */}
+      <ConsumableHistoryModal
+        deviceId={deviceId}
+        consumableId={selectedConsumableId ?? undefined}
+        installedConsumables={installedConsumables}
+        open={showConsumableHistoryModal}
+        onOpenChange={(v) => {
+          setShowConsumableHistoryModal(v)
+          if (!v) setSelectedConsumableId(null)
+        }}
+      />
+
       {/* Edit Consumable Modal - Modern Design */}
       <Dialog open={showEditConsumable} onOpenChange={setShowEditConsumable}>
         <DialogContent className="max-w-[640px] overflow-hidden rounded-2xl border-0 p-0 shadow-2xl">
@@ -1902,6 +2230,224 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
+  )
+}
+
+// Consumable usage history panel (client-side)
+export function ConsumableUsageHistory({
+  deviceId,
+  consumableId,
+}: {
+  deviceId: string
+  consumableId?: string
+}) {
+  type HistoryRecord = {
+    id?: string
+    consumableId?: string
+    consumableTypeId?: string
+    percentage?: number
+    remaining?: number
+    capacity?: number
+    status?: string
+    recordedAt?: string
+    [k: string]: unknown
+  }
+
+  const [items, setItems] = useState<HistoryRecord[]>([])
+  const [loading, setLoading] = useState(false)
+  const [page, setPage] = useState(1)
+  const [limit, setLimit] = useState(20)
+  const [search, setSearch] = useState('')
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
+
+  const load = async () => {
+    if (!deviceId) return
+    setLoading(true)
+    try {
+      const q = new URLSearchParams()
+      q.set('page', String(page))
+      q.set('limit', String(limit))
+      if (search) q.set('search', search)
+      if (startDate) q.set('startDate', new Date(startDate).toISOString())
+      if (endDate) q.set('endDate', new Date(endDate).toISOString())
+      if (consumableId) q.set('consumableId', consumableId)
+
+      const url = `/api/consumable-usage-history/devices/${deviceId}?${q.toString()}`
+      const res = await fetch(url)
+      if (!res.ok) {
+        const txt = await res.text().catch(() => '')
+        throw new Error(txt || res.statusText)
+      }
+      const data = await res.json()
+
+      let list: unknown[] = []
+      if (Array.isArray(data)) {
+        list = data
+      } else if (typeof data === 'object' && data !== null) {
+        const obj = data as Record<string, unknown>
+        const maybeItems = obj['items']
+        const maybeData = obj['data']
+        if (Array.isArray(maybeItems)) list = maybeItems
+        else if (Array.isArray(maybeData)) list = maybeData
+        else if (obj['success'] === true && Array.isArray(maybeData)) list = maybeData
+      }
+
+      setItems(Array.isArray(list) ? (list as HistoryRecord[]) : [])
+    } catch (err) {
+      console.error('Load consumable usage history failed', err)
+      toast.error('Không tải được lịch sử sử dụng vật tư')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // helper: format numbers and IDs
+  const fmt = (v: unknown) => (typeof v === 'number' ? v.toLocaleString('vi-VN') : String(v ?? '-'))
+  const shortId = (id?: string) => (id ? `${id.slice(0, 8)}…${id.slice(-4)}` : '-')
+
+  // load on page/limit changes; searches are triggered via button or Enter
+  useEffect(() => {
+    load()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deviceId, page, limit, consumableId])
+
+  const handleSearch = () => {
+    setPage(1)
+    load()
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="flex w-full items-center gap-2">
+          <div className="flex w-full items-center gap-2 rounded-lg border bg-white px-3 py-2 shadow-sm">
+            <Search className="h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Tìm kiếm theo ID hoặc consumable..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleSearch()
+              }}
+              className="h-8 border-0 bg-transparent px-0 py-0"
+            />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setSearch('')
+                handleSearch()
+              }}
+            >
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => handleSearch()} className="ml-2">
+              Tìm
+            </Button>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Label className="text-sm">Từ</Label>
+          <Input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            className="h-8"
+          />
+          <Label className="text-sm">Đến</Label>
+          <Input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            className="h-8"
+          />
+          <Label className="text-sm">Hiển thị</Label>
+          <select
+            value={String(limit)}
+            onChange={(e) => setLimit(Number(e.target.value))}
+            className="h-8 rounded border px-2"
+          >
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="50">50</option>
+          </select>
+          <Button variant="ghost" size="sm" onClick={() => load()}>
+            Làm mới
+          </Button>
+        </div>
+      </div>
+
+      <div className="overflow-hidden rounded-lg border bg-white">
+        {loading ? (
+          <div className="flex items-center justify-center p-8">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+          </div>
+        ) : items.length === 0 ? (
+          <div className="text-muted-foreground p-8 text-center">Chưa có bản ghi</div>
+        ) : (
+          <div className="w-full overflow-auto">
+            <table className="w-full min-w-[900px]">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">ID</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Consumable</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Type</th>
+                  <th className="px-4 py-3 text-right text-sm font-semibold">%</th>
+                  <th className="px-4 py-3 text-right text-sm font-semibold">Remaining</th>
+                  <th className="px-4 py-3 text-right text-sm font-semibold">Capacity</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Status</th>
+                  <th className="px-4 py-3 text-right text-sm font-semibold">Recorded At</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {items.map((r: any) => (
+                  <tr key={r.id} className="hover:bg-muted/30 transition-colors">
+                    <td className="text-muted-foreground px-4 py-3 font-mono text-sm" title={r.id}>
+                      {shortId(r.id)}
+                    </td>
+                    <td className="px-4 py-3 text-sm">{shortId(r.consumableId)}</td>
+                    <td className="px-4 py-3 text-sm">{shortId(r.consumableTypeId)}</td>
+                    <td className="px-4 py-3 text-right text-sm">{r.percentage ?? '-'}%</td>
+                    <td className="px-4 py-3 text-right text-sm">{fmt(r.remaining)}</td>
+                    <td className="px-4 py-3 text-right text-sm">{fmt(r.capacity)}</td>
+                    <td className="px-4 py-3 text-sm">
+                      <Badge variant="outline">{r.status ?? '-'}</Badge>
+                    </td>
+                    <td className="px-4 py-3 text-right text-sm">
+                      {r.recordedAt ? new Date(r.recordedAt).toLocaleString('vi-VN') : '-'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      <div className="flex items-center justify-between">
+        <div className="text-muted-foreground text-sm">Trang {page}</div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page <= 1 || loading}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+          >
+            Trước
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={loading}
+            onClick={() => setPage((p) => p + 1)}
+          >
+            Sau
+          </Button>
+        </div>
+      </div>
     </div>
   )
 }
