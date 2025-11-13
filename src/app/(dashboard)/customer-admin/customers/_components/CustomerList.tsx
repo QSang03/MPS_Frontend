@@ -453,12 +453,13 @@ export function CustomerList() {
                                 if (filterOrphaned === 'orphaned') params.isOrphaned = true
                                 else if (filterOrphaned === 'installed') params.isOrphaned = false
                                 const res = await consumablesClientService.list(params)
-                                const items = Array.isArray((res as any)?.items)
-                                  ? (res as any).items
-                                  : Array.isArray(res as any)
-                                    ? (res as any)
+                                const _res = res as unknown
+                                const items = Array.isArray((_res as { items?: unknown[] })?.items)
+                                  ? (_res as { items?: unknown[] }).items!
+                                  : Array.isArray(_res)
+                                    ? (_res as unknown[])
                                     : []
-                                setConsumablesForCustomer(items)
+                                setConsumablesForCustomer(items as Record<string, unknown>[])
                               } catch (e) {
                                 console.error('Load consumables for customer failed', e)
                                 toast.error('Không tải được vật tư tiêu hao của khách hàng')
@@ -588,12 +589,13 @@ export function CustomerList() {
             if (v === 'orphaned') params.isOrphaned = true
             else if (v === 'installed') params.isOrphaned = false
             const res = await consumablesClientService.list(params)
-            const items = Array.isArray((res as any)?.items)
-              ? (res as any).items
-              : Array.isArray(res as any)
-                ? (res as any)
+            const _res = res as unknown
+            const items = Array.isArray((_res as { items?: unknown[] })?.items)
+              ? (_res as { items?: unknown[] }).items!
+              : Array.isArray(_res)
+                ? (_res as unknown[])
                 : []
-            setConsumablesForCustomer(items)
+            setConsumablesForCustomer(items as Record<string, unknown>[])
           } finally {
             setConsumablesLoading(false)
           }
