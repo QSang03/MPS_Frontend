@@ -45,7 +45,7 @@ export default function MyRequestsPage() {
           <p className="text-muted-foreground">Track your service requests</p>
         </div>
         <Button asChild>
-          <Link href="/customer-admin/service-requests/new">
+          <Link href="/system/service-requests/new">
             <Plus className="mr-2 h-4 w-4" />
             New Request
           </Link>
@@ -76,7 +76,7 @@ export default function MyRequestsPage() {
                   </div>
                 </div>
                 <Button variant="outline" size="sm" asChild>
-                  <Link href={`/customer-admin/service-requests/${request.id}`}>View Details</Link>
+                  <Link href={`/system/service-requests/${request.id}`}>View Details</Link>
                 </Button>
               </div>
             </CardContent>

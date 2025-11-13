@@ -36,28 +36,28 @@ export function NavigationTracker({
     if (deviceId && deviceName) {
       setCurrentSubmenu({
         label: deviceName,
-        href: `/customer-admin/devices/${deviceId}`,
+        href: `/system/devices/${deviceId}`,
       })
     }
     // Service request detail page
     else if (serviceRequestId && serviceRequestName) {
       setCurrentSubmenu({
         label: serviceRequestName,
-        href: `/customer-admin/service-requests/${serviceRequestId}`,
+        href: `/system/service-requests/${serviceRequestId}`,
       })
     }
     // Purchase request detail page
     else if (purchaseRequestId && purchaseRequestName) {
       setCurrentSubmenu({
         label: purchaseRequestName,
-        href: `/customer-admin/purchase-requests/${purchaseRequestId}`,
+        href: `/system/purchase-requests/${purchaseRequestId}`,
       })
     }
     // User detail page
     else if (userId && userName) {
       setCurrentSubmenu({
         label: userName,
-        href: `/customer-admin/users/${userId}`,
+        href: `/system/users/${userId}`,
       })
     }
     // Clear submenu when on list pages

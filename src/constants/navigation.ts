@@ -38,7 +38,7 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
     name: 'dashboard',
     label: 'Tổng quan',
     icon: 'LayoutDashboard',
-    route: '/customer-admin',
+    route: '/system',
     description: 'Bảng điều khiển',
     requiredPermissions: {
       strategy: 'all',
@@ -50,7 +50,7 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
     id: 'revenue',
     label: 'Doanh thu',
     icon: 'BarChart3',
-    route: '/customer-admin/revenue',
+    route: '/system/revenue',
     description: 'Báo cáo doanh thu theo thiết bị và theo tháng',
     requiredPermissions: {
       strategy: 'all',
@@ -63,7 +63,7 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
     name: 'devices',
     label: 'Thiết bị',
     icon: 'Printer',
-    route: '/customer-admin/devices',
+    route: '/system/devices',
     description: 'Quản lý thiết bị',
     requiredPermissions: { strategy: 'all', resources: [{ resource: 'devices', action: 'read' }] },
     actions: [
@@ -109,7 +109,7 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
     id: 'device-models',
     label: 'Mẫu thiết bị',
     icon: 'Building2',
-    route: '/customer-admin/device-models',
+    route: '/system/device-models',
     requiredPermissions: {
       strategy: 'all',
       resources: [{ resource: 'device-models', action: 'read' }],
@@ -166,7 +166,7 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
     id: 'contracts',
     label: 'Hợp đồng',
     icon: 'FileText',
-    route: '/customer-admin/contracts',
+    route: '/system/contracts',
     requiredPermissions: {
       strategy: 'all',
       resources: [{ resource: 'contracts', action: 'read' }],
@@ -223,7 +223,7 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
     id: 'consumable-types',
     label: 'Loại vật tư tiêu hao',
     icon: 'ShoppingCart',
-    route: '/customer-admin/consumable-types',
+    route: '/system/consumable-types',
     requiredPermissions: {
       strategy: 'all',
       resources: [{ resource: 'consumable-types', action: 'read' }],
@@ -271,7 +271,7 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
     id: 'users',
     label: 'Quản lý người dùng',
     icon: 'Users',
-    route: '/customer-admin/users',
+    route: '/system/users',
     requiredPermissions: { strategy: 'all', resources: [{ resource: 'users', action: 'read' }] },
     actions: [
       {
@@ -334,7 +334,7 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
     id: 'customers',
     label: 'Khách hàng',
     icon: 'Building2',
-    route: '/customer-admin/customers',
+    route: '/system/customers',
     requiredPermissions: {
       strategy: 'all',
       resources: [{ resource: 'customers', action: 'read' }],
@@ -382,7 +382,7 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
     id: 'policies',
     label: 'Quản lý policies',
     icon: 'Shield',
-    route: '/customer-admin/policies',
+    route: '/system/policies',
     requiredPermissions: { strategy: 'all', resources: [{ resource: 'policies', action: 'read' }] },
     actions: [
       {
@@ -436,7 +436,7 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
     id: 'roles',
     label: 'Quản lý vai trò',
     icon: 'Settings',
-    route: '/customer-admin/roles',
+    route: '/system/roles',
     requiredPermissions: { strategy: 'all', resources: [{ resource: 'roles', action: 'read' }] },
     actions: [
       {
@@ -481,7 +481,7 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
     id: 'departments',
     label: 'Quản lý bộ phận',
     icon: 'Building2',
-    route: '/customer-admin/departments',
+    route: '/system/departments',
     requiredPermissions: {
       strategy: 'all',
       resources: [{ resource: 'departments', action: 'read' }],
@@ -529,7 +529,7 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
     id: 'system-settings',
     label: 'Cấu hình hệ thống',
     icon: 'Settings',
-    route: '/customer-admin/system-settings',
+    route: '/system/system-settings',
     requiredPermissions: {
       strategy: 'all',
       resources: [{ resource: 'system-settings', action: 'read' }],

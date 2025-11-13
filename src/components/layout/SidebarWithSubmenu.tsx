@@ -29,7 +29,7 @@ export function SidebarNavItem({ item, index }: SidebarNavItemProps) {
 
   // Check if this item or any submenu is active
   const isParentActive =
-    item.href === '/customer-admin'
+    item.href === '/system'
       ? pathname === item.href
       : pathname === item.href || pathname.startsWith(item.href + '/')
 

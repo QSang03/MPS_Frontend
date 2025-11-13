@@ -152,7 +152,7 @@ export function Sidebar({ session }: SidebarProps) {
             {navigation.map((item) => {
               // Fix: Only exact match, except for dashboard which should only be active when exactly on that route
               const isActive =
-                item.href === '/customer-admin'
+                item.href === '/system'
                   ? pathname === item.href
                   : pathname === item.href || pathname.startsWith(item.href + '/')
               return (

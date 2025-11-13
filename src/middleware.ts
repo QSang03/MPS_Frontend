@@ -68,7 +68,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL(ROUTES.FORBIDDEN, request.url))
   }
 
-  if (pathname.startsWith('/customer-admin')) {
+  if (pathname.startsWith('/system')) {
     if (session.role !== UserRole.CUSTOMER_ADMIN && session.role !== UserRole.SYSTEM_ADMIN) {
       return NextResponse.redirect(new URL(ROUTES.FORBIDDEN, request.url))
     }

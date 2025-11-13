@@ -31,8 +31,8 @@ export function Navbar({ session }: NavbarProps) {
   const pathname = usePathname()
 
   // derive the best matching title from NAVIGATION_PAYLOAD by choosing the longest
-  // route that is a prefix of the current pathname. This ensures /customer-admin/devices
-  // matches the 'Thiết bị' entry instead of the more generic '/customer-admin' dashboard.
+  // route that is a prefix of the current pathname. This ensures /system/devices
+  // matches the 'Thiết bị' entry instead of the more generic '/system' dashboard.
   const derivedTitle = (() => {
     if (!pathname) return null
     const matches = NAVIGATION_PAYLOAD.filter((n) => n.route && pathname.startsWith(n.route))

@@ -124,7 +124,7 @@ export function canAccessRoute(session: Session | null, pathname: string): boole
     return session.role === UserRole.SYSTEM_ADMIN
   }
 
-  if (pathname.startsWith('/customer-admin')) {
+  if (pathname.startsWith('/system')) {
     return session.role === UserRole.CUSTOMER_ADMIN || session.role === UserRole.SYSTEM_ADMIN
   }
 

@@ -148,37 +148,33 @@ export function ModernSidebar({ session }: SidebarProps) {
               submenu?: unknown
             }
             const sections: { key: string; title: string; matcher: (href: string) => boolean }[] = [
-              { key: 'overview', title: 'Tổng quan', matcher: (h) => h === '/customer-admin' },
+              { key: 'overview', title: 'Tổng quan', matcher: (h) => h === '/system' },
               {
                 key: 'devices',
                 title: 'Thiết bị',
                 matcher: (h) =>
-                  h.startsWith('/customer-admin/devices') ||
-                  h.startsWith('/customer-admin/device-models'),
+                  h.startsWith('/system/devices') || h.startsWith('/system/device-models'),
               },
               {
                 key: 'consumables',
                 title: 'Vật tư',
                 matcher: (h) =>
-                  h.startsWith('/customer-admin/consumables') ||
-                  h.startsWith('/customer-admin/consumable-types'),
+                  h.startsWith('/system/consumables') || h.startsWith('/system/consumable-types'),
               },
               {
                 key: 'customers',
                 title: 'Khách hàng',
-                matcher: (h) => h.startsWith('/customer-admin/customers'),
+                matcher: (h) => h.startsWith('/system/customers'),
               },
               {
                 key: 'contracts',
                 title: 'Hợp đồng',
-                matcher: (h) => h.startsWith('/customer-admin/contracts'),
+                matcher: (h) => h.startsWith('/system/contracts'),
               },
               {
                 key: 'reports',
                 title: 'Báo cáo',
-                matcher: (h) =>
-                  h.startsWith('/customer-admin/reports') ||
-                  h.startsWith('/customer-admin/revenue'),
+                matcher: (h) => h.startsWith('/system/reports') || h.startsWith('/system/revenue'),
               },
             ]
             const grouped = new Map<string, Item[]>()
@@ -210,16 +206,16 @@ export function ModernSidebar({ session }: SidebarProps) {
                       const itemWithSubmenu = {
                         ...item,
                         submenu:
-                          item.href === '/customer-admin/devices' &&
+                          item.href === '/system/devices' &&
                           currentSubmenu?.href.includes('/devices/')
                             ? [currentSubmenu]
-                            : item.href === '/customer-admin/service-requests' &&
+                            : item.href === '/system/service-requests' &&
                                 currentSubmenu?.href.includes('/service-requests/')
                               ? [currentSubmenu]
-                              : item.href === '/customer-admin/purchase-requests' &&
+                              : item.href === '/system/purchase-requests' &&
                                   currentSubmenu?.href.includes('/purchase-requests/')
                                 ? [currentSubmenu]
-                                : item.href === '/customer-admin/users' &&
+                                : item.href === '/system/users' &&
                                     currentSubmenu?.href.includes('/users/')
                                   ? [currentSubmenu]
                                   : undefined,
