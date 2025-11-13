@@ -719,5 +719,34 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
       strategy: 'all',
       resources: [{ resource: 'system-settings', action: 'read' }],
     },
+    actions: [
+      {
+        id: 'create',
+        label: 'Tạo cấu hình hệ thống',
+        icon: 'Plus',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'system-settings', action: 'create' }],
+        },
+      },
+      {
+        id: 'update',
+        label: 'Chỉnh sửa cấu hình',
+        icon: 'Edit',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'system-settings', action: 'update' }],
+        },
+      },
+      {
+        id: 'delete',
+        label: 'Xóa cấu hình',
+        icon: 'Trash2',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'system-settings', action: 'delete' }],
+        },
+      },
+    ],
   },
 ]
