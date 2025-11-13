@@ -62,6 +62,15 @@ export const USER_NAVIGATION_PAYLOAD: NavItemPayload[] = [
     description: 'Thiết bị của tôi',
     actions: [
       {
+        id: 'read',
+        label: 'Xem thiết bị',
+        icon: 'Eye',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'devices', action: 'read' }],
+        },
+      },
+      {
         id: 'create',
         label: 'Tạo thiết bị',
         icon: 'Plus',
@@ -97,6 +106,27 @@ export const USER_NAVIGATION_PAYLOAD: NavItemPayload[] = [
           resources: [{ resource: 'customers', action: 'read' }],
         },
       },
+      {
+        id: 'assign-customer',
+        label: 'Gán/Gỡ khách hàng',
+        icon: 'UserPlus',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [
+            { resource: 'devices', action: 'update' },
+            { resource: 'reports', action: 'create' },
+          ],
+        },
+      },
+      {
+        id: 'set-a4-pricing',
+        label: 'Gán giá A4',
+        icon: 'BarChart3',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'reports', action: 'create' }],
+        },
+      },
     ],
   },
   {
@@ -107,6 +137,15 @@ export const USER_NAVIGATION_PAYLOAD: NavItemPayload[] = [
     route: '/user/contracts',
     description: 'Hợp đồng của tôi',
     actions: [
+      {
+        id: 'read',
+        label: 'Xem hợp đồng',
+        icon: 'Eye',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'contracts', action: 'read' }],
+        },
+      },
       {
         id: 'create',
         label: 'Tạo hợp đồng',
@@ -226,6 +265,27 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
         requiredPermissions: {
           strategy: 'all',
           resources: [{ resource: 'customers', action: 'read' }],
+        },
+      },
+      {
+        id: 'assign-customer',
+        label: 'Gán/Gỡ khách hàng',
+        icon: 'UserPlus',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [
+            { resource: 'devices', action: 'update' },
+            { resource: 'reports', action: 'create' },
+          ],
+        },
+      },
+      {
+        id: 'set-a4-pricing',
+        label: 'Gán giá A4',
+        icon: 'BarChart3',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'reports', action: 'create' }],
         },
       },
     ],

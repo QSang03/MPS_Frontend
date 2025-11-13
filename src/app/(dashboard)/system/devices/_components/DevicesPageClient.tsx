@@ -601,56 +601,58 @@ export default function DevicesPageClient() {
                             <span className="text-muted-foreground">—</span>
                           )}
                           {/* Allow editing customer only if customer is in warehouse (code === 'SYS') */}
-                          {(
-                            d as unknown as {
-                              customer?: { name?: string; code?: string; id?: string }
-                            }
-                          ).customer?.code === 'SYS' && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 w-7 p-0 hover:bg-rose-100"
-                              onClick={() => {
-                                setEditingDeviceId(d.id)
-                                setShowCustomerSelect(true)
-                              }}
-                              title="Chỉnh sửa khách hàng"
-                            >
-                              <Edit2 className="h-3.5 w-3.5 text-rose-600" />
-                            </Button>
-                          )}
-                          {/* Allow removing customer (return to warehouse) only if customer is NOT in warehouse (code !== 'SYS') */}
-                          {(
-                            d as unknown as {
-                              customer?: { name?: string; code?: string; id?: string }
-                            }
-                          ).customer?.code &&
-                            (
+                          <ActionGuard pageId="devices" actionId="assign-customer">
+                            {(
                               d as unknown as {
                                 customer?: { name?: string; code?: string; id?: string }
                               }
-                            ).customer?.code !== 'SYS' && (
-                              <DeleteDialog
-                                title={`Gỡ khách hàng khỏi thiết bị ${d.serialNumber || d.id}`}
-                                description={
-                                  'Bạn có chắc muốn gỡ khách hàng khỏi thiết bị này? Thiết bị sẽ được chuyển về kho hệ thống.'
-                                }
-                                onConfirm={async () => {
-                                  await handleRemoveCustomer(d.id)
+                            ).customer?.code === 'SYS' && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 w-7 p-0 hover:bg-rose-100"
+                                onClick={() => {
+                                  setEditingDeviceId(d.id)
+                                  setShowCustomerSelect(true)
                                 }}
-                                trigger={
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-7 w-7 p-0 hover:bg-red-100"
-                                    disabled={updatingCustomer}
-                                    title="Gỡ về kho"
-                                  >
-                                    <X className="h-3.5 w-3.5 text-red-600" />
-                                  </Button>
-                                }
-                              />
+                                title="Chỉnh sửa khách hàng"
+                              >
+                                <Edit2 className="h-3.5 w-3.5 text-rose-600" />
+                              </Button>
                             )}
+                            {/* Allow removing customer (return to warehouse) only if customer is NOT in warehouse (code !== 'SYS') */}
+                            {(
+                              d as unknown as {
+                                customer?: { name?: string; code?: string; id?: string }
+                              }
+                            ).customer?.code &&
+                              (
+                                d as unknown as {
+                                  customer?: { name?: string; code?: string; id?: string }
+                                }
+                              ).customer?.code !== 'SYS' && (
+                                <DeleteDialog
+                                  title={`Gỡ khách hàng khỏi thiết bị ${d.serialNumber || d.id}`}
+                                  description={
+                                    'Bạn có chắc muốn gỡ khách hàng khỏi thiết bị này? Thiết bị sẽ được chuyển về kho hệ thống.'
+                                  }
+                                  onConfirm={async () => {
+                                    await handleRemoveCustomer(d.id)
+                                  }}
+                                  trigger={
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-7 w-7 p-0 hover:bg-red-100"
+                                      disabled={updatingCustomer}
+                                      title="Gỡ về kho"
+                                    >
+                                      <X className="h-3.5 w-3.5 text-red-600" />
+                                    </Button>
+                                  }
+                                />
+                              )}
+                          </ActionGuard>
                         </div>
                       </td>
                       <td className="px-4 py-3 text-sm">
@@ -760,18 +762,20 @@ export default function DevicesPageClient() {
                           <DevicePricingModal device={d} compact onSaved={() => fetchDevices()} />
 
                           {/* A4 equivalent snapshot modal (manual edit) */}
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-7 w-7 bg-sky-50 p-0 text-sky-600 hover:bg-sky-100"
-                            onClick={() => {
-                              setA4ModalDevice(d)
-                              setA4ModalOpen(true)
-                            }}
-                            title="Ghi/Chỉnh sửa snapshot A4"
-                          >
-                            <BarChart3 className="h-3.5 w-3.5" />
-                          </Button>
+                          <ActionGuard pageId="devices" actionId="set-a4-pricing">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-7 w-7 bg-sky-50 p-0 text-sky-600 hover:bg-sky-100"
+                              onClick={() => {
+                                setA4ModalDevice(d)
+                                setA4ModalOpen(true)
+                              }}
+                              title="Ghi/Chỉnh sửa snapshot A4"
+                            >
+                              <BarChart3 className="h-3.5 w-3.5" />
+                            </Button>
+                          </ActionGuard>
 
                           <ActionGuard pageId="devices" actionId="delete">
                             <DeleteDialog

@@ -2,12 +2,12 @@ import internalApiClient from '../internal-client'
 
 export const dashboardClientService = {
   /**
-   * Get dashboard overview for a customer and month
-   * GET /api/dashboard/overview?customerId=...&month=YYYY-MM
+   * Get dashboard overview for the current session's customer (backend scopes by session) and month
+   * GET /api/dashboard/overview?month=YYYY-MM
    */
-  async getOverview(customerId: string, month: string) {
+  async getOverview(month: string) {
     const response = await internalApiClient.get('/api/dashboard/overview', {
-      params: { customerId, month },
+      params: { month },
     })
 
     const body = response.data

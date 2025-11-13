@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { ChevronLeft, Printer, UserCircle } from 'lucide-react'
 import type { Session } from '@/lib/auth/session'
 import { useUIStore } from '@/lib/store/uiStore'
-import { getNavigationItems } from '@/lib/nav/nav-items'
+import { NAVIGATION_PAYLOAD, USER_NAVIGATION_PAYLOAD } from '@/constants/navigation'
 import { useNavigation } from '@/contexts/NavigationContext'
 import * as Icons from 'lucide-react'
 import { ROUTES } from '@/constants/routes'
@@ -22,7 +22,15 @@ export function Sidebar({ session }: SidebarProps) {
   const pathname = usePathname()
   const { sidebarOpen, toggleSidebar } = useUIStore()
 
-  const navigationFromConfig = getNavigationItems(session.role)
+  const isUserRole = String(session.role ?? '').toLowerCase() === 'user'
+  const payload = isUserRole ? USER_NAVIGATION_PAYLOAD : NAVIGATION_PAYLOAD
+  const navigationFromConfig = (payload || []).map((it) => ({
+    href: ((it as any).route as string) || ((it as any).href as string) || '#',
+    label: String(it.label ?? ''),
+    icon: getIconComponent((it as any).icon as string),
+    badge: undefined,
+    raw: it as unknown as Record<string, unknown>,
+  }))
   // Try to use navigation items computed by the backend (permission-checked)
   const { items: navItems, loading: navLoading } = useNavigation()
 

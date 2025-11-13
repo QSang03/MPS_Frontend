@@ -10,7 +10,7 @@ import { logout } from '@/app/actions/auth'
 import { useNavigation } from '@/contexts/NavigationContext'
 import { SidebarNavItem } from '@/components/layout/SidebarWithSubmenu'
 import * as Icons from 'lucide-react'
-import { getNavigationItems } from '@/lib/nav/nav-items'
+import { NAVIGATION_PAYLOAD, USER_NAVIGATION_PAYLOAD } from '@/constants/navigation'
 import { Dialog, DialogTrigger, DialogContent } from '@/components/ui/dialog'
 import SettingsPanel from './SettingsPanel'
 
@@ -33,7 +33,8 @@ export function ModernSidebar({ session }: SidebarProps) {
   const { sidebarOpen, toggleSidebar } = useUIStore()
   const { currentSubmenu } = useNavigation()
 
-  const roleBasedFallback = getNavigationItems(session.role as unknown as string)
+  const isUserRole = String(session.role ?? '').toLowerCase() === 'user'
+  const roleBasedFallback = isUserRole ? USER_NAVIGATION_PAYLOAD : NAVIGATION_PAYLOAD
 
   const { items: navItems, loading: navLoading } = useNavigation()
 

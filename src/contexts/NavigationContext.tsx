@@ -136,9 +136,22 @@ export function NavigationProvider({ children }: { children: ReactNode }) {
 
       // Filter items and actions based on hasAccess
       // Note: `item.hasAccess` controls sidebar visibility; `action.hasAccess` controls actions inside the page.
-      // Do NOT hide a page just because all its actions are denied — keep the sidebar item if `item.hasAccess !== false`.
+      // Also hide sidebar item if outer hasAccess is true but 'read' action's hasAccess is false.
       const filteredItems: NavigationItem[] = rawItems
-        .filter((item) => item.hasAccess !== false)
+        .filter((item) => {
+          // First check: outer hasAccess must not be false
+          if (item.hasAccess === false) return false
+
+          // Second check: if 'read' action exists, it must not have hasAccess: false
+          if (item.actions && Array.isArray(item.actions)) {
+            const readAction = item.actions.find((action) => action.id === 'read')
+            if (readAction && readAction.hasAccess === false) {
+              return false
+            }
+          }
+
+          return true
+        })
         .map((item) => {
           if (item.actions && Array.isArray(item.actions)) {
             return {

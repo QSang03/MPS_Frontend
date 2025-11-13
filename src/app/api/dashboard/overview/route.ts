@@ -4,8 +4,9 @@ import backendApiClient from '@/lib/api/backend-client'
 
 /**
  * GET /api/dashboard/overview
- * Fetch customer-specific dashboard overview for a month
- * Query params: customerId (required), month (required, format: YYYY-MM)
+ * Fetch dashboard overview for the logged-in user's customer for a month
+ * Query params: month (required, format: YYYY-MM)
+ * Backend extracts customerId from JWT token
  */
 export async function GET(request: NextRequest) {
   try {
@@ -17,12 +18,7 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url)
-    const customerId = searchParams.get('customerId')
     const month = searchParams.get('month')
-
-    if (!customerId) {
-      return NextResponse.json({ error: 'customerId is required' }, { status: 400 })
-    }
 
     if (!month) {
       return NextResponse.json({ error: 'month is required' }, { status: 400 })
@@ -33,11 +29,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid month format. Use YYYY-MM' }, { status: 400 })
     }
 
-    console.log('[api/dashboard/overview] Fetching with customerId:', customerId, 'month:', month)
+    console.log('[api/dashboard/overview] Fetching for month:', month, '(customerId from session)')
 
-    // Call backend API
+    // Call backend API (backend extracts customerId from JWT)
     const response = await backendApiClient.get('/dashboard/overview', {
-      params: { customerId, month },
+      params: { month },
       headers: { Authorization: `Bearer ${accessToken}` },
     })
 
