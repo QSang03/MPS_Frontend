@@ -19,10 +19,13 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 import SystemSettingFormModal from './_components/SystemSettingFormModal'
 import SystemSettingDetailModal from './_components/SystemSettingDetailModal'
+import { useActionPermission } from '@/lib/hooks/useActionPermission'
+import { ActionGuard } from '@/components/shared/ActionGuard'
 import { Settings, Search, Filter, Eye, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export default function SystemSettingsPage() {
+  const { can } = useActionPermission('system-settings')
   const [query, setQuery] = useState<SystemSettingQuery>({
     page: 1,
     limit: 10,
@@ -123,40 +126,46 @@ export default function SystemSettingsPage() {
             </div>
 
             {/* Filter by type */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Loại cấu hình</label>
-              <Select value={query.type || 'all'} onValueChange={handleTypeFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Tất cả" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tất cả</SelectItem>
-                  <SelectItem value={SystemSettingType.STRING}>STRING</SelectItem>
-                  <SelectItem value={SystemSettingType.NUMBER}>NUMBER</SelectItem>
-                  <SelectItem value={SystemSettingType.BOOLEAN}>BOOLEAN</SelectItem>
-                  <SelectItem value={SystemSettingType.JSON}>JSON</SelectItem>
-                  <SelectItem value={SystemSettingType.SECRET}>SECRET</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            {can('filter-by-type') && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Loại cấu hình</label>
+                <Select value={query.type || 'all'} onValueChange={handleTypeFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Tất cả" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tất cả</SelectItem>
+                    <SelectItem value={SystemSettingType.STRING}>STRING</SelectItem>
+                    <SelectItem value={SystemSettingType.NUMBER}>NUMBER</SelectItem>
+                    <SelectItem value={SystemSettingType.BOOLEAN}>BOOLEAN</SelectItem>
+                    <SelectItem value={SystemSettingType.JSON}>JSON</SelectItem>
+                    <SelectItem value={SystemSettingType.SECRET}>SECRET</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             {/* Filter by editable */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Trạng thái</label>
-              <Select
-                value={query.isEditable === undefined ? 'all' : query.isEditable ? 'true' : 'false'}
-                onValueChange={handleEditableFilter}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Tất cả" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tất cả</SelectItem>
-                  <SelectItem value="true">Có thể chỉnh sửa</SelectItem>
-                  <SelectItem value="false">Chỉ đọc</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            {can('filter-by-status') && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Trạng thái</label>
+                <Select
+                  value={
+                    query.isEditable === undefined ? 'all' : query.isEditable ? 'true' : 'false'
+                  }
+                  onValueChange={handleEditableFilter}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Tất cả" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tất cả</SelectItem>
+                    <SelectItem value="true">Có thể chỉnh sửa</SelectItem>
+                    <SelectItem value="false">Chỉ đọc</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -229,7 +238,9 @@ export default function SystemSettingsPage() {
                         Xem
                       </Button>
                       {setting.isEditable && (
-                        <SystemSettingFormModal setting={setting} onSaved={() => refetch()} />
+                        <ActionGuard pageId="system-settings" actionId="update">
+                          <SystemSettingFormModal setting={setting} onSaved={() => refetch()} />
+                        </ActionGuard>
                       )}
                     </div>
                   </div>

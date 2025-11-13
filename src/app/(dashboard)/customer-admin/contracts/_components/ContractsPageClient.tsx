@@ -2,8 +2,6 @@
 
 import { useEffect, useState, useMemo } from 'react'
 import type { Contract } from '@/types/models/contract'
-import type { Session } from '@/lib/auth/session'
-import { PermissionGuard } from '@/components/shared/PermissionGuard'
 import {
   Edit,
   Trash2,
@@ -48,13 +46,14 @@ import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { VN } from '@/constants/vietnamese'
 import Link from 'next/link'
+import { useActionPermission } from '@/lib/hooks/useActionPermission'
+import { ActionGuard } from '@/components/shared/ActionGuard'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 
-interface Props {
-  session: Session | null
-}
+export default function ContractsPageClient() {
+  // Permission checks
+  const { canUpdate, canDelete } = useActionPermission('contracts')
 
-export default function ContractsPageClient({ session }: Props) {
   const extractApiMessage = (err: unknown): string | undefined => {
     if (!err) return undefined
     if (typeof err === 'string') return err
@@ -93,6 +92,9 @@ export default function ContractsPageClient({ session }: Props) {
   } | null>(null)
   const [hoveredRowId, setHoveredRowId] = useState<string | null>(null)
 
+  // In-flight request dedupe map to prevent duplicate concurrent API calls
+  const inFlightRef = useState(() => new Map<string, Promise<unknown>>())[0]
+
   // Fetch contracts from server with filters (debouncedSearch).
   // Accept an explicit customerId so effects can drive the authoritative
   // value from URL (searchParamsString) and avoid races between effects.
@@ -100,28 +102,57 @@ export default function ContractsPageClient({ session }: Props) {
     customerIdArg?: string | undefined,
     opts?: { silent?: boolean }
   ) => {
-    if (!opts?.silent) setLoading(true)
-    try {
-      const cid = customerIdArg ?? customerFilter
-      // Always call getAll and pass the current filters as query params.
-      // This keeps behavior simple: whatever the UI state is, we send it to
-      // the /contracts endpoint and let the backend filter.
-      const res = await contractsClientService.getAll({
-        page,
-        limit,
-        search: debouncedSearch || undefined,
-        status: statusFilter,
-        type: typeFilter,
-        customerId: cid,
-      })
-      setContracts(res.data || [])
-    } catch (err: unknown) {
-      console.error('fetch contracts error', err)
-      const apiMsg = extractApiMessage(err)
-      toast.error(apiMsg || '❌ Không thể tải danh sách hợp đồng')
-    } finally {
-      if (!opts?.silent) setLoading(false)
+    const silent = opts?.silent === true
+    const cid = customerIdArg ?? customerFilter
+    const key = JSON.stringify({
+      type: 'contracts',
+      page,
+      limit,
+      search: debouncedSearch,
+      statusFilter,
+      typeFilter,
+      customerId: cid,
+    })
+
+    // reuse in-flight request if present
+    const existing = inFlightRef.get(key) as Promise<{ data?: Contract[] } | undefined> | undefined
+    if (existing) {
+      try {
+        const res = await existing
+        if (!silent) setLoading(false)
+        setContracts((res?.data as Contract[]) || [])
+        return res
+      } catch {
+        // fallthrough to start a new request
+      }
     }
+
+    if (!silent) setLoading(true)
+    const promise = (async () => {
+      try {
+        const res = await contractsClientService.getAll({
+          page,
+          limit,
+          search: debouncedSearch || undefined,
+          status: statusFilter,
+          type: typeFilter,
+          customerId: cid,
+        })
+        setContracts(res.data || [])
+        return res
+      } catch (err: unknown) {
+        console.error('fetch contracts error', err)
+        const apiMsg = extractApiMessage(err)
+        toast.error(apiMsg || '❌ Không thể tải danh sách hợp đồng')
+        return undefined
+      } finally {
+        if (!silent) setLoading(false)
+        inFlightRef.delete(key)
+      }
+    })()
+
+    inFlightRef.set(key, promise)
+    return promise
   }
 
   // Load contracts whenever any filter or the URL search params change.
@@ -173,24 +204,47 @@ export default function ContractsPageClient({ session }: Props) {
   // Load customers for customer filter (simple: first page, limit 100)
   useEffect(() => {
     let mounted = true
+    const key = JSON.stringify({ type: 'customers', page: 1, limit: 100 })
     const loadCustomers = async () => {
       setCustomersLoading(true)
-      try {
-        const res = await customersClientService.getAll({ page: 1, limit: 100 })
-        if (!mounted) return
-        setCustomers(res.data || [])
-      } catch (err: unknown) {
-        console.error('Failed to load customers for filter', err)
-      } finally {
-        if (mounted) setCustomersLoading(false)
+
+      const existing = inFlightRef.get(key) as
+        | Promise<{ data?: Customer[] } | undefined>
+        | undefined
+      if (existing) {
+        try {
+          const res = await existing
+          if (!mounted) return
+          setCustomers(res?.data || [])
+          return
+        } catch {
+          // fall through
+        }
       }
+
+      const promise = (async () => {
+        try {
+          const res = await customersClientService.getAll({ page: 1, limit: 100 })
+          if (!mounted) return res
+          setCustomers(res.data || [])
+          return res
+        } catch (err) {
+          console.error('Failed to load customers for filter', err)
+          return undefined
+        } finally {
+          if (mounted) setCustomersLoading(false)
+          inFlightRef.delete(key)
+        }
+      })()
+
+      inFlightRef.set(key, promise)
     }
 
     loadCustomers()
     return () => {
       mounted = false
     }
-  }, [])
+  }, [inFlightRef])
 
   // Enter to search immediately
   const handleSearchKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -411,8 +465,9 @@ export default function ContractsPageClient({ session }: Props) {
 
                   setLoading(true)
                   try {
-                    const res = await contractsClientService.getAll({ page: 1, limit })
-                    setContracts(res.data || [])
+                    // use fetchContracts which is deduped
+                    const res = await fetchContracts(undefined, { silent: true })
+                    setContracts(res?.data || [])
                   } catch (err) {
                     console.error('Failed to clear filters and fetch contracts', err)
                     const apiMsg = extractApiMessage(err)
@@ -426,9 +481,9 @@ export default function ContractsPageClient({ session }: Props) {
                 Xóa bộ lọc
               </Button>
 
-              <PermissionGuard session={session} action="create" resource={{ type: 'contract' }}>
+              <ActionGuard pageId="contracts" actionId="create">
                 <ContractFormModal onCreated={(c) => c && setContracts((prev) => [c, ...prev])} />
-              </PermissionGuard>
+              </ActionGuard>
             </div>
           </div>
         </CardHeader>
@@ -480,15 +535,11 @@ export default function ContractsPageClient({ session }: Props) {
                           <>
                             <FileText className="h-12 w-12 opacity-20" />
                             <p>Chưa có hợp đồng nào</p>
-                            <PermissionGuard
-                              session={session}
-                              action="create"
-                              resource={{ type: 'contract' }}
-                            >
+                            <ActionGuard pageId="contracts" actionId="create">
                               <ContractFormModal
                                 onCreated={(c) => c && setContracts((prev) => [c, ...prev])}
                               />
-                            </PermissionGuard>
+                            </ActionGuard>
                           </>
                         )}
                       </div>
@@ -571,57 +622,57 @@ export default function ContractsPageClient({ session }: Props) {
                             align="end"
                             className="rounded-lg border-2 shadow-xl"
                           >
-                            <PermissionGuard
-                              session={session}
-                              action="update"
-                              resource={{ type: 'contract' }}
-                            >
-                              <DropdownMenuItem
-                                onClick={() => {
-                                  setEditingContract(c)
-                                  setIsEditModalOpen(true)
-                                }}
-                                className="flex cursor-pointer items-center gap-2 py-2 transition-all hover:bg-sky-50 hover:text-sky-700"
-                              >
-                                <Edit className="h-4 w-4" />
-                                Chỉnh sửa
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => {
-                                  setDevicesModalContract({ id: c.id, number: c.contractNumber })
-                                  setIsDevicesModalOpen(true)
-                                }}
-                                className="flex cursor-pointer items-center gap-2 py-2 transition-all hover:bg-sky-50 hover:text-sky-700"
-                              >
-                                <Package className="h-4 w-4" />
-                                Gán thiết bị
-                              </DropdownMenuItem>
-                            </PermissionGuard>
-
-                            <DeleteDialog
-                              title="Xóa hợp đồng"
-                              description={`Bạn có chắc chắn muốn xóa hợp đồng "${c.contractNumber}" không? Hành động này không thể hoàn tác.`}
-                              onConfirm={async () => {
-                                try {
-                                  await contractsClientService.delete(c.id)
-                                  setContracts((prev) => prev.filter((p) => p.id !== c.id))
-                                  toast.success('Xóa hợp đồng thành công')
-                                } catch (err: unknown) {
-                                  console.error('Delete contract error', err)
-                                  const apiMsg = extractApiMessage(err)
-                                  toast.error(apiMsg || 'Có lỗi khi xóa hợp đồng')
-                                }
-                              }}
-                              trigger={
+                            {canUpdate && (
+                              <>
                                 <DropdownMenuItem
-                                  className="flex cursor-pointer items-center gap-2 py-2 text-red-600 transition-all hover:bg-red-50"
-                                  onSelect={(e) => e.preventDefault()}
+                                  onClick={() => {
+                                    setEditingContract(c)
+                                    setIsEditModalOpen(true)
+                                  }}
+                                  className="flex cursor-pointer items-center gap-2 py-2 transition-all hover:bg-sky-50 hover:text-sky-700"
                                 >
-                                  <Trash2 className="h-4 w-4" />
-                                  Xóa
+                                  <Edit className="h-4 w-4" />
+                                  Chỉnh sửa
                                 </DropdownMenuItem>
-                              }
-                            />
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    setDevicesModalContract({ id: c.id, number: c.contractNumber })
+                                    setIsDevicesModalOpen(true)
+                                  }}
+                                  className="flex cursor-pointer items-center gap-2 py-2 transition-all hover:bg-sky-50 hover:text-sky-700"
+                                >
+                                  <Package className="h-4 w-4" />
+                                  Gán thiết bị
+                                </DropdownMenuItem>
+                              </>
+                            )}
+
+                            {canDelete && (
+                              <DeleteDialog
+                                title="Xóa hợp đồng"
+                                description={`Bạn có chắc chắn muốn xóa hợp đồng "${c.contractNumber}" không? Hành động này không thể hoàn tác.`}
+                                onConfirm={async () => {
+                                  try {
+                                    await contractsClientService.delete(c.id)
+                                    setContracts((prev) => prev.filter((p) => p.id !== c.id))
+                                    toast.success('Xóa hợp đồng thành công')
+                                  } catch (err: unknown) {
+                                    console.error('Delete contract error', err)
+                                    const apiMsg = extractApiMessage(err)
+                                    toast.error(apiMsg || 'Có lỗi khi xóa hợp đồng')
+                                  }
+                                }}
+                                trigger={
+                                  <DropdownMenuItem
+                                    className="flex cursor-pointer items-center gap-2 py-2 text-red-600 transition-all hover:bg-red-50"
+                                    onSelect={(e) => e.preventDefault()}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                    Xóa
+                                  </DropdownMenuItem>
+                                }
+                              />
+                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </td>

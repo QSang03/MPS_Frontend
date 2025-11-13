@@ -14,6 +14,8 @@ import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
 import { DeleteDialog } from '@/components/shared/DeleteDialog'
+import { useActionPermission } from '@/lib/hooks/useActionPermission'
+import { ActionGuard } from '@/components/shared/ActionGuard'
 import {
   Loader2,
   Package,
@@ -30,6 +32,7 @@ import { cn } from '@/lib/utils'
 import BulkAssignModal from '../../consumables/_components/BulkAssignModal'
 
 export function ConsumableTypeList() {
+  const { can } = useActionPermission('consumable-types')
   const [models, setModels] = useState<ConsumableType[]>([])
   const [loading, setLoading] = useState(true)
   const [deletingId, setDeletingId] = useState<string | null>(null)
@@ -211,7 +214,9 @@ export function ConsumableTypeList() {
                 </Button>
               }
             />
-            <ConsumableTypeFormModal mode="create" onSaved={handleSaved} />
+            <ActionGuard pageId="consumable-types" actionId="create">
+              <ConsumableTypeFormModal mode="create" onSaved={handleSaved} />
+            </ActionGuard>
           </div>
         </div>
 
@@ -321,7 +326,9 @@ export function ConsumableTypeList() {
                           <>
                             <Package className="h-12 w-12 opacity-20" />
                             <p>Chưa có loại vật tư tiêu hao nào</p>
-                            <ConsumableTypeFormModal mode="create" onSaved={handleSaved} />
+                            <ActionGuard pageId="consumable-types" actionId="create">
+                              <ConsumableTypeFormModal mode="create" onSaved={handleSaved} />
+                            </ActionGuard>
                           </>
                         )}
                       </div>
@@ -362,21 +369,23 @@ export function ConsumableTypeList() {
                             >
                               {m.stockItem.quantity}
                             </Badge>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() =>
-                                openEditStockModal(
-                                  m.stockItem!.id,
-                                  m.name || 'N/A',
-                                  m.stockItem!.quantity!,
-                                  m.stockItem!.lowStockThreshold ?? 0
-                                )
-                              }
-                              className="h-6 w-6 p-0"
-                            >
-                              <Pencil className="h-3 w-3 text-gray-500" />
-                            </Button>
+                            {can('edit-stock') && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() =>
+                                  openEditStockModal(
+                                    m.stockItem!.id,
+                                    m.name || 'N/A',
+                                    m.stockItem!.quantity!,
+                                    m.stockItem!.lowStockThreshold ?? 0
+                                  )
+                                }
+                                className="h-6 w-6 p-0"
+                              >
+                                <Pencil className="h-3 w-3 text-gray-500" />
+                              </Button>
+                            )}
                           </div>
                         ) : (
                           <span className="text-muted-foreground text-sm">—</span>
@@ -402,28 +411,32 @@ export function ConsumableTypeList() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-2">
-                          <ConsumableTypeFormModal mode="edit" model={m} onSaved={handleSaved} />
-                          <DeleteDialog
-                            title="Xác nhận xóa loại vật tư"
-                            description={`Xác nhận xóa loại vật tư "${m.name || ''}"?`}
-                            onConfirm={async () => handleDelete(m.id)}
-                            trigger={
-                              <Button
-                                variant="destructive"
-                                size="sm"
-                                disabled={deletingId === m.id}
-                              >
-                                {deletingId === m.id ? (
-                                  <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Đang xóa...
-                                  </>
-                                ) : (
-                                  'Xóa'
-                                )}
-                              </Button>
-                            }
-                          />
+                          <ActionGuard pageId="consumable-types" actionId="update">
+                            <ConsumableTypeFormModal mode="edit" model={m} onSaved={handleSaved} />
+                          </ActionGuard>
+                          <ActionGuard pageId="consumable-types" actionId="delete">
+                            <DeleteDialog
+                              title="Xác nhận xóa loại vật tư"
+                              description={`Xác nhận xóa loại vật tư "${m.name || ''}"?`}
+                              onConfirm={async () => handleDelete(m.id)}
+                              trigger={
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  disabled={deletingId === m.id}
+                                >
+                                  {deletingId === m.id ? (
+                                    <>
+                                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                      Đang xóa...
+                                    </>
+                                  ) : (
+                                    'Xóa'
+                                  )}
+                                </Button>
+                              }
+                            />
+                          </ActionGuard>
                         </div>
                       </td>
                     </tr>

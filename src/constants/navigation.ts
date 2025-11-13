@@ -76,6 +76,33 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
           resources: [{ resource: 'devices', action: 'create' }],
         },
       },
+      {
+        id: 'update',
+        label: 'Chỉnh sửa thiết bị',
+        icon: 'Edit',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'devices', action: 'update' }],
+        },
+      },
+      {
+        id: 'delete',
+        label: 'Xóa thiết bị',
+        icon: 'Trash2',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'devices', action: 'delete' }],
+        },
+      },
+      {
+        id: 'filter-by-customer',
+        label: 'Lọc theo khách hàng',
+        icon: 'Filter',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'customers', action: 'read' }],
+        },
+      },
     ],
   },
   {
@@ -87,6 +114,53 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
       strategy: 'all',
       resources: [{ resource: 'device-models', action: 'read' }],
     },
+    actions: [
+      {
+        id: 'create',
+        label: 'Tạo mẫu thiết bị',
+        icon: 'Plus',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'device-models', action: 'create' }],
+        },
+      },
+      {
+        id: 'update',
+        label: 'Chỉnh sửa mẫu',
+        icon: 'Edit',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'device-models', action: 'update' }],
+        },
+      },
+      {
+        id: 'delete',
+        label: 'Xóa mẫu',
+        icon: 'Trash2',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'device-models', action: 'delete' }],
+        },
+      },
+      {
+        id: 'filter-by-manufacturer',
+        label: 'Lọc theo hãng',
+        icon: 'Filter',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'device-models', action: 'read' }],
+        },
+      },
+      {
+        id: 'filter-by-type',
+        label: 'Lọc theo loại',
+        icon: 'Filter',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'device-models', action: 'read' }],
+        },
+      },
+    ],
   },
   {
     id: 'contracts',
@@ -97,6 +171,53 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
       strategy: 'all',
       resources: [{ resource: 'contracts', action: 'read' }],
     },
+    actions: [
+      {
+        id: 'create',
+        label: 'Tạo hợp đồng',
+        icon: 'Plus',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'contracts', action: 'create' }],
+        },
+      },
+      {
+        id: 'update',
+        label: 'Chỉnh sửa hợp đồng',
+        icon: 'Edit',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'contracts', action: 'update' }],
+        },
+      },
+      {
+        id: 'delete',
+        label: 'Xóa hợp đồng',
+        icon: 'Trash2',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'contracts', action: 'delete' }],
+        },
+      },
+      {
+        id: 'filter-by-customer',
+        label: 'Lọc theo khách hàng',
+        icon: 'Filter',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'customers', action: 'read' }],
+        },
+      },
+      {
+        id: 'filter-by-type',
+        label: 'Lọc theo loại hợp đồng',
+        icon: 'Filter',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'contracts', action: 'read' }],
+        },
+      },
+    ],
   },
   {
     id: 'consumable-types',
@@ -107,6 +228,44 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
       strategy: 'all',
       resources: [{ resource: 'consumable-types', action: 'read' }],
     },
+    actions: [
+      {
+        id: 'create',
+        label: 'Tạo loại vật tư',
+        icon: 'Plus',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'consumable-types', action: 'create' }],
+        },
+      },
+      {
+        id: 'update',
+        label: 'Chỉnh sửa loại vật tư',
+        icon: 'Edit',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'consumable-types', action: 'update' }],
+        },
+      },
+      {
+        id: 'delete',
+        label: 'Xóa loại vật tư',
+        icon: 'Trash2',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'consumable-types', action: 'delete' }],
+        },
+      },
+      {
+        id: 'filter-by-category',
+        label: 'Lọc theo danh mục',
+        icon: 'Filter',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'consumable-types', action: 'read' }],
+        },
+      },
+    ],
   },
   {
     id: 'users',
@@ -124,6 +283,51 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
           resources: [{ resource: 'users', action: 'create' }],
         },
       },
+      {
+        id: 'update',
+        label: 'Chỉnh sửa người dùng',
+        icon: 'Edit',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'users', action: 'update' }],
+        },
+      },
+      {
+        id: 'delete',
+        label: 'Xóa người dùng',
+        icon: 'Trash2',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'users', action: 'delete' }],
+        },
+      },
+      {
+        id: 'filter-by-role',
+        label: 'Lọc theo vai trò',
+        icon: 'Filter',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'roles', action: 'read' }],
+        },
+      },
+      {
+        id: 'filter-by-department',
+        label: 'Lọc theo bộ phận',
+        icon: 'Filter',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'departments', action: 'read' }],
+        },
+      },
+      {
+        id: 'filter-by-customer',
+        label: 'Lọc theo khách hàng',
+        icon: 'Filter',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'customers', action: 'read' }],
+        },
+      },
     ],
   },
   {
@@ -135,6 +339,44 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
       strategy: 'all',
       resources: [{ resource: 'customers', action: 'read' }],
     },
+    actions: [
+      {
+        id: 'create',
+        label: 'Tạo khách hàng',
+        icon: 'Plus',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'customers', action: 'create' }],
+        },
+      },
+      {
+        id: 'update',
+        label: 'Chỉnh sửa khách hàng',
+        icon: 'Edit',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'customers', action: 'update' }],
+        },
+      },
+      {
+        id: 'delete',
+        label: 'Xóa khách hàng',
+        icon: 'Trash2',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'customers', action: 'delete' }],
+        },
+      },
+      {
+        id: 'filter-by-type',
+        label: 'Lọc theo loại khách hàng',
+        icon: 'Filter',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'customers', action: 'read' }],
+        },
+      },
+    ],
   },
   {
     id: 'policies',
@@ -142,6 +384,53 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
     icon: 'Shield',
     route: '/customer-admin/policies',
     requiredPermissions: { strategy: 'all', resources: [{ resource: 'policies', action: 'read' }] },
+    actions: [
+      {
+        id: 'create',
+        label: 'Tạo policy',
+        icon: 'Plus',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'policies', action: 'create' }],
+        },
+      },
+      {
+        id: 'update',
+        label: 'Chỉnh sửa policy',
+        icon: 'Edit',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'policies', action: 'update' }],
+        },
+      },
+      {
+        id: 'delete',
+        label: 'Xóa policy',
+        icon: 'Trash2',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'policies', action: 'delete' }],
+        },
+      },
+      {
+        id: 'filter-by-effect',
+        label: 'Lọc theo hiệu lực',
+        icon: 'Filter',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'policies', action: 'read' }],
+        },
+      },
+      {
+        id: 'filter-by-action',
+        label: 'Lọc theo action',
+        icon: 'Filter',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'policies', action: 'read' }],
+        },
+      },
+    ],
   },
   {
     id: 'roles',
@@ -149,6 +438,44 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
     icon: 'Settings',
     route: '/customer-admin/roles',
     requiredPermissions: { strategy: 'all', resources: [{ resource: 'roles', action: 'read' }] },
+    actions: [
+      {
+        id: 'create',
+        label: 'Tạo vai trò',
+        icon: 'Plus',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'roles', action: 'create' }],
+        },
+      },
+      {
+        id: 'update',
+        label: 'Chỉnh sửa vai trò',
+        icon: 'Edit',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'roles', action: 'update' }],
+        },
+      },
+      {
+        id: 'delete',
+        label: 'Xóa vai trò',
+        icon: 'Trash2',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'roles', action: 'delete' }],
+        },
+      },
+      {
+        id: 'filter',
+        label: 'Lọc vai trò',
+        icon: 'Filter',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'roles', action: 'read' }],
+        },
+      },
+    ],
   },
   {
     id: 'departments',
@@ -159,6 +486,44 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
       strategy: 'all',
       resources: [{ resource: 'departments', action: 'read' }],
     },
+    actions: [
+      {
+        id: 'create',
+        label: 'Tạo bộ phận',
+        icon: 'Plus',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'departments', action: 'create' }],
+        },
+      },
+      {
+        id: 'update',
+        label: 'Chỉnh sửa bộ phận',
+        icon: 'Edit',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'departments', action: 'update' }],
+        },
+      },
+      {
+        id: 'delete',
+        label: 'Xóa bộ phận',
+        icon: 'Trash2',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'departments', action: 'delete' }],
+        },
+      },
+      {
+        id: 'filter',
+        label: 'Lọc bộ phận',
+        icon: 'Filter',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'departments', action: 'read' }],
+        },
+      },
+    ],
   },
   {
     id: 'system-settings',

@@ -1,5 +1,11 @@
 import axios from 'axios'
-import type { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios'
+import type {
+  AxiosError,
+  AxiosInstance,
+  InternalAxiosRequestConfig,
+  AxiosResponse,
+  AxiosRequestConfig,
+} from 'axios'
 
 /**
  * Client-side axios instance để gọi Next.js API Routes (không gọi trực tiếp backend)
@@ -15,6 +21,44 @@ const internalApiClient: AxiosInstance = axios.create({
   },
   withCredentials: true, // Quan trọng: gửi cookies trong same-origin requests
 })
+
+// Simple in-memory dedupe map for GET requests. Keyed by URL + sorted params JSON.
+// Store Promise<AxiosResponse<unknown>> so callers can access response.data with proper typing
+const getDedupeMap = new Map<string, Promise<AxiosResponse<unknown>>>()
+
+function makeGetKey(url: string, params?: Record<string, unknown>) {
+  try {
+    // Sort keys for stable keying
+    if (!params) return url
+    const ordered: Record<string, unknown> = {}
+    Object.keys(params)
+      .sort()
+      .forEach((k) => {
+        ordered[k] = params[k]
+      })
+    return `${url}|${JSON.stringify(ordered)}`
+  } catch {
+    return `${url}|${String(params)}`
+  }
+}
+
+export async function getWithDedupe<T = unknown>(
+  url: string,
+  config?: { params?: Record<string, unknown> } & Record<string, unknown>
+): Promise<AxiosResponse<T>> {
+  const key = makeGetKey(url, config?.params)
+  const existing = getDedupeMap.get(key) as Promise<AxiosResponse<T>> | undefined
+  if (existing) return existing
+
+  // Cast config to AxiosRequestConfig to avoid using `any`
+  const cfg = config as unknown as AxiosRequestConfig | undefined
+
+  const p = internalApiClient.get<T>(url, cfg).finally(() => {
+    getDedupeMap.delete(key)
+  }) as Promise<AxiosResponse<T>>
+  getDedupeMap.set(key, p as Promise<AxiosResponse<unknown>>)
+  return p
+}
 
 // Singleton promise để tránh refresh đồng thời
 let isRefreshing = false

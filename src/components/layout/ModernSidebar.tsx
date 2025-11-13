@@ -41,12 +41,14 @@ export function ModernSidebar({ session }: SidebarProps) {
   // Build navigation list used by the sidebar.
   // Important behaviour:
   // - While nav is loading, don't render the static NAVIGATION_PAYLOAD (avoid briefly showing items the user may not have access to).
-  // - If backend returns permission-checked `navItems`, use them and filter out items with hasAccess === false.
+  // - If backend returns permission-checked `navItems`, use them directly (items and actions already filtered in NavigationContext).
   // - If backend finished loading but returned no navItems (null/undefined), fall back to static NAVIGATION_PAYLOAD.
   const source = navLoading ? [] : (navItems ?? NAVIGATION_PAYLOAD)
 
   const navigation = (source as Array<Record<string, unknown>>)
     .filter(Boolean)
+    // Items from backend are already filtered in NavigationContext (hasAccess === false items and actions are removed)
+    // So we can use them directly without additional filtering
     .map((it) => ({
       label: String(it.label ?? ''),
       href: (it.route as string) || (it.href as string) || '#',
@@ -55,8 +57,6 @@ export function ModernSidebar({ session }: SidebarProps) {
       submenu: undefined,
       raw: it,
     }))
-    // If navItems is present (from backend), filter out denied items explicitly
-    .filter((it) => (navItems ? (it.raw as Record<string, unknown>)?.hasAccess !== false : true))
 
   const handleLogout = async () => {
     await logout()

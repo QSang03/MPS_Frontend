@@ -58,12 +58,17 @@ import type {
 } from '@/types/users'
 import type { Customer } from '@/types/models/customer'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useActionPermission } from '@/lib/hooks/useActionPermission'
+import { ActionGuard } from '@/components/shared/ActionGuard'
 import { toast } from 'sonner'
 import { DeleteDialog } from '@/components/shared/DeleteDialog'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { useQueryClient } from '@tanstack/react-query'
 
 export function UsersTable() {
+  // Permission checks
+  const { canUpdate, canDelete } = useActionPermission('users')
+
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
@@ -381,11 +386,13 @@ export function UsersTable() {
               >
                 <RotateCcw className="mr-2 h-4 w-4" /> Reset
               </Button>
-              <UserFormModal
-                customerId={
-                  filters.customerId && filters.customerId !== 'all' ? filters.customerId : ''
-                }
-              />
+              <ActionGuard pageId="users" actionId="create">
+                <UserFormModal
+                  customerId={
+                    filters.customerId && filters.customerId !== 'all' ? filters.customerId : ''
+                  }
+                />
+              </ActionGuard>
             </div>
           </div>
         </CardContent>
@@ -438,7 +445,11 @@ export function UsersTable() {
               </div>
               <h3 className="mb-2 text-xl font-bold text-gray-700">Không có người dùng nào</h3>
               <p className="mb-6 text-gray-500">Hãy tạo người dùng đầu tiên</p>
-              <UserFormModal customerId={filters.customerId !== 'all' ? filters.customerId : ''} />
+              <ActionGuard pageId="users" actionId="create">
+                <UserFormModal
+                  customerId={filters.customerId !== 'all' ? filters.customerId : ''}
+                />
+              </ActionGuard>
             </div>
           ) : (
             <>
@@ -553,13 +564,15 @@ export function UsersTable() {
                               align="end"
                               className="rounded-lg border-2 shadow-xl"
                             >
-                              <DropdownMenuItem
-                                onClick={() => handleEditUser(user)}
-                                className="flex cursor-pointer items-center gap-2 py-2 transition-all hover:bg-purple-50 hover:text-purple-700"
-                              >
-                                <Edit className="h-4 w-4" />
-                                Chỉnh sửa
-                              </DropdownMenuItem>
+                              {canUpdate && (
+                                <DropdownMenuItem
+                                  onClick={() => handleEditUser(user)}
+                                  className="flex cursor-pointer items-center gap-2 py-2 transition-all hover:bg-purple-50 hover:text-purple-700"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                  Chỉnh sửa
+                                </DropdownMenuItem>
+                              )}
                               {/* Custom password change removed — only reset to default allowed */}
                               <ConfirmDialog
                                 title="Đặt lại mật khẩu"
@@ -587,29 +600,31 @@ export function UsersTable() {
                                 }
                               />
 
-                              <DeleteDialog
-                                title="Xóa người dùng"
-                                description={`Bạn có chắc chắn muốn xóa người dùng "${user.email}" không?\n\nHành động này không thể hoàn tác.`}
-                                onConfirm={async () => {
-                                  try {
-                                    await usersClientService.deleteUser(user.id)
-                                    await queryClient.invalidateQueries({ queryKey: ['users'] })
-                                    toast.success('✅ Xóa người dùng thành công')
-                                  } catch (err) {
-                                    console.error('Delete user error', err)
-                                    toast.error('❌ Có lỗi khi xóa người dùng')
+                              {canDelete && (
+                                <DeleteDialog
+                                  title="Xóa người dùng"
+                                  description={`Bạn có chắc chắn muốn xóa người dùng "${user.email}" không?\n\nHành động này không thể hoàn tác.`}
+                                  onConfirm={async () => {
+                                    try {
+                                      await usersClientService.deleteUser(user.id)
+                                      await queryClient.invalidateQueries({ queryKey: ['users'] })
+                                      toast.success('✅ Xóa người dùng thành công')
+                                    } catch (err) {
+                                      console.error('Delete user error', err)
+                                      toast.error('❌ Có lỗi khi xóa người dùng')
+                                    }
+                                  }}
+                                  trigger={
+                                    <DropdownMenuItem
+                                      className="flex cursor-pointer items-center gap-2 py-2 text-red-600 transition-all hover:bg-red-50"
+                                      onSelect={(e) => e.preventDefault()}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                      Xóa
+                                    </DropdownMenuItem>
                                   }
-                                }}
-                                trigger={
-                                  <DropdownMenuItem
-                                    className="flex cursor-pointer items-center gap-2 py-2 text-red-600 transition-all hover:bg-red-50"
-                                    onSelect={(e) => e.preventDefault()}
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                    Xóa
-                                  </DropdownMenuItem>
-                                }
-                              />
+                                />
+                              )}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>

@@ -40,8 +40,13 @@ import {
   SelectContent,
   SelectItem,
 } from '@/components/ui/select'
+import { useActionPermission } from '@/lib/hooks/useActionPermission'
+import { ActionGuard } from '@/components/shared/ActionGuard'
 
 export default function DevicesPageClient() {
+  // Permission checks
+  const { can } = useActionPermission('devices')
+
   const [devices, setDevices] = useState<Device[]>([])
   const [filteredDevices, setFilteredDevices] = useState<Device[]>([])
   const [loading, setLoading] = useState(false)
@@ -336,13 +341,15 @@ export default function DevicesPageClient() {
             </div>
           </div>
 
-          <DeviceFormModal
-            mode="create"
-            onSaved={() => {
-              toast.success('Tạo thiết bị thành công')
-              fetchDevices()
-            }}
-          />
+          <ActionGuard pageId="devices" actionId="create">
+            <DeviceFormModal
+              mode="create"
+              onSaved={() => {
+                toast.success('Tạo thiết bị thành công')
+                fetchDevices()
+              }}
+            />
+          </ActionGuard>
         </div>
 
         {/* Quick Stats */}
@@ -401,19 +408,21 @@ export default function DevicesPageClient() {
 
             {/* Search (kept visible even when devices.length === 0 so user can adjust filters) */}
             <div className="flex items-center gap-3">
-              <select
-                suppressHydrationWarning
-                value={customerFilter ?? ''}
-                onChange={(e) => setCustomerFilter(e.target.value ? e.target.value : null)}
-                className="rounded-md border px-3 py-2 text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none"
-              >
-                <option value="">Tất cả khách hàng</option>
-                {customers.map((cust) => (
-                  <option key={cust.id} value={cust.id}>
-                    {cust.name} {cust.code ? `(${cust.code})` : ''}
-                  </option>
-                ))}
-              </select>
+              {can('filter-by-customer') && (
+                <select
+                  suppressHydrationWarning
+                  value={customerFilter ?? ''}
+                  onChange={(e) => setCustomerFilter(e.target.value ? e.target.value : null)}
+                  className="rounded-md border px-3 py-2 text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                >
+                  <option value="">Tất cả khách hàng</option>
+                  {customers.map((cust) => (
+                    <option key={cust.id} value={cust.id}>
+                      {cust.name} {cust.code ? `(${cust.code})` : ''}
+                    </option>
+                  ))}
+                </select>
+              )}
               <div className="relative w-64">
                 <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
                 <Input
@@ -544,13 +553,15 @@ export default function DevicesPageClient() {
                           <>
                             <Monitor className="h-12 w-12 opacity-20" />
                             <p>Chưa có thiết bị nào</p>
-                            <DeviceFormModal
-                              mode="create"
-                              onSaved={() => {
-                                toast.success('Tạo thiết bị thành công')
-                                fetchDevices()
-                              }}
-                            />
+                            <ActionGuard pageId="devices" actionId="create">
+                              <DeviceFormModal
+                                mode="create"
+                                onSaved={() => {
+                                  toast.success('Tạo thiết bị thành công')
+                                  fetchDevices()
+                                }}
+                              />
+                            </ActionGuard>
                           </>
                         )}
                       </div>
@@ -733,15 +744,17 @@ export default function DevicesPageClient() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-2">
-                          <DeviceFormModal
-                            mode="edit"
-                            device={d}
-                            compact
-                            onSaved={() => {
-                              toast.success('Cập nhật thiết bị thành công')
-                              fetchDevices()
-                            }}
-                          />
+                          <ActionGuard pageId="devices" actionId="update">
+                            <DeviceFormModal
+                              mode="edit"
+                              device={d}
+                              compact
+                              onSaved={() => {
+                                toast.success('Cập nhật thiết bị thành công')
+                                fetchDevices()
+                              }}
+                            />
+                          </ActionGuard>
 
                           {/* Pricing modal */}
                           <DevicePricingModal device={d} compact onSaved={() => fetchDevices()} />
@@ -760,20 +773,22 @@ export default function DevicesPageClient() {
                             <BarChart3 className="h-3.5 w-3.5" />
                           </Button>
 
-                          <DeleteDialog
-                            title={`Xóa thiết bị ${d.serialNumber || d.id}`}
-                            description={`Bạn có chắc muốn xóa thiết bị ${d.serialNumber || d.id}?`}
-                            onConfirm={async () => {
-                              try {
-                                await devicesClientService.delete(d.id)
-                                toast.success('Xóa thiết bị thành công')
-                                await fetchDevices()
-                              } catch (err) {
-                                console.error('delete device error', err)
-                                toast.error('Có lỗi khi xóa thiết bị')
-                              }
-                            }}
-                          />
+                          <ActionGuard pageId="devices" actionId="delete">
+                            <DeleteDialog
+                              title={`Xóa thiết bị ${d.serialNumber || d.id}`}
+                              description={`Bạn có chắc muốn xóa thiết bị ${d.serialNumber || d.id}?`}
+                              onConfirm={async () => {
+                                try {
+                                  await devicesClientService.delete(d.id)
+                                  toast.success('Xóa thiết bị thành công')
+                                  await fetchDevices()
+                                } catch (err) {
+                                  console.error('delete device error', err)
+                                  toast.error('Có lỗi khi xóa thiết bị')
+                                }
+                              }}
+                            />
+                          </ActionGuard>
                         </div>
                       </td>
                     </tr>

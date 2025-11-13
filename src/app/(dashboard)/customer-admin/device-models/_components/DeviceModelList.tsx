@@ -34,8 +34,13 @@ import {
   SelectContent,
   SelectItem,
 } from '@/components/ui/select'
+import { useActionPermission } from '@/lib/hooks/useActionPermission'
+import { ActionGuard } from '@/components/shared/ActionGuard'
 
 export default function DeviceModelList() {
+  // Permission checks
+  const { can } = useActionPermission('device-models')
+
   const [models, setModels] = useState<DeviceModel[]>([])
   const [filteredModels, setFilteredModels] = useState<DeviceModel[]>([])
   const [loading, setLoading] = useState(false)
@@ -251,7 +256,9 @@ export default function DeviceModelList() {
             </div>
           </div>
 
-          <DeviceModelFormModal mode="create" onSaved={handleSaved} />
+          <ActionGuard pageId="device-models" actionId="create">
+            <DeviceModelFormModal mode="create" onSaved={handleSaved} />
+          </ActionGuard>
         </div>
 
         {/* Quick Stats */}
@@ -344,40 +351,44 @@ export default function DeviceModelList() {
                 <span className="text-sm font-semibold">Bộ lọc:</span>
               </div>
 
-              <Select
-                value={manufacturerFilter || 'ALL'}
-                onValueChange={(v) => setManufacturerFilter(v === 'ALL' ? '' : v)}
-              >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Nhà sản xuất" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">Tất cả NSX</SelectItem>
-                  <SelectItem value="HP">HP</SelectItem>
-                  <SelectItem value="Canon">Canon</SelectItem>
-                  <SelectItem value="Epson">Epson</SelectItem>
-                  <SelectItem value="Brother">Brother</SelectItem>
-                  <SelectItem value="Samsung">Samsung</SelectItem>
-                  <SelectItem value="Xerox">Xerox</SelectItem>
-                </SelectContent>
-              </Select>
+              {can('filter-by-manufacturer') && (
+                <Select
+                  value={manufacturerFilter || 'ALL'}
+                  onValueChange={(v) => setManufacturerFilter(v === 'ALL' ? '' : v)}
+                >
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Nhà sản xuất" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">Tất cả NSX</SelectItem>
+                    <SelectItem value="HP">HP</SelectItem>
+                    <SelectItem value="Canon">Canon</SelectItem>
+                    <SelectItem value="Epson">Epson</SelectItem>
+                    <SelectItem value="Brother">Brother</SelectItem>
+                    <SelectItem value="Samsung">Samsung</SelectItem>
+                    <SelectItem value="Xerox">Xerox</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
 
-              <Select
-                value={typeFilter || 'ALL'}
-                onValueChange={(v) => setTypeFilter(v === 'ALL' ? '' : v)}
-              >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Loại thiết bị" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">Tất cả loại</SelectItem>
-                  <SelectItem value="PRINTER">Máy in</SelectItem>
-                  <SelectItem value="SCANNER">Máy quét</SelectItem>
-                  <SelectItem value="COPIER">Máy photocopy</SelectItem>
-                  <SelectItem value="FAX">Máy fax</SelectItem>
-                  <SelectItem value="MULTIFUNCTION">Đa năng</SelectItem>
-                </SelectContent>
-              </Select>
+              {can('filter-by-type') && (
+                <Select
+                  value={typeFilter || 'ALL'}
+                  onValueChange={(v) => setTypeFilter(v === 'ALL' ? '' : v)}
+                >
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Loại thiết bị" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">Tất cả loại</SelectItem>
+                    <SelectItem value="PRINTER">Máy in</SelectItem>
+                    <SelectItem value="SCANNER">Máy quét</SelectItem>
+                    <SelectItem value="COPIER">Máy photocopy</SelectItem>
+                    <SelectItem value="FAX">Máy fax</SelectItem>
+                    <SelectItem value="MULTIFUNCTION">Đa năng</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
 
               <Select
                 value={isActiveFilter || 'ALL'}
@@ -486,7 +497,9 @@ export default function DeviceModelList() {
                           <>
                             <Package className="h-12 w-12 opacity-20" />
                             <p>Chưa có device model nào</p>
-                            <DeviceModelFormModal mode="create" onSaved={handleSaved} />
+                            <ActionGuard pageId="device-models" actionId="create">
+                              <DeviceModelFormModal mode="create" onSaved={handleSaved} />
+                            </ActionGuard>
                           </>
                         )}
                       </div>
@@ -573,26 +586,30 @@ export default function DeviceModelList() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex justify-end gap-2">
-                          <DeviceModelFormModal mode="edit" model={m} onSaved={handleSaved} />
-                          <DeleteDialog
-                            title="Xác nhận xóa device model này?"
-                            description={`Xác nhận xóa device model "${m.name || ''}"?`}
-                            onConfirm={async () => handleDelete(m.id)}
-                            trigger={
-                              <Button
-                                type="button"
-                                variant="destructive"
-                                size="sm"
-                                disabled={deletingId === m.id}
-                              >
-                                {deletingId === m.id ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                  <Trash className="h-4 w-4" />
-                                )}
-                              </Button>
-                            }
-                          />
+                          <ActionGuard pageId="device-models" actionId="update">
+                            <DeviceModelFormModal mode="edit" model={m} onSaved={handleSaved} />
+                          </ActionGuard>
+                          <ActionGuard pageId="device-models" actionId="delete">
+                            <DeleteDialog
+                              title="Xác nhận xóa device model này?"
+                              description={`Xác nhận xóa device model "${m.name || ''}"?`}
+                              onConfirm={async () => handleDelete(m.id)}
+                              trigger={
+                                <Button
+                                  type="button"
+                                  variant="destructive"
+                                  size="sm"
+                                  disabled={deletingId === m.id}
+                                >
+                                  {deletingId === m.id ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <Trash className="h-4 w-4" />
+                                  )}
+                                </Button>
+                              }
+                            />
+                          </ActionGuard>
                         </div>
                       </td>
                     </tr>

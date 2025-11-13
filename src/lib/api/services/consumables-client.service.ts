@@ -1,4 +1,4 @@
-import internalApiClient from '../internal-client'
+import internalApiClient, { getWithDedupe } from '../internal-client'
 
 export interface CreateConsumableDto {
   consumableTypeId: string
@@ -10,10 +10,17 @@ export interface CreateConsumableDto {
 }
 
 class ConsumablesClientService {
-  async list(params?: Record<string, unknown>) {
-    const response = await internalApiClient.get('/api/consumables', { params })
-    const body = response.data
-    return body?.data ?? body
+  async list<T = unknown>(params?: Record<string, unknown>): Promise<T> {
+    // Use deduped GET to avoid duplicate concurrent calls for same customer/page/limit
+    const response = await getWithDedupe<unknown>('/api/consumables', { params })
+    const body = response.data as unknown
+
+    // Normalize: backend sometimes returns { data: ... } or returns the payload directly
+    if (body && typeof body === 'object' && 'data' in (body as Record<string, unknown>)) {
+      return (body as Record<string, unknown>)['data'] as T
+    }
+
+    return body as T
   }
 
   async bulkCreate(payload: {

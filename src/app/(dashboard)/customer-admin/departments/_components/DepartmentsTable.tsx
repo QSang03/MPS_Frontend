@@ -38,8 +38,13 @@ import {
   Calendar,
 } from 'lucide-react'
 import { DeleteDialog } from '@/components/shared/DeleteDialog'
+import { useActionPermission } from '@/lib/hooks/useActionPermission'
+import { ActionGuard } from '@/components/shared/ActionGuard'
 
 export function DepartmentsTable() {
+  // Permission checks
+  const { canUpdate, canDelete } = useActionPermission('departments')
+
   const [search, setSearch] = useState('')
   // debouncedSearch updates 2s after user stops typing, or immediately on Enter
   const [debouncedSearch, setDebouncedSearch] = useState('')
@@ -135,13 +140,15 @@ export function DepartmentsTable() {
             </div>
           </div>
 
-          <Button
-            onClick={openCreate}
-            className="transform rounded-xl bg-white px-6 py-2 text-base font-bold text-blue-600 shadow-lg transition-all duration-300 hover:scale-105 hover:bg-cyan-50 hover:shadow-2xl"
-          >
-            <Plus className="mr-2 h-5 w-5" />
-            Tạo Bộ phận
-          </Button>
+          <ActionGuard pageId="departments" actionId="create">
+            <Button
+              onClick={openCreate}
+              className="transform rounded-xl bg-white px-6 py-2 text-base font-bold text-blue-600 shadow-lg transition-all duration-300 hover:scale-105 hover:bg-cyan-50 hover:shadow-2xl"
+            >
+              <Plus className="mr-2 h-5 w-5" />
+              Tạo Bộ phận
+            </Button>
+          </ActionGuard>
         </div>
       </div>
 
@@ -368,30 +375,34 @@ export function DepartmentsTable() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center justify-end gap-1.5">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => openEdit(dept)}
-                            className="transform rounded-lg transition-all duration-300 hover:scale-110 hover:bg-blue-100 hover:text-blue-700"
-                            title="Chỉnh sửa"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <DeleteDialog
-                            title="Xóa bộ phận"
-                            description={`Bạn có chắc chắn muốn xóa bộ phận "${dept.name}" không?\n\nHành động này không thể hoàn tác.`}
-                            onConfirm={() => handleDelete(dept.id)}
-                            trigger={
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="transform rounded-lg transition-all duration-300 hover:scale-110 hover:bg-red-100 hover:text-red-700"
-                                title="Xóa"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            }
-                          />
+                          {canUpdate && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => openEdit(dept)}
+                              className="transform rounded-lg transition-all duration-300 hover:scale-110 hover:bg-blue-100 hover:text-blue-700"
+                              title="Chỉnh sửa"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {canDelete && (
+                            <DeleteDialog
+                              title="Xóa bộ phận"
+                              description={`Bạn có chắc chắn muốn xóa bộ phận "${dept.name}" không?\n\nHành động này không thể hoàn tác.`}
+                              onConfirm={() => handleDelete(dept.id)}
+                              trigger={
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="transform rounded-lg transition-all duration-300 hover:scale-110 hover:bg-red-100 hover:text-red-700"
+                                  title="Xóa"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              }
+                            />
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>

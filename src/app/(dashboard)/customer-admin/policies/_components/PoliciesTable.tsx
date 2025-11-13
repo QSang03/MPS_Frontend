@@ -42,8 +42,13 @@ import {
 } from 'lucide-react'
 import { DeleteDialog } from '@/components/shared/DeleteDialog'
 import { PolicyFormModal } from './PolicyFormModal'
+import { useActionPermission } from '@/lib/hooks/useActionPermission'
+import { ActionGuard } from '@/components/shared/ActionGuard'
 
 export function PoliciesTable() {
+  // Permission checks
+  const { canUpdate, canDelete } = useActionPermission('policies')
+
   const [search, setSearch] = useState('')
   // debouncedSearch is the value actually used for querying the API.
   // It updates 2s after the user stops typing, or immediately when the user
@@ -200,13 +205,15 @@ export function PoliciesTable() {
             </div>
           </div>
 
-          <Button
-            onClick={openCreate}
-            className="transform rounded-xl bg-white px-6 py-2 text-base font-bold text-blue-600 shadow-lg transition-all duration-300 hover:scale-105 hover:bg-blue-50 hover:shadow-2xl"
-          >
-            <Plus className="mr-2 h-5 w-5" />
-            Tạo Policy
-          </Button>
+          <ActionGuard pageId="policies" actionId="create">
+            <Button
+              onClick={openCreate}
+              className="transform rounded-xl bg-white px-6 py-2 text-base font-bold text-blue-600 shadow-lg transition-all duration-300 hover:scale-105 hover:bg-blue-50 hover:shadow-2xl"
+            >
+              <Plus className="mr-2 h-5 w-5" />
+              Tạo Policy
+            </Button>
+          </ActionGuard>
         </div>
       </div>
 
@@ -472,30 +479,34 @@ export function PoliciesTable() {
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => openEdit(p)}
-                            className="transform rounded-lg transition-all duration-300 hover:scale-110 hover:bg-purple-100 hover:text-purple-700"
-                            title="Chỉnh sửa"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <DeleteDialog
-                            title="Xóa policy"
-                            description={`Bạn có chắc chắn muốn xóa policy "${p.name}" không?\n\nHành động này không thể hoàn tác.`}
-                            onConfirm={() => handleDelete(p.id)}
-                            trigger={
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="transform rounded-lg transition-all duration-300 hover:scale-110 hover:bg-red-100 hover:text-red-700"
-                                title="Xóa"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            }
-                          />
+                          {canUpdate && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => openEdit(p)}
+                              className="transform rounded-lg transition-all duration-300 hover:scale-110 hover:bg-purple-100 hover:text-purple-700"
+                              title="Chỉnh sửa"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {canDelete && (
+                            <DeleteDialog
+                              title="Xóa policy"
+                              description={`Bạn có chắc chắn muốn xóa policy "${p.name}" không?\n\nHành động này không thể hoàn tác.`}
+                              onConfirm={() => handleDelete(p.id)}
+                              trigger={
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="transform rounded-lg transition-all duration-300 hover:scale-110 hover:bg-red-100 hover:text-red-700"
+                                  title="Xóa"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              }
+                            />
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>

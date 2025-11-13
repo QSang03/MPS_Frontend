@@ -30,8 +30,14 @@ import {
 import ConsumablesModal from './ConsumablesModal'
 // Removed unused Select imports to satisfy lint rules
 import { consumablesClientService } from '@/lib/api/services/consumables-client.service'
+import { useActionPermission } from '@/lib/hooks/useActionPermission'
+import { ActionGuard } from '@/components/shared/ActionGuard'
 
 export function CustomerList() {
+  // Permission checks - destructure only what we need to avoid unused vars
+  useActionPermission('customers')
+
+  type CustomersResponse = Awaited<ReturnType<typeof customersClientService.getAll>> | undefined
   const [items, setItems] = useState<Customer[]>([])
   const [filtered, setFiltered] = useState<Customer[]>([])
   const [loading, setLoading] = useState(true)
@@ -44,27 +50,52 @@ export function CustomerList() {
   const [totalPages, setTotalPages] = useState(1)
 
   // load is intentionally stable (no page/limit captured) — always pass explicit p and l
-  const load = useCallback(async (p = 1, l = 10, search?: string, opts?: { silent?: boolean }) => {
-    const silent = opts?.silent === true
-    try {
-      if (!silent) setLoading(true)
-      const params: { page?: number; limit?: number; search?: string } = { page: p, limit: l }
-      if (search) params.search = search
-      const res = await customersClientService.getAll(params)
-      setItems(res.data)
-      setFiltered(res.data)
-      setTotal(res.pagination?.total ?? res.data.length)
-      setTotalPages(res.pagination?.totalPages ?? 1)
-      return res
-    } catch (error: unknown) {
-      const e = error as Error
-      console.error('Error loading customers:', e)
-      toast.error(e.message || 'Không thể tải danh sách khách hàng')
-      return undefined
-    } finally {
-      if (!silent) setLoading(false)
-    }
-  }, [])
+  // Simple in-flight dedupe to avoid duplicate concurrent API calls (e.g., React Strict Mode double mount)
+  const inFlightRef = useState(() => new Map<string, Promise<CustomersResponse>>())[0]
+
+  const load = useCallback(
+    async (p = 1, l = 10, search?: string, opts?: { silent?: boolean }) => {
+      const silent = opts?.silent === true
+      const key = JSON.stringify({ p, l, search })
+
+      // If there's an in-flight request for the same params, reuse it
+      const existing = inFlightRef.get(key)
+      if (existing) {
+        try {
+          const res = await existing
+          return res
+        } catch {
+          // fallthrough to start a new request
+        }
+      }
+
+      const promise = (async () => {
+        try {
+          if (!silent) setLoading(true)
+          const params: { page?: number; limit?: number; search?: string } = { page: p, limit: l }
+          if (search) params.search = search
+          const res = await customersClientService.getAll(params)
+          setItems(res.data)
+          setFiltered(res.data)
+          setTotal(res.pagination?.total ?? res.data.length)
+          setTotalPages(res.pagination?.totalPages ?? 1)
+          return res
+        } catch (error: unknown) {
+          const e = error as Error
+          console.error('Error loading customers:', e)
+          toast.error(e.message || 'Không thể tải danh sách khách hàng')
+          return undefined
+        } finally {
+          if (!silent) setLoading(false)
+          inFlightRef.delete(key)
+        }
+      })()
+
+      inFlightRef.set(key, promise)
+      return promise
+    },
+    [inFlightRef]
+  )
 
   useEffect(() => {
     load(1, limit, debouncedSearch)
@@ -165,7 +196,9 @@ export function CustomerList() {
             </div>
           </div>
 
-          <CustomerFormModal mode="create" onSaved={handleSaved} />
+          <ActionGuard pageId="customers" actionId="create">
+            <CustomerFormModal mode="create" onSaved={handleSaved} />
+          </ActionGuard>
         </div>
 
         <div className="mt-6 grid grid-cols-3 gap-4">
@@ -258,7 +291,9 @@ export function CustomerList() {
                           <>
                             <Building2 className="h-12 w-12 opacity-20" />
                             <p>Chưa có khách hàng nào</p>
-                            <CustomerFormModal mode="create" onSaved={handleSaved} />
+                            <ActionGuard pageId="customers" actionId="create">
+                              <CustomerFormModal mode="create" onSaved={handleSaved} />
+                            </ActionGuard>
                           </>
                         )}
                       </div>
@@ -418,10 +453,10 @@ export function CustomerList() {
                                 if (filterOrphaned === 'orphaned') params.isOrphaned = true
                                 else if (filterOrphaned === 'installed') params.isOrphaned = false
                                 const res = await consumablesClientService.list(params)
-                                const items = Array.isArray(res?.items)
-                                  ? res.items
-                                  : Array.isArray(res)
-                                    ? res
+                                const items = Array.isArray((res as any)?.items)
+                                  ? (res as any).items
+                                  : Array.isArray(res as any)
+                                    ? (res as any)
                                     : []
                                 setConsumablesForCustomer(items)
                               } catch (e) {
@@ -435,28 +470,32 @@ export function CustomerList() {
                             <Eye className="mr-2 h-4 w-4" />
                             Vật tư
                           </Button>
-                          <CustomerFormModal mode="edit" customer={c} onSaved={handleSaved} />
-                          <DeleteDialog
-                            title="Xác nhận xóa khách hàng"
-                            description={`Xác nhận xóa khách hàng "${c.name || ''}"?`}
-                            onConfirm={async () => handleDelete(c.id)}
-                            trigger={
-                              <Button
-                                variant="destructive"
-                                size="sm"
-                                disabled={deletingId === c.id}
-                              >
-                                {deletingId === c.id ? (
-                                  <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Đang xóa...
-                                  </>
-                                ) : (
-                                  'Xóa'
-                                )}
-                              </Button>
-                            }
-                          />
+                          <ActionGuard pageId="customers" actionId="update">
+                            <CustomerFormModal mode="edit" customer={c} onSaved={handleSaved} />
+                          </ActionGuard>
+                          <ActionGuard pageId="customers" actionId="delete">
+                            <DeleteDialog
+                              title="Xác nhận xóa khách hàng"
+                              description={`Xác nhận xóa khách hàng "${c.name || ''}"?`}
+                              onConfirm={async () => handleDelete(c.id)}
+                              trigger={
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  disabled={deletingId === c.id}
+                                >
+                                  {deletingId === c.id ? (
+                                    <>
+                                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                      Đang xóa...
+                                    </>
+                                  ) : (
+                                    'Xóa'
+                                  )}
+                                </Button>
+                              }
+                            />
+                          </ActionGuard>
                         </div>
                       </td>
                     </tr>
@@ -549,7 +588,11 @@ export function CustomerList() {
             if (v === 'orphaned') params.isOrphaned = true
             else if (v === 'installed') params.isOrphaned = false
             const res = await consumablesClientService.list(params)
-            const items = Array.isArray(res?.items) ? res.items : Array.isArray(res) ? res : []
+            const items = Array.isArray((res as any)?.items)
+              ? (res as any).items
+              : Array.isArray(res as any)
+                ? (res as any)
+                : []
             setConsumablesForCustomer(items)
           } finally {
             setConsumablesLoading(false)

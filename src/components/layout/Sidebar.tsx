@@ -49,7 +49,8 @@ export function Sidebar({ session }: SidebarProps) {
       ? // cast static items into SidebarNavItem shape
         (navigationFromConfig as unknown as SidebarNavItem[])
       : (navItems || [])
-          .filter((it) => (it as unknown as Record<string, unknown>)?.hasAccess !== false)
+          // Items from backend are already filtered in NavigationContext (hasAccess === false items and actions are removed)
+          // So we can use them directly without additional filtering
           .map((it) => {
             const item = it as unknown as Record<string, unknown>
             return {

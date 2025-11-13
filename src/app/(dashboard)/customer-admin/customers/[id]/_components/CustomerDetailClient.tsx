@@ -43,9 +43,15 @@ export default function CustomerDetailClient({ customerId }: Props) {
       try {
         setLoadingConsumables(true)
         const res = await consumablesClientService.list({ customerId, page: 1, limit: 50 })
-        const items = Array.isArray(res?.items) ? res.items : Array.isArray(res) ? res : []
+        // normalize response that might be either { items: [...] } or an array
+        const payload = res as { items?: unknown[] } | unknown[]
+        const items = Array.isArray((payload as { items?: unknown[] }).items)
+          ? (payload as { items?: unknown[] }).items!
+          : Array.isArray(payload)
+            ? (payload as unknown[])
+            : []
         if (!mounted) return
-        setConsumables(items as unknown as Record<string, unknown>[])
+        setConsumables(items as Record<string, unknown>[])
       } catch (err: unknown) {
         console.error('Load consumables for customer failed', err)
         setConsumables([])
