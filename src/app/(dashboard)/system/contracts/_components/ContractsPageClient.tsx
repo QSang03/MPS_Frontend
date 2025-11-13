@@ -192,11 +192,12 @@ export default function ContractsPageClient() {
     return () => clearTimeout(t)
   }, [searchTerm])
 
-  const applyCustomerFilter = (cid: string) => {
-    setCustomerFilter(cid)
+  const applyCustomerFilter = (cid?: string) => {
+    const normalizedCid = cid && cid.trim() !== '' ? cid : undefined
+    setCustomerFilter(normalizedCid)
     setPage(1)
     const params = new URLSearchParams(searchParams?.toString() || '')
-    if (cid) params.set('customerId', cid)
+    if (normalizedCid) params.set('customerId', normalizedCid)
     else params.delete('customerId')
     router.replace(`${pathname}?${params.toString()}`)
   }
@@ -394,8 +395,8 @@ export default function ContractsPageClient() {
                 suppressHydrationWarning
                 value={customerFilter ?? ''}
                 onChange={(e) => {
-                  setCustomerFilter(e.target.value ? e.target.value : undefined)
-                  setPage(1)
+                  const cid = e.target.value || undefined
+                  applyCustomerFilter(cid)
                 }}
                 className="rounded-md border px-3 py-2 text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none"
               >
@@ -460,7 +461,7 @@ export default function ContractsPageClient() {
                   setDebouncedSearch('')
                   setStatusFilter(undefined)
                   setTypeFilter(undefined)
-                  setCustomerFilter(undefined)
+                  applyCustomerFilter(undefined)
                   setPage(1)
 
                   setLoading(true)

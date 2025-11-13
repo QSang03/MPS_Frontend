@@ -1,5 +1,6 @@
 import { ROUTES } from '@/constants/routes'
-import { Home, Users, ClipboardList, Layout, Settings, Layers } from 'lucide-react'
+import { Home, Users, ClipboardList, Layout, Settings, Layers, FileText } from 'lucide-react'
+import { UserRole } from '@/constants/roles'
 import type { LucideIcon } from 'lucide-react'
 
 type NavItem = {
@@ -9,8 +10,17 @@ type NavItem = {
   badge?: number
 }
 
-export function getNavigationItems(_role?: string): NavItem[] {
-  // Temporary: show roles and departments to everyone. We'll refine by role later.
+export function getNavigationItems(role?: string): NavItem[] {
+  const r = role as keyof typeof UserRole | undefined
+  if (r === UserRole.USER || role === 'User') {
+    return [
+      { href: '/user/dashboard', label: 'Tổng quan', icon: Home },
+      { href: '/user/devices', label: 'Thiết bị', icon: Layout },
+      { href: '/user/contracts', label: 'Hợp đồng', icon: FileText },
+    ]
+  }
+
+  // Default (System/Customer Admin)
   const items: NavItem[] = [
     { href: ROUTES.CUSTOMER_ADMIN, label: 'Dashboard', icon: Home },
     { href: ROUTES.CUSTOMER_ADMIN_USERS, label: 'Quản lý người dùng', icon: Users },
@@ -27,7 +37,7 @@ export function getNavigationItems(_role?: string): NavItem[] {
 
     console.debug(
       '[nav-items] getNavigationItems called with role:',
-      _role,
+      role,
       'returning items:',
       items.map((i) => i.label)
     )

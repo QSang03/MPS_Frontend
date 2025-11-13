@@ -1,6 +1,7 @@
 'use client'
 
 import { useActionState, useEffect } from 'react'
+import Cookies from 'js-cookie'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { login, type LoginActionState } from '@/app/actions/auth'
@@ -19,6 +20,17 @@ export default function LoginPage() {
   // Redirect on successful login
   useEffect(() => {
     if (state?.success?.message && !isPending) {
+      // Persist isDefaultCustomer flag to client-side cookie so client code can read it
+      try {
+        if (typeof state.success.isDefaultCustomer !== 'undefined') {
+          Cookies.set('mps_is_default_customer', String(state.success.isDefaultCustomer), {
+            path: '/',
+            sameSite: 'lax',
+          })
+        }
+      } catch {
+        // ignore
+      }
       // Check if user needs to change default password
       if (state.success.isDefaultPassword) {
         // Redirect to change password page immediately
@@ -26,9 +38,10 @@ export default function LoginPage() {
         return
       }
 
-      // Show success message for 1.5 seconds then redirect
+      // Show success message for 1.5 seconds then redirect based on isDefaultCustomer
       const timer = setTimeout(() => {
-        router.push(ROUTES.CUSTOMER_ADMIN)
+        const target = state.success?.isDefaultCustomer ? ROUTES.CUSTOMER_ADMIN : '/user/dashboard'
+        router.push(target)
       }, 1500)
 
       return () => clearTimeout(timer)

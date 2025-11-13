@@ -32,6 +32,131 @@ export type NavItemPayload = {
   metadata?: Record<string, unknown>
 }
 
+// User navigation payload - simple, no permissions required
+export const USER_NAVIGATION_PAYLOAD: NavItemPayload[] = [
+  {
+    id: 'user-dashboard',
+    name: 'dashboard',
+    label: 'Tổng quan',
+    icon: 'LayoutDashboard',
+    route: '/user/dashboard',
+    description: 'Tổng quan',
+    actions: [
+      {
+        id: 'read',
+        label: 'Xem tổng quan',
+        icon: 'Eye',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'dashboard', action: 'read' }],
+        },
+      },
+    ],
+  },
+  {
+    id: 'user-devices',
+    name: 'devices',
+    label: 'Thiết bị',
+    icon: 'Printer',
+    route: '/user/devices',
+    description: 'Thiết bị của tôi',
+    actions: [
+      {
+        id: 'create',
+        label: 'Tạo thiết bị',
+        icon: 'Plus',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'devices', action: 'create' }],
+        },
+      },
+      {
+        id: 'update',
+        label: 'Chỉnh sửa thiết bị',
+        icon: 'Edit',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'devices', action: 'update' }],
+        },
+      },
+      {
+        id: 'delete',
+        label: 'Xóa thiết bị',
+        icon: 'Trash2',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'devices', action: 'delete' }],
+        },
+      },
+      {
+        id: 'filter-by-customer',
+        label: 'Lọc theo khách hàng',
+        icon: 'Filter',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'customers', action: 'read' }],
+        },
+      },
+    ],
+  },
+  {
+    id: 'user-contracts',
+    name: 'contracts',
+    label: 'Hợp đồng',
+    icon: 'FileText',
+    route: '/user/contracts',
+    description: 'Hợp đồng của tôi',
+    actions: [
+      {
+        id: 'create',
+        label: 'Tạo hợp đồng',
+        icon: 'Plus',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'contracts', action: 'create' }],
+        },
+      },
+      {
+        id: 'update',
+        label: 'Chỉnh sửa hợp đồng',
+        icon: 'Edit',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'contracts', action: 'update' }],
+        },
+      },
+      {
+        id: 'delete',
+        label: 'Xóa hợp đồng',
+        icon: 'Trash2',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'contracts', action: 'delete' }],
+        },
+      },
+      {
+        id: 'filter-by-customer',
+        label: 'Lọc theo khách hàng',
+        icon: 'Filter',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'customers', action: 'read' }],
+        },
+      },
+      {
+        id: 'filter-by-type',
+        label: 'Lọc theo loại hợp đồng',
+        icon: 'Filter',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'contracts', action: 'read' }],
+        },
+      },
+    ],
+  },
+]
+
+// Admin navigation payload - requires permissions
 export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
   {
     id: 'dashboard',

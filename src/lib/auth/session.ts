@@ -20,6 +20,7 @@ export interface Session {
   username: string
   email: string
   isDefaultPassword?: boolean
+  isDefaultCustomer?: boolean
   [key: string]: string | UserRole | boolean | undefined // Index signature for JWT compatibility
 }
 

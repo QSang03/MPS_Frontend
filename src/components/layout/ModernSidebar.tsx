@@ -10,7 +10,7 @@ import { logout } from '@/app/actions/auth'
 import { useNavigation } from '@/contexts/NavigationContext'
 import { SidebarNavItem } from '@/components/layout/SidebarWithSubmenu'
 import * as Icons from 'lucide-react'
-import { NAVIGATION_PAYLOAD } from '@/constants/navigation'
+import { getNavigationItems } from '@/lib/nav/nav-items'
 import { Dialog, DialogTrigger, DialogContent } from '@/components/ui/dialog'
 import SettingsPanel from './SettingsPanel'
 
@@ -33,8 +33,7 @@ export function ModernSidebar({ session }: SidebarProps) {
   const { sidebarOpen, toggleSidebar } = useUIStore()
   const { currentSubmenu } = useNavigation()
 
-  // mark session as used to avoid unused var lint when not needed yet
-  void session
+  const roleBasedFallback = getNavigationItems(session.role as unknown as string)
 
   const { items: navItems, loading: navLoading } = useNavigation()
 
@@ -42,8 +41,10 @@ export function ModernSidebar({ session }: SidebarProps) {
   // Important behaviour:
   // - While nav is loading, don't render the static NAVIGATION_PAYLOAD (avoid briefly showing items the user may not have access to).
   // - If backend returns permission-checked `navItems`, use them directly (items and actions already filtered in NavigationContext).
-  // - If backend finished loading but returned no navItems (null/undefined), fall back to static NAVIGATION_PAYLOAD.
-  const source = navLoading ? [] : (navItems ?? NAVIGATION_PAYLOAD)
+  // - If backend finished loading but returned no navItems (null/undefined), fall back to role-based items.
+  const source = navLoading
+    ? []
+    : (navItems ?? (roleBasedFallback as unknown as Array<Record<string, unknown>>))
 
   const navigation = (source as Array<Record<string, unknown>>)
     .filter(Boolean)

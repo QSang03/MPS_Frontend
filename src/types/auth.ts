@@ -65,6 +65,7 @@ export interface AuthResponse {
     accessToken: string
     refreshToken: string
     isDefaultPassword?: boolean
+    isDefaultCustomer?: boolean
   }
 }
 

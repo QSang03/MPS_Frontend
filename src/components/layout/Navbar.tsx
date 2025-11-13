@@ -101,7 +101,13 @@ export function Navbar({ session }: NavbarProps) {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => router.push(ROUTES.CUSTOMER_ADMIN)}
+                onClick={() =>
+                  router.push(
+                    session.role === 'SystemAdmin' || session.role === 'CustomerAdmin'
+                      ? ROUTES.CUSTOMER_ADMIN
+                      : ROUTES.USER_MY_DEVICES
+                  )
+                }
                 className="hidden items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-300 hover:bg-blue-50 hover:text-blue-700 md:flex"
               >
                 <LayoutDashboard className="h-4 w-4 text-blue-600" />

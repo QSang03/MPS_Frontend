@@ -4,9 +4,11 @@ import { createContext, useContext, useState, ReactNode, useEffect } from 'react
 import navigationClientService from '@/lib/api/services/navigation-client.service'
 import {
   NAVIGATION_PAYLOAD,
+  USER_NAVIGATION_PAYLOAD,
   type NavActionPayload,
   type NavItemPayload,
 } from '@/constants/navigation'
+import Cookies from 'js-cookie'
 
 interface NavigationSubmenu {
   label: string
@@ -24,6 +26,7 @@ interface NavigationContextType {
   items: NavigationItem[] | null
   loading: boolean
   refresh: () => Promise<void>
+  sessionRole: string | null
   // Permission checking methods
   hasPageAccess: (pageId: string) => boolean
   hasActionAccess: (pageId: string, actionId: string) => boolean
@@ -36,12 +39,77 @@ export function NavigationProvider({ children }: { children: ReactNode }) {
   const [currentSubmenu, setCurrentSubmenu] = useState<NavigationSubmenu | null>(null)
   const [items, setItems] = useState<NavigationItem[] | null>(null)
   const [loading, setLoading] = useState(true)
+  const [sessionRole, setSessionRole] = useState<string | null>(null)
+
+  // Helper to get current role from session cookie
+  const getCurrentRole = (): string | null => {
+    try {
+      const sessionCookie = Cookies.get('mps_session')
+      if (sessionCookie) {
+        const parts = sessionCookie.split('.')
+        if (parts[1]) {
+          const payload = JSON.parse(atob(parts[1]))
+          return payload.role || null
+        }
+      }
+    } catch (err) {
+      console.error('Failed to parse session cookie', err)
+    }
+    return null
+  }
+
+  // Helper to check if user is admin (isDefaultCustomer: true) or regular user (isDefaultCustomer: false)
+  // Prefer client-side flag `mps_is_default_customer` (set after login). Fallback to parsing session JWT if needed.
+  const isAdminUser = (): boolean => {
+    try {
+      const clientFlag = Cookies.get('mps_is_default_customer')
+      if (typeof clientFlag !== 'undefined') {
+        return clientFlag === 'true'
+      }
+
+      const sessionCookie = Cookies.get('mps_session')
+      if (sessionCookie) {
+        const parts = sessionCookie.split('.')
+        if (parts[1]) {
+          const payload = JSON.parse(atob(parts[1]))
+          // isDefaultCustomer: true -> admin user -> use NAVIGATION_PAYLOAD
+          // isDefaultCustomer: false -> regular user -> use USER_NAVIGATION_PAYLOAD
+          // undefined -> default to admin
+          return payload.isDefaultCustomer !== false
+        }
+      }
+    } catch (err) {
+      console.error('Failed to parse session cookie or client flag', err)
+    }
+    return true // Default to admin if can't parse
+  }
+
+  // Extract role from session cookie (client-side)
+  useEffect(() => {
+    setSessionRole(getCurrentRole())
+  }, [])
 
   async function load() {
     setLoading(true)
     try {
+      // Check isDefaultCustomer to determine which payload to send
+      const isAdmin = isAdminUser()
+
+      // Debug: log for troubleshooting
+      console.log('[NavigationContext] isAdminUser:', isAdmin)
+
+      // Choose navigation payload based on isDefaultCustomer
+      // isDefaultCustomer: true (or undefined) -> admin -> NAVIGATION_PAYLOAD
+      // isDefaultCustomer: false -> regular user -> USER_NAVIGATION_PAYLOAD
+      const payload = isAdmin ? NAVIGATION_PAYLOAD : USER_NAVIGATION_PAYLOAD
+
+      console.log(
+        '[NavigationContext] Using payload:',
+        isAdmin ? 'NAVIGATION_PAYLOAD (admin)' : 'USER_NAVIGATION_PAYLOAD (user)'
+      )
+
       // Send FE navigation payload to backend to check permissions
-      const resp = await navigationClientService.check(NAVIGATION_PAYLOAD)
+      const resp = await navigationClientService.check(payload)
       // Backend expected shapes supported:
       // 1) Array directly: [ { ...item } ]
       // 2) { data: [ ... ] }
@@ -67,27 +135,11 @@ export function NavigationProvider({ children }: { children: ReactNode }) {
       }
 
       // Filter items and actions based on hasAccess
+      // Note: `item.hasAccess` controls sidebar visibility; `action.hasAccess` controls actions inside the page.
+      // Do NOT hide a page just because all its actions are denied — keep the sidebar item if `item.hasAccess !== false`.
       const filteredItems: NavigationItem[] = rawItems
-        .filter((item) => {
-          // Hide item if hasAccess is explicitly false
-          if (item.hasAccess === false) {
-            return false
-          }
-
-          // If item has actions, check if at least one action has access
-          if (item.actions && Array.isArray(item.actions) && item.actions.length > 0) {
-            const hasAllowedAction = item.actions.some((action) => action.hasAccess !== false)
-            // If no actions are allowed, hide the item
-            if (!hasAllowedAction) {
-              return false
-            }
-          }
-
-          // Item is visible (hasAccess is true or undefined, and either no actions or at least one allowed action)
-          return true
-        })
+        .filter((item) => item.hasAccess !== false)
         .map((item) => {
-          // Filter actions to only include those with hasAccess !== false
           if (item.actions && Array.isArray(item.actions)) {
             return {
               ...item,
@@ -109,6 +161,7 @@ export function NavigationProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // Load once on mount. This will call /api/navigation and store items in context.
     void load()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Helper function to check if user has access to a page
@@ -141,6 +194,7 @@ export function NavigationProvider({ children }: { children: ReactNode }) {
         items,
         loading,
         refresh: load,
+        sessionRole,
         hasPageAccess,
         hasActionAccess,
         getPagePermissions,

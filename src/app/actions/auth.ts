@@ -21,6 +21,7 @@ export type LoginActionState = {
   success?: {
     message?: string
     isDefaultPassword?: boolean
+    isDefaultCustomer?: boolean
   }
 } | null
 
@@ -75,16 +76,18 @@ export async function login(
         username: data?.user?.email || 'User', // Use email as username with fallback
         email: data?.user?.email || 'user@example.com',
         isDefaultPassword: data?.isDefaultPassword || false,
+        isDefaultCustomer: data?.isDefaultCustomer,
       },
       accessToken: data?.accessToken || '',
       refreshToken: data?.refreshToken || '',
     })
 
-    // Return success state with isDefaultPassword flag - redirect will be handled by the form
+    // Return success state with flags for UI redirect
     return {
       success: {
         message: 'Đăng nhập thành công!',
         isDefaultPassword: data?.isDefaultPassword || false,
+        isDefaultCustomer: data?.isDefaultCustomer || false,
       },
     }
   } catch (error: unknown) {
