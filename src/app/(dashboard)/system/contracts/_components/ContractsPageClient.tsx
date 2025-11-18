@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react'
 import type { Contract } from '@/types/models/contract'
+import type { Session } from '@/lib/auth/session'
 import {
   Edit,
   Trash2,
@@ -50,7 +51,10 @@ import { useActionPermission } from '@/lib/hooks/useActionPermission'
 import { ActionGuard } from '@/components/shared/ActionGuard'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 
-export default function ContractsPageClient() {
+export default function ContractsPageClient({ session }: { session?: Session | null }) {
+  // `session` is passed from the server page to keep PermissionGuard logic in sync.
+  // We don't need it directly here, but mark it as used to satisfy lint rules.
+  void session
   // Permission checks
   const { canUpdate, canDelete } = useActionPermission('contracts')
 

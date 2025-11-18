@@ -40,6 +40,7 @@ export function NavigationProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<NavigationItem[] | null>(null)
   const [loading, setLoading] = useState(true)
   const [sessionRole, setSessionRole] = useState<string | null>(null)
+  const NAV_CACHE_KEY = 'mps_navigation'
 
   // Helper to get current role from session cookie
   const getCurrentRole = (): string | null => {
@@ -163,6 +164,17 @@ export function NavigationProvider({ children }: { children: ReactNode }) {
         })
 
       setItems(filteredItems)
+      try {
+        // Cache navigation in localStorage so we can reuse it until logout
+        if (typeof window !== 'undefined' && window.localStorage) {
+          localStorage.setItem(
+            NAV_CACHE_KEY,
+            JSON.stringify({ items: filteredItems, ts: Date.now() })
+          )
+        }
+      } catch {
+        // ignore cache write errors
+      }
     } catch (err) {
       console.error('Failed to load navigation permissions', err)
       setItems(null)
@@ -172,6 +184,23 @@ export function NavigationProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
+    // Try to read cached navigation first (persist between login and logout)
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const raw = localStorage.getItem(NAV_CACHE_KEY)
+        if (raw) {
+          const parsed = JSON.parse(raw) as { items?: NavigationItem[]; ts?: number }
+          if (parsed?.items && Array.isArray(parsed.items)) {
+            setItems(parsed.items)
+            setLoading(false)
+            return
+          }
+        }
+      }
+    } catch {
+      // ignore parse errors and fall back to remote fetch
+    }
+
     // Load once on mount. This will call /api/navigation and store items in context.
     void load()
     // eslint-disable-next-line react-hooks/exhaustive-deps

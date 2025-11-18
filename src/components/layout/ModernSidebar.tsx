@@ -61,6 +61,13 @@ export function ModernSidebar({ session }: SidebarProps) {
     }))
 
   const handleLogout = async () => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        localStorage.removeItem('mps_navigation')
+      }
+    } catch {
+      // ignore
+    }
     await logout()
   }
 

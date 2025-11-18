@@ -29,21 +29,16 @@ import {
 } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Loader2, User, Mail, Building, Shield } from 'lucide-react'
-import {
-  getRolesForClient,
-  getDepartmentsForClient,
-  updateUserForClient,
-} from '@/lib/auth/data-actions'
+import { Loader2, User, Mail, Shield } from 'lucide-react'
+import { getRolesForClient, updateUserForClient } from '@/lib/auth/data-actions'
 import removeEmpty from '@/lib/utils/clean'
-import type { User as UserType, UserRole, Department } from '@/types/users'
+import type { User as UserType, UserRole } from '@/types/users'
 import { toast } from 'sonner'
 
 // Validation schema for editing user
 const editUserSchema = z.object({
   email: z.string().min(1, 'Email là bắt buộc').email('Email không hợp lệ'),
   roleId: z.string().min(1, 'Vai trò là bắt buộc'),
-  departmentId: z.string().min(1, 'Phòng ban là bắt buộc'),
   customerId: z.string().min(1, 'Khách hàng là bắt buộc'),
 })
 
@@ -68,14 +63,12 @@ export function EditUserModal({
 }: EditUserModalProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [roles, setRoles] = useState<UserRole[]>([])
-  const [departments, setDepartments] = useState<Department[]>([])
 
   const form = useForm<EditUserFormData>({
     resolver: zodResolver(editUserSchema),
     defaultValues: {
       email: '',
       roleId: '',
-      departmentId: '',
       customerId: '',
     },
   })
@@ -83,7 +76,7 @@ export function EditUserModal({
   // Load roles and departments when modal opens
   useEffect(() => {
     if (isOpen) {
-      loadRolesAndDepartments()
+      loadRoles()
     }
   }, [isOpen])
 
@@ -93,24 +86,19 @@ export function EditUserModal({
       form.reset({
         email: user.email,
         roleId: user.roleId,
-        departmentId: user.departmentId,
         customerId: user.customerId || '',
       })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
 
-  const loadRolesAndDepartments = async () => {
+  const loadRoles = async () => {
     try {
-      const [rolesData, departmentsData] = await Promise.all([
-        getRolesForClient(),
-        getDepartmentsForClient(),
-      ])
+      const rolesData = await getRolesForClient()
       setRoles(rolesData)
-      setDepartments(departmentsData)
     } catch (error) {
-      console.error('Error loading roles and departments:', error)
-      toast.error('Không thể tải danh sách vai trò và phòng ban')
+      console.error('Error loading roles:', error)
+      toast.error('Không thể tải danh sách vai trò')
     }
   }
 
@@ -129,7 +117,6 @@ export function EditUserModal({
       const payload = removeEmpty({
         email: data.email,
         roleId: data.roleId,
-        departmentId: data.departmentId,
         customerId: customerIdToSend,
       })
 
@@ -153,7 +140,7 @@ export function EditUserModal({
           Object.entries(err.errors).forEach(([field, messages]) => {
             const message = Array.isArray(messages) ? String(messages[0]) : String(messages)
             // Only set known form fields
-            if (['email', 'roleId', 'departmentId', 'customerId'].includes(field)) {
+            if (['email', 'roleId', 'customerId'].includes(field)) {
               form.setError(field as any, { type: 'server', message })
             }
           })
@@ -266,45 +253,6 @@ export function EditUserModal({
                 />
 
                 {/* Department Field */}
-                <FormField
-                  control={form.control}
-                  name="departmentId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2 text-sm font-bold text-gray-800">
-                        <Building className="h-4 w-4 text-rose-600" />
-                        Phòng ban *
-                      </FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger className="h-10 rounded-lg border-2 border-gray-200 transition-all focus:border-rose-500 focus:ring-2 focus:ring-rose-200">
-                            <SelectValue placeholder="Chọn phòng ban">
-                              {field.value && departments.find((d) => d.id === field.value) && (
-                                <div className="flex items-center gap-1">
-                                  <span>{departments.find((d) => d.id === field.value)?.name}</span>
-                                  <span className="text-xs text-gray-500">
-                                    ({departments.find((d) => d.id === field.value)?.code})
-                                  </span>
-                                </div>
-                              )}
-                            </SelectValue>
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {departments.map((department) => (
-                            <SelectItem key={department.id} value={department.id}>
-                              <div className="flex items-center gap-2">
-                                <span className="font-semibold">{department.name}</span>
-                                <span className="text-xs text-gray-500">({department.code})</span>
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage className="mt-1 text-xs text-red-600" />
-                    </FormItem>
-                  )}
-                />
               </div>
 
               {/* Customer Field */}

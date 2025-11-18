@@ -1,9 +1,9 @@
-import { PoliciesTable } from './_components/PoliciesTable'
+import { PolicyWorkspace } from './_components/PolicyWorkspace'
 
 export default function PoliciesPage() {
   return (
     <div className="p-4">
-      <PoliciesTable />
+      <PolicyWorkspace />
     </div>
   )
 }

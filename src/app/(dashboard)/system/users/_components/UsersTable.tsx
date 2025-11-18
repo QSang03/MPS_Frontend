@@ -32,7 +32,6 @@ import {
   Trash2,
   MoreHorizontal,
   Mail,
-  Building,
   Calendar,
   RotateCcw,
   Users,
@@ -48,14 +47,7 @@ import {
 import { formatDate } from '@/lib/utils/formatters'
 import { EditUserModal } from './EditUserModal'
 import { UserFormModal } from './UserFormModal'
-import type {
-  User,
-  UserFilters,
-  UserPagination,
-  UserRole,
-  Department,
-  UsersResponse,
-} from '@/types/users'
+import type { User, UserFilters, UserPagination, UserRole, UsersResponse } from '@/types/users'
 import type { Customer } from '@/types/models/customer'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useActionPermission } from '@/lib/hooks/useActionPermission'
@@ -126,7 +118,7 @@ export function UsersTable() {
     queryFn: async () => (await rolesClientService.getRoles()).data,
   })
 
-  const { data: departments = [], isLoading: isLoadingDepartments } = useQuery({
+  const { isLoading: isLoadingDepartments } = useQuery({
     queryKey: ['departments'],
     queryFn: async () => (await departmentsClientService.getDepartments()).data,
   })
@@ -318,7 +310,7 @@ export function UsersTable() {
             </div>
 
             {/* Department */}
-            <div className="space-y-2">
+            {/* <div className="space-y-2">
               <label className="text-sm font-bold text-gray-700">🏢 Phòng ban</label>
               {isMounted ? (
                 <Select
@@ -340,7 +332,7 @@ export function UsersTable() {
               ) : (
                 <div className="h-10 w-full rounded-lg border-2 border-gray-200 bg-transparent" />
               )}
-            </div>
+            </div> */}
 
             {/* Customer */}
             <div className="space-y-2">
@@ -478,12 +470,12 @@ export function UsersTable() {
                           Vai trò
                         </div>
                       </TableHead>
-                      <TableHead className="font-bold text-gray-700">
+                      {/* <TableHead className="font-bold text-gray-700">
                         <div className="flex items-center gap-2">
                           <Building className="h-4 w-4 text-pink-600" />
                           Phòng ban
                         </div>
-                      </TableHead>
+                      </TableHead> */}
                       <TableHead className="font-bold text-gray-700">
                         <div className="flex items-center gap-2">
                           <Calendar className="h-4 w-4 text-rose-600" />
@@ -533,14 +525,14 @@ export function UsersTable() {
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell>
+                        {/* <TableCell>
                           <div className="flex items-center gap-2">
                             <Building className="h-4 w-4 text-gray-400" />
                             <span className="text-sm text-gray-800">
                               {user.department?.name || '—'}
                             </span>
                           </div>
-                        </TableCell>
+                        </TableCell> */}
                         <TableCell>
                           <div className="flex items-center gap-2">
                             <Calendar className="h-4 w-4 text-gray-400" />

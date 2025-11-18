@@ -7,7 +7,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import {
@@ -23,13 +22,14 @@ import {
 } from 'lucide-react'
 import type { UserProfile } from '@/types/auth'
 import { getUserProfileForClient } from '@/lib/auth/server-actions'
+import { EditProfileModal } from './EditProfileModal'
 
 interface ProfileClientProps {
   initialProfile: UserProfile | null
 }
 
 export function ProfileClient({ initialProfile }: ProfileClientProps) {
-  const [isEditing, setIsEditing] = useState(false)
+  const [isModalOpen, setIsModalOpen] = useState(false)
   const [profile, setProfile] = useState<UserProfile | null>(initialProfile)
   const router = useRouter()
 
@@ -186,11 +186,11 @@ export function ProfileClient({ initialProfile }: ProfileClientProps) {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setIsEditing(!isEditing)}
+                  onClick={() => setIsModalOpen(true)}
                   className="rounded-xl border-white/30 bg-white/20 font-bold text-white transition-all hover:bg-white/30"
                 >
                   <Edit className="mr-2 h-4 w-4" />
-                  {isEditing ? '✕ Hủy' : '✏️ Chỉnh sửa'}
+                  ✏️ Chỉnh sửa
                 </Button>
               </div>
             </div>
@@ -210,16 +210,9 @@ export function ProfileClient({ initialProfile }: ProfileClientProps) {
                     </Label>
                     <div className="flex items-center gap-2">
                       <Mail className="h-4 w-4 flex-shrink-0 text-gray-400" />
-                      <Input
-                        id="email"
-                        value={user.email}
-                        disabled={!isEditing}
-                        className={`rounded-2xl border-2 transition-all ${
-                          isEditing
-                            ? 'border-purple-500 focus:ring-2 focus:ring-purple-200'
-                            : 'border-gray-200 bg-gray-50'
-                        }`}
-                      />
+                      <div className="flex-1 rounded-2xl border-2 border-gray-200 bg-gray-50 px-3 py-2 text-gray-700">
+                        {user.email}
+                      </div>
                     </div>
                   </div>
 
@@ -230,16 +223,9 @@ export function ProfileClient({ initialProfile }: ProfileClientProps) {
                     </Label>
                     <div className="flex items-center gap-2">
                       <User className="h-4 w-4 flex-shrink-0 text-gray-400" />
-                      <Input
-                        id="username"
-                        value={user.username || user.email}
-                        disabled={!isEditing}
-                        className={`rounded-2xl border-2 transition-all ${
-                          isEditing
-                            ? 'border-purple-500 focus:ring-2 focus:ring-purple-200'
-                            : 'border-gray-200 bg-gray-50'
-                        }`}
-                      />
+                      <div className="flex-1 rounded-2xl border-2 border-gray-200 bg-gray-50 px-3 py-2 text-gray-700">
+                        {user.username || user.email || 'Chưa cập nhật'}
+                      </div>
                     </div>
                   </div>
 
@@ -248,17 +234,9 @@ export function ProfileClient({ initialProfile }: ProfileClientProps) {
                     <Label htmlFor="firstName" className="text-sm font-bold text-gray-700">
                       📝 Tên
                     </Label>
-                    <Input
-                      id="firstName"
-                      value={user.firstName || ''}
-                      disabled={!isEditing}
-                      placeholder="Chưa cập nhật"
-                      className={`rounded-2xl border-2 transition-all ${
-                        isEditing
-                          ? 'border-purple-500 focus:ring-2 focus:ring-purple-200'
-                          : 'border-gray-200 bg-gray-50'
-                      }`}
-                    />
+                    <div className="flex-1 rounded-2xl border-2 border-gray-200 bg-gray-50 px-3 py-2 text-gray-700">
+                      {user.firstName || 'Chưa cập nhật'}
+                    </div>
                   </div>
 
                   {/* Last Name */}
@@ -266,17 +244,9 @@ export function ProfileClient({ initialProfile }: ProfileClientProps) {
                     <Label htmlFor="lastName" className="text-sm font-bold text-gray-700">
                       📝 Họ
                     </Label>
-                    <Input
-                      id="lastName"
-                      value={user.lastName || ''}
-                      disabled={!isEditing}
-                      placeholder="Chưa cập nhật"
-                      className={`rounded-2xl border-2 transition-all ${
-                        isEditing
-                          ? 'border-purple-500 focus:ring-2 focus:ring-purple-200'
-                          : 'border-gray-200 bg-gray-50'
-                      }`}
-                    />
+                    <div className="flex-1 rounded-2xl border-2 border-gray-200 bg-gray-50 px-3 py-2 text-gray-700">
+                      {user.lastName || 'Chưa cập nhật'}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -314,58 +284,45 @@ export function ProfileClient({ initialProfile }: ProfileClientProps) {
                 </div>
               </div>
 
-              {/* Edit Actions */}
-              {isEditing && (
-                <div className="flex justify-end gap-3 border-t-2 border-gray-100 pt-4">
-                  <Button
-                    variant="outline"
-                    onClick={() => setIsEditing(false)}
-                    className="rounded-xl border-2 border-gray-300 font-bold hover:bg-gray-50"
-                  >
-                    ✕ Hủy
-                  </Button>
+              {/* Security Card */}
+              <div className="border-gradient-to-r mt-6 rounded-2xl border-2 bg-gradient-to-r from-orange-50 from-orange-200 to-red-50 to-red-200 p-5">
+                <div className="flex items-start justify-between">
+                  <div className="flex flex-1 items-start gap-3">
+                    <Lock className="mt-1 h-5 w-5 flex-shrink-0 text-red-600" />
+                    <div>
+                      <h5 className="flex items-center gap-2 font-bold text-gray-800">
+                        🔒 Bảo mật tài khoản
+                      </h5>
+                      <p className="mt-1 text-sm text-gray-600">
+                        Thay đổi mật khẩu và cài đặt bảo mật của bạn
+                      </p>
+                    </div>
+                  </div>
                   <Button
                     onClick={() => {
-                      // TODO: Implement update profile
-                      setIsEditing(false)
+                      router.push(`${ROUTES.USER_SETTINGS}?tab=password`)
                     }}
-                    className="rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 font-bold text-white shadow-lg transition-all hover:from-purple-700 hover:to-pink-700 hover:shadow-xl"
+                    className="rounded-xl bg-gradient-to-r from-red-600 to-orange-600 font-bold whitespace-nowrap text-white shadow-lg transition-all hover:from-red-700 hover:to-orange-700 hover:shadow-xl"
                   >
-                    💾 Lưu thay đổi
+                    🔐 Đổi mật khẩu
                   </Button>
                 </div>
-              )}
-
-              {/* Security Card */}
-              {!isEditing && (
-                <div className="border-gradient-to-r mt-6 rounded-2xl border-2 bg-gradient-to-r from-orange-50 from-orange-200 to-red-50 to-red-200 p-5">
-                  <div className="flex items-start justify-between">
-                    <div className="flex flex-1 items-start gap-3">
-                      <Lock className="mt-1 h-5 w-5 flex-shrink-0 text-red-600" />
-                      <div>
-                        <h5 className="flex items-center gap-2 font-bold text-gray-800">
-                          🔒 Bảo mật tài khoản
-                        </h5>
-                        <p className="mt-1 text-sm text-gray-600">
-                          Thay đổi mật khẩu và cài đặt bảo mật của bạn
-                        </p>
-                      </div>
-                    </div>
-                    <Button
-                      onClick={() => {
-                        router.push(`${ROUTES.USER_SETTINGS}?tab=password`)
-                      }}
-                      className="rounded-xl bg-gradient-to-r from-red-600 to-orange-600 font-bold whitespace-nowrap text-white shadow-lg transition-all hover:from-red-700 hover:to-orange-700 hover:shadow-xl"
-                    >
-                      🔐 Đổi mật khẩu
-                    </Button>
-                  </div>
-                </div>
-              )}
+              </div>
             </CardContent>
           </div>
         </div>
       </div>
+
+      {/* Edit Profile Modal */}
+      <EditProfileModal
+        profile={profile}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onProfileUpdated={(updatedProfile) => {
+          setProfile(updatedProfile)
+          setIsModalOpen(false)
+        }}
+      />
     </div>
   )
 }

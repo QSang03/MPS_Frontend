@@ -108,4 +108,8 @@ export const API_ENDPOINTS = {
   RESOURCE_TYPES: '/resource-types',
   POLICY_OPERATORS: '/policy-operators',
   POLICY_CONDITIONS: '/policy-conditions',
+  POLICY_ASSISTANT: {
+    BLUEPRINT: (role: string) => `/policies/assistant/blueprint/${encodeURIComponent(role)}`,
+    ANALYZE: '/policies/assistant/analyze',
+  },
 } as const

@@ -100,7 +100,7 @@ export default function DevicesPageClient() {
         setFilteredDevices(res.data || [])
       } catch (err) {
         try {
-          const anyErr = err as unknown as { response?: { data?: unknown; status?: number } }
+          const anyErr = err as unknown as { response?: { data?: unknown } }
           if (anyErr?.response?.data) {
             console.error('fetch devices error - response body:', anyErr.response.data)
           } else {

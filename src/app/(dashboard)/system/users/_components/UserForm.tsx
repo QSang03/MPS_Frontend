@@ -27,7 +27,7 @@ import {
 import CustomerSelect from '@/components/shared/CustomerSelect'
 import { userSchema, type UserFormData } from '@/lib/validations/user.schema'
 import removeEmpty from '@/lib/utils/clean'
-import { getRolesForClient, getDepartmentsForClient } from '@/lib/auth/data-actions'
+import { getRolesForClient } from '@/lib/auth/data-actions'
 import { usersClientService } from '@/lib/api/services/users-client.service' // Thay đổi ở đây
 import type { User } from '@/types/users'
 
@@ -49,15 +49,10 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
   const router = useRouter()
   const queryClient = useQueryClient()
 
-  // Fetch roles and departments
+  // Fetch roles
   const { data: roles = [], isLoading: isLoadingRoles } = useQuery({
     queryKey: ['roles'],
     queryFn: getRolesForClient,
-  })
-
-  const { data: departments = [], isLoading: isLoadingDepartments } = useQuery({
-    queryKey: ['departments'],
-    queryFn: getDepartmentsForClient,
   })
 
   const form = useForm<UserFormData>({
@@ -67,7 +62,6 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
       fullName: initialData?.fullName || '',
       customerId: initialData?.customerId || customerId || '',
       roleId: initialData?.roleId || '',
-      departmentId: initialData?.departmentId || '',
     },
   })
 
@@ -341,7 +335,7 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
               <FormItem>
                 <FormLabel>Vai trò</FormLabel>
                 <Select
-                  onValueChange={field.onChange}
+                  onValueChange={(v) => field.onChange(v === '__empty' ? '' : v)}
                   defaultValue={field.value}
                   disabled={isPending}
                 >
@@ -363,7 +357,7 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
                       ))
                     ) : (
                       <>
-                        <SelectItem value="">Không có vai trò</SelectItem>
+                        <SelectItem value="__empty">Không có vai trò</SelectItem>
                       </>
                     )}
                   </SelectContent>
@@ -373,44 +367,7 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
             )}
           />
 
-          <FormField
-            control={form.control}
-            name="departmentId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Phòng ban</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                  disabled={isPending || isLoadingDepartments}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Chọn phòng ban" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {isLoadingDepartments ? (
-                      <SelectItem value="loading" disabled>
-                        Đang tải phòng ban...
-                      </SelectItem>
-                    ) : departments.length > 0 ? (
-                      departments.map((dept) => (
-                        <SelectItem key={dept.id} value={dept.id}>
-                          {dept.name}
-                        </SelectItem>
-                      ))
-                    ) : (
-                      <SelectItem value="" disabled>
-                        Không có phòng ban
-                      </SelectItem>
-                    )}
-                  </SelectContent>
-                </Select>
-                <FormDescription>Phòng ban của người dùng (tùy chọn)</FormDescription>
-              </FormItem>
-            )}
-          />
+          {/* Department selection removed from system user form per request */}
         </div>
 
         <div className="flex gap-4">

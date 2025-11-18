@@ -45,6 +45,7 @@ import { policyConditionsClientService } from '@/lib/api/services/policy-conditi
 import type { PolicyCondition } from '@/lib/api/services/policy-conditions-client.service'
 import { Checkbox } from '@/components/ui/checkbox'
 import removeEmpty from '@/lib/utils/clean'
+import { sanitizeSubject } from '@/lib/policies/policy-form.utils'
 
 const policySchema = z.object({
   name: z.string().min(1, 'Tên policy là bắt buộc'),
@@ -728,42 +729,6 @@ export function PolicyFormModal({
       }
 
       const subjectObj: Record<string, unknown> = {}
-      // Helper to sanitize subject object entries to prevent sending {$eq: null}
-      const sanitizeSubject = (subject: Record<string, unknown>) => {
-        Object.keys(subject).forEach((k) => {
-          const v = subject[k]
-          if (v && typeof v === 'object' && !Array.isArray(v)) {
-            const opKeys = Object.keys(v as Record<string, unknown>).filter((op) =>
-              op.startsWith('$')
-            )
-            if (opKeys.length) {
-              opKeys.forEach((op) => {
-                const operand = (v as Record<string, unknown>)[op]
-                const emptyArray = Array.isArray(operand) && operand.length === 0
-                const emptyString = typeof operand === 'string' && operand.trim() === ''
-                const isNaNNumber = typeof operand === 'number' && Number.isNaN(operand)
-                const invalid =
-                  operand === null ||
-                  operand === undefined ||
-                  emptyArray ||
-                  emptyString ||
-                  isNaNNumber
-                if (invalid) {
-                  // Remove the whole key if operator value is invalid
-                  delete subject[k]
-                }
-              })
-            }
-            // If after cleanup object becomes empty, remove it
-            if (subject[k] && typeof subject[k] === 'object' && !Array.isArray(subject[k])) {
-              if (Object.keys(subject[k] as Record<string, unknown>).length === 0) delete subject[k]
-            }
-          } else if (v === null || v === undefined || (typeof v === 'string' && v.trim() === '')) {
-            delete subject[k]
-          }
-        })
-        return subject
-      }
       if (data.includeRole) {
         let operator = data.roleOperator || '$eq'
         let opMeta = getOperatorByName(operator)

@@ -3,6 +3,9 @@
 import { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import CustomerSelect from '@/components/shared/CustomerSelect'
+import ConsumableTypeSelect from '@/components/shared/ConsumableTypeSelect'
+import MonthPicker from '@/components/ui/month-picker'
 import { Button } from '@/components/ui/button'
 import {
   Loader2,
@@ -55,6 +58,7 @@ export default function AnalyticsPageClient() {
   const [customersLoading, setCustomersLoading] = useState(false)
   const [customersData, setCustomersData] = useState<CustomerProfitItem[]>([])
   const [customersSearchTerm, setCustomersSearchTerm] = useState('')
+  const [customersSearchId, setCustomersSearchId] = useState('')
 
   // Customer Detail State
   const [selectedCustomerId, setSelectedCustomerId] = useState('')
@@ -240,10 +244,11 @@ export default function AnalyticsPageClient() {
     }
   }
 
-  // Filter customers by search term
-  const filteredCustomers = customersData.filter((c) =>
-    c.name.toLowerCase().includes(customersSearchTerm.toLowerCase())
-  )
+  // Filter customers by search term or selected customer id
+  const filteredCustomers = customersData.filter((c) => {
+    if (customersSearchId) return c.customerId === customersSearchId
+    return c.name.toLowerCase().includes(customersSearchTerm.toLowerCase())
+  })
 
   return (
     <div className="space-y-6">
@@ -264,10 +269,10 @@ export default function AnalyticsPageClient() {
           <div className="mb-4 flex gap-3">
             <div className="flex items-center gap-2">
               <Calendar className="text-muted-foreground h-4 w-4" />
-              <Input
+              <MonthPicker
                 placeholder="Kỳ (YYYY-MM)"
                 value={enterprisePeriod}
-                onChange={(e) => setEnterprisePeriod(e.target.value)}
+                onChange={(v) => setEnterprisePeriod(v)}
                 className="w-40"
               />
             </div>
@@ -357,20 +362,23 @@ export default function AnalyticsPageClient() {
           <div className="mb-4 flex flex-wrap gap-3">
             <div className="flex items-center gap-2">
               <Calendar className="text-muted-foreground h-4 w-4" />
-              <Input
+              <MonthPicker
                 placeholder="Kỳ (YYYY-MM)"
                 value={customersPeriod}
-                onChange={(e) => setCustomersPeriod(e.target.value)}
+                onChange={(v) => setCustomersPeriod(v)}
                 className="w-40"
               />
             </div>
             <div className="flex items-center gap-2">
               <Search className="text-muted-foreground h-4 w-4" />
-              <Input
+              <CustomerSelect
                 placeholder="Tìm kiếm khách hàng..."
-                value={customersSearchTerm}
-                onChange={(e) => setCustomersSearchTerm(e.target.value)}
-                className="w-64"
+                value={customersSearchId}
+                onChange={(id) => {
+                  setCustomersSearchId(id)
+                  // clear text search when a selection is made
+                  setCustomersSearchTerm('')
+                }}
               />
             </div>
             <Button onClick={loadCustomersProfit} disabled={customersLoading}>
@@ -461,10 +469,10 @@ export default function AnalyticsPageClient() {
               />
               <div className="flex items-center gap-2">
                 <Calendar className="text-muted-foreground h-4 w-4" />
-                <Input
+                <MonthPicker
                   placeholder="Kỳ (YYYY-MM)"
                   value={customerDetailPeriod}
-                  onChange={(e) => setCustomerDetailPeriod(e.target.value)}
+                  onChange={(v) => setCustomerDetailPeriod(v)}
                   className="w-40"
                 />
               </div>
@@ -574,16 +582,16 @@ export default function AnalyticsPageClient() {
                 onChange={(e) => setSelectedDeviceId(e.target.value)}
                 className="w-80"
               />
-              <Input
+              <MonthPicker
                 placeholder="From (YYYY-MM)"
                 value={deviceFrom}
-                onChange={(e) => setDeviceFrom(e.target.value)}
+                onChange={(v) => setDeviceFrom(v)}
                 className="w-36"
               />
-              <Input
+              <MonthPicker
                 placeholder="To (YYYY-MM)"
                 value={deviceTo}
-                onChange={(e) => setDeviceTo(e.target.value)}
+                onChange={(v) => setDeviceTo(v)}
                 className="w-36"
               />
               <Button onClick={loadDeviceProfitability} disabled={deviceLoading}>
@@ -705,25 +713,25 @@ export default function AnalyticsPageClient() {
         </CardHeader>
         <CardContent>
           <div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-5">
-            <Input
+            <MonthPicker
               placeholder="From (YYYY-MM)"
               value={consumableFrom}
-              onChange={(e) => setConsumableFrom(e.target.value)}
+              onChange={(v) => setConsumableFrom(v)}
             />
-            <Input
+            <MonthPicker
               placeholder="To (YYYY-MM)"
               value={consumableTo}
-              onChange={(e) => setConsumableTo(e.target.value)}
+              onChange={(v) => setConsumableTo(v)}
             />
-            <Input
-              placeholder="Consumable Type ID (tùy chọn)"
+            <ConsumableTypeSelect
+              placeholder="Consumable Type (tùy chọn)"
               value={consumableTypeId}
-              onChange={(e) => setConsumableTypeId(e.target.value)}
+              onChange={(id) => setConsumableTypeId(id)}
             />
-            <Input
+            <CustomerSelect
               placeholder="Customer ID (tùy chọn)"
               value={consumableCustomerId}
-              onChange={(e) => setConsumableCustomerId(e.target.value)}
+              onChange={(id) => setConsumableCustomerId(id)}
             />
             <Button onClick={loadConsumableLifecycle} disabled={consumableLoading}>
               {consumableLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}

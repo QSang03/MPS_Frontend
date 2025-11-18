@@ -24,10 +24,10 @@ export function Sidebar({ session }: SidebarProps) {
 
   const isUserRole = String(session.role ?? '').toLowerCase() === 'user'
   const payload = isUserRole ? USER_NAVIGATION_PAYLOAD : NAVIGATION_PAYLOAD
-  const navigationFromConfig = (payload || []).map((it) => ({
-    href: ((it as any).route as string) || ((it as any).href as string) || '#',
+  const navigationFromConfig = (payload || []).map((it: Record<string, unknown>) => ({
+    href: (it.route as string as string) || (it.href as string as string) || '#',
     label: String(it.label ?? ''),
-    icon: getIconComponent((it as any).icon as string),
+    icon: getIconComponent(it.icon as string),
     badge: undefined,
     raw: it as unknown as Record<string, unknown>,
   }))

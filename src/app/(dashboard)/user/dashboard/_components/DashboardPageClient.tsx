@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { dashboardClientService } from '@/lib/api/services/dashboard-client.service'
+import { getClientUserProfile } from '@/lib/auth/client-auth'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { FileText, TrendingUp, Printer } from 'lucide-react'
+import { FileText, TrendingUp, Printer, ChevronDown, ChevronUp } from 'lucide-react'
 
 type Overview = {
   month: string
@@ -19,8 +20,16 @@ type Overview = {
     deviceModelName?: string
     serialNumber?: string
     partNumber?: string
-    totalPages?: number
-    totalCost?: number
+    // fields provided by backend for topDevices (keep minimal)
+    revenueRental?: number
+    revenueRepair?: number
+    revenuePageBW?: number
+    revenuePageColor?: number
+    totalRevenue?: number
+    cogsConsumable?: number
+    cogsRepair?: number
+    totalCogs?: number
+    grossProfit?: number
   }>
   usage?: {
     items?: Array<{
@@ -34,10 +43,26 @@ type Overview = {
 
 export default function DashboardPageClient({ month }: { month?: string }) {
   const [overview, setOverview] = useState<Overview | null>(null)
+  const [displayName, setDisplayName] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [expandedDeviceId, setExpandedDeviceId] = useState<string | null>(null)
 
   useEffect(() => {
+    // load current user display name for the hero
+    let mountedName = true
+    void (async () => {
+      try {
+        const p = await getClientUserProfile()
+        if (!mountedName) return
+        const u = p?.user
+        const name =
+          u?.username || (u?.firstName && u?.lastName ? `${u.firstName} ${u.lastName}` : null)
+        setDisplayName(name ?? u?.email ?? null)
+      } catch {
+        // ignore
+      }
+    })()
     let mounted = true
     const load = async () => {
       setLoading(true)
@@ -60,6 +85,7 @@ export default function DashboardPageClient({ month }: { month?: string }) {
     void load()
     return () => {
       mounted = false
+      mountedName = false
     }
   }, [month])
 
@@ -93,8 +119,12 @@ export default function DashboardPageClient({ month }: { month?: string }) {
         <div className="absolute top-0 right-0 h-64 w-64 translate-x-8 -translate-y-8 transform rounded-full bg-white/10 blur-3xl" />
         <div className="absolute bottom-0 left-0 h-64 w-64 -translate-x-8 translate-y-8 transform rounded-full bg-white/10 blur-3xl" />
         <div className="relative">
-          <h1 className="text-3xl font-bold">Dashboard Tổng quan</h1>
-          <p className="mt-2 text-blue-100">Tháng {overview.month}</p>
+          <h1 className="text-3xl font-bold">Tổng quan</h1>
+          <p className="mt-2 text-blue-100">
+            Tháng {overview.month}
+            {displayName ? <span className="mx-2">•</span> : null}
+            {displayName ? <span className="text-sm font-medium">{displayName}</span> : null}
+          </p>
         </div>
       </div>
 
@@ -106,7 +136,7 @@ export default function DashboardPageClient({ month }: { month?: string }) {
             <TrendingUp className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{(k.totalCost ?? 0).toLocaleString()}₫</div>
+            <div className="text-2xl font-bold">{(k.totalCost ?? 0).toLocaleString()}$</div>
             <p className="text-muted-foreground mt-1 text-xs">Chi phí trong tháng</p>
           </CardContent>
         </Card>
@@ -142,25 +172,70 @@ export default function DashboardPageClient({ month }: { month?: string }) {
         <CardContent>
           {overview.topDevices && overview.topDevices.length > 0 ? (
             <div className="space-y-3">
-              {overview.topDevices.map((d, idx) => (
-                <div
-                  key={d.deviceId ?? idx}
-                  className="hover:bg-muted/50 flex items-center justify-between rounded-lg border p-4 transition-all"
-                >
-                  <div className="flex-1">
-                    <div className="font-medium">{d.deviceModelName || d.serialNumber || '—'}</div>
-                    <div className="text-muted-foreground text-sm">{d.partNumber || '—'}</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm font-medium">
-                      {(d.totalPages ?? 0).toLocaleString()} trang
+              {overview.topDevices.map((d, idx) => {
+                const idKey = d.deviceId ?? `idx-${idx}`
+                const expanded = expandedDeviceId === idKey
+                return (
+                  <div
+                    key={idKey}
+                    className="hover:bg-muted/50 rounded-lg border p-3 transition-all"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium">
+                          {d.deviceModelName || d.serialNumber || '—'}
+                        </div>
+                        <div className="text-muted-foreground text-sm">{d.partNumber ?? '—'}</div>
+                      </div>
+
+                      <div className="flex items-center gap-4">
+                        <div className="font-medium">{(d.totalRevenue ?? 0).toLocaleString()}$</div>
+                        <button
+                          type="button"
+                          onClick={() => setExpandedDeviceId(expanded ? null : idKey)}
+                          className="rounded-md bg-slate-50/50 p-1 text-sm hover:bg-slate-100"
+                          aria-expanded={expanded}
+                        >
+                          {expanded ? (
+                            <ChevronUp className="h-4 w-4" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
                     </div>
-                    <div className="text-muted-foreground text-sm">
-                      {(d.totalCost ?? 0).toLocaleString()}₫
-                    </div>
+
+                    {expanded && (
+                      <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
+                        <div className="text-muted-foreground">Chi phí thuê</div>
+                        <div className="text-right font-medium">
+                          {(d.revenueRental ?? 0).toLocaleString()}$
+                        </div>
+
+                        <div className="text-muted-foreground">Chi phí sửa chữa</div>
+                        <div className="text-right font-medium">
+                          {(d.revenueRepair ?? 0).toLocaleString()}$
+                        </div>
+
+                        <div className="text-muted-foreground">Chi phí B/W</div>
+                        <div className="text-right font-medium">
+                          {(d.revenuePageBW ?? 0).toLocaleString()}$
+                        </div>
+
+                        <div className="text-muted-foreground">Chi phí màu</div>
+                        <div className="text-right font-medium">
+                          {(d.revenuePageColor ?? 0).toLocaleString()}$
+                        </div>
+
+                        <div className="text-muted-foreground">Tổng Chi phí</div>
+                        <div className="text-right font-medium">
+                          {(d.totalRevenue ?? 0).toLocaleString()}$
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           ) : (
             <div className="text-muted-foreground py-8 text-center">Chưa có thiết bị nổi bật</div>
@@ -176,23 +251,40 @@ export default function DashboardPageClient({ month }: { month?: string }) {
         <CardContent>
           {overview.usage?.items && overview.usage.items.length > 0 ? (
             <div className="space-y-2">
-              {overview.usage.items.map((item, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center justify-between rounded-lg border p-3 text-sm"
-                >
-                  <div className="font-medium">
-                    {new Date(item.date).toLocaleDateString('vi-VN')}
+              {overview.usage.items.map((item, idx) => {
+                // Some backend responses return `date` (full ISO date) while
+                // others return `month` (YYYY-MM). Handle both gracefully.
+                const dateLabel = (() => {
+                  const itemData = item as Record<string, unknown>
+                  if (itemData.date) {
+                    const d = new Date(itemData.date as string)
+                    if (!isNaN(d.getTime())) return d.toLocaleDateString('vi-VN')
+                  }
+                  if (itemData.month && typeof itemData.month === 'string') {
+                    const m = itemData.month
+                    const parts = m.split('-')
+                    if (parts.length === 2) return `${parts[1]}/${parts[0]}` // MM/YYYY
+                    return m
+                  }
+                  return '—'
+                })()
+
+                return (
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between rounded-lg border p-3 text-sm"
+                  >
+                    <div className="font-medium">{dateLabel}</div>
+                    <div className="text-muted-foreground flex gap-4">
+                      <span>B/W: {(item.bwPages ?? 0).toLocaleString()}</span>
+                      <span>Màu: {(item.colorPages ?? 0).toLocaleString()}</span>
+                      <span>
+                        Tổng: {((item.bwPages ?? 0) + (item.colorPages ?? 0)).toLocaleString()}
+                      </span>
+                    </div>
                   </div>
-                  <div className="text-muted-foreground flex gap-4">
-                    <span>B/W: {item.bwPages.toLocaleString()}</span>
-                    <span>Màu: {item.colorPages.toLocaleString()}</span>
-                    <span className="text-foreground font-medium">
-                      {item.cost.toLocaleString()}₫
-                    </span>
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           ) : (
             <div className="text-muted-foreground py-8 text-center">Chưa có dữ liệu sử dụng</div>

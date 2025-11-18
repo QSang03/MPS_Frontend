@@ -8,7 +8,7 @@ import {
   updateTokensInCookies,
   createSessionWithTokens,
 } from './session'
-import { authService } from '@/lib/api/services/auth.service'
+import { authServerService } from '@/lib/api/services/auth-server.service'
 import { withRefreshRetry, AuthExpiredError } from '@/lib/api/server-retry'
 import type { UserProfile } from '@/types/auth'
 
@@ -43,7 +43,7 @@ export async function updateTokensInCookiesAction(
  */
 export async function getUserProfileForClient(): Promise<UserProfile | null> {
   try {
-    return await authService.getProfileServer()
+    return await authServerService.getProfileServer()
   } catch (error) {
     console.error('Failed to get user profile:', error)
     return null
@@ -58,7 +58,7 @@ export async function changePasswordForClient(payload: {
   newPassword: string
 }) {
   try {
-    const res = await withRefreshRetry(() => authService.changePasswordServer(payload))
+    const res = await withRefreshRetry(() => authServerService.changePasswordServer(payload))
 
     // If user just changed from default password, ensure session flag is updated
     try {

@@ -193,6 +193,132 @@ export const USER_NAVIGATION_PAYLOAD: NavItemPayload[] = [
       },
     ],
   },
+  {
+    id: 'user-consumables',
+    name: 'consumables',
+    label: 'Vật tư tiêu hao',
+    icon: 'ShoppingCart',
+    route: '/user/consumables',
+    description: 'Vật tư tiêu hao liên quan đến khách hàng',
+    actions: [
+      {
+        id: 'read',
+        label: 'Xem vật tư tiêu hao',
+        icon: 'Eye',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'consumables', action: 'read' }],
+        },
+      },
+      {
+        id: 'create',
+        label: 'Tạo vật tư tiêu hao',
+        icon: 'Plus',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'consumables', action: 'create' }],
+        },
+      },
+      {
+        id: 'update',
+        label: 'Chỉnh sửa vật tư',
+        icon: 'Edit',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'consumables', action: 'update' }],
+        },
+      },
+      {
+        id: 'delete',
+        label: 'Xóa vật tư',
+        icon: 'Trash2',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'consumables', action: 'delete' }],
+        },
+      },
+      {
+        id: 'filter-by-type',
+        label: 'Lọc theo loại vật tư',
+        icon: 'Filter',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'consumable-types', action: 'read' }],
+        },
+      },
+    ],
+  },
+
+  /* Departments (user-scoped) removed — hidden per request */
+  {
+    id: 'users',
+    name: 'users',
+    label: 'Người dùng',
+    icon: 'Users',
+    route: '/user/users',
+    description: 'Quản lý người dùng (user-scoped)',
+    actions: [
+      {
+        id: 'read',
+        label: 'Xem người dùng',
+        icon: 'Eye',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'users', action: 'read' }],
+        },
+      },
+      {
+        id: 'create',
+        label: 'Tạo người dùng',
+        icon: 'Plus',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [
+            { resource: 'users', action: 'create' },
+            { resource: 'customers', action: 'read' },
+            { resource: 'roles', action: 'read' },
+          ],
+        },
+      },
+      {
+        id: 'update',
+        label: 'Chỉnh sửa người dùng',
+        icon: 'Edit',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'users', action: 'update' }],
+        },
+      },
+      {
+        id: 'delete',
+        label: 'Xóa người dùng',
+        icon: 'Trash2',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'users', action: 'delete' }],
+        },
+      },
+      {
+        id: 'filter-by-role',
+        label: 'Lọc theo vai trò',
+        icon: 'Filter',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'roles', action: 'read' }],
+        },
+      },
+      /* filter-by-department removed */
+      {
+        id: 'filter-by-customer',
+        label: 'Lọc theo khách hàng',
+        icon: 'Filter',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'customers', action: 'read' }],
+        },
+      },
+    ],
+  },
 ]
 
 // Admin navigation payload - requires permissions
@@ -442,6 +568,15 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
         },
       },
       {
+        id: 'edit-stock',
+        label: 'Chỉnh sửa tồn kho',
+        icon: 'Edit',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'stock-items', action: 'update' }],
+        },
+      },
+      {
         id: 'filter-by-category',
         label: 'Lọc theo danh mục',
         icon: 'Filter',
@@ -452,6 +587,7 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
       },
     ],
   },
+
   {
     id: 'users',
     label: 'Quản lý người dùng',
@@ -495,15 +631,7 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
           resources: [{ resource: 'roles', action: 'read' }],
         },
       },
-      {
-        id: 'filter-by-department',
-        label: 'Lọc theo bộ phận',
-        icon: 'Filter',
-        requiredPermissions: {
-          strategy: 'all',
-          resources: [{ resource: 'departments', action: 'read' }],
-        },
-      },
+      /* filter-by-department removed */
       {
         id: 'filter-by-customer',
         label: 'Lọc theo khách hàng',
@@ -662,54 +790,7 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
       },
     ],
   },
-  {
-    id: 'departments',
-    label: 'Quản lý bộ phận',
-    icon: 'Building2',
-    route: '/system/departments',
-    requiredPermissions: {
-      strategy: 'all',
-      resources: [{ resource: 'departments', action: 'read' }],
-    },
-    actions: [
-      {
-        id: 'create',
-        label: 'Tạo bộ phận',
-        icon: 'Plus',
-        requiredPermissions: {
-          strategy: 'all',
-          resources: [{ resource: 'departments', action: 'create' }],
-        },
-      },
-      {
-        id: 'update',
-        label: 'Chỉnh sửa bộ phận',
-        icon: 'Edit',
-        requiredPermissions: {
-          strategy: 'all',
-          resources: [{ resource: 'departments', action: 'update' }],
-        },
-      },
-      {
-        id: 'delete',
-        label: 'Xóa bộ phận',
-        icon: 'Trash2',
-        requiredPermissions: {
-          strategy: 'all',
-          resources: [{ resource: 'departments', action: 'delete' }],
-        },
-      },
-      {
-        id: 'filter',
-        label: 'Lọc bộ phận',
-        icon: 'Filter',
-        requiredPermissions: {
-          strategy: 'all',
-          resources: [{ resource: 'departments', action: 'read' }],
-        },
-      },
-    ],
-  },
+  /* Departments (system) removed — hidden per request */
   {
     id: 'system-settings',
     label: 'Cấu hình hệ thống',

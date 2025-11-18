@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AlertCircle, CheckCircle, Loader2, Lock, Eye, EyeOff } from 'lucide-react'
 import { toast } from 'sonner'
 import { changePasswordForClient } from '@/lib/auth/server-actions'
+import { getClientUserProfile } from '@/lib/auth/client-auth'
 import { ROUTES } from '@/constants/routes'
 
 export default function ChangePasswordPage() {
@@ -126,9 +127,31 @@ export default function ChangePasswordPage() {
       setSuccess(true)
       toast.success(message || 'Đổi mật khẩu thành công!')
 
-      setTimeout(() => {
-        router.push(ROUTES.CUSTOMER_ADMIN)
-      }, 2000)
+      // After successful password change, determine where to redirect the user.
+      // Prefer role-based landing: SystemAdmin -> SYSTEM_ADMIN, CustomerAdmin -> CUSTOMER_ADMIN,
+      // others -> USER_MY_DEVICES. Keep a short delay so the toast can be seen.
+      setTimeout(async () => {
+        try {
+          const profile = await getClientUserProfile()
+          const role = profile?.user?.role as string | undefined
+
+          if (role === 'SystemAdmin') {
+            router.push(ROUTES.SYSTEM_ADMIN)
+            return
+          }
+
+          if (role === 'CustomerAdmin') {
+            router.push(ROUTES.CUSTOMER_ADMIN)
+            return
+          }
+
+          // Non-admin users should be redirected to the user dashboard
+          router.push(ROUTES.USER_DASHBOARD)
+        } catch {
+          // Fallback to customer admin if anything fails
+          router.push(ROUTES.CUSTOMER_ADMIN)
+        }
+      }, 1200)
     } catch (err: unknown) {
       console.error('Change password error:', err)
       const eObj = err as Record<string, unknown>

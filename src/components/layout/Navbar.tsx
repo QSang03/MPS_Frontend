@@ -42,6 +42,13 @@ export function Navbar({ session }: NavbarProps) {
   })()
 
   const handleLogout = async () => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        localStorage.removeItem('mps_navigation')
+      }
+    } catch {
+      // ignore
+    }
     await logout()
   }
 
@@ -154,7 +161,7 @@ export function Navbar({ session }: NavbarProps) {
                     {/* Email and Chevron */}
                     <div className="hidden items-center gap-1 md:flex">
                       <span className="max-w-[150px] truncate text-sm font-semibold text-gray-700">
-                        {session.email}
+                        {session.username || session.email}
                       </span>
                       <ChevronDown className="h-4 w-4 text-gray-500 transition-all duration-300 group-hover:rotate-180 group-hover:text-blue-700" />
                     </div>

@@ -64,6 +64,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { consumablesClientService } from '@/lib/api/services/consumables-client.service'
 import type { CreateConsumableDto } from '@/lib/api/services/consumables-client.service'
 import { deviceModelsClientService } from '@/lib/api/services/device-models-client.service'
+import { ActionGuard } from '@/components/shared/ActionGuard'
 import { cn } from '@/lib/utils'
 import { Separator } from '@/components/ui/separator'
 import { removeEmpty } from '@/lib/utils/clean'
@@ -451,26 +452,30 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
           <div className="flex items-center gap-3">
             {getStatusBadge(device.isActive)}
             {renderStatusChip()}
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => setA4ModalOpen(true)}
-              className="gap-2 bg-white text-black"
-              title="Ghi/Chỉnh sửa snapshot A4"
-            >
-              <BarChart3 className="h-4 w-4 text-black" />
-              A4
-            </Button>
-            {Boolean(device?.isActive) ? (
+            <ActionGuard pageId="devices" actionId="set-a4-pricing">
               <Button
                 variant="secondary"
                 size="sm"
-                onClick={() => setShowEdit(true)}
-                className="gap-2"
+                onClick={() => setA4ModalOpen(true)}
+                className="gap-2 bg-white text-black"
+                title="Ghi/Chỉnh sửa snapshot A4"
               >
-                <Edit className="h-4 w-4" />
-                Chỉnh sửa
+                <BarChart3 className="h-4 w-4 text-black" />
+                A4
               </Button>
+            </ActionGuard>
+            {Boolean(device?.isActive) ? (
+              <ActionGuard pageId="devices" actionId="update">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setShowEdit(true)}
+                  className="gap-2"
+                >
+                  <Edit className="h-4 w-4" />
+                  Chỉnh sửa
+                </Button>
+              </ActionGuard>
             ) : (
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -488,29 +493,31 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
             )}
 
             {Boolean(device?.isActive) ? (
-              <DeleteDialog
-                title="Xóa thiết bị"
-                description="Bạn có chắc muốn xóa thiết bị này? Hành động không thể hoàn tác."
-                onConfirm={async () => {
-                  try {
-                    await devicesClientService.delete(deviceId)
-                    toast.success('Xóa thiết bị thành công')
-                    // navigate back to the provided backHref if present, otherwise fall back to model-based route
-                    if (backHref) router.push(backHref)
-                    else if (modelId) router.push(`/system/device-models/${modelId}`)
-                    else router.push('/system/device-models')
-                  } catch (err) {
-                    console.error('Delete device failed', err)
-                    toast.error('Xóa thiết bị thất bại')
+              <ActionGuard pageId="devices" actionId="delete">
+                <DeleteDialog
+                  title="Xóa thiết bị"
+                  description="Bạn có chắc muốn xóa thiết bị này? Hành động không thể hoàn tác."
+                  onConfirm={async () => {
+                    try {
+                      await devicesClientService.delete(deviceId)
+                      toast.success('Xóa thiết bị thành công')
+                      // navigate back to the provided backHref if present, otherwise fall back to model-based route
+                      if (backHref) router.push(backHref)
+                      else if (modelId) router.push(`/system/device-models/${modelId}`)
+                      else router.push('/system/device-models')
+                    } catch (err) {
+                      console.error('Delete device failed', err)
+                      toast.error('Xóa thiết bị thất bại')
+                    }
+                  }}
+                  trigger={
+                    <Button variant="destructive" size="sm" className="gap-2">
+                      <Trash2 className="h-4 w-4" />
+                      Xóa
+                    </Button>
                   }
-                }}
-                trigger={
-                  <Button variant="destructive" size="sm" className="gap-2">
-                    <Trash2 className="h-4 w-4" />
-                    Xóa
-                  </Button>
-                }
-              />
+                />
+              </ActionGuard>
             ) : (
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -861,38 +868,40 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                   </CardDescription>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={async () => {
-                      try {
-                        setShowAttachFromOrphaned(true)
-                        const cid = device?.customerId
-                        if (!cid) {
-                          toast.error('Thiết bị chưa có khách hàng')
-                          return
+                  <ActionGuard pageId="consumables" actionId="create">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={async () => {
+                        try {
+                          setShowAttachFromOrphaned(true)
+                          const cid = device?.customerId
+                          if (!cid) {
+                            toast.error('Thiết bị chưa có khách hàng')
+                            return
+                          }
+                          setConsumablesLoading(true)
+                          const list = await consumablesClientService.list({
+                            customerId: cid,
+                            isOrphaned: true,
+                          })
+                          const items = Array.isArray((list as any)?.items)
+                            ? (list as any).items
+                            : Array.isArray(list)
+                              ? (list as any)
+                              : []
+                          setOrphanedList(items)
+                        } catch (e) {
+                          console.error('Load orphaned consumables failed', e)
+                          toast.error('Không tải được vật tư đã xuất sẵn')
+                        } finally {
+                          setConsumablesLoading(false)
                         }
-                        setConsumablesLoading(true)
-                        const list = await consumablesClientService.list({
-                          customerId: cid,
-                          isOrphaned: true,
-                        })
-                        const items = Array.isArray(list?.items)
-                          ? list.items
-                          : Array.isArray(list)
-                            ? list
-                            : []
-                        setOrphanedList(items)
-                      } catch (e) {
-                        console.error('Load orphaned consumables failed', e)
-                        toast.error('Không tải được vật tư đã xuất sẵn')
-                      } finally {
-                        setConsumablesLoading(false)
-                      }
-                    }}
-                  >
-                    Chọn từ vật tư đã xuất sẵn
-                  </Button>
+                      }}
+                    >
+                      Chọn từ vật tư đã xuất sẵn
+                    </Button>
+                  </ActionGuard>
                 </div>
               </div>
             </CardHeader>
@@ -1030,62 +1039,64 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                                   Lịch sử
                                 </Button>
 
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => {
-                                    const consumableData = cons ?? c
-                                    setEditingConsumable(consumableData)
-                                    setEditSerialNumber(consumableData?.serialNumber ?? '')
-                                    setEditBatchNumber(consumableData?.batchNumber ?? '')
-                                    setEditCapacity(consumableData?.capacity ?? '')
-                                    setEditRemaining(consumableData?.remaining ?? '')
-                                    const expiryDateValue = consumableData?.expiryDate
-                                      ? new Date(consumableData.expiryDate)
-                                          .toISOString()
-                                          .split('T')[0]
-                                      : ''
-                                    setEditExpiryDate(expiryDateValue ?? '')
-                                    setEditConsumableStatus(consumableData?.status ?? 'ACTIVE')
-                                    // device-level fields
-                                    setEditInstalledAt(c?.installedAt ?? null)
-                                    setEditRemovedAt(c?.removedAt ?? null)
-                                    setEditActualPagesPrinted(c?.actualPagesPrinted ?? '')
+                                <ActionGuard pageId="consumables" actionId="update">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      const consumableData = cons ?? c
+                                      setEditingConsumable(consumableData)
+                                      setEditSerialNumber(consumableData?.serialNumber ?? '')
+                                      setEditBatchNumber(consumableData?.batchNumber ?? '')
+                                      setEditCapacity(consumableData?.capacity ?? '')
+                                      setEditRemaining(consumableData?.remaining ?? '')
+                                      const expiryDateValue = consumableData?.expiryDate
+                                        ? new Date(consumableData.expiryDate)
+                                            .toISOString()
+                                            .split('T')[0]
+                                        : ''
+                                      setEditExpiryDate(expiryDateValue ?? '')
+                                      setEditConsumableStatus(consumableData?.status ?? 'ACTIVE')
+                                      // device-level fields
+                                      setEditInstalledAt(c?.installedAt ?? null)
+                                      setEditRemovedAt(c?.removedAt ?? null)
+                                      setEditActualPagesPrinted(c?.actualPagesPrinted ?? '')
 
-                                    // Always default checkbox to unchecked
-                                    setEditShowRemovedAt(false)
+                                      // Always default checkbox to unchecked
+                                      setEditShowRemovedAt(false)
 
-                                    // Set price fields: if exchangeRate exists, show VND mode
-                                    const existingPrice = c?.price
-                                    const existingExchangeRate = Number(
-                                      (c as unknown as Record<string, unknown>)['exchangeRate'] ??
-                                        ''
-                                    )
+                                      // Set price fields: if exchangeRate exists, show VND mode
+                                      const existingPrice = c?.price
+                                      const existingExchangeRate = Number(
+                                        (c as unknown as Record<string, unknown>)['exchangeRate'] ??
+                                          ''
+                                      )
 
-                                    if (existingExchangeRate && existingPrice) {
-                                      // VND mode: calculate VND from price * exchangeRate
-                                      setEditPriceVND(existingPrice * existingExchangeRate)
-                                      setEditExchangeRate(existingExchangeRate)
-                                      setEditPriceUSD('')
-                                    } else if (existingPrice) {
-                                      // USD mode: use price directly
-                                      setEditPriceUSD(existingPrice)
-                                      setEditPriceVND('')
-                                      setEditExchangeRate('')
-                                    } else {
-                                      // No price data
-                                      setEditPriceVND('')
-                                      setEditPriceUSD('')
-                                      setEditExchangeRate('')
-                                    }
+                                      if (existingExchangeRate && existingPrice) {
+                                        // VND mode: calculate VND from price * exchangeRate
+                                        setEditPriceVND(existingPrice * existingExchangeRate)
+                                        setEditExchangeRate(existingExchangeRate)
+                                        setEditPriceUSD('')
+                                      } else if (existingPrice) {
+                                        // USD mode: use price directly
+                                        setEditPriceUSD(existingPrice)
+                                        setEditPriceVND('')
+                                        setEditExchangeRate('')
+                                      } else {
+                                        // No price data
+                                        setEditPriceVND('')
+                                        setEditPriceUSD('')
+                                        setEditExchangeRate('')
+                                      }
 
-                                    setShowEditConsumable(true)
-                                  }}
-                                  className="gap-2"
-                                >
-                                  <Edit className="h-4 w-4" />
-                                  Sửa
-                                </Button>
+                                      setShowEditConsumable(true)
+                                    }}
+                                    className="gap-2"
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                    Sửa
+                                  </Button>
+                                </ActionGuard>
                               </div>
                             </td>
                           </tr>
@@ -1147,26 +1158,28 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                           </td>
                           <td className="px-4 py-3 text-right">
                             {Boolean(device?.isActive) ? (
-                              <Button
-                                size="sm"
-                                onClick={() => {
-                                  setSelectedConsumableType(ct)
-                                  setSerialNumber('')
-                                  setBatchNumber('')
-                                  setCapacity('')
-                                  setRemaining('')
-                                  setCreateInstalledAt(null)
-                                  setCreateActualPagesPrinted('')
-                                  setCreatePriceVND('')
-                                  setCreatePriceUSD('')
-                                  setCreateExchangeRate('')
-                                  setShowCreateConsumable(true)
-                                }}
-                                className="gap-2"
-                              >
-                                <Plus className="h-4 w-4" />
-                                Thêm
-                              </Button>
+                              <ActionGuard pageId="consumables" actionId="create">
+                                <Button
+                                  size="sm"
+                                  onClick={() => {
+                                    setSelectedConsumableType(ct)
+                                    setSerialNumber('')
+                                    setBatchNumber('')
+                                    setCapacity('')
+                                    setRemaining('')
+                                    setCreateInstalledAt(null)
+                                    setCreateActualPagesPrinted('')
+                                    setCreatePriceVND('')
+                                    setCreatePriceUSD('')
+                                    setCreateExchangeRate('')
+                                    setShowCreateConsumable(true)
+                                  }}
+                                  className="gap-2"
+                                >
+                                  <Plus className="h-4 w-4" />
+                                  Thêm
+                                </Button>
+                              </ActionGuard>
                             ) : (
                               <Tooltip>
                                 <TooltipTrigger asChild>

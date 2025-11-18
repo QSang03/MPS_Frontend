@@ -30,6 +30,7 @@ export const ROUTES = {
 
   // User
   USER_MY_DEVICES: '/user/my-devices',
+  USER_DASHBOARD: '/user/dashboard',
   USER_MY_REQUESTS: '/user/my-requests',
   USER_PROFILE: '/user/profile',
   USER_SETTINGS: '/user/settings',

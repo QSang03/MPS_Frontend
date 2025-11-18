@@ -25,11 +25,34 @@ export default function ConsumablesList() {
         setLoading(true)
         const params: Record<string, unknown> = { page: p, limit }
         if (debouncedSearch) params.search = debouncedSearch
-        const res = await consumablesClientService.list(params)
-        const items = Array.isArray(res?.items) ? res.items : Array.isArray(res) ? res : []
-        setConsumables(items as unknown as Record<string, unknown>[])
-        setTotal(res?.total ?? items.length)
-        setTotalPages(res?.totalPages ?? Math.ceil((res?.total ?? items.length) / limit))
+        const res = await consumablesClientService.list<
+          { items?: unknown[]; total?: number; totalPages?: number } | unknown[]
+        >(params)
+
+        const isRecordPayload = res && typeof res === 'object' && !Array.isArray(res)
+
+        const items = isRecordPayload
+          ? Array.isArray((res as { items?: unknown[] }).items)
+            ? (res as { items?: unknown[] }).items!
+            : []
+          : Array.isArray(res)
+            ? (res as unknown[])
+            : []
+
+        setConsumables(items as Record<string, unknown>[])
+
+        const totalFromRes =
+          isRecordPayload && typeof (res as { total?: number }).total === 'number'
+            ? (res as { total?: number }).total!
+            : undefined
+
+        const totalPagesFromRes =
+          isRecordPayload && typeof (res as { totalPages?: number }).totalPages === 'number'
+            ? (res as { totalPages?: number }).totalPages!
+            : undefined
+
+        setTotal(totalFromRes ?? items.length)
+        setTotalPages(totalPagesFromRes ?? Math.ceil((totalFromRes ?? items.length) / limit))
       } catch (err) {
         console.error('Load consumables failed', err)
         setConsumables([])
