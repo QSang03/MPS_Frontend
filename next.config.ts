@@ -32,6 +32,11 @@ const nextConfig: NextConfig = {
   // Enable compression
   compress: true,
 
+  // // Temporarily ignore ESLint during builds to allow incremental lint fixes
+  // eslint: {
+  //   ignoreDuringBuilds: true,
+  // },
+
   // Bundle analyzer
   ...(process.env.ANALYZE === 'true' && {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

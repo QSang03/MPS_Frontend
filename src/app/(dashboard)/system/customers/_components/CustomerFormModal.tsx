@@ -36,6 +36,7 @@ type LocalCustomerForm = Partial<Customer> & {
   tier?: string
   isActive?: boolean
   description?: string
+  billingDay?: number
 }
 import { Plus, Edit, Loader2, Building2, User, MapPin, CheckCircle2 } from 'lucide-react'
 
@@ -60,6 +61,7 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
     tier: 'BASIC',
     isActive: true,
     description: '',
+    billingDay: undefined,
   })
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const clearFieldError = (key: string) =>
@@ -77,6 +79,7 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
   const contactPersonRef = useRef<HTMLInputElement | null>(null)
   const addressRef = useRef<HTMLInputElement | null>(null)
   const descriptionRef = useRef<HTMLInputElement | null>(null)
+  const billingDayRef = useRef<HTMLInputElement | null>(null)
 
   // autofocus first invalid field when fieldErrors is set by server validation
   useEffect(() => {
@@ -90,6 +93,7 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
       'contactPerson',
       'address',
       'description',
+      'billingDay',
     ]
 
     const refs: Record<string, React.RefObject<HTMLInputElement | null>> = {
@@ -100,6 +104,7 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
       contactPerson: contactPersonRef,
       address: addressRef,
       description: descriptionRef,
+      billingDay: billingDayRef,
     }
 
     for (const k of order) {
@@ -137,6 +142,7 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
         contactPerson: (customer as any).contactPerson,
         tier: (customer as any).tier || 'BASIC',
         isActive: (customer as any).isActive ?? true,
+        billingDay: (customer as any).billingDay,
       })
     }, 0)
     return () => clearTimeout(t)
@@ -170,6 +176,14 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
     // code: optional but if present, ensure no spaces
     if (form.code && String(form.code).includes(' ')) {
       errors.code = 'Mã không được chứa dấu cách'
+    }
+
+    // billingDay: optional but if present, must be between 1-31
+    if (form.billingDay !== undefined && form.billingDay !== null) {
+      const day = Number(form.billingDay)
+      if (isNaN(day) || day < 1 || day > 31) {
+        errors.billingDay = 'Ngày thanh toán phải từ 1 đến 31'
+      }
     }
 
     if (Object.keys(errors).length) {
@@ -446,6 +460,34 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
                       <SelectItem value="ENTERPRISE">ENTERPRISE</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-base font-semibold">Ngày thanh toán</Label>
+                  <Input
+                    ref={billingDayRef}
+                    type="number"
+                    min="1"
+                    max="31"
+                    value={
+                      form.billingDay !== undefined && form.billingDay !== null
+                        ? form.billingDay
+                        : ''
+                    }
+                    onChange={(e) => {
+                      const value = e.target.value
+                      setForm((s) => ({
+                        ...s,
+                        billingDay: value === '' ? undefined : Number(value),
+                      }))
+                      clearFieldError('billingDay')
+                    }}
+                    placeholder="Nhập ngày (1-31)"
+                    className={`h-11 ${fieldErrors.billingDay ? 'border-destructive focus-visible:ring-destructive/50' : ''}`}
+                  />
+                  {fieldErrors.billingDay && (
+                    <p className="text-destructive mt-1 text-sm">{fieldErrors.billingDay}</p>
+                  )}
                 </div>
               </div>
             </div>

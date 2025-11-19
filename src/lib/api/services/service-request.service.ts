@@ -5,9 +5,11 @@ import type {
   CreateServiceRequestDto,
   UpdateServiceRequestDto,
   ServiceRequestStats,
+  ServiceRequestCost,
+  CreateServiceRequestCostDto,
 } from '@/types/models'
-import type { PaginatedResponse, PaginationParams } from '@/types/api'
-import { ServiceRequestStatus } from '@/constants/status'
+import type { ApiListResponse } from '@/types/api'
+import { ServiceRequestStatus, Priority } from '@/constants/status'
 
 /**
  * Service Request API Service
@@ -16,10 +18,18 @@ export const serviceRequestService = {
   /**
    * Get all service requests with pagination and filtering
    */
-  async getAll(
-    params: PaginationParams & { customerId?: string; status?: ServiceRequestStatus }
-  ): Promise<PaginatedResponse<ServiceRequest>> {
-    const { data } = await apiClient.get<PaginatedResponse<ServiceRequest>>(
+  async getAll(params?: {
+    page?: number
+    limit?: number
+    search?: string
+    sortBy?: string
+    sortOrder?: 'asc' | 'desc'
+    customerId?: string
+    priority?: Priority
+    status?: ServiceRequestStatus
+    assignedTo?: string
+  }): Promise<ApiListResponse<ServiceRequest>> {
+    const { data } = await apiClient.get<ApiListResponse<ServiceRequest>>(
       API_ENDPOINTS.SERVICE_REQUESTS.LIST,
       { params }
     )
@@ -30,30 +40,43 @@ export const serviceRequestService = {
    * Get service request by ID
    */
   async getById(id: string): Promise<ServiceRequest> {
-    const { data } = await apiClient.get<ServiceRequest>(API_ENDPOINTS.SERVICE_REQUESTS.DETAIL(id))
-    return data
+    const response = await apiClient.get<{ success: boolean; data: ServiceRequest }>(
+      API_ENDPOINTS.SERVICE_REQUESTS.DETAIL(id)
+    )
+    return response.data.data
   },
 
   /**
    * Create new service request
    */
   async create(dto: CreateServiceRequestDto): Promise<ServiceRequest> {
-    const { data } = await apiClient.post<ServiceRequest>(
+    const response = await apiClient.post<{ success: boolean; data: ServiceRequest }>(
       API_ENDPOINTS.SERVICE_REQUESTS.CREATE,
       dto
     )
-    return data
+    return response.data.data
   },
 
   /**
    * Update service request
    */
   async update(id: string, dto: UpdateServiceRequestDto): Promise<ServiceRequest> {
-    const { data } = await apiClient.patch<ServiceRequest>(
+    const response = await apiClient.patch<{ success: boolean; data: ServiceRequest }>(
       API_ENDPOINTS.SERVICE_REQUESTS.UPDATE(id),
       dto
     )
-    return data
+    return response.data.data
+  },
+
+  /**
+   * Update service request status
+   */
+  async updateStatus(id: string, status: ServiceRequestStatus): Promise<ServiceRequest> {
+    const response = await apiClient.patch<{ success: boolean; data: ServiceRequest }>(
+      API_ENDPOINTS.SERVICE_REQUESTS.STATUS(id),
+      { status }
+    )
+    return response.data.data
   },
 
   /**
@@ -69,6 +92,27 @@ export const serviceRequestService = {
   async getStats(customerId: string): Promise<ServiceRequestStats> {
     const { data } = await apiClient.get<ServiceRequestStats>(
       API_ENDPOINTS.SERVICE_REQUESTS.STATS(customerId)
+    )
+    return data
+  },
+
+  /**
+   * Create service request cost
+   */
+  async createCost(id: string, dto: CreateServiceRequestCostDto): Promise<ServiceRequestCost> {
+    const response = await apiClient.post<{ success: boolean; data: ServiceRequestCost }>(
+      API_ENDPOINTS.SERVICE_REQUESTS.COSTS(id),
+      dto
+    )
+    return response.data.data
+  },
+
+  /**
+   * Get all costs for a service request
+   */
+  async getCosts(id: string): Promise<ApiListResponse<ServiceRequestCost>> {
+    const { data } = await apiClient.get<ApiListResponse<ServiceRequestCost>>(
+      API_ENDPOINTS.SERVICE_REQUESTS.COSTS(id)
     )
     return data
   },

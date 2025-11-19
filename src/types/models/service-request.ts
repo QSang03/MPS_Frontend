@@ -5,15 +5,13 @@ import { ServiceRequestStatus, Priority } from '@/constants/status'
  */
 export interface ServiceRequest {
   id: string
-  deviceId: string
   customerId: string
+  slaId?: string
+  assignedTo?: string
+  title: string
   description: string
   priority: Priority
   status: ServiceRequestStatus
-  createdBy: string
-  assignedTo?: string
-  resolvedAt?: string
-  notes?: string
   createdAt: string
   updatedAt: string
 }
@@ -22,18 +20,26 @@ export interface ServiceRequest {
  * Create service request DTO
  */
 export interface CreateServiceRequestDto {
+  customerId: string
   deviceId: string
+  title: string
   description: string
   priority: Priority
+  status?: ServiceRequestStatus
+  assignedTo?: string
 }
 
 /**
  * Update service request DTO
  */
 export interface UpdateServiceRequestDto {
+  customerId?: string
+  deviceId?: string
+  title?: string
+  description?: string
+  priority?: Priority
   status?: ServiceRequestStatus
   assignedTo?: string
-  notes?: string
 }
 
 /**
@@ -45,4 +51,48 @@ export interface ServiceRequestStats {
   inProgress: number
   resolved: number
   closed: number
+}
+
+/**
+ * Service request cost item type
+ */
+export type ServiceRequestCostItemType = 'LABOR' | 'PARTS' | 'OTHER'
+
+/**
+ * Service request cost item
+ */
+export interface ServiceRequestCostItem {
+  id: string
+  costId: string
+  type: ServiceRequestCostItemType
+  amount: number
+  note?: string
+  createdAt: string
+}
+
+/**
+ * Service request cost
+ */
+export interface ServiceRequestCost {
+  id: string
+  serviceRequestId: string
+  deviceId: string
+  totalAmount: number
+  currency: string
+  createdAt: string
+  updatedAt: string
+  items: ServiceRequestCostItem[]
+}
+
+/**
+ * Create service request cost DTO
+ */
+export interface CreateServiceRequestCostDto {
+  deviceId: string
+  totalAmount: number
+  items: Array<{
+    type: ServiceRequestCostItemType
+    amount: number
+    note?: string
+  }>
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import CustomerSelect from '@/components/shared/CustomerSelect'
@@ -97,6 +97,62 @@ export default function AnalyticsPageClient() {
   const [consumableLoading, setConsumableLoading] = useState(false)
   const [consumableData, setConsumableData] = useState<ConsumableLifecycleItem[]>([])
 
+  // Load Enterprise Profit
+  const loadEnterpriseProfit = useCallback(
+    async (period?: string) => {
+      const periodToUse = period ?? enterprisePeriod
+      if (!periodToUse) {
+        toast.warning('Vui lòng nhập kỳ (YYYY-MM)')
+        return
+      }
+      setEnterpriseLoading(true)
+      try {
+        const res = await reportsAnalyticsService.getEnterpriseProfit({ period: periodToUse })
+        if (res.success && res.data) {
+          setEnterpriseData(res.data)
+        } else {
+          toast.error(res.message || 'Không tải được dữ liệu doanh nghiệp')
+          setEnterpriseData(null)
+        }
+      } catch (e) {
+        console.error(e)
+        toast.error('Lỗi khi tải dữ liệu doanh nghiệp')
+        setEnterpriseData(null)
+      } finally {
+        setEnterpriseLoading(false)
+      }
+    },
+    [enterprisePeriod]
+  )
+
+  // Load Customers Profit
+  const loadCustomersProfit = useCallback(
+    async (period?: string) => {
+      const periodToUse = period ?? customersPeriod
+      if (!periodToUse) {
+        toast.warning('Vui lòng nhập kỳ (YYYY-MM)')
+        return
+      }
+      setCustomersLoading(true)
+      try {
+        const res = await reportsAnalyticsService.getCustomersProfit({ period: periodToUse })
+        if (res.success && res.data) {
+          setCustomersData(res.data.customers)
+        } else {
+          toast.error(res.message || 'Không tải được dữ liệu khách hàng')
+          setCustomersData([])
+        }
+      } catch (e) {
+        console.error(e)
+        toast.error('Lỗi khi tải dữ liệu khách hàng')
+        setCustomersData([])
+      } finally {
+        setCustomersLoading(false)
+      }
+    },
+    [customersPeriod]
+  )
+
   // Prefill current month
   useEffect(() => {
     const now = new Date()
@@ -112,81 +168,54 @@ export default function AnalyticsPageClient() {
     setDeviceTo(currentMonth)
     setConsumableFrom(fromMonth)
     setConsumableTo(currentMonth)
-  }, [])
-
-  // Load Enterprise Profit
-  const loadEnterpriseProfit = async () => {
-    if (!enterprisePeriod) {
-      toast.warning('Vui lòng nhập kỳ (YYYY-MM)')
-      return
-    }
-    setEnterpriseLoading(true)
-    try {
-      const res = await reportsAnalyticsService.getEnterpriseProfit({ period: enterprisePeriod })
-      if (res.success && res.data) {
-        setEnterpriseData(res.data)
-      } else {
-        toast.error(res.message || 'Không tải được dữ liệu doanh nghiệp')
-        setEnterpriseData(null)
+    // Auto-load enterprise and customers profit for the initial month so the page shows data by default
+    void (async () => {
+      try {
+        await loadEnterpriseProfit(currentMonth)
+      } catch {
+        // ignore - loadEnterpriseProfit handles errors
       }
-    } catch (e) {
-      console.error(e)
-      toast.error('Lỗi khi tải dữ liệu doanh nghiệp')
-      setEnterpriseData(null)
-    } finally {
-      setEnterpriseLoading(false)
-    }
-  }
-
-  // Load Customers Profit
-  const loadCustomersProfit = async () => {
-    if (!customersPeriod) {
-      toast.warning('Vui lòng nhập kỳ (YYYY-MM)')
-      return
-    }
-    setCustomersLoading(true)
-    try {
-      const res = await reportsAnalyticsService.getCustomersProfit({ period: customersPeriod })
-      if (res.success && res.data) {
-        setCustomersData(res.data.customers)
-      } else {
-        toast.error(res.message || 'Không tải được dữ liệu khách hàng')
-        setCustomersData([])
+      try {
+        await loadCustomersProfit(currentMonth)
+      } catch {
+        // ignore - loadCustomersProfit handles errors
       }
-    } catch (e) {
-      console.error(e)
-      toast.error('Lỗi khi tải dữ liệu khách hàng')
-      setCustomersData([])
-    } finally {
-      setCustomersLoading(false)
-    }
-  }
+    })()
+  }, [loadCustomersProfit, loadEnterpriseProfit])
 
   // Load Customer Detail
-  const loadCustomerDetail = async () => {
-    if (!selectedCustomerId || !customerDetailPeriod) {
-      toast.warning('Vui lòng nhập Customer ID và kỳ (YYYY-MM)')
-      return
-    }
-    setCustomerDetailLoading(true)
-    try {
-      const res = await reportsAnalyticsService.getCustomerDetailProfit(selectedCustomerId, {
-        period: customerDetailPeriod,
-      })
-      if (res.success && res.data) {
-        setCustomerDetailData(res.data)
-      } else {
-        toast.error(res.message || 'Không tải được chi tiết khách hàng')
-        setCustomerDetailData(null)
+  const loadCustomerDetail = useCallback(
+    async (customerId?: string, period?: string) => {
+      const idToUse = customerId ?? selectedCustomerId
+      const periodToUse = period ?? customerDetailPeriod
+      if (!idToUse || !periodToUse) {
+        toast.warning('Vui lòng nhập Customer ID và kỳ (YYYY-MM)')
+        return
       }
-    } catch (e) {
-      console.error(e)
-      toast.error('Lỗi khi tải chi tiết khách hàng')
-      setCustomerDetailData(null)
-    } finally {
-      setCustomerDetailLoading(false)
-    }
-  }
+      setCustomerDetailLoading(true)
+      try {
+        const res = await reportsAnalyticsService.getCustomerDetailProfit(idToUse, {
+          period: periodToUse,
+        })
+        if (res.success && res.data) {
+          setCustomerDetailData(res.data)
+          // ensure selectedCustomerId and period reflect the loaded detail
+          setSelectedCustomerId(idToUse)
+          setCustomerDetailPeriod(periodToUse)
+        } else {
+          toast.error(res.message || 'Không tải được chi tiết khách hàng')
+          setCustomerDetailData(null)
+        }
+      } catch (e) {
+        console.error(e)
+        toast.error('Lỗi khi tải chi tiết khách hàng')
+        setCustomerDetailData(null)
+      } finally {
+        setCustomerDetailLoading(false)
+      }
+    },
+    [customerDetailPeriod, selectedCustomerId]
+  )
 
   // Load Device Profitability
   const loadDeviceProfitability = async () => {
@@ -250,6 +279,13 @@ export default function AnalyticsPageClient() {
     return c.name.toLowerCase().includes(customersSearchTerm.toLowerCase())
   })
 
+  // Auto-load customer detail when a customer is selected from the CustomerSelect control
+  useEffect(() => {
+    if (!customersSearchId) return
+    // Use the current customersPeriod as the detail period
+    void loadCustomerDetail(customersSearchId, customersPeriod)
+  }, [customersSearchId, customersPeriod, loadCustomerDetail])
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -276,7 +312,7 @@ export default function AnalyticsPageClient() {
                 className="w-40"
               />
             </div>
-            <Button onClick={loadEnterpriseProfit} disabled={enterpriseLoading}>
+            <Button onClick={() => void loadEnterpriseProfit()} disabled={enterpriseLoading}>
               {enterpriseLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Tải dữ liệu
             </Button>
@@ -381,7 +417,7 @@ export default function AnalyticsPageClient() {
                 }}
               />
             </div>
-            <Button onClick={loadCustomersProfit} disabled={customersLoading}>
+            <Button onClick={() => void loadCustomersProfit()} disabled={customersLoading}>
               {customersLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Tải dữ liệu
             </Button>
@@ -433,8 +469,8 @@ export default function AnalyticsPageClient() {
                           variant="outline"
                           size="sm"
                           onClick={() => {
-                            setSelectedCustomerId(c.customerId)
-                            setCustomerDetailPeriod(customersPeriod)
+                            // load detail immediately for this customer using current customersPeriod
+                            void loadCustomerDetail(c.customerId, customersPeriod)
                           }}
                         >
                           Chi tiết
@@ -476,7 +512,7 @@ export default function AnalyticsPageClient() {
                   className="w-40"
                 />
               </div>
-              <Button onClick={loadCustomerDetail} disabled={customerDetailLoading}>
+              <Button onClick={() => void loadCustomerDetail()} disabled={customerDetailLoading}>
                 {customerDetailLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                 Tải dữ liệu
               </Button>

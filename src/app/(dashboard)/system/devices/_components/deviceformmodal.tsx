@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import {
@@ -54,6 +54,20 @@ interface Props {
   compact?: boolean
 }
 
+const buildInitialForm = () => ({
+  deviceModelId: '',
+  serialNumber: '',
+  customerLocation: '',
+  ipAddress: '',
+  macAddress: '',
+  firmware: '',
+  isActive: true,
+  status: 'ACTIVE',
+  inactiveReasonOption: '',
+  inactiveReasonText: '',
+  customerId: '',
+})
+
 export default function DeviceFormModal({
   mode = 'create',
   device = null,
@@ -62,19 +76,9 @@ export default function DeviceFormModal({
 }: Props) {
   const [open, setOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
-  const [form, setForm] = useState<any>({
-    deviceModelId: '',
-    serialNumber: '',
-    customerLocation: '',
-    ipAddress: '',
-    macAddress: '',
-    firmware: '',
-    isActive: true,
-    status: 'ACTIVE',
-    inactiveReasonOption: '',
-    inactiveReasonText: '',
-    customerId: '',
-  })
+  const [customerAddresses, setCustomerAddresses] = useState<string[]>([])
+  const [loadingAddresses, setLoadingAddresses] = useState(false)
+  const [form, setForm] = useState<any>(() => buildInitialForm())
   // device models and customers are shared resources; use React Query to deduplicate
   const { data: modelsData, isLoading: modelsLoading } = useQuery({
     queryKey: ['device-models', { page: 1, limit: 100 }],
@@ -86,27 +90,129 @@ export default function DeviceFormModal({
     queryFn: () => customersClientService.getAll({ page: 1, limit: 100 }).then((r) => r.data),
   })
 
-  const models = modelsData ?? []
-  const customers = customersData ?? []
+  const models = useMemo(() => modelsData ?? [], [modelsData])
+  const customers = useMemo(() => customersData ?? [], [customersData])
+  const hasPrefilledLocationRef = useRef(false)
+  const lastInitializedKeyRef = useRef<string | null>(null)
+  const lastFetchedCustomerIdRef = useRef<string | null>(null)
+
+  const resolvedCustomerId = useMemo(() => {
+    if (mode === 'edit') {
+      return form.customerId || (device as any)?.customerId || (device as any)?.customer?.id || ''
+    }
+    return form.customerId || ''
+  }, [mode, form.customerId, device])
+
+  const selectedCustomer = useMemo(() => {
+    if (!resolvedCustomerId) return undefined
+    return customers.find((c) => c.id === resolvedCustomerId)
+  }, [customers, resolvedCustomerId])
 
   useEffect(() => {
-    if (!device) return
-    setForm({
-      deviceModelId: device.deviceModelId || device.deviceModel?.id || '',
-      serialNumber: device.serialNumber || '',
-      customerLocation: device.customerLocation || '',
-      ipAddress: device.ipAddress || '',
-      macAddress: device.macAddress || '',
-      firmware: device.firmware || '',
-      isActive: typeof device.isActive === 'boolean' ? device.isActive : true,
-      status:
-        (device.status as string) ||
-        (device.isActive ? DEVICE_STATUS.ACTIVE : DEVICE_STATUS.DECOMMISSIONED),
-      inactiveReasonOption: device.inactiveReason ? device.inactiveReason : '',
-      inactiveReasonText: device.inactiveReason || '',
-      customerId: device.customerId || device.customer?.id || '',
-    })
-  }, [device])
+    if (!open) {
+      lastInitializedKeyRef.current = null
+      setForm(buildInitialForm())
+      setCustomerAddresses([])
+      hasPrefilledLocationRef.current = false
+      lastFetchedCustomerIdRef.current = null
+      return
+    }
+
+    const key = mode === 'edit' ? `edit-${device?.id ?? 'none'}` : 'create'
+    if (lastInitializedKeyRef.current === key) return
+    lastInitializedKeyRef.current = key
+    hasPrefilledLocationRef.current = false
+    lastFetchedCustomerIdRef.current = null
+
+    if (mode === 'edit' && device) {
+      setForm({
+        deviceModelId: device.deviceModelId || device.deviceModel?.id || '',
+        serialNumber: device.serialNumber || '',
+        customerLocation: device.location || device.customerLocation || '',
+        ipAddress: device.ipAddress || '',
+        macAddress: device.macAddress || '',
+        firmware: device.firmware || '',
+        isActive: typeof device.isActive === 'boolean' ? device.isActive : true,
+        status:
+          (device.status as string) ||
+          (device.isActive ? DEVICE_STATUS.ACTIVE : DEVICE_STATUS.DECOMMISSIONED),
+        inactiveReasonOption: device.inactiveReason ? device.inactiveReason : '',
+        inactiveReasonText: device.inactiveReason || '',
+        customerId: device.customerId || device.customer?.id || '',
+      })
+    } else {
+      setForm(buildInitialForm())
+    }
+  }, [open, mode, device])
+
+  // Fetch customer addresses when modal opens in edit mode and device has a customer
+  useEffect(() => {
+    if (!open || mode !== 'edit' || !device) {
+      setCustomerAddresses([])
+      hasPrefilledLocationRef.current = false
+      lastFetchedCustomerIdRef.current = null
+      return
+    }
+
+    if (!resolvedCustomerId) {
+      setCustomerAddresses([])
+      hasPrefilledLocationRef.current = false
+      lastFetchedCustomerIdRef.current = null
+      return
+    }
+
+    const isSystemWarehouse = selectedCustomer?.code === 'SYS'
+    if (isSystemWarehouse) {
+      setCustomerAddresses([])
+      hasPrefilledLocationRef.current = false
+      lastFetchedCustomerIdRef.current = null
+      return
+    }
+
+    if (
+      lastFetchedCustomerIdRef.current === resolvedCustomerId &&
+      hasPrefilledLocationRef.current
+    ) {
+      return
+    }
+    lastFetchedCustomerIdRef.current = resolvedCustomerId
+
+    const fetchCustomerDetails = async () => {
+      setLoadingAddresses(true)
+      try {
+        const details = await customersClientService.getById(resolvedCustomerId)
+        if (details?.address && Array.isArray(details.address)) {
+          setCustomerAddresses(details.address)
+          // Pre-select first address if no location is set (only once when addresses are loaded)
+          if (
+            details.address.length > 0 &&
+            !form.customerLocation &&
+            !hasPrefilledLocationRef.current
+          ) {
+            const firstAddr = details.address[0]
+            if (firstAddr) {
+              setForm((s: any) => ({ ...s, customerLocation: firstAddr }))
+              hasPrefilledLocationRef.current = true
+            }
+          }
+        } else {
+          setCustomerAddresses([])
+          hasPrefilledLocationRef.current = false
+          lastFetchedCustomerIdRef.current = null
+        }
+      } catch (err) {
+        console.error('Failed to fetch customer details', err)
+        toast.error('Không thể tải địa chỉ khách hàng')
+        setCustomerAddresses([])
+        hasPrefilledLocationRef.current = false
+        lastFetchedCustomerIdRef.current = null
+      } finally {
+        setLoadingAddresses(false)
+      }
+    }
+
+    fetchCustomerDetails()
+  }, [open, mode, device, resolvedCustomerId, selectedCustomer?.code, form.customerLocation])
 
   // previous explicit loaders replaced by React Query above
 
@@ -213,6 +319,15 @@ export default function DeviceFormModal({
         onSaved?.(created)
       } else if (device && device.id) {
         const updated = await devicesClientService.update(device.id, payload as any)
+        // Update location if customerLocation is provided
+        if (form.customerLocation) {
+          try {
+            await devicesClientService.update(device.id, { location: form.customerLocation })
+          } catch (err) {
+            console.error('Failed to update device location', err)
+            // Don't fail the whole update if location update fails
+          }
+        }
         toast.success('Cập nhật thiết bị thành công')
         setOpen(false)
         onSaved?.(updated)
@@ -499,6 +614,64 @@ export default function DeviceFormModal({
                 </div>
               </div>
             </div>
+
+            {/* Address field in edit mode - Show when device has a customer (not System warehouse) */}
+            {mode === 'edit' &&
+              (() => {
+                const currentCustomerId =
+                  form.customerId || (device as any)?.customerId || (device as any)?.customer?.id
+                const selectedCustomer = customers.find((c) => c.id === currentCustomerId)
+                const isSystemWarehouse = selectedCustomer?.code === 'SYS'
+                const showAddressField =
+                  currentCustomerId &&
+                  !isSystemWarehouse &&
+                  (customerAddresses.length > 0 || loadingAddresses)
+
+                return showAddressField ? (
+                  <div className="mt-4">
+                    <Label className="flex items-center gap-2 text-base font-semibold">
+                      <MapPin className="h-4 w-4 text-rose-600" />
+                      Địa chỉ
+                    </Label>
+                    {loadingAddresses ? (
+                      <div className="mt-2 flex items-center gap-2 text-sm text-gray-500">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Đang tải địa chỉ...
+                      </div>
+                    ) : customerAddresses.length > 0 ? (
+                      <Select
+                        value={form.customerLocation}
+                        onValueChange={(v) => setForm((s: any) => ({ ...s, customerLocation: v }))}
+                      >
+                        <SelectTrigger className="mt-2 h-11">
+                          <SelectValue placeholder="Chọn địa chỉ khách hàng" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {customerAddresses.map((addr, i) => (
+                            <SelectItem key={i} value={addr}>
+                              {addr}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Input
+                        value={form.customerLocation}
+                        onChange={(e) =>
+                          setForm((s: any) => ({ ...s, customerLocation: e.target.value }))
+                        }
+                        placeholder="Nhập địa chỉ..."
+                        className="mt-2 h-11"
+                      />
+                    )}
+                    <p className="mt-1 text-xs text-gray-500">
+                      {customerAddresses.length > 0
+                        ? 'Chọn địa chỉ từ danh sách địa chỉ của khách hàng'
+                        : 'Nhập địa chỉ của thiết bị tại khách hàng'}
+                    </p>
+                  </div>
+                ) : null
+              })()}
 
             {/* Active toggle & reason (only in edit mode) */}
             {mode === 'edit' && (

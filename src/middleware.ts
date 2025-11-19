@@ -25,7 +25,13 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Public routes - allow access without authentication
-  if (pathname === ROUTES.LOGIN || pathname === '/change-password') {
+  // Include forgot-password so users can request a reset without being authenticated
+  if (
+    pathname === ROUTES.LOGIN ||
+    pathname === '/change-password' ||
+    pathname === '/forgot-password' ||
+    pathname === '/reset-password'
+  ) {
     // If already logged in, redirect to appropriate dashboard
     const session = await getSessionFromRequest(request)
     if (session) {

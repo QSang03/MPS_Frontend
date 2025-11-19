@@ -12,9 +12,14 @@ import { MonitorSmartphone, Plug2 } from 'lucide-react'
 interface Props {
   contractId?: string | null
   onRequestOpenAttach?: () => void
+  attachedDevices?: ContractDevice[] // Truyền danh sách thiết bị đã gán
 }
 
-export default function ContractDevicesSection({ contractId, onRequestOpenAttach }: Props) {
+export default function ContractDevicesSection({
+  contractId,
+  onRequestOpenAttach,
+  attachedDevices,
+}: Props) {
   const queryClient = useQueryClient()
   const [page] = useState(1)
   const [limit] = useState(50)
@@ -26,13 +31,14 @@ export default function ContractDevicesSection({ contractId, onRequestOpenAttach
 
   const { data: listResp, isLoading } = useQuery({
     queryKey: ['contract-devices', contractId, page, limit],
-    enabled: !!contractId,
+    enabled: !!contractId && !attachedDevices, // Chỉ fetch nếu không có attachedDevices từ props
     queryFn: async () =>
       await contractsClientService.listDevices(contractId as string, { page, limit }),
     select: (r) => r,
   })
 
-  const devices: ContractDevice[] = listResp?.data ?? []
+  // Ưu tiên sử dụng attachedDevices từ props, nếu không có thì dùng data từ query
+  const devices: ContractDevice[] = attachedDevices ?? listResp?.data ?? []
 
   const detachMutation = useMutation({
     mutationFn: (deviceIds: string[]) =>
@@ -79,6 +85,12 @@ export default function ContractDevicesSection({ contractId, onRequestOpenAttach
     )
   }
 
+  const formatPrice = (value?: number | null) => {
+    if (value === undefined || value === null) return '—'
+    if (typeof value === 'number') return value.toFixed(5)
+    return String(value)
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
@@ -93,7 +105,7 @@ export default function ContractDevicesSection({ contractId, onRequestOpenAttach
             className="bg-gradient-to-r from-blue-100 to-indigo-100 font-bold text-indigo-700"
             onClick={openAttachDialog}
           >
-            + Thêm thiết bị
+            + Thêm và Cập nhật
           </Button>
           <Button
             size="sm"
@@ -114,6 +126,8 @@ export default function ContractDevicesSection({ contractId, onRequestOpenAttach
               <th className="px-3 py-2 text-left text-sm font-bold">Serial</th>
               <th className="px-3 py-2 text-left text-sm font-bold">Model</th>
               <th className="px-3 py-2 text-left text-sm font-bold">Giá thuê/tháng</th>
+              <th className="px-3 py-2 text-left text-sm font-bold">Giá trang B/W</th>
+              <th className="px-3 py-2 text-left text-sm font-bold">Giá trang màu</th>
               <th className="px-3 py-2 text-left text-sm font-bold">Bắt đầu</th>
               <th className="px-3 py-2 text-left text-sm font-bold">Kết thúc</th>
             </tr>
@@ -121,13 +135,13 @@ export default function ContractDevicesSection({ contractId, onRequestOpenAttach
           <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan={6} className="px-4 py-7 text-center text-base text-indigo-400">
+                <td colSpan={8} className="px-4 py-7 text-center text-base text-indigo-400">
                   Đang tải...
                 </td>
               </tr>
             ) : devices.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-base text-indigo-400">
+                <td colSpan={8} className="px-4 py-8 text-center text-base text-indigo-400">
                   Chưa có thiết bị nào được gắn
                 </td>
               </tr>
@@ -148,7 +162,9 @@ export default function ContractDevicesSection({ contractId, onRequestOpenAttach
                   <td className="px-3 py-2">
                     {d.device?.deviceModel?.name ?? d.device?.model ?? '—'}
                   </td>
-                  <td className="px-3 py-2">{d.monthlyRent ?? '—'}</td>
+                  <td className="px-3 py-2">{formatPrice(d.monthlyRent)}</td>
+                  <td className="px-3 py-2">{formatPrice(d.pricePerBWPage)}</td>
+                  <td className="px-3 py-2">{formatPrice(d.pricePerColorPage)}</td>
                   <td className="px-3 py-2">{d.activeFrom ? d.activeFrom.slice(0, 10) : '—'}</td>
                   <td className="px-3 py-2">{d.activeTo ? d.activeTo.slice(0, 10) : '—'}</td>
                 </tr>

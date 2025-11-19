@@ -9,7 +9,7 @@ import { ServiceRequestStatus, Priority } from '@/constants/status'
 import { ServiceRequestActions } from './ServiceRequestActions'
 
 const statusColorMap: Record<ServiceRequestStatus, string> = {
-  [ServiceRequestStatus.NEW]: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
+  [ServiceRequestStatus.OPEN]: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
   [ServiceRequestStatus.IN_PROGRESS]:
     'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
   [ServiceRequestStatus.RESOLVED]:
@@ -38,13 +38,15 @@ export const columns: ColumnDef<ServiceRequest>[] = [
     ),
   },
   {
-    accessorKey: 'deviceId',
-    header: 'Device',
-    cell: ({ row }) => <div className="font-mono text-sm">{row.original.deviceId.slice(0, 8)}</div>,
+    accessorKey: 'title',
+    header: 'Tiêu đề',
+    cell: ({ row }) => (
+      <div className="max-w-[200px] truncate font-medium">{row.original.title}</div>
+    ),
   },
   {
     accessorKey: 'description',
-    header: 'Description',
+    header: 'Mô tả',
     cell: ({ row }) => <div className="max-w-[300px] truncate">{row.original.description}</div>,
   },
   {

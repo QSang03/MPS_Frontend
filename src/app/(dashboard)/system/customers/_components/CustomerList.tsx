@@ -274,13 +274,14 @@ export function CustomerList() {
                   <th className="px-4 py-3 text-left text-sm font-semibold">Mã</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold">Địa chỉ</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold">Trạng thái</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Ngày thanh toán</th>
                   <th className="px-4 py-3 text-right text-sm font-semibold">Thao tác</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
                 {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-12 text-center">
+                    <td colSpan={7} className="px-4 py-12 text-center">
                       <div className="text-muted-foreground flex flex-col items-center gap-3">
                         {searchTerm ? (
                           <>
@@ -434,6 +435,15 @@ export function CustomerList() {
                             ? 'Hoạt động'
                             : 'Tạm dừng'}
                         </Badge>
+                      </td>
+                      <td className="px-4 py-3">
+                        {(c as unknown as { billingDay?: number | null }).billingDay ? (
+                          <span className="text-sm font-medium text-slate-700">
+                            Ngày {(c as unknown as { billingDay?: number | null }).billingDay}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">—</span>
+                        )}
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-2">

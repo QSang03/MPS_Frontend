@@ -4,6 +4,8 @@ import type {
   ConditionGroupInput,
   DraftChecklistItem,
 } from '@/types/policies'
+import type { RuleBuilderValue } from '@/app/(dashboard)/system/policies/_types/rule-builder'
+import { ruleBuilderValueToPolicyObject } from '@/app/(dashboard)/system/policies/_utils/rule-builder-converters'
 
 export type PlainSubject = Record<string, unknown>
 
@@ -81,63 +83,9 @@ export const stringifyPolicyPreview = (policy: Partial<Policy>) => {
 }
 
 export const draftInputToPolicy = (draft: PolicyDraftInput): Partial<Policy> => {
+  // Use rawSubject and rawResource directly (they are already in Policy format from Rule Builder)
   const subject: PlainSubject = { ...(draft.rawSubject || {}) }
   const resource: PlainSubject = { ...(draft.rawResource || {}) }
-
-  if (draft.selectedRole?.trim()) {
-    subject['attributes.role'] = { $eq: draft.selectedRole.trim() }
-  }
-
-  if (draft.departmentScope === 'name' && draft.departmentValues.length) {
-    subject['department.name'] =
-      draft.departmentValues.length === 1
-        ? { $eq: draft.departmentValues[0] }
-        : { $in: draft.departmentValues }
-  }
-
-  if (draft.includeManagedCustomers && draft.managedCustomers.length) {
-    subject['user.attributes.managedCustomers'] = { $in: draft.managedCustomers }
-  }
-
-  switch (draft.customerScope) {
-    case 'self':
-      resource['customerId'] = { $eq: '{{user.customerId}}' }
-      break
-    case 'managed':
-      if (draft.managedCustomers.length) {
-        resource['customerId'] = { $in: draft.managedCustomers }
-      }
-      break
-    case 'custom':
-      if (draft.customerIds.length) {
-        resource['customerId'] = { $in: draft.customerIds }
-      }
-      break
-    default:
-      break
-  }
-
-  draft.subjectAttributes?.forEach((attribute) => {
-    if (!attribute.field?.trim() || !attribute.operator?.trim()) return
-    const key = attribute.field.trim()
-    const operator = attribute.operator.trim()
-    const current = (subject[key] as Record<string, unknown>) || {}
-    current[operator] = attribute.value
-    subject[key] = current
-  })
-
-  if (draft.resourceType?.trim()) {
-    resource.type = { $eq: draft.resourceType.trim() }
-  }
-
-  draft.resourceFilters?.forEach((filter) => {
-    if (!filter.field?.trim() || !filter.operator?.trim()) return
-    const key = filter.field.trim()
-    const operator = filter.operator.trim()
-    const current = (resource[key] as Record<string, unknown>) || {}
-    current[operator] = filter.value
-    resource[key] = current
-  })
 
   const cleanedSubject = sanitizeSubject(subject)
   const cleanedResource = sanitizeSubject(resource)
@@ -202,10 +150,45 @@ const isConditionValueEmpty = (value: unknown) => {
   return false
 }
 
+/**
+ * Convert RuleBuilderValue to Policy format (for new Rule Builder)
+ */
+export function ruleBuilderValueToPolicy(
+  subjectValue: RuleBuilderValue,
+  resourceValue: RuleBuilderValue,
+  conditionValue?: RuleBuilderValue
+): {
+  subject: Record<string, unknown>
+  resource?: Record<string, unknown>
+  conditions?: Record<string, unknown>
+} {
+  const subject = sanitizeSubject(ruleBuilderValueToPolicyObject(subjectValue))
+  const resource = sanitizeSubject(ruleBuilderValueToPolicyObject(resourceValue))
+  const conditions = conditionValue
+    ? sanitizeSubject(ruleBuilderValueToPolicyObject(conditionValue))
+    : undefined
+
+  return {
+    subject: Object.keys(subject).length > 0 ? subject : {},
+    resource: Object.keys(resource).length > 0 ? resource : undefined,
+    conditions: conditions && Object.keys(conditions).length > 0 ? conditions : undefined,
+  }
+}
+
 export const buildDraftChecklist = (draft: PolicyDraftInput): DraftChecklistItem[] => {
-  const hasRole = Boolean(draft.selectedRole?.trim())
+  // Check if subject has role.name or attributes.role
+  const subject = draft.rawSubject || {}
+  const hasRole =
+    Boolean(subject['role.name']) ||
+    Boolean(subject['attributes.role']) ||
+    Boolean(subject['role.id'])
+
   const hasActions = draft.actions.length > 0
-  const hasResourceType = Boolean(draft.resourceType?.trim())
+
+  // Check if resource has type
+  const resource = draft.rawResource || {}
+  const hasResourceType = Boolean(resource.type)
+
   const tenantIsolation = ensureTenantIsolation(draft)
   const conditionsValid = draft.conditionGroups.every((group) =>
     group.conditions.every(
@@ -215,16 +198,14 @@ export const buildDraftChecklist = (draft: PolicyDraftInput): DraftChecklistItem
   )
 
   return [
-    { id: 'role', label: 'Có role.name', passed: hasRole },
+    { id: 'role', label: 'Có role trong subject', passed: hasRole },
     { id: 'actions', label: 'Có ít nhất một action', passed: hasActions },
     { id: 'resource-type', label: 'Định nghĩa resource.type', passed: hasResourceType },
     {
       id: 'tenant-isolation',
       label: 'Tenant isolation',
       passed: tenantIsolation,
-      hint: tenantIsolation
-        ? undefined
-        : 'Cần giới hạn customer scope hoặc customerId trong resource.',
+      hint: tenantIsolation ? undefined : 'Cần giới hạn customerId trong resource hoặc subject.',
     },
     {
       id: 'conditions',
@@ -236,22 +217,41 @@ export const buildDraftChecklist = (draft: PolicyDraftInput): DraftChecklistItem
 }
 
 const ensureTenantIsolation = (draft: PolicyDraftInput): boolean => {
-  if (draft.selectedRole === 'system-admin') return true
-  if (draft.customerScope && draft.customerScope !== 'all') return true
+  const subject = draft.rawSubject || {}
+  const resource = draft.rawResource || {}
 
-  const subjectHasCustomer =
-    draft.subjectAttributes?.some(
-      (attr) =>
-        attr.field === 'user.customerId' && attr.operator && !isConditionValueEmpty(attr.value)
-    ) ?? false
-  if (subjectHasCustomer) return true
+  // Check if subject has system-admin role
+  const roleName = subject['role.name'] || subject['attributes.role']
+  if (roleName && typeof roleName === 'object' && !Array.isArray(roleName)) {
+    const roleObj = roleName as Record<string, unknown>
+    const roleValue = roleObj.$eq || (Array.isArray(roleObj.$in) && roleObj.$in[0])
+    if (roleValue === 'system-admin') return true
+  }
 
-  const resourceHasCustomer =
-    draft.resourceFilters?.some(
-      (filter) =>
-        filter.field === 'customerId' && filter.operator && !isConditionValueEmpty(filter.value)
-    ) ?? false
-  if (resourceHasCustomer) return true
+  // Check if resource has customerId
+  const customerId = resource.customerId
+  if (customerId) {
+    if (typeof customerId === 'object' && !Array.isArray(customerId)) {
+      // Check if it's a template variable or has a value
+      const customerIdObj = customerId as Record<string, unknown>
+      const value = customerIdObj.$eq || customerIdObj.$in
+      if (value && (typeof value === 'string' || Array.isArray(value))) {
+        return true
+      }
+    }
+  }
+
+  // Check if subject has user.customerId
+  const userCustomerId = subject['user.customerId']
+  if (userCustomerId) {
+    if (typeof userCustomerId === 'object' && !Array.isArray(userCustomerId)) {
+      const userCustomerIdObj = userCustomerId as Record<string, unknown>
+      const value = userCustomerIdObj.$eq || userCustomerIdObj.$in
+      if (value && (typeof value === 'string' || Array.isArray(value))) {
+        return true
+      }
+    }
+  }
 
   return false
 }

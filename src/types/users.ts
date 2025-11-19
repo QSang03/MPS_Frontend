@@ -38,6 +38,7 @@ export interface Customer {
   tier?: string | null
   isActive?: boolean
   description?: string | null
+  billingDay?: number | null
   createdAt?: string
   updatedAt?: string
 }

@@ -53,6 +53,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     const body = await request.json()
+    console.log('POST /api/contracts/[id]/devices - Request body:', JSON.stringify(body, null, 2))
 
     const response = await backendApiClient.post(`${API_ENDPOINTS.CONTRACTS}/${id}/devices`, body, {
       headers: {
@@ -62,10 +63,31 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     return NextResponse.json(response.data)
   } catch (error: unknown) {
-    const err = error as { message?: string; response?: { status?: number } } | undefined
+    const err = error as
+      | {
+          message?: string
+          response?: {
+            status?: number
+            data?: unknown
+          }
+        }
+      | undefined
+
+    // Log chi tiết lỗi từ backend
     console.error('API Route /api/contracts/[id]/devices POST error:', error)
+    if (err?.response?.data) {
+      console.error('Backend response data:', JSON.stringify(err.response.data, null, 2))
+    }
+
+    // Trả về error message chi tiết từ backend nếu có
+    const errorMessage =
+      (err?.response?.data as { message?: string; error?: string })?.message ||
+      (err?.response?.data as { message?: string; error?: string })?.error ||
+      err?.message ||
+      'Internal Server Error'
+
     return NextResponse.json(
-      { error: err?.message || 'Internal Server Error' },
+      { error: errorMessage, details: err?.response?.data },
       { status: err?.response?.status || 500 }
     )
   }

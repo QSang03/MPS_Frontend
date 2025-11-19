@@ -2,13 +2,15 @@
 
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { ArrowLeft } from 'lucide-react'
 import { formatRelativeTime } from '@/lib/utils/formatters'
-import { serviceRequestService } from '@/lib/api/services/service-request.service'
+import { serviceRequestsClientService } from '@/lib/api/services/service-requests-client.service'
 import { ServiceRequestStatus } from '@/constants/status'
 import { PermissionGuard } from '@/components/shared/PermissionGuard'
 import type { Session } from '@/lib/auth/session'
@@ -26,12 +28,12 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
 
   const { data, isLoading } = useQuery({
     queryKey: ['service-requests', 'detail', id],
-    queryFn: () => serviceRequestService.getById(id),
+    queryFn: () => serviceRequestsClientService.getById(id),
   })
 
   const updateMutation = useMutation({
     mutationFn: ({ status }: { status: ServiceRequestStatus }) =>
-      serviceRequestService.update(id, { status }),
+      serviceRequestsClientService.update(id, { status }),
     onMutate: () => setUpdating(true),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['service-requests'] })
@@ -47,7 +49,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
   })
 
   const deleteMutation = useMutation({
-    mutationFn: () => serviceRequestService.delete(id),
+    mutationFn: () => serviceRequestsClientService.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['service-requests'] })
       toast.success('Yêu cầu đã được xóa')
@@ -75,6 +77,13 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
 
   return (
     <div className="space-y-6">
+      <Button variant="ghost" asChild className="mb-2 w-fit gap-2">
+        <Link href="/system/requests">
+          <ArrowLeft className="h-4 w-4" />
+          Quay lại danh sách
+        </Link>
+      </Button>
+
       <Card>
         <CardHeader>
           <CardTitle>Chi tiết yêu cầu #{data.id.slice(0, 8)}</CardTitle>
@@ -83,9 +92,9 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
         <CardContent>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <strong>Thiết bị:</strong>
-                <span className="font-mono">{data.deviceId}</span>
+              <div>
+                <strong>Tiêu đề:</strong>
+                <p className="text-muted-foreground mt-1 font-medium">{data.title}</p>
               </div>
               <div>
                 <strong>Mô tả:</strong>
@@ -99,10 +108,6 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                 <strong>Trạng thái:</strong>
                 <Badge variant="secondary">{data.status}</Badge>
               </div>
-              <div className="flex items-center gap-2">
-                <strong>Người tạo:</strong>
-                <span className="font-mono">{data.createdBy}</span>
-              </div>
               {data.assignedTo && (
                 <div className="flex items-center gap-2">
                   <strong>Người phụ trách:</strong>
@@ -112,11 +117,6 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
             </div>
 
             <div className="space-y-4">
-              <div>
-                <strong>Ghi chú:</strong>
-                <p className="text-muted-foreground mt-1">{data.notes ?? '—'}</p>
-              </div>
-
               <div className="flex gap-2">
                 <PermissionGuard
                   session={session}
@@ -124,7 +124,6 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                   resource={{
                     type: 'serviceRequest',
                     customerId: data.customerId,
-                    ownerId: data.createdBy,
                   }}
                   fallback={null}
                 >
@@ -148,7 +147,6 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                   resource={{
                     type: 'serviceRequest',
                     customerId: data.customerId,
-                    ownerId: data.createdBy,
                   }}
                   fallback={null}
                 >
@@ -173,7 +171,6 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                   resource={{
                     type: 'serviceRequest',
                     customerId: data.customerId,
-                    ownerId: data.createdBy,
                   }}
                 >
                   <Button variant="destructive" onClick={() => deleteMutation.mutate()}>

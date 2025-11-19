@@ -7,6 +7,7 @@ export interface Customer {
   name: string
   address?: string[]
   deviceCount?: number
+  billingDay?: number
   createdAt: string
   updatedAt: string
 }

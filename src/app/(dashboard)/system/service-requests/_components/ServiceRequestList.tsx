@@ -32,8 +32,8 @@ export function ServiceRequestList({ customerId, status }: ServiceRequestListPro
   return (
     <DataTable
       columns={columns}
-      data={data?.items || []}
-      totalCount={data?.totalCount || 0}
+      data={data?.data || []}
+      totalCount={data?.pagination?.total || 0}
       pageIndex={pagination.pageIndex}
       pageSize={pagination.pageSize}
       onPaginationChange={setPagination}

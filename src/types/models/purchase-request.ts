@@ -49,6 +49,7 @@ export interface PurchaseRequestStats {
   total: number
   pending: number
   approved: number
-  rejected: number
-  completed: number
+  ordered: number
+  received: number
+  cancelled: number
 }

@@ -97,18 +97,7 @@ export interface PolicyDraftInput {
   name: string
   effect: 'ALLOW' | 'DENY'
   actions: string[]
-  notes: string
-  selectedRole: string
-  departmentScope: 'none' | 'name' | 'code'
-  departmentValues: string[]
-  includeManagedCustomers: boolean
-  managedCustomers: string[]
-  customerScope: 'all' | 'self' | 'managed' | 'custom'
-  customerIds: string[]
-  resourceType?: string
   rawSubject?: Record<string, unknown>
   rawResource?: Record<string, unknown>
-  subjectAttributes: SubjectAttributeFilter[]
-  resourceFilters: ResourceFilterInput[]
   conditionGroups: ConditionGroupInput[]
 }

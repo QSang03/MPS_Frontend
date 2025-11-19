@@ -50,28 +50,29 @@ export const STATUS_DISPLAY: Record<
  * Service request status enum
  */
 export enum ServiceRequestStatus {
-  NEW = 'New',
-  IN_PROGRESS = 'InProgress',
-  RESOLVED = 'Resolved',
-  CLOSED = 'Closed',
+  OPEN = 'OPEN',
+  IN_PROGRESS = 'IN_PROGRESS',
+  RESOLVED = 'RESOLVED',
+  CLOSED = 'CLOSED',
 }
 
 /**
  * Purchase request status enum
  */
 export enum PurchaseRequestStatus {
-  PENDING = 'Pending',
-  APPROVED = 'Approved',
-  REJECTED = 'Rejected',
-  COMPLETED = 'Completed',
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  ORDERED = 'ORDERED',
+  RECEIVED = 'RECEIVED',
+  CANCELLED = 'CANCELLED',
 }
 
 /**
  * Priority levels
  */
 export enum Priority {
-  LOW = 'Low',
-  NORMAL = 'Normal',
-  HIGH = 'High',
-  URGENT = 'Urgent',
+  LOW = 'LOW',
+  NORMAL = 'NORMAL',
+  HIGH = 'HIGH',
+  URGENT = 'URGENT',
 }

@@ -1,10 +1,8 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { rolesClientService } from '@/lib/api/services/roles-client.service'
-import { policiesClientService } from '@/lib/api/services/policies-client.service'
-import { policyConditionsClientService } from '@/lib/api/services/policy-conditions-client.service'
-import { resourceTypesClientService } from '@/lib/api/services/resource-types-client.service'
 import { policyAssistantService } from '@/lib/api/services/policy-assistant.service'
+import { usePolicyCatalogsCache } from './usePolicyCatalogsCache'
 import type { PolicyFormCatalogs } from '../_types/policy-form'
 import type { PolicyBlueprint } from '@/types/policies'
 import type { UserRole } from '@/types/users'
@@ -28,6 +26,14 @@ interface UsePolicyCatalogsResult {
 }
 
 export function usePolicyCatalogs(selectedRole: string): UsePolicyCatalogsResult {
+  // Use cache hook for discovery APIs
+  const {
+    policyOperators,
+    policyConditions,
+    resourceTypes,
+    isLoading: catalogsCacheLoading,
+  } = usePolicyCatalogsCache()
+
   const {
     data: rolesResp,
     isLoading: rolesLoading,
@@ -35,26 +41,7 @@ export function usePolicyCatalogs(selectedRole: string): UsePolicyCatalogsResult
   } = useQuery({
     queryKey: ['policies', 'roles'],
     queryFn: async () =>
-      (await rolesClientService.getRoles({ page: 1, limit: 200, isActive: true })).data,
-    staleTime: 1000 * 60 * 5,
-  })
-
-  const { data: policyOperators = [], isLoading: operatorsLoading } = useQuery({
-    queryKey: ['policies', 'operators'],
-    queryFn: () => policiesClientService.getPolicyOperators(),
-    staleTime: 1000 * 60 * 5,
-  })
-
-  const { data: resourceTypes = [], isLoading: resourceTypesLoading } = useQuery({
-    queryKey: ['policies', 'resource-types'],
-    queryFn: () => resourceTypesClientService.getResourceTypes({ limit: 200, isActive: true }),
-    staleTime: 1000 * 60 * 5,
-  })
-
-  const { data: policyConditions = [], isLoading: policyConditionsLoading } = useQuery({
-    queryKey: ['policies', 'conditions'],
-    queryFn: () =>
-      policyConditionsClientService.getPolicyConditions({ limit: 200, isActive: true }),
+      (await rolesClientService.getRoles({ page: 1, limit: 100, isActive: true })).data,
     staleTime: 1000 * 60 * 5,
   })
 
@@ -69,12 +56,7 @@ export function usePolicyCatalogs(selectedRole: string): UsePolicyCatalogsResult
     staleTime: 1000 * 60 * 5,
   })
 
-  const catalogsLoading =
-    rolesLoading ||
-    operatorsLoading ||
-    resourceTypesLoading ||
-    policyConditionsLoading ||
-    blueprintFetching
+  const catalogsLoading = rolesLoading || catalogsCacheLoading || blueprintFetching
 
   const roles = useMemo(() => rolesResp || [], [rolesResp])
 

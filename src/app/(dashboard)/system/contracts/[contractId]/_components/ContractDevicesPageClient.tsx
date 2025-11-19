@@ -19,6 +19,12 @@ export default function ContractDevicesPageClient({ contractId }: { contractId: 
   const [page, setPage] = useState(1)
   const [limit] = useState(20)
 
+  const formatPrice = (value?: number | null) => {
+    if (value === undefined || value === null) return '—'
+    if (typeof value === 'number') return value.toFixed(5)
+    return String(value)
+  }
+
   const loadDevices = async () => {
     setLoading(true)
     try {
@@ -105,7 +111,7 @@ export default function ContractDevicesPageClient({ contractId }: { contractId: 
             </div>
           ) : (
             <div className="overflow-hidden rounded-xl border border-slate-300 shadow-lg dark:border-slate-700">
-              <table className="w-full min-w-[750px] table-auto">
+              <table className="w-full min-w-[1000px] table-auto">
                 <thead className="bg-gradient-to-r from-sky-100 to-indigo-100 dark:from-slate-700 dark:to-slate-800">
                   <tr>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-sky-700 dark:text-sky-400">
@@ -113,6 +119,15 @@ export default function ContractDevicesPageClient({ contractId }: { contractId: 
                     </th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-sky-700 dark:text-sky-400">
                       Model
+                    </th>
+                    <th className="px-6 py-4 text-right text-sm font-semibold text-sky-700 dark:text-sky-400">
+                      Giá thuê/tháng
+                    </th>
+                    <th className="px-6 py-4 text-right text-sm font-semibold text-sky-700 dark:text-sky-400">
+                      Giá trang B/W
+                    </th>
+                    <th className="px-6 py-4 text-right text-sm font-semibold text-sky-700 dark:text-sky-400">
+                      Giá trang màu
                     </th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-sky-700 dark:text-sky-400">
                       Vị trí
@@ -142,6 +157,15 @@ export default function ContractDevicesPageClient({ contractId }: { contractId: 
                       </td>
                       <td className="px-6 py-3 text-sm text-slate-700 dark:text-slate-400">
                         {d.device?.deviceModel?.name ?? '—'}
+                      </td>
+                      <td className="px-6 py-3 text-right text-sm font-medium text-slate-700 dark:text-slate-300">
+                        {formatPrice(d.monthlyRent)}
+                      </td>
+                      <td className="px-6 py-3 text-right text-sm font-medium text-slate-700 dark:text-slate-300">
+                        {formatPrice(d.pricePerBWPage)}
+                      </td>
+                      <td className="px-6 py-3 text-right text-sm font-medium text-slate-700 dark:text-slate-300">
+                        {formatPrice(d.pricePerColorPage)}
                       </td>
                       <td className="px-6 py-3 text-sm text-slate-700 dark:text-slate-400">
                         {d.device?.location ?? '—'}

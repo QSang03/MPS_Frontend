@@ -156,7 +156,13 @@ export function ModernSidebar({ session }: SidebarProps) {
               badge?: number
               submenu?: unknown
             }
-            const sections: { key: string; title: string; matcher: (href: string) => boolean }[] = [
+
+            // System sections (admin)
+            const systemSections: {
+              key: string
+              title: string
+              matcher: (href: string) => boolean
+            }[] = [
               { key: 'overview', title: 'Tổng quan', matcher: (h) => h === '/system' },
               {
                 key: 'devices',
@@ -186,6 +192,39 @@ export function ModernSidebar({ session }: SidebarProps) {
                 matcher: (h) => h.startsWith('/system/reports') || h.startsWith('/system/revenue'),
               },
             ]
+
+            // User sections
+            const userSections: {
+              key: string
+              title: string
+              matcher: (href: string) => boolean
+            }[] = [
+              { key: 'overview', title: 'Tổng quan', matcher: (h) => h === '/user/dashboard' },
+              {
+                key: 'costs',
+                title: 'Chi phí',
+                matcher: (h) =>
+                  h.startsWith('/user/dashboard/costs') || h.startsWith('/user/costs'),
+              },
+              { key: 'devices', title: 'Thiết bị', matcher: (h) => h.startsWith('/user/devices') },
+              {
+                key: 'consumables',
+                title: 'Vật tư tiêu hao',
+                matcher: (h) => h.startsWith('/user/consumables'),
+              },
+              {
+                key: 'contracts',
+                title: 'Hợp đồng',
+                matcher: (h) => h.startsWith('/user/contracts'),
+              },
+              { key: 'users', title: 'Người dùng', matcher: (h) => h.startsWith('/user/users') },
+            ]
+
+            // Prefer user sections when session role is 'user' OR when the navigation contains /user routes.
+            const hasUserRoutes = navigation.some(
+              (n) => typeof n.href === 'string' && (n.href as string).startsWith('/user')
+            )
+            const sections = isUserRole || hasUserRoutes ? userSections : systemSections
             const grouped = new Map<string, Item[]>()
             const otherKey = 'others'
             const getSectionKey = (href: string) => {

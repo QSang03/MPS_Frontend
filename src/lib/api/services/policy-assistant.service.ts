@@ -38,4 +38,49 @@ export const policyAssistantService = {
     }
     return data as PolicyAssistantAnalysis
   },
+
+  async chat(messages: Array<{ role: 'user' | 'assistant'; content: string }>): Promise<{
+    content: string
+    suggestedPolicy?: Partial<Policy>
+    metadata?: {
+      model?: string
+      promptTokens?: number
+      completionTokens?: number
+      totalTokens?: number
+    }
+  }> {
+    const response = await internalApiClient.post<
+      | {
+          data?: {
+            content: string
+            suggestedPolicy?: Partial<Policy>
+            metadata?: Record<string, unknown>
+          }
+        }
+      | {
+          content: string
+          suggestedPolicy?: Partial<Policy>
+          metadata?: Record<string, unknown>
+        }
+    >('/api/policies/assistant/chat', { messages })
+
+    const data = response.data
+    if (
+      data &&
+      typeof data === 'object' &&
+      'data' in (data as Record<string, unknown>) &&
+      (data as { data?: unknown }).data
+    ) {
+      return (data as { data: unknown }).data as {
+        content: string
+        suggestedPolicy?: Partial<Policy>
+        metadata?: Record<string, unknown>
+      }
+    }
+    return data as {
+      content: string
+      suggestedPolicy?: Partial<Policy>
+      metadata?: Record<string, unknown>
+    }
+  },
 }

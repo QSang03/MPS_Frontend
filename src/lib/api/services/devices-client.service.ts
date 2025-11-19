@@ -213,6 +213,7 @@ export const devicesClientService = {
     dto: {
       pricePerBWPage?: number
       pricePerColorPage?: number
+      monthlyRent?: number
       effectiveFrom?: string
     }
   ) {
@@ -235,6 +236,45 @@ export const devicesClientService = {
       } catch {
         console.error('[devicesClientService.upsertPricing] error:', err)
       }
+      throw err
+    }
+  },
+
+  // Get monthly rent info from active contract
+  async getContractMonthlyRent(id: string) {
+    try {
+      const response = await internalApiClient.get(`/api/devices/${id}/contract-monthly-rent`)
+      const body = response.data
+      if (!body) return null
+      if (body.data) return body.data
+      return body
+    } catch (err: unknown) {
+      try {
+        const e = err as { response?: { status?: number } }
+        if (e?.response?.status === 404) {
+          return null
+        }
+      } catch {
+        // ignore
+      }
+      console.error('[devicesClientService.getContractMonthlyRent] error:', err)
+      throw err
+    }
+  },
+
+  // Update monthly rent in active contract
+  async updateContractMonthlyRent(id: string, dto: { monthlyRent: number }) {
+    try {
+      const response = await internalApiClient.patch(
+        `/api/devices/${id}/contract-monthly-rent`,
+        dto
+      )
+      const body = response.data
+      if (!body) return null
+      if (body.data) return body.data
+      return body
+    } catch (err: unknown) {
+      console.error('[devicesClientService.updateContractMonthlyRent] error:', err)
       throw err
     }
   },

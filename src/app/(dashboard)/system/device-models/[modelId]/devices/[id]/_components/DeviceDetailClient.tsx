@@ -88,7 +88,7 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
   const [error, setError] = useState<string | null>(null)
   const [showEdit, setShowEdit] = useState(false)
   const [editing, setEditing] = useState(false)
-  const [locationEdit, setLocationEdit] = useState('')
+  const [, setLocationEdit] = useState('')
   const [ipEdit, setIpEdit] = useState('')
   const [macEdit, setMacEdit] = useState('')
   const [firmwareEdit, setFirmwareEdit] = useState('')
@@ -98,6 +98,9 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
   const [inactiveReasonOptionEdit, setInactiveReasonOptionEdit] = useState<string>('')
   const [inactiveReasonTextEdit, setInactiveReasonTextEdit] = useState<string>('')
   const [customerIdEdit, setCustomerIdEdit] = useState<string>('')
+  const [locationAddressEdit, setLocationAddressEdit] = useState<string>('')
+  const [customerAddresses, setCustomerAddresses] = useState<string[]>([])
+  const [loadingAddresses, setLoadingAddresses] = useState(false)
   // customers list is a shared resource; use React Query to deduplicate requests
   const { data: customersData, isLoading: customersLoading } = useQuery({
     queryKey: ['customers', { page: 1, limit: 100 }],
@@ -268,6 +271,7 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
           setCustomerIdEdit(
             (d['customerId'] as string) || ((d['customer'] as any)?.id as string) || ''
           )
+          setLocationAddressEdit((d['location'] as string) || '')
         }
 
         try {
@@ -297,6 +301,55 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
       fetchDevice()
     }
   }, [deviceId, modelId])
+
+  // Fetch customer addresses when customer is selected or device has a customer
+  useEffect(() => {
+    // Get current customer from device or from edit selection
+    const currentCustomerId =
+      customerIdEdit || (device as any)?.customerId || (device as any)?.customer?.id
+
+    if (!currentCustomerId || !showEdit) {
+      setCustomerAddresses([])
+      if (!currentCustomerId) {
+        setLocationAddressEdit('')
+      }
+      return
+    }
+
+    const fetchCustomerDetails = async () => {
+      setLoadingAddresses(true)
+      try {
+        const details = await customersClientService.getById(currentCustomerId)
+        if (details?.address && Array.isArray(details.address)) {
+          setCustomerAddresses(details.address)
+          // Pre-select current location if it matches an address, otherwise keep current value
+          if (
+            details.address.length > 0 &&
+            locationAddressEdit &&
+            details.address.includes(locationAddressEdit)
+          ) {
+            // Keep current location if it's in the list
+          } else if (details.address.length > 0 && !locationAddressEdit) {
+            // Pre-select first address if no location is set
+            const firstAddr = details.address[0]
+            if (firstAddr) {
+              setLocationAddressEdit(firstAddr)
+            }
+          }
+        } else {
+          setCustomerAddresses([])
+        }
+      } catch (err) {
+        console.error('Failed to fetch customer details', err)
+        toast.error('Không thể tải địa chỉ khách hàng')
+        setCustomerAddresses([])
+      } finally {
+        setLoadingAddresses(false)
+      }
+    }
+
+    fetchCustomerDetails()
+  }, [customerIdEdit, device, showEdit, locationAddressEdit])
 
   // customers are loaded via React Query above; no local effect needed
 
@@ -1298,15 +1351,6 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
           <div className="space-y-4 bg-white px-6 py-6">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
-                <Label className="text-base font-semibold">Vị trí</Label>
-                <Input
-                  value={locationEdit}
-                  onChange={(e) => setLocationEdit(e.target.value)}
-                  placeholder="Nhập vị trí..."
-                  className="mt-2 h-11"
-                />
-              </div>
-              <div>
                 <Label className="text-base font-semibold">Địa chỉ IP</Label>
                 <Input
                   value={ipEdit}
@@ -1368,6 +1412,63 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                 </Select>
               </div>
             )}
+
+            {/* Address selection - Show when device has a customer (not System warehouse) and customer has addresses */}
+            {(() => {
+              // Get current customer from device or from edit selection
+              const currentCustomerId =
+                customerIdEdit || (device as any)?.customerId || (device as any)?.customer?.id
+              const selectedCustomer = customers.find((c) => c.id === currentCustomerId)
+              const isSystemWarehouse = selectedCustomer?.code === 'SYS'
+              // Show address field if device has a customer (not System) and addresses are available
+              const showAddressField =
+                currentCustomerId &&
+                !isSystemWarehouse &&
+                (customerAddresses.length > 0 || loadingAddresses)
+
+              return showAddressField ? (
+                <div className="mt-4">
+                  <Label className="flex items-center gap-2 text-base font-semibold">
+                    <MapPin className="h-4 w-4 text-rose-600" />
+                    Địa chỉ
+                  </Label>
+                  {loadingAddresses ? (
+                    <div className="mt-2 flex items-center gap-2 text-sm text-gray-500">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Đang tải địa chỉ...
+                    </div>
+                  ) : customerAddresses.length > 0 ? (
+                    <Select
+                      value={locationAddressEdit}
+                      onValueChange={(v) => setLocationAddressEdit(v)}
+                    >
+                      <SelectTrigger className="mt-2 h-11">
+                        <SelectValue placeholder="Chọn địa chỉ khách hàng" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {customerAddresses.map((addr, i) => (
+                          <SelectItem key={i} value={addr}>
+                            {addr}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Input
+                      value={locationAddressEdit}
+                      onChange={(e) => setLocationAddressEdit(e.target.value)}
+                      placeholder="Nhập địa chỉ..."
+                      className="mt-2 h-11"
+                    />
+                  )}
+                  <p className="mt-1 text-xs text-gray-500">
+                    {customerAddresses.length > 0
+                      ? 'Chọn địa chỉ từ danh sách địa chỉ của khách hàng'
+                      : 'Nhập địa chỉ của thiết bị tại khách hàng'}
+                  </p>
+                </div>
+              ) : null
+            })()}
 
             {/* Status editing (allow toggling active/status and providing reason) */}
             <div className="mt-4">
@@ -1507,7 +1608,7 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                   }
 
                   let dto: Record<string, unknown> = {
-                    location: locationEdit || undefined,
+                    location: locationAddressEdit || undefined,
                     ipAddress: ipEdit || undefined,
                     macAddress: macEdit || undefined,
                     firmware: firmwareEdit || undefined,

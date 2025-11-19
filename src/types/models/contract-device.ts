@@ -5,6 +5,10 @@ export interface ContractDevice {
   contractId: string
   deviceId: string
   monthlyRent?: number | null
+  exchangeRate?: number | null
+  pricePerBWPage?: number | null
+  pricePerColorPage?: number | null
+  pricePerPageExchangeRate?: number | null
   activeFrom?: string | null
   activeTo?: string | null
   createdAt?: string

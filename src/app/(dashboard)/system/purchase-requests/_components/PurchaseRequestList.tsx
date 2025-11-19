@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { formatCurrency, formatRelativeTime } from '@/lib/utils/formatters'
 import { PurchaseRequestStatus, Priority } from '@/constants/status'
-import { Check, X, Clock } from 'lucide-react'
+import { Check, X, Clock, Truck, PackageCheck } from 'lucide-react'
 
 interface PurchaseRequestListProps {
   customerId: string
@@ -32,6 +32,24 @@ const mockRequests = [
     status: PurchaseRequestStatus.APPROVED,
     createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
   },
+  {
+    id: '3',
+    itemName: 'Maintenance Kit',
+    quantity: 5,
+    estimatedCost: 1200,
+    priority: Priority.NORMAL,
+    status: PurchaseRequestStatus.ORDERED,
+    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: '4',
+    itemName: 'Cleaning Supplies',
+    quantity: 15,
+    estimatedCost: 150,
+    priority: Priority.LOW,
+    status: PurchaseRequestStatus.RECEIVED,
+    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+  },
 ]
 
 const statusConfig = {
@@ -43,13 +61,17 @@ const statusConfig = {
     color: 'bg-green-100 text-green-800',
     icon: Check,
   },
-  [PurchaseRequestStatus.REJECTED]: {
+  [PurchaseRequestStatus.ORDERED]: {
+    color: 'bg-blue-100 text-blue-800',
+    icon: Truck,
+  },
+  [PurchaseRequestStatus.RECEIVED]: {
+    color: 'bg-emerald-100 text-emerald-800',
+    icon: PackageCheck,
+  },
+  [PurchaseRequestStatus.CANCELLED]: {
     color: 'bg-red-100 text-red-800',
     icon: X,
-  },
-  [PurchaseRequestStatus.COMPLETED]: {
-    color: 'bg-blue-100 text-blue-800',
-    icon: Check,
   },
 }
 

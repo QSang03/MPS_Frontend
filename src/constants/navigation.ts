@@ -41,17 +41,11 @@ export const USER_NAVIGATION_PAYLOAD: NavItemPayload[] = [
     icon: 'LayoutDashboard',
     route: '/user/dashboard',
     description: 'Tổng quan',
-    actions: [
-      {
-        id: 'read',
-        label: 'Xem tổng quan',
-        icon: 'Eye',
-        requiredPermissions: {
-          strategy: 'all',
-          resources: [{ resource: 'dashboard', action: 'read' }],
-        },
-      },
-    ],
+    requiredPermissions: {
+      strategy: 'all',
+      resources: [{ resource: 'dashboard', action: 'read' }],
+    },
+    actions: [],
   },
   {
     id: 'user-devices',
@@ -60,16 +54,11 @@ export const USER_NAVIGATION_PAYLOAD: NavItemPayload[] = [
     icon: 'Printer',
     route: '/user/devices',
     description: 'Thiết bị của tôi',
+    requiredPermissions: {
+      strategy: 'all',
+      resources: [{ resource: 'devices', action: 'read' }],
+    },
     actions: [
-      {
-        id: 'read',
-        label: 'Xem thiết bị',
-        icon: 'Eye',
-        requiredPermissions: {
-          strategy: 'all',
-          resources: [{ resource: 'devices', action: 'read' }],
-        },
-      },
       {
         id: 'create',
         label: 'Tạo thiết bị',
@@ -130,22 +119,33 @@ export const USER_NAVIGATION_PAYLOAD: NavItemPayload[] = [
     ],
   },
   {
+    id: 'user-costs',
+    name: 'costs',
+    label: 'Chi phí',
+    icon: 'BarChart3',
+    route: '/user/dashboard/costs/monthly',
+    description: 'Báo cáo chi phí theo tháng',
+    requiredPermissions: {
+      strategy: 'all',
+      resources: [
+        { resource: 'dashboard', action: 'read' },
+        { resource: 'devices', action: 'read' },
+      ],
+    },
+    actions: [],
+  },
+  {
     id: 'user-contracts',
     name: 'contracts',
     label: 'Hợp đồng',
     icon: 'FileText',
     route: '/user/contracts',
     description: 'Hợp đồng của tôi',
+    requiredPermissions: {
+      strategy: 'all',
+      resources: [{ resource: 'contracts', action: 'read' }],
+    },
     actions: [
-      {
-        id: 'read',
-        label: 'Xem hợp đồng',
-        icon: 'Eye',
-        requiredPermissions: {
-          strategy: 'all',
-          resources: [{ resource: 'contracts', action: 'read' }],
-        },
-      },
       {
         id: 'create',
         label: 'Tạo hợp đồng',
@@ -200,16 +200,11 @@ export const USER_NAVIGATION_PAYLOAD: NavItemPayload[] = [
     icon: 'ShoppingCart',
     route: '/user/consumables',
     description: 'Vật tư tiêu hao liên quan đến khách hàng',
+    requiredPermissions: {
+      strategy: 'all',
+      resources: [{ resource: 'consumables', action: 'read' }],
+    },
     actions: [
-      {
-        id: 'read',
-        label: 'Xem vật tư tiêu hao',
-        icon: 'Eye',
-        requiredPermissions: {
-          strategy: 'all',
-          resources: [{ resource: 'consumables', action: 'read' }],
-        },
-      },
       {
         id: 'create',
         label: 'Tạo vật tư tiêu hao',
@@ -248,6 +243,47 @@ export const USER_NAVIGATION_PAYLOAD: NavItemPayload[] = [
       },
     ],
   },
+  {
+    id: 'user-my-requests',
+    name: 'my-requests',
+    label: 'Yêu cầu của tôi',
+    icon: 'FileText',
+    route: '/user/my-requests',
+    description: 'Theo dõi yêu cầu bảo trì của tôi',
+    requiredPermissions: {
+      strategy: 'all',
+      resources: [{ resource: 'service-requests', action: 'read' }],
+    },
+    actions: [
+      {
+        id: 'create',
+        label: 'Tạo yêu cầu',
+        icon: 'Plus',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'service-requests', action: 'create' }],
+        },
+      },
+      {
+        id: 'update',
+        label: 'Cập nhật yêu cầu',
+        icon: 'Edit',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'service-requests', action: 'update' }],
+        },
+      },
+      {
+        id: 'delete',
+        label: 'Xóa yêu cầu',
+        icon: 'Trash2',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'service-requests', action: 'delete' }],
+        },
+      },
+    ],
+  },
 
   /* Departments (user-scoped) removed — hidden per request */
   {
@@ -257,6 +293,10 @@ export const USER_NAVIGATION_PAYLOAD: NavItemPayload[] = [
     icon: 'Users',
     route: '/user/users',
     description: 'Quản lý người dùng (user-scoped)',
+    requiredPermissions: {
+      strategy: 'all',
+      resources: [{ resource: 'users', action: 'read' }],
+    },
     actions: [
       {
         id: 'read',
@@ -588,6 +628,49 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
     ],
   },
 
+  {
+    id: 'customer-requests',
+    label: 'Yêu cầu khách hàng',
+    icon: 'Layers',
+    route: '/system/requests',
+    description: 'Tổng hợp service request và purchase request',
+    requiredPermissions: {
+      strategy: 'all',
+      resources: [
+        { resource: 'service-requests', action: 'read' },
+        { resource: 'purchase-requests', action: 'read' },
+      ],
+    },
+    actions: [
+      {
+        id: 'update-service-status',
+        label: 'Cập nhật service request',
+        icon: 'Wrench',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'service-requests', action: 'update' }],
+        },
+      },
+      {
+        id: 'update-purchase-status',
+        label: 'Cập nhật purchase request',
+        icon: 'ClipboardCheck',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'purchase-requests', action: 'update' }],
+        },
+      },
+      {
+        id: 'filter-by-customer',
+        label: 'Lọc theo khách hàng',
+        icon: 'Filter',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'customers', action: 'read' }],
+        },
+      },
+    ],
+  },
   {
     id: 'users',
     label: 'Quản lý người dùng',

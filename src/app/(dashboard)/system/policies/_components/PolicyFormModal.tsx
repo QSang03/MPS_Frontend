@@ -420,7 +420,7 @@ export function PolicyFormModal({
     refetch: refetchConditions,
   } = useQuery({
     queryKey: ['policy-conditions'],
-    queryFn: () => policyConditionsClientService.getPolicyConditions({ limit: 200 }),
+    queryFn: () => policyConditionsClientService.getPolicyConditions({ limit: 100 }),
     staleTime: 1000 * 60 * 10,
   })
 

@@ -40,7 +40,13 @@ export default function LoginPage() {
 
       // Show success message for 1.5 seconds then redirect based on isDefaultCustomer
       const timer = setTimeout(() => {
-        const target = state.success?.isDefaultCustomer ? ROUTES.CUSTOMER_ADMIN : '/user/dashboard'
+        // Nếu vẫn đang dùng mật khẩu mặc định, đã redirect lên change-password ở trên
+        // nên không cần redirect lần nữa từ login.
+        if (state.success?.isDefaultPassword) return
+
+        const target = state.success?.isDefaultCustomer
+          ? ROUTES.CUSTOMER_ADMIN
+          : ROUTES.USER_DASHBOARD
         router.push(target)
       }, 1500)
 
@@ -151,6 +157,15 @@ export default function LoginPage() {
               {state?.error?.password && (
                 <p className="text-destructive text-sm">{state.error.password[0]}</p>
               )}
+              <div className="text-right">
+                <button
+                  type="button"
+                  onClick={() => router.push('/forgot-password')}
+                  className="text-sm text-blue-600 hover:underline"
+                >
+                  Quên mật khẩu?
+                </button>
+              </div>
             </div>
 
             {/* Submit button */}

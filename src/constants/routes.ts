@@ -17,6 +17,7 @@ export const ROUTES = {
   CUSTOMER_ADMIN_DEVICE_MODELS: '/system/device-models',
   CUSTOMER_ADMIN_CONSUMABLE_TYPES: '/system/consumable-types',
   CUSTOMER_ADMIN_SERVICE_REQUESTS: '/system/service-requests',
+  CUSTOMER_ADMIN_REQUESTS: '/system/requests',
   CUSTOMER_ADMIN_PURCHASE_REQUESTS: '/system/purchase-requests',
   CUSTOMER_ADMIN_CONTRACTS: '/system/contracts',
 

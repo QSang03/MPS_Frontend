@@ -167,3 +167,88 @@ export async function logout(): Promise<void> {
   // Redirect to login
   redirect(ROUTES.LOGIN)
 }
+
+/**
+ * Forgot password server action
+ * Sends a password reset request to backend for the given email
+ */
+export type AuthActionState = {
+  error?: { message?: string }
+  success?: { message?: string }
+} | null
+
+export async function forgotPassword(
+  _prevState: AuthActionState,
+  formData: FormData
+): Promise<AuthActionState> {
+  const email = formData.get('email')?.toString()?.trim()
+
+  if (!email) {
+    return { error: { message: 'Email is required' } }
+  }
+
+  try {
+    const response = await serverApiClient.post(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, { email })
+
+    // Backend usually returns { message: '...' } or { success: true, message: '...' }
+    const data = response.data as { message?: string; success?: boolean }
+
+    return { success: { message: data?.message || 'Yêu cầu đặt lại mật khẩu đã được gửi' } }
+  } catch (error) {
+    console.error('Forgot password error:', error)
+    let errorMessage = 'Gửi yêu cầu đặt lại mật khẩu thất bại. Vui lòng thử lại.'
+
+    if (error && typeof error === 'object' && 'response' in error) {
+      const axiosError = error as { response?: { data?: { message?: string }; status?: number } }
+      const responseData = axiosError.response?.data
+      if (responseData?.message) errorMessage = responseData.message
+      else if (axiosError.response?.status === 404) errorMessage = 'Không tìm thấy email này'
+    } else if (error instanceof Error) {
+      errorMessage = error.message
+    }
+
+    return { error: { message: errorMessage } }
+  }
+}
+
+/**
+ * Reset password server action
+ * Accepts token and newPassword from client and calls backend to reset password
+ */
+export async function resetPassword(
+  _prevState: AuthActionState,
+  formData: FormData
+): Promise<AuthActionState> {
+  const token = formData.get('token')?.toString()?.trim()
+  const newPassword = formData.get('newPassword')?.toString()?.trim()
+
+  if (!token || !newPassword) {
+    return { error: { message: 'Token và mật khẩu mới là bắt buộc' } }
+  }
+
+  try {
+    const response = await serverApiClient.post(API_ENDPOINTS.AUTH.RESET_PASSWORD, {
+      token,
+      newPassword,
+    })
+
+    const data = response.data as { message?: string; success?: boolean }
+    return { success: { message: data?.message || 'Password reset successfully' } }
+  } catch (error) {
+    console.error('Reset password error:', error)
+    let errorMessage = 'Đặt lại mật khẩu thất bại. Vui lòng thử lại.'
+
+    if (error && typeof error === 'object' && 'response' in error) {
+      const axiosError = error as { response?: { data?: { message?: string }; status?: number } }
+      const responseData = axiosError.response?.data
+      if (responseData?.message) errorMessage = responseData.message
+      else if (axiosError.response?.status === 400) errorMessage = 'Yêu cầu không hợp lệ'
+      else if (axiosError.response?.status === 401)
+        errorMessage = 'Token không hợp lệ hoặc đã hết hạn'
+    } else if (error instanceof Error) {
+      errorMessage = error.message
+    }
+
+    return { error: { message: errorMessage } }
+  }
+}

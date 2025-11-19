@@ -28,10 +28,14 @@ export function SidebarNavItem({ item, index }: SidebarNavItemProps) {
   const pathname = usePathname()
 
   // Check if this item or any submenu is active
+  // Only treat the parent as active for child paths when it actually has a submenu.
+  // This prevents top-level items like `/user/dashboard` from being highlighted when
+  // visiting unrelated nested routes such as `/user/dashboard/costs/monthly` if the
+  // parent has no submenu entries.
   const isParentActive =
     item.href === '/system'
       ? pathname === item.href
-      : pathname === item.href || pathname.startsWith(item.href + '/')
+      : pathname === item.href || (item.submenu && pathname.startsWith(item.href + '/'))
 
   // Auto-expand if submenu item is active
   const hasActiveSubmenu = item.submenu?.some((sub) => pathname.startsWith(sub.href))

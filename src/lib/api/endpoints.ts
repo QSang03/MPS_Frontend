@@ -9,6 +9,8 @@ export const API_ENDPOINTS = {
     REFRESH: '/auth/refresh',
     PROFILE: '/profile',
     CHANGE_PASSWORD: '/auth/change-password',
+    FORGOT_PASSWORD: '/auth/forgot-password',
+    RESET_PASSWORD: '/auth/reset-password',
   },
 
   // Users
@@ -76,7 +78,9 @@ export const API_ENDPOINTS = {
     CREATE: '/service-requests',
     UPDATE: (id: string) => `/service-requests/${id}`,
     DELETE: (id: string) => `/service-requests/${id}`,
+    STATUS: (id: string) => `/service-requests/${id}/status`,
     STATS: (customerId: string) => `/service-requests/stats/${customerId}`,
+    COSTS: (id: string) => `/service-requests/${id}/costs`,
   },
 
   // Purchase Requests
@@ -86,6 +90,7 @@ export const API_ENDPOINTS = {
     CREATE: '/purchase-requests',
     UPDATE: (id: string) => `/purchase-requests/${id}`,
     DELETE: (id: string) => `/purchase-requests/${id}`,
+    STATUS: (id: string) => `/purchase-requests/${id}/status`,
   },
 
   // Usage Logs
@@ -111,5 +116,6 @@ export const API_ENDPOINTS = {
   POLICY_ASSISTANT: {
     BLUEPRINT: (role: string) => `/policies/assistant/blueprint/${encodeURIComponent(role)}`,
     ANALYZE: '/policies/assistant/analyze',
+    CHAT: '/policies/assistant/chat',
   },
 } as const

@@ -5,7 +5,7 @@ import type {
   CreatePurchaseRequestDto,
   UpdatePurchaseRequestDto,
 } from '@/types/models'
-import type { PaginatedResponse, PaginationParams } from '@/types/api'
+import type { ApiListResponse } from '@/types/api'
 import { PurchaseRequestStatus } from '@/constants/status'
 
 /**
@@ -15,12 +15,20 @@ export const purchaseRequestService = {
   /**
    * Get all purchase requests
    */
-  async getAll(
-    params: PaginationParams & { customerId?: string; status?: PurchaseRequestStatus }
-  ): Promise<PaginatedResponse<PurchaseRequest>> {
-    const { data } = await apiClient.get<PaginatedResponse<PurchaseRequest>>(
+  async getAll(params?: {
+    page?: number
+    limit?: number
+    search?: string
+    sortBy?: string
+    sortOrder?: 'asc' | 'desc'
+    customerId?: string
+    status?: PurchaseRequestStatus
+  }): Promise<ApiListResponse<PurchaseRequest>> {
+    const { data } = await apiClient.get<ApiListResponse<PurchaseRequest>>(
       API_ENDPOINTS.PURCHASE_REQUESTS.LIST,
-      { params }
+      {
+        params,
+      }
     )
     return data
   },
@@ -53,6 +61,17 @@ export const purchaseRequestService = {
     const { data } = await apiClient.patch<PurchaseRequest>(
       API_ENDPOINTS.PURCHASE_REQUESTS.UPDATE(id),
       dto
+    )
+    return data
+  },
+
+  /**
+   * Update purchase request status
+   */
+  async updateStatus(id: string, status: PurchaseRequestStatus): Promise<PurchaseRequest> {
+    const { data } = await apiClient.patch<PurchaseRequest>(
+      API_ENDPOINTS.PURCHASE_REQUESTS.STATUS(id),
+      { status }
     )
     return data
   },
