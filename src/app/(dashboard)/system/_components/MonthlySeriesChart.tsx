@@ -2,7 +2,14 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import {
   LineChart,
@@ -17,12 +24,14 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 import type { MonthlySeries } from '@/types/dashboard'
-import { TrendingUp } from 'lucide-react'
+import { TrendingUp, FileText, ArrowRight } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 
 interface MonthlySeriesChartProps {
   monthlySeries: MonthlySeries | undefined
   isLoading?: boolean
+  onViewDetails?: () => void
+  onExport?: () => void
 }
 
 const METRIC_CONFIG = {
@@ -116,7 +125,12 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
   return null
 }
 
-export function MonthlySeriesChart({ monthlySeries, isLoading }: MonthlySeriesChartProps) {
+export function MonthlySeriesChart({
+  monthlySeries,
+  isLoading,
+  onViewDetails,
+  onExport,
+}: MonthlySeriesChartProps) {
   const [chartType, setChartType] = useState<ChartType>('area')
   const [visibleMetrics, setVisibleMetrics] = useState<string[]>([
     'totalRevenue',
@@ -289,6 +303,16 @@ export function MonthlySeriesChart({ monthlySeries, isLoading }: MonthlySeriesCh
             </Chart>
           </ResponsiveContainer>
         </CardContent>
+        <CardFooter className="flex justify-end gap-2 border-t bg-gray-50/50 p-4">
+          <Button variant="outline" size="sm" onClick={onExport} className="gap-2">
+            <FileText className="h-4 w-4" />
+            Xuất báo cáo
+          </Button>
+          <Button size="sm" onClick={onViewDetails} className="gap-2">
+            Chi tiết
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+        </CardFooter>
       </Card>
     </motion.div>
   )

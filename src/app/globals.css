@@ -98,6 +98,7 @@
   --shadow-soft-2xl: 0 8px 32px 0 rgb(0 0 0 / 0.12);
   --shadow-glow: 0 0 20px rgb(14 165 233 / 0.5);
   --shadow-glow-lg: 0 0 40px rgb(14 165 233 / 0.6);
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 :root {
@@ -114,13 +115,13 @@
   /* Brand colors - Blue gradient */
   --primary: oklch(0.59 0.2 239); /* Brand blue */
   --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.145 0 0);
+  --secondary: oklch(0.72 0.16 231); /* Cyan 500 */
+  --secondary-foreground: oklch(1 0 0);
   --muted: oklch(0.97 0 0);
   --muted-foreground: oklch(0.556 0 0);
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.145 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
+  --destructive: oklch(0.63 0.26 29); /* Red 500 */
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.59 0.2 239);

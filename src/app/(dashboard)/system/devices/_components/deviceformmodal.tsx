@@ -62,6 +62,7 @@ const buildInitialForm = () => ({
   macAddress: '',
   firmware: '',
   isActive: true,
+  isCustomerOwned: false,
   status: 'ACTIVE',
   inactiveReasonOption: '',
   inactiveReasonText: '',
@@ -133,6 +134,8 @@ export default function DeviceFormModal({
         macAddress: device.macAddress || '',
         firmware: device.firmware || '',
         isActive: typeof device.isActive === 'boolean' ? device.isActive : true,
+        isCustomerOwned:
+          typeof device.isCustomerOwned === 'boolean' ? device.isCustomerOwned : false,
         status:
           (device.status as string) ||
           (device.isActive ? DEVICE_STATUS.ACTIVE : DEVICE_STATUS.DECOMMISSIONED),
@@ -274,6 +277,7 @@ export default function DeviceFormModal({
         ipAddress: form.ipAddress || undefined,
         macAddress: form.macAddress || undefined,
         firmware: form.firmware || undefined,
+        isCustomerOwned: form.isCustomerOwned,
       }
 
       // customerLocation and customerId: do NOT include them in the initial
@@ -285,6 +289,7 @@ export default function DeviceFormModal({
 
       if (mode === 'edit') {
         payload.isActive = form.isActive
+        payload.isCustomerOwned = form.isCustomerOwned
         // status must reflect the chosen status and follow backend enum (uppercase)
         payload.status = String(form.status).toUpperCase()
         payload.inactiveReason = chosenReason || undefined
@@ -610,6 +615,23 @@ export default function DeviceFormModal({
                     onChange={(e) => setForm((s: any) => ({ ...s, firmware: e.target.value }))}
                     placeholder="v1.0.0"
                     className="h-11"
+                  />
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800">Thuộc sở hữu khách hàng</p>
+                    <p className="text-xs text-slate-500">
+                      Bật nếu thiết bị do khách hàng sở hữu (không thuộc kho công ty).
+                    </p>
+                  </div>
+                  <Switch
+                    checked={!!form.isCustomerOwned}
+                    onCheckedChange={(checked: boolean) =>
+                      setForm((s: any) => ({ ...s, isCustomerOwned: checked }))
+                    }
                   />
                 </div>
               </div>

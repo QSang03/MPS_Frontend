@@ -16,12 +16,12 @@ const JWT_SECRET = new TextEncoder().encode(
 export interface Session {
   userId: string
   customerId: string
-  role: UserRole
+  role: UserRole // UserRole is now string type
   username: string
   email: string
   isDefaultPassword?: boolean
   isDefaultCustomer?: boolean
-  [key: string]: string | UserRole | boolean | undefined // Index signature for JWT compatibility
+  [key: string]: string | boolean | undefined // Index signature for JWT compatibility
 }
 
 /**

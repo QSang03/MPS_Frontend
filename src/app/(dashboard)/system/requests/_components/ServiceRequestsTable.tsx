@@ -19,20 +19,12 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { CustomerSelect } from '@/components/shared/CustomerSelect'
-import { formatRelativeTime } from '@/lib/utils/formatters'
+import { formatDateTime, formatRelativeTime } from '@/lib/utils/formatters'
 import { cn } from '@/lib/utils/cn'
 import { serviceRequestsClientService } from '@/lib/api/services/service-requests-client.service'
 import { ServiceRequestStatus, Priority } from '@/constants/status'
 import type { ServiceRequest } from '@/types/models/service-request'
-import type { Customer } from '@/types/models/customer'
-import type { Device } from '@/types/models/device'
-
-type ServiceRequestRow = ServiceRequest & {
-  customer?: Pick<Customer, 'id' | 'name' | 'code'> & { contactPerson?: string }
-  device?: Pick<Device, 'id' | 'serialNumber' | 'location' | 'status'>
-  deviceId?: string
-  respondedAt?: string | null
-}
+type ServiceRequestRow = ServiceRequest
 
 type ServiceRequestsResponse = Awaited<ReturnType<typeof serviceRequestsClientService.getAll>>
 
@@ -63,6 +55,18 @@ const statusBadgeMap: Record<ServiceRequestStatus, string> = {
   [ServiceRequestStatus.IN_PROGRESS]: 'bg-amber-100 text-amber-700',
   [ServiceRequestStatus.RESOLVED]: 'bg-emerald-100 text-emerald-700',
   [ServiceRequestStatus.CLOSED]: 'bg-slate-100 text-slate-600',
+}
+
+const renderTimestamp = (timestamp?: string) => {
+  if (!timestamp) {
+    return <span className="text-muted-foreground text-xs">—</span>
+  }
+  return (
+    <div className="text-sm">
+      <p>{formatRelativeTime(timestamp)}</p>
+      <p className="text-muted-foreground text-xs">{formatDateTime(timestamp)}</p>
+    </div>
+  )
 }
 
 function useDebouncedValue<T>(value: T, delay = 400) {
@@ -147,6 +151,8 @@ export function ServiceRequestsTable() {
   const summary = {
     total: totalCount,
     open: requests.filter((r) => r.status === ServiceRequestStatus.OPEN).length,
+    inProgress: requests.filter((r) => r.status === ServiceRequestStatus.IN_PROGRESS).length,
+    resolved: requests.filter((r) => r.status === ServiceRequestStatus.RESOLVED).length,
     urgent: requests.filter((r) => r.priority === Priority.URGENT).length,
   }
 
@@ -177,7 +183,12 @@ export function ServiceRequestsTable() {
         cell: ({ row }) => (
           <div className="flex flex-col">
             <span className="font-medium">{row.original.customer?.name ?? '—'}</span>
-            <span className="text-muted-foreground text-xs">{row.original.customer?.code}</span>
+            <span className="text-muted-foreground text-xs">
+              {row.original.customer?.code}
+              {row.original.customer?.contactPerson
+                ? ` • ${row.original.customer.contactPerson}`
+                : ''}
+            </span>
           </div>
         ),
       },
@@ -187,9 +198,21 @@ export function ServiceRequestsTable() {
         cell: ({ row }) => (
           <div className="text-sm">
             <div className="font-medium">{row.original.device?.serialNumber ?? '—'}</div>
-            <div className="text-muted-foreground text-xs">{row.original.device?.location}</div>
+            <div className="text-muted-foreground text-xs">
+              {row.original.device?.deviceModel?.name ?? row.original.device?.location ?? '—'}
+            </div>
           </div>
         ),
+      },
+      {
+        accessorKey: 'respondedAt',
+        header: 'Phản hồi',
+        cell: ({ row }) => renderTimestamp(row.original.respondedAt ?? undefined),
+      },
+      {
+        accessorKey: 'resolvedAt',
+        header: 'Giải quyết',
+        cell: ({ row }) => renderTimestamp(row.original.resolvedAt ?? undefined),
       },
       {
         accessorKey: 'priority',
@@ -258,7 +281,7 @@ export function ServiceRequestsTable() {
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardContent className="pt-6">
             <p className="text-muted-foreground text-sm">Tổng yêu cầu</p>
@@ -269,6 +292,18 @@ export function ServiceRequestsTable() {
           <CardContent className="pt-6">
             <p className="text-muted-foreground text-sm">Đang mở</p>
             <p className="text-2xl font-bold text-blue-600">{summary.open}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-muted-foreground text-sm">Đang xử lý</p>
+            <p className="text-2xl font-bold text-amber-600">{summary.inProgress}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-muted-foreground text-sm">Đã xử lý</p>
+            <p className="text-2xl font-bold text-emerald-600">{summary.resolved}</p>
           </CardContent>
         </Card>
         <Card>

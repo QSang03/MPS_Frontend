@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion'
 import { Bell, Menu, LogOut, User, Settings, ChevronDown, Zap, LayoutDashboard } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { usePathname } from 'next/navigation'
 import { NAVIGATION_PAYLOAD } from '@/constants/navigation'
 import {
@@ -18,6 +19,19 @@ import type { Session } from '@/types/auth'
 import { useUIStore } from '@/lib/store/uiStore'
 import { useRouter } from 'next/navigation'
 import { ROUTES } from '@/constants/routes'
+import { NotificationPanel } from '@/components/notifications/NotificationPanel'
+import { useNotifications } from '@/lib/hooks/useNotifications'
+import { useState } from 'react'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 // 'cn' helper removed from imports (not used here)
 
 interface NavbarProps {
@@ -29,6 +43,8 @@ export function Navbar({ session }: NavbarProps) {
   const router = useRouter()
   const pageTitle = useUIStore((s) => s.pageTitle)
   const pathname = usePathname()
+  const { unreadCount, isUnreadCountLoading } = useNotifications()
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
 
   // derive the best matching title from NAVIGATION_PAYLOAD by choosing the longest
   // route that is a prefix of the current pathname. This ensures /system/devices
@@ -41,7 +57,7 @@ export function Navbar({ session }: NavbarProps) {
     return matches[0]?.label ?? null
   })()
 
-  const handleLogout = async () => {
+  const performLogout = async () => {
     try {
       if (typeof window !== 'undefined' && window.localStorage) {
         localStorage.removeItem('mps_navigation')
@@ -122,20 +138,25 @@ export function Navbar({ session }: NavbarProps) {
               </Button>
             </motion.div>
             {/* Notifications - Premium Bell */}
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="relative rounded-lg transition-all duration-300 hover:bg-blue-50 hover:text-blue-700"
-              >
-                <Bell className="h-5 w-5" />
-                <motion.span
-                  className="absolute top-1 right-1 h-2.5 w-2.5 rounded-full bg-gradient-to-r from-red-500 to-pink-500 shadow-lg"
-                  animate={{ scale: [1, 1.2, 1] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                />
-              </Button>
-            </motion.div>
+            <NotificationPanel>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="relative rounded-lg transition-all duration-300 hover:bg-blue-50 hover:text-blue-700"
+                >
+                  <Bell className="h-5 w-5" />
+                  {!isUnreadCountLoading && unreadCount > 0 && (
+                    <Badge
+                      variant="destructive"
+                      className="absolute -top-1 -right-1 h-5 min-w-5 px-1 text-xs"
+                    >
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </Badge>
+                  )}
+                </Button>
+              </motion.div>
+            </NotificationPanel>
 
             {/* Divider */}
             <div className="hidden h-6 w-px bg-gray-200 md:block" />
@@ -229,7 +250,10 @@ export function Navbar({ session }: NavbarProps) {
                 <div className="p-2">
                   <motion.div whileHover={{ x: 4 }} whileTap={{ scale: 0.98 }}>
                     <DropdownMenuItem
-                      onClick={handleLogout}
+                      onClick={(e) => {
+                        e.preventDefault()
+                        setShowLogoutConfirm(true)
+                      }}
                       className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 font-medium text-red-600 transition-all duration-300 hover:bg-red-50 hover:text-red-700"
                     >
                       <LogOut className="h-4 w-4 flex-shrink-0" />
@@ -252,6 +276,23 @@ export function Navbar({ session }: NavbarProps) {
           </div>
         </div>
       </div>
+
+      <AlertDialog open={showLogoutConfirm} onOpenChange={setShowLogoutConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận đăng xuất</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn đăng xuất khỏi hệ thống không?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction onClick={performLogout} className="bg-red-600 hover:bg-red-700">
+              Đăng xuất
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </header>
   )
 }

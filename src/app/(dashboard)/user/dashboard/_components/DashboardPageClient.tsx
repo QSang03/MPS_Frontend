@@ -1,11 +1,38 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { PageHeader } from '@/components/ui/PageHeader'
+import { LoadingState } from '@/components/ui/LoadingState'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { ROUTES } from '@/constants/routes'
+import {
+  FileText,
+  TrendingUp,
+  Printer,
+  ChevronDown,
+  ChevronUp,
+  FileBarChart,
+  Send,
+  LayoutDashboard,
+} from 'lucide-react'
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+} from 'recharts'
 import { dashboardClientService } from '@/lib/api/services/dashboard-client.service'
 import { getClientUserProfile } from '@/lib/auth/client-auth'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Skeleton } from '@/components/ui/skeleton'
-import { FileText, TrendingUp, Printer, ChevronDown, ChevronUp } from 'lucide-react'
+// `Skeleton` removed — not used in this module
 
 type Overview = {
   month: string
@@ -41,7 +68,10 @@ type Overview = {
   }
 }
 
+// COLORS removed — not used in this component
+
 export default function DashboardPageClient({ month }: { month?: string }) {
+  const router = useRouter()
   const [overview, setOverview] = useState<Overview | null>(null)
   const [displayName, setDisplayName] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -90,47 +120,95 @@ export default function DashboardPageClient({ month }: { month?: string }) {
   }, [month])
 
   if (loading) {
-    return (
-      <div className="space-y-4">
-        <Skeleton className="h-8 w-48" />
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-24 w-full" />
-        </div>
-      </div>
-    )
+    return <LoadingState text="Đang tải dữ liệu tổng quan..." />
   }
 
   if (error) {
-    return <div className="text-destructive">{error}</div>
+    return (
+      <EmptyState
+        title="Đã xảy ra lỗi"
+        description={error}
+        action={{ label: 'Thử lại', onClick: () => window.location.reload() }}
+      />
+    )
   }
 
   if (!overview) {
-    return <div>Không có dữ liệu</div>
+    return (
+      <EmptyState
+        title="Không có dữ liệu"
+        description="Hiện tại chưa có dữ liệu tổng quan cho tháng này."
+      />
+    )
   }
 
   const k = overview.kpis || {}
 
+  // Prepare data for charts
+  const usageData =
+    overview.usage?.items?.map((item) => {
+      let dateLabel = '—'
+      const itemData = item as Record<string, unknown>
+      if (itemData.date) {
+        const d = new Date(itemData.date as string)
+        if (!isNaN(d.getTime()))
+          dateLabel = d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })
+      } else if (itemData.month && typeof itemData.month === 'string') {
+        const m = itemData.month
+        const parts = m.split('-')
+        if (parts.length === 2) dateLabel = `${parts[1]}/${parts[0]}`
+        else dateLabel = m
+      }
+      return {
+        name: dateLabel,
+        bw: item.bwPages || 0,
+        color: item.colorPages || 0,
+        total: (item.bwPages || 0) + (item.colorPages || 0),
+      }
+    }) || []
+
+  const deviceData =
+    overview.topDevices
+      ?.map((d) => ({
+        name: d.deviceModelName || d.serialNumber || 'Unknown',
+        value: d.totalRevenue || 0,
+      }))
+      .slice(0, 5) || []
+
   return (
     <div className="space-y-8">
       {/* Hero Section với Gradient */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 via-cyan-600 to-teal-500 p-8 text-white shadow-xl">
-        <div className="absolute top-0 right-0 h-64 w-64 translate-x-8 -translate-y-8 transform rounded-full bg-white/10 blur-3xl" />
-        <div className="absolute bottom-0 left-0 h-64 w-64 -translate-x-8 translate-y-8 transform rounded-full bg-white/10 blur-3xl" />
-        <div className="relative">
-          <h1 className="text-3xl font-bold">Tổng quan</h1>
-          <p className="mt-2 text-blue-100">
-            Tháng {overview.month}
-            {displayName ? <span className="mx-2">•</span> : null}
-            {displayName ? <span className="text-sm font-medium">{displayName}</span> : null}
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title="Tổng quan"
+        subtitle={`Tháng ${overview.month}${displayName ? ` • ${displayName}` : ''}`}
+        icon={<LayoutDashboard className="h-6 w-6 text-white" />}
+        actions={
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              className="border-white/20 bg-white/10 text-white hover:bg-white/20"
+              onClick={() => router.push(ROUTES.USER_MY_DEVICES)}
+            >
+              <FileBarChart className="mr-2 h-4 w-4" />
+              Thiết bị
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              className="border-white/20 bg-white/10 text-white hover:bg-white/20"
+              onClick={() => router.push(ROUTES.USER_MY_REQUESTS)}
+            >
+              <Send className="mr-2 h-4 w-4" />
+              Gửi yêu cầu
+            </Button>
+          </div>
+        }
+      />
 
       {/* KPI Cards - 3 Cards Grid */}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-        <Card className="overflow-hidden border-l-4 border-l-blue-500 shadow-lg transition-all hover:shadow-xl">
+        <Card className="shadow-card overflow-hidden border-l-4 border-l-blue-500 transition-all hover:shadow-md">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Tổng chi phí</CardTitle>
             <TrendingUp className="h-4 w-4 text-blue-500" />
@@ -141,7 +219,7 @@ export default function DashboardPageClient({ month }: { month?: string }) {
           </CardContent>
         </Card>
 
-        <Card className="overflow-hidden border-l-4 border-l-green-500 shadow-lg transition-all hover:shadow-xl">
+        <Card className="shadow-card overflow-hidden border-l-4 border-l-green-500 transition-all hover:shadow-md">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Trang in B/W</CardTitle>
             <FileText className="h-4 w-4 text-green-500" />
@@ -152,7 +230,7 @@ export default function DashboardPageClient({ month }: { month?: string }) {
           </CardContent>
         </Card>
 
-        <Card className="overflow-hidden border-l-4 border-l-purple-500 shadow-lg transition-all hover:shadow-xl">
+        <Card className="shadow-card overflow-hidden border-l-4 border-l-purple-500 transition-all hover:shadow-md">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Trang in màu</CardTitle>
             <Printer className="h-4 w-4 text-purple-500" />
@@ -164,10 +242,92 @@ export default function DashboardPageClient({ month }: { month?: string }) {
         </Card>
       </div>
 
-      {/* Top Devices */}
-      <Card className="shadow-lg">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* Usage History Chart */}
+        <Card className="shadow-card">
+          <CardHeader>
+            <CardTitle>Biểu đồ sử dụng</CardTitle>
+            <CardDescription>Số lượng trang in theo thời gian</CardDescription>
+          </CardHeader>
+          <CardContent className="h-[300px]">
+            {usageData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={usageData}>
+                  <defs>
+                    <linearGradient id="colorBw" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#22c55e" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="colorColor" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#a855f7" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="#a855f7" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Area
+                    type="monotone"
+                    dataKey="bw"
+                    name="B/W"
+                    stroke="#22c55e"
+                    fillOpacity={1}
+                    fill="url(#colorBw)"
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="color"
+                    name="Màu"
+                    stroke="#a855f7"
+                    fillOpacity={1}
+                    fill="url(#colorColor)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <EmptyState
+                title="Chưa có dữ liệu"
+                description="Không có dữ liệu biểu đồ cho khoảng thời gian này"
+                className="h-full border-none bg-transparent py-0"
+              />
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Top Devices Chart */}
+        <Card className="shadow-card">
+          <CardHeader>
+            <CardTitle>Top thiết bị theo chi phí</CardTitle>
+            <CardDescription>5 thiết bị có chi phí cao nhất</CardDescription>
+          </CardHeader>
+          <CardContent className="h-[300px]">
+            {deviceData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart layout="vertical" data={deviceData} margin={{ left: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
+                  <XAxis type="number" />
+                  <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 12 }} />
+                  <Tooltip formatter={(value) => `${Number(value).toLocaleString()}$`} />
+                  <Bar dataKey="value" name="Chi phí" fill="#3b82f6" radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <EmptyState
+                title="Chưa có dữ liệu"
+                description="Không có dữ liệu thiết bị cho khoảng thời gian này"
+                className="h-full border-none bg-transparent py-0"
+              />
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Top Devices List (Detailed) */}
+      <Card className="shadow-card">
         <CardHeader>
-          <CardTitle>Thiết bị tiêu thụ nhiều</CardTitle>
+          <CardTitle>Chi tiết thiết bị tiêu thụ nhiều</CardTitle>
         </CardHeader>
         <CardContent>
           {overview.topDevices && overview.topDevices.length > 0 ? (
@@ -238,56 +398,11 @@ export default function DashboardPageClient({ month }: { month?: string }) {
               })}
             </div>
           ) : (
-            <div className="text-muted-foreground py-8 text-center">Chưa có thiết bị nổi bật</div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Usage History */}
-      <Card className="shadow-lg">
-        <CardHeader>
-          <CardTitle>Lịch sử sử dụng</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {overview.usage?.items && overview.usage.items.length > 0 ? (
-            <div className="space-y-2">
-              {overview.usage.items.map((item, idx) => {
-                // Some backend responses return `date` (full ISO date) while
-                // others return `month` (YYYY-MM). Handle both gracefully.
-                const dateLabel = (() => {
-                  const itemData = item as Record<string, unknown>
-                  if (itemData.date) {
-                    const d = new Date(itemData.date as string)
-                    if (!isNaN(d.getTime())) return d.toLocaleDateString('vi-VN')
-                  }
-                  if (itemData.month && typeof itemData.month === 'string') {
-                    const m = itemData.month
-                    const parts = m.split('-')
-                    if (parts.length === 2) return `${parts[1]}/${parts[0]}` // MM/YYYY
-                    return m
-                  }
-                  return '—'
-                })()
-
-                return (
-                  <div
-                    key={idx}
-                    className="flex items-center justify-between rounded-lg border p-3 text-sm"
-                  >
-                    <div className="font-medium">{dateLabel}</div>
-                    <div className="text-muted-foreground flex gap-4">
-                      <span>B/W: {(item.bwPages ?? 0).toLocaleString()}</span>
-                      <span>Màu: {(item.colorPages ?? 0).toLocaleString()}</span>
-                      <span>
-                        Tổng: {((item.bwPages ?? 0) + (item.colorPages ?? 0)).toLocaleString()}
-                      </span>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          ) : (
-            <div className="text-muted-foreground py-8 text-center">Chưa có dữ liệu sử dụng</div>
+            <EmptyState
+              title="Chưa có thiết bị nổi bật"
+              description="Không có dữ liệu thiết bị nổi bật cho khoảng thời gian này"
+              className="border-none bg-transparent py-8"
+            />
           )}
         </CardContent>
       </Card>

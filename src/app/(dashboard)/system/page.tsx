@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { usePageTitle } from '@/lib/hooks/usePageTitle'
 import { useAdminOverview, useCurrentMonth } from '@/lib/hooks/useDashboardData'
 import { KPICards } from './_components/KPICards'
@@ -19,6 +20,7 @@ import { AlertCircle, RefreshCw, PlayCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import internalApiClient from '@/lib/api/internal-client'
+import { exportToExcel } from '@/lib/utils/export'
 
 function DashboardSkeleton() {
   return (
@@ -38,6 +40,7 @@ function DashboardSkeleton() {
 }
 
 export default function CustomerAdminDashboard() {
+  const router = useRouter()
   const currentMonth = useCurrentMonth()
   const [selectedMonth, setSelectedMonth] = useState(currentMonth)
   const [showCustomersModal, setShowCustomersModal] = useState(false)
@@ -73,6 +76,128 @@ export default function CustomerAdminDashboard() {
     } finally {
       setIsAggregating(false)
     }
+  }
+
+  // Export handlers
+  const handleExportCostBreakdown = async () => {
+    if (!overviewData?.costBreakdown) return
+    try {
+      const resp = await internalApiClient.get('/api/reports/monthly/export/pdf', {
+        params: {
+          month: selectedMonth,
+        },
+      })
+
+      if (resp?.data?.success && resp.data.data?.url) {
+        window.open(resp.data.data.url, '_blank')
+        toast.success('Báo cáo PDF đã được tạo, mở ở tab mới')
+        return
+      }
+    } catch (err) {
+      console.warn('PDF export failed, falling back to client Excel', err)
+    }
+
+    // Fallback: client-side Excel export
+    const data = [
+      {
+        Category: 'Thuê thiết bị',
+        Percentage: overviewData.costBreakdown.rentalPercent,
+      },
+      {
+        Category: 'Sửa chữa',
+        Percentage: overviewData.costBreakdown.repairPercent,
+      },
+      {
+        Category: 'Trang đen trắng',
+        Percentage: overviewData.costBreakdown.pageBWPercent,
+      },
+      {
+        Category: 'Trang màu',
+        Percentage: overviewData.costBreakdown.pageColorPercent,
+      },
+    ]
+    await exportToExcel(
+      data,
+      [
+        { header: 'Danh mục', key: 'Category', width: 30 },
+        { header: 'Tỷ lệ (%)', key: 'Percentage', width: 15 },
+      ],
+      `cost-breakdown-${selectedMonth}`,
+      'Phân bổ chi phí'
+    )
+    toast.success('Đã tải xuống báo cáo phân bổ chi phí (Excel)')
+  }
+
+  const handleExportMonthlySeries = async () => {
+    if (!overviewData?.monthlySeries?.points) return
+
+    // Prefer backend generated PDF for the full monthly report
+    try {
+      const resp = await internalApiClient.get('/api/reports/monthly/export/pdf', {
+        params: {
+          month: selectedMonth,
+        },
+      })
+
+      if (resp?.data?.success && resp.data.data?.url) {
+        window.open(resp.data.data.url, '_blank')
+        toast.success('Báo cáo PDF đã được tạo, mở ở tab mới')
+        return
+      }
+    } catch (err) {
+      console.warn('Backend PDF export failed, falling back to Excel', err)
+    }
+
+    // Fallback: client-side Excel export of series data
+    await exportToExcel(
+      overviewData.monthlySeries.points,
+      [
+        { header: 'Tháng', key: 'month', width: 15 },
+        { header: 'Tổng doanh thu', key: 'totalRevenue', width: 20 },
+        { header: 'Tổng chi phí', key: 'totalCogs', width: 20 },
+        { header: 'Lợi nhuận gộp', key: 'grossProfit', width: 20 },
+        { header: 'Doanh thu thuê', key: 'revenueRental', width: 20 },
+        { header: 'Doanh thu sửa chữa', key: 'revenueRepair', width: 20 },
+        { header: 'Doanh thu trang in', key: 'revenuePageBW', width: 20 },
+      ],
+      `monthly-trends-${selectedMonth}`,
+      'Xu hướng tháng'
+    )
+    toast.success('Đã tải xuống báo cáo xu hướng tháng (Excel)')
+  }
+
+  const handleExportTopCustomers = async () => {
+    if (!overviewData?.topCustomers) return
+
+    try {
+      const resp = await internalApiClient.get('/api/reports/monthly/export/csv', {
+        params: {
+          month: selectedMonth,
+        },
+      })
+
+      if (resp?.data?.success && resp.data.data?.url) {
+        window.open(resp.data.data.url, '_blank')
+        toast.success('CSV báo cáo đã được tạo, mở ở tab mới')
+        return
+      }
+    } catch (err) {
+      console.warn('Backend CSV export failed, falling back to Excel', err)
+    }
+
+    await exportToExcel(
+      overviewData.topCustomers,
+      [
+        { header: 'Mã KH', key: 'customerId', width: 15 },
+        { header: 'Tên khách hàng', key: 'customerName', width: 30 },
+        { header: 'Doanh thu', key: 'totalRevenue', width: 20 },
+        { header: 'Chi phí', key: 'totalCogs', width: 20 },
+        { header: 'Lợi nhuận', key: 'grossProfit', width: 20 },
+      ],
+      `top-customers-${selectedMonth}`,
+      'Top khách hàng'
+    )
+    toast.success('Đã tải xuống danh sách khách hàng (Excel)')
   }
 
   // Error state
@@ -158,17 +283,36 @@ export default function CustomerAdminDashboard() {
 
       {/* Row 1: Cost Breakdown + Alerts Summary */}
       <div className="grid gap-6 lg:grid-cols-2">
-        <CostBreakdownChart costBreakdown={overviewData?.costBreakdown} isLoading={isLoading} />
-        <AlertsSummary kpis={overviewData?.kpis} isLoading={isLoading} />
+        <CostBreakdownChart
+          costBreakdown={overviewData?.costBreakdown}
+          isLoading={isLoading}
+          onViewDetails={() => router.push('/system/reports')}
+          onExport={handleExportCostBreakdown}
+        />
+        <AlertsSummary
+          kpis={overviewData?.kpis}
+          isLoading={isLoading}
+          onViewAll={() => router.push('/system/notifications')}
+        />
       </div>
 
       {/* Row 2: Monthly Trends Chart */}
-      <MonthlySeriesChart monthlySeries={overviewData?.monthlySeries} isLoading={isLoading} />
+      <MonthlySeriesChart
+        monthlySeries={overviewData?.monthlySeries}
+        isLoading={isLoading}
+        onViewDetails={() => router.push('/system/reports')}
+        onExport={handleExportMonthlySeries}
+      />
 
       {/* Row 3: Top Customers + Recent Activity */}
       <div className="grid gap-6 lg:grid-cols-2">
-        <TopCustomersTable topCustomers={overviewData?.topCustomers} isLoading={isLoading} />
-        <RecentActivity />
+        <TopCustomersTable
+          topCustomers={overviewData?.topCustomers}
+          isLoading={isLoading}
+          onViewAll={() => router.push('/system/customers')}
+          onExport={handleExportTopCustomers}
+        />
+        <RecentActivity onViewAll={() => router.push('/system/requests')} />
       </div>
     </div>
   )

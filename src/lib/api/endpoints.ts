@@ -93,6 +93,15 @@ export const API_ENDPOINTS = {
     STATUS: (id: string) => `/purchase-requests/${id}/status`,
   },
 
+  // Service Level Agreements
+  SLAS: {
+    LIST: '/slas',
+    DETAIL: (id: string) => `/slas/${id}`,
+    CREATE: '/slas',
+    UPDATE: (id: string) => `/slas/${id}`,
+    DELETE: (id: string) => `/slas/${id}`,
+  },
+
   // Usage Logs
   USAGE_LOGS: {
     LIST: '/usage-logs',
@@ -117,5 +126,13 @@ export const API_ENDPOINTS = {
     BLUEPRINT: (role: string) => `/policies/assistant/blueprint/${encodeURIComponent(role)}`,
     ANALYZE: '/policies/assistant/analyze',
     CHAT: '/policies/assistant/chat',
+  },
+
+  // Notifications
+  NOTIFICATIONS: {
+    LIST: '/notifications',
+    UNREAD_COUNT: '/notifications/unread-count',
+    MARK_READ: (id: string) => `/notifications/${id}/read`,
+    MARK_ALL_READ: '/notifications/read-all',
   },
 } as const

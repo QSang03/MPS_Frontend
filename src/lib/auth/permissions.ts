@@ -1,5 +1,4 @@
 import type { Session } from './session'
-import { UserRole } from '@/constants/roles'
 
 /**
  * Action types for ABAC
@@ -34,9 +33,15 @@ export interface Resource {
  * Evaluates if a user can perform an action on a resource
  */
 export function canPerform(session: Session, action: Action, resource: Resource): boolean {
-  // Policy 1: SystemAdmin has full access to everything
-  if (session.role === UserRole.SYSTEM_ADMIN) {
-    return true
+  // Policy 1: Users with isDefaultCustomer === true have full access to everything
+  // (equivalent to SystemAdmin/CustomerAdmin in old system)
+  if (session.isDefaultCustomer) {
+    // Can manage all resources within their customer
+    if (resource.type === 'customer') {
+      // Cannot modify customer info (only for specific roles, can be checked by role string if needed)
+      return action === 'read'
+    }
+    return true // Full access to other resources within customer
   }
 
   // Policy 2: Customer isolation - users can only access resources within their customer
@@ -44,39 +49,25 @@ export function canPerform(session: Session, action: Action, resource: Resource)
     return false
   }
 
-  // Policy 3: CustomerAdmin permissions within their customer
-  if (session.role === UserRole.CUSTOMER_ADMIN) {
-    // Can manage all resources within their customer
-    if (resource.type === 'customer') {
-      // Cannot modify customer info (only SystemAdmin)
-      return action === 'read'
-    }
-    return true // Full access to other resources within customer
+  // Policy 3: Regular User permissions (isDefaultCustomer === false)
+  // Read access to devices and usage logs within their customer
+  if ((resource.type === 'device' || resource.type === 'usageLog') && action === 'read') {
+    return true
   }
 
-  // Policy 4: Regular User permissions
-  if (session.role === UserRole.USER) {
-    // Read access to devices and usage logs within their customer
-    if ((resource.type === 'device' || resource.type === 'usageLog') && action === 'read') {
+  // Can create and read their own service requests
+  if (resource.type === 'serviceRequest') {
+    if (action === 'create') return true
+    if (action === 'read') return true
+    // Can update only their own service requests
+    if (action === 'update' && resource.ownerId === session.userId) {
       return true
     }
+  }
 
-    // Can create and read their own service requests
-    if (resource.type === 'serviceRequest') {
-      if (action === 'create') return true
-      if (action === 'read') return true
-      // Can update only their own service requests
-      if (action === 'update' && resource.ownerId === session.userId) {
-        return true
-      }
-    }
-
-    // Cannot create purchase requests (only CustomerAdmin+)
-    if (resource.type === 'purchaseRequest' && action === 'read') {
-      return true
-    }
-
-    return false
+  // Cannot create purchase requests (only isDefaultCustomer === true)
+  if (resource.type === 'purchaseRequest' && action === 'read') {
+    return true
   }
 
   // Default deny
@@ -92,25 +83,16 @@ export function canCreateUrgentRequest(
   isBusinessHours: boolean,
   hasPremiumSupport: boolean
 ): boolean {
-  // SystemAdmin can always create urgent requests
-  if (session.role === UserRole.SYSTEM_ADMIN) {
-    return true
-  }
-
-  // CustomerAdmin can always create urgent requests within their customer
-  if (session.role === UserRole.CUSTOMER_ADMIN) {
+  // Users with isDefaultCustomer === true can always create urgent requests
+  if (session.isDefaultCustomer) {
     return true
   }
 
   // Regular users can create urgent requests:
   // - During business hours (any support tier)
   // - Outside business hours (only with premium support)
-  if (session.role === UserRole.USER) {
-    if (isBusinessHours) return true
-    if (!isBusinessHours && hasPremiumSupport) return true
-    return false
-  }
-
+  if (isBusinessHours) return true
+  if (!isBusinessHours && hasPremiumSupport) return true
   return false
 }
 
@@ -120,12 +102,9 @@ export function canCreateUrgentRequest(
 export function canAccessRoute(session: Session | null, pathname: string): boolean {
   if (!session) return false
 
-  if (pathname.startsWith('/system-admin')) {
-    return session.role === UserRole.SYSTEM_ADMIN
-  }
-
   if (pathname.startsWith('/system')) {
-    return session.role === UserRole.CUSTOMER_ADMIN || session.role === UserRole.SYSTEM_ADMIN
+    // Only users with isDefaultCustomer === true can access /system routes
+    return session.isDefaultCustomer === true
   }
 
   if (pathname.startsWith('/user')) {

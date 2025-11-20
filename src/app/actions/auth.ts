@@ -5,7 +5,7 @@ import { createSessionWithTokens, destroySession, getRefreshToken } from '@/lib/
 import { loginSchema } from '@/lib/validations/auth.schema'
 import serverApiClient from '@/lib/api/server-client'
 import { API_ENDPOINTS } from '@/lib/api/endpoints'
-import { UserRole } from '@/constants/roles'
+import type { UserRole } from '@/constants/roles'
 import { ROUTES } from '@/constants/routes'
 import type { AuthResponse } from '@/types/auth'
 
@@ -67,16 +67,33 @@ export async function login(
     // Extract data from response (API returns { success, data: { user, accessToken, refreshToken, isDefaultPassword } })
     const { data } = response.data
 
+    // Get role from backend (data.user.role.name)
+    const roleName = data?.user?.role?.name || 'User'
+    const role: UserRole = roleName // UserRole is now string type
+    const isDefaultCustomer = data?.isDefaultCustomer || false
+
+    // Save to localStorage for persistence across page refreshes
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('mps_user_role', roleName)
+        localStorage.setItem('mps_is_default_customer', String(isDefaultCustomer))
+        localStorage.setItem('mps_user_id', data?.user?.id || '')
+        localStorage.setItem('mps_customer_id', data?.user?.customerId || '')
+      } catch (error) {
+        console.error('Failed to save to localStorage:', error)
+      }
+    }
+
     // Create session with tokens and set httpOnly cookies
     await createSessionWithTokens({
       session: {
         userId: data?.user?.id || 'unknown',
         customerId: data?.user?.customerId || 'default',
-        role: UserRole.CUSTOMER_ADMIN, // Set as customer admin for now
+        role,
         username: data?.user?.email || 'User', // Use email as username with fallback
         email: data?.user?.email || 'user@example.com',
         isDefaultPassword: data?.isDefaultPassword || false,
-        isDefaultCustomer: data?.isDefaultCustomer,
+        isDefaultCustomer,
       },
       accessToken: data?.accessToken || '',
       refreshToken: data?.refreshToken || '',
@@ -159,6 +176,18 @@ export async function logout(): Promise<void> {
   } catch (error) {
     console.error('Logout API error:', error)
     // Continue with logout even if API call fails
+  }
+
+  // Clear localStorage
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.removeItem('mps_user_role')
+      localStorage.removeItem('mps_is_default_customer')
+      localStorage.removeItem('mps_user_id')
+      localStorage.removeItem('mps_customer_id')
+    } catch (error) {
+      console.error('Failed to clear localStorage:', error)
+    }
   }
 
   // Destroy session and cookies

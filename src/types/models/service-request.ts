@@ -1,4 +1,6 @@
 import { ServiceRequestStatus, Priority } from '@/constants/status'
+import type { Customer } from './customer'
+import type { Device } from './device'
 
 /**
  * Service request model
@@ -12,8 +14,50 @@ export interface ServiceRequest {
   description: string
   priority: Priority
   status: ServiceRequestStatus
+  respondedAt?: string
+  respondedBy?: string
+  resolvedAt?: string
+  resolvedBy?: string
+  closedAt?: string
+  closedBy?: string
+  customerClosedReason?: string
+  customerClosedBy?: string
+  customerClosedAt?: string
   createdAt: string
   updatedAt: string
+  customer?: CustomerSummary
+  device?: DeviceSummary
+}
+
+type CustomerSummary = Pick<
+  Customer,
+  | 'id'
+  | 'name'
+  | 'code'
+  | 'contactEmail'
+  | 'contactPhone'
+  | 'contactPerson'
+  | 'address'
+  | 'tier'
+  | 'isActive'
+  | 'description'
+  | 'billingDay'
+  | 'deviceCount'
+  | 'contractCount'
+  | 'userCount'
+>
+
+type DeviceSummary = Device & {
+  deviceModel?: {
+    id: string
+    name?: string
+    manufacturer?: string
+    deviceType?: string
+    isActive?: boolean
+    createdAt?: string
+    updatedAt?: string
+  }
+  customer?: CustomerSummary
 }
 
 /**

@@ -196,7 +196,7 @@ export const USER_NAVIGATION_PAYLOAD: NavItemPayload[] = [
   {
     id: 'user-consumables',
     name: 'consumables',
-    label: 'Vật tư tiêu hao',
+    label: 'Kho vật tư',
     icon: 'ShoppingCart',
     route: '/user/consumables',
     description: 'Vật tư tiêu hao liên quan đến khách hàng',
@@ -658,6 +658,55 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
         requiredPermissions: {
           strategy: 'all',
           resources: [{ resource: 'purchase-requests', action: 'update' }],
+        },
+      },
+      {
+        id: 'filter-by-customer',
+        label: 'Lọc theo khách hàng',
+        icon: 'Filter',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'customers', action: 'read' }],
+        },
+      },
+    ],
+  },
+  {
+    id: 'slas',
+    label: 'Quản trị SLA',
+    icon: 'Shield',
+    route: '/system/slas',
+    description: 'Định nghĩa SLA & chuẩn hóa cam kết phản hồi',
+    requiredPermissions: {
+      strategy: 'all',
+      resources: [{ resource: 'slas', action: 'read' }],
+    },
+    actions: [
+      {
+        id: 'create',
+        label: 'Tạo SLA',
+        icon: 'Plus',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'slas', action: 'create' }],
+        },
+      },
+      {
+        id: 'update',
+        label: 'Cập nhật SLA',
+        icon: 'Edit',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'slas', action: 'update' }],
+        },
+      },
+      {
+        id: 'delete',
+        label: 'Xóa SLA',
+        icon: 'Trash2',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'slas', action: 'delete' }],
         },
       },
       {

@@ -1,12 +1,22 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { formatRelativeTime } from '@/lib/utils/formatters'
-import { ArrowRight, Printer, FileText, AlertCircle } from 'lucide-react'
+import { ArrowRight, Printer, FileText, AlertCircle, History } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+
+interface RecentActivityProps {
+  onViewAll?: () => void
+}
 
 // Mock data - will be replaced with real API
 const recentActivities = [
@@ -49,7 +59,7 @@ const iconMap = {
   service: FileText,
 }
 
-export function RecentActivity() {
+export function RecentActivity({ onViewAll }: RecentActivityProps) {
   const [isClient, setIsClient] = useState(false)
 
   useEffect(() => {
@@ -64,15 +74,12 @@ export function RecentActivity() {
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle>Hoạt động gần đây</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <History className="h-5 w-5" />
+              Hoạt động gần đây
+            </CardTitle>
             <CardDescription>Cập nhật mới nhất từ thiết bị và yêu cầu</CardDescription>
           </div>
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/system/service-requests">
-              Xem tất cả
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
         </div>
       </CardHeader>
       <CardContent>
@@ -106,6 +113,12 @@ export function RecentActivity() {
           })}
         </div>
       </CardContent>
+      <CardFooter className="flex justify-end border-t bg-gray-50/50 p-4">
+        <Button size="sm" onClick={onViewAll} className="gap-2">
+          Xem tất cả
+          <ArrowRight className="h-4 w-4" />
+        </Button>
+      </CardFooter>
     </Card>
   )
 }

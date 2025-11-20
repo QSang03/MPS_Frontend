@@ -1,7 +1,14 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import type { AdminOverviewKPIs } from '@/types/dashboard'
@@ -11,6 +18,7 @@ import { cn } from '@/lib/utils/cn'
 interface AlertsSummaryProps {
   kpis: AdminOverviewKPIs | undefined
   isLoading?: boolean
+  onViewAll?: () => void
 }
 
 interface AlertItem {
@@ -26,7 +34,7 @@ interface AlertItem {
   description: string
 }
 
-export function AlertsSummary({ kpis, isLoading }: AlertsSummaryProps) {
+export function AlertsSummary({ kpis, isLoading, onViewAll }: AlertsSummaryProps) {
   if (isLoading || !kpis) {
     return (
       <Card>
@@ -203,17 +211,15 @@ export function AlertsSummary({ kpis, isLoading }: AlertsSummaryProps) {
               })}
             </div>
           )}
-
-          {/* Action Button */}
-          {totalAlerts > 0 && (
-            <div className="mt-4 border-t pt-4">
-              <Button className="w-full" variant="outline">
-                <Bell className="mr-2 h-4 w-4" />
-                Xem tất cả cảnh báo ({totalAlerts})
-              </Button>
-            </div>
-          )}
         </CardContent>
+        {totalAlerts > 0 && (
+          <CardFooter className="flex justify-end border-t bg-gray-50/50 p-4">
+            <Button className="w-full sm:w-auto" variant="outline" onClick={onViewAll}>
+              <Bell className="mr-2 h-4 w-4" />
+              Xem tất cả cảnh báo ({totalAlerts})
+            </Button>
+          </CardFooter>
+        )}
       </Card>
     </motion.div>
   )

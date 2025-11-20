@@ -6,7 +6,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { usersClientService } from '@/lib/api/services/users-client.service'
 import { rolesClientService } from '@/lib/api/services/roles-client.service'
 import { customersClientService } from '@/lib/api/services/customers-client.service'
-import { CardContent, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -36,6 +36,7 @@ import {
   Users,
   RefreshCw,
   Filter,
+  UserCog,
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -48,12 +49,15 @@ import { EditUserModal } from './EditUserModal'
 import { UserFormModal } from './UserFormModal'
 import type { User, UserFilters, UserPagination, UserRole, UsersResponse } from '@/types/users'
 import type { Customer } from '@/types/models/customer'
-import { Skeleton } from '@/components/ui/skeleton'
 import { useActionPermission } from '@/lib/hooks/useActionPermission'
 import { ActionGuard } from '@/components/shared/ActionGuard'
 import { toast } from 'sonner'
 import { DeleteDialog } from '@/components/shared/DeleteDialog'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
+import { PageHeader } from '@/components/ui/PageHeader'
+import { LoadingState } from '@/components/ui/LoadingState'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { StatusBadge } from '@/components/ui/StatusBadge'
 
 export function UsersTable() {
   const { can } = useActionPermission('users')
@@ -83,7 +87,6 @@ export function UsersTable() {
   const [editingUser, setEditingUser] = useState<User | null>(null)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
-  const [hoveredRowId, setHoveredRowId] = useState<string | null>(null)
 
   useEffect(() => {
     const t = setTimeout(() => setIsMounted(true), 0)
@@ -223,57 +226,79 @@ export function UsersTable() {
     setPagination((p) => ({ ...p, page }))
   }
 
-  const getRoleBadgeColor = (roleName?: string) => {
+  const getRoleBadgeVariant = (roleName?: string) => {
     switch (roleName) {
       case 'super-admin':
-        return 'bg-red-100 text-red-800 border-red-300'
+        return 'destructive'
       case 'admin':
-        return 'bg-orange-100 text-orange-800 border-orange-300'
+        return 'warning'
       case 'manager':
-        return 'bg-blue-100 text-blue-800 border-blue-300'
+        return 'info'
       case 'developer':
-        return 'bg-emerald-100 text-emerald-800 border-emerald-300'
+        return 'success'
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-300'
+        return 'secondary'
     }
   }
 
   const paginationInfo = usersData?.pagination || { page: 1, limit: 10, total: 0, totalPages: 1 }
   const isLoading = isLoadingUsers || isLoadingRoles || isLoadingCustomers
 
+  if (isLoading) {
+    return <LoadingState text="Đang tải danh sách người dùng..." />
+  }
+
   return (
     <div className="space-y-6">
-      {/* FILTER CARD */}
-      <div className="overflow-hidden rounded-2xl border-0 bg-white shadow-2xl">
-        <div className="relative overflow-hidden border-0 bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500 p-0">
-          <div className="absolute inset-0 opacity-20">
-            <div className="absolute top-0 right-0 h-40 w-40 translate-x-1/2 -translate-y-1/2 rounded-full bg-white"></div>
+      <PageHeader
+        title="Danh sách Người dùng"
+        subtitle="Quản lý tài khoản và phân quyền người dùng"
+        icon={<Users className="h-6 w-6 text-white" />}
+        actions={
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => refetchUsers()}
+              className="border-white/20 bg-white/10 text-white hover:bg-white/20"
+              title="Làm mới dữ liệu"
+            >
+              <RefreshCw className={`${isFetchingUsers ? 'animate-spin' : ''} h-5 w-5`} />
+            </Button>
+            <ActionGuard pageId="users" actionId="create">
+              <UserFormModal
+                customerId={
+                  filters.customerId && filters.customerId !== 'all' ? filters.customerId : ''
+                }
+              />
+            </ActionGuard>
           </div>
-          <div className="relative flex items-center justify-between px-8 py-6">
-            <div className="flex items-center gap-3">
-              <div className="rounded-xl border border-white/30 bg-white/20 p-2.5 backdrop-blur-lg">
-                <Filter className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <CardTitle className="text-2xl font-bold text-white">Bộ lọc & Tìm kiếm</CardTitle>
-                <p className="mt-1 text-sm font-medium text-pink-100">Tìm kiếm và lọc người dùng</p>
-              </div>
-            </div>
-          </div>
-        </div>
+        }
+      />
 
-        <CardContent className="bg-gradient-to-b from-gray-50 to-white p-6">
+      {/* FILTER CARD */}
+      <Card className="shadow-card">
+        <CardHeader className="pb-3">
+          <div className="flex items-center gap-2">
+            <Filter className="h-5 w-5 text-blue-600" />
+            <CardTitle className="text-lg">Bộ lọc & Tìm kiếm</CardTitle>
+          </div>
+          <CardDescription>Tìm kiếm và lọc danh sách người dùng</CardDescription>
+        </CardHeader>
+        <CardContent>
           <div className="grid items-end gap-4 md:grid-cols-5">
             {/* Search */}
             <div className="space-y-2">
-              <label className="text-sm font-bold text-gray-700">🔍 Tìm kiếm</label>
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                Tìm kiếm
+              </label>
               <div className="relative">
-                <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
                 <Input
                   placeholder="Tìm theo email..."
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
-                  className="rounded-lg border-2 border-gray-200 pl-10 transition-all focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                  className="pl-9"
                 />
               </div>
             </div>
@@ -281,13 +306,15 @@ export function UsersTable() {
             {/* Role (hidden if no permission) */}
             {canReadRoles ? (
               <div className="space-y-2">
-                <label className="text-sm font-bold text-gray-700">🎭 Vai trò</label>
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Vai trò
+                </label>
                 {isMounted ? (
                   <Select
                     value={filters.roleId}
                     onValueChange={(v) => setFilters((p) => ({ ...p, roleId: v }))}
                   >
-                    <SelectTrigger className="rounded-lg border-2 border-gray-200 transition-all focus:border-purple-500 focus:ring-2 focus:ring-purple-200">
+                    <SelectTrigger>
                       <SelectValue placeholder="Chọn vai trò" />
                     </SelectTrigger>
                     <SelectContent>
@@ -300,7 +327,7 @@ export function UsersTable() {
                     </SelectContent>
                   </Select>
                 ) : (
-                  <div className="h-10 w-full rounded-lg border-2 border-gray-200 bg-transparent" />
+                  <div className="bg-muted/20 h-10 w-full rounded-md border" />
                 )}
               </div>
             ) : null}
@@ -308,13 +335,15 @@ export function UsersTable() {
             {/* Customer (hidden if no permission) */}
             {canReadCustomers ? (
               <div className="space-y-2">
-                <label className="text-sm font-bold text-gray-700">🏪 Khách hàng</label>
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Khách hàng
+                </label>
                 {isMounted ? (
                   <Select
                     value={filters.customerId}
                     onValueChange={(v) => setFilters((p) => ({ ...p, customerId: v }))}
                   >
-                    <SelectTrigger className="rounded-lg border-2 border-gray-200 transition-all focus:border-purple-500 focus:ring-2 focus:ring-purple-200">
+                    <SelectTrigger>
                       <SelectValue placeholder="Chọn mã KH" />
                     </SelectTrigger>
                     <SelectContent>
@@ -327,7 +356,7 @@ export function UsersTable() {
                     </SelectContent>
                   </Select>
                 ) : (
-                  <div className="h-10 w-full rounded-lg border-2 border-gray-200 bg-transparent" />
+                  <div className="bg-muted/20 h-10 w-full rounded-md border" />
                 )}
               </div>
             ) : null}
@@ -347,296 +376,233 @@ export function UsersTable() {
                   setSearchInput('')
                   router.replace(pathname, { scroll: false })
                 }}
-                className="rounded-lg border-2 border-gray-300 font-medium transition-all hover:border-gray-400 hover:bg-gray-50"
+                className="w-full"
               >
                 <RotateCcw className="mr-2 h-4 w-4" /> Reset
               </Button>
-              <ActionGuard pageId="users" actionId="create">
-                <UserFormModal
-                  customerId={
-                    filters.customerId && filters.customerId !== 'all' ? filters.customerId : ''
-                  }
-                />
-              </ActionGuard>
             </div>
           </div>
         </CardContent>
-      </div>
+      </Card>
 
       {/* USERS TABLE CARD */}
-      <div className="overflow-hidden rounded-2xl border-0 bg-white shadow-2xl">
-        <div className="relative overflow-hidden border-0 bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 p-0">
-          <div className="absolute inset-0 opacity-20">
-            <div className="absolute top-0 left-0 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white"></div>
-            <div className="absolute right-0 bottom-0 h-96 w-96 translate-x-1/2 translate-y-1/2 rounded-full bg-white"></div>
+      <Card className="shadow-card">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <UserCog className="h-5 w-5 text-blue-600" />
+                Danh sách Người dùng
+              </CardTitle>
+              <CardDescription className="mt-1">
+                {paginationInfo.total} người dùng đang hoạt động
+              </CardDescription>
+            </div>
           </div>
-          <div className="relative flex items-center justify-between px-8 py-6">
-            <div className="flex items-center gap-3">
-              <div className="rounded-2xl border border-white/30 bg-white/20 p-3 shadow-lg backdrop-blur-lg">
-                <Users className="h-7 w-7 text-white" />
-              </div>
-              <div className="text-white">
-                <CardTitle className="text-3xl font-bold tracking-tight">
-                  Danh sách Người dùng
-                </CardTitle>
-                <p className="mt-1 text-sm font-medium text-pink-100">
-                  ⚡ {paginationInfo.total} người dùng đang hoạt động
-                </p>
-              </div>
-            </div>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => refetchUsers()}
-              className="cursor-pointer border-white/30 bg-white/20 text-white transition-all hover:bg-white/30"
-              title="Làm mới dữ liệu"
-            >
-              <RefreshCw className={`${isFetchingUsers ? 'animate-spin' : ''} h-5 w-5`} />
-            </Button>
-          </div>
-        </div>
-
-        <CardContent className="space-y-4 bg-gradient-to-b from-gray-50 to-white p-6">
-          {isLoading ? (
-            <div className="space-y-2">
-              <Skeleton className="h-14 w-full rounded-xl" />
-              <Skeleton className="h-14 w-full rounded-xl" />
-              <Skeleton className="h-14 w-full rounded-xl" />
-            </div>
-          ) : users.length === 0 ? (
-            <div className="p-12 text-center">
-              <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200">
-                <Users className="h-8 w-8 text-gray-400" />
-              </div>
-              <h3 className="mb-2 text-xl font-bold text-gray-700">Không có người dùng nào</h3>
-              <p className="mb-6 text-gray-500">Hãy tạo người dùng đầu tiên</p>
-              <ActionGuard pageId="users" actionId="create">
-                <UserFormModal
-                  customerId={filters.customerId !== 'all' ? filters.customerId : ''}
-                />
-              </ActionGuard>
-            </div>
-          ) : (
-            <>
-              <div className="overflow-hidden rounded-2xl border-2 border-gray-200 shadow-lg">
-                <Table className="min-w-full">
-                  <TableHeader className="border-b-2 border-gray-200 bg-gradient-to-r from-purple-100 via-pink-50 to-rose-50">
-                    <TableRow>
-                      <TableHead className="w-[60px] text-center font-bold text-gray-700">
-                        STT
-                      </TableHead>
-                      <TableHead className="font-bold text-gray-700">
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-hidden rounded-lg border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[60px] text-center">#</TableHead>
+                  <TableHead>
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-blue-600" />
+                      Người dùng
+                    </div>
+                  </TableHead>
+                  <TableHead>
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4 text-cyan-600" />
+                      Khách hàng
+                    </div>
+                  </TableHead>
+                  <TableHead>
+                    <div className="flex items-center gap-2">
+                      <UserCog className="h-4 w-4 text-rose-600" />
+                      Vai trò
+                    </div>
+                  </TableHead>
+                  <TableHead>
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-teal-600" />
+                      Ngày tạo
+                    </div>
+                  </TableHead>
+                  <TableHead className="w-[80px] text-right">Thao tác</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {users.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="h-64 text-center">
+                      <EmptyState
+                        title="Không có người dùng nào"
+                        description="Hãy tạo người dùng đầu tiên hoặc thử thay đổi bộ lọc"
+                        action={{
+                          label: 'Tạo người dùng',
+                          onClick: () => document.getElementById('create-user-trigger')?.click(),
+                        }}
+                        className="border-none bg-transparent py-0"
+                      />
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  users.map((user, index) => (
+                    <TableRow key={user.id} className="cursor-pointer">
+                      <TableCell className="text-muted-foreground text-center">
+                        {(pagination.page - 1) * pagination.limit + index + 1}
+                      </TableCell>
+                      <TableCell>
                         <div className="flex items-center gap-2">
-                          <Mail className="h-4 w-4 text-purple-600" />
-                          Người dùng
+                          <span className="font-medium">{user.email}</span>
                         </div>
-                      </TableHead>
-                      <TableHead className="font-bold text-gray-700">
-                        <div className="flex items-center gap-2">
-                          <span className="text-lg">🏪</span>
-                          Khách hàng
-                        </div>
-                      </TableHead>
-                      <TableHead className="font-bold text-gray-700">
-                        <div className="flex items-center gap-2">
-                          <span className="text-lg">🎭</span>
-                          Vai trò
-                        </div>
-                      </TableHead>
-                      <TableHead className="font-bold text-gray-700">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-rose-600" />
-                          Ngày tạo
-                        </div>
-                      </TableHead>
-                      <TableHead className="w-[80px] text-right font-bold text-gray-700">
-                        ⚙️ Thao tác
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {users.map((user, index) => (
-                      <TableRow
-                        key={user.id}
-                        onMouseEnter={() => setHoveredRowId(user.id)}
-                        onMouseLeave={() => setHoveredRowId(null)}
-                        className={`border-b border-gray-100 transition-all duration-300 ${
-                          hoveredRowId === user.id
-                            ? 'bg-gradient-to-r from-purple-50/80 via-pink-50/50 to-rose-50/30 shadow-md'
-                            : 'hover:bg-gray-50'
-                        }`}
-                      >
-                        <TableCell className="text-center font-bold text-gray-600">
-                          <span className="inline-flex h-6 w-6 items-center justify-center rounded bg-purple-100 text-sm text-purple-700">
-                            {(pagination.page - 1) * pagination.limit + index + 1}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Mail className="h-4 w-4 text-gray-400" />
-                            <span className="font-semibold text-gray-800">{user.email}</span>
+                      </TableCell>
+                      <TableCell>
+                        {user.customer?.code ? (
+                          <Badge
+                            variant="outline"
+                            className="border-amber-200 bg-amber-50 text-amber-700"
+                          >
+                            {user.customer.code}
+                          </Badge>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <StatusBadge
+                            status={user.role?.name || 'Unknown'}
+                            variant={getRoleBadgeVariant(user.role?.name)}
+                          />
+                          <div className="text-muted-foreground pl-1 text-xs">
+                            Level {user.role?.level || '—'}
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          <span className="inline-block rounded-lg border border-amber-300 bg-amber-100 px-3 py-1 text-xs font-bold text-amber-700">
-                            {user.customer?.code || '—'}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <div className="space-y-1">
-                            <Badge className={`${getRoleBadgeColor(user.role?.name)} border-2`}>
-                              {user.role?.name || '—'}
-                            </Badge>
-                            <div className="text-xs text-gray-500">
-                              Level {user.role?.level || '—'}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-gray-400" />
-                            <span className="text-sm text-gray-700">
-                              {formatDate(user.createdAt)}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="transition-all hover:bg-purple-100 hover:text-purple-700"
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-muted-foreground text-sm">
+                          {formatDate(user.createdAt)}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            {canUpdate && (
+                              <DropdownMenuItem
+                                onClick={() => handleEditUser(user)}
+                                className="cursor-pointer"
                               >
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent
-                              align="end"
-                              className="rounded-lg border-2 shadow-xl"
-                            >
-                              {canUpdate && (
+                                <Edit className="mr-2 h-4 w-4" />
+                                Chỉnh sửa
+                              </DropdownMenuItem>
+                            )}
+                            <ConfirmDialog
+                              title="Đặt lại mật khẩu"
+                              description={`Bạn có chắc muốn đặt lại mật khẩu người dùng "${user.email}" về mật khẩu mặc định không?`}
+                              confirmLabel="Đặt lại"
+                              cancelLabel="Hủy"
+                              onConfirm={async () => {
+                                try {
+                                  await usersClientService.resetPassword(user.id)
+                                  await queryClient.invalidateQueries({ queryKey: ['users'] })
+                                  toast.success('Đặt lại mật khẩu thành công')
+                                } catch (err) {
+                                  console.error('Reset user password error', err)
+                                  toast.error('Có lỗi khi đặt lại mật khẩu')
+                                }
+                              }}
+                              trigger={
                                 <DropdownMenuItem
-                                  onClick={() => handleEditUser(user)}
-                                  className="flex cursor-pointer items-center gap-2 py-2 transition-all hover:bg-purple-50 hover:text-purple-700"
+                                  className="cursor-pointer"
+                                  onSelect={(e) => e.preventDefault()}
                                 >
-                                  <Edit className="h-4 w-4" />
-                                  Chỉnh sửa
+                                  <RotateCcw className="mr-2 h-4 w-4" />
+                                  Đặt lại mật khẩu
                                 </DropdownMenuItem>
-                              )}
-                              <ConfirmDialog
-                                title="Đặt lại mật khẩu"
-                                description={`Bạn có chắc muốn đặt lại mật khẩu người dùng "${user.email}" về mật khẩu mặc định không?`}
-                                confirmLabel="Đặt lại"
-                                cancelLabel="Hủy"
+                              }
+                            />
+
+                            {canDelete && (
+                              <DeleteDialog
+                                title="Xóa người dùng"
+                                description={`Bạn có chắc chắn muốn xóa người dùng "${user.email}" không?\n\nHành động này không thể hoàn tác.`}
                                 onConfirm={async () => {
                                   try {
-                                    await usersClientService.resetPassword(user.id)
+                                    await usersClientService.deleteUser(user.id)
                                     await queryClient.invalidateQueries({ queryKey: ['users'] })
-                                    toast.success('Đặt lại mật khẩu thành công')
+                                    toast.success('Xóa người dùng thành công')
                                   } catch (err) {
-                                    console.error('Reset user password error', err)
-                                    toast.error('Có lỗi khi đặt lại mật khẩu')
+                                    console.error('Delete user error', err)
+                                    toast.error('Có lỗi khi xóa người dùng')
                                   }
                                 }}
                                 trigger={
                                   <DropdownMenuItem
-                                    className="flex cursor-pointer items-center gap-2 py-2 transition-all hover:bg-purple-50 hover:text-purple-700"
+                                    className="cursor-pointer text-red-600 focus:text-red-600"
                                     onSelect={(e) => e.preventDefault()}
                                   >
-                                    <RotateCcw className="h-4 w-4" />
-                                    Đặt lại mật khẩu
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Xóa
                                   </DropdownMenuItem>
                                 }
                               />
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
 
-                              {canDelete && (
-                                <DeleteDialog
-                                  title="Xóa người dùng"
-                                  description={`Bạn có chắc chắn muốn xóa người dùng "${user.email}" không?\n\nHành động này không thể hoàn tác.`}
-                                  onConfirm={async () => {
-                                    try {
-                                      await usersClientService.deleteUser(user.id)
-                                      await queryClient.invalidateQueries({ queryKey: ['users'] })
-                                      toast.success('✅ Xóa người dùng thành công')
-                                    } catch (err) {
-                                      console.error('Delete user error', err)
-                                      toast.error('❌ Có lỗi khi xóa người dùng')
-                                    }
-                                  }}
-                                  trigger={
-                                    <DropdownMenuItem
-                                      className="flex cursor-pointer items-center gap-2 py-2 text-red-600 transition-all hover:bg-red-50"
-                                      onSelect={(e) => e.preventDefault()}
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                      Xóa
-                                    </DropdownMenuItem>
-                                  }
-                                />
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+          {/* PAGINATION */}
+          {users.length > 0 && (
+            <div className="mt-4 flex items-center justify-between">
+              <div className="text-muted-foreground text-sm">
+                Hiển thị <span className="text-foreground font-medium">{users.length}</span> /{' '}
+                <span className="text-foreground font-medium">{paginationInfo.total}</span> người
+                dùng
               </div>
 
-              {/* PAGINATION */}
-              <div className="border-gradient-to-r flex items-center justify-between rounded-2xl border-2 bg-gradient-to-r from-purple-200 from-white via-purple-50 to-rose-50 to-rose-200 p-5 shadow-lg">
-                <div className="flex items-center gap-3">
-                  <span className="text-xs font-bold tracking-widest text-gray-600 uppercase">
-                    Hiển thị
-                  </span>
-                  <div className="rounded-xl border-2 border-purple-300 bg-gradient-to-r from-purple-100 to-pink-100 px-4 py-2">
-                    <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-sm font-bold text-transparent">
-                      {users.length}
-                    </span>
-                    <span className="text-sm text-gray-500"> / </span>
-                    <span className="text-sm font-bold text-gray-700">{paginationInfo.total}</span>
-                  </div>
-                  <span className="text-xs font-semibold text-gray-600">người dùng</span>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(pagination.page - 1)}
+                  disabled={pagination.page <= 1}
+                >
+                  Trước
+                </Button>
+
+                <div className="flex items-center gap-1 text-sm">
+                  <span className="font-medium">{pagination.page}</span>
+                  <span className="text-muted-foreground">/</span>
+                  <span>{paginationInfo.totalPages}</span>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handlePageChange(pagination.page - 1)}
-                    disabled={pagination.page <= 1}
-                    className="rounded-lg border-2 border-gray-300 font-bold transition-all hover:border-purple-400 hover:bg-purple-100 hover:text-purple-700 disabled:opacity-50"
-                  >
-                    ← Trước
-                  </Button>
-
-                  <div className="flex items-center gap-2 rounded-xl border-2 border-purple-300 bg-white px-5 py-2 shadow-md">
-                    <span className="text-xs font-bold text-gray-600">Trang</span>
-                    <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-base font-bold text-transparent">
-                      {pagination.page}
-                    </span>
-                    <span className="text-xs text-gray-400">/</span>
-                    <span className="text-base font-bold text-gray-800">
-                      {paginationInfo.totalPages}
-                    </span>
-                  </div>
-
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handlePageChange(pagination.page + 1)}
-                    disabled={pagination.page >= paginationInfo.totalPages}
-                    className="rounded-lg border-2 border-gray-300 font-bold transition-all hover:border-pink-400 hover:bg-pink-100 hover:text-pink-700 disabled:opacity-50"
-                  >
-                    Sau →
-                  </Button>
-                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(pagination.page + 1)}
+                  disabled={pagination.page >= paginationInfo.totalPages}
+                >
+                  Sau
+                </Button>
               </div>
-            </>
+            </div>
           )}
         </CardContent>
-      </div>
+      </Card>
 
       <EditUserModal
         user={editingUser}

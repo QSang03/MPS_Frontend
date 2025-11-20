@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, type ReactNode } from 'react'
+import { useState, useEffect, type ReactNode } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Plus,
@@ -56,6 +56,7 @@ interface ServiceRequestFormModalProps {
   customerId: string
   onSuccess?: () => void
   children?: ReactNode
+  preselectedDeviceId?: string
 }
 
 const priorityConfig = {
@@ -96,6 +97,7 @@ export function ServiceRequestFormModal({
   customerId,
   onSuccess,
   children,
+  preselectedDeviceId,
 }: ServiceRequestFormModalProps) {
   const [open, setOpen] = useState(false)
   const queryClient = useQueryClient()
@@ -112,12 +114,21 @@ export function ServiceRequestFormModal({
     resolver: zodResolver(serviceRequestSchema),
     defaultValues: {
       customerId,
-      deviceId: '',
+      deviceId: preselectedDeviceId ?? '',
       title: '',
       description: '',
       priority: Priority.NORMAL,
     },
   })
+
+  // When modal is opened with a preselected device, ensure the form value is set
+  // (handles cases where devices data loads after initial render)
+  useEffect(() => {
+    if (preselectedDeviceId) {
+      form.reset({ ...form.getValues(), deviceId: preselectedDeviceId, customerId })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [preselectedDeviceId, open])
 
   const createMutation = useMutation({
     mutationFn: serviceRequestsClientService.create,
@@ -217,7 +228,9 @@ export function ServiceRequestFormModal({
                           <Select
                             onValueChange={field.onChange}
                             value={field.value}
-                            disabled={createMutation.isPending || devicesLoading}
+                            disabled={
+                              createMutation.isPending || devicesLoading || !!preselectedDeviceId
+                            }
                           >
                             <FormControl>
                               <SelectTrigger className="h-12 justify-start rounded-xl border-slate-300/50 bg-white/60 pl-4 backdrop-blur-xl transition-all duration-300 hover:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-600/50 dark:bg-slate-700/60 dark:hover:border-indigo-500">

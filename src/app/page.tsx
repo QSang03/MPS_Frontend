@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation'
 import { getSession } from '@/lib/auth/session'
 import { getDevSession, DEV_BYPASS_AUTH } from '@/lib/auth/dev-session'
-import { UserRole } from '@/constants/roles'
 import { ROUTES } from '@/constants/routes'
 
 // Force dynamic rendering - uses cookies()
@@ -19,11 +18,11 @@ export default async function HomePage() {
     redirect(ROUTES.LOGIN)
   }
 
-  // Redirect to appropriate dashboard based on role
-  if (session.role === UserRole.SYSTEM_ADMIN) {
-    redirect(ROUTES.SYSTEM_ADMIN_CUSTOMERS)
-  } else if (session.role === UserRole.CUSTOMER_ADMIN) {
-    redirect(ROUTES.CUSTOMER_ADMIN)
+  // Redirect to appropriate dashboard based on isDefaultCustomer
+  // isDefaultCustomer: true -> /system routes
+  // isDefaultCustomer: false -> /user routes
+  if (session.isDefaultCustomer) {
+    redirect(ROUTES.CUSTOMER_ADMIN) // or ROUTES.SYSTEM_ADMIN_CUSTOMERS if needed
   } else {
     redirect(ROUTES.USER_MY_DEVICES)
   }

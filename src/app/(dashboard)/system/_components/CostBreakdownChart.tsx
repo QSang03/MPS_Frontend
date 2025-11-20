@@ -1,14 +1,24 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from '@/components/ui/card'
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts'
 import type { CostBreakdown } from '@/types/dashboard'
-import { DollarSign } from 'lucide-react'
+import { DollarSign, FileDown, ExternalLink } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 interface CostBreakdownChartProps {
   costBreakdown: CostBreakdown | undefined
   isLoading?: boolean
+  onViewDetails?: () => void
+  onExport?: () => void
 }
 
 const COLORS = {
@@ -47,7 +57,12 @@ const CustomTooltip = ({ active, payload }: TooltipProps) => {
   return null
 }
 
-export function CostBreakdownChart({ costBreakdown, isLoading }: CostBreakdownChartProps) {
+export function CostBreakdownChart({
+  costBreakdown,
+  isLoading,
+  onViewDetails,
+  onExport,
+}: CostBreakdownChartProps) {
   if (isLoading || !costBreakdown) {
     return (
       <Card>
@@ -119,7 +134,7 @@ export function CostBreakdownChart({ costBreakdown, isLoading }: CostBreakdownCh
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <Card>
+      <Card className="flex h-full flex-col">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <DollarSign className="h-5 w-5 text-emerald-600" />
@@ -127,7 +142,7 @@ export function CostBreakdownChart({ costBreakdown, isLoading }: CostBreakdownCh
           </CardTitle>
           <CardDescription>Tỷ lệ phần trăm theo doanh thu trong tháng</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex-1">
           <ResponsiveContainer width="100%" height={320}>
             <PieChart>
               <Pie
@@ -177,6 +192,18 @@ export function CostBreakdownChart({ costBreakdown, isLoading }: CostBreakdownCh
             ))}
           </div>
         </CardContent>
+        <CardFooter className="border-t bg-gray-50/50 p-3">
+          <div className="flex w-full gap-2">
+            <Button variant="outline" size="sm" className="flex-1" onClick={onViewDetails}>
+              <ExternalLink className="mr-2 h-4 w-4" />
+              Chi tiết
+            </Button>
+            <Button variant="outline" size="sm" className="flex-1" onClick={onExport}>
+              <FileDown className="mr-2 h-4 w-4" />
+              Xuất báo cáo
+            </Button>
+          </div>
+        </CardFooter>
       </Card>
     </motion.div>
   )

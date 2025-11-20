@@ -2,6 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ServiceRequestsTable } from './_components/ServiceRequestsTable'
 import { PurchaseRequestsTable } from './_components/PurchaseRequestsTable'
+import { SlaQuickPanel } from './_components/SlaQuickPanel'
 
 export const metadata = {
   title: 'Yêu cầu khách hàng',
@@ -23,6 +24,7 @@ export default function RequestsPage() {
         <TabsList>
           <TabsTrigger value="service">Service Request</TabsTrigger>
           <TabsTrigger value="purchase">Purchase Request</TabsTrigger>
+          <TabsTrigger value="sla">SLA</TabsTrigger>
         </TabsList>
 
         <TabsContent value="service" className="space-y-4">
@@ -45,6 +47,20 @@ export default function RequestsPage() {
             </CardHeader>
             <CardContent>
               <PurchaseRequestsTable />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="sla" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Chuẩn SLA & cam kết đáp ứng</CardTitle>
+              <CardDescription>
+                So sánh SLA đang bật để điều phối nguồn lực theo yêu cầu.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <SlaQuickPanel />
             </CardContent>
           </Card>
         </TabsContent>

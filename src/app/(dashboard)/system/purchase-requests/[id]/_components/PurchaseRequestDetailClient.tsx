@@ -23,50 +23,38 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { formatCurrency, formatRelativeTime } from '@/lib/utils/formatters'
+import { formatCurrency, formatDateTime, formatRelativeTime } from '@/lib/utils/formatters'
 import { purchaseRequestsClientService } from '@/lib/api/services/purchase-requests-client.service'
 import { PurchaseRequestStatus, Priority } from '@/constants/status'
 import { PermissionGuard } from '@/components/shared/PermissionGuard'
 import type { Session } from '@/lib/auth/session'
-import { ArrowLeft, Loader2 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
+import {
+  ArrowLeft,
+  CalendarCheck,
+  CheckCircle2,
+  Clock4,
+  Loader2,
+  Package,
+  XCircle,
+} from 'lucide-react'
+import type { PurchaseRequest } from '@/types/models/purchase-request'
 
 interface Props {
   id: string
   session: Session | null
 }
 
-type PurchaseRequestDetail = {
-  id: string
-  customerId: string
-  title?: string
-  description?: string
-  totalAmount?: number | string
-  priority?: Priority
-  status: PurchaseRequestStatus
-  createdAt: string
-  updatedAt: string
-  requestedBy?: string
-  items?: PurchaseRequestItem[]
-  customer?: {
-    id: string
-    name?: string
-    code?: string
-  }
+type TimelineEvent = {
+  label: string
+  time?: string
+  by?: string
+  reason?: string
+  icon: LucideIcon
+  color: string
 }
 
-type PurchaseRequestItem = {
-  id: string
-  consumableTypeId?: string
-  quantity: number
-  unitPrice?: number | string
-  totalPrice?: number | string
-  notes?: string
-  consumableType?: {
-    name?: string
-    unit?: string
-    description?: string
-  }
-}
+type TimelineEntry = TimelineEvent & { time: string }
 
 const statusOptions: { label: string; value: PurchaseRequestStatus }[] = [
   { label: 'Chờ duyệt', value: PurchaseRequestStatus.PENDING },
@@ -107,7 +95,7 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
     queryFn: () => purchaseRequestsClientService.getById(id),
   })
 
-  const detail = useMemo(() => (data as PurchaseRequestDetail | null) ?? null, [data])
+  const detail = useMemo(() => (data as PurchaseRequest | null) ?? null, [data])
 
   const updateStatusMutation = useMutation({
     mutationFn: (status: PurchaseRequestStatus) =>
@@ -130,7 +118,7 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['purchase-requests'] })
       toast.success('Đã xóa yêu cầu mua hàng')
-      router.push('/system/purchase-requests')
+      router.push('/system/requests')
     },
     onError: (error: unknown) => {
       const message = error instanceof Error ? error.message : 'Không thể xóa yêu cầu'
@@ -157,6 +145,54 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
     detail.items?.reduce((sum, item) => sum + toNumber(item.totalPrice), 0) ||
     0
 
+  const timeline: TimelineEntry[] = (
+    [
+      {
+        label: 'Chờ duyệt',
+        time: detail.createdAt,
+        by: detail.requestedBy,
+        icon: Clock4,
+        color: 'text-slate-500',
+      },
+      {
+        label: 'Đã duyệt',
+        time: detail.approvedAt,
+        by: detail.approvedBy,
+        icon: CheckCircle2,
+        color: 'text-emerald-600',
+      },
+      {
+        label: 'Đặt hàng',
+        time: detail.orderedAt,
+        by: detail.orderedBy,
+        icon: CalendarCheck,
+        color: 'text-blue-600',
+      },
+      {
+        label: 'Đã nhận',
+        time: detail.receivedAt,
+        by: detail.receivedBy,
+        icon: Package,
+        color: 'text-green-600',
+      },
+      {
+        label: 'Hủy (nội bộ)',
+        time: detail.cancelledAt,
+        by: detail.cancelledBy,
+        icon: XCircle,
+        color: 'text-rose-600',
+      },
+      {
+        label: 'Khách hàng hủy',
+        time: detail.customerCancelledAt,
+        by: detail.customerCancelledBy,
+        reason: detail.customerCancelledReason,
+        icon: XCircle,
+        color: 'text-orange-500',
+      },
+    ] as TimelineEvent[]
+  ).filter((event): event is TimelineEntry => Boolean(event.time))
+
   return (
     <div className="space-y-6">
       <Button variant="ghost" asChild className="mb-2 w-fit gap-2">
@@ -169,11 +205,14 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
       <Card>
         <CardHeader>
           <CardTitle>Yêu cầu mua hàng #{detail.id.slice(0, 8)}</CardTitle>
-          <CardDescription>{formatRelativeTime(detail.createdAt)}</CardDescription>
+          <CardDescription>
+            Tạo {formatRelativeTime(detail.createdAt)}
+            {detail.requestedBy ? ` • bởi ${detail.requestedBy}` : ''}
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid gap-6 md:grid-cols-2">
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div>
                 <p className="text-muted-foreground text-sm">Tiêu đề</p>
                 <p className="text-lg font-semibold">{detail.title ?? '—'}</p>
@@ -182,31 +221,46 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
                 <p className="text-muted-foreground text-sm">Mô tả</p>
                 <p>{detail.description ?? '—'}</p>
               </div>
-              <div className="flex items-center gap-2">
-                <p className="text-muted-foreground text-sm">Ưu tiên</p>
-                {detail.priority ? (
-                  <Badge className={priorityBadgeMap[detail.priority]}>{detail.priority}</Badge>
-                ) : (
-                  <span>—</span>
-                )}
+              <div className="flex items-center gap-3">
+                <div>
+                  <p className="text-muted-foreground text-sm">Ưu tiên</p>
+                  {detail.priority ? (
+                    <Badge className={priorityBadgeMap[detail.priority]}>{detail.priority}</Badge>
+                  ) : (
+                    <span>—</span>
+                  )}
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-sm">Người yêu cầu</p>
+                  <p className="font-medium">{detail.requestedBy ?? '—'}</p>
+                </div>
               </div>
-              <div className="flex flex-col gap-1">
+              <div>
                 <p className="text-muted-foreground text-sm">Khách hàng</p>
-                <p className="font-medium">{detail.customer?.name ?? detail.customerId}</p>
-                {detail.customer?.code && (
-                  <span className="text-muted-foreground text-xs">{detail.customer.code}</span>
-                )}
+                <div className="flex flex-col">
+                  <p className="font-semibold">{detail.customer?.name ?? detail.customerId}</p>
+                  <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-xs">
+                    {detail.customer?.code && (
+                      <Badge variant="outline">{detail.customer.code}</Badge>
+                    )}
+                    {detail.customer?.tier && (
+                      <Badge variant="secondary" className="bg-blue-50 text-blue-700">
+                        {detail.customer.tier}
+                      </Badge>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div className="flex items-center gap-2">
-                <p className="text-muted-foreground text-sm">Trạng thái</p>
+                <p className="text-muted-foreground text-sm">Trạng thái hiện tại</p>
                 <Badge className={statusBadgeMap[detail.status]}>{detail.status}</Badge>
               </div>
               <div>
                 <p className="text-muted-foreground text-sm">Tổng giá trị</p>
-                <p className="text-2xl font-bold">{formatCurrency(totalAmount)}</p>
+                <p className="text-3xl font-bold">{formatCurrency(totalAmount)}</p>
               </div>
 
               <div className="space-y-2">
@@ -228,7 +282,7 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
                     }
                     disabled={statusUpdating}
                   >
-                    <SelectTrigger className="w-[220px] justify-between">
+                    <SelectTrigger className="w-[260px] justify-between">
                       <SelectValue placeholder="Chọn trạng thái">
                         <div className="flex items-center gap-2">
                           <Badge className={statusBadgeMap[detail.status]}>{detail.status}</Badge>
@@ -257,8 +311,9 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
                   variant="destructive"
                   onClick={() => deleteMutation.mutate()}
                   disabled={deleteMutation.isPending}
+                  className="gap-2"
                 >
-                  {deleteMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {deleteMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
                   Xóa yêu cầu
                 </Button>
               </PermissionGuard>
@@ -266,6 +321,99 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
           </div>
         </CardContent>
       </Card>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Timeline xử lý</CardTitle>
+            <CardDescription>Các mốc trạng thái đã được ghi nhận</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {timeline.length === 0 ? (
+              <div className="text-muted-foreground flex items-center gap-2 text-sm">
+                <Clock4 className="h-4 w-4" />
+                Chưa có mốc thời gian nào.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {timeline.map((event) => {
+                  const Icon = event.icon
+                  return (
+                    <div key={event.label} className="flex items-start gap-3 rounded-lg border p-3">
+                      <Icon className={`${event.color} h-5 w-5`} />
+                      <div className="flex-1 space-y-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="font-semibold">{event.label}</p>
+                          <span className="text-muted-foreground text-xs">
+                            {formatRelativeTime(event.time)}
+                          </span>
+                        </div>
+                        <p className="text-muted-foreground text-sm">
+                          {formatDateTime(event.time)}
+                          {event.by ? (
+                            <span className="text-foreground font-medium"> • {event.by}</span>
+                          ) : null}
+                        </p>
+                        {event.reason && (
+                          <p className="text-muted-foreground text-xs">Lý do: {event.reason}</p>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Thông tin khách hàng</CardTitle>
+            <CardDescription>Liên hệ & phân hạng</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <p className="text-muted-foreground text-sm">Tên khách hàng</p>
+              <p className="text-lg font-semibold">{detail.customer?.name ?? '—'}</p>
+              <div className="mt-1 flex flex-wrap gap-2">
+                {detail.customer?.code && (
+                  <Badge variant="outline" className="text-xs">
+                    {detail.customer.code}
+                  </Badge>
+                )}
+                {detail.customer?.tier && (
+                  <Badge variant="secondary" className="bg-blue-50 text-xs text-blue-700">
+                    {detail.customer.tier}
+                  </Badge>
+                )}
+              </div>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <InfoRow label="Email" value={detail.customer?.contactEmail} />
+              <InfoRow label="Điện thoại" value={detail.customer?.contactPhone} />
+              <InfoRow label="Liên hệ" value={detail.customer?.contactPerson} />
+              <InfoRow
+                label="Ngày chốt"
+                value={
+                  detail.customer?.billingDay ? `Ngày ${detail.customer.billingDay}` : undefined
+                }
+              />
+            </div>
+
+            {Array.isArray(detail.customer?.address) && detail.customer.address.length > 0 && (
+              <div>
+                <p className="text-muted-foreground text-xs uppercase">Địa chỉ</p>
+                <ul className="text-muted-foreground space-y-1 text-sm">
+                  {detail.customer.address.map((address) => (
+                    <li key={address}>{address}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       <Card>
         <CardHeader>
@@ -279,6 +427,7 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
                 <TableRow>
                   <TableHead>Tên vật tư</TableHead>
                   <TableHead>Số lượng</TableHead>
+                  <TableHead>Đơn vị</TableHead>
                   <TableHead>Đơn giá</TableHead>
                   <TableHead>Thành tiền</TableHead>
                   <TableHead>Ghi chú</TableHead>
@@ -300,6 +449,7 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
                       </div>
                     </TableCell>
                     <TableCell>{item.quantity}</TableCell>
+                    <TableCell>{item.consumableType?.unit ?? '—'}</TableCell>
                     <TableCell>{formatCurrency(toNumber(item.unitPrice))}</TableCell>
                     <TableCell>{formatCurrency(toNumber(item.totalPrice))}</TableCell>
                     <TableCell className="text-muted-foreground text-sm">
@@ -310,10 +460,24 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
               </TableBody>
             </Table>
           ) : (
-            <p className="text-muted-foreground">Chưa có vật tư nào trong yêu cầu này.</p>
+            <div className="text-muted-foreground flex min-h-[120px] items-center justify-center rounded-lg border border-dashed">
+              <div className="text-center">
+                <Package className="mx-auto mb-2 h-6 w-6 opacity-60" />
+                <p>Chưa có vật tư nào trong yêu cầu này.</p>
+              </div>
+            </div>
           )}
         </CardContent>
       </Card>
+    </div>
+  )
+}
+
+function InfoRow({ label, value }: { label: string; value?: string | number }) {
+  return (
+    <div>
+      <p className="text-muted-foreground text-xs uppercase">{label}</p>
+      <p className="text-sm">{value ?? '—'}</p>
     </div>
   )
 }

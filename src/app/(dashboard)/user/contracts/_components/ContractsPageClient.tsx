@@ -30,9 +30,9 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog'
-import ContractFormModal from '../../../system/contracts/_components/ContractFormModal'
-import ContractForm from '../../../system/contracts/_components/ContractForm'
-import ContractDevicesModal from '../../../system/contracts/_components/ContractDevicesModal'
+import ContractFormModal from './ContractFormModal'
+import { ContractForm } from './ContractForm'
+import ContractDevicesModal from './ContractDevicesModal'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -45,10 +45,13 @@ import { cn } from '@/lib/utils'
 import { VN } from '@/constants/vietnamese'
 import { useActionPermission } from '@/lib/hooks/useActionPermission'
 import { ActionGuard } from '@/components/shared/ActionGuard'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 export default function ContractsPageClient() {
   const { canCreate, canUpdate, canDelete } = useActionPermission('contracts')
   const hasAnyAction = Boolean(canCreate || canUpdate || canDelete)
+  const router = useRouter()
 
   const extractApiMessage = (err: unknown): string | undefined => {
     if (!err) return undefined
@@ -429,10 +432,11 @@ export default function ContractsPageClient() {
                   contracts.map((c: Contract, idx: number) => (
                     <motion.tr
                       key={c.id}
+                      onClick={() => router.push(`/user/contracts/${c.id}`)}
                       onMouseEnter={() => setHoveredRowId(c.id)}
                       onMouseLeave={() => setHoveredRowId(null)}
                       className={cn(
-                        'transition-all duration-300',
+                        'cursor-pointer transition-all duration-300',
                         hoveredRowId === c.id
                           ? 'bg-gradient-to-r from-sky-50/80 via-cyan-50/50 to-blue-50/30 shadow-md'
                           : 'hover:bg-gray-50'
@@ -444,9 +448,13 @@ export default function ContractsPageClient() {
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <code className="rounded bg-sky-100 px-2 py-1 text-sm font-semibold text-sky-700">
-                          {c.contractNumber}
-                        </code>
+                        <Link
+                          href={`/user/contracts/${c.id}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="inline-block rounded bg-sky-100 px-2 py-1 text-sm font-semibold text-sky-700 hover:underline"
+                        >
+                          <code>{c.contractNumber}</code>
+                        </Link>
                       </td>
                       <td className="px-4 py-3 font-medium">{c.customer?.name ?? '—'}</td>
                       <td className="px-4 py-3">
@@ -467,7 +475,7 @@ export default function ContractsPageClient() {
                         </div>
                       </td>
                       {hasAnyAction && (
-                        <td className="px-4 py-3 text-right">
+                        <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button

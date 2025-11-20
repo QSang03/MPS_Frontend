@@ -9,12 +9,28 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
+  Tooltip as RechartsTooltip,
   ResponsiveContainer,
   Legend,
+  PieChart,
+  Pie,
+  Cell,
 } from 'recharts'
 import { Skeleton } from '@/components/ui/skeleton'
-import { ChevronRight, TrendingUp, DollarSign, Zap, AlertCircle } from 'lucide-react'
+import { ChevronRight, DollarSign, AlertCircle, ArrowUpDown, Info } from 'lucide-react'
+import { MonthPicker } from '@/components/ui/month-picker'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+// Badge and cn imports removed — not used in this file
 
 type AnyRecord = Record<string, unknown>
 
@@ -30,6 +46,18 @@ export default function MonthlyCostsPage() {
   const [error, setError] = useState<string | null>(null)
   // Keep a ref to the latest `series` to avoid adding it to the effect deps
   const seriesRef = useRef(series)
+
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(
+    null
+  )
+
+  const handleSort = (key: string) => {
+    let direction: 'asc' | 'desc' = 'asc'
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc'
+    }
+    setSortConfig({ key, direction })
+  }
 
   // View-friendly typed data derived from API response to avoid `any` in JSX
   const viewData = (() => {
@@ -53,6 +81,32 @@ export default function MonthlyCostsPage() {
     })
     return { totalCost, totalBWPagesCost, totalColorPagesCost, byDevice }
   })()
+
+  const sortedDevices = [...viewData.byDevice].sort((a, b) => {
+    if (!sortConfig) return 0
+    // @ts-expect-error dynamic key access validated by sortConfig
+    const aValue = a[sortConfig.key]
+    // @ts-expect-error dynamic key access validated by sortConfig
+    const bValue = b[sortConfig.key]
+
+    if (typeof aValue === 'number' && typeof bValue === 'number') {
+      return sortConfig.direction === 'asc' ? aValue - bValue : bValue - aValue
+    }
+    return sortConfig.direction === 'asc'
+      ? String(aValue).localeCompare(String(bValue))
+      : String(bValue).localeCompare(String(aValue))
+  })
+
+  const setMonthToCurrent = () => {
+    const now = new Date()
+    setMonth(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`)
+  }
+
+  const setMonthToPrevious = () => {
+    const now = new Date()
+    now.setMonth(now.getMonth() - 1)
+    setMonth(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`)
+  }
 
   useEffect(() => {
     let mounted = true
@@ -166,7 +220,7 @@ export default function MonthlyCostsPage() {
 
   return (
     <div className="min-h-screen from-slate-50 via-blue-50 to-indigo-50 px-4 py-8 sm:px-6 lg:px-8 dark:from-slate-950 dark:via-blue-950 dark:to-indigo-950">
-      <div className="mx-auto">
+      <div className="mx-auto max-w-7xl">
         {/* Header Section */}
         <div className="mb-8">
           <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -178,16 +232,23 @@ export default function MonthlyCostsPage() {
                 Theo dõi và quản lý chi phí hoạt động hàng tháng
               </p>
             </div>
-            <div className="flex items-center gap-3">
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                Chọn tháng:
-              </label>
-              <input
-                type="month"
-                value={month}
-                onChange={(e) => setMonth(e.target.value)}
-                className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-900 transition-all focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-slate-600 dark:bg-slate-800 dark:text-white"
-              />
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={setMonthToPrevious}>
+                  Tháng trước
+                </Button>
+                <Button variant="outline" size="sm" onClick={setMonthToCurrent}>
+                  Tháng này
+                </Button>
+              </div>
+              <div className="flex items-center gap-3">
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Chọn tháng:
+                </label>
+                <div className="w-40">
+                  <MonthPicker value={month} onChange={setMonth} />
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -227,185 +288,288 @@ export default function MonthlyCostsPage() {
             {/* KPI Cards */}
             <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
               {/* Total Cost Card */}
-              <div className="group rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:shadow-md dark:border-slate-700 dark:bg-slate-800">
-                <div className="mb-4 flex items-start justify-between">
-                  <div>
-                    <p className="mb-1 text-sm font-medium text-slate-600 dark:text-slate-400">
-                      Tổng Chi Phí
-                    </p>
-                    <h3 className="text-3xl font-bold text-slate-900 dark:text-white">
-                      ${viewData.totalCost.toLocaleString()}
-                    </h3>
+              <Card className="border-slate-200 shadow-sm transition-all hover:shadow-md dark:border-slate-700 dark:bg-slate-800">
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                          Tổng Chi Phí
+                        </p>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <Info className="h-4 w-4 text-slate-400" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Tổng chi phí bao gồm in ấn, thuê máy và sửa chữa</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
+                      <h3 className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
+                        ${viewData.totalCost.toLocaleString()}
+                      </h3>
+                    </div>
+                    <div className="rounded-lg bg-blue-100 p-3 dark:bg-blue-900/30">
+                      <DollarSign className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                    </div>
                   </div>
-                  <div className="rounded-lg bg-blue-100 p-3 transition-colors group-hover:bg-blue-200 dark:bg-blue-900/30 dark:group-hover:bg-blue-900/50">
-                    <DollarSign className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-                  </div>
-                </div>
-                <p className="text-xs text-slate-500 dark:text-slate-500">
-                  Chi phí toàn bộ trong tháng {month}
-                </p>
-              </div>
+                  <p className="mt-4 text-xs text-slate-500 dark:text-slate-500">
+                    Chi phí toàn bộ trong tháng {month}
+                  </p>
+                </CardContent>
+              </Card>
 
               {/* B/W Pages Cost Card */}
-              <div className="group rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:shadow-md dark:border-slate-700 dark:bg-slate-800">
-                <div className="mb-4 flex items-start justify-between">
-                  <div>
-                    <p className="mb-1 text-sm font-medium text-slate-600 dark:text-slate-400">
-                      Chi Phí B/W
-                    </p>
-                    <h3 className="text-3xl font-bold text-slate-900 dark:text-white">
-                      ${viewData.totalBWPagesCost.toLocaleString()}
-                    </h3>
+              <Card className="border-slate-200 shadow-sm transition-all hover:shadow-md dark:border-slate-700 dark:bg-slate-800">
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                          Chi Phí B/W
+                        </p>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <Info className="h-4 w-4 text-slate-400" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Chi phí cho các trang in đen trắng</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
+                      <h3 className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
+                        ${viewData.totalBWPagesCost.toLocaleString()}
+                      </h3>
+                    </div>
+                    <div className="h-16 w-16">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={[
+                              { value: viewData.totalBWPagesCost },
+                              { value: viewData.totalCost - viewData.totalBWPagesCost },
+                            ]}
+                            innerRadius={20}
+                            outerRadius={30}
+                            paddingAngle={0}
+                            dataKey="value"
+                          >
+                            <Cell fill="#64748b" />
+                            <Cell fill="#e2e8f0" />
+                          </Pie>
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
                   </div>
-                  <div className="rounded-lg bg-slate-100 p-3 transition-colors group-hover:bg-slate-200 dark:bg-slate-700 dark:group-hover:bg-slate-600">
-                    <Zap className="h-6 w-6 text-slate-600 dark:text-slate-400" />
+                  <div className="mt-2 flex items-center gap-1">
+                    <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                      {viewData.totalCost > 0
+                        ? `${((viewData.totalBWPagesCost / viewData.totalCost) * 100).toFixed(1)}%`
+                        : '0%'}
+                    </span>
+                    <p className="text-xs text-slate-500 dark:text-slate-500">tổng chi phí</p>
                   </div>
-                </div>
-                <div className="flex items-center gap-1">
-                  <p className="text-xs text-slate-500 dark:text-slate-500">Trang đen trắng</p>
-                  <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                    {viewData.totalCost > 0
-                      ? `${((viewData.totalBWPagesCost / viewData.totalCost) * 100).toFixed(1)}%`
-                      : '0%'}
-                  </span>
-                </div>
-              </div>
+                </CardContent>
+              </Card>
 
               {/* Color Pages Cost Card */}
-              <div className="group rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:shadow-md dark:border-slate-700 dark:bg-slate-800">
-                <div className="mb-4 flex items-start justify-between">
-                  <div>
-                    <p className="mb-1 text-sm font-medium text-slate-600 dark:text-slate-400">
-                      Chi Phí Màu
-                    </p>
-                    <h3 className="text-3xl font-bold text-slate-900 dark:text-white">
-                      ${viewData.totalColorPagesCost.toLocaleString()}
-                    </h3>
-                  </div>
-                  <div className="rounded-lg bg-purple-100 p-3 transition-colors group-hover:bg-purple-200 dark:bg-purple-900/30 dark:group-hover:bg-purple-900/50">
-                    <TrendingUp className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-                  </div>
-                </div>
-                <div className="flex items-center gap-1">
-                  <p className="text-xs text-slate-500 dark:text-slate-500">Trang màu</p>
-                  <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                    {viewData.totalCost > 0
-                      ? `${((viewData.totalColorPagesCost / viewData.totalCost) * 100).toFixed(1)}%`
-                      : '0%'}
-                  </span>
-                </div>
-              </div>
-            </div>
-            {/* Device Breakdown */}
-            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-              <div className="mb-6">
-                <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-                  Phân Bổ Theo Thiết Bị
-                </h2>
-                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                  Chi phí chi tiết cho từng thiết bị
-                </p>
-              </div>
-
-              {viewData.byDevice && viewData.byDevice.length > 0 ? (
-                <div className="space-y-3">
-                  {viewData.byDevice.map((d, idx: number) => (
-                    <Link
-                      key={d.deviceId ?? idx}
-                      href={`/user/devices/${encodeURIComponent(d.deviceId ?? '')}`}
-                      className="group flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 p-4 transition-colors hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-700/50 dark:hover:bg-slate-700"
-                    >
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-slate-900 transition-colors group-hover:text-blue-600 dark:text-white dark:group-hover:text-blue-400">
-                          {d.deviceModelName ?? d.serialNumber ?? '—'}
-                        </h3>
-                        <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                          {d.partNumber ?? '—'}
+              <Card className="border-slate-200 shadow-sm transition-all hover:shadow-md dark:border-slate-700 dark:bg-slate-800">
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                          Chi Phí Màu
                         </p>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <Info className="h-4 w-4 text-slate-400" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Chi phí cho các trang in màu</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       </div>
-                      <div className="flex items-center gap-4">
-                        <div className="text-right">
-                          <p className="text-lg font-bold text-slate-900 dark:text-white">
-                            ${d.totalCost.toLocaleString()}
-                          </p>
-                          {viewData.totalCost > 0 && (
-                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-500">
-                              {((d.totalCost / viewData.totalCost) * 100).toFixed(1)}%
-                            </p>
-                          )}
-                        </div>
-                        <ChevronRight className="h-5 w-5 text-slate-400 transition-colors group-hover:text-blue-600 dark:group-hover:text-blue-400" />
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              ) : (
-                <div className="py-12 text-center">
-                  <AlertCircle className="mx-auto mb-3 h-12 w-12 text-slate-300 dark:text-slate-600" />
-                  <p className="text-slate-600 dark:text-slate-400">
-                    Chưa có dữ liệu phân bổ thiết bị
-                  </p>
-                </div>
-              )}
+                      <h3 className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
+                        ${viewData.totalColorPagesCost.toLocaleString()}
+                      </h3>
+                    </div>
+                    <div className="h-16 w-16">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={[
+                              { value: viewData.totalColorPagesCost },
+                              { value: viewData.totalCost - viewData.totalColorPagesCost },
+                            ]}
+                            innerRadius={20}
+                            outerRadius={30}
+                            paddingAngle={0}
+                            dataKey="value"
+                          >
+                            <Cell fill="#8b5cf6" />
+                            <Cell fill="#e2e8f0" />
+                          </Pie>
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                  <div className="mt-2 flex items-center gap-1">
+                    <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                      {viewData.totalCost > 0
+                        ? `${((viewData.totalColorPagesCost / viewData.totalCost) * 100).toFixed(1)}%`
+                        : '0%'}
+                    </span>
+                    <p className="text-xs text-slate-500 dark:text-slate-500">tổng chi phí</p>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
+
+            {/* Device Breakdown */}
+            <Card className="border-slate-200 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+              <CardHeader>
+                <CardTitle className="text-xl font-bold text-slate-900 dark:text-white">
+                  Phân Bổ Theo Thiết Bị
+                </CardTitle>
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  Chi tiết chi phí và xếp hạng thiết bị
+                </p>
+              </CardHeader>
+              <CardContent>
+                {viewData.byDevice && viewData.byDevice.length > 0 ? (
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-[300px]">
+                            <Button variant="ghost" onClick={() => handleSort('deviceModelName')}>
+                              Thiết bị
+                              <ArrowUpDown className="ml-2 h-4 w-4" />
+                            </Button>
+                          </TableHead>
+                          <TableHead>Part Number</TableHead>
+                          <TableHead className="text-right">
+                            <Button variant="ghost" onClick={() => handleSort('totalCost')}>
+                              Chi phí
+                              <ArrowUpDown className="ml-2 h-4 w-4" />
+                            </Button>
+                          </TableHead>
+                          <TableHead className="text-right">% Tổng</TableHead>
+                          <TableHead className="w-[50px]"></TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {sortedDevices.map((d, idx) => (
+                          <TableRow key={d.deviceId ?? idx}>
+                            <TableCell className="font-medium">
+                              <div className="flex flex-col">
+                                <span className="text-slate-900 dark:text-white">
+                                  {d.deviceModelName ?? d.serialNumber ?? '—'}
+                                </span>
+                                <span className="text-xs text-slate-500">{d.serialNumber}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell>{d.partNumber ?? '—'}</TableCell>
+                            <TableCell className="text-right font-bold">
+                              ${d.totalCost.toLocaleString()}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {viewData.totalCost > 0
+                                ? `${((d.totalCost / viewData.totalCost) * 100).toFixed(1)}%`
+                                : '0%'}
+                            </TableCell>
+                            <TableCell>
+                              <Link href={`/user/devices/${encodeURIComponent(d.deviceId ?? '')}`}>
+                                <Button variant="ghost" size="icon">
+                                  <ChevronRight className="h-4 w-4" />
+                                </Button>
+                              </Link>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                ) : (
+                  <div className="py-12 text-center">
+                    <AlertCircle className="mx-auto mb-3 h-12 w-12 text-slate-300 dark:text-slate-600" />
+                    <p className="text-slate-600 dark:text-slate-400">
+                      Chưa có dữ liệu phân bổ thiết bị
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
             {/* Chart Section */}
-            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-              <div className="mb-6">
-                <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+            <Card className="border-slate-200 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+              <CardHeader>
+                <CardTitle className="text-xl font-bold text-slate-900 dark:text-white">
                   Xu Hướng Chi Phí
-                </h2>
-                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                </CardTitle>
+                <p className="text-sm text-slate-600 dark:text-slate-400">
                   Biểu đồ chi phí theo từng tháng
                 </p>
-              </div>
-              {chartLoading || !series ? (
-                <div className="flex h-64 items-center justify-center rounded-lg bg-slate-50 dark:bg-slate-700/50">
-                  <div className="animate-pulse">
-                    <div className="h-12 w-12 rounded-lg bg-slate-300 dark:bg-slate-600"></div>
+              </CardHeader>
+              <CardContent>
+                {chartLoading || !series ? (
+                  <div className="flex h-64 items-center justify-center rounded-lg bg-slate-50 dark:bg-slate-700/50">
+                    <div className="animate-pulse">
+                      <div className="h-12 w-12 rounded-lg bg-slate-300 dark:bg-slate-600"></div>
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <div style={{ width: '100%', height: 320 }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={series} margin={{ top: 5, right: 30, left: 60, bottom: 5 }}>
-                      <defs>
-                        <linearGradient id="colorCogs" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
-                          <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                      <XAxis dataKey="month" stroke="#64748b" />
-                      <YAxis
-                        stroke="#64748b"
-                        width={50}
-                        tickFormatter={(v) => `$${Number(v).toLocaleString()}`}
-                      />
-                      <Tooltip
-                        formatter={(value: number) => `$${value.toLocaleString()}`}
-                        contentStyle={{
-                          backgroundColor: '#1e293b',
-                          border: 'none',
-                          borderRadius: '8px',
-                          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                        }}
-                        labelStyle={{ color: '#fff' }}
-                      />
-                      <Legend />
-                      <Line
-                        type="monotone"
-                        dataKey="totalCogs"
-                        stroke="#3b82f6"
-                        strokeWidth={3}
-                        dot={{ fill: '#3b82f6', r: 4 }}
-                        activeDot={{ r: 6 }}
-                        name="Chi phí"
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              )}
-            </div>
+                ) : (
+                  <div style={{ width: '100%', height: 320 }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={series} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                        <defs>
+                          <linearGradient id="colorCogs" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
+                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                        <XAxis dataKey="month" stroke="#64748b" />
+                        <YAxis
+                          stroke="#64748b"
+                          width={60}
+                          tickFormatter={(v) => `$${Number(v).toLocaleString()}`}
+                        />
+                        <RechartsTooltip
+                          formatter={(value: number) => [`$${value.toLocaleString()}`, 'Chi phí']}
+                          contentStyle={{
+                            backgroundColor: '#1e293b',
+                            border: 'none',
+                            borderRadius: '8px',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                            color: '#fff',
+                          }}
+                          itemStyle={{ color: '#fff' }}
+                          labelStyle={{ color: '#94a3b8', marginBottom: '0.5rem' }}
+                        />
+                        <Legend />
+                        <Line
+                          type="monotone"
+                          dataKey="totalCogs"
+                          stroke="#3b82f6"
+                          strokeWidth={3}
+                          dot={{ fill: '#3b82f6', r: 4 }}
+                          activeDot={{ r: 6 }}
+                          name="Chi phí"
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
         )}
       </div>

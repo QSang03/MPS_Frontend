@@ -60,8 +60,15 @@ export const serviceRequestsClientService = {
     return response.data?.data ?? null
   },
 
-  async updateStatus(id: string, status: ServiceRequestStatus): Promise<ServiceRequest | null> {
-    const response = await internalApiClient.patch(`/api/service-requests/${id}/status`, { status })
+  async updateStatus(
+    id: string,
+    statusOrPayload:
+      | ServiceRequestStatus
+      | { status: ServiceRequestStatus; customerCloseReason?: string }
+  ): Promise<ServiceRequest | null> {
+    const payload =
+      typeof statusOrPayload === 'string' ? { status: statusOrPayload } : statusOrPayload
+    const response = await internalApiClient.patch(`/api/service-requests/${id}/status`, payload)
     return response.data?.data ?? null
   },
 

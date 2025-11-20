@@ -30,7 +30,7 @@ export const ROUTES = {
   CUSTOMER_ADMIN_REPORTS: '/system/reports',
 
   // User
-  USER_MY_DEVICES: '/user/my-devices',
+  USER_MY_DEVICES: '/user/devices',
   USER_DASHBOARD: '/user/dashboard',
   USER_MY_REQUESTS: '/user/my-requests',
   USER_PROFILE: '/user/profile',

@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
-import { Loader2, Search, RefreshCw } from 'lucide-react'
+import { Loader2, Search, RefreshCw, Calendar as CalendarIcon } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -13,7 +13,24 @@ import {
   DialogFooter,
   DialogDescription,
 } from '@/components/ui/dialog'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { toast } from 'sonner'
+import { format } from 'date-fns'
+import { vi } from 'date-fns/locale'
 
 export function ConsumableUsageHistory({
   deviceId,
@@ -99,115 +116,152 @@ export function ConsumableUsageHistory({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div className="flex w-full items-center gap-2">
-          <div className="flex w-full items-center gap-2 rounded-lg border bg-white px-3 py-2 shadow-sm">
-            <Search className="h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Tìm kiếm theo ID hoặc consumable..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleSearch()
-              }}
-              className="h-8 border-0 bg-transparent px-0 py-0"
-            />
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setSearch('')
-                handleSearch()
-              }}
-            >
-              <RefreshCw className="h-4 w-4" />
+      <div className="flex flex-col gap-4 rounded-lg border bg-slate-50/50 p-4 md:flex-row md:items-end md:justify-between">
+        <div className="flex flex-1 flex-col gap-4 md:flex-row md:items-end">
+          <div className="w-full space-y-1.5 md:max-w-xs">
+            <Label className="text-xs text-slate-500">Tìm kiếm</Label>
+            <div className="relative">
+              <Search className="absolute top-2.5 left-2.5 h-4 w-4 text-slate-400" />
+              <Input
+                placeholder="ID hoặc mã vật tư..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSearch()
+                }}
+                className="bg-white pl-9"
+              />
+            </div>
+          </div>
+
+          <div className="flex gap-2">
+            <div className="space-y-1.5">
+              <Label className="text-xs text-slate-500">Từ ngày</Label>
+              <div className="relative">
+                <Input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="w-[140px] bg-white pl-9"
+                />
+                <CalendarIcon className="absolute top-2.5 left-2.5 h-4 w-4 text-slate-400" />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-slate-500">Đến ngày</Label>
+              <div className="relative">
+                <Input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="w-[140px] bg-white pl-9"
+                />
+                <CalendarIcon className="absolute top-2.5 left-2.5 h-4 w-4 text-slate-400" />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex gap-2">
+            <Button variant="default" onClick={() => handleSearch()}>
+              Tìm kiếm
             </Button>
-            <Button variant="outline" size="sm" onClick={() => handleSearch()} className="ml-2">
-              Tìm
+            <Button variant="outline" size="icon" onClick={() => load()} title="Làm mới">
+              <RefreshCw className="h-4 w-4" />
             </Button>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <Label className="text-sm">Từ</Label>
-          <Input
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            className="h-8"
-          />
-          <Label className="text-sm">Đến</Label>
-          <Input
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            className="h-8"
-          />
-          <Label className="text-sm">Hiển thị</Label>
-          <select
-            value={String(limit)}
-            onChange={(e) => setLimit(Number(e.target.value))}
-            className="h-8 rounded border px-2"
-          >
-            <option value="10">10</option>
-            <option value="20">20</option>
-            <option value="50">50</option>
-          </select>
-          <Button variant="ghost" size="sm" onClick={() => load()}>
-            Làm mới
-          </Button>
+          <Label className="text-xs whitespace-nowrap text-slate-500">Hiển thị</Label>
+          <Select value={String(limit)} onValueChange={(v) => setLimit(Number(v))}>
+            <SelectTrigger className="h-9 w-[70px] bg-white">
+              <SelectValue placeholder="20" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="10">10</SelectItem>
+              <SelectItem value="20">20</SelectItem>
+              <SelectItem value="50">50</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-lg border bg-white">
-        {loading ? (
-          <div className="flex items-center justify-center p-8">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-          </div>
-        ) : items.length === 0 ? (
-          <div className="text-muted-foreground p-8 text-center">Chưa có bản ghi</div>
-        ) : (
-          <div className="w-full overflow-auto">
-            <table className="w-full min-w-[900px]">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">ID</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">Consumable</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">Type</th>
-                  <th className="px-4 py-3 text-right text-sm font-semibold">%</th>
-                  <th className="px-4 py-3 text-right text-sm font-semibold">Remaining</th>
-                  <th className="px-4 py-3 text-right text-sm font-semibold">Capacity</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">Status</th>
-                  <th className="px-4 py-3 text-right text-sm font-semibold">Recorded At</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                {items.map((r) => (
-                  <tr key={r.id} className="hover:bg-muted/30 transition-colors">
-                    <td className="text-muted-foreground px-4 py-3 font-mono text-sm" title={r.id}>
-                      {shortId(r.id)}
-                    </td>
-                    <td className="px-4 py-3 text-sm">{shortId(r.consumableId)}</td>
-                    <td className="px-4 py-3 text-sm">{shortId(r.consumableTypeId)}</td>
-                    <td className="px-4 py-3 text-right text-sm">{r.percentage ?? '-'}%</td>
-                    <td className="px-4 py-3 text-right text-sm">{fmt(r.remaining)}</td>
-                    <td className="px-4 py-3 text-right text-sm">{fmt(r.capacity)}</td>
-                    <td className="px-4 py-3 text-sm">
-                      <Badge variant="outline">{r.status ?? '-'}</Badge>
-                    </td>
-                    <td className="px-4 py-3 text-right text-sm">
-                      {r.recordedAt ? new Date(r.recordedAt).toLocaleString('vi-VN') : '-'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+      <div className="rounded-md border bg-white">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-slate-50 hover:bg-slate-50">
+              <TableHead className="w-[100px]">ID</TableHead>
+              <TableHead>Consumable</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead className="text-right">%</TableHead>
+              <TableHead className="text-right">Remaining</TableHead>
+              <TableHead className="text-right">Capacity</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Recorded At</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={8} className="h-32 text-center">
+                  <div className="flex flex-col items-center justify-center gap-2 text-slate-500">
+                    <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+                    <p className="text-sm">Đang tải dữ liệu...</p>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : items.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={8} className="h-32 text-center text-slate-500">
+                  Không có dữ liệu lịch sử
+                </TableCell>
+              </TableRow>
+            ) : (
+              items.map((r) => (
+                <TableRow key={r.id}>
+                  <TableCell className="font-mono text-xs text-slate-500" title={r.id}>
+                    {shortId(r.id)}
+                  </TableCell>
+                  <TableCell className="font-mono text-xs">{shortId(r.consumableId)}</TableCell>
+                  <TableCell className="font-mono text-xs">{shortId(r.consumableTypeId)}</TableCell>
+                  <TableCell className="text-right font-medium">
+                    {r.percentage !== undefined ? (
+                      <span
+                        className={
+                          r.percentage < 20
+                            ? 'text-red-600'
+                            : r.percentage < 50
+                              ? 'text-amber-600'
+                              : 'text-emerald-600'
+                        }
+                      >
+                        {r.percentage}%
+                      </span>
+                    ) : (
+                      '-'
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right">{fmt(r.remaining)}</TableCell>
+                  <TableCell className="text-right text-slate-500">{fmt(r.capacity)}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="font-normal">
+                      {r.status ?? '-'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right text-slate-500">
+                    {r.recordedAt
+                      ? format(new Date(r.recordedAt), 'dd/MM/yyyy HH:mm', { locale: vi })
+                      : '-'}
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
       </div>
 
-      <div className="flex items-center justify-between">
-        <div className="text-muted-foreground text-sm">Trang {page}</div>
+      <div className="flex items-center justify-between border-t pt-4">
+        <div className="text-sm text-slate-500">Trang {page}</div>
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
@@ -220,7 +274,7 @@ export function ConsumableUsageHistory({
           <Button
             variant="outline"
             size="sm"
-            disabled={loading}
+            disabled={loading || items.length < limit}
             onClick={() => setPage((p) => p + 1)}
           >
             Sau
@@ -246,12 +300,15 @@ export default function ConsumableHistoryModal({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-4xl">
+      <DialogContent className="max-h-[90vh] w-full max-w-5xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{title ?? 'Lịch sử vật tư'}</DialogTitle>
-          <DialogDescription>Lịch sử sử dụng cho vật tư: {consumableId ?? '—'}</DialogDescription>
+          <DialogDescription>
+            Lịch sử sử dụng cho vật tư:{' '}
+            <span className="font-mono font-medium text-slate-900">{consumableId ?? '—'}</span>
+          </DialogDescription>
         </DialogHeader>
-        <div className="p-4">
+        <div className="py-4">
           <ConsumableUsageHistory deviceId={deviceId} consumableId={consumableId} />
         </div>
         <DialogFooter>

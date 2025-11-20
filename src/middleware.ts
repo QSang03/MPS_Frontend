@@ -11,10 +11,11 @@ const JWT_SECRET = new TextEncoder().encode(
 interface Session {
   userId: string
   customerId: string
-  role: UserRole
+  role: UserRole // UserRole is now string type
   username: string
   email: string
   isDefaultPassword?: boolean
+  isDefaultCustomer?: boolean
 }
 
 /**
@@ -41,13 +42,13 @@ export async function middleware(request: NextRequest) {
       }
       // If already changed password, redirect to dashboard
       if (!session.isDefaultPassword && pathname === '/change-password') {
-        return NextResponse.redirect(new URL(getDashboardPath(session.role), request.url))
+        return NextResponse.redirect(new URL(getDashboardPath(session), request.url))
       }
       // If on change-password with default password, allow access
       if (pathname === '/change-password') {
         return NextResponse.next()
       }
-      return NextResponse.redirect(new URL(getDashboardPath(session.role), request.url))
+      return NextResponse.redirect(new URL(getDashboardPath(session), request.url))
     }
     return NextResponse.next()
   }
@@ -69,13 +70,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/change-password?required=true', request.url))
   }
 
-  // Role-based access control (RBAC)
-  if (pathname.startsWith('/system-admin') && session.role !== UserRole.SYSTEM_ADMIN) {
-    return NextResponse.redirect(new URL(ROUTES.FORBIDDEN, request.url))
-  }
-
+  // Access control based on isDefaultCustomer
+  // isDefaultCustomer: true -> can access /system routes
+  // isDefaultCustomer: false -> can access /user routes
   if (pathname.startsWith('/system')) {
-    if (session.role !== UserRole.CUSTOMER_ADMIN && session.role !== UserRole.SYSTEM_ADMIN) {
+    if (!session.isDefaultCustomer) {
       return NextResponse.redirect(new URL(ROUTES.FORBIDDEN, request.url))
     }
   }
@@ -118,18 +117,13 @@ async function getSessionFromRequest(request: NextRequest): Promise<Session | nu
 }
 
 /**
- * Helper function to get dashboard path based on role
+ * Helper function to get dashboard path based on isDefaultCustomer
  */
-function getDashboardPath(role: UserRole): string {
-  switch (role) {
-    case UserRole.SYSTEM_ADMIN:
-      return ROUTES.SYSTEM_ADMIN_CUSTOMERS
-    case UserRole.CUSTOMER_ADMIN:
-      return ROUTES.CUSTOMER_ADMIN
-    case UserRole.USER:
-      return ROUTES.USER_MY_DEVICES
-    default:
-      return ROUTES.LOGIN
+function getDashboardPath(session: Session): string {
+  if (session.isDefaultCustomer) {
+    return ROUTES.CUSTOMER_ADMIN // or ROUTES.SYSTEM_ADMIN_CUSTOMERS if needed
+  } else {
+    return ROUTES.USER_MY_DEVICES
   }
 }
 

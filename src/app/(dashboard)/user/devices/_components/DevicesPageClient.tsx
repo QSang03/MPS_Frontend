@@ -1,11 +1,24 @@
 'use client'
 
-import { useEffect, useState, useCallback, useRef } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import type { Device } from '@/types/models/device'
+
+import { PageHeader } from '@/components/ui/PageHeader'
+import { StatusBadge } from '@/components/ui/StatusBadge'
+import { LoadingState } from '@/components/ui/LoadingState'
+import { EmptyState } from '@/components/ui/EmptyState'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Skeleton } from '@/components/ui/skeleton'
+// `Skeleton` removed — not used in this file
 import { DeleteDialog } from '@/components/shared/DeleteDialog'
 import DeviceFormModal from '@/app/(dashboard)/system/devices/_components/deviceformmodal'
 import DevicePricingModal from '@/app/(dashboard)/system/devices/_components/DevicePricingModal'
@@ -28,7 +41,9 @@ import {
   Users,
   Edit2,
   X,
+  FileText,
 } from 'lucide-react'
+import { ServiceRequestFormModal } from '@/app/(dashboard)/user/my-requests/_components/ServiceRequestFormModal'
 import { STATUS_DISPLAY, STATUS_ALLOWED_FOR_INACTIVE } from '@/constants/status'
 import type { DeviceStatusValue } from '@/constants/status'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
@@ -301,38 +316,17 @@ export default function DevicesPageClient() {
   }
 
   if (loading) {
-    return (
-      <div className="space-y-6">
-        <Skeleton className="h-32 w-full rounded-2xl" />
-        <Card>
-          <CardHeader>
-            <Skeleton className="h-8 w-64" />
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-          </CardContent>
-        </Card>
-      </div>
-    )
+    return <LoadingState text="Đang tải danh sách thiết bị..." />
   }
 
   return (
     <div className="space-y-6">
       {/* Header with Gradient */}
-      <div className="rounded-2xl bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600 p-6 text-white shadow-lg">
-        <div className="flex items-center justify-between">
-          <div className="space-y-2">
-            <div className="flex items-center gap-3">
-              <Monitor className="h-10 w-10" />
-              <div>
-                <h1 className="text-2xl font-bold">Danh sách thiết bị</h1>
-                <p className="mt-1 text-white/90">Quản lý tất cả thiết bị của bạn</p>
-              </div>
-            </div>
-          </div>
-
+      <PageHeader
+        title="Danh sách thiết bị"
+        subtitle="Quản lý tất cả thiết bị của bạn"
+        icon={<Monitor className="h-6 w-6 text-white" />}
+        actions={
           <ActionGuard pageId="devices" actionId="create">
             <DeviceFormModal
               mode="create"
@@ -342,52 +336,56 @@ export default function DevicesPageClient() {
               }}
             />
           </ActionGuard>
-        </div>
+        }
+      />
 
-        {/* Quick Stats */}
-        <div className="mt-6 grid grid-cols-3 gap-4">
-          <div className="rounded-lg border border-white/20 bg-white/10 p-3 backdrop-blur-sm">
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-white/20 p-2">
-                <Monitor className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-sm text-white/80">Tổng thiết bị</p>
-                <p className="text-2xl font-bold">{devices.length}</p>
-              </div>
+      {/* Quick Stats */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <Card className="shadow-card">
+          <CardContent className="flex items-center gap-4 p-6">
+            <div className="rounded-full bg-blue-100 p-3 dark:bg-blue-900/30">
+              <Monitor className="h-6 w-6 text-blue-600 dark:text-blue-400" />
             </div>
-          </div>
+            <div>
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                Tổng thiết bị
+              </p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-white">{devices.length}</p>
+            </div>
+          </CardContent>
+        </Card>
 
-          <div className="rounded-lg border border-white/20 bg-white/10 p-3 backdrop-blur-sm">
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-green-500/20 p-2">
-                <CheckCircle2 className="h-5 w-5 text-green-300" />
-              </div>
-              <div>
-                <p className="text-sm text-white/80">Hoạt động</p>
-                <p className="text-2xl font-bold">{activeCount}</p>
-              </div>
+        <Card className="shadow-card">
+          <CardContent className="flex items-center gap-4 p-6">
+            <div className="rounded-full bg-green-100 p-3 dark:bg-green-900/30">
+              <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400" />
             </div>
-          </div>
+            <div>
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Hoạt động</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-white">{activeCount}</p>
+            </div>
+          </CardContent>
+        </Card>
 
-          <div className="rounded-lg border border-white/20 bg-white/10 p-3 backdrop-blur-sm">
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-gray-500/20 p-2">
-                <AlertCircle className="h-5 w-5 text-gray-300" />
-              </div>
-              <div>
-                <p className="text-sm text-white/80">Không hoạt động</p>
-                <p className="text-2xl font-bold">{inactiveCount}</p>
-              </div>
+        <Card className="shadow-card">
+          <CardContent className="flex items-center gap-4 p-6">
+            <div className="rounded-full bg-gray-100 p-3 dark:bg-gray-800">
+              <AlertCircle className="h-6 w-6 text-gray-600 dark:text-gray-400" />
             </div>
-          </div>
-        </div>
+            <div>
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                Không hoạt động
+              </p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-white">{inactiveCount}</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Main Content Card */}
-      <Card>
+      <Card className="shadow-card">
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Package className="h-5 w-5 text-blue-600" />
@@ -399,7 +397,7 @@ export default function DevicesPageClient() {
             </div>
 
             {/* Search (kept visible even when devices.length === 0 so user can adjust filters) */}
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               {can('filter-by-customer') && (
                 <select
                   suppressHydrationWarning
@@ -444,7 +442,7 @@ export default function DevicesPageClient() {
                 value={statusFilter ?? 'ALL'}
                 onValueChange={(v: string) => setStatusFilter(v === 'ALL' ? null : v)}
               >
-                <SelectTrigger className="h-9 w-48">
+                <SelectTrigger className="h-10 w-48">
                   <SelectValue placeholder="All statuses" />
                 </SelectTrigger>
                 <SelectContent>
@@ -457,7 +455,7 @@ export default function DevicesPageClient() {
                 </SelectContent>
               </Select>
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
                 onClick={async () => {
                   setSearchTerm('')
@@ -477,7 +475,6 @@ export default function DevicesPageClient() {
                     setLoading(false)
                   }
                 }}
-                className="rounded-md border px-3 py-2 text-sm"
               >
                 Xóa bộ lọc
               </Button>
@@ -494,87 +491,82 @@ export default function DevicesPageClient() {
         </CardHeader>
         <CardContent>
           <div className="overflow-hidden rounded-lg border">
-            <table className="w-full">
-              <thead className="bg-gradient-to-r from-blue-50 to-cyan-50">
-                <tr>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">#</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>#</TableHead>
+                  <TableHead>
                     <div className="flex items-center gap-2">
                       <Monitor className="h-4 w-4 text-blue-600" />
                       Serial
                     </div>
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">
+                  </TableHead>
+                  <TableHead>
                     <div className="flex items-center gap-2">
                       <Package className="h-4 w-4 text-cyan-600" />
                       Model
                     </div>
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">
+                  </TableHead>
+                  <TableHead>
                     <div className="flex items-center gap-2">
                       <Users className="h-4 w-4 text-rose-600" />
                       Khách hàng
                     </div>
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">
+                  </TableHead>
+                  <TableHead>
                     <div className="flex items-center gap-2">
                       <MapPin className="h-4 w-4 text-teal-600" />
                       Vị trí
                     </div>
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">Trạng thái</th>
-                  <th className="px-4 py-3 text-right text-sm font-semibold">Thao tác</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y">
+                  </TableHead>
+                  <TableHead>Trạng thái</TableHead>
+                  <TableHead className="text-right">Thao tác</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {filteredDevices.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="px-4 py-12 text-center">
-                      <div className="text-muted-foreground flex flex-col items-center gap-3">
-                        {searchTerm ? (
-                          <>
-                            <Search className="h-12 w-12 opacity-20" />
-                            <p>Không tìm thấy thiết bị phù hợp với "{searchTerm}"</p>
-                          </>
-                        ) : (
-                          <>
-                            <Monitor className="h-12 w-12 opacity-20" />
-                            <p>Chưa có thiết bị nào</p>
-                            <ActionGuard pageId="devices" actionId="create">
-                              <DeviceFormModal
-                                mode="create"
-                                onSaved={() => {
-                                  toast.success('Tạo thiết bị thành công')
-                                  fetchDevices()
-                                }}
-                              />
-                            </ActionGuard>
-                          </>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
+                  <TableRow>
+                    <TableCell colSpan={7} className="h-64 text-center">
+                      <EmptyState
+                        title={
+                          searchTerm
+                            ? `Không tìm thấy thiết bị phù hợp với "${searchTerm}"`
+                            : 'Chưa có thiết bị nào'
+                        }
+                        description={
+                          searchTerm
+                            ? 'Vui lòng thử lại với từ khóa khác'
+                            : 'Bắt đầu bằng cách tạo thiết bị mới'
+                        }
+                        action={
+                          !searchTerm
+                            ? {
+                                label: 'Tạo thiết bị',
+                                onClick: () =>
+                                  document.getElementById('create-device-trigger')?.click(),
+                              }
+                            : undefined
+                        }
+                        className="border-none bg-transparent py-0"
+                      />
+                    </TableCell>
+                  </TableRow>
                 ) : (
                   filteredDevices.map((d, idx) => (
-                    <tr
-                      key={d.id}
-                      className="transition-colors hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-cyan-50/50"
-                    >
-                      <td className="text-muted-foreground px-4 py-3 text-sm">{idx + 1}</td>
-                      <td className="px-4 py-3">
+                    <TableRow key={d.id} className="cursor-pointer">
+                      <TableCell className="text-muted-foreground">{idx + 1}</TableCell>
+                      <TableCell>
                         <code
                           role="button"
                           title="Xem chi tiết"
                           onClick={() => router.push(`/user/devices/${d.id}`)}
-                          className="cursor-pointer rounded bg-blue-100 px-2 py-1 text-sm font-semibold text-blue-700"
+                          className="cursor-pointer rounded bg-blue-100 px-2 py-1 text-sm font-semibold text-blue-700 hover:bg-blue-200"
                         >
                           {d.serialNumber || '—'}
                         </code>
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        {d.deviceModel?.name || d.deviceModelId || '—'}
-                      </td>
-                      <td className="px-4 py-3 text-sm">
+                      </TableCell>
+                      <TableCell>{d.deviceModel?.name || d.deviceModelId || '—'}</TableCell>
+                      <TableCell>
                         <div className="flex items-center gap-2">
                           {(
                             d as unknown as {
@@ -639,8 +631,8 @@ export default function DevicesPageClient() {
                               )}
                           </ActionGuard>
                         </div>
-                      </td>
-                      <td className="px-4 py-3 text-sm">
+                      </TableCell>
+                      <TableCell>
                         <div className="flex items-center gap-2">
                           {d.location ? (
                             <>
@@ -651,8 +643,8 @@ export default function DevicesPageClient() {
                             <span className="text-muted-foreground">—</span>
                           )}
                         </div>
-                      </td>
-                      <td className="px-4 py-3">
+                      </TableCell>
+                      <TableCell>
                         <div className="flex items-center gap-3">
                           {(() => {
                             const meta = STATUS_DISPLAY[
@@ -662,23 +654,32 @@ export default function DevicesPageClient() {
                               color: 'gray',
                               icon: '',
                             }
-                            const colorClassMap: Record<string, string> = {
-                              green: 'bg-green-500 text-white',
-                              blue: 'bg-blue-500 text-white',
-                              red: 'bg-red-500 text-white',
-                              gray: 'bg-gray-400 text-white',
-                              orange: 'bg-orange-500 text-white',
-                              purple: 'bg-purple-600 text-white',
-                              black: 'bg-black text-white',
+
+                            // Map old color names to StatusBadge variants
+                            const variantMap: Record<
+                              string,
+                              | 'default'
+                              | 'secondary'
+                              | 'destructive'
+                              | 'outline'
+                              | 'success'
+                              | 'warning'
+                              | 'info'
+                            > = {
+                              green: 'success',
+                              blue: 'info',
+                              red: 'destructive',
+                              gray: 'secondary',
+                              orange: 'warning',
+                              purple: 'default',
+                              black: 'default',
                             }
-                            const cls = colorClassMap[meta.color] || 'bg-gray-400 text-white'
+
                             return (
-                              <span
-                                className={`inline-flex items-center gap-1 rounded px-2 py-1 text-sm ${cls}`}
-                              >
-                                <span className="text-xs">{meta.icon}</span>
-                                <span className="font-medium">{meta.label}</span>
-                              </span>
+                              <StatusBadge
+                                status={meta.label}
+                                variant={variantMap[meta.color] ?? 'default'}
+                              />
                             )
                           })()}
 
@@ -687,14 +688,14 @@ export default function DevicesPageClient() {
                               type="button"
                               aria-label="On"
                               title="Hoạt động"
-                              className="inline-flex items-center justify-center rounded-full bg-green-500 p-2 text-white"
+                              className="inline-flex items-center justify-center rounded-full bg-green-500 p-1.5 text-white hover:bg-green-600"
                               onClick={() => {
                                 setToggleTargetDevice(d)
                                 setToggleTargetActive(false)
                                 setToggleModalOpen(true)
                               }}
                             >
-                              <Power className="h-4 w-4" />
+                              <Power className="h-3 w-3" />
                             </button>
                           ) : (
                             <Tooltip>
@@ -703,14 +704,14 @@ export default function DevicesPageClient() {
                                   type="button"
                                   aria-label="Off"
                                   title="Tạm dừng"
-                                  className="inline-flex items-center justify-center rounded-full bg-gray-300 p-2 text-gray-700"
+                                  className="inline-flex items-center justify-center rounded-full bg-gray-300 p-1.5 text-gray-700 hover:bg-gray-400"
                                   onClick={() => {
                                     setToggleTargetDevice(d)
                                     setToggleTargetActive(true)
                                     setToggleModalOpen(true)
                                   }}
                                 >
-                                  <Power className="h-4 w-4" />
+                                  <Power className="h-3 w-3" />
                                 </button>
                               </TooltipTrigger>
                               <TooltipContent>
@@ -723,8 +724,8 @@ export default function DevicesPageClient() {
                             </Tooltip>
                           )}
                         </div>
-                      </td>
-                      <td className="px-4 py-3">
+                      </TableCell>
+                      <TableCell>
                         <div className="flex items-center justify-end gap-2">
                           <ActionGuard pageId="devices" actionId="update">
                             <DeviceFormModal
@@ -738,20 +739,38 @@ export default function DevicesPageClient() {
                             />
                           </ActionGuard>
 
+                          {/* Create Service Request for this device (preselect device and make read-only) */}
+                          <ServiceRequestFormModal
+                            customerId={
+                              (d as unknown as { customer?: { id?: string } })?.customer?.id ?? ''
+                            }
+                            preselectedDeviceId={d.id}
+                            onSuccess={() => fetchDevices()}
+                          >
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 text-indigo-600 hover:bg-indigo-50"
+                              title="Tạo yêu cầu từ thiết bị"
+                            >
+                              <FileText className="h-4 w-4" />
+                            </Button>
+                          </ServiceRequestFormModal>
+
                           <DevicePricingModal device={d} compact onSaved={() => fetchDevices()} />
 
                           <ActionGuard pageId="devices" actionId="set-a4-pricing">
                             <Button
-                              variant="outline"
+                              variant="ghost"
                               size="sm"
-                              className="h-7 w-7 bg-sky-50 p-0 text-sky-600 hover:bg-sky-100"
+                              className="h-8 w-8 p-0 text-sky-600 hover:bg-sky-50"
                               onClick={() => {
                                 setA4ModalDevice(d)
                                 setA4ModalOpen(true)
                               }}
                               title="Ghi/Chỉnh sửa snapshot A4"
                             >
-                              <BarChart3 className="h-3.5 w-3.5" />
+                              <BarChart3 className="h-4 w-4" />
                             </Button>
                           </ActionGuard>
 
@@ -772,12 +791,12 @@ export default function DevicesPageClient() {
                             />
                           </ActionGuard>
                         </div>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))
                 )}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
 
           {/* Footer Stats */}

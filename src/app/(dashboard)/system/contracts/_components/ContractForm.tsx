@@ -27,7 +27,7 @@ import {
 } from '@/components/ui/select'
 import CustomerSelect from '@/components/shared/CustomerSelect'
 import { Textarea } from '@/components/ui/textarea'
-import { contractSchema, type ContractFormData } from '@/lib/validations/contract.schema'
+import { contractFormSchema, type ContractFormData } from '@/lib/validations/contract.schema'
 import type { Contract } from '@/types/models/contract'
 import { contractsClientService } from '@/lib/api/services/contracts-client.service'
 import { removeEmpty } from '@/lib/utils/clean'
@@ -43,8 +43,7 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
   const queryClient = useQueryClient()
 
   const form = useForm<ContractFormData>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- resolver typing from zodResolver is complex; keep as-is
-    resolver: zodResolver(contractSchema as any),
+    resolver: zodResolver(contractFormSchema),
     defaultValues: {
       customerId: initial?.customerId || '',
       contractNumber: initial?.contractNumber || '',
@@ -138,7 +137,6 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
     (updateMutation as unknown as { isLoading?: boolean }).isLoading
   const id = (initial as unknown as { id?: string })?.id
   const watched = useWatch({ control: form.control })
-  const errors = form.formState.errors
 
   // keep the hidden endDate form value in sync with startDate + durationYears - 1 day
   useEffect(() => {
@@ -464,22 +462,6 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
         <div>
           <ContractDevicesSection contractId={id} />
         </div>
-
-        {/* Dev debug */}
-        {process.env.NODE_ENV !== 'production' && (
-          <div className="mt-3 rounded border bg-gray-50 p-2 text-xs text-slate-700">
-            <div className="mb-1 text-sm font-medium">DEBUG: form state</div>
-            <div className="mb-1">
-              customerId: <span className="font-mono">{String(watched.customerId)}</span>
-            </div>
-            <div className="mb-1">
-              contractNumber: <span className="font-mono">{String(watched.contractNumber)}</span>
-            </div>
-            <div className="mb-1">
-              errors: <pre className="whitespace-pre-wrap">{JSON.stringify(errors, null, 2)}</pre>
-            </div>
-          </div>
-        )}
       </form>
     </Form>
   )

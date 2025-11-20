@@ -1,15 +1,25 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import type { TopCustomer } from '@/types/dashboard'
-import { Building2, Crown, Medal, Award } from 'lucide-react'
+import { Building2, Crown, Medal, Award, Users, Download } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 
 interface TopCustomersTableProps {
   topCustomers: TopCustomer[] | undefined
   isLoading?: boolean
+  onViewAll?: () => void
+  onExport?: () => void
 }
 
 function formatCurrency(amount: number): string {
@@ -26,7 +36,12 @@ const RANK_ICONS = [
   { icon: Award, color: 'text-orange-500', bgColor: 'bg-orange-50', label: '#3' },
 ]
 
-export function TopCustomersTable({ topCustomers, isLoading }: TopCustomersTableProps) {
+export function TopCustomersTable({
+  topCustomers,
+  isLoading,
+  onViewAll,
+  onExport,
+}: TopCustomersTableProps) {
   if (isLoading || !topCustomers) {
     return (
       <Card>
@@ -230,6 +245,16 @@ export function TopCustomersTable({ topCustomers, isLoading }: TopCustomersTable
             </div>
           )}
         </CardContent>
+        <CardFooter className="flex justify-end gap-2 border-t bg-gray-50/50 p-4">
+          <Button variant="outline" size="sm" onClick={onExport} className="gap-2">
+            <Download className="h-4 w-4" />
+            Xuất danh sách
+          </Button>
+          <Button size="sm" onClick={onViewAll} className="gap-2">
+            <Users className="h-4 w-4" />
+            Xem tất cả
+          </Button>
+        </CardFooter>
       </Card>
     </motion.div>
   )

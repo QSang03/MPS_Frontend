@@ -26,6 +26,8 @@ export interface CustomerOverviewParams {
   search?: string
   sortBy?: string
   sortOrder?: 'asc' | 'desc' | string
+  status?: string
+  type?: string
 }
 
 export default CustomerOverview

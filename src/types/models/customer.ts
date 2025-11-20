@@ -6,7 +6,15 @@ export interface Customer {
   code?: string
   name: string
   address?: string[]
+  contactEmail?: string
+  contactPhone?: string
+  contactPerson?: string
+  tier?: string
+  isActive?: boolean
+  description?: string
   deviceCount?: number
+  contractCount?: number
+  userCount?: number
   billingDay?: number
   createdAt: string
   updatedAt: string

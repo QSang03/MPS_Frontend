@@ -22,6 +22,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     if (sp.has('search')) query.search = sp.get('search')
     if (sp.has('sortBy')) query.sortBy = sp.get('sortBy')
     if (sp.has('sortOrder')) query.sortOrder = sp.get('sortOrder')
+    if (sp.has('status')) query.status = sp.get('status')
+    if (sp.has('type')) query.type = sp.get('type')
 
     const response = await backendApiClient.get(`${API_ENDPOINTS.CUSTOMERS}/${id}/overview`, {
       headers: {

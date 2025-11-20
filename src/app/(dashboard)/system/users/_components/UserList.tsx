@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { UserRole } from '@/constants/roles'
+import type { UserRole } from '@/constants/roles'
 import { formatRelativeTime } from '@/lib/utils/formatters'
 
 interface UserListProps {
@@ -27,7 +27,7 @@ const mockUsers = [
     username: 'john.doe',
     email: 'john.doe@company.com',
     fullName: 'John Doe',
-    role: UserRole.CUSTOMER_ADMIN,
+    role: 'CustomerAdmin' as UserRole,
     isActive: true,
     lastLogin: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
   },
@@ -36,7 +36,7 @@ const mockUsers = [
     username: 'jane.smith',
     email: 'jane.smith@company.com',
     fullName: 'Jane Smith',
-    role: UserRole.USER,
+    role: 'User' as UserRole,
     isActive: true,
     lastLogin: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
   },
@@ -45,16 +45,16 @@ const mockUsers = [
     username: 'bob.wilson',
     email: 'bob.wilson@company.com',
     fullName: 'Bob Wilson',
-    role: UserRole.USER,
+    role: 'User' as UserRole,
     isActive: false,
     lastLogin: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
   },
 ]
 
-const roleColors = {
-  [UserRole.SYSTEM_ADMIN]: 'bg-purple-100 text-purple-800',
-  [UserRole.CUSTOMER_ADMIN]: 'bg-blue-100 text-blue-800',
-  [UserRole.USER]: 'bg-gray-100 text-gray-800',
+const roleColors: Record<string, string> = {
+  SystemAdmin: 'bg-purple-100 text-purple-800',
+  CustomerAdmin: 'bg-blue-100 text-blue-800',
+  User: 'bg-gray-100 text-gray-800',
 }
 
 export function UserList({}: UserListProps) {

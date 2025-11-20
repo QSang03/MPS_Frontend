@@ -1,4 +1,4 @@
-import { UserRole } from '@/constants/roles'
+import type { UserRole } from '@/constants/roles'
 import type { Session } from './session'
 
 /**
@@ -9,23 +9,26 @@ export const DEV_SESSIONS: Record<string, Session> = {
   'system-admin': {
     userId: 'dev-system-admin-1',
     customerId: 'system',
-    role: UserRole.SYSTEM_ADMIN,
+    role: 'SystemAdmin' as UserRole,
     username: 'System Admin (Dev)',
     email: 'admin@system.dev',
+    isDefaultCustomer: true,
   },
   'customer-admin': {
     userId: 'dev-customer-admin-1',
     customerId: 'customer-1',
-    role: UserRole.CUSTOMER_ADMIN,
+    role: 'CustomerAdmin' as UserRole,
     username: 'Customer Admin (Dev)',
     email: 'admin@customer.dev',
+    isDefaultCustomer: true,
   },
   user: {
     userId: 'dev-user-1',
     customerId: 'customer-1',
-    role: UserRole.USER,
+    role: 'User' as UserRole,
     username: 'User (Dev)',
     email: 'user@customer.dev',
+    isDefaultCustomer: false,
   },
 }
 

@@ -85,7 +85,14 @@ export function SidebarNavItem({ item, index }: SidebarNavItemProps) {
               : 'text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800'
           )}
         >
-          <item.icon className="h-5 w-5 shrink-0" />
+          <item.icon
+            className={cn(
+              'h-5 w-5 shrink-0 transition-colors',
+              isParentActive
+                ? 'text-white'
+                : 'text-brand-600 dark:text-brand-400 group-hover:text-brand-700 dark:group-hover:text-brand-300'
+            )}
+          />
           <span className="flex-1">{item.label}</span>
 
           {/* Badge */}

@@ -19,29 +19,17 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { CustomerSelect } from '@/components/shared/CustomerSelect'
-import { formatCurrency, formatRelativeTime } from '@/lib/utils/formatters'
+import { formatCurrency, formatDateTime, formatRelativeTime } from '@/lib/utils/formatters'
 import { cn } from '@/lib/utils/cn'
 import { purchaseRequestsClientService } from '@/lib/api/services/purchase-requests-client.service'
 import { Priority, PurchaseRequestStatus } from '@/constants/status'
 import type { PurchaseRequest } from '@/types/models/purchase-request'
 import type { Customer } from '@/types/models/customer'
 
-type PurchaseRequestItem = {
-  id: string
-  consumableTypeId?: string
-  quantity: number
-  unitPrice?: number
-  totalPrice?: number
-  notes?: string
-}
-
 type PurchaseRequestRow = PurchaseRequest & {
-  title?: string
-  description?: string
-  totalAmount?: number
-  items?: PurchaseRequestItem[]
-  customer?: Pick<Customer, 'id' | 'name' | 'code'>
+  customer?: Customer
 }
 
 type PurchaseRequestsResponse = Awaited<ReturnType<typeof purchaseRequestsClientService.getAll>>
@@ -68,6 +56,24 @@ const priorityBadgeMap: Record<Priority, string> = {
   [Priority.HIGH]: 'bg-orange-100 text-orange-700',
   [Priority.URGENT]: 'bg-red-100 text-red-700',
 }
+
+type TimelineStep = {
+  label: string
+  time: string
+  by?: string
+}
+
+const buildTimelineSteps = (request: PurchaseRequestRow): TimelineStep[] =>
+  (
+    [
+      { label: 'Tạo yêu cầu', time: request.createdAt, by: request.requestedBy },
+      { label: 'Đã duyệt', time: request.approvedAt, by: request.approvedBy },
+      { label: 'Đặt hàng', time: request.orderedAt, by: request.orderedBy },
+      { label: 'Đã nhận', time: request.receivedAt, by: request.receivedBy },
+      { label: 'Hủy', time: request.cancelledAt, by: request.cancelledBy },
+      { label: 'Khách hủy', time: request.customerCancelledAt, by: request.customerCancelledBy },
+    ] as Array<Omit<TimelineStep, 'time'> & { time?: string }>
+  ).filter((step): step is TimelineStep => Boolean(step.time))
 
 function useDebouncedValue<T>(value: T, delay = 400) {
   const [debounced, setDebounced] = useState(value)
@@ -148,6 +154,7 @@ export function PurchaseRequestsTable() {
     total: totalCount,
     pending: requests.filter((r) => r.status === PurchaseRequestStatus.PENDING).length,
     ordered: requests.filter((r) => r.status === PurchaseRequestStatus.ORDERED).length,
+    received: requests.filter((r) => r.status === PurchaseRequestStatus.RECEIVED).length,
   }
 
   const columns = useMemo<ColumnDef<PurchaseRequestRow>[]>(
@@ -198,6 +205,40 @@ export function PurchaseRequestsTable() {
         ),
       },
       {
+        id: 'progress',
+        header: 'Tiến trình',
+        cell: ({ row }) => {
+          const steps = buildTimelineSteps(row.original)
+          if (steps.length === 0) {
+            return <span className="text-muted-foreground text-xs">Chờ xử lý</span>
+          }
+          const latest = steps[steps.length - 1]!
+          return (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex flex-col text-xs">
+                    <span className="font-semibold">{latest.label}</span>
+                    <span className="text-muted-foreground">{formatRelativeTime(latest.time)}</span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent className="w-60 space-y-1 text-xs">
+                  {steps.map((step) => (
+                    <div key={`${row.original.id}-${step.label}`} className="flex justify-between">
+                      <span className="font-medium">{step.label}</span>
+                      <span className="text-muted-foreground">
+                        {formatDateTime(step.time)}
+                        {step.by ? ` • ${step.by}` : ''}
+                      </span>
+                    </div>
+                  ))}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )
+        },
+      },
+      {
         accessorKey: 'totalAmount',
         header: 'Tổng dự toán',
         cell: ({ row }) => {
@@ -236,9 +277,10 @@ export function PurchaseRequestsTable() {
                           <span>{formatCurrency(item.totalPrice)}</span>
                         )}
                       </div>
-                      {item.notes && (
-                        <p className="text-muted-foreground mt-1 text-xs">{item.notes}</p>
-                      )}
+                      <div className="text-muted-foreground mt-1 space-y-1 text-xs">
+                        <p>Đơn vị: {item.unitPrice ? formatCurrency(item.unitPrice) : '—'}</p>
+                        {item.notes && <p>Ghi chú: {item.notes}</p>}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -296,7 +338,7 @@ export function PurchaseRequestsTable() {
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardContent className="pt-6">
             <p className="text-muted-foreground text-sm">Tổng yêu cầu</p>
@@ -313,6 +355,12 @@ export function PurchaseRequestsTable() {
           <CardContent className="pt-6">
             <p className="text-muted-foreground text-sm">Đang đặt hàng</p>
             <p className="text-2xl font-bold text-blue-600">{summary.ordered}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-muted-foreground text-sm">Đã nhận</p>
+            <p className="text-2xl font-bold text-green-600">{summary.received}</p>
           </CardContent>
         </Card>
       </div>

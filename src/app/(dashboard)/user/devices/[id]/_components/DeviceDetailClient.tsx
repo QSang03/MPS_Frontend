@@ -19,6 +19,8 @@ import {
   BarChart3,
   AlertCircle,
 } from 'lucide-react'
+import { FileText } from 'lucide-react'
+import { ServiceRequestFormModal } from '@/app/(dashboard)/user/my-requests/_components/ServiceRequestFormModal'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { DEVICE_STATUS, STATUS_DISPLAY } from '@/constants/status'
 import { Button } from '@/components/ui/button'
@@ -264,6 +266,20 @@ export default function DeviceDetailClient({ deviceId, backHref }: Props) {
                 A4
               </Button>
             </ActionGuard>
+
+            {/* Create Service Request (user) - preselect this device */}
+            <ServiceRequestFormModal
+              customerId={(device as unknown as { customer?: { id?: string } })?.customer?.id ?? ''}
+              preselectedDeviceId={deviceId}
+              onSuccess={() => {
+                toast.success('Yêu cầu đã được gửi')
+              }}
+            >
+              <Button variant="secondary" size="sm" className="gap-2">
+                <FileText className="h-4 w-4" />
+                Tạo yêu cầu
+              </Button>
+            </ServiceRequestFormModal>
 
             {Boolean(device?.isActive) ? (
               <ActionGuard pageId="devices" actionId="update">

@@ -35,6 +35,8 @@ export const customerOverviewClientService = {
           ...(params?.search ? { search: params.search } : {}),
           ...(params?.sortBy ? { sortBy: params.sortBy } : {}),
           ...(params?.sortOrder ? { sortOrder: params.sortOrder } : {}),
+          ...(params?.status ? { status: params.status } : {}),
+          ...(params?.type ? { type: params.type } : {}),
         },
       }
     )
