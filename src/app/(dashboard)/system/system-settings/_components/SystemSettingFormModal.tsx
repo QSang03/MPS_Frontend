@@ -33,15 +33,27 @@ export default function SystemSettingFormModal({ setting, onSaved }: Props) {
   const [open, setOpen] = useState(false)
   const queryClient = useQueryClient()
 
+  const getInitialValue = (value: unknown): string => {
+    if (value === null || value === undefined) return ''
+    if (typeof value === 'object') {
+      try {
+        return JSON.stringify(value, null, 2)
+      } catch {
+        return String(value)
+      }
+    }
+    return String(value)
+  }
+
   const [form, setForm] = useState<SystemSettingFormData>({
-    value: setting.value || '',
+    value: getInitialValue(setting.value),
     description: setting.description || '',
   })
 
   React.useEffect(() => {
     if (setting) {
       setForm({
-        value: setting.value || '',
+        value: getInitialValue(setting.value),
         description: setting.description || '',
       })
     }

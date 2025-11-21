@@ -168,13 +168,18 @@ export function Sidebar({ session }: SidebarProps) {
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                    'group flex items-center gap-3 rounded-full px-3 py-2 text-sm font-semibold transition-all duration-150',
                     isActive
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                      ? 'bg-blue-50 text-[#0B63D1] shadow-sm ring-1 ring-blue-200'
+                      : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
                   )}
                 >
-                  <item.icon className="h-5 w-5 shrink-0" />
+                  <item.icon
+                    className={cn(
+                      'h-5 w-5 shrink-0',
+                      isActive ? 'text-[#0B63D1]' : 'text-slate-400 group-hover:text-[#0B63D1]'
+                    )}
+                  />
                   <span className="flex-1">{item.label}</span>
                   {item.badge !== undefined && item.badge > 0 && (
                     <span className="bg-destructive flex h-5 min-w-[1.25rem] items-center justify-center rounded-full px-1.5 text-xs text-white">

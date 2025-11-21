@@ -125,7 +125,7 @@ export function ProfileClient({ initialProfile }: ProfileClientProps) {
             <CardContent className="space-y-4 bg-gradient-to-b from-gray-50 to-white p-6">
               {/* Role Level */}
               <div className="flex items-center gap-3 rounded-2xl border border-purple-200 bg-gradient-to-r from-purple-50 to-purple-100 p-3">
-                <Shield className="h-5 w-5 flex-shrink-0 text-purple-600" />
+                <Shield className="h-5 w-5 flex-shrink-0 text-black dark:text-white" />
                 <div>
                   <p className="text-xs font-bold text-gray-600">CẤP ĐỘ</p>
                   <p className="text-sm font-bold text-purple-700">Level {user.role?.level || 0}</p>
@@ -134,7 +134,7 @@ export function ProfileClient({ initialProfile }: ProfileClientProps) {
 
               {/* Department */}
               <div className="flex items-center gap-3 rounded-2xl border border-blue-200 bg-gradient-to-r from-blue-50 to-blue-100 p-3">
-                <Building className="h-5 w-5 flex-shrink-0 text-blue-600" />
+                <Building className="h-5 w-5 flex-shrink-0 text-black dark:text-white" />
                 <div>
                   <p className="text-xs font-bold text-gray-600">BỘ PHẬN</p>
                   <p className="text-sm font-bold text-blue-700">{departmentName}</p>
@@ -143,7 +143,7 @@ export function ProfileClient({ initialProfile }: ProfileClientProps) {
 
               {/* Created Date */}
               <div className="flex items-center gap-3 rounded-2xl border border-green-200 bg-gradient-to-r from-green-50 to-green-100 p-3">
-                <Calendar className="h-5 w-5 flex-shrink-0 text-green-600" />
+                <Calendar className="h-5 w-5 flex-shrink-0 text-black dark:text-white" />
                 <div>
                   <p className="text-xs font-bold text-gray-600">NGÀY TẠO</p>
                   <p className="text-sm font-bold text-green-700">{createdDate}</p>
@@ -154,12 +154,12 @@ export function ProfileClient({ initialProfile }: ProfileClientProps) {
               <div className="pt-2">
                 {isUserActive ? (
                   <Badge className="w-full justify-center rounded-2xl border-2 border-emerald-300 bg-gradient-to-r from-emerald-100 to-emerald-50 py-2 font-bold text-emerald-700">
-                    <CheckCircle2 className="mr-2 h-4 w-4" />
+                    <CheckCircle2 className="mr-2 h-4 w-4 text-black dark:text-white" />
                     Tài khoản hoạt động
                   </Badge>
                 ) : (
                   <Badge className="w-full justify-center rounded-2xl border-2 border-red-300 bg-gradient-to-r from-red-100 to-red-50 py-2 font-bold text-red-700">
-                    <AlertCircle className="mr-2 h-4 w-4" />
+                    <AlertCircle className="mr-2 h-4 w-4 text-black dark:text-white" />
                     Tài khoản bị khóa
                   </Badge>
                 )}
@@ -199,7 +199,7 @@ export function ProfileClient({ initialProfile }: ProfileClientProps) {
               {/* Basic Information */}
               <div>
                 <h4 className="mb-4 flex items-center gap-2 text-lg font-bold text-gray-800">
-                  <User className="h-5 w-5 text-purple-600" />
+                  <User className="h-5 w-5 text-black dark:text-white" />
                   Thông tin cơ bản
                 </h4>
                 <div className="grid gap-4 md:grid-cols-2">
@@ -209,7 +209,7 @@ export function ProfileClient({ initialProfile }: ProfileClientProps) {
                       📧 Email
                     </Label>
                     <div className="flex items-center gap-2">
-                      <Mail className="h-4 w-4 flex-shrink-0 text-gray-400" />
+                      <Mail className="h-4 w-4 flex-shrink-0 text-black dark:text-white" />
                       <div className="flex-1 rounded-2xl border-2 border-gray-200 bg-gray-50 px-3 py-2 text-gray-700">
                         {user.email}
                       </div>
@@ -222,7 +222,7 @@ export function ProfileClient({ initialProfile }: ProfileClientProps) {
                       👤 Tên đăng nhập
                     </Label>
                     <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 flex-shrink-0 text-gray-400" />
+                      <User className="h-4 w-4 flex-shrink-0 text-black dark:text-white" />
                       <div className="flex-1 rounded-2xl border-2 border-gray-200 bg-gray-50 px-3 py-2 text-gray-700">
                         {user.username || user.email || 'Chưa cập nhật'}
                       </div>
@@ -256,7 +256,7 @@ export function ProfileClient({ initialProfile }: ProfileClientProps) {
               {/* Role Information */}
               <div>
                 <h4 className="mb-4 flex items-center gap-2 text-lg font-bold text-gray-800">
-                  <Shield className="h-5 w-5 text-pink-600" />
+                  <Shield className="h-5 w-5 text-black dark:text-white" />
                   Thông tin vai trò
                 </h4>
                 <div className="grid gap-4 md:grid-cols-2">
@@ -288,7 +288,7 @@ export function ProfileClient({ initialProfile }: ProfileClientProps) {
               <div className="border-gradient-to-r mt-6 rounded-2xl border-2 bg-gradient-to-r from-orange-50 from-orange-200 to-red-50 to-red-200 p-5">
                 <div className="flex items-start justify-between">
                   <div className="flex flex-1 items-start gap-3">
-                    <Lock className="mt-1 h-5 w-5 flex-shrink-0 text-red-600" />
+                    <Lock className="mt-1 h-5 w-5 flex-shrink-0 text-black dark:text-white" />
                     <div>
                       <h5 className="flex items-center gap-2 font-bold text-gray-800">
                         🔒 Bảo mật tài khoản

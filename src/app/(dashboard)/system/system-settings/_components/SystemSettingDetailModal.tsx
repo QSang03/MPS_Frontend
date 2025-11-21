@@ -47,10 +47,12 @@ export default function SystemSettingDetailModal({ setting, open, onOpenChange }
 
   const renderValue = () => {
     if (setting.type === SystemSettingType.SECRET) {
+      const secretValue =
+        typeof setting.value === 'object' ? JSON.stringify(setting.value) : String(setting.value)
       return (
         <div className="flex items-center gap-2">
           <code className="flex-1 rounded-lg bg-gray-100 px-4 py-2 font-mono text-sm">
-            {showSecret ? setting.value : '••••••••••••'}
+            {showSecret ? secretValue : '••••••••••••'}
           </code>
           <button
             onClick={() => setShowSecret(!showSecret)}
@@ -64,25 +66,38 @@ export default function SystemSettingDetailModal({ setting, open, onOpenChange }
 
     if (setting.type === SystemSettingType.JSON) {
       try {
-        const formatted = JSON.stringify(JSON.parse(setting.value), null, 2)
+        let jsonValue: unknown
+        // If value is already an object, use it directly
+        if (typeof setting.value === 'object' && setting.value !== null) {
+          jsonValue = setting.value
+        } else {
+          // If value is a string, try to parse it
+          jsonValue = JSON.parse(String(setting.value))
+        }
+        const formatted = JSON.stringify(jsonValue, null, 2)
         return (
           <pre className="overflow-x-auto rounded-lg bg-gray-100 p-4 font-mono text-sm">
             {formatted}
           </pre>
         )
       } catch {
+        // If parsing fails, convert to string safely
+        const fallbackValue =
+          typeof setting.value === 'object' ? JSON.stringify(setting.value) : String(setting.value)
         return (
           <code className="block rounded-lg bg-gray-100 px-4 py-2 font-mono text-sm">
-            {setting.value}
+            {fallbackValue}
           </code>
         )
       }
     }
 
     if (setting.type === SystemSettingType.BOOLEAN) {
+      const boolValue =
+        typeof setting.value === 'object' ? JSON.stringify(setting.value) : String(setting.value)
       return (
         <div className="flex items-center gap-2">
-          {setting.value === 'true' ? (
+          {boolValue === 'true' ? (
             <Badge className="border-green-200 bg-green-500/10 text-green-700">
               <CheckCircle2 className="mr-1 h-3 w-3" />
               true
@@ -97,9 +112,12 @@ export default function SystemSettingDetailModal({ setting, open, onOpenChange }
       )
     }
 
+    // For other types, safely convert to string
+    const displayValue =
+      typeof setting.value === 'object' ? JSON.stringify(setting.value) : String(setting.value)
     return (
       <code className="block rounded-lg bg-gray-100 px-4 py-2 font-mono text-sm">
-        {setting.value}
+        {displayValue}
       </code>
     )
   }

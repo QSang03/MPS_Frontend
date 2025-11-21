@@ -14,11 +14,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     const { id } = await params
 
-    // Gọi backend API trực tiếp
-    // Backend expect body với id property
+    // Gọi backend API trực tiếp (backend không cần body, chỉ path param)
     const response = await backendApiClient.patch(
       API_ENDPOINTS.NOTIFICATIONS.MARK_READ(id),
-      { id },
+      undefined,
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,

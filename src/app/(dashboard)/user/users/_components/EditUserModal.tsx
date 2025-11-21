@@ -132,31 +132,22 @@ export function EditUserModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-[550px] overflow-hidden rounded-2xl border-0 p-0 shadow-2xl">
-        {/* Premium Header */}
-        <DialogHeader className="relative overflow-hidden bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 p-0">
-          {/* Animated background shapes */}
-          <div className="absolute inset-0 opacity-20">
-            <div className="absolute top-0 right-0 h-40 w-40 translate-x-1/2 -translate-y-1/2 rounded-full bg-white"></div>
-          </div>
-
-          <div className="relative px-8 py-6">
-            <div className="mb-2 flex items-center gap-3">
-              <div className="rounded-xl border border-white/30 bg-white/20 p-2.5 backdrop-blur-lg">
-                <User className="h-6 w-6 text-white" />
-              </div>
-              <DialogTitle className="text-2xl font-bold text-white">
-                Chỉnh sửa người dùng
-              </DialogTitle>
+      <DialogContent className="max-w-[550px] overflow-hidden rounded-lg border p-0 shadow-lg">
+        {/* Header */}
+        <DialogHeader className="border-b px-6 py-4">
+          <div className="flex items-center gap-3">
+            <div className="bg-primary/10 rounded-lg p-2">
+              <User className="text-primary h-6 w-6" />
             </div>
-            <DialogDescription className="text-sm font-medium text-pink-100">
-              Cập nhật thông tin và phân quyền cho người dùng
-            </DialogDescription>
+            <div>
+              <DialogTitle className="text-xl font-bold">Chỉnh sửa người dùng</DialogTitle>
+              <DialogDescription>Cập nhật thông tin và phân quyền cho người dùng</DialogDescription>
+            </div>
           </div>
         </DialogHeader>
 
         {/* Form Content */}
-        <div className="space-y-5 bg-gradient-to-b from-gray-50 to-white px-8 py-6">
+        <div className="bg-background space-y-5 px-6 py-6">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
               {/* Email Field */}
@@ -165,19 +156,14 @@ export function EditUserModal({
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex items-center gap-2 text-sm font-bold text-gray-800">
-                      <Mail className="h-4 w-4 text-purple-600" />
+                    <FormLabel className="flex items-center gap-2 text-sm font-medium">
+                      <Mail className="text-muted-foreground h-4 w-4" />
                       Email *
                     </FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder="Nhập email người dùng"
-                        type="email"
-                        {...field}
-                        className="h-10 rounded-lg border-2 border-gray-200 text-base transition-all focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
-                      />
+                      <Input placeholder="Nhập email người dùng" type="email" {...field} />
                     </FormControl>
-                    <FormMessage className="mt-1 text-xs text-red-600" />
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -189,13 +175,13 @@ export function EditUserModal({
                   name="customerId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="flex items-center gap-2 text-sm font-bold text-gray-800">
+                      <FormLabel className="flex items-center gap-2 text-sm font-medium">
                         <span className="text-lg">🏪</span>
                         Mã khách hàng
                       </FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
-                          <SelectTrigger className="h-10 rounded-lg border-2 border-gray-200 transition-all focus:border-amber-500 focus:ring-2 focus:ring-amber-200">
+                          <SelectTrigger>
                             <SelectValue placeholder="Chọn mã khách hàng">
                               {field.value &&
                                 Object.entries(customerCodeToId).find(
@@ -207,42 +193,33 @@ export function EditUserModal({
                         <SelectContent>
                           {customerCodes.map((code) => (
                             <SelectItem key={code} value={customerCodeToId[code] || code}>
-                              <span className="inline-block rounded bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700">
+                              <span className="bg-muted text-muted-foreground inline-block rounded px-2 py-0.5 text-xs font-bold">
                                 {code}
                               </span>
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
-                      <FormMessage className="mt-1 text-xs text-red-600" />
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
               )}
 
               {/* Info card */}
-              <div className="rounded-lg border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-purple-50 p-4">
-                <p className="text-xs text-gray-700">
-                  <span className="font-bold text-blue-700">💡 Tip:</span> Các thay đổi sẽ được lưu
-                  ngay khi bạn nhấn "Cập nhật".
+              <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+                <p className="text-xs text-blue-700">
+                  <span className="font-bold">💡 Tip:</span> Các thay đổi sẽ được lưu ngay khi bạn
+                  nhấn "Cập nhật".
                 </p>
               </div>
 
               {/* Form Footer */}
-              <div className="mt-6 flex gap-3 border-t-2 border-gray-100 pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleClose}
-                  className="flex-1 rounded-lg border-2 border-gray-300 font-medium transition-all hover:border-gray-400 hover:bg-gray-50"
-                >
+              <div className="mt-6 flex gap-3 border-t pt-4">
+                <Button type="button" variant="outline" onClick={handleClose} className="flex-1">
                   Hủy
                 </Button>
-                <Button
-                  type="submit"
-                  disabled={isLoading}
-                  className="min-w-[120px] flex-1 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 font-bold text-white shadow-lg transition-all hover:from-purple-700 hover:to-pink-700 hover:shadow-xl disabled:opacity-50"
-                >
+                <Button type="submit" disabled={isLoading} className="flex-1">
                   {isLoading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />

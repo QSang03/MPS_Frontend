@@ -1,16 +1,20 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Suspense, useCallback, useEffect, useMemo, useState, useTransition } from 'react'
+import type { ReactNode } from 'react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import type { ColumnDef } from '@tanstack/react-table'
 import { Loader2, ListOrdered } from 'lucide-react'
 import { toast } from 'sonner'
-import { DataTable } from '@/components/shared/DataTable/DataTable'
+import { TableWrapper } from '@/components/system/TableWrapper'
+import { TableSkeleton } from '@/components/system/TableSkeleton'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { FilterSection } from '@/components/system/FilterSection'
+import { StatsCards } from '@/components/system/StatsCard'
+// Removed unused Card/CardContent imports
 import {
   Select,
   SelectContent,
@@ -27,12 +31,11 @@ import { purchaseRequestsClientService } from '@/lib/api/services/purchase-reque
 import { Priority, PurchaseRequestStatus } from '@/constants/status'
 import type { PurchaseRequest } from '@/types/models/purchase-request'
 import type { Customer } from '@/types/models/customer'
+import { usePurchaseRequestsQuery } from '@/lib/hooks/queries/usePurchaseRequestsQuery'
 
 type PurchaseRequestRow = PurchaseRequest & {
   customer?: Customer
 }
-
-type PurchaseRequestsResponse = Awaited<ReturnType<typeof purchaseRequestsClientService.getAll>>
 
 const statusOptions = [
   { label: 'Chờ duyệt', value: PurchaseRequestStatus.PENDING },
@@ -91,39 +94,218 @@ export function PurchaseRequestsTable() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<PurchaseRequestStatus | 'all'>('all')
   const [customerFilter, setCustomerFilter] = useState<string>('')
-  const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null)
+  const [sorting, setSorting] = useState<{ sortBy?: string; sortOrder?: 'asc' | 'desc' }>({
+    sortBy: 'createdAt',
+    sortOrder: 'desc',
+  })
+  const [columnVisibilityMenu, setColumnVisibilityMenu] = useState<ReactNode | null>(null)
+  const [summary, setSummary] = useState({
+    total: 0,
+    pending: 0,
+    ordered: 0,
+    received: 0,
+  })
 
-  const queryClient = useQueryClient()
   const debouncedSearch = useDebouncedValue(search, 400)
 
-  const listQuery = useQuery<PurchaseRequestsResponse>({
-    queryKey: [
-      'system-requests-purchase',
-      {
-        pageIndex: pagination.pageIndex,
-        pageSize: pagination.pageSize,
-        search: debouncedSearch,
-        status: statusFilter,
-        customerId: customerFilter,
-      },
-    ],
-    queryFn: () =>
-      purchaseRequestsClientService.getAll({
-        page: pagination.pageIndex + 1,
-        limit: pagination.pageSize,
-        search: debouncedSearch || undefined,
-        status: statusFilter === 'all' ? undefined : statusFilter,
-        customerId: customerFilter || undefined,
-        sortBy: 'createdAt',
-        sortOrder: 'desc',
-      }),
-  })
+  const handleResetFilters = () => {
+    setSearch('')
+    setStatusFilter('all')
+    setCustomerFilter('')
+  }
+
+  const activeFilters: Array<{ label: string; value: string; onRemove: () => void }> = []
+  if (search) {
+    activeFilters.push({
+      label: `Tìm kiếm: "${search}"`,
+      value: search,
+      onRemove: () => setSearch(''),
+    })
+  }
+  if (statusFilter !== 'all') {
+    const statusLabel =
+      statusOptions.find((opt) => opt.value === statusFilter)?.label || statusFilter
+    activeFilters.push({
+      label: `Trạng thái: ${statusLabel}`,
+      value: statusFilter,
+      onRemove: () => setStatusFilter('all'),
+    })
+  }
+  if (customerFilter) {
+    activeFilters.push({
+      label: `Khách hàng: ${customerFilter}`,
+      value: customerFilter,
+      onRemove: () => setCustomerFilter(''),
+    })
+  }
+
+  return (
+    <div className="space-y-6">
+      <StatsCards
+        cards={[
+          {
+            label: 'Tổng yêu cầu',
+            value: summary.total,
+            icon: <ListOrdered className="h-6 w-6" />,
+            borderColor: 'blue',
+          },
+          {
+            label: 'Chờ duyệt',
+            value: summary.pending,
+            icon: <ListOrdered className="h-6 w-6" />,
+            borderColor: 'orange',
+          },
+          {
+            label: 'Đang đặt hàng',
+            value: summary.ordered,
+            icon: <ListOrdered className="h-6 w-6" />,
+            borderColor: 'blue',
+          },
+          {
+            label: 'Đã nhận',
+            value: summary.received,
+            icon: <ListOrdered className="h-6 w-6" />,
+            borderColor: 'green',
+          },
+        ]}
+      />
+
+      <FilterSection
+        title="Bộ lọc & Tìm kiếm"
+        onReset={handleResetFilters}
+        activeFilters={activeFilters}
+        columnVisibilityMenu={columnVisibilityMenu}
+      >
+        <div className="grid gap-4 md:grid-cols-3">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Tìm kiếm</label>
+            <Input
+              placeholder="Tìm kiếm tiêu đề, mô tả..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Trạng thái</label>
+            <Select
+              value={statusFilter}
+              onValueChange={(value) => setStatusFilter(value as PurchaseRequestStatus | 'all')}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Tất cả trạng thái">
+                  {statusFilter === 'all'
+                    ? 'Tất cả trạng thái'
+                    : statusOptions.find((opt) => opt.value === statusFilter)?.label}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                {statusOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Khách hàng</label>
+            <CustomerSelect
+              value={customerFilter}
+              onChange={(id) => setCustomerFilter(id)}
+              placeholder="Lọc theo khách hàng"
+            />
+          </div>
+        </div>
+      </FilterSection>
+
+      <Suspense fallback={<TableSkeleton rows={10} columns={10} />}>
+        <PurchaseRequestsTableContent
+          pagination={pagination}
+          search={debouncedSearch}
+          searchInput={search}
+          statusFilter={statusFilter}
+          customerFilter={customerFilter}
+          sorting={sorting}
+          onPaginationChange={setPagination}
+          onSortingChange={setSorting}
+          onStatsChange={setSummary}
+          renderColumnVisibilityMenu={setColumnVisibilityMenu}
+        />
+      </Suspense>
+    </div>
+  )
+}
+
+interface PurchaseRequestsTableContentProps {
+  pagination: { pageIndex: number; pageSize: number }
+  search: string
+  searchInput: string
+  statusFilter: PurchaseRequestStatus | 'all'
+  customerFilter: string
+  sorting: { sortBy?: string; sortOrder?: 'asc' | 'desc' }
+  onPaginationChange: (pagination: { pageIndex: number; pageSize: number }) => void
+  onSortingChange: (sorting: { sortBy?: string; sortOrder?: 'asc' | 'desc' }) => void
+  onStatsChange: (summary: {
+    total: number
+    pending: number
+    ordered: number
+    received: number
+  }) => void
+  renderColumnVisibilityMenu: (menu: ReactNode | null) => void
+}
+
+function PurchaseRequestsTableContent({
+  pagination,
+  search,
+  searchInput,
+  statusFilter,
+  customerFilter,
+  sorting,
+  onPaginationChange,
+  onSortingChange,
+  onStatsChange,
+  renderColumnVisibilityMenu,
+}: PurchaseRequestsTableContentProps) {
+  const queryClient = useQueryClient()
+  const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null)
+  const [isPending, startTransition] = useTransition()
+
+  const queryParams = useMemo(
+    () => ({
+      page: pagination.pageIndex + 1,
+      limit: pagination.pageSize,
+      search: search || undefined,
+      status: statusFilter === 'all' ? undefined : statusFilter,
+      customerId: customerFilter || undefined,
+      sortBy: sorting.sortBy || 'createdAt',
+      sortOrder: sorting.sortOrder || 'desc',
+    }),
+    [pagination, search, statusFilter, customerFilter, sorting]
+  )
+
+  const { data } = usePurchaseRequestsQuery(queryParams)
+  const requests = useMemo(() => (data?.data ?? []) as PurchaseRequestRow[], [data?.data])
+  const totalCount = data?.pagination?.total ?? requests.length
+
+  useEffect(() => {
+    const pending = requests.filter((r) => r.status === PurchaseRequestStatus.PENDING).length
+    const ordered = requests.filter((r) => r.status === PurchaseRequestStatus.ORDERED).length
+    const received = requests.filter((r) => r.status === PurchaseRequestStatus.RECEIVED).length
+    onStatsChange({
+      total: totalCount,
+      pending,
+      ordered,
+      received,
+    })
+  }, [requests, totalCount, onStatsChange])
 
   const mutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: PurchaseRequestStatus }) =>
       purchaseRequestsClientService.updateStatus(id, status),
     onSuccess: () => {
       toast.success('Cập nhật trạng thái mua hàng thành công')
+      queryClient.invalidateQueries({ queryKey: ['purchase-requests', queryParams] })
       queryClient.invalidateQueries({ queryKey: ['system-requests-purchase'] })
     },
     onError: (error: unknown) => {
@@ -141,22 +323,6 @@ export function PurchaseRequestsTable() {
     [mutation]
   )
 
-  const handleResetFilters = () => {
-    setSearch('')
-    setStatusFilter('all')
-    setCustomerFilter('')
-  }
-
-  const requests = (listQuery.data?.data ?? []) as PurchaseRequestRow[]
-  const totalCount = listQuery.data?.pagination?.total ?? requests.length
-
-  const summary = {
-    total: totalCount,
-    pending: requests.filter((r) => r.status === PurchaseRequestStatus.PENDING).length,
-    ordered: requests.filter((r) => r.status === PurchaseRequestStatus.ORDERED).length,
-    received: requests.filter((r) => r.status === PurchaseRequestStatus.RECEIVED).length,
-  }
-
   const columns = useMemo<ColumnDef<PurchaseRequestRow>[]>(
     () => [
       {
@@ -173,6 +339,7 @@ export function PurchaseRequestsTable() {
       },
       {
         accessorKey: 'title',
+        enableSorting: true,
         header: 'Tiêu đề',
         cell: ({ row }) => (
           <div className="max-w-[260px]">
@@ -337,91 +504,42 @@ export function PurchaseRequestsTable() {
   )
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-muted-foreground text-sm">Tổng yêu cầu</p>
-            <p className="text-2xl font-bold">{summary.total}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-muted-foreground text-sm">Chờ duyệt</p>
-            <p className="text-2xl font-bold text-amber-600">{summary.pending}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-muted-foreground text-sm">Đang đặt hàng</p>
-            <p className="text-2xl font-bold text-blue-600">{summary.ordered}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-muted-foreground text-sm">Đã nhận</p>
-            <p className="text-2xl font-bold text-green-600">{summary.received}</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-3">
-        <Input
-          placeholder="Tìm kiếm tiêu đề, mô tả..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full max-w-xs"
-        />
-
-        <Select
-          value={statusFilter}
-          onValueChange={(value) => setStatusFilter(value as PurchaseRequestStatus | 'all')}
-        >
-          <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="Trạng thái">
-              {statusFilter === 'all'
-                ? 'Tất cả trạng thái'
-                : statusOptions.find((opt) => opt.value === statusFilter)?.label}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tất cả trạng thái</SelectItem>
-            {statusOptions.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <div className="w-full max-w-xs">
-          <CustomerSelect
-            value={customerFilter}
-            onChange={(id) => setCustomerFilter(id)}
-            placeholder="Lọc theo khách hàng"
-          />
-        </div>
-
-        <Button variant="ghost" onClick={handleResetFilters}>
-          Xóa bộ lọc
-        </Button>
-      </div>
-
-      <DataTable<PurchaseRequestRow, unknown>
-        columns={columns}
-        data={requests}
-        totalCount={totalCount}
-        pageIndex={pagination.pageIndex}
-        pageSize={pagination.pageSize}
-        onPaginationChange={setPagination}
-        isLoading={listQuery.isLoading}
-      />
-      {listQuery.isFetching && (
-        <div className="text-muted-foreground flex items-center gap-2 text-sm">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          Đang tải dữ liệu...
-        </div>
-      )}
-    </div>
+    <TableWrapper<PurchaseRequestRow>
+      tableId="purchase-requests"
+      columns={columns}
+      data={requests}
+      totalCount={totalCount}
+      pageIndex={pagination.pageIndex}
+      pageSize={pagination.pageSize}
+      onPaginationChange={(next) => {
+        startTransition(() => {
+          onPaginationChange(next)
+        })
+      }}
+      onSortingChange={(nextSorting) => {
+        startTransition(() => {
+          onSortingChange(nextSorting)
+        })
+      }}
+      sorting={sorting}
+      defaultSorting={{ sortBy: 'createdAt', sortOrder: 'desc' }}
+      enableColumnVisibility
+      renderColumnVisibilityMenu={renderColumnVisibilityMenu}
+      isPending={isPending}
+      emptyState={
+        requests.length === 0 ? (
+          <div className="p-8 text-center">
+            <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200">
+              <ListOrdered className="h-8 w-8 text-gray-400" />
+            </div>
+            <h3 className="mb-2 text-xl font-bold text-gray-700">Không có yêu cầu mua hàng</h3>
+            <p className="text-gray-500">
+              {searchInput ? 'Không tìm thấy yêu cầu phù hợp' : 'Hãy tạo yêu cầu mua hàng đầu tiên'}
+            </p>
+          </div>
+        ) : undefined
+      }
+      skeletonRows={10}
+    />
   )
 }

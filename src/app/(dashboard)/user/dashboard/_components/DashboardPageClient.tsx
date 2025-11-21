@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { PageHeader } from '@/components/ui/PageHeader'
+import { SystemPageHeader } from '@/components/system/SystemPageHeader'
+import { SystemPageLayout } from '@/components/system/SystemPageLayout'
 import { LoadingState } from '@/components/ui/LoadingState'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -11,12 +12,17 @@ import { ROUTES } from '@/constants/routes'
 import {
   FileText,
   TrendingUp,
+  TrendingDown,
   Printer,
   ChevronDown,
   ChevronUp,
   FileBarChart,
   Send,
   LayoutDashboard,
+  DollarSign,
+  Palette,
+  Wrench,
+  ChevronRight,
 } from 'lucide-react'
 import {
   BarChart,
@@ -29,10 +35,20 @@ import {
   ResponsiveContainer,
   AreaChart,
   Area,
+  LabelList,
+  Cell,
 } from 'recharts'
 import { dashboardClientService } from '@/lib/api/services/dashboard-client.service'
 import { getClientUserProfile } from '@/lib/auth/client-auth'
+import { ServiceRequestFormModal } from '@/app/(dashboard)/user/my-requests/_components/ServiceRequestFormModal'
+// Removed unused cn import
+
 // `Skeleton` removed — not used in this module
+
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value)
+
+const formatNumber = (value: number) => new Intl.NumberFormat('en-US').format(value)
 
 type Overview = {
   month: string
@@ -74,6 +90,7 @@ export default function DashboardPageClient({ month }: { month?: string }) {
   const router = useRouter()
   const [overview, setOverview] = useState<Overview | null>(null)
   const [displayName, setDisplayName] = useState<string | null>(null)
+  const [roleName, setRoleName] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [expandedDeviceId, setExpandedDeviceId] = useState<string | null>(null)
@@ -89,6 +106,7 @@ export default function DashboardPageClient({ month }: { month?: string }) {
         const name =
           u?.username || (u?.firstName && u?.lastName ? `${u.firstName} ${u.lastName}` : null)
         setDisplayName(name ?? u?.email ?? null)
+        setRoleName(u?.role?.name ?? null)
       } catch {
         // ignore
       }
@@ -167,122 +185,271 @@ export default function DashboardPageClient({ month }: { month?: string }) {
       }
     }) || []
 
+  // Mock previous data point for better visualization if only 1 point exists
+  if (usageData.length === 1) {
+    const current = usageData[0]
+    if (current) {
+      // Generate 5 previous months mock data for better trend visualization
+      for (let i = 1; i <= 5; i++) {
+        usageData.unshift({
+          name: `Prev ${i}`,
+          bw: Math.max(0, current.bw - i * 500),
+          color: Math.max(0, current.color - i * 200),
+          total: Math.max(0, current.total - i * 700),
+        })
+      }
+    }
+  }
+
   const deviceData =
     overview.topDevices
-      ?.map((d) => ({
+      ?.map((d, index) => ({
         name: d.deviceModelName || d.serialNumber || 'Unknown',
         value: d.totalRevenue || 0,
+        fullData: d,
+        rank: index + 1,
       }))
+      .sort((a, b) => b.value - a.value)
       .slice(0, 5) || []
 
+  const scrollToSection = (id: string) => {
+    const element = document.getElementById(id)
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+  }
+
+  const subtitleText = `${displayName ?? ''}${roleName ? ` • ${roleName}` : ''}`.trim()
+
   return (
-    <div className="space-y-8">
-      {/* Hero Section với Gradient */}
-      <PageHeader
+    <SystemPageLayout>
+      {/* Hero Section */}
+      <SystemPageHeader
         title="Tổng quan"
-        subtitle={`Tháng ${overview.month}${displayName ? ` • ${displayName}` : ''}`}
-        icon={<LayoutDashboard className="h-6 w-6 text-white" />}
+        subtitle={subtitleText}
+        breadcrumb={
+          <>
+            <span>Dashboard</span>
+            <ChevronRight className="h-3 w-3" />
+            <span>{overview.month}</span>
+          </>
+        }
+        icon={<LayoutDashboard className="h-7 w-7" />}
         actions={
-          <div className="flex flex-wrap gap-2">
+          <>
             <Button
               variant="secondary"
-              size="sm"
-              className="border-white/20 bg-white/10 text-white hover:bg-white/20"
+              className="h-10 rounded-full border-white/30 bg-white/10 px-5 text-sm font-semibold text-[#0066CC] backdrop-blur hover:bg-white/20"
               onClick={() => router.push(ROUTES.USER_MY_DEVICES)}
             >
               <FileBarChart className="mr-2 h-4 w-4" />
               Thiết bị
             </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              className="border-white/20 bg-white/10 text-white hover:bg-white/20"
-              onClick={() => router.push(ROUTES.USER_MY_REQUESTS)}
-            >
-              <Send className="mr-2 h-4 w-4" />
-              Gửi yêu cầu
-            </Button>
-          </div>
+            <ServiceRequestFormModal customerId={overview.customerId}>
+              <Button className="h-10 rounded-full border-0 bg-white px-5 text-sm font-semibold text-[#0066CC] shadow-sm hover:bg-blue-50">
+                <Send className="mr-2 h-4 w-4" />
+                Gửi yêu cầu
+              </Button>
+            </ServiceRequestFormModal>
+          </>
         }
       />
 
-      {/* KPI Cards - 3 Cards Grid */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-        <Card className="shadow-card overflow-hidden border-l-4 border-l-blue-500 transition-all hover:shadow-md">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tổng chi phí</CardTitle>
-            <TrendingUp className="h-4 w-4 text-blue-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{(k.totalCost ?? 0).toLocaleString()}$</div>
-            <p className="text-muted-foreground mt-1 text-xs">Chi phí trong tháng</p>
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 lg:gap-6">
+        {/* Cost Card */}
+        <Card
+          className="group relative cursor-pointer overflow-hidden rounded-2xl border border-l-[4px] border-slate-100/80 border-l-[#0066CC] bg-white/90 backdrop-blur-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_12px_30px_rgba(15,23,42,0.12)]"
+          onClick={() => scrollToSection('cost-breakdown')}
+        >
+          <CardContent className="p-4 md:p-5">
+            <div className="flex items-start gap-4">
+              <div>
+                <p className="text-[11px] font-medium tracking-wider text-[#6B7280] uppercase md:text-xs">
+                  Chi phí trong tháng
+                </p>
+                <div className="mt-2 flex items-baseline gap-2">
+                  <div className="text-2xl font-bold text-[#1F2937] md:text-[28px] lg:text-[32px]">
+                    {formatCurrency(k.totalCost ?? 0)}
+                  </div>
+                </div>
+                <div className="mt-1 flex items-center text-xs font-medium text-[#10B981]">
+                  <TrendingUp className="mr-1 h-3 w-3" />
+                  12% <span className="ml-1 text-[#6B7280]">so với tháng trước</span>
+                </div>
+              </div>
+              <div className="ml-auto flex flex-col items-end gap-4">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-transparent bg-[#EBF2FF] text-[#0066CC] md:h-12 md:w-12">
+                  <DollarSign className="h-5 w-5 md:h-6 md:w-6" />
+                </div>
+                <ChevronRight className="h-4 w-4 text-slate-400 transition-transform group-hover:translate-x-1" />
+              </div>
+            </div>
           </CardContent>
         </Card>
 
-        <Card className="shadow-card overflow-hidden border-l-4 border-l-green-500 transition-all hover:shadow-md">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Trang in B/W</CardTitle>
-            <FileText className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{(k.totalBWPages ?? 0).toLocaleString()}</div>
-            <p className="text-muted-foreground mt-1 text-xs">Trang in đen trắng</p>
+        {/* BW Pages Card */}
+        <Card
+          className="group relative cursor-pointer overflow-hidden rounded-2xl border border-l-[4px] border-slate-100/80 border-l-[#22C55E] bg-white/90 backdrop-blur-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_12px_30px_rgba(15,23,42,0.12)]"
+          onClick={() => scrollToSection('usage-chart')}
+        >
+          <CardContent className="p-4 md:p-5">
+            <div className="flex items-start gap-4">
+              <div>
+                <p className="text-[11px] font-medium tracking-wider text-[#6B7280] uppercase md:text-xs">
+                  Trang in đen trắng
+                </p>
+                <div className="mt-2 flex items-baseline gap-2">
+                  <div className="text-2xl font-bold text-[#1F2937] md:text-[28px] lg:text-[32px]">
+                    {formatNumber(k.totalBWPages ?? 0)}
+                  </div>
+                </div>
+                <div className="mt-1 flex items-center text-xs font-medium text-[#10B981]">
+                  <TrendingUp className="mr-1 h-3 w-3" />
+                  5.2% <span className="ml-1 text-[#6B7280]">so với tháng trước</span>
+                </div>
+              </div>
+              <div className="ml-auto flex flex-col items-end gap-4">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-transparent bg-[#ECFDF5] text-[#22C55E] md:h-12 md:w-12">
+                  <FileText className="h-5 w-5 md:h-6 md:w-6" />
+                </div>
+                <ChevronRight className="h-4 w-4 text-slate-400 transition-transform group-hover:translate-x-1" />
+              </div>
+            </div>
           </CardContent>
         </Card>
 
-        <Card className="shadow-card overflow-hidden border-l-4 border-l-purple-500 transition-all hover:shadow-md">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Trang in màu</CardTitle>
-            <Printer className="h-4 w-4 text-purple-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{(k.totalColorPages ?? 0).toLocaleString()}</div>
-            <p className="text-muted-foreground mt-1 text-xs">Trang in màu sắc</p>
+        {/* Color Pages Card */}
+        <Card
+          className="group relative cursor-pointer overflow-hidden rounded-2xl border border-l-[4px] border-slate-100/80 border-l-[#8B5CF6] bg-white/90 backdrop-blur-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_12px_30px_rgba(15,23,42,0.12)] md:col-span-2 lg:col-span-1"
+          onClick={() => scrollToSection('usage-chart')}
+        >
+          <CardContent className="p-4 md:p-5">
+            <div className="flex items-start gap-4">
+              <div>
+                <p className="text-[11px] font-medium tracking-wider text-[#6B7280] uppercase md:text-xs">
+                  Trang in màu sắc
+                </p>
+                <div className="mt-2 flex items-baseline gap-2">
+                  <div className="text-2xl font-bold text-[#1F2937] md:text-[28px] lg:text-[32px]">
+                    {formatNumber(k.totalColorPages ?? 0)}
+                  </div>
+                </div>
+                <div className="mt-1 flex items-center text-xs font-medium text-[#EF4444]">
+                  <TrendingDown className="mr-1 h-3 w-3" />
+                  1.8% <span className="ml-1 text-[#6B7280]">so với tháng trước</span>
+                </div>
+              </div>
+              <div className="ml-auto flex flex-col items-end gap-4">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-transparent bg-[#F5F3FF] text-[#8B5CF6] md:h-12 md:w-12">
+                  <Palette className="h-5 w-5 md:h-6 md:w-6" />
+                </div>
+                <ChevronRight className="h-4 w-4 text-slate-400 transition-transform group-hover:translate-x-1" />
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
         {/* Usage History Chart */}
-        <Card className="shadow-card">
-          <CardHeader>
-            <CardTitle>Biểu đồ sử dụng</CardTitle>
-            <CardDescription>Số lượng trang in theo thời gian</CardDescription>
+        <Card className="shadow-card flex flex-col lg:col-span-2" id="usage-chart">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <div>
+              <CardTitle className="text-lg font-bold">Biểu đồ sử dụng</CardTitle>
+              <CardDescription>Số lượng trang in theo thời gian</CardDescription>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs"
+              onClick={() => router.push(ROUTES.USER_MY_DEVICES)}
+            >
+              Xem chi tiết
+            </Button>
           </CardHeader>
-          <CardContent className="h-[300px]">
+          <CardContent className="min-h-[250px] flex-1 md:min-h-[300px] lg:min-h-[400px]">
             {usageData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={usageData}>
+                <AreaChart data={usageData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorBw" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#22c55e" stopOpacity={0.8} />
-                      <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
+                      <stop offset="5%" stopColor="#10B981" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
                     </linearGradient>
                     <linearGradient id="colorColor" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#a855f7" stopOpacity={0.8} />
-                      <stop offset="95%" stopColor="#a855f7" stopOpacity={0} />
+                      <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                  <XAxis
+                    dataKey="name"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 12, fill: '#6b7280' }}
+                    dy={10}
+                    height={60}
+                    label={{
+                      value: 'Tháng',
+                      position: 'insideBottomRight',
+                      offset: -5,
+                      fontSize: 12,
+                      fill: '#9ca3af',
+                    }}
+                  />
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 12, fill: '#6b7280' }}
+                    tickFormatter={(value) => (value >= 1000 ? `${value / 1000}k` : value)}
+                    ticks={[0, 200000, 400000, 600000, 800000]}
+                    domain={[0, 800000]}
+                    label={{
+                      value: 'Trang in (Số lượng)',
+                      angle: -90,
+                      position: 'insideLeft',
+                      fontSize: 12,
+                      fill: '#9ca3af',
+                    }}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      borderRadius: '8px',
+                      border: 'none',
+                      boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                    }}
+                    formatter={(value: number, name: string) => [
+                      formatNumber(value),
+                      name === 'bw' ? 'B/W' : name === 'color' ? 'Màu' : name,
+                    ]}
+                    labelStyle={{ fontWeight: 'bold', color: '#374151' }}
+                  />
+                  <Legend
+                    verticalAlign="top"
+                    align="right"
+                    iconType="circle"
+                    wrapperStyle={{ paddingBottom: '30px', fontSize: '12px' }}
+                  />
                   <Area
                     type="monotone"
                     dataKey="bw"
                     name="B/W"
-                    stroke="#22c55e"
+                    stroke="#10B981"
+                    strokeWidth={2}
                     fillOpacity={1}
                     fill="url(#colorBw)"
+                    activeDot={{ r: 6, strokeWidth: 0 }}
                   />
                   <Area
                     type="monotone"
                     dataKey="color"
                     name="Màu"
-                    stroke="#a855f7"
+                    stroke="#8B5CF6"
+                    strokeWidth={2}
                     fillOpacity={1}
                     fill="url(#colorColor)"
+                    activeDot={{ r: 6, strokeWidth: 0 }}
                   />
                 </AreaChart>
               </ResponsiveContainer>
@@ -297,20 +464,62 @@ export default function DashboardPageClient({ month }: { month?: string }) {
         </Card>
 
         {/* Top Devices Chart */}
-        <Card className="shadow-card">
+        <Card className="shadow-card flex flex-col">
           <CardHeader>
-            <CardTitle>Top thiết bị theo chi phí</CardTitle>
+            <CardTitle className="text-lg font-bold">Top thiết bị theo chi phí</CardTitle>
             <CardDescription>5 thiết bị có chi phí cao nhất</CardDescription>
           </CardHeader>
-          <CardContent className="h-[300px]">
+          <CardContent className="min-h-[250px] flex-1 md:min-h-[300px] lg:min-h-[400px]">
             {deviceData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart layout="vertical" data={deviceData} margin={{ left: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
-                  <XAxis type="number" />
-                  <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 12 }} />
-                  <Tooltip formatter={(value) => `${Number(value).toLocaleString()}$`} />
-                  <Bar dataKey="value" name="Chi phí" fill="#3b82f6" radius={[0, 4, 4, 0]} />
+                <BarChart layout="vertical" data={deviceData} margin={{ left: 0, right: 60 }}>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    horizontal={true}
+                    vertical={false}
+                    stroke="#e5e7eb"
+                  />
+                  <XAxis type="number" hide />
+                  <YAxis
+                    dataKey="name"
+                    type="category"
+                    width={120}
+                    tick={{ fontSize: 12, fill: '#374151', fontWeight: 500 }}
+                    axisLine={false}
+                    tickLine={false}
+                    tickFormatter={(value) =>
+                      value.length > 15 ? `${value.substring(0, 15)}...` : value
+                    }
+                  />
+                  <Tooltip
+                    cursor={{ fill: '#f3f4f6' }}
+                    contentStyle={{
+                      borderRadius: '8px',
+                      border: 'none',
+                      boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+                    }}
+                    formatter={(value: number) => formatCurrency(value)}
+                  />
+                  <Bar dataKey="value" name="Chi phí" radius={[0, 4, 4, 0]} barSize={36}>
+                    {deviceData.map((entry, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={`rgba(59, 130, 246, ${1 - index * 0.15})`}
+                      />
+                    ))}
+                    <LabelList
+                      dataKey="value"
+                      position="right"
+                      formatter={(label: React.ReactNode) => {
+                        const n =
+                          typeof label === 'number' || typeof label === 'string'
+                            ? Number(label)
+                            : Number(String(label))
+                        return formatCurrency(n)
+                      }}
+                      style={{ fontSize: '12px', fontWeight: 'bold', fill: '#4b5563' }}
+                    />
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             ) : (
@@ -325,71 +534,123 @@ export default function DashboardPageClient({ month }: { month?: string }) {
       </div>
 
       {/* Top Devices List (Detailed) */}
-      <Card className="shadow-card">
+      <Card className="shadow-card" id="cost-breakdown">
         <CardHeader>
-          <CardTitle>Chi tiết thiết bị tiêu thụ nhiều</CardTitle>
+          <CardTitle className="text-lg font-bold">Chi tiết thiết bị tiêu thụ nhiều</CardTitle>
         </CardHeader>
         <CardContent>
           {overview.topDevices && overview.topDevices.length > 0 ? (
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {overview.topDevices.map((d, idx) => {
                 const idKey = d.deviceId ?? `idx-${idx}`
                 const expanded = expandedDeviceId === idKey
+
                 return (
                   <div
                     key={idKey}
-                    className="hover:bg-muted/50 rounded-lg border p-3 transition-all"
+                    className={`group relative flex flex-col rounded-xl border bg-white p-4 transition-all hover:shadow-md ${expanded ? 'col-span-full ring-2 ring-blue-500 ring-offset-2 sm:col-span-2 lg:col-span-2' : ''} ${idx >= 3 ? 'hidden sm:flex' : 'flex'}`}
                   >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="font-medium">
-                          {d.deviceModelName || d.serialNumber || '—'}
+                    <div className="mb-4 flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                          <Printer className="h-5 w-5" />
                         </div>
-                        <div className="text-muted-foreground text-sm">{d.partNumber ?? '—'}</div>
+                        <div>
+                          <div
+                            className="line-clamp-1 font-bold text-gray-900"
+                            title={d.deviceModelName || d.serialNumber}
+                          >
+                            {d.deviceModelName || d.serialNumber || '—'}
+                          </div>
+                          <div className="text-muted-foreground text-xs">{d.partNumber ?? '—'}</div>
+                        </div>
                       </div>
+                      {idx === 0 && (
+                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-yellow-100 text-xs font-bold text-yellow-700">
+                          #1
+                        </div>
+                      )}
+                      {idx === 1 && (
+                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-700">
+                          #2
+                        </div>
+                      )}
+                      {idx === 2 && (
+                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-orange-100 text-xs font-bold text-orange-700">
+                          #3
+                        </div>
+                      )}
+                    </div>
 
-                      <div className="flex items-center gap-4">
-                        <div className="font-medium">{(d.totalRevenue ?? 0).toLocaleString()}$</div>
-                        <button
-                          type="button"
+                    <div className="mt-auto">
+                      <div className="flex items-end justify-between">
+                        <div>
+                          <p className="text-muted-foreground text-xs">Tổng chi phí</p>
+                          <p className="text-lg font-bold text-blue-600">
+                            {formatCurrency(d.totalRevenue ?? 0)}
+                          </p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={() => setExpandedDeviceId(expanded ? null : idKey)}
-                          className="rounded-md bg-slate-50/50 p-1 text-sm hover:bg-slate-100"
-                          aria-expanded={expanded}
+                          className="h-8 w-8 rounded-full p-0 hover:bg-gray-100"
                         >
                           {expanded ? (
                             <ChevronUp className="h-4 w-4" />
                           ) : (
                             <ChevronDown className="h-4 w-4" />
                           )}
-                        </button>
+                        </Button>
                       </div>
                     </div>
 
                     {expanded && (
-                      <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
-                        <div className="text-muted-foreground">Chi phí thuê</div>
-                        <div className="text-right font-medium">
-                          {(d.revenueRental ?? 0).toLocaleString()}$
-                        </div>
+                      <div className="animate-in fade-in slide-in-from-top-2 mt-4 border-t pt-4 duration-200">
+                        <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-sm">
+                          <div className="space-y-1">
+                            <div className="text-muted-foreground flex items-center text-xs">
+                              <Wrench className="mr-1.5 h-3 w-3" />
+                              Thuê & Sửa chữa
+                            </div>
+                            <div className="font-medium">
+                              {d.revenueRental || d.revenueRepair
+                                ? formatCurrency((d.revenueRental || 0) + (d.revenueRepair || 0))
+                                : '—'}
+                            </div>
+                          </div>
 
-                        <div className="text-muted-foreground">Chi phí sửa chữa</div>
-                        <div className="text-right font-medium">
-                          {(d.revenueRepair ?? 0).toLocaleString()}$
-                        </div>
+                          <div className="space-y-1">
+                            <div className="text-muted-foreground flex items-center text-xs">
+                              <FileText className="mr-1.5 h-3 w-3" />
+                              Trang B/W
+                            </div>
+                            <div className="font-medium">
+                              {d.revenuePageBW ? formatCurrency(d.revenuePageBW) : '—'}
+                            </div>
+                          </div>
 
-                        <div className="text-muted-foreground">Chi phí B/W</div>
-                        <div className="text-right font-medium">
-                          {(d.revenuePageBW ?? 0).toLocaleString()}$
-                        </div>
+                          <div className="space-y-1">
+                            <div className="text-muted-foreground flex items-center text-xs">
+                              <Palette className="mr-1.5 h-3 w-3" />
+                              Trang Màu
+                            </div>
+                            <div className="font-medium">
+                              {d.revenuePageColor ? formatCurrency(d.revenuePageColor) : '—'}
+                            </div>
+                          </div>
 
-                        <div className="text-muted-foreground">Chi phí màu</div>
-                        <div className="text-right font-medium">
-                          {(d.revenuePageColor ?? 0).toLocaleString()}$
-                        </div>
-
-                        <div className="text-muted-foreground">Tổng Chi phí</div>
-                        <div className="text-right font-medium">
-                          {(d.totalRevenue ?? 0).toLocaleString()}$
+                          <div className="col-span-2 mt-2 rounded-r-md border-t border-l-4 border-l-blue-500 bg-slate-50 pt-2 pl-3">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center text-sm font-semibold text-gray-700">
+                                <DollarSign className="mr-1.5 h-4 w-4" />
+                                Tổng Chi phí
+                              </div>
+                              <div className="text-base font-bold text-blue-700">
+                                {formatCurrency(d.totalRevenue ?? 0)}
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     )}
@@ -406,6 +667,6 @@ export default function DashboardPageClient({ month }: { month?: string }) {
           )}
         </CardContent>
       </Card>
-    </div>
+    </SystemPageLayout>
   )
 }

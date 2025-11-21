@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { Loader2, Trash2, AlertTriangle, X } from 'lucide-react'
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -13,6 +12,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
+// Removed unused AlertDialogAction import
 import { Button } from '@/components/ui/button'
 
 interface DeleteDialogProps {
@@ -46,23 +46,22 @@ export function DeleteDialog({ title, description, onConfirm, trigger }: DeleteD
           </Button>
         )}
       </AlertDialogTrigger>
-      <AlertDialogContent className="max-w-lg overflow-hidden rounded-2xl border-0 p-0 shadow-2xl">
-        {/* Header with gradient danger background */}
-        <div className="relative overflow-hidden bg-gradient-to-r from-red-600 via-rose-600 to-pink-600 px-6 py-5">
-          <div className="absolute inset-0 bg-black/10"></div>
-          <div className="relative z-10 flex items-start gap-4">
+      <AlertDialogContent className="max-w-lg overflow-hidden rounded-lg border p-0 shadow-lg">
+        {/* Header */}
+        <div className="border-b px-6 py-5">
+          <div className="flex items-start gap-4">
             <div className="flex-shrink-0">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/20 ring-2 ring-white/30 backdrop-blur-sm">
-                <AlertTriangle className="h-6 w-6 text-white" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100">
+                <AlertTriangle className="h-5 w-5 text-red-600" />
               </div>
             </div>
 
-            <div className="min-w-0 flex-1 text-white">
+            <div className="min-w-0 flex-1">
               <AlertDialogHeader className="space-y-2 text-left">
-                <AlertDialogTitle className="text-xl font-bold text-white">
+                <AlertDialogTitle className="text-foreground text-xl font-bold">
                   {title}
                 </AlertDialogTitle>
-                <AlertDialogDescription className="text-white/90">
+                <AlertDialogDescription className="text-muted-foreground">
                   {description}
                 </AlertDialogDescription>
               </AlertDialogHeader>
@@ -71,7 +70,7 @@ export function DeleteDialog({ title, description, onConfirm, trigger }: DeleteD
         </div>
 
         {/* Content */}
-        <div className="bg-white px-6 py-5">
+        <div className="bg-background px-6 py-5">
           <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4">
             <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600" />
             <div>
@@ -86,15 +85,16 @@ export function DeleteDialog({ title, description, onConfirm, trigger }: DeleteD
         </div>
 
         {/* Footer */}
-        <AlertDialogFooter className="border-t bg-gray-50 px-6 py-4">
+        <AlertDialogFooter className="bg-muted/50 border-t px-6 py-4">
           <AlertDialogCancel disabled={isDeleting} className="min-w-[100px]">
             <X className="mr-2 h-4 w-4" />
             Hủy
           </AlertDialogCancel>
-          <AlertDialogAction
+          <Button
+            variant="destructive"
             onClick={handleConfirm}
             disabled={isDeleting}
-            className="min-w-[120px] bg-gradient-to-r from-red-600 to-rose-600 text-white hover:from-red-700 hover:to-rose-700"
+            className="min-w-[120px]"
           >
             {isDeleting ? (
               <>
@@ -107,7 +107,7 @@ export function DeleteDialog({ title, description, onConfirm, trigger }: DeleteD
                 Xác nhận xóa
               </>
             )}
-          </AlertDialogAction>
+          </Button>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

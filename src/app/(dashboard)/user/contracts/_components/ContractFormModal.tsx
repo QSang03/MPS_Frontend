@@ -19,18 +19,21 @@ import type { ContractFormData } from '@/lib/validations/contract.schema'
 interface ContractFormModalProps {
   initial?: Partial<ContractFormData> | undefined
   onCreated?: (c?: Contract | null) => void
+  trigger?: React.ReactNode
 }
 
-export function ContractFormModal({ initial, onCreated }: ContractFormModalProps) {
+export function ContractFormModal({ initial, onCreated, trigger }: ContractFormModalProps) {
   const [open, setOpen] = useState(false)
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 shadow-lg transition-all hover:from-blue-700 hover:to-indigo-700 hover:shadow-xl">
-          <Plus className="h-4 w-4" />
-          Tạo hợp đồng
-        </Button>
+        {trigger || (
+          <Button className="gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 shadow-lg transition-all hover:from-blue-700 hover:to-indigo-700 hover:shadow-xl">
+            <Plus className="h-4 w-4" />
+            Tạo hợp đồng
+          </Button>
+        )}
       </DialogTrigger>
 
       <AnimatePresence>

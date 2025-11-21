@@ -1,24 +1,19 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import {
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useTransition,
+  type ReactNode,
+} from 'react'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { usersClientService } from '@/lib/api/services/users-client.service'
 import { rolesClientService } from '@/lib/api/services/roles-client.service'
-import { departmentsClientService } from '@/lib/api/services/departments-client.service'
 import { customersClientService } from '@/lib/api/services/customers-client.service'
-import { CardContent, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
 import {
   Select,
   SelectContent,
@@ -26,6 +21,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { StatsCards } from '@/components/system/StatsCard'
+import { FilterSection } from '@/components/system/FilterSection'
+import { TableSkeleton } from '@/components/system/TableSkeleton'
+import { TableWrapper } from '@/components/system/TableWrapper'
+import { Badge } from '@/components/ui/badge'
 import {
   Search,
   Edit,
@@ -35,8 +37,8 @@ import {
   Calendar,
   RotateCcw,
   Users,
-  RefreshCw,
-  Filter,
+  CheckCircle2,
+  AlertCircle,
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -47,23 +49,24 @@ import {
 import { formatDate } from '@/lib/utils/formatters'
 import { EditUserModal } from './EditUserModal'
 import { UserFormModal } from './UserFormModal'
-import type { User, UserFilters, UserPagination, UserRole, UsersResponse } from '@/types/users'
-import type { Customer } from '@/types/models/customer'
-import { Skeleton } from '@/components/ui/skeleton'
 import { useActionPermission } from '@/lib/hooks/useActionPermission'
 import { ActionGuard } from '@/components/shared/ActionGuard'
-import { toast } from 'sonner'
 import { DeleteDialog } from '@/components/shared/DeleteDialog'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
-import { useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
+import { useUsersQuery } from '@/lib/hooks/queries/useUsersQuery'
+import type { User, UserFilters, UserPagination, UserRole, UsersResponse } from '@/types/users'
+import type { Customer } from '@/types/models/customer'
+import type { ColumnDef } from '@tanstack/react-table'
+
+type UsersStats = { total: number; active: number; inactive: number }
 
 export function UsersTable() {
-  // Permission checks
   const { canUpdate, canDelete } = useActionPermission('users')
-
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
+  const queryClient = useQueryClient()
 
   const [filters, setFilters] = useState<UserFilters>(() => ({
     search: searchParams.get('search') || '',
@@ -72,96 +75,35 @@ export function UsersTable() {
     status: 'all',
     customerId: searchParams.get('customerId') || 'all',
   }))
-
   const [pagination, setPagination] = useState<UserPagination>({
-    page: parseInt(searchParams.get('page') || '1'),
-    limit: parseInt(searchParams.get('limit') || '10'),
+    page: parseInt(searchParams.get('page') || '1', 10),
+    limit: parseInt(searchParams.get('limit') || '10', 10),
     total: 0,
     totalPages: 1,
   })
-
-  const [searchInput, setSearchInput] = useState<string>(filters.search)
+  const [sorting, setSorting] = useState<{ sortBy?: string; sortOrder?: 'asc' | 'desc' }>({
+    sortBy: 'createdAt',
+    sortOrder: 'desc',
+  })
+  const [searchInput, setSearchInput] = useState(filters.search)
+  const [columnVisibilityMenu, setColumnVisibilityMenu] = useState<ReactNode | null>(null)
+  const [stats, setStats] = useState<UsersStats>({ total: 0, active: 0, inactive: 0 })
   const [editingUser, setEditingUser] = useState<User | null>(null)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-  // Removed custom password change UI: only reset-to-default is allowed
   const [isMounted, setIsMounted] = useState(false)
-  const [hoveredRowId, setHoveredRowId] = useState<string | null>(null)
 
   useEffect(() => {
-    // defer mounting flag to avoid synchronous setState inside effect
     const t = setTimeout(() => setIsMounted(true), 0)
     return () => clearTimeout(t)
   }, [])
 
-  const queryClient = useQueryClient()
-
-  const {
-    data: usersData,
-    isLoading: isLoadingUsers,
-    isFetching: isFetchingUsers,
-    refetch: refetchUsers,
-  } = useQuery({
-    queryKey: ['users', pagination.page, pagination.limit, filters],
-    queryFn: () =>
-      usersClientService.getUsers({
-        page: pagination.page,
-        limit: pagination.limit,
-        search: filters.search,
-        roleId: filters.roleId !== 'all' ? filters.roleId : undefined,
-        departmentId: filters.departmentId !== 'all' ? filters.departmentId : undefined,
-        customerId: filters.customerId !== 'all' ? filters.customerId : undefined,
-      }),
-  })
-
-  const { data: roles = [], isLoading: isLoadingRoles } = useQuery({
-    queryKey: ['roles'],
-    queryFn: async () => (await rolesClientService.getRoles()).data,
-  })
-
-  const { isLoading: isLoadingDepartments } = useQuery({
-    queryKey: ['departments'],
-    queryFn: async () => (await departmentsClientService.getDepartments()).data,
-  })
-
-  const { data: customers = [], isLoading: isLoadingCustomers } = useQuery({
-    queryKey: ['customers'],
-    queryFn: async () => (await customersClientService.getAll()).data,
-  })
-
-  // Derive users directly from query result to avoid calling setState synchronously in an effect
-  const users = usersData?.data ?? []
-
   useEffect(() => {
-    // Always return a cleanup function. Schedule pagination update asynchronously
-    let t: number | undefined
-    if (usersData?.pagination) {
-      t = window.setTimeout(() => {
-        setPagination({
-          page: usersData.pagination.page,
-          limit: usersData.pagination.limit,
-          total: usersData.pagination.total,
-          totalPages: usersData.pagination.totalPages,
-        })
-      }, 0)
-    }
-    return () => {
-      if (t) clearTimeout(t)
-    }
-  }, [usersData])
-
-  const availableCustomerCodes = useMemo(
-    () => (customers || []).map((c: Customer) => (c.code as string) || c.id),
-    [customers]
-  )
-
-  const customerCodeToId = useMemo(() => {
-    const map: Record<string, string> = {}
-    for (const c of customers || []) {
-      const code = ((c as Customer).code as string) || c.id
-      if (code && (c as Customer).id && !map[code]) map[code] = (c as Customer).id
-    }
-    return map
-  }, [customers])
+    const timer = setTimeout(
+      () => setFilters((prev) => ({ ...prev, search: searchInput.trim() })),
+      700
+    )
+    return () => clearTimeout(timer)
+  }, [searchInput])
 
   useEffect(() => {
     const params = new URLSearchParams()
@@ -181,18 +123,35 @@ export function UsersTable() {
         : window.location.search
       if (currentQS !== queryString) router.replace(newURL, { scroll: false })
     }
-  }, [filters, pagination, pathname, router])
+  }, [filters, pagination.page, pagination.limit, pathname, router])
 
-  useEffect(() => {
-    const handle = setTimeout(() => setFilters((prev) => ({ ...prev, search: searchInput })), 700)
-    return () => clearTimeout(handle)
-  }, [searchInput])
+  const { data: roles = [] } = useQuery({
+    queryKey: ['roles'],
+    queryFn: async () => (await rolesClientService.getRoles()).data,
+  })
+  const { data: customers = [] } = useQuery({
+    queryKey: ['customers'],
+    queryFn: async () => (await customersClientService.getAll()).data,
+  })
+
+  const availableCustomerCodes = useMemo(
+    () => (customers || []).map((c: Customer) => (c.code as string) || c.id),
+    [customers]
+  )
+
+  const customerCodeToId = useMemo(() => {
+    const map: Record<string, string> = {}
+    for (const c of customers || []) {
+      const code = ((c as Customer).code as string) || c.id
+      if (code && (c as Customer).id && !map[code]) map[code] = (c as Customer).id
+    }
+    return map
+  }, [customers])
 
   const handleUserUpdated = (updatedUser: User) => {
-    // Optimistically update cached users list for the current query key
     try {
       queryClient.setQueryData(
-        ['users', pagination.page, pagination.limit, filters],
+        ['users', pagination.page, pagination.limit, filters, sorting.sortBy, sorting.sortOrder],
         (old: UsersResponse | undefined | null) => {
           if (!old) return old
           const copy: UsersResponse = { ...old }
@@ -205,10 +164,8 @@ export function UsersTable() {
         }
       )
     } catch {
-      // fallback: invalidate to refetch
       queryClient.invalidateQueries({ queryKey: ['users'] })
     }
-
     setIsEditModalOpen(false)
   }
 
@@ -217,468 +174,218 @@ export function UsersTable() {
     setIsEditModalOpen(true)
   }
 
-  // no-op: custom change removed
-
   const handleCloseEditModal = () => {
     setEditingUser(null)
     setIsEditModalOpen(false)
   }
 
-  const handlePageChange = (page: number) => {
-    setPagination((p) => ({ ...p, page }))
-  }
-
-  const getRoleBadgeColor = (roleName?: string) => {
-    switch (roleName) {
-      case 'super-admin':
-        return 'bg-red-100 text-red-800 border-red-300'
-      case 'admin':
-        return 'bg-orange-100 text-orange-800 border-orange-300'
-      case 'manager':
-        return 'bg-blue-100 text-blue-800 border-blue-300'
-      case 'developer':
-        return 'bg-emerald-100 text-emerald-800 border-emerald-300'
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-300'
+  const handleResetPassword = async (userId: string) => {
+    try {
+      await usersClientService.resetPassword(userId)
+      await queryClient.invalidateQueries({ queryKey: ['users'] })
+      toast.success('Đặt lại mật khẩu thành công')
+    } catch (err) {
+      console.error('Reset user password error', err)
+      toast.error('Có lỗi khi đặt lại mật khẩu')
     }
   }
 
-  // `users` is derived from query data above
-  const paginationInfo = usersData?.pagination || { page: 1, limit: 10, total: 0, totalPages: 1 }
-  const isLoading = isLoadingUsers || isLoadingRoles || isLoadingDepartments || isLoadingCustomers
+  const handleDeleteUser = async (userId: string) => {
+    try {
+      await usersClientService.deleteUser(userId)
+      await queryClient.invalidateQueries({ queryKey: ['users'] })
+      toast.success('✅ Xóa người dùng thành công')
+    } catch (err) {
+      console.error('Delete user error', err)
+      toast.error('❌ Có lỗi khi xóa người dùng')
+    }
+  }
+
+  const activeFilters = useMemo(() => {
+    const items: Array<{ label: string; value: string; onRemove: () => void }> = []
+    if (filters.search) {
+      items.push({
+        label: `Tìm kiếm: "${filters.search}"`,
+        value: filters.search,
+        onRemove: () => {
+          setSearchInput('')
+          setFilters((prev) => ({ ...prev, search: '' }))
+        },
+      })
+    }
+    if (filters.roleId !== 'all') {
+      const roleName = roles.find((r: UserRole) => r.id === filters.roleId)?.name || filters.roleId
+      items.push({
+        label: `Vai trò: ${roleName}`,
+        value: filters.roleId,
+        onRemove: () => setFilters((prev) => ({ ...prev, roleId: 'all' })),
+      })
+    }
+    if (filters.customerId && filters.customerId !== 'all') {
+      const selectedCustomerId = filters.customerId
+      const customerCode =
+        availableCustomerCodes.find((code) => customerCodeToId[code] === selectedCustomerId) ??
+        selectedCustomerId
+      items.push({
+        label: `KH: ${customerCode}`,
+        value: selectedCustomerId,
+        onRemove: () => setFilters((prev) => ({ ...prev, customerId: 'all' })),
+      })
+    }
+    return items
+  }, [filters, roles, availableCustomerCodes, customerCodeToId])
+
+  const handleResetFilters = () => {
+    setFilters({
+      search: '',
+      roleId: 'all',
+      departmentId: 'all',
+      status: 'all',
+      customerId: 'all',
+    })
+    setSearchInput('')
+    router.replace(pathname, { scroll: false })
+  }
+
+  const handlePaginationChange = (pageIndex: number, pageSize: number) => {
+    setPagination((prev) => ({
+      ...prev,
+      page: pageIndex,
+      limit: pageSize,
+    }))
+  }
+
+  const handlePaginationMetaChange = useCallback((meta: Partial<UserPagination>) => {
+    setPagination((prev) => ({ ...prev, ...meta }))
+  }, [])
+
+  const handleStatsChange = useCallback((next: UsersStats) => setStats(next), [])
 
   return (
     <div className="space-y-6">
-      {/* FILTER CARD */}
-      <div className="overflow-hidden rounded-2xl border-0 bg-white shadow-2xl">
-        <div className="relative overflow-hidden border-0 bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500 p-0">
-          <div className="absolute inset-0 opacity-20">
-            <div className="absolute top-0 right-0 h-40 w-40 translate-x-1/2 -translate-y-1/2 rounded-full bg-white"></div>
-          </div>
-          <div className="relative flex items-center justify-between px-8 py-6">
-            <div className="flex items-center gap-3">
-              <div className="rounded-xl border border-white/30 bg-white/20 p-2.5 backdrop-blur-lg">
-                <Filter className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <CardTitle className="text-2xl font-bold text-white">Bộ lọc & Tìm kiếm</CardTitle>
-                <p className="mt-1 text-sm font-medium text-pink-100">Tìm kiếm và lọc người dùng</p>
-              </div>
+      <StatsCards
+        cards={[
+          {
+            label: 'Tổng người dùng',
+            value: stats.total,
+            icon: <Users className="h-6 w-6" />,
+            borderColor: 'blue',
+          },
+          {
+            label: 'Đang hoạt động',
+            value: stats.active,
+            icon: <CheckCircle2 className="h-6 w-6" />,
+            borderColor: 'green',
+          },
+          {
+            label: 'Tạm dừng',
+            value: stats.inactive,
+            icon: <AlertCircle className="h-6 w-6" />,
+            borderColor: 'gray',
+          },
+        ]}
+      />
+
+      <FilterSection
+        title="Bộ lọc & Tìm kiếm"
+        subtitle="Tìm kiếm và lọc người dùng"
+        onReset={handleResetFilters}
+        activeFilters={activeFilters}
+        columnVisibilityMenu={columnVisibilityMenu}
+      >
+        <div className="grid items-end gap-4 md:grid-cols-5">
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-gray-700">🔍 Tìm kiếm</label>
+            <div className="relative">
+              <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <Input
+                placeholder="Tìm theo email..."
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                className="rounded-lg border-2 border-gray-200 pl-10 transition-all focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+              />
             </div>
           </div>
-        </div>
 
-        <CardContent className="bg-gradient-to-b from-gray-50 to-white p-6">
-          <div className="grid items-end gap-4 md:grid-cols-5">
-            {/* Search */}
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-gray-700">🔍 Tìm kiếm</label>
-              <div className="relative">
-                <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                <Input
-                  placeholder="Tìm theo email..."
-                  value={searchInput}
-                  onChange={(e) => setSearchInput(e.target.value)}
-                  className="rounded-lg border-2 border-gray-200 pl-10 transition-all focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
-                />
-              </div>
-            </div>
-
-            {/* Role */}
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-gray-700">🎭 Vai trò</label>
-              {isMounted ? (
-                <Select
-                  value={filters.roleId}
-                  onValueChange={(v) => setFilters((p) => ({ ...p, roleId: v }))}
-                >
-                  <SelectTrigger className="rounded-lg border-2 border-gray-200 transition-all focus:border-purple-500 focus:ring-2 focus:ring-purple-200">
-                    <SelectValue placeholder="Chọn vai trò" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Tất cả vai trò</SelectItem>
-                    {roles.map((role: UserRole) => (
-                      <SelectItem key={role.id} value={role.id}>
-                        {role.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              ) : (
-                <div className="h-10 w-full rounded-lg border-2 border-gray-200 bg-transparent" />
-              )}
-            </div>
-
-            {/* Department */}
-            {/* <div className="space-y-2">
-              <label className="text-sm font-bold text-gray-700">🏢 Phòng ban</label>
-              {isMounted ? (
-                <Select
-                  value={filters.departmentId}
-                  onValueChange={(v) => setFilters((p) => ({ ...p, departmentId: v }))}
-                >
-                  <SelectTrigger className="rounded-lg border-2 border-gray-200 transition-all focus:border-purple-500 focus:ring-2 focus:ring-purple-200">
-                    <SelectValue placeholder="Chọn phòng ban" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Tất cả phòng ban</SelectItem>
-                    {departments.map((d: Department) => (
-                      <SelectItem key={d.id} value={d.id}>
-                        {d.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              ) : (
-                <div className="h-10 w-full rounded-lg border-2 border-gray-200 bg-transparent" />
-              )}
-            </div> */}
-
-            {/* Customer */}
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-gray-700">🏪 Khách hàng</label>
-              {isMounted ? (
-                <Select
-                  value={filters.customerId}
-                  onValueChange={(v) => setFilters((p) => ({ ...p, customerId: v }))}
-                >
-                  <SelectTrigger className="rounded-lg border-2 border-gray-200 transition-all focus:border-purple-500 focus:ring-2 focus:ring-purple-200">
-                    <SelectValue placeholder="Chọn mã KH" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Tất cả KH</SelectItem>
-                    {availableCustomerCodes.map((code) => (
-                      <SelectItem key={code} value={customerCodeToId[code] || code}>
-                        {code}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              ) : (
-                <div className="h-10 w-full rounded-lg border-2 border-gray-200 bg-transparent" />
-              )}
-            </div>
-
-            {/* Actions */}
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setFilters({
-                    search: '',
-                    roleId: 'all',
-                    departmentId: 'all',
-                    status: 'all',
-                    customerId: 'all',
-                  })
-                  setSearchInput('')
-                  router.replace(pathname, { scroll: false })
-                }}
-                className="rounded-lg border-2 border-gray-300 font-medium transition-all hover:border-gray-400 hover:bg-gray-50"
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-gray-700">🎭 Vai trò</label>
+            {isMounted ? (
+              <Select
+                value={filters.roleId}
+                onValueChange={(value) => setFilters((prev) => ({ ...prev, roleId: value }))}
               >
-                <RotateCcw className="mr-2 h-4 w-4" /> Reset
-              </Button>
-              <ActionGuard pageId="users" actionId="create">
-                <UserFormModal
-                  customerId={
-                    filters.customerId && filters.customerId !== 'all' ? filters.customerId : ''
-                  }
-                />
-              </ActionGuard>
-            </div>
+                <SelectTrigger className="rounded-lg border-2 border-gray-200 transition-all focus:border-purple-500 focus:ring-2 focus:ring-purple-200">
+                  <SelectValue placeholder="Chọn vai trò" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất cả vai trò</SelectItem>
+                  {roles.map((role: UserRole) => (
+                    <SelectItem key={role.id} value={role.id}>
+                      {role.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <div className="h-10 w-full rounded-lg border-2 border-gray-200 bg-transparent" />
+            )}
           </div>
-        </CardContent>
-      </div>
 
-      {/* USERS TABLE CARD */}
-      <div className="overflow-hidden rounded-2xl border-0 bg-white shadow-2xl">
-        <div className="relative overflow-hidden border-0 bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 p-0">
-          <div className="absolute inset-0 opacity-20">
-            <div className="absolute top-0 left-0 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white"></div>
-            <div className="absolute right-0 bottom-0 h-96 w-96 translate-x-1/2 translate-y-1/2 rounded-full bg-white"></div>
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-gray-700">🏪 Khách hàng</label>
+            {isMounted ? (
+              <Select
+                value={filters.customerId}
+                onValueChange={(value) => setFilters((prev) => ({ ...prev, customerId: value }))}
+              >
+                <SelectTrigger className="rounded-lg border-2 border-gray-200 transition-all focus:border-purple-500 focus:ring-2 focus:ring-purple-200">
+                  <SelectValue placeholder="Chọn mã KH" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất cả KH</SelectItem>
+                  {availableCustomerCodes.map((code) => (
+                    <SelectItem key={code} value={customerCodeToId[code] || code}>
+                      {code}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <div className="h-10 w-full rounded-lg border-2 border-gray-200 bg-transparent" />
+            )}
           </div>
-          <div className="relative flex items-center justify-between px-8 py-6">
-            <div className="flex items-center gap-3">
-              <div className="rounded-2xl border border-white/30 bg-white/20 p-3 shadow-lg backdrop-blur-lg">
-                <Users className="h-7 w-7 text-white" />
-              </div>
-              <div className="text-white">
-                <CardTitle className="text-3xl font-bold tracking-tight">
-                  Danh sách Người dùng
-                </CardTitle>
-                <p className="mt-1 text-sm font-medium text-pink-100">
-                  ⚡ {paginationInfo.total} người dùng đang hoạt động
-                </p>
-              </div>
-            </div>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => refetchUsers()}
-              className="cursor-pointer border-white/30 bg-white/20 text-white transition-all hover:bg-white/30"
-              title="Làm mới dữ liệu"
-            >
-              <RefreshCw className={`${isFetchingUsers ? 'animate-spin' : ''} h-5 w-5`} />
-            </Button>
+
+          <div className="flex gap-2">
+            <ActionGuard pageId="users" actionId="create">
+              <UserFormModal
+                customerId={
+                  filters.customerId && filters.customerId !== 'all' ? filters.customerId : ''
+                }
+              />
+            </ActionGuard>
           </div>
         </div>
+      </FilterSection>
 
-        <CardContent className="space-y-4 bg-gradient-to-b from-gray-50 to-white p-6">
-          {isLoading ? (
-            <div className="space-y-2">
-              <Skeleton className="h-14 w-full rounded-xl" />
-              <Skeleton className="h-14 w-full rounded-xl" />
-              <Skeleton className="h-14 w-full rounded-xl" />
-            </div>
-          ) : users.length === 0 ? (
-            <div className="p-12 text-center">
-              <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200">
-                <Users className="h-8 w-8 text-gray-400" />
-              </div>
-              <h3 className="mb-2 text-xl font-bold text-gray-700">Không có người dùng nào</h3>
-              <p className="mb-6 text-gray-500">Hãy tạo người dùng đầu tiên</p>
-              <ActionGuard pageId="users" actionId="create">
-                <UserFormModal
-                  customerId={filters.customerId !== 'all' ? filters.customerId : ''}
-                />
-              </ActionGuard>
-            </div>
-          ) : (
-            <>
-              <div className="overflow-hidden rounded-2xl border-2 border-gray-200 shadow-lg">
-                <Table className="min-w-full">
-                  <TableHeader className="border-b-2 border-gray-200 bg-gradient-to-r from-purple-100 via-pink-50 to-rose-50">
-                    <TableRow>
-                      <TableHead className="w-[60px] text-center font-bold text-gray-700">
-                        STT
-                      </TableHead>
-                      <TableHead className="font-bold text-gray-700">
-                        <div className="flex items-center gap-2">
-                          <Mail className="h-4 w-4 text-purple-600" />
-                          Người dùng
-                        </div>
-                      </TableHead>
-                      <TableHead className="font-bold text-gray-700">
-                        <div className="flex items-center gap-2">
-                          <span className="text-lg">🏪</span>
-                          Khách hàng
-                        </div>
-                      </TableHead>
-                      <TableHead className="font-bold text-gray-700">
-                        <div className="flex items-center gap-2">
-                          <span className="text-lg">🎭</span>
-                          Vai trò
-                        </div>
-                      </TableHead>
-                      {/* <TableHead className="font-bold text-gray-700">
-                        <div className="flex items-center gap-2">
-                          <Building className="h-4 w-4 text-pink-600" />
-                          Phòng ban
-                        </div>
-                      </TableHead> */}
-                      <TableHead className="font-bold text-gray-700">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-rose-600" />
-                          Ngày tạo
-                        </div>
-                      </TableHead>
-                      <TableHead className="w-[80px] text-right font-bold text-gray-700">
-                        ⚙️ Thao tác
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {users.map((user, index) => (
-                      <TableRow
-                        key={user.id}
-                        onMouseEnter={() => setHoveredRowId(user.id)}
-                        onMouseLeave={() => setHoveredRowId(null)}
-                        className={`border-b border-gray-100 transition-all duration-300 ${
-                          hoveredRowId === user.id
-                            ? 'bg-gradient-to-r from-purple-50/80 via-pink-50/50 to-rose-50/30 shadow-md'
-                            : 'hover:bg-gray-50'
-                        }`}
-                      >
-                        <TableCell className="text-center font-bold text-gray-600">
-                          <span className="inline-flex h-6 w-6 items-center justify-center rounded bg-purple-100 text-sm text-purple-700">
-                            {(pagination.page - 1) * pagination.limit + index + 1}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Mail className="h-4 w-4 text-gray-400" />
-                            <span className="font-semibold text-gray-800">{user.email}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <span className="inline-block rounded-lg border border-amber-300 bg-amber-100 px-3 py-1 text-xs font-bold text-amber-700">
-                            {user.customer?.code || '—'}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <div className="space-y-1">
-                            <Badge className={`${getRoleBadgeColor(user.role?.name)} border-2`}>
-                              {user.role?.name || '—'}
-                            </Badge>
-                            <div className="text-xs text-gray-500">
-                              Level {user.role?.level || '—'}
-                            </div>
-                          </div>
-                        </TableCell>
-                        {/* <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Building className="h-4 w-4 text-gray-400" />
-                            <span className="text-sm text-gray-800">
-                              {user.department?.name || '—'}
-                            </span>
-                          </div>
-                        </TableCell> */}
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-gray-400" />
-                            <span className="text-sm text-gray-700">
-                              {formatDate(user.createdAt)}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="transition-all hover:bg-purple-100 hover:text-purple-700"
-                              >
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent
-                              align="end"
-                              className="rounded-lg border-2 shadow-xl"
-                            >
-                              {canUpdate && (
-                                <DropdownMenuItem
-                                  onClick={() => handleEditUser(user)}
-                                  className="flex cursor-pointer items-center gap-2 py-2 transition-all hover:bg-purple-50 hover:text-purple-700"
-                                >
-                                  <Edit className="h-4 w-4" />
-                                  Chỉnh sửa
-                                </DropdownMenuItem>
-                              )}
-                              {/* Custom password change removed — only reset to default allowed */}
-                              <ConfirmDialog
-                                title="Đặt lại mật khẩu"
-                                description={`Bạn có chắc muốn đặt lại mật khẩu người dùng "${user.email}" về mật khẩu mặc định không?`}
-                                confirmLabel="Đặt lại"
-                                cancelLabel="Hủy"
-                                onConfirm={async () => {
-                                  try {
-                                    await usersClientService.resetPassword(user.id)
-                                    await queryClient.invalidateQueries({ queryKey: ['users'] })
-                                    toast.success('Đặt lại mật khẩu thành công')
-                                  } catch (err) {
-                                    console.error('Reset user password error', err)
-                                    toast.error('Có lỗi khi đặt lại mật khẩu')
-                                  }
-                                }}
-                                trigger={
-                                  <DropdownMenuItem
-                                    className="flex cursor-pointer items-center gap-2 py-2 transition-all hover:bg-purple-50 hover:text-purple-700"
-                                    onSelect={(e) => e.preventDefault()}
-                                  >
-                                    <RotateCcw className="h-4 w-4" />
-                                    Đặt lại mật khẩu
-                                  </DropdownMenuItem>
-                                }
-                              />
-
-                              {canDelete && (
-                                <DeleteDialog
-                                  title="Xóa người dùng"
-                                  description={`Bạn có chắc chắn muốn xóa người dùng "${user.email}" không?\n\nHành động này không thể hoàn tác.`}
-                                  onConfirm={async () => {
-                                    try {
-                                      await usersClientService.deleteUser(user.id)
-                                      await queryClient.invalidateQueries({ queryKey: ['users'] })
-                                      toast.success('✅ Xóa người dùng thành công')
-                                    } catch (err) {
-                                      console.error('Delete user error', err)
-                                      toast.error('❌ Có lỗi khi xóa người dùng')
-                                    }
-                                  }}
-                                  trigger={
-                                    <DropdownMenuItem
-                                      className="flex cursor-pointer items-center gap-2 py-2 text-red-600 transition-all hover:bg-red-50"
-                                      onSelect={(e) => e.preventDefault()}
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                      Xóa
-                                    </DropdownMenuItem>
-                                  }
-                                />
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-
-              {/* PAGINATION */}
-              <div className="border-gradient-to-r flex items-center justify-between rounded-2xl border-2 bg-gradient-to-r from-purple-200 from-white via-purple-50 to-rose-50 to-rose-200 p-5 shadow-lg">
-                <div className="flex items-center gap-3">
-                  <span className="text-xs font-bold tracking-widest text-gray-600 uppercase">
-                    Hiển thị
-                  </span>
-                  <div className="rounded-xl border-2 border-purple-300 bg-gradient-to-r from-purple-100 to-pink-100 px-4 py-2">
-                    <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-sm font-bold text-transparent">
-                      {users.length}
-                    </span>
-                    <span className="text-sm text-gray-500"> / </span>
-                    <span className="text-sm font-bold text-gray-700">{paginationInfo.total}</span>
-                  </div>
-                  <span className="text-xs font-semibold text-gray-600">người dùng</span>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handlePageChange(pagination.page - 1)}
-                    disabled={pagination.page <= 1}
-                    className="rounded-lg border-2 border-gray-300 font-bold transition-all hover:border-purple-400 hover:bg-purple-100 hover:text-purple-700 disabled:opacity-50"
-                  >
-                    ← Trước
-                  </Button>
-
-                  <div className="flex items-center gap-2 rounded-xl border-2 border-purple-300 bg-white px-5 py-2 shadow-md">
-                    <span className="text-xs font-bold text-gray-600">Trang</span>
-                    <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-base font-bold text-transparent">
-                      {pagination.page}
-                    </span>
-                    <span className="text-xs text-gray-400">/</span>
-                    <span className="text-base font-bold text-gray-800">
-                      {paginationInfo.totalPages}
-                    </span>
-                  </div>
-
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handlePageChange(pagination.page + 1)}
-                    disabled={pagination.page >= paginationInfo.totalPages}
-                    className="rounded-lg border-2 border-gray-300 font-bold transition-all hover:border-pink-400 hover:bg-pink-100 hover:text-pink-700 disabled:opacity-50"
-                  >
-                    Sau →
-                  </Button>
-                </div>
-              </div>
-            </>
-          )}
-        </CardContent>
-      </div>
+      <Suspense fallback={<TableSkeleton rows={10} columns={8} />}>
+        <UsersTableContent
+          filters={filters}
+          pagination={pagination}
+          sorting={sorting}
+          onPaginationChange={handlePaginationChange}
+          onPaginationMetaChange={handlePaginationMetaChange}
+          onSortingChange={setSorting}
+          onStatsChange={handleStatsChange}
+          onEditUser={handleEditUser}
+          onResetPassword={handleResetPassword}
+          onDeleteUser={handleDeleteUser}
+          renderColumnVisibilityMenu={setColumnVisibilityMenu}
+          canUpdate={canUpdate}
+          canDelete={canDelete}
+          searchInput={searchInput}
+          filtersState={filters}
+        />
+      </Suspense>
 
       <EditUserModal
         user={editingUser}
@@ -688,7 +395,317 @@ export function UsersTable() {
         customerCodes={availableCustomerCodes}
         customerCodeToId={customerCodeToId}
       />
-      {/* Custom change-password modal removed - only reset-to-default is supported via action menu */}
     </div>
   )
+}
+
+interface UsersTableContentProps {
+  filters: UserFilters
+  pagination: UserPagination
+  sorting: { sortBy?: string; sortOrder?: 'asc' | 'desc' }
+  onPaginationChange: (page: number, limit: number) => void
+  onPaginationMetaChange: (meta: Partial<UserPagination>) => void
+  onSortingChange: (sorting: { sortBy?: string; sortOrder?: 'asc' | 'desc' }) => void
+  onStatsChange: (stats: UsersStats) => void
+  onEditUser: (user: User) => void
+  onResetPassword: (userId: string) => Promise<void>
+  onDeleteUser: (userId: string) => Promise<void>
+  renderColumnVisibilityMenu: (menu: ReactNode | null) => void
+  canUpdate: boolean
+  canDelete: boolean
+  searchInput: string
+  filtersState: UserFilters
+}
+
+function UsersTableContent({
+  filters,
+  pagination,
+  sorting,
+  onPaginationChange,
+  onPaginationMetaChange,
+  onSortingChange,
+  onStatsChange,
+  onEditUser,
+  onResetPassword,
+  onDeleteUser,
+  renderColumnVisibilityMenu,
+  canUpdate,
+  canDelete,
+  searchInput,
+  filtersState,
+}: UsersTableContentProps) {
+  const [isPending, startTransition] = useTransition()
+
+  const queryParams = useMemo(
+    () => ({
+      page: pagination.page,
+      limit: pagination.limit,
+      search: filters.search || undefined,
+      roleId: filters.roleId !== 'all' ? filters.roleId : undefined,
+      departmentId: filters.departmentId !== 'all' ? filters.departmentId : undefined,
+      customerId: filters.customerId !== 'all' ? filters.customerId : undefined,
+      sortBy: sorting.sortBy || 'createdAt',
+      sortOrder: sorting.sortOrder || 'desc',
+    }),
+    [filters, pagination.page, pagination.limit, sorting]
+  )
+
+  const { data } = useUsersQuery(queryParams)
+
+  const users = useMemo(() => data?.data ?? [], [data])
+
+  const paginationMeta = useMemo(() => {
+    if (data?.pagination) {
+      return data.pagination
+    }
+    const totalUsersFallback = users.length
+    return {
+      page: pagination.page,
+      limit: pagination.limit,
+      total: totalUsersFallback,
+      totalPages: Math.max(1, Math.ceil(totalUsersFallback / pagination.limit)),
+    }
+  }, [data, pagination.page, pagination.limit, users.length])
+
+  useEffect(() => {
+    onPaginationMetaChange({
+      page: paginationMeta.page ?? pagination.page,
+      limit: paginationMeta.limit ?? pagination.limit,
+      total: paginationMeta.total ?? users.length,
+      totalPages:
+        paginationMeta.totalPages ?? Math.max(1, Math.ceil(users.length / pagination.limit)),
+    })
+
+    const totalUsers = paginationMeta.total ?? users.length
+    const activeUsers = users.filter((user) => user.isActive !== false).length
+    onStatsChange({
+      total: totalUsers,
+      active: activeUsers,
+      inactive: totalUsers - activeUsers,
+    })
+  }, [paginationMeta, users, pagination, onPaginationMetaChange, onStatsChange])
+
+  const columns = useMemo<ColumnDef<User>[]>(() => {
+    const getRoleBadgeColorLocal = (roleName?: string) => getRoleBadgeColor(roleName)
+
+    return [
+      {
+        id: 'index',
+        header: 'STT',
+        cell: ({ row, table }) => {
+          const index = table.getSortedRowModel().rows.findIndex((r) => r.id === row.id)
+          return (
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded bg-purple-100 text-sm text-purple-700">
+              {(pagination.page - 1) * pagination.limit + index + 1}
+            </span>
+          )
+        },
+        enableSorting: false,
+      },
+      {
+        accessorKey: 'email',
+        enableSorting: true,
+        header: () => (
+          <div className="flex items-center gap-2">
+            <Mail className="h-4 w-4 text-purple-600" />
+            Người dùng
+          </div>
+        ),
+        cell: ({ row }) => (
+          <div className="flex items-center gap-2">
+            <Mail className="h-4 w-4 text-gray-400" />
+            <span className="font-semibold text-gray-800">{row.original.email}</span>
+          </div>
+        ),
+      },
+      {
+        accessorKey: 'customer',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <span className="text-lg">🏪</span>
+            Khách hàng
+          </div>
+        ),
+        cell: ({ row }) => (
+          <span className="inline-block rounded-lg border border-amber-300 bg-amber-100 px-3 py-1 text-xs font-bold text-amber-700">
+            {row.original.customer?.code || '—'}
+          </span>
+        ),
+        enableSorting: false,
+      },
+      {
+        accessorKey: 'role',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <span className="text-lg">🎭</span>
+            Vai trò
+          </div>
+        ),
+        cell: ({ row }) => (
+          <div className="space-y-1">
+            <Badge className={`${getRoleBadgeColorLocal(row.original.role?.name)} border-2`}>
+              {row.original.role?.name || '—'}
+            </Badge>
+            <div className="text-xs text-gray-500">Level {row.original.role?.level || '—'}</div>
+          </div>
+        ),
+        enableSorting: false,
+      },
+      {
+        accessorKey: 'createdAt',
+        enableSorting: true,
+        header: () => (
+          <div className="flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-rose-600" />
+            Ngày tạo
+          </div>
+        ),
+        cell: ({ row }) => (
+          <div className="flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-gray-400" />
+            <span className="text-sm text-gray-700">{formatDate(row.original.createdAt)}</span>
+          </div>
+        ),
+      },
+      {
+        id: 'actions',
+        header: '⚙️ Thao tác',
+        enableSorting: false,
+        cell: ({ row }) => (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="transition-all hover:bg-purple-100 hover:text-purple-700"
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="rounded-lg border-2 shadow-xl">
+              {canUpdate && (
+                <DropdownMenuItem
+                  onClick={() => onEditUser(row.original)}
+                  className="flex cursor-pointer items-center gap-2 py-2 transition-all hover:bg-purple-50 hover:text-purple-700"
+                >
+                  <Edit className="h-4 w-4" />
+                  Chỉnh sửa
+                </DropdownMenuItem>
+              )}
+              <ConfirmDialog
+                title="Đặt lại mật khẩu"
+                description={`Bạn có chắc muốn đặt lại mật khẩu người dùng "${row.original.email}" về mật khẩu mặc định không?`}
+                confirmLabel="Đặt lại"
+                cancelLabel="Hủy"
+                onConfirm={async () => {
+                  await onResetPassword(row.original.id)
+                }}
+                trigger={
+                  <DropdownMenuItem
+                    className="flex cursor-pointer items-center gap-2 py-2 transition-all hover:bg-purple-50 hover:text-purple-700"
+                    onSelect={(e) => e.preventDefault()}
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                    Đặt lại mật khẩu
+                  </DropdownMenuItem>
+                }
+              />
+              {canDelete && (
+                <DeleteDialog
+                  title="Xóa người dùng"
+                  description={`Bạn có chắc chắn muốn xóa người dùng "${row.original.email}" không?\n\nHành động này không thể hoàn tác.`}
+                  onConfirm={async () => {
+                    await onDeleteUser(row.original.id)
+                  }}
+                  trigger={
+                    <DropdownMenuItem
+                      className="flex cursor-pointer items-center gap-2 py-2 text-red-600 transition-all hover:bg-red-50"
+                      onSelect={(e) => e.preventDefault()}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Xóa
+                    </DropdownMenuItem>
+                  }
+                />
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ),
+      },
+    ]
+  }, [
+    pagination.page,
+    pagination.limit,
+    canUpdate,
+    canDelete,
+    onEditUser,
+    onResetPassword,
+    onDeleteUser,
+  ])
+
+  return (
+    <TableWrapper<User>
+      tableId="users"
+      columns={columns}
+      data={users}
+      totalCount={paginationMeta.total ?? users.length}
+      pageIndex={pagination.page - 1}
+      pageSize={pagination.limit}
+      onPaginationChange={(newPagination) => {
+        startTransition(() => {
+          onPaginationChange(newPagination.pageIndex + 1, newPagination.pageSize)
+        })
+      }}
+      onSortingChange={(nextSorting) => {
+        startTransition(() => {
+          onSortingChange(nextSorting)
+        })
+      }}
+      sorting={sorting}
+      defaultSorting={{ sortBy: 'createdAt', sortOrder: 'desc' }}
+      enableColumnVisibility
+      renderColumnVisibilityMenu={renderColumnVisibilityMenu}
+      isPending={isPending}
+      emptyState={
+        users.length === 0 ? (
+          <div className="p-12 text-center">
+            <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200">
+              <Users className="h-8 w-8 text-gray-400" />
+            </div>
+            <h3 className="mb-2 text-xl font-bold text-gray-700">Không có người dùng nào</h3>
+            <p className="mb-6 text-gray-500">
+              {searchInput ? 'Không tìm thấy người dùng phù hợp' : 'Hãy tạo người dùng đầu tiên'}
+            </p>
+            {!searchInput && (
+              <ActionGuard pageId="users" actionId="create">
+                <UserFormModal
+                  customerId={
+                    filtersState.customerId && filtersState.customerId !== 'all'
+                      ? filtersState.customerId
+                      : ''
+                  }
+                />
+              </ActionGuard>
+            )}
+          </div>
+        ) : undefined
+      }
+      skeletonRows={10}
+    />
+  )
+}
+
+function getRoleBadgeColor(roleName?: string) {
+  switch (roleName) {
+    case 'super-admin':
+      return 'bg-red-100 text-red-800 border-red-300'
+    case 'admin':
+      return 'bg-orange-100 text-orange-800 border-orange-300'
+    case 'manager':
+      return 'bg-blue-100 text-blue-800 border-blue-300'
+    case 'developer':
+      return 'bg-emerald-100 text-emerald-800 border-emerald-300'
+    default:
+      return 'bg-gray-100 text-gray-800 border-gray-300'
+  }
 }

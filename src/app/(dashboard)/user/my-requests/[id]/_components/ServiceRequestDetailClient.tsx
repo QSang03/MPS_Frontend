@@ -273,7 +273,7 @@ export function ServiceRequestDetailClient(props: Props) {
                   <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-emerald-500/5 opacity-0 transition-opacity duration-300 group-hover/card:opacity-100" />
                   <div className="relative">
                     <div className="mb-3 flex items-center gap-2">
-                      <User className="h-5 w-5 text-green-600 dark:text-green-400" />
+                      <User className="h-5 w-5 text-black dark:text-white" />
                       <p className="text-xs font-bold tracking-wider text-slate-600 uppercase dark:text-slate-400">
                         Người phụ trách
                       </p>
@@ -301,7 +301,7 @@ export function ServiceRequestDetailClient(props: Props) {
 
               {costsQuery.isLoading ? (
                 <div className="rounded-2xl border border-white/20 bg-gradient-to-br from-white/70 to-white/60 p-12 text-center shadow-xl backdrop-blur-xl dark:border-slate-700/50 dark:from-slate-800/70 dark:to-slate-800/60">
-                  <Zap className="mx-auto mb-4 h-12 w-12 animate-bounce text-yellow-500" />
+                  <Zap className="mx-auto mb-4 h-12 w-12 animate-bounce text-black dark:text-white" />
                   <p className="text-lg font-medium text-slate-600 dark:text-slate-400">
                     Đang tải chi phí...
                   </p>
@@ -481,7 +481,7 @@ export function ServiceRequestDetailClient(props: Props) {
                 {/* Timeline */}
                 <div className="rounded-xl bg-gradient-to-r from-indigo-50 to-purple-100/50 p-4 dark:from-indigo-900/20 dark:to-purple-900/20">
                   <div className="mb-3 flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                    <Calendar className="h-4 w-4 text-black dark:text-white" />
                     <span className="text-sm font-semibold text-slate-600 dark:text-slate-400">
                       Thời gian
                     </span>
@@ -504,7 +504,7 @@ export function ServiceRequestDetailClient(props: Props) {
                 {data.assignedTo && (
                   <div className="rounded-xl bg-gradient-to-r from-green-50 to-emerald-100/50 p-4 dark:from-green-900/20 dark:to-emerald-900/20">
                     <div className="mb-3 flex items-center gap-2">
-                      <User className="h-4 w-4 text-green-600 dark:text-green-400" />
+                      <User className="h-4 w-4 text-black dark:text-white" />
                       <span className="text-sm font-semibold text-slate-600 dark:text-slate-400">
                         Phụ trách
                       </span>
@@ -519,7 +519,7 @@ export function ServiceRequestDetailClient(props: Props) {
                 {!costsQuery.isLoading && costsQuery.data && costsQuery.data.data.length > 0 && (
                   <div className="rounded-xl bg-gradient-to-r from-emerald-50 to-teal-100/50 p-4 dark:from-emerald-900/20 dark:to-teal-900/20">
                     <div className="mb-4 flex items-center gap-2">
-                      <BarChart3 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                      <BarChart3 className="h-4 w-4 text-black dark:text-white" />
                       <span className="text-sm font-semibold text-slate-600 dark:text-slate-400">
                         Thống kê chi phí
                       </span>

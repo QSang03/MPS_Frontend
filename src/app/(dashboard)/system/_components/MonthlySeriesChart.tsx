@@ -95,8 +95,8 @@ interface CustomTooltipProps {
 const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
   if (active && payload && payload.length) {
     return (
-      <div className="rounded-lg border bg-white p-3 shadow-lg">
-        <p className="mb-2 font-semibold text-gray-900">{label}</p>
+      <div className="rounded-lg border-0 bg-[#1F2937] p-3 text-white shadow-[0_4px_12px_rgba(0,0,0,0.15)]">
+        <p className="mb-2 font-semibold text-white">{label}</p>
         {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
         {payload.map((entry: any) => {
           const config = METRIC_CONFIG[entry.dataKey as keyof typeof METRIC_CONFIG]
@@ -114,8 +114,8 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
           return (
             <div key={entry.dataKey} className="flex items-center gap-2 text-sm">
               <div className="h-3 w-3 rounded-full" style={{ backgroundColor: entry.color }} />
-              <span className="text-gray-600">{config.label}:</span>
-              <span className="font-semibold">{formatValue(entry.value)}</span>
+              <span className="text-gray-300">{config.label}:</span>
+              <span className="font-semibold text-white">{formatValue(entry.value)}</span>
             </div>
           )
         })}
@@ -187,15 +187,17 @@ export function MonthlySeriesChart({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.1 }}
     >
-      <Card>
-        <CardHeader>
+      <Card className="border-0 shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
+        <CardHeader className="pb-2">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-blue-600" />
+              <CardTitle className="flex items-center gap-2 text-base font-semibold text-[#1F2937]">
+                <TrendingUp className="h-5 w-5 text-[#0066CC]" />
                 Xu hướng theo tháng
               </CardTitle>
-              <CardDescription>Biểu đồ thống kê các chỉ số theo thời gian</CardDescription>
+              <CardDescription className="text-[13px] text-[#6B7280]">
+                Biểu đồ thống kê các chỉ số theo thời gian
+              </CardDescription>
             </div>
 
             {/* Chart Type Toggle */}
@@ -204,6 +206,7 @@ export function MonthlySeriesChart({
                 variant={chartType === 'area' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setChartType('area')}
+                className={cn(chartType === 'area' ? 'bg-[#0066CC] hover:bg-[#0052a3]' : '')}
               >
                 Area
               </Button>
@@ -211,6 +214,7 @@ export function MonthlySeriesChart({
                 variant={chartType === 'line' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setChartType('line')}
+                className={cn(chartType === 'line' ? 'bg-[#0066CC] hover:bg-[#0052a3]' : '')}
               >
                 Line
               </Button>
@@ -239,7 +243,7 @@ export function MonthlySeriesChart({
               >
                 <span
                   className="mr-2 inline-block h-2 w-2 rounded-full"
-                  style={{ backgroundColor: config.color }}
+                  style={{ backgroundColor: visibleMetrics.includes(key) ? 'white' : config.color }}
                 />
                 {config.label}
               </Button>
@@ -249,15 +253,27 @@ export function MonthlySeriesChart({
           {/* Chart */}
           <ResponsiveContainer width="100%" height={400}>
             <Chart data={transformedData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
               <XAxis
                 dataKey="month"
                 stroke="#6b7280"
                 fontSize={12}
                 tickLine={false}
                 axisLine={false}
+                dy={10}
               />
-              <YAxis stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
+              <YAxis
+                stroke="#6b7280"
+                fontSize={12}
+                tickLine={false}
+                axisLine={false}
+                tickFormatter={(value) =>
+                  new Intl.NumberFormat('en-US', {
+                    notation: 'compact',
+                    compactDisplay: 'short',
+                  }).format(value)
+                }
+              />
               <Tooltip content={<CustomTooltip />} />
               <Legend
                 verticalAlign="top"
@@ -265,7 +281,9 @@ export function MonthlySeriesChart({
                 iconType="circle"
                 formatter={(value) => {
                   const config = METRIC_CONFIG[value as keyof typeof METRIC_CONFIG]
-                  return config?.label || value
+                  return (
+                    <span className="text-[13px] text-[#6B7280]">{config?.label || value}</span>
+                  )
                 }}
               />
 
@@ -280,7 +298,7 @@ export function MonthlySeriesChart({
                       dataKey={key}
                       stroke={config.color}
                       fill={config.color}
-                      fillOpacity={0.3}
+                      fillOpacity={0.1}
                       strokeWidth={config.strokeWidth}
                       animationDuration={800}
                     />
@@ -294,8 +312,8 @@ export function MonthlySeriesChart({
                     dataKey={key}
                     stroke={config.color}
                     strokeWidth={config.strokeWidth}
-                    dot={{ fill: config.color, r: 4 }}
-                    activeDot={{ r: 6 }}
+                    dot={{ fill: config.color, r: 4, strokeWidth: 0 }}
+                    activeDot={{ r: 6, strokeWidth: 0 }}
                     animationDuration={800}
                   />
                 )
@@ -303,12 +321,21 @@ export function MonthlySeriesChart({
             </Chart>
           </ResponsiveContainer>
         </CardContent>
-        <CardFooter className="flex justify-end gap-2 border-t bg-gray-50/50 p-4">
-          <Button variant="outline" size="sm" onClick={onExport} className="gap-2">
+        <CardFooter className="flex justify-end gap-2 border-t border-gray-100 bg-gray-50/50 p-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onExport}
+            className="gap-2 border-gray-200 text-[#6B7280] hover:bg-white hover:text-[#1F2937]"
+          >
             <FileText className="h-4 w-4" />
             Xuất báo cáo
           </Button>
-          <Button size="sm" onClick={onViewDetails} className="gap-2">
+          <Button
+            size="sm"
+            onClick={onViewDetails}
+            className="gap-2 bg-[#0066CC] hover:bg-[#0052a3]"
+          >
             Chi tiết
             <ArrowRight className="h-4 w-4" />
           </Button>

@@ -13,6 +13,8 @@ export const devicesClientService = {
     deviceModelId?: string
     // include devices with hidden statuses (DECOMMISSIONED/SUSPENDED)
     includeHidden?: boolean
+    sortBy?: string
+    sortOrder?: 'asc' | 'desc'
   }) {
     const response = await internalApiClient.get<ApiListResponse<Device>>('/api/devices', {
       params: {
@@ -23,6 +25,8 @@ export const devicesClientService = {
         customerId: params?.customerId,
         deviceModelId: params?.deviceModelId,
         includeHidden: params?.includeHidden,
+        sortBy: params?.sortBy,
+        sortOrder: params?.sortOrder,
       },
     })
     const { data, pagination } = response.data || { data: [], pagination: undefined }

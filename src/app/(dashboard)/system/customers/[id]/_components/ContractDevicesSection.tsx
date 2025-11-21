@@ -8,6 +8,7 @@ import { contractsClientService } from '@/lib/api/services/contracts-client.serv
 import type { ContractDevice } from '@/types/models/contract-device'
 import { toast } from 'sonner'
 import { MonitorSmartphone, Plug2 } from 'lucide-react'
+import { useActionPermission } from '@/lib/hooks/useActionPermission'
 
 interface Props {
   contractId?: string | null
@@ -26,6 +27,10 @@ export default function ContractDevicesSection({
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   // attach dialog is lifted to parent modal; request parent to open when needed
   // local inputs were removed - attach dialog is lifted to parent
+
+  const { can: canContractAction } = useActionPermission('customers')
+  const canAttachDevices = canContractAction('contract-attach-devices')
+  const canDetachDevices = canContractAction('contract-detach-devices')
 
   const canManage = !!contractId
 
@@ -99,22 +104,26 @@ export default function ContractDevicesSection({
           Thiết bị của hợp đồng
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Button
-            size="sm"
-            variant="ghost"
-            className="bg-gradient-to-r from-blue-100 to-indigo-100 font-bold text-indigo-700"
-            onClick={openAttachDialog}
-          >
-            + Thêm và Cập nhật
-          </Button>
-          <Button
-            size="sm"
-            onClick={handleDetach}
-            disabled={selectedIds.length === 0}
-            className="bg-gradient-to-r from-red-400 to-pink-400 font-semibold text-white"
-          >
-            Gỡ thiết bị
-          </Button>
+          {canAttachDevices && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="bg-gradient-to-r from-blue-100 to-indigo-100 font-bold text-indigo-700"
+              onClick={openAttachDialog}
+            >
+              + Thêm và Cập nhật
+            </Button>
+          )}
+          {canDetachDevices && (
+            <Button
+              size="sm"
+              onClick={handleDetach}
+              disabled={selectedIds.length === 0}
+              className="bg-gradient-to-r from-red-400 to-pink-400 font-semibold text-white"
+            >
+              Gỡ thiết bị
+            </Button>
+          )}
         </div>
       </div>
 

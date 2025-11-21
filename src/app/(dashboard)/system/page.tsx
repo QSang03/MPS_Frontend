@@ -16,11 +16,21 @@ import { ContractsModal } from './_components/ContractsModal'
 import ContractDetailModal from './_components/ContractDetailModal'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { AlertCircle, RefreshCw, PlayCircle } from 'lucide-react'
+import {
+  AlertCircle,
+  RefreshCw,
+  PlayCircle,
+  FileText,
+  Settings,
+  LayoutDashboard,
+  ChevronRight,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import internalApiClient from '@/lib/api/internal-client'
 import { exportToExcel } from '@/lib/utils/export'
+import { SystemPageLayout } from '@/components/system/SystemPageLayout'
+import { SystemPageHeader } from '@/components/system/SystemPageHeader'
 
 function DashboardSkeleton() {
   return (
@@ -224,8 +234,37 @@ export default function CustomerAdminDashboard() {
   }
 
   return (
-    <div className="space-y-8">
-      {/* Hero Section với Gradient */}
+    <SystemPageLayout>
+      <SystemPageHeader
+        title="Dashboard Tổng quan"
+        subtitle={`Tháng ${selectedMonth} • Administrator`}
+        stats="Chào mừng trở lại, Administrator. Dưới đây là tổng hợp hoạt động hệ thống hôm nay."
+        breadcrumb={
+          <>
+            <span>Dashboard</span>
+            <ChevronRight className="h-3 w-3" />
+            <span>Tổng quan</span>
+            <ChevronRight className="h-3 w-3" />
+            <span>{selectedMonth}</span>
+          </>
+        }
+        icon={<LayoutDashboard className="h-7 w-7" />}
+        actions={
+          <>
+            <Button className="h-10 rounded-full border-0 bg-white px-5 text-sm font-semibold text-[#0066CC] shadow-sm hover:bg-blue-50">
+              <FileText className="mr-2 h-4 w-4" />
+              Xem báo cáo chi tiết
+            </Button>
+            <Button
+              variant="outline"
+              className="h-10 rounded-full border-white/30 bg-white/10 px-5 text-sm font-semibold text-white backdrop-blur hover:bg-white/20"
+            >
+              <Settings className="mr-2 h-4 w-4" />
+              Cấu hình hiển thị
+            </Button>
+          </>
+        }
+      />
 
       {/* Date Range Selector + Aggregation Button */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -314,6 +353,6 @@ export default function CustomerAdminDashboard() {
         />
         <RecentActivity onViewAll={() => router.push('/system/requests')} />
       </div>
-    </div>
+    </SystemPageLayout>
   )
 }

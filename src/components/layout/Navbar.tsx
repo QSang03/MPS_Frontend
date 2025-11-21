@@ -1,11 +1,20 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Bell, Menu, LogOut, User, Settings, ChevronDown, Zap, LayoutDashboard } from 'lucide-react'
+import {
+  Bell,
+  Menu,
+  LogOut,
+  User,
+  Settings,
+  ChevronDown,
+  Zap,
+  LayoutDashboard,
+  Printer,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { usePathname } from 'next/navigation'
-import { NAVIGATION_PAYLOAD } from '@/constants/navigation'
+import { NAVIGATION_PAYLOAD, USER_NAVIGATION_PAYLOAD } from '@/constants/navigation'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -46,12 +55,19 @@ export function Navbar({ session }: NavbarProps) {
   const { unreadCount, isUnreadCountLoading } = useNotifications()
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
 
+  const currentMonth = new Date().toISOString().slice(0, 7)
+  const companyName = 'CHÍNH NHÂN TECHNOLOGY'
+
   // derive the best matching title from NAVIGATION_PAYLOAD by choosing the longest
   // route that is a prefix of the current pathname. This ensures /system/devices
   // matches the 'Thiết bị' entry instead of the more generic '/system' dashboard.
+  // Choose navigation payload depending on current path (user vs admin)
+  const navPayload =
+    pathname && pathname.startsWith('/user') ? USER_NAVIGATION_PAYLOAD : NAVIGATION_PAYLOAD
+
   const derivedTitle = (() => {
     if (!pathname) return null
-    const matches = NAVIGATION_PAYLOAD.filter((n) => n.route && pathname.startsWith(n.route))
+    const matches = navPayload.filter((n) => n.route && pathname.startsWith(n.route))
     if (!matches.length) return null
     matches.sort((a, b) => (b.route?.length || 0) - (a.route?.length || 0))
     return matches[0]?.label ?? null
@@ -104,39 +120,37 @@ export function Navbar({ session }: NavbarProps) {
             </Button>
           </motion.div>
 
-          {/* Center - Page title (shows on large screens) */}
-          <div className="hidden flex-1 items-center lg:flex">
-            {derivedTitle || pageTitle ? (
-              <div className="ml-2 min-w-0">
-                <h2 className="font-display truncate text-lg font-bold text-gray-800">
-                  {derivedTitle || pageTitle}
-                </h2>
+          {/* Mobile Logo */}
+          <div className="mr-auto ml-2 flex items-center gap-2 lg:hidden">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-blue-600">
+              <Printer className="h-5 w-5" />
+            </div>
+            <span className="text-sm font-bold text-slate-900">MPS</span>
+          </div>
+
+          {/* Center - Page title & Company (compact) */}
+          <div className="hidden flex-1 items-center px-2 lg:flex">
+            <div className="ml-2 min-w-0">
+              <div className="flex items-center gap-3">
+                <div className="hidden rounded-lg bg-blue-50 p-2 text-blue-600 sm:block">
+                  <LayoutDashboard className="h-5 w-5" />
+                </div>
+                <div className="flex flex-col">
+                  <h2 className="font-display truncate text-lg font-bold text-gray-800">
+                    {derivedTitle || pageTitle || 'Tổng quan'}
+                  </h2>
+                  <div className="mt-0.5 text-xs text-gray-500">
+                    <span className="font-medium text-gray-600">{companyName}</span>
+                    <span className="hidden sm:inline"> • Tháng {currentMonth}</span>
+                  </div>
+                </div>
               </div>
-            ) : (
-              <div className="flex-1" />
-            )}
+            </div>
           </div>
 
           {/* Right side - Actions */}
           <div className="flex items-center gap-1 md:gap-3">
-            {/* Dashboard shortcut - show on md+ and align with user avatar */}
-            <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.98 }}>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() =>
-                  router.push(
-                    session.role === 'SystemAdmin' || session.role === 'CustomerAdmin'
-                      ? ROUTES.CUSTOMER_ADMIN
-                      : ROUTES.USER_MY_DEVICES
-                  )
-                }
-                className="hidden items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-300 hover:bg-blue-50 hover:text-blue-700 md:flex"
-              >
-                <LayoutDashboard className="h-4 w-4 text-blue-600" />
-                <span className="text-sm font-semibold text-gray-700">Tổng quan</span>
-              </Button>
-            </motion.div>
+            {/* Dashboard shortcut removed in favor of header info */}
             {/* Notifications - Premium Bell */}
             <NotificationPanel>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
@@ -147,12 +161,9 @@ export function Navbar({ session }: NavbarProps) {
                 >
                   <Bell className="h-5 w-5" />
                   {!isUnreadCountLoading && unreadCount > 0 && (
-                    <Badge
-                      variant="destructive"
-                      className="absolute -top-1 -right-1 h-5 min-w-5 px-1 text-xs"
-                    >
+                    <span className="absolute -top-1 -right-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1.5 text-[10px] leading-none font-bold text-white shadow-sm">
                       {unreadCount > 99 ? '99+' : unreadCount}
-                    </Badge>
+                    </span>
                   )}
                 </Button>
               </motion.div>

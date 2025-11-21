@@ -9,22 +9,26 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: 'bg-blue-500 text-white shadow hover:bg-blue-600 hover:opacity-90',
-        destructive: 'bg-red-500 text-white shadow-sm hover:bg-red-600 hover:opacity-90',
-        outline: 'border border-gray-300 bg-white shadow-sm hover:bg-gray-50 hover:text-gray-900',
-        secondary: 'bg-white text-gray-700 border border-gray-300 shadow-sm hover:bg-gray-50',
-        ghost: 'hover:bg-gray-100 hover:text-gray-900',
-        link: 'text-blue-500 underline-offset-4 hover:underline',
-        success: 'bg-green-500 text-white shadow hover:bg-green-600 hover:opacity-90',
-        warning: 'bg-amber-500 text-white shadow hover:bg-amber-600 hover:opacity-90',
+        default:
+          'bg-blue-600 text-white shadow-sm hover:bg-blue-700 transition-colors duration-200', // Primary standardized
+        destructive: 'bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90',
+        outline:
+          'border border-blue-600 text-blue-600 bg-transparent shadow-sm hover:bg-blue-50 transition-colors duration-200', // Secondary standardized
+        secondary:
+          'bg-white text-blue-600 border border-blue-600 shadow-sm hover:bg-blue-50 transition-colors duration-200',
+        ghost: 'hover:bg-gray-50 text-gray-700 transition-colors duration-200',
+        link: 'text-blue-600 underline-offset-4 hover:underline',
+        success:
+          'bg-emerald-600 text-white shadow hover:bg-emerald-700 transition-colors duration-200',
+        warning: 'bg-amber-500 text-white shadow hover:bg-amber-600 transition-colors duration-200',
       },
       size: {
-        default: 'h-10 px-4 py-2 text-sm',
-        sm: 'h-8 rounded-md px-3 text-xs',
-        lg: 'h-12 rounded-md px-5 text-base',
-        icon: 'h-10 w-10',
-        'icon-sm': 'h-8 w-8',
-        'icon-lg': 'h-12 w-12',
+        default: 'h-10 px-5 py-2 text-sm font-semibold rounded-lg',
+        sm: 'h-8 rounded-md px-3 text-xs font-medium',
+        lg: 'h-12 rounded-lg px-6 text-base font-semibold',
+        icon: 'h-10 w-10 rounded-lg',
+        'icon-sm': 'h-8 w-8 rounded-md',
+        'icon-lg': 'h-12 w-12 rounded-lg',
       },
     },
     defaultVariants: {

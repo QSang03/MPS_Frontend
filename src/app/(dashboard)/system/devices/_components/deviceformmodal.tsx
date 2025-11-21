@@ -52,6 +52,7 @@ interface Props {
   onSaved?: (d?: any) => void
   // When true, render compact icon-only trigger button (used in table action column)
   compact?: boolean
+  trigger?: React.ReactNode
 }
 
 const buildInitialForm = () => ({
@@ -74,6 +75,7 @@ export default function DeviceFormModal({
   device = null,
   onSaved,
   compact = false,
+  trigger,
 }: Props) {
   const [open, setOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -368,7 +370,9 @@ export default function DeviceFormModal({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      {mode === 'create' ? (
+      {trigger ? (
+        <DialogTrigger asChild>{trigger}</DialogTrigger>
+      ) : mode === 'create' ? (
         <DialogTrigger asChild>
           <Button className="gap-2 bg-white text-blue-600 hover:bg-white/90">
             <Plus className="h-4 w-4" />

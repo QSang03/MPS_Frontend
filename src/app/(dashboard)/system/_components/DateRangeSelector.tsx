@@ -78,13 +78,18 @@ export function DateRangeSelector({ defaultMonth, onChange }: DateRangeSelectorP
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <Card className="p-4">
+      <Card className="rounded-2xl border border-slate-200/80 p-5 shadow-sm">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           {/* Month Navigator */}
           <div className="flex items-center gap-3">
             <Calendar className="h-5 w-5 text-gray-500" />
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="icon" onClick={handlePrevMonth} className="h-9 w-9">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handlePrevMonth}
+                className="h-9 w-9 rounded-full border-slate-200 text-slate-700 hover:bg-slate-100"
+              >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
 
@@ -98,7 +103,7 @@ export function DateRangeSelector({ defaultMonth, onChange }: DateRangeSelectorP
                 size="icon"
                 onClick={handleNextMonth}
                 disabled={isNextMonthDisabled()}
-                className="h-9 w-9"
+                className="h-9 w-9 rounded-full border-slate-200 text-slate-700 hover:bg-slate-100 disabled:opacity-50"
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>
@@ -119,7 +124,12 @@ export function DateRangeSelector({ defaultMonth, onChange }: DateRangeSelectorP
                   variant={isActive ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => handleQuickSelect(option.value)}
-                  className={cn('transition-all', isActive && 'ring-2 ring-blue-300 ring-offset-2')}
+                  className={cn(
+                    'h-9 rounded-full border border-transparent px-4 text-sm font-semibold transition-all',
+                    isActive
+                      ? 'bg-[#0066CC] text-white shadow-sm hover:bg-[#005BB5]'
+                      : 'border-slate-200 bg-white text-slate-600 hover:border-[#0066CC]/30 hover:text-[#0066CC]'
+                  )}
                 >
                   {option.label}
                 </Button>

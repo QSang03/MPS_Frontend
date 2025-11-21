@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils/cn'
 import { Button } from '@/components/ui/button'
@@ -30,7 +31,28 @@ interface SidebarProps {
 }
 
 export function ModernSidebar({ session }: SidebarProps) {
-  const { sidebarOpen, toggleSidebar } = useUIStore()
+  const { sidebarOpen, toggleSidebar, openSidebar, closeSidebar } = useUIStore()
+
+  // Ensure sidebar state follows viewport size so it doesn't remain hidden
+  // due to persisted state when resizing between mobile <-> desktop.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const handleResize = () => {
+      const isDesktop = window.innerWidth >= 1024
+      if (isDesktop) {
+        openSidebar()
+      } else {
+        closeSidebar()
+      }
+    }
+
+    // Run once to sync initial state
+    handleResize()
+
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [openSidebar, closeSidebar])
   const { currentSubmenu } = useNavigation()
 
   const isUserRole = String(session.role ?? '').toLowerCase() === 'user'
@@ -92,35 +114,29 @@ export function ModernSidebar({ session }: SidebarProps) {
         }}
         transition={{ type: 'spring', damping: 25 }}
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-gray-200 transition-transform duration-300 lg:static lg:translate-x-0',
-          'bg-gradient-to-b from-white via-blue-50/20 to-white shadow-xl lg:shadow-lg'
+          'fixed inset-y-0 left-0 z-50 flex w-[268px] flex-col border-r border-gray-200 transition-transform duration-300 lg:static lg:translate-x-0',
+          'bg-white shadow-xl lg:shadow-none'
         )}
       >
-        {/* Logo Header - Premium Design */}
+        {/* Logo Header - Minimal Design */}
         <motion.div
-          className="relative overflow-hidden border-b border-gray-200 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 p-0"
+          className="relative overflow-hidden border-b border-gray-100 bg-white p-0"
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.5 }}
         >
-          {/* Animated background shapes */}
-          <div className="absolute inset-0 opacity-20">
-            <div className="absolute top-0 right-0 h-40 w-40 translate-x-1/2 -translate-y-1/2 rounded-full bg-white"></div>
-            <div className="absolute bottom-0 left-0 h-32 w-32 -translate-x-1/2 translate-y-1/2 rounded-full bg-white"></div>
-          </div>
-
           <div className="relative flex items-center justify-between gap-3 px-6 py-6">
             <div className="flex min-w-0 flex-1 items-center gap-3">
               {/* make logo clickable to open settings */}
               <Dialog>
                 <DialogTrigger asChild>
                   <motion.button
-                    className="flex-shrink-0 rounded-xl border border-white/30 bg-white/20 p-2.5 shadow-lg backdrop-blur-lg"
+                    className="flex-shrink-0 rounded-xl border border-slate-200 bg-slate-50 p-2.5 shadow-sm"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     aria-label="Mở cài đặt giao diện"
                   >
-                    <Printer className="h-6 w-6 text-white" />
+                    <Printer className="h-6 w-6 text-blue-600" />
                   </motion.button>
                 </DialogTrigger>
 
@@ -130,14 +146,14 @@ export function ModernSidebar({ session }: SidebarProps) {
               </Dialog>
 
               <div className="min-w-0 flex-1">
-                <h1 className="truncate text-sm font-bold text-white">MPS</h1>
-                <p className="truncate text-xs font-medium text-blue-100">CHÍNH NHÂN TECHNOLOGY</p>
+                <h1 className="truncate text-sm font-bold text-slate-900">MPS</h1>
+                <p className="truncate text-xs font-medium text-slate-500">CHÍNH NHÂN TECHNOLOGY</p>
               </div>
             </div>
             <Button
               variant="ghost"
               size="sm"
-              className="flex-shrink-0 text-white hover:bg-white/20 lg:hidden"
+              className="flex-shrink-0 text-slate-500 hover:bg-slate-100 lg:hidden"
               onClick={toggleSidebar}
             >
               <ChevronLeft className="h-5 w-5" />
@@ -180,11 +196,6 @@ export function ModernSidebar({ session }: SidebarProps) {
                 key: 'customers',
                 title: 'Khách hàng',
                 matcher: (h) => h.startsWith('/system/customers'),
-              },
-              {
-                key: 'contracts',
-                title: 'Hợp đồng',
-                matcher: (h) => h.startsWith('/system/contracts'),
               },
               {
                 key: 'reports',
@@ -288,11 +299,11 @@ export function ModernSidebar({ session }: SidebarProps) {
         </nav>
 
         {/* Divider */}
-        <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent" />
+        <div className="h-px bg-slate-100" />
 
-        {/* Footer Section - Premium */}
+        {/* Footer Section - Minimal */}
         <motion.div
-          className="space-y-3 border-t border-gray-200 bg-gradient-to-b from-white to-gray-50 p-4"
+          className="space-y-3 border-t border-slate-100 bg-white p-4"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
@@ -300,21 +311,21 @@ export function ModernSidebar({ session }: SidebarProps) {
           {/* Logout Button */}
           <motion.button
             onClick={handleLogout}
-            className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-red-600 transition-all duration-300 hover:bg-red-50"
-            whileHover={{ scale: 1.02, x: 4 }}
-            whileTap={{ scale: 0.98 }}
+            className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-slate-600 transition-all duration-200 hover:bg-slate-50 hover:text-red-600"
+            whileHover={{ scale: 1.01, x: 2 }}
+            whileTap={{ scale: 0.99 }}
           >
             <LogOut className="h-5 w-5 flex-shrink-0" />
             <span className="flex-1 text-left">Đăng xuất</span>
           </motion.button>
 
-          {/* Footer Info - Premium Card */}
-          <div className="rounded-lg border-2 border-gray-100 bg-white p-3">
+          {/* Footer Info - Minimal Card */}
+          <div className="rounded-lg border border-slate-100 bg-slate-50/50 p-3">
             <div className="flex items-start gap-2">
               <Zap className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-500" />
               <div>
-                <p className="text-xs font-bold text-gray-800">MPS v1.0.0</p>
-                <p className="mt-0.5 text-xs text-gray-500">© 2025 Chính Nhân Technology</p>
+                <p className="text-xs font-bold text-slate-800">MPS v1.0.0</p>
+                <p className="mt-0.5 text-xs text-slate-500">© 2025 Chính Nhân Technology</p>
               </div>
             </div>
           </div>

@@ -253,14 +253,14 @@ export function UsersTable() {
       <PageHeader
         title="Danh sách Người dùng"
         subtitle="Quản lý tài khoản và phân quyền người dùng"
-        icon={<Users className="h-6 w-6 text-white" />}
+        icon={<Users className="h-6 w-6 text-black dark:text-white" />}
         actions={
           <div className="flex gap-2">
             <Button
               variant="outline"
               size="icon"
               onClick={() => refetchUsers()}
-              className="border-white/20 bg-white/10 text-white hover:bg-white/20"
+              className="border-white/20 bg-white/10 text-black hover:bg-white/20 dark:text-white"
               title="Làm mới dữ liệu"
             >
               <RefreshCw className={`${isFetchingUsers ? 'animate-spin' : ''} h-5 w-5`} />
@@ -280,7 +280,7 @@ export function UsersTable() {
       <Card className="shadow-card">
         <CardHeader className="pb-3">
           <div className="flex items-center gap-2">
-            <Filter className="h-5 w-5 text-blue-600" />
+            <Filter className="h-5 w-5 text-black dark:text-white" />
             <CardTitle className="text-lg">Bộ lọc & Tìm kiếm</CardTitle>
           </div>
           <CardDescription>Tìm kiếm và lọc danh sách người dùng</CardDescription>
@@ -391,7 +391,7 @@ export function UsersTable() {
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="flex items-center gap-2">
-                <UserCog className="h-5 w-5 text-blue-600" />
+                <UserCog className="h-5 w-5 text-black dark:text-white" />
                 Danh sách Người dùng
               </CardTitle>
               <CardDescription className="mt-1">
@@ -408,25 +408,25 @@ export function UsersTable() {
                   <TableHead className="w-[60px] text-center">#</TableHead>
                   <TableHead>
                     <div className="flex items-center gap-2">
-                      <Mail className="h-4 w-4 text-blue-600" />
+                      <Mail className="h-4 w-4 text-black dark:text-white" />
                       Người dùng
                     </div>
                   </TableHead>
                   <TableHead>
                     <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4 text-cyan-600" />
+                      <Users className="h-4 w-4 text-black dark:text-white" />
                       Khách hàng
                     </div>
                   </TableHead>
                   <TableHead>
                     <div className="flex items-center gap-2">
-                      <UserCog className="h-4 w-4 text-rose-600" />
+                      <UserCog className="h-4 w-4 text-black dark:text-white" />
                       Vai trò
                     </div>
                   </TableHead>
                   <TableHead>
                     <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-teal-600" />
+                      <Calendar className="h-4 w-4 text-black dark:text-white" />
                       Ngày tạo
                     </div>
                   </TableHead>

@@ -26,9 +26,15 @@ interface Props {
   mode?: 'create' | 'edit'
   model?: ConsumableType | null
   onSaved?: (m?: ConsumableType | null) => void
+  trigger?: React.ReactNode
 }
 
-export default function ConsumableTypeFormModal({ mode = 'create', model = null, onSaved }: Props) {
+export default function ConsumableTypeFormModal({
+  mode = 'create',
+  model = null,
+  onSaved,
+  trigger,
+}: Props) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [form, setForm] = useState<CreateConsumableTypeDto>({
@@ -84,18 +90,22 @@ export default function ConsumableTypeFormModal({ mode = 'create', model = null,
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {mode === 'create' ? (
-          <Button className="gap-2 bg-white text-emerald-600 hover:bg-white/90">
-            <Plus className="h-4 w-4" />
-            Thêm loại vật tư
-          </Button>
-        ) : (
-          <Button variant="outline" size="sm" className="gap-2">
-            <Edit className="h-4 w-4" />
-          </Button>
-        )}
-      </DialogTrigger>
+      {trigger ? (
+        <DialogTrigger asChild>{trigger}</DialogTrigger>
+      ) : (
+        <DialogTrigger asChild>
+          {mode === 'create' ? (
+            <Button className="gap-2 bg-white text-emerald-600 hover:bg-white/90">
+              <Plus className="h-4 w-4" />
+              Thêm loại vật tư
+            </Button>
+          ) : (
+            <Button variant="outline" size="sm" className="gap-2">
+              <Edit className="h-4 w-4" />
+            </Button>
+          )}
+        </DialogTrigger>
+      )}
 
       <DialogContent className="max-w-[700px] overflow-hidden rounded-2xl border-0 p-0 shadow-2xl">
         {/* Header with Gradient */}

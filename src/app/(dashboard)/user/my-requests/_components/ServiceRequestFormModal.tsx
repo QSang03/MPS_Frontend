@@ -137,7 +137,7 @@ export function ServiceRequestFormModal({
       queryClient.invalidateQueries({ queryKey: ['service-requests'] })
       toast.success('Tạo yêu cầu bảo trì thành công!', {
         description: 'Yêu cầu của bạn đã được gửi đi',
-        icon: <CheckCircle className="h-5 w-5 text-green-500" />,
+        icon: <CheckCircle className="h-5 w-5 text-black dark:text-white" />,
       })
       form.reset({
         customerId,
@@ -155,7 +155,7 @@ export function ServiceRequestFormModal({
       const message = error instanceof Error ? error.message : 'Tạo yêu cầu bảo trì thất bại'
       toast.error(message, {
         description: 'Vui lòng thử lại sau',
-        icon: <AlertCircle className="h-5 w-5 text-red-500" />,
+        icon: <AlertCircle className="h-5 w-5 text-black dark:text-white" />,
       })
     },
   })
@@ -195,7 +195,7 @@ export function ServiceRequestFormModal({
               <DialogHeader className="space-y-4 border-b border-slate-200/50 pb-6 dark:border-slate-700/50">
                 <div className="flex items-center gap-4">
                   <div className="rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-500 p-3 shadow-lg shadow-blue-500/30">
-                    <FileText className="h-7 w-7 text-white" />
+                    <FileText className="h-7 w-7 text-black dark:text-white" />
                   </div>
                   <div>
                     <DialogTitle className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-3xl font-bold text-transparent dark:from-blue-400 dark:via-indigo-400 dark:to-purple-400">
@@ -222,7 +222,7 @@ export function ServiceRequestFormModal({
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-300">
-                            <Monitor className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                            <Monitor className="h-4 w-4 text-black dark:text-white" />
                             Thiết bị
                           </FormLabel>
                           <Select
@@ -248,7 +248,7 @@ export function ServiceRequestFormModal({
                               {devicesLoading && (
                                 <SelectItem value="__loading" disabled>
                                   <div className="flex items-center gap-2">
-                                    <Loader2 className="h-4 w-4 animate-spin text-indigo-600" />
+                                    <Loader2 className="h-4 w-4 animate-spin text-black dark:text-white" />
                                     <span className="text-slate-600 dark:text-slate-400">
                                       Đang tải...
                                     </span>
@@ -258,7 +258,7 @@ export function ServiceRequestFormModal({
                               {!devicesLoading && devicesData?.data.length === 0 && (
                                 <SelectItem value="__empty" disabled>
                                   <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
-                                    <AlertCircle className="h-4 w-4" />
+                                    <AlertCircle className="h-4 w-4 text-black dark:text-white" />
                                     Không có thiết bị nào
                                   </div>
                                 </SelectItem>
@@ -270,7 +270,7 @@ export function ServiceRequestFormModal({
                                   className="cursor-pointer transition-colors hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
                                 >
                                   <div className="flex items-center gap-2">
-                                    <Monitor className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                                    <Monitor className="h-4 w-4 text-black dark:text-white" />
                                     <div className="flex flex-col">
                                       <span className="font-semibold text-slate-900 dark:text-white">
                                         {device.serialNumber}
@@ -286,7 +286,7 @@ export function ServiceRequestFormModal({
                             </SelectContent>
                           </Select>
                           <FormDescription className="mt-1.5 flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
-                            <Sparkles className="h-3 w-3" />
+                            <Sparkles className="h-3 w-3 text-black dark:text-white" />
                             Chọn thiết bị cần được bảo trì
                           </FormDescription>
                           <FormMessage className="mt-1 text-xs" />
@@ -307,7 +307,7 @@ export function ServiceRequestFormModal({
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-300">
-                            <FileText className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                            <FileText className="h-4 w-4 text-black dark:text-white" />
                             Tiêu đề
                           </FormLabel>
                           <FormControl>
@@ -339,7 +339,7 @@ export function ServiceRequestFormModal({
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-300">
-                            <FileText className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                            <FileText className="h-4 w-4 text-black dark:text-white" />
                             Mô tả chi tiết
                           </FormLabel>
                           <FormControl>
@@ -372,7 +372,7 @@ export function ServiceRequestFormModal({
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-300">
-                            <Flag className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                            <Flag className="h-4 w-4 text-black dark:text-white" />
                             Độ ưu tiên
                           </FormLabel>
                           <Select
@@ -408,7 +408,7 @@ export function ServiceRequestFormModal({
                             </SelectContent>
                           </Select>
                           <FormDescription className="mt-1.5 flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
-                            <Sparkles className="h-3 w-3" />
+                            <Sparkles className="h-3 w-3 text-black dark:text-white" />
                             Đặt mức độ khẩn cấp của yêu cầu
                           </FormDescription>
                           <FormMessage className="mt-1 text-xs" />
@@ -431,12 +431,12 @@ export function ServiceRequestFormModal({
                     >
                       {createMutation.isPending ? (
                         <>
-                          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                          <Loader2 className="mr-2 h-5 w-5 animate-spin text-black dark:text-white" />
                           Đang tạo...
                         </>
                       ) : (
                         <>
-                          <CheckCircle className="mr-2 h-5 w-5" />
+                          <CheckCircle className="mr-2 h-5 w-5 text-black dark:text-white" />
                           Tạo Yêu Cầu
                         </>
                       )}

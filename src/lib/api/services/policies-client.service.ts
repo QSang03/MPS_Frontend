@@ -48,6 +48,8 @@ export const policiesClientService = {
   async getPolicies(params?: {
     page?: number
     limit?: number
+    sortBy?: string
+    sortOrder?: 'asc' | 'desc'
     search?: string
     effect?: string
     action?: string
@@ -59,6 +61,8 @@ export const policiesClientService = {
         search: params?.search,
         effect: params?.effect,
         action: params?.action,
+        sortBy: params?.sortBy,
+        sortOrder: params?.sortOrder,
       },
     })
     const { data, pagination } = response.data || { data: [], pagination: undefined }

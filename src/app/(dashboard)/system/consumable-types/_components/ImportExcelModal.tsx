@@ -17,7 +17,11 @@ import ExcelJS from 'exceljs'
 import { toast } from 'sonner'
 import { useQueryClient } from '@tanstack/react-query'
 
-export default function ImportExcelModal() {
+interface ImportExcelModalProps {
+  trigger?: React.ReactNode
+}
+
+export default function ImportExcelModal({ trigger }: ImportExcelModalProps = {}) {
   const [open, setOpen] = useState(false)
   const [file, setFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
@@ -133,12 +137,16 @@ export default function ImportExcelModal() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button className="gap-2 bg-white text-emerald-600 hover:bg-white/90">
-          <FileText className="h-4 w-4" />
-          Import Excel
-        </Button>
-      </DialogTrigger>
+      {trigger ? (
+        <DialogTrigger asChild>{trigger}</DialogTrigger>
+      ) : (
+        <DialogTrigger asChild>
+          <Button className="gap-2 bg-white text-emerald-600 hover:bg-white/90">
+            <FileText className="h-4 w-4" />
+            Import Excel
+          </Button>
+        </DialogTrigger>
+      )}
 
       <DialogContent className="max-w-[600px] overflow-hidden rounded-2xl border-0 p-0 shadow-2xl">
         <DialogHeader className="relative overflow-hidden bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 p-0">

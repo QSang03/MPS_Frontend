@@ -1,16 +1,19 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Suspense, useCallback, useEffect, useMemo, useState, useTransition } from 'react'
+import type { ReactNode } from 'react'
 import Link from 'next/link'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { ColumnDef } from '@tanstack/react-table'
 import { toast } from 'sonner'
-import { Loader2 } from 'lucide-react'
-import { DataTable } from '@/components/shared/DataTable/DataTable'
-import { Badge } from '@/components/ui/badge'
+import { Loader2, FileText, Info, Tag, Clock as ClockIcon, Server } from 'lucide-react'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { TableWrapper } from '@/components/system/TableWrapper'
 import { Input } from '@/components/ui/input'
+import { FilterSection } from '@/components/system/FilterSection'
+import { StatsCards } from '@/components/system/StatsCard'
 import {
   Select,
   SelectContent,
@@ -19,15 +22,13 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { CustomerSelect } from '@/components/shared/CustomerSelect'
-import { formatDateTime, formatRelativeTime } from '@/lib/utils/formatters'
-import { cn } from '@/lib/utils/cn'
+import { formatDateTime } from '@/lib/utils/formatters'
 import { serviceRequestsClientService } from '@/lib/api/services/service-requests-client.service'
 import { ServiceRequestStatus, Priority } from '@/constants/status'
 import type { ServiceRequest } from '@/types/models/service-request'
+import { useServiceRequestsQuery } from '@/lib/hooks/queries/useServiceRequestsQuery'
+import { TableSkeleton } from '@/components/system/TableSkeleton'
 type ServiceRequestRow = ServiceRequest
-
-type ServiceRequestsResponse = Awaited<ReturnType<typeof serviceRequestsClientService.getAll>>
-
 const statusOptions = [
   { label: 'Mở', value: ServiceRequestStatus.OPEN },
   { label: 'Đang xử lý', value: ServiceRequestStatus.IN_PROGRESS },
@@ -43,30 +44,13 @@ const priorityOptions = [
   { label: 'Khẩn cấp', value: Priority.URGENT },
 ]
 
-const priorityBadgeMap: Record<Priority, string> = {
-  [Priority.LOW]: 'bg-slate-100 text-slate-700',
-  [Priority.NORMAL]: 'bg-blue-100 text-blue-700',
-  [Priority.HIGH]: 'bg-orange-100 text-orange-700',
-  [Priority.URGENT]: 'bg-red-100 text-red-700',
-}
-
-const statusBadgeMap: Record<ServiceRequestStatus, string> = {
-  [ServiceRequestStatus.OPEN]: 'bg-blue-100 text-blue-700',
-  [ServiceRequestStatus.IN_PROGRESS]: 'bg-amber-100 text-amber-700',
-  [ServiceRequestStatus.RESOLVED]: 'bg-emerald-100 text-emerald-700',
-  [ServiceRequestStatus.CLOSED]: 'bg-slate-100 text-slate-600',
-}
+// Removed unused priorityBadgeMap and statusBadgeMap
 
 const renderTimestamp = (timestamp?: string) => {
   if (!timestamp) {
     return <span className="text-muted-foreground text-xs">—</span>
   }
-  return (
-    <div className="text-sm">
-      <p>{formatRelativeTime(timestamp)}</p>
-      <p className="text-muted-foreground text-xs">{formatDateTime(timestamp)}</p>
-    </div>
-  )
+  return <span className="text-sm">{formatDateTime(timestamp)}</span>
 }
 
 function useDebouncedValue<T>(value: T, delay = 400) {
@@ -86,41 +70,266 @@ export function ServiceRequestsTable() {
   const [statusFilter, setStatusFilter] = useState<ServiceRequestStatus | 'all'>('all')
   const [priorityFilter, setPriorityFilter] = useState<Priority | 'all'>('all')
   const [customerFilter, setCustomerFilter] = useState<string>('')
-  const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null)
+  const [sorting, setSorting] = useState<{ sortBy?: string; sortOrder?: 'asc' | 'desc' }>({
+    sortBy: 'createdAt',
+    sortOrder: 'desc',
+  })
+  const [columnVisibilityMenu, setColumnVisibilityMenu] = useState<ReactNode | null>(null)
+  const [summary, setSummary] = useState({
+    total: 0,
+    open: 0,
+    inProgress: 0,
+    resolved: 0,
+    urgent: 0,
+  })
 
-  const queryClient = useQueryClient()
   const debouncedSearch = useDebouncedValue(search, 400)
 
-  const listQuery = useQuery<ServiceRequestsResponse>({
-    queryKey: [
-      'system-requests-service',
-      {
-        pageIndex: pagination.pageIndex,
-        pageSize: pagination.pageSize,
-        search: debouncedSearch,
-        status: statusFilter,
-        priority: priorityFilter,
-        customerId: customerFilter,
-      },
-    ],
-    queryFn: () =>
-      serviceRequestsClientService.getAll({
-        page: pagination.pageIndex + 1,
-        limit: pagination.pageSize,
-        search: debouncedSearch || undefined,
-        status: statusFilter === 'all' ? undefined : statusFilter,
-        priority: priorityFilter === 'all' ? undefined : priorityFilter,
-        customerId: customerFilter || undefined,
-        sortBy: 'createdAt',
-        sortOrder: 'desc',
-      }),
-  })
+  const handleResetFilters = () => {
+    setSearch('')
+    setStatusFilter('all')
+    setPriorityFilter('all')
+    setCustomerFilter('')
+  }
+
+  const activeFilters: Array<{ label: string; value: string; onRemove: () => void }> = []
+  if (search) {
+    activeFilters.push({
+      label: `Tìm kiếm: "${search}"`,
+      value: search,
+      onRemove: () => setSearch(''),
+    })
+  }
+  if (statusFilter !== 'all') {
+    const statusLabel =
+      statusOptions.find((opt) => opt.value === statusFilter)?.label || statusFilter
+    activeFilters.push({
+      label: `Trạng thái: ${statusLabel}`,
+      value: statusFilter,
+      onRemove: () => setStatusFilter('all'),
+    })
+  }
+  if (priorityFilter !== 'all') {
+    const priorityLabel =
+      priorityOptions.find((opt) => opt.value === priorityFilter)?.label || priorityFilter
+    activeFilters.push({
+      label: `Ưu tiên: ${priorityLabel}`,
+      value: priorityFilter,
+      onRemove: () => setPriorityFilter('all'),
+    })
+  }
+  if (customerFilter) {
+    activeFilters.push({
+      label: `Khách hàng: ${customerFilter}`,
+      value: customerFilter,
+      onRemove: () => setCustomerFilter(''),
+    })
+  }
+
+  return (
+    <div className="space-y-6">
+      <StatsCards
+        cards={[
+          {
+            label: 'Tổng yêu cầu',
+            value: summary.total,
+            icon: <FileText className="h-6 w-6" />,
+            borderColor: 'blue',
+          },
+          {
+            label: 'Đang mở',
+            value: summary.open,
+            icon: <FileText className="h-6 w-6" />,
+            borderColor: 'blue',
+          },
+          {
+            label: 'Đang xử lý',
+            value: summary.inProgress,
+            icon: <FileText className="h-6 w-6" />,
+            borderColor: 'orange',
+          },
+          {
+            label: 'Đã xử lý',
+            value: summary.resolved,
+            icon: <FileText className="h-6 w-6" />,
+            borderColor: 'green',
+          },
+          {
+            label: 'Ưu tiên khẩn',
+            value: summary.urgent,
+            icon: <FileText className="h-6 w-6" />,
+            borderColor: 'red',
+          },
+        ]}
+        className="md:grid-cols-5"
+      />
+
+      <FilterSection
+        title="Bộ lọc & Tìm kiếm"
+        onReset={handleResetFilters}
+        activeFilters={activeFilters}
+        columnVisibilityMenu={columnVisibilityMenu}
+      >
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Tìm kiếm</label>
+            <Input
+              placeholder="Tìm kiếm tiêu đề, mô tả..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Trạng thái</label>
+            <Select
+              value={statusFilter}
+              onValueChange={(value) => setStatusFilter(value as ServiceRequestStatus | 'all')}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Tất cả trạng thái">
+                  {statusFilter === 'all'
+                    ? 'Tất cả trạng thái'
+                    : statusOptions.find((opt) => opt.value === statusFilter)?.label}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                {statusOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Ưu tiên</label>
+            <Select
+              value={priorityFilter}
+              onValueChange={(value) => setPriorityFilter(value as Priority | 'all')}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Tất cả ưu tiên">
+                  {priorityFilter === 'all'
+                    ? 'Tất cả ưu tiên'
+                    : priorityOptions.find((opt) => opt.value === priorityFilter)?.label}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {priorityOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Khách hàng</label>
+            <CustomerSelect
+              value={customerFilter}
+              onChange={(id) => setCustomerFilter(id)}
+              placeholder="Lọc theo khách hàng"
+            />
+          </div>
+        </div>
+      </FilterSection>
+
+      <Suspense fallback={<TableSkeleton rows={10} columns={10} />}>
+        <ServiceRequestsTableContent
+          pagination={pagination}
+          search={debouncedSearch}
+          searchInput={search}
+          statusFilter={statusFilter}
+          priorityFilter={priorityFilter}
+          customerFilter={customerFilter}
+          sorting={sorting}
+          onPaginationChange={setPagination}
+          onSortingChange={setSorting}
+          onStatsChange={setSummary}
+          renderColumnVisibilityMenu={setColumnVisibilityMenu}
+        />
+      </Suspense>
+    </div>
+  )
+}
+
+interface ServiceRequestsTableContentProps {
+  pagination: { pageIndex: number; pageSize: number }
+  search: string
+  searchInput: string
+  statusFilter: ServiceRequestStatus | 'all'
+  priorityFilter: Priority | 'all'
+  customerFilter: string
+  sorting: { sortBy?: string; sortOrder?: 'asc' | 'desc' }
+  onPaginationChange: (pagination: { pageIndex: number; pageSize: number }) => void
+  onSortingChange: (sorting: { sortBy?: string; sortOrder?: 'asc' | 'desc' }) => void
+  onStatsChange: (summary: {
+    total: number
+    open: number
+    inProgress: number
+    resolved: number
+    urgent: number
+  }) => void
+  renderColumnVisibilityMenu: (menu: ReactNode | null) => void
+}
+
+function ServiceRequestsTableContent({
+  pagination,
+  search,
+  searchInput,
+  statusFilter,
+  priorityFilter,
+  customerFilter,
+  sorting,
+  onPaginationChange,
+  onSortingChange,
+  onStatsChange,
+  renderColumnVisibilityMenu,
+}: ServiceRequestsTableContentProps) {
+  const queryClient = useQueryClient()
+  const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null)
+  const [isPending, startTransition] = useTransition()
+
+  const queryParams = useMemo(
+    () => ({
+      page: pagination.pageIndex + 1,
+      limit: pagination.pageSize,
+      search: search || undefined,
+      status: statusFilter === 'all' ? undefined : statusFilter,
+      priority: priorityFilter === 'all' ? undefined : priorityFilter,
+      customerId: customerFilter || undefined,
+      sortBy: sorting.sortBy || 'createdAt',
+      sortOrder: sorting.sortOrder || 'desc',
+    }),
+    [pagination, search, statusFilter, priorityFilter, customerFilter, sorting]
+  )
+
+  const { data } = useServiceRequestsQuery(queryParams)
+
+  const requests = useMemo(() => (data?.data ?? []) as ServiceRequestRow[], [data?.data])
+  const totalCount = data?.pagination?.total ?? requests.length
+
+  useEffect(() => {
+    const open = requests.filter((r) => r.status === ServiceRequestStatus.OPEN).length
+    const inProgress = requests.filter((r) => r.status === ServiceRequestStatus.IN_PROGRESS).length
+    const resolved = requests.filter((r) => r.status === ServiceRequestStatus.RESOLVED).length
+    const urgent = requests.filter((r) => r.priority === Priority.URGENT).length
+    onStatsChange({
+      total: totalCount,
+      open,
+      inProgress,
+      resolved,
+      urgent,
+    })
+  }, [requests, totalCount, onStatsChange])
 
   const mutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: ServiceRequestStatus }) =>
       serviceRequestsClientService.updateStatus(id, status),
     onSuccess: () => {
       toast.success('Cập nhật trạng thái thành công')
+      queryClient.invalidateQueries({ queryKey: ['service-requests', queryParams] })
       queryClient.invalidateQueries({ queryKey: ['system-requests-service'] })
     },
     onError: (error: unknown) => {
@@ -138,29 +347,26 @@ export function ServiceRequestsTable() {
     [mutation]
   )
 
-  const handleResetFilters = () => {
-    setSearch('')
-    setStatusFilter('all')
-    setPriorityFilter('all')
-    setCustomerFilter('')
-  }
-
-  const requests = (listQuery.data?.data ?? []) as ServiceRequestRow[]
-  const totalCount = listQuery.data?.pagination?.total ?? requests.length
-
-  const summary = {
-    total: totalCount,
-    open: requests.filter((r) => r.status === ServiceRequestStatus.OPEN).length,
-    inProgress: requests.filter((r) => r.status === ServiceRequestStatus.IN_PROGRESS).length,
-    resolved: requests.filter((r) => r.status === ServiceRequestStatus.RESOLVED).length,
-    urgent: requests.filter((r) => r.priority === Priority.URGENT).length,
-  }
-
   const columns = useMemo<ColumnDef<ServiceRequestRow>[]>(
     () => [
       {
         accessorKey: 'id',
-        header: 'Mã yêu cầu',
+        enableSorting: true,
+        header: () => (
+          <div className="flex items-center gap-2">
+            <span>Mã yêu cầu</span>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info className="text-muted-foreground h-4 w-4" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Mã rút gọn hiển thị 8 ký tự đầu</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        ),
         cell: ({ row }) => (
           <Link href={`/system/service-requests/${row.original.id}`} className="font-mono text-sm">
             #{row.original.id.slice(0, 8)}
@@ -169,6 +375,7 @@ export function ServiceRequestsTable() {
       },
       {
         accessorKey: 'title',
+        enableSorting: true,
         header: 'Tiêu đề',
         cell: ({ row }) => (
           <div className="max-w-[260px]">
@@ -206,26 +413,78 @@ export function ServiceRequestsTable() {
       },
       {
         accessorKey: 'respondedAt',
-        header: 'Phản hồi',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <span>Phản hồi</span>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <ClockIcon className="text-muted-foreground h-4 w-4" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Thời gian phản hồi (ngày giờ)</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        ),
         cell: ({ row }) => renderTimestamp(row.original.respondedAt ?? undefined),
       },
       {
         accessorKey: 'resolvedAt',
-        header: 'Giải quyết',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <span>Giải quyết</span>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <ClockIcon className="text-muted-foreground h-4 w-4" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Thời gian hoàn tất (ngày giờ)</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        ),
         cell: ({ row }) => renderTimestamp(row.original.resolvedAt ?? undefined),
       },
       {
         accessorKey: 'priority',
-        header: 'Ưu tiên',
-        cell: ({ row }) => (
-          <Badge className={cn('text-xs', priorityBadgeMap[row.original.priority])}>
-            {row.original.priority}
-          </Badge>
+        header: () => (
+          <div className="flex items-center gap-2">
+            <span>Ưu tiên</span>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Tag className="text-muted-foreground h-4 w-4" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Mức độ ưu tiên yêu cầu</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
         ),
+        cell: ({ row }) => <StatusBadge priority={row.original.priority} />,
       },
       {
         accessorKey: 'status',
-        header: 'Trạng thái',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <span>Trạng thái</span>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Server className="text-muted-foreground h-4 w-4" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Trạng thái hiện tại của yêu cầu</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        ),
         cell: ({ row }) => (
           <Select
             value={row.original.status}
@@ -236,9 +495,7 @@ export function ServiceRequestsTable() {
           >
             <SelectTrigger className="h-9 w-[180px] justify-between">
               <SelectValue placeholder="Chọn trạng thái">
-                <Badge className={cn('text-xs', statusBadgeMap[row.original.status])}>
-                  {row.original.status}
-                </Badge>
+                <StatusBadge serviceStatus={row.original.status} />
               </SelectValue>
               {statusUpdatingId === row.original.id && mutation.isPending && (
                 <Loader2 className="text-muted-foreground h-4 w-4 animate-spin" />
@@ -256,15 +513,23 @@ export function ServiceRequestsTable() {
       },
       {
         accessorKey: 'createdAt',
-        header: 'Ngày tạo',
-        cell: ({ row }) => (
-          <div className="text-sm">
-            <p>{new Date(row.original.createdAt).toLocaleDateString('vi-VN')}</p>
-            <p className="text-muted-foreground text-xs">
-              {formatRelativeTime(row.original.createdAt)}
-            </p>
+        enableSorting: true,
+        header: () => (
+          <div className="flex items-center gap-2">
+            <span>Ngày tạo</span>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <ClockIcon className="text-muted-foreground h-4 w-4" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Ngày và giờ tạo yêu cầu</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         ),
+        cell: ({ row }) => <div className="text-sm">{formatDateTime(row.original.createdAt)}</div>,
       },
       {
         id: 'actions',
@@ -280,116 +545,42 @@ export function ServiceRequestsTable() {
   )
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-muted-foreground text-sm">Tổng yêu cầu</p>
-            <p className="text-2xl font-bold">{summary.total}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-muted-foreground text-sm">Đang mở</p>
-            <p className="text-2xl font-bold text-blue-600">{summary.open}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-muted-foreground text-sm">Đang xử lý</p>
-            <p className="text-2xl font-bold text-amber-600">{summary.inProgress}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-muted-foreground text-sm">Đã xử lý</p>
-            <p className="text-2xl font-bold text-emerald-600">{summary.resolved}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-muted-foreground text-sm">Ưu tiên khẩn</p>
-            <p className="text-2xl font-bold text-red-600">{summary.urgent}</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-3">
-        <Input
-          placeholder="Tìm kiếm tiêu đề, mô tả..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full max-w-xs"
-        />
-        <Select
-          value={statusFilter}
-          onValueChange={(value) => setStatusFilter(value as ServiceRequestStatus | 'all')}
-        >
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Trạng thái">
-              {statusFilter === 'all'
-                ? 'Tất cả trạng thái'
-                : statusOptions.find((opt) => opt.value === statusFilter)?.label}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tất cả trạng thái</SelectItem>
-            {statusOptions.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select
-          value={priorityFilter}
-          onValueChange={(value) => setPriorityFilter(value as Priority | 'all')}
-        >
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Ưu tiên">
-              {priorityFilter === 'all'
-                ? 'Tất cả ưu tiên'
-                : priorityOptions.find((opt) => opt.value === priorityFilter)?.label}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            {priorityOptions.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <div className="w-full max-w-xs">
-          <CustomerSelect
-            value={customerFilter}
-            onChange={(id) => setCustomerFilter(id)}
-            placeholder="Lọc theo khách hàng"
-          />
-        </div>
-
-        <Button variant="ghost" onClick={handleResetFilters}>
-          Xóa bộ lọc
-        </Button>
-      </div>
-
-      <DataTable<ServiceRequestRow, unknown>
-        columns={columns}
-        data={requests}
-        totalCount={totalCount}
-        pageIndex={pagination.pageIndex}
-        pageSize={pagination.pageSize}
-        onPaginationChange={setPagination}
-        isLoading={listQuery.isLoading}
-      />
-      {listQuery.isFetching && (
-        <div className="text-muted-foreground flex items-center gap-2 text-sm">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          Đang tải dữ liệu...
-        </div>
-      )}
-    </div>
+    <TableWrapper<ServiceRequestRow>
+      tableId="service-requests"
+      columns={columns}
+      data={requests}
+      totalCount={totalCount}
+      pageIndex={pagination.pageIndex}
+      pageSize={pagination.pageSize}
+      onPaginationChange={(next) => {
+        startTransition(() => {
+          onPaginationChange(next)
+        })
+      }}
+      onSortingChange={(nextSorting) => {
+        startTransition(() => {
+          onSortingChange(nextSorting)
+        })
+      }}
+      sorting={sorting}
+      defaultSorting={{ sortBy: 'createdAt', sortOrder: 'desc' }}
+      enableColumnVisibility
+      renderColumnVisibilityMenu={renderColumnVisibilityMenu}
+      isPending={isPending}
+      emptyState={
+        requests.length === 0 ? (
+          <div className="p-12 text-center">
+            <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200">
+              <FileText className="h-8 w-8 text-gray-400" />
+            </div>
+            <h3 className="mb-2 text-xl font-bold text-gray-700">Không có yêu cầu dịch vụ</h3>
+            <p className="text-gray-500">
+              {searchInput ? 'Không tìm thấy yêu cầu phù hợp' : 'Hãy tạo yêu cầu đầu tiên'}
+            </p>
+          </div>
+        ) : undefined
+      }
+      skeletonRows={10}
+    />
   )
 }

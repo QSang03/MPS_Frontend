@@ -240,7 +240,7 @@ export default function DeviceDetailClient({ deviceId, backHref }: Props) {
               </Link>
             </div>
             <div className="flex items-center gap-4">
-              <Monitor className="h-10 w-10" />
+              <Monitor className="h-10 w-10 text-white" />
               <div>
                 <h1 className="text-3xl font-bold">Thiết bị {device.serialNumber}</h1>
                 <p className="mt-1 text-white/80">
@@ -262,7 +262,7 @@ export default function DeviceDetailClient({ deviceId, backHref }: Props) {
                 className="gap-2 bg-white text-black"
                 title="Ghi/Chỉnh sửa snapshot A4"
               >
-                <BarChart3 className="h-4 w-4 text-black" />
+                <BarChart3 className="h-4 w-4 text-black dark:text-white" />
                 A4
               </Button>
             </ActionGuard>
@@ -276,7 +276,7 @@ export default function DeviceDetailClient({ deviceId, backHref }: Props) {
               }}
             >
               <Button variant="secondary" size="sm" className="gap-2">
-                <FileText className="h-4 w-4" />
+                <FileText className="h-4 w-4 text-black dark:text-white" />
                 Tạo yêu cầu
               </Button>
             </ServiceRequestFormModal>
@@ -289,7 +289,7 @@ export default function DeviceDetailClient({ deviceId, backHref }: Props) {
                   onClick={() => setShowEdit(true)}
                   className="gap-2"
                 >
-                  <Edit className="h-4 w-4" />
+                  <Edit className="h-4 w-4 text-black dark:text-white" />
                   Chỉnh sửa
                 </Button>
               </ActionGuard>
@@ -325,7 +325,7 @@ export default function DeviceDetailClient({ deviceId, backHref }: Props) {
                   }}
                   trigger={
                     <Button variant="destructive" size="sm" className="gap-2">
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-4 w-4 text-black dark:text-white" />
                       Xóa
                     </Button>
                   }
@@ -352,15 +352,15 @@ export default function DeviceDetailClient({ deviceId, backHref }: Props) {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="mb-6 grid w-full grid-cols-3">
           <TabsTrigger value="overview" className="flex items-center gap-2">
-            <Info className="h-4 w-4" />
+            <Info className="h-4 w-4 text-black dark:text-white" />
             Tổng quan
           </TabsTrigger>
           <TabsTrigger value="consumables" className="flex items-center gap-2">
-            <Package className="h-4 w-4" />
+            <Package className="h-4 w-4 text-black dark:text-white" />
             Vật tư
           </TabsTrigger>
           <TabsTrigger value="maintenance" className="flex items-center gap-2">
-            <Wrench className="h-4 w-4" />
+            <Wrench className="h-4 w-4 text-black dark:text-white" />
             Bảo trì
           </TabsTrigger>
         </TabsList>
@@ -370,7 +370,7 @@ export default function DeviceDetailClient({ deviceId, backHref }: Props) {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Wifi className="h-5 w-5 text-blue-600" />
+                  <Wifi className="h-5 w-5 text-black dark:text-white" />
                   Thông tin mạng
                 </CardTitle>
                 <CardDescription>Cấu hình kết nối và địa chỉ</CardDescription>
@@ -384,7 +384,7 @@ export default function DeviceDetailClient({ deviceId, backHref }: Props) {
                         {device.ipAddress || 'Chưa cấu hình'}
                       </p>
                     </div>
-                    <Wifi className="h-5 w-5 text-blue-600" />
+                    <Wifi className="h-5 w-5 text-black dark:text-white" />
                   </div>
 
                   <div className="flex items-start justify-between rounded-lg bg-purple-50 p-3">
@@ -394,7 +394,7 @@ export default function DeviceDetailClient({ deviceId, backHref }: Props) {
                         {device.macAddress || 'Chưa có thông tin'}
                       </p>
                     </div>
-                    <Box className="h-5 w-5 text-purple-600" />
+                    <Box className="h-5 w-5 text-black dark:text-white" />
                   </div>
 
                   <div className="flex items-start justify-between rounded-lg bg-green-50 p-3">
@@ -404,7 +404,7 @@ export default function DeviceDetailClient({ deviceId, backHref }: Props) {
                         {device.firmware || 'N/A'}
                       </p>
                     </div>
-                    <Monitor className="h-5 w-5 text-green-600" />
+                    <Monitor className="h-5 w-5 text-black dark:text-white" />
                   </div>
                 </div>
               </CardContent>
@@ -413,7 +413,7 @@ export default function DeviceDetailClient({ deviceId, backHref }: Props) {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Monitor className="h-5 w-5 text-teal-600" />
+                  <Monitor className="h-5 w-5 text-black dark:text-white" />
                   Thông tin thiết bị
                 </CardTitle>
                 <CardDescription>Chi tiết và trạng thái</CardDescription>
@@ -425,7 +425,7 @@ export default function DeviceDetailClient({ deviceId, backHref }: Props) {
                       <p className="text-muted-foreground mb-1 text-sm font-medium">Số Serial</p>
                       <p className="text-base font-semibold text-teal-700">{device.serialNumber}</p>
                     </div>
-                    <Box className="h-5 w-5 text-teal-600" />
+                    <Box className="h-5 w-5 text-black dark:text-white" />
                   </div>
 
                   <div className="flex items-start justify-between rounded-lg bg-orange-50 p-3">
@@ -435,7 +435,7 @@ export default function DeviceDetailClient({ deviceId, backHref }: Props) {
                         {device.location || 'Chưa xác định'}
                       </p>
                     </div>
-                    <MapPin className="h-5 w-5 text-orange-600" />
+                    <MapPin className="h-5 w-5 text-black dark:text-white" />
                   </div>
 
                   <div className="flex items-start justify-between rounded-lg bg-indigo-50 p-3">
@@ -449,7 +449,7 @@ export default function DeviceDetailClient({ deviceId, backHref }: Props) {
                           : 'Chưa có dữ liệu'}
                       </p>
                     </div>
-                    <Calendar className="h-5 w-5 text-indigo-600" />
+                    <Calendar className="h-5 w-5 text-black dark:text-white" />
                   </div>
                 </div>
               </CardContent>
@@ -463,7 +463,7 @@ export default function DeviceDetailClient({ deviceId, backHref }: Props) {
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="flex items-center gap-2">
-                    <Package className="h-5 w-5 text-emerald-600" />
+                    <Package className="h-5 w-5 text-black dark:text-white" />
                     Vật tư đã lắp
                   </CardTitle>
                   <CardDescription className="mt-1">
@@ -486,11 +486,11 @@ export default function DeviceDetailClient({ deviceId, backHref }: Props) {
             <CardContent>
               {consumablesLoading ? (
                 <div className="flex items-center justify-center p-8">
-                  <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                  <Loader2 className="h-8 w-8 animate-spin text-black dark:text-white" />
                 </div>
               ) : installedConsumables.length === 0 ? (
                 <div className="text-muted-foreground p-8 text-center">
-                  <Package className="mx-auto mb-3 h-12 w-12 opacity-20" />
+                  <Package className="mx-auto mb-3 h-12 w-12 text-black opacity-20 dark:text-white" />
                   <p>Chưa có vật tư nào được lắp đặt</p>
                 </div>
               ) : (
@@ -611,7 +611,7 @@ export default function DeviceDetailClient({ deviceId, backHref }: Props) {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Wrench className="h-5 w-5 text-rose-600" /> Lịch sử bảo trì
+                <Wrench className="h-5 w-5 text-black dark:text-white" /> Lịch sử bảo trì
               </CardTitle>
               <CardDescription>Thông tin bảo trì và bảo dưỡng thiết bị</CardDescription>
             </CardHeader>
@@ -626,7 +626,7 @@ export default function DeviceDetailClient({ deviceId, backHref }: Props) {
                   <div className="rounded-xl border border-rose-200 bg-gradient-to-br from-rose-50 to-pink-50 p-6">
                     <div className="mb-3 flex items-center gap-3">
                       <div className="rounded-lg bg-rose-100 p-2">
-                        <Calendar className="h-5 w-5 text-rose-600" />
+                        <Calendar className="h-5 w-5 text-black dark:text-white" />
                       </div>
                       <h4 className="font-semibold text-rose-900">Bảo trì lần cuối</h4>
                     </div>
@@ -640,7 +640,7 @@ export default function DeviceDetailClient({ deviceId, backHref }: Props) {
                   <div className="rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50 to-cyan-50 p-6">
                     <div className="mb-3 flex items-center gap-3">
                       <div className="rounded-lg bg-blue-100 p-2">
-                        <Calendar className="h-5 w-5 text-blue-600" />
+                        <Calendar className="h-5 w-5 text-black dark:text-white" />
                       </div>
                       <h4 className="font-semibold text-blue-900">Bảo trì lần tiếp theo</h4>
                     </div>

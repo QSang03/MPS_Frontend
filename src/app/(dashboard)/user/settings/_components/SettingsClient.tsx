@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { changePasswordForClient } from '@/lib/auth/server-actions'
 import { getUserProfileForClient } from '@/lib/auth/server-actions'
-import { Card, CardContent, CardDescription, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardTitle, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -292,8 +292,8 @@ export function SettingsClient({ initialProfile, initialTab = 'account' }: Setti
         </Alert>
       )}
 
-      {/* Tab Navigation - Premium */}
-      <div className="border-b-2 border-gray-200">
+      {/* Tab Navigation */}
+      <div className="border-border border-b">
         <nav className="-mb-px flex space-x-8 overflow-x-auto">
           {tabs.map((tab) => {
             const Icon = tab.icon
@@ -301,13 +301,13 @@ export function SettingsClient({ initialProfile, initialTab = 'account' }: Setti
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as 'account' | 'password' | 'notifications')}
-                className={`flex items-center gap-2 border-b-2 px-1 py-4 text-sm font-bold whitespace-nowrap transition-all duration-300 ${
+                className={`flex items-center gap-2 border-b-2 px-1 py-4 text-sm font-medium whitespace-nowrap transition-all duration-300 ${
                   activeTab === tab.id
-                    ? 'border-purple-600 text-purple-600'
-                    : 'border-transparent text-gray-600 hover:text-purple-500'
+                    ? 'border-primary text-primary'
+                    : 'text-muted-foreground hover:text-foreground border-transparent'
                 }`}
               >
-                <Icon className="h-5 w-5" />
+                <Icon className="h-4 w-4" />
                 {tab.label}
               </button>
             )
@@ -319,122 +319,86 @@ export function SettingsClient({ initialProfile, initialTab = 'account' }: Setti
       <div className="space-y-6">
         {/* Account Settings */}
         {activeTab === 'account' && (
-          <div className="overflow-hidden rounded-3xl border-0 shadow-xl">
-            <div className="relative overflow-hidden bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 p-0">
-              <div className="absolute inset-0 opacity-20">
-                <div className="absolute top-0 right-0 h-40 w-40 translate-x-1/2 -translate-y-1/2 rounded-full bg-white"></div>
-              </div>
-              <div className="relative px-8 py-6">
-                <CardTitle className="flex items-center gap-2 text-2xl font-bold text-white">
-                  <User className="h-6 w-6" />
-                  👤 Thông tin tài khoản
-                </CardTitle>
-                <CardDescription className="mt-2 text-sm text-pink-100">
-                  Cập nhật thông tin cá nhân của bạn
-                </CardDescription>
-              </div>
-            </div>
-            <CardContent className="space-y-6 bg-gradient-to-b from-gray-50 to-white p-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <User className="h-5 w-5" />
+                Thông tin tài khoản
+              </CardTitle>
+              <CardDescription>Cập nhật thông tin cá nhân của bạn</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
               <div className="grid gap-4 md:grid-cols-2">
                 {/* Email */}
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-sm font-bold text-gray-700">
-                    📧 Email
-                  </Label>
+                  <Label htmlFor="email">Email</Label>
                   <div className="flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-gray-400" />
-                    <Input
-                      id="email"
-                      value={profile.user.email}
-                      disabled
-                      className="rounded-2xl border-2 border-gray-200 bg-gray-50"
-                    />
+                    <Mail className="text-muted-foreground h-4 w-4" />
+                    <Input id="email" value={profile.user.email} disabled className="bg-muted" />
                   </div>
-                  <p className="text-xs text-gray-500">💡 Email không thể thay đổi</p>
+                  <p className="text-muted-foreground text-xs">Email không thể thay đổi</p>
                 </div>
 
                 {/* Username */}
                 <div className="space-y-2">
-                  <Label htmlFor="username" className="text-sm font-bold text-gray-700">
-                    👤 Tên đăng nhập
-                  </Label>
+                  <Label htmlFor="username">Tên đăng nhập</Label>
                   <Input
                     id="username"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     placeholder="Nhập tên đăng nhập"
-                    className="rounded-2xl border-2 border-gray-200 transition-all focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
                   />
                 </div>
 
                 {/* First Name */}
                 <div className="space-y-2">
-                  <Label htmlFor="firstName" className="text-sm font-bold text-gray-700">
-                    📝 Tên
-                  </Label>
+                  <Label htmlFor="firstName">Tên</Label>
                   <Input
                     id="firstName"
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
                     placeholder="Nhập tên"
-                    className="rounded-2xl border-2 border-gray-200 transition-all focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
                   />
                 </div>
 
                 {/* Last Name */}
                 <div className="space-y-2">
-                  <Label htmlFor="lastName" className="text-sm font-bold text-gray-700">
-                    📝 Họ
-                  </Label>
+                  <Label htmlFor="lastName">Họ</Label>
                   <Input
                     id="lastName"
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
                     placeholder="Nhập họ"
-                    className="rounded-2xl border-2 border-gray-200 transition-all focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
                   />
                 </div>
               </div>
 
-              <Separator className="my-6 h-1 bg-gradient-to-r from-purple-200 to-pink-200" />
+              <Separator />
 
               <div className="flex justify-end">
-                <Button
-                  onClick={handleSaveAccount}
-                  disabled={isLoading}
-                  className="rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 px-6 font-bold text-white shadow-lg transition-all hover:from-purple-700 hover:to-pink-700 hover:shadow-xl"
-                >
-                  <Save className="mr-2 h-5 w-5" />
-                  {isLoading ? '⏳ Đang lưu...' : ' Lưu thay đổi'}
+                <Button onClick={handleSaveAccount} disabled={isLoading}>
+                  <Save className="mr-2 h-4 w-4" />
+                  {isLoading ? 'Đang lưu...' : 'Lưu thay đổi'}
                 </Button>
               </div>
             </CardContent>
-          </div>
+          </Card>
         )}
 
         {/* Password Settings */}
         {activeTab === 'password' && (
-          <div className="overflow-hidden rounded-3xl border-0 shadow-xl">
-            <div className="relative overflow-hidden bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600 p-0">
-              <div className="absolute inset-0 opacity-20">
-                <div className="absolute top-0 left-0 h-40 w-40 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white"></div>
-              </div>
-              <div className="relative px-8 py-6">
-                <CardTitle className="flex items-center gap-2 text-2xl font-bold text-white">
-                  <Key className="h-6 w-6" />
-                  🔐 Đổi mật khẩu
-                </CardTitle>
-                <CardDescription className="mt-2 text-sm text-cyan-100">
-                  Thay đổi mật khẩu để bảo mật tài khoản
-                </CardDescription>
-              </div>
-            </div>
-            <CardContent className="space-y-6 bg-gradient-to-b from-gray-50 to-white p-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Key className="h-5 w-5" />
+                Đổi mật khẩu
+              </CardTitle>
+              <CardDescription>Thay đổi mật khẩu để bảo mật tài khoản</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
               {/* Current Password */}
               <div className="space-y-2">
-                <Label htmlFor="currentPassword" className="text-sm font-bold text-gray-700">
-                  🔑 Mật khẩu hiện tại
-                </Label>
+                <Label htmlFor="currentPassword">Mật khẩu hiện tại</Label>
                 <div className="relative">
                   <Input
                     id="currentPassword"
@@ -442,14 +406,10 @@ export function SettingsClient({ initialProfile, initialTab = 'account' }: Setti
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
                     placeholder="Nhập mật khẩu hiện tại"
-                    className={`rounded-2xl border-2 pr-10 transition-all ${
-                      currentPasswordError
-                        ? 'border-red-500 focus:ring-2 focus:ring-red-200'
-                        : 'border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200'
-                    }`}
+                    className={currentPasswordError ? 'border-destructive' : ''}
                   />
                   {currentPasswordError && (
-                    <p className="mt-1 text-sm font-semibold text-red-600">
+                    <p className="text-destructive mt-1 text-sm font-medium">
                       {currentPasswordError}
                     </p>
                   )}
@@ -461,9 +421,9 @@ export function SettingsClient({ initialProfile, initialTab = 'account' }: Setti
                     onClick={() => setShowCurrentPassword(!showCurrentPassword)}
                   >
                     {showCurrentPassword ? (
-                      <EyeOff className="h-4 w-4 text-gray-500" />
+                      <EyeOff className="text-muted-foreground h-4 w-4" />
                     ) : (
-                      <Eye className="h-4 w-4 text-gray-500" />
+                      <Eye className="text-muted-foreground h-4 w-4" />
                     )}
                   </Button>
                 </div>
@@ -471,9 +431,7 @@ export function SettingsClient({ initialProfile, initialTab = 'account' }: Setti
 
               {/* New Password */}
               <div className="space-y-2">
-                <Label htmlFor="newPassword" className="text-sm font-bold text-gray-700">
-                  ✨ Mật khẩu mới
-                </Label>
+                <Label htmlFor="newPassword">Mật khẩu mới</Label>
                 <div className="relative">
                   <Input
                     id="newPassword"
@@ -481,14 +439,10 @@ export function SettingsClient({ initialProfile, initialTab = 'account' }: Setti
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     placeholder="Nhập mật khẩu mới"
-                    className={`rounded-2xl border-2 pr-10 transition-all ${
-                      newPasswordError
-                        ? 'border-red-500 focus:ring-2 focus:ring-red-200'
-                        : 'border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200'
-                    }`}
+                    className={newPasswordError ? 'border-destructive' : ''}
                   />
                   {newPasswordError && (
-                    <p className="mt-1 text-sm font-semibold text-red-600">{newPasswordError}</p>
+                    <p className="text-destructive mt-1 text-sm font-medium">{newPasswordError}</p>
                   )}
                   <Button
                     type="button"
@@ -498,9 +452,9 @@ export function SettingsClient({ initialProfile, initialTab = 'account' }: Setti
                     onClick={() => setShowNewPassword(!showNewPassword)}
                   >
                     {showNewPassword ? (
-                      <EyeOff className="h-4 w-4 text-gray-500" />
+                      <EyeOff className="text-muted-foreground h-4 w-4" />
                     ) : (
-                      <Eye className="h-4 w-4 text-gray-500" />
+                      <Eye className="text-muted-foreground h-4 w-4" />
                     )}
                   </Button>
                 </div>
@@ -508,9 +462,7 @@ export function SettingsClient({ initialProfile, initialTab = 'account' }: Setti
 
               {/* Confirm Password */}
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword" className="text-sm font-bold text-gray-700">
-                  ✅ Xác nhận mật khẩu mới
-                </Label>
+                <Label htmlFor="confirmPassword">Xác nhận mật khẩu mới</Label>
                 <div className="relative">
                   <Input
                     id="confirmPassword"
@@ -518,14 +470,10 @@ export function SettingsClient({ initialProfile, initialTab = 'account' }: Setti
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Nhập lại mật khẩu mới"
-                    className={`rounded-2xl border-2 pr-10 transition-all ${
-                      confirmPasswordError
-                        ? 'border-red-500 focus:ring-2 focus:ring-red-200'
-                        : 'border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200'
-                    }`}
+                    className={confirmPasswordError ? 'border-destructive' : ''}
                   />
                   {confirmPasswordError && (
-                    <p className="mt-1 text-sm font-semibold text-red-600">
+                    <p className="text-destructive mt-1 text-sm font-medium">
                       {confirmPasswordError}
                     </p>
                   )}
@@ -537,72 +485,61 @@ export function SettingsClient({ initialProfile, initialTab = 'account' }: Setti
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   >
                     {showConfirmPassword ? (
-                      <EyeOff className="h-4 w-4 text-gray-500" />
+                      <EyeOff className="text-muted-foreground h-4 w-4" />
                     ) : (
-                      <Eye className="h-4 w-4 text-gray-500" />
+                      <Eye className="text-muted-foreground h-4 w-4" />
                     )}
                   </Button>
                 </div>
               </div>
 
-              <div className="rounded-2xl border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-cyan-50 p-4">
-                <p className="text-xs text-gray-700">
-                  <span className="font-bold text-blue-700">💡 Yêu cầu mật khẩu:</span> Ít nhất 8 ký
-                  tự, chứa chữ thường, chữ hoa và số
+              <div className="bg-muted/50 rounded-lg border p-4">
+                <p className="text-muted-foreground text-xs">
+                  <span className="font-bold">Yêu cầu mật khẩu:</span> Ít nhất 8 ký tự, chứa chữ
+                  thường, chữ hoa và số
                 </p>
               </div>
 
-              <Separator className="my-6 h-1 bg-gradient-to-r from-blue-200 to-cyan-200" />
+              <Separator />
 
               <div className="flex justify-end">
-                <Button
-                  onClick={handleChangePassword}
-                  disabled={isLoading}
-                  className="rounded-2xl bg-gradient-to-r from-blue-600 to-cyan-600 px-6 font-bold text-white shadow-lg transition-all hover:from-blue-700 hover:to-cyan-700 hover:shadow-xl"
-                >
-                  <Key className="mr-2 h-5 w-5" />
-                  {isLoading ? '⏳ Đang đổi...' : '🔐 Đổi mật khẩu'}
+                <Button onClick={handleChangePassword} disabled={isLoading}>
+                  <Key className="mr-2 h-4 w-4" />
+                  {isLoading ? 'Đang đổi...' : 'Đổi mật khẩu'}
                 </Button>
               </div>
             </CardContent>
-          </div>
+          </Card>
         )}
 
         {/* Notification Settings */}
         {activeTab === 'notifications' && (
-          <div className="overflow-hidden rounded-3xl border-0 shadow-xl">
-            <div className="relative overflow-hidden bg-gradient-to-r from-amber-600 via-orange-600 to-red-600 p-0">
-              <div className="absolute inset-0 opacity-20">
-                <div className="absolute bottom-0 left-0 h-40 w-40 -translate-x-1/2 translate-y-1/2 rounded-full bg-white"></div>
-              </div>
-              <div className="relative px-8 py-6">
-                <CardTitle className="flex items-center gap-2 text-2xl font-bold text-white">
-                  <Bell className="h-6 w-6" />
-                  🔔 Cài đặt thông báo
-                </CardTitle>
-                <CardDescription className="mt-2 text-sm text-orange-100">
-                  Quản lý cách bạn nhận thông báo qua email
-                </CardDescription>
-              </div>
-            </div>
-            <CardContent className="space-y-6 bg-gradient-to-b from-gray-50 to-white p-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bell className="h-5 w-5" />
+                Cài đặt thông báo
+              </CardTitle>
+              <CardDescription>Quản lý cách bạn nhận thông báo qua email</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
               <div className="space-y-4">
                 {/* Email Notifications */}
-                <div className="flex items-center justify-between rounded-2xl border-2 border-gray-200 bg-white p-4 transition-all duration-300 hover:border-amber-300 hover:bg-amber-50">
+                <div className="flex items-center justify-between rounded-lg border p-4">
                   <div className="flex-1 space-y-0.5">
-                    <Label className="text-sm font-bold text-gray-800">
-                      📧 Thông báo email chung
-                    </Label>
-                    <p className="text-sm text-gray-600">Nhận thông báo quan trọng qua email</p>
+                    <Label className="text-base">Thông báo email chung</Label>
+                    <p className="text-muted-foreground text-sm">
+                      Nhận thông báo quan trọng qua email
+                    </p>
                   </div>
                   <Switch checked={emailNotifications} onCheckedChange={setEmailNotifications} />
                 </div>
 
                 {/* Login Alerts */}
-                <div className="flex items-center justify-between rounded-2xl border-2 border-gray-200 bg-white p-4 transition-all duration-300 hover:border-red-300 hover:bg-red-50">
+                <div className="flex items-center justify-between rounded-lg border p-4">
                   <div className="flex-1 space-y-0.5">
-                    <Label className="text-sm font-bold text-gray-800">🚨 Cảnh báo đăng nhập</Label>
-                    <p className="text-sm text-gray-600">
+                    <Label className="text-base">Cảnh báo đăng nhập</Label>
+                    <p className="text-muted-foreground text-sm">
                       Thông báo khi có đăng nhập từ thiết bị mới
                     </p>
                   </div>
@@ -610,10 +547,10 @@ export function SettingsClient({ initialProfile, initialTab = 'account' }: Setti
                 </div>
 
                 {/* System Updates */}
-                <div className="flex items-center justify-between rounded-2xl border-2 border-gray-200 bg-white p-4 transition-all duration-300 hover:border-blue-300 hover:bg-blue-50">
+                <div className="flex items-center justify-between rounded-lg border p-4">
                   <div className="flex-1 space-y-0.5">
-                    <Label className="text-sm font-bold text-gray-800">⚙️ Cập nhật hệ thống</Label>
-                    <p className="text-sm text-gray-600">
+                    <Label className="text-base">Cập nhật hệ thống</Label>
+                    <p className="text-muted-foreground text-sm">
                       Thông báo về cập nhật và bảo trì hệ thống
                     </p>
                   </div>
@@ -621,29 +558,27 @@ export function SettingsClient({ initialProfile, initialTab = 'account' }: Setti
                 </div>
 
                 {/* Marketing Emails */}
-                <div className="flex items-center justify-between rounded-2xl border-2 border-gray-200 bg-white p-4 transition-all duration-300 hover:border-green-300 hover:bg-green-50">
+                <div className="flex items-center justify-between rounded-lg border p-4">
                   <div className="flex-1 space-y-0.5">
-                    <Label className="text-sm font-bold text-gray-800">📢 Email marketing</Label>
-                    <p className="text-sm text-gray-600">Nhận email về sản phẩm và dịch vụ mới</p>
+                    <Label className="text-base">Email marketing</Label>
+                    <p className="text-muted-foreground text-sm">
+                      Nhận email về sản phẩm và dịch vụ mới
+                    </p>
                   </div>
                   <Switch checked={marketingEmails} onCheckedChange={setMarketingEmails} />
                 </div>
               </div>
 
-              <Separator className="my-6 h-1 bg-gradient-to-r from-amber-200 to-orange-200" />
+              <Separator />
 
               <div className="flex justify-end">
-                <Button
-                  onClick={handleSaveNotifications}
-                  disabled={isLoading}
-                  className="rounded-2xl bg-gradient-to-r from-amber-600 to-orange-600 px-6 font-bold text-white shadow-lg transition-all hover:from-amber-700 hover:to-orange-700 hover:shadow-xl"
-                >
-                  <Save className="mr-2 h-5 w-5" />
-                  {isLoading ? '⏳ Đang lưu...' : '💾 Lưu cài đặt'}
+                <Button onClick={handleSaveNotifications} disabled={isLoading}>
+                  <Save className="mr-2 h-4 w-4" />
+                  {isLoading ? 'Đang lưu...' : 'Lưu cài đặt'}
                 </Button>
               </div>
             </CardContent>
-          </div>
+          </Card>
         )}
       </div>
     </div>

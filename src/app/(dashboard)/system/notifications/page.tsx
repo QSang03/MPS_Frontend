@@ -1,15 +1,16 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Bell } from 'lucide-react'
+import { SystemPageLayout } from '@/components/system/SystemPageLayout'
+import { SystemPageHeader } from '@/components/system/SystemPageHeader'
 
 export default function NotificationsPage() {
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Thông báo hệ thống</h1>
-        <p className="text-muted-foreground">
-          Xem lại tất cả các cảnh báo và thông báo từ hệ thống
-        </p>
-      </div>
+    <SystemPageLayout>
+      <SystemPageHeader
+        title="Thông báo hệ thống"
+        subtitle="Xem lại tất cả các cảnh báo và thông báo từ hệ thống"
+        icon={<Bell className="h-6 w-6" />}
+      />
 
       <Card>
         <CardHeader>
@@ -25,6 +26,6 @@ export default function NotificationsPage() {
           </div>
         </CardContent>
       </Card>
-    </div>
+    </SystemPageLayout>
   )
 }

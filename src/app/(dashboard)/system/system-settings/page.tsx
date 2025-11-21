@@ -21,8 +21,13 @@ import SystemSettingFormModal from './_components/SystemSettingFormModal'
 import SystemSettingDetailModal from './_components/SystemSettingDetailModal'
 import { useActionPermission } from '@/lib/hooks/useActionPermission'
 import { ActionGuard } from '@/components/shared/ActionGuard'
-import { Settings, Search, Filter, Eye, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react'
+import { Settings, Search, Eye, RefreshCw, Edit } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { SystemPageLayout } from '@/components/system/SystemPageLayout'
+import { SystemPageHeader } from '@/components/system/SystemPageHeader'
+import { FilterSection } from '@/components/system/FilterSection'
+import { PaginationControls } from '@/components/system/PaginationControls'
+import { StatsCards } from '@/components/system/StatsCard'
 
 export default function SystemSettingsPage() {
   const { can } = useActionPermission('system-settings')
@@ -84,91 +89,144 @@ export default function SystemSettingsPage() {
     }
   }
 
+  const activeFilters = []
+  if (query.key) {
+    activeFilters.push({
+      label: `Tìm kiếm: "${query.key}"`,
+      value: query.key,
+      onRemove: () => handleSearch(''),
+    })
+  }
+  if (query.type) {
+    activeFilters.push({
+      label: `Loại: ${query.type}`,
+      value: query.type,
+      onRemove: () => handleTypeFilter('all'),
+    })
+  }
+  if (query.isEditable !== undefined) {
+    activeFilters.push({
+      label: query.isEditable ? 'Có thể chỉnh sửa' : 'Chỉ đọc',
+      value: String(query.isEditable),
+      onRemove: () => handleEditableFilter('all'),
+    })
+  }
+
+  const handleResetFilters = () => {
+    setQuery({
+      page: 1,
+      limit: 10,
+      key: '',
+      type: undefined,
+      isEditable: undefined,
+    })
+  }
+
+  // Calculate stats
+  const totalSettings = data?.pagination.total || 0
+  const editableSettings = data?.data?.filter((s) => s.isEditable).length || 0
+  const readOnlySettings = totalSettings - editableSettings
+
   return (
-    <div className="container mx-auto space-y-6 p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <h1 className="flex items-center gap-3 text-3xl font-bold">
-            <Settings className="h-8 w-8 text-blue-600" />
-            Cấu hình hệ thống
-          </h1>
-          <p className="text-sm text-gray-500">Quản lý các cấu hình và thiết lập hệ thống</p>
-        </div>
-        <Button onClick={() => refetch()} variant="outline" className="gap-2">
-          <RefreshCw className="h-4 w-4" />
-          Làm mới
-        </Button>
-      </div>
+    <SystemPageLayout>
+      <SystemPageHeader
+        title="Cấu hình hệ thống"
+        subtitle="Quản lý các cấu hình và thiết lập hệ thống"
+        icon={<Settings className="h-6 w-6" />}
+        actions={
+          <Button
+            onClick={() => refetch()}
+            variant="outline"
+            className="gap-2 border-white/20 bg-white/10 text-white hover:bg-white/20"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Làm mới
+          </Button>
+        }
+      />
+
+      {/* Stats Cards */}
+      <StatsCards
+        cards={[
+          {
+            label: 'Tổng cấu hình',
+            value: totalSettings,
+            icon: <Settings className="h-6 w-6" />,
+            borderColor: 'blue',
+          },
+          {
+            label: 'Có thể chỉnh sửa',
+            value: editableSettings,
+            icon: <Edit className="h-6 w-6" />,
+            borderColor: 'green',
+          },
+          {
+            label: 'Chỉ đọc',
+            value: readOnlySettings,
+            icon: <Eye className="h-6 w-6" />,
+            borderColor: 'gray',
+          },
+        ]}
+      />
 
       {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Filter className="h-5 w-5" />
-            Bộ lọc
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-3">
-            {/* Search by key */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Tìm kiếm theo khóa</label>
-              <div className="relative">
-                <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                <Input
-                  placeholder="Nhập khóa cấu hình..."
-                  value={query.key}
-                  onChange={(e) => handleSearch(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
+      <FilterSection title="Bộ lọc" onReset={handleResetFilters} activeFilters={activeFilters}>
+        <div className="grid gap-4 md:grid-cols-3">
+          {/* Search by key */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Tìm kiếm theo khóa</label>
+            <div className="relative">
+              <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <Input
+                placeholder="Nhập khóa cấu hình..."
+                value={query.key}
+                onChange={(e) => handleSearch(e.target.value)}
+                className="pl-10"
+              />
             </div>
-
-            {/* Filter by type */}
-            {can('filter-by-type') && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Loại cấu hình</label>
-                <Select value={query.type || 'all'} onValueChange={handleTypeFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Tất cả" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Tất cả</SelectItem>
-                    <SelectItem value={SystemSettingType.STRING}>STRING</SelectItem>
-                    <SelectItem value={SystemSettingType.NUMBER}>NUMBER</SelectItem>
-                    <SelectItem value={SystemSettingType.BOOLEAN}>BOOLEAN</SelectItem>
-                    <SelectItem value={SystemSettingType.JSON}>JSON</SelectItem>
-                    <SelectItem value={SystemSettingType.SECRET}>SECRET</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {/* Filter by editable */}
-            {can('filter-by-status') && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Trạng thái</label>
-                <Select
-                  value={
-                    query.isEditable === undefined ? 'all' : query.isEditable ? 'true' : 'false'
-                  }
-                  onValueChange={handleEditableFilter}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Tất cả" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Tất cả</SelectItem>
-                    <SelectItem value="true">Có thể chỉnh sửa</SelectItem>
-                    <SelectItem value="false">Chỉ đọc</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
           </div>
-        </CardContent>
-      </Card>
+
+          {/* Filter by type */}
+          {can('filter-by-type') && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Loại cấu hình</label>
+              <Select value={query.type || 'all'} onValueChange={handleTypeFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Tất cả" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất cả</SelectItem>
+                  <SelectItem value={SystemSettingType.STRING}>STRING</SelectItem>
+                  <SelectItem value={SystemSettingType.NUMBER}>NUMBER</SelectItem>
+                  <SelectItem value={SystemSettingType.BOOLEAN}>BOOLEAN</SelectItem>
+                  <SelectItem value={SystemSettingType.JSON}>JSON</SelectItem>
+                  <SelectItem value={SystemSettingType.SECRET}>SECRET</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* Filter by editable */}
+          {can('filter-by-status') && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Trạng thái</label>
+              <Select
+                value={query.isEditable === undefined ? 'all' : query.isEditable ? 'true' : 'false'}
+                onValueChange={handleEditableFilter}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Tất cả" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất cả</SelectItem>
+                  <SelectItem value="true">Có thể chỉnh sửa</SelectItem>
+                  <SelectItem value="false">Chỉ đọc</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+        </div>
+      </FilterSection>
 
       {/* Settings List */}
       <Card>
@@ -219,11 +277,31 @@ export default function SystemSettingsPage() {
                       <div className="text-xs text-gray-400">
                         Giá trị:{' '}
                         <code className="rounded bg-gray-50 px-2 py-0.5 font-mono">
-                          {setting.type === SystemSettingType.SECRET
-                            ? '••••••••'
-                            : setting.value.length > 50
-                              ? setting.value.substring(0, 50) + '...'
-                              : setting.value}
+                          {(() => {
+                            if (setting.type === SystemSettingType.SECRET) {
+                              return '••••••••'
+                            }
+                            let displayValue: string
+                            if (setting.type === SystemSettingType.JSON) {
+                              try {
+                                // If value is already an object, stringify it
+                                if (typeof setting.value === 'object' && setting.value !== null) {
+                                  displayValue = JSON.stringify(setting.value)
+                                } else {
+                                  // If value is a string, try to parse and stringify for formatting
+                                  displayValue = JSON.stringify(JSON.parse(setting.value), null, 2)
+                                }
+                              } catch {
+                                // If parsing fails, use the value as-is (should be a string)
+                                displayValue = String(setting.value)
+                              }
+                            } else {
+                              displayValue = String(setting.value)
+                            }
+                            return displayValue.length > 50
+                              ? displayValue.substring(0, 50) + '...'
+                              : displayValue
+                          })()}
                         </code>
                       </div>
                     </div>
@@ -256,30 +334,14 @@ export default function SystemSettingsPage() {
 
           {/* Pagination */}
           {data?.pagination && data.pagination.totalPages > 1 && (
-            <div className="mt-6 flex items-center justify-between border-t pt-4">
-              <p className="text-sm text-gray-500">
-                Trang {data.pagination.page} / {data.pagination.totalPages}
-              </p>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setQuery({ ...query, page: query.page! - 1 })}
-                  disabled={query.page === 1}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                  Trước
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setQuery({ ...query, page: query.page! + 1 })}
-                  disabled={query.page === data.pagination.totalPages}
-                >
-                  Sau
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
+            <div className="mt-6">
+              <PaginationControls
+                currentPage={data.pagination.page}
+                totalPages={data.pagination.totalPages}
+                totalItems={data.pagination.total}
+                itemsPerPage={data.pagination.limit}
+                onPageChange={(page) => setQuery({ ...query, page })}
+              />
             </div>
           )}
         </CardContent>
@@ -291,6 +353,6 @@ export default function SystemSettingsPage() {
         open={detailModalOpen}
         onOpenChange={setDetailModalOpen}
       />
-    </div>
+    </SystemPageLayout>
   )
 }

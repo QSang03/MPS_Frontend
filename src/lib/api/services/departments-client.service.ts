@@ -12,6 +12,8 @@ export const departmentsClientService = {
     limit?: number
     search?: string
     isActive?: boolean
+    sortBy?: string
+    sortOrder?: 'asc' | 'desc'
   }): Promise<{
     data: Department[]
     pagination?: ListPagination
@@ -22,6 +24,8 @@ export const departmentsClientService = {
         limit: params?.limit ?? 10,
         search: params?.search,
         isActive: params?.isActive,
+        sortBy: params?.sortBy,
+        sortOrder: params?.sortOrder,
       },
     })
     const { data, pagination } = response.data || { data: [], pagination: undefined }

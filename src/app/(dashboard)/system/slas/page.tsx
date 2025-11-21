@@ -2,6 +2,7 @@ import { Suspense } from 'react'
 import SlasClient from './_components/SlasClient'
 import { getSession } from '@/lib/auth/session'
 import { getDevSession, DEV_BYPASS_AUTH } from '@/lib/auth/dev-session'
+import { SystemPageLayout } from '@/components/system/SystemPageLayout'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,8 +18,10 @@ export default async function SlasPage() {
   }
 
   return (
-    <Suspense>
-      <SlasClient session={session} />
-    </Suspense>
+    <SystemPageLayout>
+      <Suspense>
+        <SlasClient session={session} />
+      </Suspense>
+    </SystemPageLayout>
   )
 }

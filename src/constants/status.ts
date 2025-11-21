@@ -76,3 +76,25 @@ export enum Priority {
   HIGH = 'HIGH',
   URGENT = 'URGENT',
 }
+
+// Unified Vietnamese display labels & color tokens for service request statuses (Phase 1 standardization)
+export const SERVICE_REQUEST_STATUS_DISPLAY: Record<
+  ServiceRequestStatus,
+  { label: string; color: string }
+> = {
+  [ServiceRequestStatus.OPEN]: { label: 'Mở', color: 'gray' },
+  [ServiceRequestStatus.IN_PROGRESS]: { label: 'Đang xử lý', color: 'gray' },
+  [ServiceRequestStatus.RESOLVED]: { label: 'Đã xử lý', color: 'green' },
+  [ServiceRequestStatus.CLOSED]: { label: 'Đóng', color: 'gray' },
+}
+
+// Unified Vietnamese display labels & color tokens for priorities (Phase 1 standardization)
+export const PRIORITY_DISPLAY: Record<Priority, { label: string; color: string }> = {
+  [Priority.HIGH]: { label: 'Cao', color: 'orange' },
+  [Priority.NORMAL]: { label: 'Bình thường', color: 'gray' },
+  [Priority.LOW]: { label: 'Thấp', color: 'gray' },
+  [Priority.URGENT]: { label: 'Khẩn cấp', color: 'red' },
+}
+
+export type ServiceRequestStatusValue = ServiceRequestStatus
+export type PriorityValue = Priority

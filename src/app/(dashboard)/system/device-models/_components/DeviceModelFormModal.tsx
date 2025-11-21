@@ -48,9 +48,10 @@ interface Props {
   mode?: 'create' | 'edit'
   model?: DeviceModel | null
   onSaved?: (m?: DeviceModel | null) => void
+  trigger?: React.ReactNode
 }
 
-export function DeviceModelFormModal({ mode = 'create', model = null, onSaved }: Props) {
+export function DeviceModelFormModal({ mode = 'create', model = null, onSaved, trigger }: Props) {
   const [open, setOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [form, setForm] = useState<Partial<CreateDeviceModelDto & UpdateDeviceModelDto>>({
@@ -133,18 +134,22 @@ export function DeviceModelFormModal({ mode = 'create', model = null, onSaved }:
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {mode === 'create' ? (
-          <Button className="gap-2 bg-white text-violet-600 hover:bg-white/90">
-            <Plus className="h-4 w-4" />
-            Thêm model
-          </Button>
-        ) : (
-          <Button variant="outline" size="sm" className="gap-2">
-            <Edit className="h-4 w-4" />
-          </Button>
-        )}
-      </DialogTrigger>
+      {trigger ? (
+        <DialogTrigger asChild>{trigger}</DialogTrigger>
+      ) : (
+        <DialogTrigger asChild>
+          {mode === 'create' ? (
+            <Button className="gap-2 bg-white text-violet-600 hover:bg-white/90">
+              <Plus className="h-4 w-4" />
+              Thêm model
+            </Button>
+          ) : (
+            <Button variant="outline" size="sm" className="gap-2">
+              <Edit className="h-4 w-4" />
+            </Button>
+          )}
+        </DialogTrigger>
+      )}
 
       <DialogContent className="max-w-[700px] overflow-hidden rounded-2xl border-0 p-0 shadow-2xl">
         <DialogHeader className="relative overflow-hidden bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 p-0">

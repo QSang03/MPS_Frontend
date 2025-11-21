@@ -12,6 +12,8 @@ export const rolesClientService = {
     limit?: number
     search?: string
     isActive?: boolean
+    sortBy?: string
+    sortOrder?: 'asc' | 'desc'
   }): Promise<{ data: UserRole[]; pagination?: ListPagination }> {
     const response = await internalApiClient.get<ApiListResponse<UserRole>>('/api/roles', {
       params: {
@@ -19,6 +21,8 @@ export const rolesClientService = {
         limit: params?.limit ?? 10,
         search: params?.search,
         isActive: params?.isActive,
+        sortBy: params?.sortBy,
+        sortOrder: params?.sortOrder,
       },
     })
     const { data, pagination } = response.data || { data: [], pagination: undefined }

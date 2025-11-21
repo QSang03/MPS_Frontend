@@ -50,10 +50,18 @@ export const notificationsClientService = {
    * Get unread notifications count
    */
   async getUnreadCount(): Promise<number> {
-    const response = await internalApiClient.get<ApiResponse<number>>(
+    const response = await internalApiClient.get<ApiResponse<number | { count?: number }>>(
       '/api/notifications/unread-count'
     )
-    return response.data?.data ?? 0
+
+    const raw = response.data?.data
+    if (typeof raw === 'number') {
+      return raw
+    }
+    if (raw && typeof (raw as { count?: number }).count === 'number') {
+      return (raw as { count: number }).count
+    }
+    return 0
   },
 
   /**

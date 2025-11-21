@@ -130,15 +130,15 @@ export function AlertsSummary({ kpis, isLoading, onViewAll }: AlertsSummaryProps
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.15 }}
     >
-      <Card>
-        <CardHeader>
+      <Card className="border-0 shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
+        <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="flex items-center gap-2">
-                <Bell className="h-5 w-5 text-red-600" />
+              <CardTitle className="flex items-center gap-2 text-base font-semibold text-[#1F2937]">
+                <Bell className="h-5 w-5 text-[#DC2626]" />
                 Cảnh báo hệ thống
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-[13px] text-[#6B7280]">
                 {totalAlerts > 0 ? `${totalAlerts} cảnh báo cần xử lý` : 'Không có cảnh báo'}
               </CardDescription>
             </div>
@@ -213,8 +213,12 @@ export function AlertsSummary({ kpis, isLoading, onViewAll }: AlertsSummaryProps
           )}
         </CardContent>
         {totalAlerts > 0 && (
-          <CardFooter className="flex justify-end border-t bg-gray-50/50 p-4">
-            <Button className="w-full sm:w-auto" variant="outline" onClick={onViewAll}>
+          <CardFooter className="flex justify-end border-t border-gray-100 bg-gray-50/50 p-4">
+            <Button
+              className="w-full border-gray-200 text-[#6B7280] hover:bg-white hover:text-[#1F2937] sm:w-auto"
+              variant="outline"
+              onClick={onViewAll}
+            >
               <Bell className="mr-2 h-4 w-4" />
               Xem tất cả cảnh báo ({totalAlerts})
             </Button>

@@ -3,6 +3,9 @@ import { getDevSession, DEV_BYPASS_AUTH } from '@/lib/auth/dev-session'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ReportGenerator } from './_components/ReportGenerator'
 import { ReportHistory } from './_components/ReportHistory'
+import { SystemPageLayout } from '@/components/system/SystemPageLayout'
+import { SystemPageHeader } from '@/components/system/SystemPageHeader'
+import { FileText } from 'lucide-react'
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic'
@@ -16,11 +19,12 @@ export default async function ReportsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Báo cáo</h1>
-        <p className="text-muted-foreground">Tạo và tải xuống báo cáo dịch vụ in ấn</p>
-      </div>
+    <SystemPageLayout>
+      <SystemPageHeader
+        title="Báo cáo"
+        subtitle="Tạo và tải xuống báo cáo dịch vụ in ấn"
+        icon={<FileText className="h-6 w-6" />}
+      />
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Report Generator */}
@@ -45,6 +49,6 @@ export default async function ReportsPage() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </SystemPageLayout>
   )
 }

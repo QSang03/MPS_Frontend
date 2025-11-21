@@ -377,7 +377,7 @@ export default function RevenuePageClient() {
                       </td>
                       <td className="px-4 py-3">
                         <Link
-                          href={`/system/contracts?customerId=${encodeURIComponent(r.customerId)}`}
+                          href={`/system/customers/${encodeURIComponent(r.customerId)}`}
                           className="text-sky-700 hover:underline"
                         >
                           {r.customerName}

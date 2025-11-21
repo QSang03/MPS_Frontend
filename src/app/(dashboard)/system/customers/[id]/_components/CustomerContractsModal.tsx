@@ -13,7 +13,6 @@ import { Badge } from '@/components/ui/badge'
 import { Loader2, FileText, Calendar, Tag, Building2, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
-import Link from 'next/link'
 import { VN } from '@/constants/vietnamese'
 
 interface Contract {
@@ -203,7 +202,6 @@ export default function CustomerContractsModal({
                         Thời gian
                       </div>
                     </th>
-                    <th className="px-4 py-3 text-right text-sm font-semibold">Chi tiết</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
@@ -213,11 +211,9 @@ export default function CustomerContractsModal({
                       className="transition-all hover:bg-gradient-to-r hover:from-sky-50 hover:to-blue-50"
                     >
                       <td className="px-4 py-3">
-                        <Link href={`/system/contracts/${c.id}`} className="hover:underline">
-                          <code className="rounded bg-sky-100 px-2 py-1 text-sm font-semibold text-sky-700">
-                            {c.contractNumber}
-                          </code>
-                        </Link>
+                        <code className="rounded bg-sky-100 px-2 py-1 text-sm font-semibold text-sky-700">
+                          {c.contractNumber}
+                        </code>
                       </td>
                       <td className="px-4 py-3">
                         <Badge className={`border-2 ${getTypeColor(c.type)}`}>{c.type}</Badge>
@@ -235,18 +231,6 @@ export default function CustomerContractsModal({
                             {new Date(c.endDate).toLocaleDateString('vi-VN')}
                           </span>
                         </div>
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <Link href={`/system/contracts/${c.id}`}>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-sky-600 hover:bg-sky-50"
-                          >
-                            <FileText className="mr-2 h-4 w-4" />
-                            Xem
-                          </Button>
-                        </Link>
                       </td>
                     </tr>
                   ))}

@@ -1,17 +1,23 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import {
+  Component,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useTransition,
+} from 'react'
+import type { ReactNode } from 'react'
 import type { ColumnDef } from '@tanstack/react-table'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   AlertTriangle,
   ArrowLeft,
   CheckCircle2,
   Clock4,
-  Filter,
-  Loader2,
   Plus,
-  RefreshCcw,
   ShieldCheck,
   Zap,
   Edit3,
@@ -19,7 +25,7 @@ import {
 import { toast } from 'sonner'
 import Link from 'next/link'
 import type { Session } from '@/lib/auth/session'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -30,23 +36,36 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { DataTable } from '@/components/shared/DataTable/DataTable'
+// removed unused Alert imports
+import { TableWrapper } from '@/components/system/TableWrapper'
+import { TableSkeleton } from '@/components/system/TableSkeleton'
 import { DeleteDialog } from '@/components/shared/DeleteDialog'
 import { CustomerSelect } from '@/components/shared/CustomerSelect'
 import { SlaFormDialog, type SlaFormValues } from './SlaFormDialog'
+import { SystemPageHeader } from '@/components/system/SystemPageHeader'
+import { FilterSection } from '@/components/system/FilterSection'
+import { StatsCards } from '@/components/system/StatsCard'
 import { slasClientService } from '@/lib/api/services/slas-client.service'
 import type { SLA } from '@/types/models/sla'
 import { Priority } from '@/constants/status'
 import { formatDateTime, formatRelativeTime } from '@/lib/utils/formatters'
 import { useActionPermission } from '@/lib/hooks/useActionPermission'
+import { useSlasQuery } from '@/lib/hooks/queries/useSlasQuery'
 
 interface SlasClientProps {
   session?: Session | null
 }
 
-type ListResponse = Awaited<ReturnType<typeof slasClientService.getAll>>
 type SlaRow = SLA
+
+interface SlaStats {
+  total: number
+  active: number
+  paused: number
+  critical: number
+  avgResponse: number
+  avgResolution: number
+}
 
 const priorityOptions = [
   { label: 'Tất cả ưu tiên', value: 'all' },
@@ -97,40 +116,27 @@ export default function SlasClient({ session }: SlasClientProps) {
   const [customerFilter, setCustomerFilter] = useState('')
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingSla, setEditingSla] = useState<SLA | null>(null)
+  const [sorting, setSorting] = useState<{ sortBy?: string; sortOrder?: 'asc' | 'desc' }>({
+    sortBy: 'createdAt',
+    sortOrder: 'desc',
+  })
+  const [columnVisibilityMenu, setColumnVisibilityMenu] = useState<ReactNode | null>(null)
 
   const debouncedSearch = useDebouncedValue(searchTerm, 500)
-
-  const listQuery = useQuery<ListResponse>({
-    queryKey: [
-      'system-slas',
-      {
-        pageIndex: pagination.pageIndex,
-        pageSize: pagination.pageSize,
-        search: debouncedSearch,
-        priorityFilter,
-        statusFilter,
-        customerFilter,
-      },
-    ],
-    queryFn: () =>
-      slasClientService.getAll({
-        page: pagination.pageIndex + 1,
-        limit: pagination.pageSize,
-        search: debouncedSearch || undefined,
-        priority: priorityFilter === 'all' ? undefined : (priorityFilter as Priority),
-        isActive: statusFilter === 'all' ? undefined : statusFilter === 'active',
-        customerId: customerFilter || undefined,
-        sortBy: 'createdAt',
-        sortOrder: 'desc',
-      }),
-    // Luôn gọi API, để backend xử lý permission
-    // Frontend chỉ dùng hasAccess để ẩn/hiện UI
+  const [stats, setStats] = useState<SlaStats>({
+    total: 0,
+    active: 0,
+    paused: 0,
+    critical: 0,
+    avgResponse: 0,
+    avgResolution: 0,
   })
 
   const createMutation = useMutation({
     mutationFn: (payload: SlaFormValues) => slasClientService.create(payload),
     onSuccess: () => {
       toast.success('Tạo SLA thành công')
+      queryClient.invalidateQueries({ queryKey: ['slas'] })
       queryClient.invalidateQueries({ queryKey: ['system-slas'] })
     },
     onError: (error: unknown) => {
@@ -144,6 +150,7 @@ export default function SlasClient({ session }: SlasClientProps) {
       slasClientService.update(id, payload),
     onSuccess: () => {
       toast.success('Cập nhật SLA thành công')
+      queryClient.invalidateQueries({ queryKey: ['slas'] })
       queryClient.invalidateQueries({ queryKey: ['system-slas'] })
     },
     onError: (error: unknown) => {
@@ -156,6 +163,7 @@ export default function SlasClient({ session }: SlasClientProps) {
     mutationFn: (id: string) => slasClientService.delete(id),
     onSuccess: () => {
       toast.success('Đã xóa SLA')
+      queryClient.invalidateQueries({ queryKey: ['slas'] })
       queryClient.invalidateQueries({ queryKey: ['system-slas'] })
     },
     onError: (error: unknown) => {
@@ -164,43 +172,46 @@ export default function SlasClient({ session }: SlasClientProps) {
     },
   })
 
-  const data = useMemo(() => (listQuery.data?.data ?? []) as SlaRow[], [listQuery.data?.data])
-  const totalCount = listQuery.data?.pagination?.total ?? data.length
-
-  const stats = useMemo(() => {
-    if (!data.length) {
-      return {
-        total: 0,
-        active: 0,
-        paused: 0,
-        critical: 0,
-        avgResponse: 0,
-        avgResolution: 0,
-      }
-    }
-
-    const active = data.filter((sla: SlaRow) => sla.isActive).length
-    const paused = data.length - active
-    const critical = data.filter(
-      (sla: SlaRow) => sla.priority === Priority.HIGH || sla.priority === Priority.URGENT
-    ).length
-    const avgResponse = Math.round(
-      data.reduce((sum: number, sla: SlaRow) => sum + (sla.responseTimeHours ?? 0), 0) / data.length
-    )
-    const avgResolution = Math.round(
-      data.reduce((sum: number, sla: SlaRow) => sum + (sla.resolutionTimeHours ?? 0), 0) /
-        data.length
-    )
-
-    return { total: data.length, active, paused, critical, avgResponse, avgResolution }
-  }, [data])
-
   const handleResetFilters = () => {
     setSearchTerm('')
     setPriorityFilter('all')
     setStatusFilter('all')
     setCustomerFilter('')
     setPagination((prev) => ({ ...prev, pageIndex: 0 }))
+  }
+
+  const activeFilters: Array<{ label: string; value: string; onRemove: () => void }> = []
+  if (searchTerm) {
+    activeFilters.push({
+      label: `Tìm kiếm: "${searchTerm}"`,
+      value: searchTerm,
+      onRemove: () => setSearchTerm(''),
+    })
+  }
+  if (priorityFilter !== 'all') {
+    const priorityLabel =
+      priorityOptions.find((opt) => opt.value === priorityFilter)?.label || priorityFilter
+    activeFilters.push({
+      label: `Ưu tiên: ${priorityLabel}`,
+      value: priorityFilter,
+      onRemove: () => setPriorityFilter('all'),
+    })
+  }
+  if (statusFilter !== 'all') {
+    const statusLabel =
+      statusOptions.find((opt) => opt.value === statusFilter)?.label || statusFilter
+    activeFilters.push({
+      label: `Trạng thái: ${statusLabel}`,
+      value: statusFilter,
+      onRemove: () => setStatusFilter('all'),
+    })
+  }
+  if (customerFilter) {
+    activeFilters.push({
+      label: `Khách hàng: ${customerFilter}`,
+      value: customerFilter,
+      onRemove: () => setCustomerFilter(''),
+    })
   }
 
   const handleCreateClick = () => {
@@ -219,6 +230,304 @@ export default function SlasClient({ session }: SlasClientProps) {
     },
     [deleteMutation]
   )
+
+  const errorBoundaryKey = useMemo(
+    () =>
+      [
+        pagination.pageIndex,
+        pagination.pageSize,
+        debouncedSearch,
+        priorityFilter,
+        statusFilter,
+        customerFilter,
+        sorting.sortBy ?? '',
+        sorting.sortOrder ?? '',
+      ].join('|'),
+    [
+      pagination.pageIndex,
+      pagination.pageSize,
+      debouncedSearch,
+      priorityFilter,
+      statusFilter,
+      customerFilter,
+      sorting.sortBy,
+      sorting.sortOrder,
+    ]
+  )
+
+  const isSubmitting = createMutation.isPending || updateMutation.isPending
+
+  const handleFormSubmit = async (values: SlaFormValues) => {
+    const payload = {
+      ...values,
+      description: values.description?.trim() ? values.description.trim() : undefined,
+    }
+
+    if (editingSla) {
+      await updateMutation.mutateAsync({ id: editingSla.id, payload })
+    } else {
+      await createMutation.mutateAsync(payload)
+    }
+    setDialogOpen(false)
+    setEditingSla(null)
+  }
+
+  return (
+    <div className="space-y-6">
+      <SystemPageHeader
+        title="Quản trị SLA"
+        subtitle="Theo dõi cam kết dịch vụ, chuẩn hóa phản hồi & xử lý theo từng khách hàng"
+        icon={<ShieldCheck className="h-6 w-6" />}
+        actions={
+          <>
+            <Link href="/system/requests">
+              <Button
+                variant="outline"
+                className="border-white/20 bg-white/10 text-white hover:bg-white/20"
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Quay lại
+              </Button>
+            </Link>
+            {canCreate && (
+              <Button
+                onClick={handleCreateClick}
+                className="border-0 bg-white text-[#0066CC] hover:bg-blue-50"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Tạo SLA mới
+              </Button>
+            )}
+          </>
+        }
+      />
+
+      <StatsCards
+        cards={[
+          {
+            label: 'SLA đang bật',
+            value: `${stats.active} / ${stats.total}`,
+            icon: <ShieldCheck className="h-6 w-6" />,
+            borderColor: 'emerald',
+          },
+          {
+            label: 'Ưu tiên cao / khẩn',
+            value: stats.critical,
+            icon: <Zap className="h-6 w-6" />,
+            borderColor: 'orange',
+          },
+          {
+            label: 'TB phản hồi',
+            value: stats.avgResponse ? `${stats.avgResponse}h` : '--',
+            icon: <Clock4 className="h-6 w-6" />,
+            borderColor: 'blue',
+          },
+          {
+            label: 'TB xử lý',
+            value: stats.avgResolution ? `${stats.avgResolution}h` : '--',
+            icon: <CheckCircle2 className="h-6 w-6" />,
+            borderColor: 'purple',
+          },
+        ]}
+      />
+
+      <FilterSection
+        title="Bộ lọc & Tìm kiếm"
+        onReset={handleResetFilters}
+        activeFilters={activeFilters}
+        columnVisibilityMenu={columnVisibilityMenu}
+      >
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Tìm kiếm</label>
+            <Input
+              placeholder="Tìm theo tên SLA..."
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value)
+                setPagination((prev) => ({ ...prev, pageIndex: 0 }))
+              }}
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Khách hàng</label>
+            <CustomerSelect
+              value={customerFilter}
+              onChange={(value) => {
+                setCustomerFilter(value)
+                setPagination((prev) => ({ ...prev, pageIndex: 0 }))
+              }}
+              placeholder="Chọn khách hàng"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Ưu tiên</label>
+            <Select
+              value={priorityFilter}
+              onValueChange={(value) => {
+                setPriorityFilter(value as typeof priorityFilter)
+                setPagination((prev) => ({ ...prev, pageIndex: 0 }))
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Ưu tiên" />
+              </SelectTrigger>
+              <SelectContent>
+                {priorityOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Trạng thái</label>
+            <Select
+              value={statusFilter}
+              onValueChange={(value) => {
+                setStatusFilter(value as typeof statusFilter)
+                setPagination((prev) => ({ ...prev, pageIndex: 0 }))
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Trạng thái" />
+              </SelectTrigger>
+              <SelectContent>
+                {statusOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </FilterSection>
+
+      <SlasTableErrorBoundary key={errorBoundaryKey}>
+        <Suspense fallback={<TableSkeleton rows={10} columns={7} />}>
+          <SlasTableContent
+            pagination={pagination}
+            search={debouncedSearch}
+            searchInput={searchTerm}
+            priorityFilter={priorityFilter}
+            statusFilter={statusFilter}
+            customerFilter={customerFilter}
+            sorting={sorting}
+            onPaginationChange={setPagination}
+            onSortingChange={setSorting}
+            onStatsChange={setStats}
+            renderColumnVisibilityMenu={setColumnVisibilityMenu}
+            canUpdate={canUpdate}
+            canDelete={canDelete}
+            onEdit={handleEditClick}
+            onDelete={handleDelete}
+          />
+        </Suspense>
+      </SlasTableErrorBoundary>
+
+      <SlaFormDialog
+        open={dialogOpen}
+        onOpenChange={(open) => {
+          setDialogOpen(open)
+          if (!open) setEditingSla(null)
+        }}
+        onSubmit={handleFormSubmit}
+        isSubmitting={isSubmitting}
+        initialData={editingSla}
+      />
+    </div>
+  )
+}
+
+interface SlasTableContentProps {
+  pagination: { pageIndex: number; pageSize: number }
+  search: string
+  searchInput: string
+  priorityFilter: 'all' | Priority
+  statusFilter: 'all' | 'active' | 'inactive'
+  customerFilter: string
+  sorting: { sortBy?: string; sortOrder?: 'asc' | 'desc' }
+  onPaginationChange: (pagination: { pageIndex: number; pageSize: number }) => void
+  onSortingChange: (sorting: { sortBy?: string; sortOrder?: 'asc' | 'desc' }) => void
+  onStatsChange: (stats: SlaStats) => void
+  renderColumnVisibilityMenu: (menu: ReactNode | null) => void
+  canUpdate: boolean
+  canDelete: boolean
+  onEdit: (sla: SLA) => void
+  onDelete: (id: string) => Promise<void> | void
+}
+
+function SlasTableContent({
+  pagination,
+  search,
+  searchInput,
+  priorityFilter,
+  statusFilter,
+  customerFilter,
+  sorting,
+  onPaginationChange,
+  onSortingChange,
+  onStatsChange,
+  renderColumnVisibilityMenu,
+  canUpdate,
+  canDelete,
+  onEdit,
+  onDelete,
+}: SlasTableContentProps) {
+  const [isPending, startTransition] = useTransition()
+
+  const queryParams = useMemo(
+    () => ({
+      page: pagination.pageIndex + 1,
+      limit: pagination.pageSize,
+      search: search || undefined,
+      priority: priorityFilter === 'all' ? undefined : priorityFilter,
+      isActive: statusFilter === 'all' ? undefined : statusFilter === 'active',
+      customerId: customerFilter || undefined,
+      sortBy: sorting.sortBy || 'createdAt',
+      sortOrder: sorting.sortOrder || 'desc',
+    }),
+    [pagination, search, priorityFilter, statusFilter, customerFilter, sorting]
+  )
+
+  const { data } = useSlasQuery(queryParams)
+  const rows = useMemo(() => (data?.data ?? []) as SlaRow[], [data?.data])
+  const totalCount = data?.pagination?.total ?? rows.length
+
+  useEffect(() => {
+    if (!rows.length) {
+      onStatsChange({
+        total: 0,
+        active: 0,
+        paused: 0,
+        critical: 0,
+        avgResponse: 0,
+        avgResolution: 0,
+      })
+      return
+    }
+    const active = rows.filter((sla) => sla.isActive).length
+    const paused = rows.length - active
+    const critical = rows.filter(
+      (sla) => sla.priority === Priority.HIGH || sla.priority === Priority.URGENT
+    ).length
+    const avgResponse = Math.round(
+      rows.reduce((sum, sla) => sum + (sla.responseTimeHours ?? 0), 0) / rows.length
+    )
+    const avgResolution = Math.round(
+      rows.reduce((sum, sla) => sum + (sla.resolutionTimeHours ?? 0), 0) / rows.length
+    )
+    onStatsChange({
+      total: totalCount,
+      active,
+      paused,
+      critical,
+      avgResponse,
+      avgResolution,
+    })
+  }, [rows, totalCount, onStatsChange])
 
   const columns = useMemo<ColumnDef<SlaRow>[]>(
     () => [
@@ -303,7 +612,7 @@ export default function SlasClient({ session }: SlasClientProps) {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => handleEditClick(row.original)}
+                onClick={() => onEdit(row.original)}
                 title="Chỉnh sửa"
               >
                 <Edit3 className="h-4 w-4" />
@@ -313,7 +622,9 @@ export default function SlasClient({ session }: SlasClientProps) {
               <DeleteDialog
                 title={`Xóa SLA ${row.original.name}`}
                 description="Bạn chắc chắn muốn xóa SLA này? Hành động không thể hoàn tác."
-                onConfirm={() => handleDelete(row.original.id)}
+                onConfirm={async () => {
+                  await onDelete(row.original.id)
+                }}
                 trigger={
                   <Button variant="ghost" size="icon" title="Xóa">
                     <AlertTriangle className="h-4 w-4 text-red-500" />
@@ -325,262 +636,94 @@ export default function SlasClient({ session }: SlasClientProps) {
         ),
       },
     ],
-    [canDelete, canUpdate, handleDelete, handleEditClick]
+    [canDelete, canUpdate, onDelete, onEdit]
   )
-
-  const isSubmitting = createMutation.isPending || updateMutation.isPending
-
-  const handleFormSubmit = async (values: SlaFormValues) => {
-    const payload = {
-      ...values,
-      description: values.description?.trim() ? values.description.trim() : undefined,
-    }
-
-    if (editingSla) {
-      await updateMutation.mutateAsync({ id: editingSla.id, payload })
-    } else {
-      await createMutation.mutateAsync(payload)
-    }
-    setDialogOpen(false)
-    setEditingSla(null)
-  }
-
-  const filtersDisabled = listQuery.isLoading && !listQuery.isFetched
-
-  // Kiểm tra nếu backend trả về 403 (Forbidden) hoặc 401 (Unauthorized)
-  const error = listQuery.error as
-    | { response?: { status?: number; data?: { message?: string } }; message?: string }
-    | undefined
-  const isForbidden =
-    listQuery.isError && (error?.response?.status === 403 || error?.response?.status === 401)
-
-  // Nếu không có quyền từ backend, hiển thị message
-  if (isForbidden) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Không có quyền truy cập SLA</CardTitle>
-          <CardDescription>
-            {error?.response?.data?.message ||
-              error?.message ||
-              'Liên hệ quản trị viên để mở quyền trang SLA.'}
-          </CardDescription>
-        </CardHeader>
-      </Card>
-    )
-  }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1 space-y-1">
-          <div className="flex items-center gap-3">
-            <Link href="/system/requests">
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-            </Link>
-            <h1 className="text-3xl font-bold">Quản trị SLA</h1>
-          </div>
-          <p className="text-muted-foreground">
-            Theo dõi cam kết dịch vụ, chuẩn hóa phản hồi & xử lý theo từng khách hàng.
-          </p>
-        </div>
-        {canCreate && (
-          <Button onClick={handleCreateClick} className="gap-2">
-            <Plus className="h-4 w-4" />
-            Tạo SLA mới
-          </Button>
-        )}
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">SLA đang bật</CardTitle>
-            <ShieldCheck className="h-4 w-4 text-emerald-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.active}</div>
-            <p className="text-muted-foreground text-xs">{stats.total} tổng số SLA</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Ưu tiên cao / khẩn</CardTitle>
-            <Zap className="h-4 w-4 text-orange-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.critical}</div>
-            <p className="text-muted-foreground text-xs">Cần giám sát sát sao</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">TB phản hồi</CardTitle>
-            <Clock4 className="h-4 w-4 text-blue-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.avgResponse || '--'}h</div>
-            <p className="text-muted-foreground text-xs">Phản hồi đầu tiên</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">TB xử lý</CardTitle>
-            <CheckCircle2 className="h-4 w-4 text-purple-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.avgResolution || '--'}h</div>
-            <p className="text-muted-foreground text-xs">Hoàn tất yêu cầu</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
-        <CardHeader className="space-y-4">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
-            <div className="flex-1 space-y-3">
-              <div className="grid gap-3 md:grid-cols-2">
-                <div className="space-y-1.5">
-                  <p className="text-muted-foreground text-xs font-medium uppercase">Tìm kiếm</p>
-                  <Input
-                    placeholder="Tìm theo tên SLA..."
-                    value={searchTerm}
-                    onChange={(e) => {
-                      setSearchTerm(e.target.value)
-                      setPagination((prev) => ({ ...prev, pageIndex: 0 }))
-                    }}
-                    disabled={filtersDisabled}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <p className="text-muted-foreground text-xs font-medium uppercase">Khách hàng</p>
-                  <CustomerSelect
-                    value={customerFilter}
-                    onChange={(value) => {
-                      setCustomerFilter(value)
-                      setPagination((prev) => ({ ...prev, pageIndex: 0 }))
-                    }}
-                    disabled={filtersDisabled}
-                    placeholder="Chọn khách hàng"
-                  />
-                </div>
-              </div>
-              <div className="grid gap-3 md:grid-cols-2">
-                <div className="space-y-1.5">
-                  <p className="text-muted-foreground text-xs font-medium uppercase">Ưu tiên</p>
-                  <Select
-                    value={priorityFilter}
-                    onValueChange={(value) => {
-                      setPriorityFilter(value as typeof priorityFilter)
-                      setPagination((prev) => ({ ...prev, pageIndex: 0 }))
-                    }}
-                    disabled={filtersDisabled}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Ưu tiên" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {priorityOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5">
-                  <p className="text-muted-foreground text-xs font-medium uppercase">Trạng thái</p>
-                  <Select
-                    value={statusFilter}
-                    onValueChange={(value) => {
-                      setStatusFilter(value as typeof statusFilter)
-                      setPagination((prev) => ({ ...prev, pageIndex: 0 }))
-                    }}
-                    disabled={filtersDisabled}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Trạng thái" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {statusOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+    <TableWrapper<SlaRow>
+      tableId="slas"
+      columns={columns}
+      data={rows}
+      totalCount={totalCount}
+      pageIndex={pagination.pageIndex}
+      pageSize={pagination.pageSize}
+      onPaginationChange={(next) => {
+        startTransition(() => {
+          onPaginationChange(next)
+        })
+      }}
+      onSortingChange={(nextSorting) => {
+        startTransition(() => {
+          onSortingChange(nextSorting)
+        })
+      }}
+      sorting={sorting}
+      defaultSorting={{ sortBy: 'createdAt', sortOrder: 'desc' }}
+      enableColumnVisibility
+      renderColumnVisibilityMenu={renderColumnVisibilityMenu}
+      isPending={isPending}
+      emptyState={
+        rows.length === 0 ? (
+          <div className="p-8 text-center">
+            <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200">
+              <ShieldCheck className="h-8 w-8 text-gray-400" />
             </div>
-
-            <div className="flex flex-col gap-3 lg:w-48">
-              <Button
-                variant="outline"
-                onClick={handleResetFilters}
-                className="gap-2"
-                disabled={filtersDisabled}
-              >
-                <Filter className="h-4 w-4" />
-                Đặt lại
-              </Button>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  className="flex-1 gap-2"
-                  onClick={() => listQuery.refetch()}
-                  disabled={listQuery.isFetching}
-                >
-                  {listQuery.isFetching ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <RefreshCcw className="h-4 w-4" />
-                  )}
-                  Làm mới
-                </Button>
-                {canCreate && (
-                  <Button className="flex-1 gap-2" onClick={handleCreateClick}>
-                    <Plus className="h-4 w-4" />
-                    Tạo SLA
-                  </Button>
-                )}
-              </div>
-            </div>
+            <h3 className="mb-2 text-xl font-bold text-gray-700">Không có SLA nào</h3>
+            <p className="text-gray-500">
+              {searchInput ? 'Không tìm thấy SLA phù hợp' : 'Hãy tạo SLA đầu tiên'}
+            </p>
           </div>
-        </CardHeader>
-        <CardContent>
-          {listQuery.isError ? (
-            <Alert variant="destructive">
-              <AlertTitle>Lỗi tải dữ liệu</AlertTitle>
-              <AlertDescription>
-                {(listQuery.error as Error)?.message || 'Không thể tải danh sách SLA'}
-              </AlertDescription>
-            </Alert>
-          ) : (
-            <DataTable
-              columns={columns}
-              data={data}
-              totalCount={totalCount}
-              pageIndex={pagination.pageIndex}
-              pageSize={pagination.pageSize}
-              onPaginationChange={(next) => setPagination(next)}
-              isLoading={listQuery.isLoading || listQuery.isFetching}
-            />
-          )}
-        </CardContent>
-      </Card>
-
-      <SlaFormDialog
-        open={dialogOpen}
-        onOpenChange={(open) => {
-          setDialogOpen(open)
-          if (!open) setEditingSla(null)
-        }}
-        onSubmit={handleFormSubmit}
-        isSubmitting={isSubmitting}
-        initialData={editingSla}
-      />
-    </div>
+        ) : undefined
+      }
+      skeletonRows={10}
+    />
   )
+}
+
+class SlasTableErrorBoundary extends Component<{ children: ReactNode }, { error: unknown }> {
+  state = { error: null }
+
+  static getDerivedStateFromError(error: unknown) {
+    return { error }
+  }
+
+  componentDidCatch(error: unknown) {
+    console.error('SlasTable error', error)
+  }
+
+  render() {
+    if (this.state.error) {
+      const err = this.state.error as {
+        response?: { status?: number; data?: { message?: string } }
+        message?: string
+      }
+      const status = err?.response?.status
+      const message =
+        err?.response?.data?.message ||
+        err?.message ||
+        'Có lỗi xảy ra khi tải danh sách SLA. Vui lòng thử lại.'
+
+      if (status === 401 || status === 403) {
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle>Không có quyền truy cập SLA</CardTitle>
+              <CardDescription>{message}</CardDescription>
+            </CardHeader>
+          </Card>
+        )
+      }
+
+      return (
+        <Card>
+          <CardHeader>
+            <CardTitle>Lỗi tải SLA</CardTitle>
+            <CardDescription>{message}</CardDescription>
+          </CardHeader>
+        </Card>
+      )
+    }
+
+    return this.props.children
+  }
 }

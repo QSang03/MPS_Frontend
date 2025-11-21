@@ -100,6 +100,8 @@ export interface UsersQueryParams {
   roleId?: string
   departmentId?: string
   customerId?: string
+  sortBy?: string
+  sortOrder?: 'asc' | 'desc'
 }
 
 /**

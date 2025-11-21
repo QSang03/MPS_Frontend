@@ -108,6 +108,18 @@ export const USER_NAVIGATION_PAYLOAD: NavItemPayload[] = [
         },
       },
       {
+        id: 'assign-pricing',
+        label: 'Gán giá cho thiết bị',
+        icon: 'Tag',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [
+            { resource: 'devices', action: 'update' },
+            { resource: 'reports', action: 'create' },
+          ],
+        },
+      },
+      {
         id: 'set-a4-pricing',
         label: 'Gán giá A4',
         icon: 'BarChart3',
@@ -514,63 +526,6 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
     ],
   },
   {
-    id: 'contracts',
-    label: 'Hợp đồng',
-    icon: 'FileText',
-    route: '/system/contracts',
-    requiredPermissions: {
-      strategy: 'all',
-      resources: [{ resource: 'contracts', action: 'read' }],
-    },
-    actions: [
-      {
-        id: 'create',
-        label: 'Tạo hợp đồng',
-        icon: 'Plus',
-        requiredPermissions: {
-          strategy: 'all',
-          resources: [{ resource: 'contracts', action: 'create' }],
-        },
-      },
-      {
-        id: 'update',
-        label: 'Chỉnh sửa hợp đồng',
-        icon: 'Edit',
-        requiredPermissions: {
-          strategy: 'all',
-          resources: [{ resource: 'contracts', action: 'update' }],
-        },
-      },
-      {
-        id: 'delete',
-        label: 'Xóa hợp đồng',
-        icon: 'Trash2',
-        requiredPermissions: {
-          strategy: 'all',
-          resources: [{ resource: 'contracts', action: 'delete' }],
-        },
-      },
-      {
-        id: 'filter-by-customer',
-        label: 'Lọc theo khách hàng',
-        icon: 'Filter',
-        requiredPermissions: {
-          strategy: 'all',
-          resources: [{ resource: 'customers', action: 'read' }],
-        },
-      },
-      {
-        id: 'filter-by-type',
-        label: 'Lọc theo loại hợp đồng',
-        icon: 'Filter',
-        requiredPermissions: {
-          strategy: 'all',
-          resources: [{ resource: 'contracts', action: 'read' }],
-        },
-      },
-    ],
-  },
-  {
     id: 'consumable-types',
     label: 'Loại vật tư tiêu hao',
     icon: 'ShoppingCart',
@@ -819,6 +774,51 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
         requiredPermissions: {
           strategy: 'all',
           resources: [{ resource: 'customers', action: 'read' }],
+        },
+      },
+      {
+        id: 'contract-create',
+        label: 'Tạo hợp đồng',
+        icon: 'Plus',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'contracts', action: 'create' }],
+        },
+      },
+      {
+        id: 'contract-update',
+        label: 'Chỉnh sửa hợp đồng',
+        icon: 'Edit',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'contracts', action: 'update' }],
+        },
+      },
+      {
+        id: 'contract-delete',
+        label: 'Xóa hợp đồng',
+        icon: 'Trash2',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'contracts', action: 'delete' }],
+        },
+      },
+      {
+        id: 'contract-attach-devices',
+        label: 'Gán thiết bị vào hợp đồng',
+        icon: 'MonitorSmartphone',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'contracts', action: 'update' }],
+        },
+      },
+      {
+        id: 'contract-detach-devices',
+        label: 'Gỡ thiết bị khỏi hợp đồng',
+        icon: 'Trash2',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'contracts', action: 'update' }],
         },
       },
     ],

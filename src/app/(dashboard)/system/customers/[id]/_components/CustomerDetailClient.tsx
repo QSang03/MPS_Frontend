@@ -45,7 +45,7 @@ import type { Customer } from '@/types/models/customer'
 import DevicePricingModal from '@/app/(dashboard)/system/devices/_components/DevicePricingModal'
 import A4EquivalentModal from '@/app/(dashboard)/system/devices/_components/A4EquivalentModal'
 import DeviceFormModal from '@/app/(dashboard)/system/devices/_components/deviceformmodal'
-import ContractDevicesModal from '@/app/(dashboard)/system/contracts/_components/ContractDevicesModal'
+import ContractDevicesModal from './ContractDevicesModal'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import {
   Dialog,
@@ -64,7 +64,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import ContractForm from '@/app/(dashboard)/system/contracts/_components/ContractForm'
+import ContractForm from './ContractForm'
 import { contractsClientService } from '@/lib/api/services/contracts-client.service'
 import { toast } from 'sonner'
 import { DeleteDialog } from '@/components/shared/DeleteDialog'
@@ -77,7 +77,12 @@ type Props = {
 }
 
 export default function CustomerDetailClient({ customerId }: Props) {
-  const { canDelete } = useActionPermission('contracts')
+  const { can: canContractAction } = useActionPermission('customers')
+  const canDeleteContract = canContractAction('contract-delete')
+  const canUpdateContract = canContractAction('contract-update')
+  const canCreateContract = canContractAction('contract-create')
+  const canAttachDevices = canContractAction('contract-attach-devices')
+  const canDetachDevices = canContractAction('contract-detach-devices')
   const [overview, setOverview] = useState<CustomerOverview | null>(null)
   const [loadingOverview, setLoadingOverview] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -653,24 +658,26 @@ export default function CustomerDetailClient({ customerId }: Props) {
                 </TooltipTrigger>
                 <TooltipContent sideOffset={4}>Xem thiết bị</TooltipContent>
               </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 w-7 p-0 text-red-600 hover:bg-red-50 hover:text-red-700"
-                    onClick={() => {
-                      if (device.deviceId) {
-                        handleDetachDevice(contract.id, device.deviceId)
-                      }
-                    }}
-                    aria-label="Gỡ thiết bị"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent sideOffset={4}>Gỡ thiết bị</TooltipContent>
-              </Tooltip>
+              {canDetachDevices && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 w-7 p-0 text-red-600 hover:bg-red-50 hover:text-red-700"
+                      onClick={() => {
+                        if (device.deviceId) {
+                          handleDetachDevice(contract.id, device.deviceId)
+                        }
+                      }}
+                      aria-label="Gỡ thiết bị"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent sideOffset={4}>Gỡ thiết bị</TooltipContent>
+                </Tooltip>
+              )}
             </div>
           )}
         </td>
@@ -1057,10 +1064,12 @@ export default function CustomerDetailClient({ customerId }: Props) {
                 >
                   {isAllExpanded ? 'Thu gọn tất cả' : 'Mở tất cả'}
                 </Button>
-                <Button size="sm" onClick={() => setCreateContractOpen(true)}>
-                  <Plus className="mr-1.5 h-4 w-4" />
-                  Tạo hợp đồng
-                </Button>
+                {canCreateContract && (
+                  <Button size="sm" onClick={() => setCreateContractOpen(true)}>
+                    <Plus className="mr-1.5 h-4 w-4" />
+                    Tạo hợp đồng
+                  </Button>
+                )}
               </div>
             </CardHeader>
             <CardContent>
@@ -1133,12 +1142,9 @@ export default function CustomerDetailClient({ customerId }: Props) {
                             <td colSpan={7} className="px-5 py-4">
                               <div className="flex flex-col gap-2 text-slate-800">
                                 <div className="flex flex-wrap items-center gap-3">
-                                  <Link
-                                    href={`/system/contracts/${contract.id}`}
-                                    className="text-base font-semibold text-sky-700 hover:underline"
-                                  >
+                                  <span className="text-base font-semibold text-sky-700">
                                     {contract.contractNumber}
-                                  </Link>
+                                  </span>
                                   <Badge
                                     variant="outline"
                                     className={cn('text-xs', getTypeColor(contract.type))}
@@ -1153,40 +1159,44 @@ export default function CustomerDetailClient({ customerId }: Props) {
                                   >
                                     {getStatusLabel(contract.status)}
                                   </Badge>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="h-7 w-7 p-0 text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-                                        onClick={() => setEditingContract(contract)}
-                                        aria-label="Chỉnh sửa hợp đồng"
-                                      >
-                                        <Edit className="h-3.5 w-3.5" />
-                                      </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent sideOffset={4}>
-                                      Chỉnh sửa hợp đồng
-                                    </TooltipContent>
-                                  </Tooltip>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="h-7 w-7 p-0 text-sky-600 hover:bg-sky-50 hover:text-sky-700"
-                                        onClick={() => {
-                                          setAttachModalContractId(contract.id)
-                                          setAttachModalOpen(true)
-                                        }}
-                                        aria-label="Gán thiết bị"
-                                      >
-                                        <MonitorSmartphone className="h-3.5 w-3.5" />
-                                      </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent sideOffset={4}>Gán thiết bị</TooltipContent>
-                                  </Tooltip>
-                                  {canDelete && (
+                                  {canUpdateContract && (
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-7 w-7 p-0 text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                                          onClick={() => setEditingContract(contract)}
+                                          aria-label="Chỉnh sửa hợp đồng"
+                                        >
+                                          <Edit className="h-3.5 w-3.5" />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent sideOffset={4}>
+                                        Chỉnh sửa hợp đồng
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  )}
+                                  {canAttachDevices && (
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-7 w-7 p-0 text-sky-600 hover:bg-sky-50 hover:text-sky-700"
+                                          onClick={() => {
+                                            setAttachModalContractId(contract.id)
+                                            setAttachModalOpen(true)
+                                          }}
+                                          aria-label="Gán thiết bị"
+                                        >
+                                          <MonitorSmartphone className="h-3.5 w-3.5" />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent sideOffset={4}>Gán thiết bị</TooltipContent>
+                                    </Tooltip>
+                                  )}
+                                  {canDeleteContract && (
                                     <Tooltip>
                                       <DeleteDialog
                                         title="Xóa hợp đồng"

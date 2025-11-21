@@ -5,16 +5,17 @@ import type { Contract } from '@/types/models/contract'
 import {
   Edit,
   Trash2,
-  MoreHorizontal,
   Search,
   Package,
   FileText,
-  Calendar,
-  Tag,
-  Building,
   BarChart3,
   CheckCircle2,
-  AlertCircle,
+  RefreshCcw,
+  Plus,
+  Eye,
+  LayoutDashboard,
+  Clock,
+  MoreHorizontal,
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -34,7 +35,7 @@ import ContractFormModal from './ContractFormModal'
 import { ContractForm } from './ContractForm'
 import ContractDevicesModal from './ContractDevicesModal'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Badge } from '@/components/ui/badge'
@@ -138,6 +139,11 @@ export default function ContractsPageClient() {
     return promise
   }
 
+  const refreshData = async () => {
+    await fetchContracts()
+    toast.success('Đã làm mới dữ liệu')
+  }
+
   useEffect(() => {
     void fetchContracts()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -161,13 +167,15 @@ export default function ContractsPageClient() {
   const getStatusColor = (status?: string) => {
     switch (status) {
       case 'ACTIVE':
-        return 'bg-green-500 hover:bg-green-600'
+        return 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border-transparent'
       case 'PENDING':
-        return 'bg-yellow-500 hover:bg-yellow-600'
+        return 'bg-amber-100 text-amber-700 hover:bg-amber-200 border-transparent'
       case 'EXPIRED':
-        return 'bg-red-500 hover:bg-red-600'
+        return 'bg-red-100 text-red-700 hover:bg-red-200 border-transparent'
+      case 'TERMINATED':
+        return 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-transparent'
       default:
-        return 'bg-gray-500 hover:bg-gray-600'
+        return 'bg-gray-100 text-gray-700 border-transparent'
     }
   }
 
@@ -223,74 +231,116 @@ export default function ContractsPageClient() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl bg-gradient-to-r from-sky-600 via-cyan-600 to-blue-600 p-6 text-white shadow-lg">
-        <div className="flex items-center justify-between">
-          <div className="space-y-2">
-            <div className="flex items-center gap-4">
-              <div className="rounded-xl border border-white/30 bg-white/20 p-3 backdrop-blur-sm">
-                <FileText className="h-7 w-7" />
+      {/* Header */}
+      <Card className="border-none bg-white shadow-sm">
+        <CardContent className="p-6">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <LayoutDashboard className="h-6 w-6 text-blue-600" />
+                <h1 className="text-2xl font-bold tracking-tight text-gray-900">
+                  Danh sách hợp đồng
+                </h1>
               </div>
-              <div>
-                <h1 className="text-3xl font-bold">Hợp đồng của tôi</h1>
-                <p className="mt-1 text-white/90">
-                  Danh sách hợp đồng liên quan đến khách hàng của bạn
-                </p>
-              </div>
+              <p className="text-muted-foreground mt-1">
+                Quản lý và theo dõi tất cả hợp đồng của công ty
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={refreshData}
+                className="gap-2 border-gray-300 hover:bg-gray-50"
+              >
+                <RefreshCcw className="h-4 w-4" />
+                Làm mới
+              </Button>
+              <ActionGuard pageId="contracts" actionId="create">
+                <ContractFormModal
+                  trigger={
+                    <Button
+                      size="sm"
+                      className="gap-2 bg-blue-600 text-white shadow-sm hover:bg-blue-700"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Thêm hợp đồng
+                    </Button>
+                  }
+                  onCreated={(c) => c && setContracts((prev) => [c, ...prev])}
+                />
+              </ActionGuard>
             </div>
           </div>
-        </div>
+        </CardContent>
+      </Card>
 
-        <div className="mt-6 grid grid-cols-3 gap-4">
-          <div className="rounded-lg border border-white/20 bg-white/10 p-3 backdrop-blur-sm">
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-white/20 p-2">
-                <Package className="h-5 w-5" />
+      {/* Stats Cards */}
+      <div className="grid gap-6 md:grid-cols-3">
+        <Card className="border-none bg-white shadow-sm">
+          <CardContent className="p-6">
+            <div className="flex items-start gap-4">
+              <div className="rounded-lg bg-blue-50 p-2">
+                <Package className="h-6 w-6 text-blue-600" />
               </div>
               <div>
-                <p className="text-sm text-white/80">Tổng hợp đồng</p>
-                <p className="text-2xl font-bold">{contracts.length}</p>
+                <p className="text-sm font-medium text-gray-500">Tổng hợp đồng</p>
+                <h3 className="mt-1 text-3xl font-bold text-gray-900">{contracts.length}</h3>
+                <p className="mt-1 text-xs text-gray-400">Tất cả hợp đồng trong hệ thống</p>
               </div>
             </div>
-          </div>
-
-          <div className="rounded-lg border border-white/20 bg-white/10 p-3 backdrop-blur-sm">
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-green-500/20 p-2">
-                <CheckCircle2 className="h-5 w-5 text-green-300" />
+          </CardContent>
+        </Card>
+        <Card className="border-none bg-white shadow-sm">
+          <CardContent className="p-6">
+            <div className="flex items-start gap-4">
+              <div className="rounded-lg bg-emerald-50 p-2">
+                <CheckCircle2 className="h-6 w-6 text-emerald-600" />
               </div>
               <div>
-                <p className="text-sm text-white/80">Đang hoạt động</p>
-                <p className="text-2xl font-bold">{activeCount}</p>
+                <p className="text-sm font-medium text-gray-500">Đang hoạt động</p>
+                <h3 className="mt-1 text-3xl font-bold text-gray-900">{activeCount}</h3>
+                <p className="mt-1 text-xs text-gray-400">Hợp đồng đang có hiệu lực</p>
               </div>
             </div>
-          </div>
-
-          <div className="rounded-lg border border-white/20 bg-white/10 p-3 backdrop-blur-sm">
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-yellow-500/20 p-2">
-                <AlertCircle className="h-5 w-5 text-yellow-300" />
+          </CardContent>
+        </Card>
+        <Card className="border-none bg-white shadow-sm">
+          <CardContent className="p-6">
+            <div className="flex items-start gap-4">
+              <div className="rounded-lg bg-amber-50 p-2">
+                <Clock className="h-6 w-6 text-amber-600" />
               </div>
               <div>
-                <p className="text-sm text-white/80">Chờ xử lý</p>
-                <p className="text-2xl font-bold">{pendingCount}</p>
+                <p className="text-sm font-medium text-gray-500">Chờ xử lý</p>
+                <h3 className="mt-1 text-3xl font-bold text-gray-900">{pendingCount}</h3>
+                <p className="mt-1 text-xs text-gray-400">Hợp đồng đang chờ duyệt</p>
               </div>
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5 text-sky-600" />
-                Danh sách hợp đồng
-              </CardTitle>
-              <CardDescription className="mt-1">quản lý hợp đồng của khách hàng</CardDescription>
+      <Card className="border bg-white shadow-sm">
+        <CardHeader className="border-b bg-gray-50/50 px-6 py-4">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-center gap-2">
+              <Search className="h-5 w-5 text-blue-600" />
+              <h3 className="font-semibold text-gray-900">Tìm kiếm & Bộ lọc</h3>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="relative w-64">
+                <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+                <Input
+                  placeholder="Tìm kiếm mã, khách hàng..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onKeyPress={handleSearchKeyPress}
+                  className="bg-white pl-9"
+                />
+              </div>
+
               <select
                 suppressHydrationWarning
                 value={statusFilter ?? ''}
@@ -298,7 +348,7 @@ export default function ContractsPageClient() {
                   setStatusFilter(e.target.value ? e.target.value : undefined)
                   setPage(1)
                 }}
-                className="rounded-md border px-3 py-2 text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                className="rounded-md border bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none"
               >
                 <option value="">Tất cả trạng thái</option>
                 <option value="PENDING">Chờ xử lý</option>
@@ -314,7 +364,7 @@ export default function ContractsPageClient() {
                   setTypeFilter(e.target.value ? e.target.value : undefined)
                   setPage(1)
                 }}
-                className="rounded-md border px-3 py-2 text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                className="rounded-md border bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none"
               >
                 <option value="">Tất cả loại</option>
                 <option value="MPS_CLICK_CHARGE">MPS_CLICK_CHARGE</option>
@@ -324,19 +374,8 @@ export default function ContractsPageClient() {
                 <option value="PARTS_REPAIR_SERVICE">PARTS_REPAIR_SERVICE</option>
               </select>
 
-              <div className="relative w-64">
-                <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-                <Input
-                  placeholder="Tìm kiếm mã, khách hàng..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  onKeyPress={handleSearchKeyPress}
-                  className="pl-9"
-                />
-              </div>
-
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
                 onClick={async () => {
                   setSearchTerm('')
@@ -357,57 +396,42 @@ export default function ContractsPageClient() {
                     setLoading(false)
                   }
                 }}
-                className="rounded-md border px-3 py-2 text-sm"
+                className="gap-2 border-dashed"
               >
-                Xóa bộ lọc
+                <RefreshCcw className="h-3.5 w-3.5" />
+                Reset
               </Button>
-
-              <ActionGuard pageId="contracts" actionId="create">
-                <ContractFormModal onCreated={(c) => c && setContracts((prev) => [c, ...prev])} />
-              </ActionGuard>
             </div>
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="overflow-hidden rounded-2xl border-2 border-gray-200 shadow-lg">
+        <CardContent className="p-0">
+          <div className="overflow-hidden">
             <table className="w-full">
-              <thead className="bg-gradient-to-r from-sky-50 to-blue-50">
+              <thead className="bg-gray-50/50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">#</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">
-                    <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-sky-600" />
-                      Mã hợp đồng
-                    </div>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">#</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                    Mã hợp đồng
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">
-                    <div className="flex items-center gap-2">
-                      <Building className="h-4 w-4 text-cyan-600" />
-                      Khách hàng
-                    </div>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                    Khách hàng
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">
-                    <div className="flex items-center gap-2">
-                      <Tag className="h-4 w-4 text-blue-600" />
-                      Loại
-                    </div>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Loại</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                    Trạng thái
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">Trạng thái</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-purple-600" />
-                      Thời gian
-                    </div>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                    Thời gian
                   </th>
-                  {hasAnyAction && (
-                    <th className="px-4 py-3 text-right text-sm font-semibold">⚙️ Thao tác</th>
-                  )}
+                  <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900">
+                    Thao tác
+                  </th>
                 </tr>
               </thead>
-              <tbody className="divide-y">
+              <tbody className="divide-y divide-gray-100">
                 {contracts.length === 0 ? (
                   <tr>
-                    <td colSpan={hasAnyAction ? 7 : 6} className="px-4 py-12 text-center">
+                    <td colSpan={7} className="px-6 py-12 text-center">
                       <div className="text-muted-foreground flex flex-col items-center gap-3">
                         {searchTerm ? (
                           <>
@@ -436,118 +460,132 @@ export default function ContractsPageClient() {
                       onMouseEnter={() => setHoveredRowId(c.id)}
                       onMouseLeave={() => setHoveredRowId(null)}
                       className={cn(
-                        'cursor-pointer transition-all duration-300',
-                        hoveredRowId === c.id
-                          ? 'bg-gradient-to-r from-sky-50/80 via-cyan-50/50 to-blue-50/30 shadow-md'
-                          : 'hover:bg-gray-50'
+                        'cursor-pointer transition-colors',
+                        hoveredRowId === c.id ? 'bg-blue-50/50' : 'hover:bg-gray-50'
                       )}
                     >
-                      <td className="text-muted-foreground px-4 py-3 text-sm font-bold">
-                        <span className="inline-flex h-6 w-6 items-center justify-center rounded bg-sky-100 text-xs text-sky-700">
-                          {idx + 1}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
+                      <td className="px-6 py-4 text-sm text-gray-500">{idx + 1}</td>
+                      <td className="px-6 py-4">
                         <Link
                           href={`/user/contracts/${c.id}`}
                           onClick={(e) => e.stopPropagation()}
-                          className="inline-block rounded bg-sky-100 px-2 py-1 text-sm font-semibold text-sky-700 hover:underline"
+                          className="font-medium text-blue-600 hover:underline"
                         >
-                          <code>{c.contractNumber}</code>
+                          {c.contractNumber}
                         </Link>
                       </td>
-                      <td className="px-4 py-3 font-medium">{c.customer?.name ?? '—'}</td>
-                      <td className="px-4 py-3">
-                        <Badge className={`border-2 ${getTypeColor(c.type)}`}>{c.type}</Badge>
+                      <td className="px-6 py-4 font-medium text-gray-700">
+                        {c.customer?.name ?? '—'}
                       </td>
-                      <td className="px-4 py-3">
-                        <Badge className={cn('border-0 text-white', getStatusColor(c.status))}>
+                      <td className="px-6 py-4">
+                        <Badge variant="outline" className={`font-normal ${getTypeColor(c.type)}`}>
+                          {c.type}
+                        </Badge>
+                      </td>
+                      <td className="px-6 py-4">
+                        <Badge className={cn('border-0 shadow-sm', getStatusColor(c.status))}>
                           {getStatusLabel(c.status)}
                         </Badge>
                       </td>
-                      <td className="px-4 py-3 text-sm">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="text-muted-foreground h-3.5 w-3.5" />
-                          <span>
-                            {new Date(c.startDate).toLocaleDateString('vi-VN')} —{' '}
-                            {new Date(c.endDate).toLocaleDateString('vi-VN')}
-                          </span>
+                      <td className="px-6 py-4 text-sm text-gray-600">
+                        <span>
+                          {new Date(c.startDate).toLocaleDateString('vi-VN')} —{' '}
+                          {new Date(c.endDate).toLocaleDateString('vi-VN')}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-gray-500 hover:text-blue-600"
+                            onClick={() => router.push(`/user/contracts/${c.id}`)}
+                            title="Xem chi tiết"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          {hasAnyAction && (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-gray-500 hover:text-gray-900"
+                                >
+                                  <MoreHorizontal className="h-4 w-4" />
+                                  <span className="sr-only">Mở menu</span>
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent
+                                align="end"
+                                className="rounded-lg border shadow-md"
+                              >
+                                <DropdownMenuItem
+                                  onClick={() => router.push(`/user/contracts/${c.id}`)}
+                                  className="flex cursor-pointer items-center gap-2 py-2"
+                                >
+                                  <Eye className="h-4 w-4" />
+                                  Xem chi tiết
+                                </DropdownMenuItem>
+                                {canUpdate && (
+                                  <>
+                                    <DropdownMenuItem
+                                      onClick={() => {
+                                        setEditingContract(c)
+                                        setIsEditModalOpen(true)
+                                      }}
+                                      className="flex cursor-pointer items-center gap-2 py-2 transition-all hover:bg-sky-50 hover:text-sky-700"
+                                    >
+                                      <Edit className="h-4 w-4" />
+                                      Chỉnh sửa
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={() => {
+                                        setDevicesModalContract({
+                                          id: c.id,
+                                          number: c.contractNumber,
+                                        })
+                                        setIsDevicesModalOpen(true)
+                                      }}
+                                      className="flex cursor-pointer items-center gap-2 py-2 transition-all hover:bg-sky-50 hover:text-sky-700"
+                                    >
+                                      <Package className="h-4 w-4" />
+                                      Gán thiết bị
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
+
+                                {canDelete && (
+                                  <DeleteDialog
+                                    title="Xóa hợp đồng"
+                                    description={`Bạn có chắc chắn muốn xóa hợp đồng "${c.contractNumber}" không? Hành động này không thể hoàn tác.`}
+                                    onConfirm={async () => {
+                                      try {
+                                        await contractsClientService.delete(c.id)
+                                        setContracts((prev) => prev.filter((p) => p.id !== c.id))
+                                        toast.success('Xóa hợp đồng thành công')
+                                      } catch (err: unknown) {
+                                        console.error('Delete contract error', err)
+                                        const apiMsg = extractApiMessage(err)
+                                        toast.error(apiMsg || 'Có lỗi khi xóa hợp đồng')
+                                      }
+                                    }}
+                                    trigger={
+                                      <DropdownMenuItem
+                                        className="flex cursor-pointer items-center gap-2 py-2 text-red-600 transition-all hover:bg-red-50"
+                                        onSelect={(e) => e.preventDefault()}
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                        Xóa
+                                      </DropdownMenuItem>
+                                    }
+                                  />
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          )}
                         </div>
                       </td>
-                      {hasAnyAction && (
-                        <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="transition-all hover:bg-sky-100 hover:text-sky-700"
-                              >
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent
-                              align="end"
-                              className="rounded-lg border-2 shadow-xl"
-                            >
-                              {canUpdate && (
-                                <>
-                                  <DropdownMenuItem
-                                    onClick={() => {
-                                      setEditingContract(c)
-                                      setIsEditModalOpen(true)
-                                    }}
-                                    className="flex cursor-pointer items-center gap-2 py-2 transition-all hover:bg-sky-50 hover:text-sky-700"
-                                  >
-                                    <Edit className="h-4 w-4" />
-                                    Chỉnh sửa
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() => {
-                                      setDevicesModalContract({
-                                        id: c.id,
-                                        number: c.contractNumber,
-                                      })
-                                      setIsDevicesModalOpen(true)
-                                    }}
-                                    className="flex cursor-pointer items-center gap-2 py-2 transition-all hover:bg-sky-50 hover:text-sky-700"
-                                  >
-                                    <Package className="h-4 w-4" />
-                                    Gán thiết bị
-                                  </DropdownMenuItem>
-                                </>
-                              )}
-
-                              {canDelete && (
-                                <DeleteDialog
-                                  title="Xóa hợp đồng"
-                                  description={`Bạn có chắc chắn muốn xóa hợp đồng "${c.contractNumber}" không? Hành động này không thể hoàn tác.`}
-                                  onConfirm={async () => {
-                                    try {
-                                      await contractsClientService.delete(c.id)
-                                      setContracts((prev) => prev.filter((p) => p.id !== c.id))
-                                      toast.success('Xóa hợp đồng thành công')
-                                    } catch (err: unknown) {
-                                      console.error('Delete contract error', err)
-                                      const apiMsg = extractApiMessage(err)
-                                      toast.error(apiMsg || 'Có lỗi khi xóa hợp đồng')
-                                    }
-                                  }}
-                                  trigger={
-                                    <DropdownMenuItem
-                                      className="flex cursor-pointer items-center gap-2 py-2 text-red-600 transition-all hover:bg-red-50"
-                                      onSelect={(e) => e.preventDefault()}
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                      Xóa
-                                    </DropdownMenuItem>
-                                  }
-                                />
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </td>
-                      )}
                     </motion.tr>
                   ))
                 )}
@@ -556,7 +594,7 @@ export default function ContractsPageClient() {
           </div>
 
           {contracts.length > 0 && (
-            <div className="text-muted-foreground mt-4 flex items-center justify-between text-sm">
+            <div className="text-muted-foreground mt-4 flex items-center justify-between px-6 pb-4 text-sm">
               <div className="flex items-center gap-2">
                 <BarChart3 className="h-4 w-4" />
                 <span>
@@ -578,14 +616,9 @@ export default function ContractsPageClient() {
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
         {isEditModalOpen && (
           <DialogContent className="max-h-[90vh] max-w-3xl overflow-hidden rounded-2xl border-0 p-0 shadow-2xl">
-            <DialogHeader className="relative overflow-hidden bg-gradient-to-r from-sky-600 via-cyan-600 to-blue-600 p-0">
-              <div className="absolute inset-0 bg-black/10"></div>
-              <div className="relative z-10 px-6 py-5 text-white">
-                <DialogTitle className="text-2xl font-bold">✏️ Chỉnh sửa hợp đồng</DialogTitle>
-                <DialogDescription className="mt-1 text-white/90">
-                  Cập nhật thông tin hợp đồng
-                </DialogDescription>
-              </div>
+            <DialogHeader className="px-6 pt-6 pb-4">
+              <DialogTitle className="text-xl font-semibold">Chỉnh sửa hợp đồng</DialogTitle>
+              <DialogDescription>Cập nhật thông tin chi tiết cho hợp đồng này</DialogDescription>
             </DialogHeader>
 
             <div className="max-h-[calc(90vh-120px)] overflow-y-auto bg-white">

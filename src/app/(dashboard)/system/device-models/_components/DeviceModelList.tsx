@@ -1,52 +1,288 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import {
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useTransition,
+  type ReactNode,
+} from 'react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Skeleton } from '@/components/ui/skeleton'
 import { Input } from '@/components/ui/input'
-import { toast } from 'sonner'
-import deviceModelsClientService from '@/lib/api/services/device-models-client.service'
+import { StatsCards } from '@/components/system/StatsCard'
+import { FilterSection } from '@/components/system/FilterSection'
+import { TableWrapper } from '@/components/system/TableWrapper'
+import { TableSkeleton } from '@/components/system/TableSkeleton'
+import { DeleteDialog } from '@/components/shared/DeleteDialog'
 import DeviceModelFormModal from './DeviceModelFormModal'
 import { ConsumableCompatibilityModal } from './ConsumableCompatibilityModal'
-import { DeleteDialog } from '@/components/shared/DeleteDialog'
 import type { DeviceModel } from '@/types/models/device-model'
-import {
-  Trash,
-  Package,
-  Loader2,
-  Search,
-  CheckCircle2,
-  XCircle,
-  Factory,
-  Hash,
-  Settings,
-  BarChart3,
-  Filter,
-} from 'lucide-react'
-import Link from 'next/link'
-import { cn } from '@/lib/utils'
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from '@/components/ui/select'
+import deviceModelsClientService from '@/lib/api/services/device-models-client.service'
 import { useActionPermission } from '@/lib/hooks/useActionPermission'
 import { ActionGuard } from '@/components/shared/ActionGuard'
+import { useDeviceModelsQuery } from '@/lib/hooks/queries/useDeviceModelsQuery'
+import { useQueryClient } from '@tanstack/react-query'
+import type { ColumnDef } from '@tanstack/react-table'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { toast } from 'sonner'
+import Link from 'next/link'
+import { cn } from '@/lib/utils'
+import { Package, Search, Factory, Hash, CheckCircle2, XCircle, Trash, Loader2 } from 'lucide-react'
+
+interface DeviceModelStats {
+  total: number
+  active: number
+  inactive: number
+}
 
 export default function DeviceModelList() {
-  // Permission checks
   const { can } = useActionPermission('device-models')
 
-  const [models, setModels] = useState<DeviceModel[]>([])
-  const [filteredModels, setFilteredModels] = useState<DeviceModel[]>([])
-  const [loading, setLoading] = useState(false)
-  const [deletingId, setDeletingId] = useState<string | null>(null)
-  // editing state removed (unused) to satisfy lint rules
-  const [searchTerm, setSearchTerm] = useState('')
+  const [searchInput, setSearchInput] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [manufacturerFilter, setManufacturerFilter] = useState('')
+  const [typeFilter, setTypeFilter] = useState('')
+  const [isActiveFilter, setIsActiveFilter] = useState('') // '', 'true', 'false'
+  const [sorting, setSorting] = useState<{ sortBy?: string; sortOrder?: 'asc' | 'desc' }>({
+    sortBy: 'createdAt',
+    sortOrder: 'desc',
+  })
+  const [columnVisibilityMenu, setColumnVisibilityMenu] = useState<ReactNode | null>(null)
+  const [stats, setStats] = useState<DeviceModelStats>({ total: 0, active: 0, inactive: 0 })
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setDebouncedSearch(searchInput.trim())
+    }, 800)
+    return () => clearTimeout(timeout)
+  }, [searchInput])
+
+  const activeFilters = useMemo(() => {
+    const filters: Array<{ label: string; value: string; onRemove: () => void }> = []
+    if (searchInput) {
+      filters.push({
+        label: `Tìm kiếm: "${searchInput}"`,
+        value: searchInput,
+        onRemove: () => setSearchInput(''),
+      })
+    }
+    if (manufacturerFilter) {
+      filters.push({
+        label: `NSX: ${manufacturerFilter}`,
+        value: manufacturerFilter,
+        onRemove: () => setManufacturerFilter(''),
+      })
+    }
+    if (typeFilter) {
+      filters.push({
+        label: `Loại: ${typeFilter}`,
+        value: typeFilter,
+        onRemove: () => setTypeFilter(''),
+      })
+    }
+    if (isActiveFilter) {
+      filters.push({
+        label: `Trạng thái: ${isActiveFilter === 'true' ? 'Hoạt động' : 'Không hoạt động'}`,
+        value: isActiveFilter,
+        onRemove: () => setIsActiveFilter(''),
+      })
+    }
+    if (sorting.sortBy !== 'createdAt' || sorting.sortOrder !== 'desc') {
+      filters.push({
+        label: `Sắp xếp: ${sorting.sortBy} (${sorting.sortOrder === 'asc' ? 'Tăng dần' : 'Giảm dần'})`,
+        value: `${sorting.sortBy}-${sorting.sortOrder}`,
+        onRemove: () => setSorting({ sortBy: 'createdAt', sortOrder: 'desc' }),
+      })
+    }
+    return filters
+  }, [searchInput, manufacturerFilter, typeFilter, isActiveFilter, sorting])
+
+  const handleResetFilters = () => {
+    setSearchInput('')
+    setManufacturerFilter('')
+    setTypeFilter('')
+    setIsActiveFilter('')
+    setSorting({ sortBy: 'createdAt', sortOrder: 'desc' })
+  }
+
+  return (
+    <div className="space-y-6">
+      <StatsCards
+        cards={[
+          {
+            label: 'Tổng models',
+            value: stats.total,
+            icon: <Package className="h-6 w-6" />,
+            borderColor: 'violet',
+          },
+          {
+            label: 'Đang hoạt động',
+            value: stats.active,
+            icon: <CheckCircle2 className="h-6 w-6" />,
+            borderColor: 'green',
+          },
+          {
+            label: 'Không hoạt động',
+            value: stats.inactive,
+            icon: <XCircle className="h-6 w-6" />,
+            borderColor: 'gray',
+          },
+        ]}
+      />
+
+      <FilterSection
+        title="Bộ lọc & Tìm kiếm"
+        subtitle="Tìm kiếm và lọc device models theo nhà sản xuất, loại, trạng thái"
+        onReset={handleResetFilters}
+        columnVisibilityMenu={columnVisibilityMenu}
+        activeFilters={activeFilters}
+      >
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
+          <div className="relative">
+            <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <Input
+              placeholder="Tìm kiếm..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  setDebouncedSearch(searchInput.trim())
+                }
+              }}
+              className="pl-10"
+            />
+          </div>
+
+          {can('filter-by-manufacturer') && (
+            <div>
+              <label className="mb-2 block text-sm font-medium">Nhà sản xuất</label>
+              <SelectInput
+                value={manufacturerFilter || 'ALL'}
+                onChange={(value) => setManufacturerFilter(value === 'ALL' ? '' : value)}
+                options={[
+                  { label: 'Tất cả NSX', value: 'ALL' },
+                  { label: 'HP', value: 'HP' },
+                  { label: 'Canon', value: 'Canon' },
+                  { label: 'Epson', value: 'Epson' },
+                  { label: 'Brother', value: 'Brother' },
+                  { label: 'Samsung', value: 'Samsung' },
+                  { label: 'Xerox', value: 'Xerox' },
+                ]}
+              />
+            </div>
+          )}
+
+          {can('filter-by-type') && (
+            <div>
+              <label className="mb-2 block text-sm font-medium">Loại thiết bị</label>
+              <SelectInput
+                value={typeFilter || 'ALL'}
+                onChange={(value) => setTypeFilter(value === 'ALL' ? '' : value)}
+                options={[
+                  { label: 'Tất cả loại', value: 'ALL' },
+                  { label: 'Máy in', value: 'PRINTER' },
+                  { label: 'Máy quét', value: 'SCANNER' },
+                  { label: 'Máy photocopy', value: 'COPIER' },
+                  { label: 'Máy fax', value: 'FAX' },
+                  { label: 'Đa năng', value: 'MULTIFUNCTION' },
+                ]}
+              />
+            </div>
+          )}
+
+          <div>
+            <label className="mb-2 block text-sm font-medium">Trạng thái</label>
+            <SelectInput
+              value={isActiveFilter || 'ALL'}
+              onChange={(value) => setIsActiveFilter(value === 'ALL' ? '' : value)}
+              options={[
+                { label: 'Tất cả', value: 'ALL' },
+                { label: 'Đang hoạt động', value: 'true' },
+                { label: 'Không hoạt động', value: 'false' },
+              ]}
+            />
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-medium">Sắp xếp theo</label>
+            <SelectInput
+              value={sorting.sortBy || 'createdAt'}
+              onChange={(value) => setSorting((prev) => ({ ...prev, sortBy: value }))}
+              options={[
+                { label: 'Ngày tạo', value: 'createdAt' },
+                { label: 'Tên', value: 'name' },
+                { label: 'Nhà sản xuất', value: 'manufacturer' },
+                { label: 'Loại', value: 'type' },
+              ]}
+            />
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-medium">Thứ tự</label>
+            <SelectInput
+              value={sorting.sortOrder || 'desc'}
+              onChange={(value) =>
+                setSorting((prev) => ({ ...prev, sortOrder: value as 'asc' | 'desc' }))
+              }
+              options={[
+                { label: 'Tăng dần', value: 'asc' },
+                { label: 'Giảm dần', value: 'desc' },
+              ]}
+            />
+          </div>
+        </div>
+      </FilterSection>
+
+      <Suspense fallback={<TableSkeleton rows={10} columns={8} />}>
+        <DeviceModelsTableContent
+          search={debouncedSearch}
+          rawSearch={searchInput}
+          manufacturer={manufacturerFilter}
+          type={typeFilter}
+          isActive={isActiveFilter}
+          sorting={sorting}
+          onSortingChange={setSorting}
+          onStatsChange={setStats}
+          renderColumnVisibilityMenu={setColumnVisibilityMenu}
+        />
+      </Suspense>
+    </div>
+  )
+}
+
+interface DeviceModelsTableContentProps {
+  search: string
+  rawSearch: string
+  manufacturer: string
+  type: string
+  isActive: string
+  sorting: { sortBy?: string; sortOrder?: 'asc' | 'desc' }
+  onSortingChange: (sorting: { sortBy?: string; sortOrder?: 'asc' | 'desc' }) => void
+  onStatsChange: (stats: DeviceModelStats) => void
+  renderColumnVisibilityMenu: (menu: ReactNode | null) => void
+}
+
+function DeviceModelsTableContent({
+  search,
+  rawSearch,
+  manufacturer,
+  type,
+  isActive,
+  sorting,
+  onSortingChange,
+  onStatsChange,
+  renderColumnVisibilityMenu,
+}: DeviceModelsTableContentProps) {
+  const [isPending, startTransition] = useTransition()
   const [compatibilityModal, setCompatibilityModal] = useState<{
     open: boolean
     deviceModelId: string
@@ -54,597 +290,317 @@ export default function DeviceModelList() {
   } | null>(null)
   const [consumableCounts, setConsumableCounts] = useState<Record<string, number>>({})
   const [countsLoading, setCountsLoading] = useState(false)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const queryClient = useQueryClient()
 
-  // Filter states
-  const [manufacturerFilter, setManufacturerFilter] = useState<string>('')
-  const [typeFilter, setTypeFilter] = useState<string>('')
-  const [isActiveFilter, setIsActiveFilter] = useState<string>('') // 'true', 'false', or ''
-  const [sortBy, setSortBy] = useState<string>('createdAt')
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
+  const queryParams = useMemo(
+    () => ({
+      page: 1,
+      limit: 100,
+      search: search || undefined,
+      manufacturer: manufacturer || undefined,
+      type: type || undefined,
+      isActive: isActive ? (isActive === 'true' ? true : false) : undefined,
+      sortBy: sorting.sortBy || 'createdAt',
+      sortOrder: sorting.sortOrder || 'desc',
+    }),
+    [search, manufacturer, type, isActive, sorting]
+  )
 
-  const load = async (search?: string) => {
-    setLoading(true)
-    try {
-      const resp = await deviceModelsClientService.getAll({
-        limit: 100,
-        search: search?.trim() || undefined,
-        manufacturer: manufacturerFilter || undefined,
-        type: typeFilter || undefined,
-        isActive: isActiveFilter === 'true' ? true : isActiveFilter === 'false' ? false : undefined,
-        sortBy: sortBy || undefined,
-        sortOrder: sortOrder || undefined,
-      })
-      const data = resp.data || []
-      setModels(data)
-      setFilteredModels(data)
+  const { data } = useDeviceModelsQuery(queryParams)
+  const models = useMemo(() => data?.data ?? [], [data?.data])
+  const totalCount = useMemo(
+    () => data?.pagination?.total ?? models.length,
+    [data?.pagination?.total, models.length]
+  )
 
-      // If backend already returned consumableTypeCount on each model, use
-      // that to populate counts and avoid per-model compatible-consumables
-      // requests. Only call per-model API for models that don't include it.
-      try {
-        const initialCounts: Record<string, number> = {}
-        const missingCountModels: typeof data = []
-        for (const m of data) {
-          // backend may include `consumableTypeCount` — guard via narrow cast
-          const maybeCount = (m as unknown as { consumableTypeCount?: number }).consumableTypeCount
-          if (typeof maybeCount === 'number') {
-            initialCounts[m.id] = maybeCount
-          } else {
-            missingCountModels.push(m)
-          }
-        }
-
-        if (Object.keys(initialCounts).length > 0) {
-          setConsumableCounts((cur) => ({ ...cur, ...initialCounts }))
-        }
-
-        // For models where backend didn't provide the count, fetch them (limited)
-        if (missingCountModels.length > 0) {
-          loadConsumableCounts(missingCountModels)
-        }
-      } catch (innerErr) {
-        console.error('Error parsing counts from backend', innerErr)
-        // fallback: still try to load counts for all models
-        loadConsumableCounts(data)
-      }
-    } catch (err) {
-      console.error('Load device models failed', err)
-      toast.error('Không thể tải danh sách model')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const loadConsumableCounts = async (modelsToLoad: DeviceModel[]) => {
-    // Avoid triggering a large number of parallel requests when there are
-    // many device models. Limit to a reasonable number (first N models) and
-    // load others lazily if needed. This reduces noise in network panel and
-    // load on backend.
-    if (!Array.isArray(modelsToLoad) || modelsToLoad.length === 0) return
-    const MAX_CONCURRENT = 20 // fetch counts for at most this many models immediately
-    const toProcess = modelsToLoad.slice(0, MAX_CONCURRENT)
-
+  const fetchMissingCounts = useCallback(async (modelsToLoad: DeviceModel[]) => {
+    if (!modelsToLoad.length) return
     setCountsLoading(true)
     try {
-      const promises = toProcess.map((m) =>
-        deviceModelsClientService
-          .getCompatibleConsumables(m.id)
-          .then((res) => ({ id: m.id, count: Array.isArray(res) ? res.length : 0 }))
-          .catch(() => ({ id: m.id, count: 0 }))
+      const results = await Promise.all(
+        modelsToLoad.slice(0, 20).map((model) =>
+          deviceModelsClientService
+            .getCompatibleConsumables(model.id)
+            .then((res) => ({ id: model.id, count: Array.isArray(res) ? res.length : 0 }))
+            .catch(() => ({ id: model.id, count: 0 }))
+        )
       )
-      const results = await Promise.all(promises)
       const next: Record<string, number> = {}
       for (const r of results) {
         next[r.id] = r.count
       }
-      setConsumableCounts((cur) => ({ ...cur, ...next }))
-    } catch (e) {
-      console.error('Failed to load consumable counts', e)
+      setConsumableCounts((prev) => ({ ...prev, ...next }))
+    } catch (error) {
+      console.error('Failed to load consumable counts', error)
     } finally {
       setCountsLoading(false)
     }
-  }
-
-  // Helper to reload with current filter state
-  const reloadWithFilters = () => {
-    load(searchTerm?.trim() ? searchTerm : undefined)
-  }
-
-  // When filter/sort state changes, reload from server using current filters.
-  // This avoids relying on setTimeout hacks and guarantees the latest
-  // selected filter values are sent to the API immediately.
-  useEffect(() => {
-    reloadWithFilters()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [manufacturerFilter, typeFilter, isActiveFilter, sortBy, sortOrder])
-
-  // When searchTerm is set we call server-side search (debounced). If server
-  // search is active we show the `models` returned by server directly. When
-  // searchTerm is empty we fall back to client-side filtering.
-  useEffect(() => {
-    if (!searchTerm.trim()) {
-      setFilteredModels(models)
-      return
-    }
-
-    // while server search is used, show server-returned models
-    setFilteredModels(models)
-  }, [searchTerm, models])
-
-  // Initial load on mount: fetch models when the component mounts so the
-  // list is populated the first time the page is opened.
-  useEffect(() => {
-    load()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // debounce ref for search
-  const searchDebounceRef = useRef<number | null>(null)
-
   useEffect(() => {
-    return () => {
-      if (searchDebounceRef.current) window.clearTimeout(searchDebounceRef.current)
-    }
-  }, [])
-
-  const handleDelete = async (id: string) => {
-    // Optimistic UI: remove locally first, then call API
-    const previous = models
-    setModels((cur) => cur.filter((m) => m.id !== id))
-    setDeletingId(id)
-    try {
-      await deviceModelsClientService.delete(id)
-      toast.success('Đã xóa')
-    } catch (err) {
-      console.error('Delete device model failed', err)
-      toast.error('Xóa thất bại')
-      // Revert
-      setModels(previous)
-    } finally {
-      setDeletingId(null)
-    }
-  }
-
-  const handleSaved = (m?: DeviceModel | null) => {
-    if (!m) {
-      load()
-      return
-    }
-
-    setModels((cur) => {
-      const exists = cur.find((it) => it.id === m.id)
-      if (exists) {
-        return cur.map((it) => (it.id === m.id ? m : it))
-      }
-      return [m, ...cur]
+    const total = totalCount
+    const active = models.filter((model) => model.isActive).length
+    onStatsChange({
+      total,
+      active,
+      inactive: Math.max(total - active, 0),
     })
-  }
 
-  const activeCount = models.filter((m) => m.isActive).length
-  const inactiveCount = models.length - activeCount
+    if (!models.length) return
 
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <Skeleton className="h-32 w-full rounded-2xl" />
-        <Card>
-          <CardHeader>
-            <Skeleton className="h-8 w-64" />
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
+    const initialCounts: Record<string, number> = {}
+    const missing: DeviceModel[] = []
+
+    for (const model of models) {
+      const maybeCount = (model as unknown as { consumableTypeCount?: number }).consumableTypeCount
+      if (typeof maybeCount === 'number') {
+        initialCounts[model.id] = maybeCount
+      } else if (consumableCounts[model.id] === undefined) {
+        missing.push(model)
+      }
+    }
+
+    if (Object.keys(initialCounts).length) {
+      setConsumableCounts((prev) => ({ ...prev, ...initialCounts }))
+    }
+
+    if (missing.length) {
+      void fetchMissingCounts(missing)
+    }
+  }, [models, totalCount, onStatsChange, fetchMissingCounts, consumableCounts])
+
+  const invalidateModels = useCallback(
+    () => queryClient.invalidateQueries({ queryKey: ['device-models'] }),
+    [queryClient]
+  )
+
+  const handleDelete = useCallback(
+    async (id: string) => {
+      setDeletingId(id)
+      try {
+        await deviceModelsClientService.delete(id)
+        toast.success('Đã xóa device model')
+        await invalidateModels()
+      } catch (error) {
+        console.error('Delete device model error', error)
+        toast.error('Xóa device model thất bại')
+      } finally {
+        setDeletingId(null)
+      }
+    },
+    [invalidateModels]
+  )
+
+  const handleSaved = useCallback(async () => {
+    await invalidateModels()
+  }, [invalidateModels])
+
+  const columns = useMemo<ColumnDef<DeviceModel>[]>(() => {
+    return [
+      {
+        id: 'index',
+        header: '#',
+        cell: ({ row, table }) => {
+          const index = table.getSortedRowModel().rows.findIndex((r) => r.id === row.id)
+          return <span className="text-muted-foreground text-sm">{index + 1}</span>
+        },
+        enableSorting: false,
+      },
+      {
+        accessorKey: 'name',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <Package className="h-4 w-4 text-violet-600" />
+            Tên Model
+          </div>
+        ),
+        enableSorting: true,
+        cell: ({ row }) => (
+          <Link
+            href={`/system/device-models/${encodeURIComponent(row.original.id)}`}
+            className="font-semibold text-violet-600 hover:text-violet-700 hover:underline"
+          >
+            {row.original.name || '-'}
+          </Link>
+        ),
+      },
+      {
+        accessorKey: 'partNumber',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <Hash className="h-4 w-4 text-purple-600" />
+            Part Number
+          </div>
+        ),
+        enableSorting: true,
+        cell: ({ row }) =>
+          row.original.partNumber ? (
+            <code className="rounded bg-purple-100 px-2 py-1 text-xs text-purple-700">
+              {row.original.partNumber}
+            </code>
+          ) : (
+            <span className="text-muted-foreground text-sm">-</span>
+          ),
+      },
+      {
+        accessorKey: 'manufacturer',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <Factory className="h-4 w-4 text-fuchsia-600" />
+            Nhà sản xuất
+          </div>
+        ),
+        enableSorting: true,
+        cell: ({ row }) => <span className="text-sm">{row.original.manufacturer || '-'}</span>,
+      },
+      {
+        accessorKey: 'isActive',
+        header: 'Trạng thái',
+        enableSorting: true,
+        cell: ({ row }) => {
+          const m = row.original
+          return (
+            <Badge
+              variant={m.isActive ? 'default' : 'secondary'}
+              className={cn(
+                'flex w-fit items-center gap-1 px-2 py-0.5 text-xs',
+                m.isActive ? 'bg-green-500 hover:bg-green-600' : 'bg-gray-400 hover:bg-gray-500'
+              )}
+            >
+              {m.isActive ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
+              {m.isActive ? 'Active' : 'Inactive'}
+            </Badge>
+          )
+        },
+      },
+      {
+        id: 'consumableCount',
+        header: 'Số loại tiêu hao',
+        enableSorting: false,
+        cell: ({ row }) => {
+          const model = row.original
+          const count = consumableCounts[model.id]
+          return countsLoading && count === undefined ? (
+            <span className="text-muted-foreground text-sm">—</span>
+          ) : (
+            <Badge variant="outline" className="font-mono text-xs">
+              {typeof count === 'number' ? count : 0}
+            </Badge>
+          )
+        },
+      },
+      {
+        id: 'deviceCount',
+        header: 'Số thiết bị',
+        enableSorting: false,
+        cell: ({ row }) => (
+          <Badge variant="outline" className="font-mono text-xs">
+            {typeof row.original.deviceCount === 'number' ? row.original.deviceCount : 0}
+          </Badge>
+        ),
+      },
+      {
+        id: 'compatibility',
+        header: 'Vật tư tiêu hao',
+        enableSorting: false,
+        cell: ({ row }) => (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() =>
+              setCompatibilityModal({
+                open: true,
+                deviceModelId: row.original.id,
+                deviceModelName: row.original.name || 'N/A',
+              })
+            }
+            className="gap-2"
+          >
+            <Package className="h-4 w-4" />
+            Quản lý
+          </Button>
+        ),
+      },
+      {
+        id: 'actions',
+        header: 'Thao tác',
+        enableSorting: false,
+        cell: ({ row }) => (
+          <div className="flex justify-end gap-2">
+            <ActionGuard pageId="device-models" actionId="update">
+              <DeviceModelFormModal mode="edit" model={row.original} onSaved={handleSaved} />
+            </ActionGuard>
+            <ActionGuard pageId="device-models" actionId="delete">
+              <DeleteDialog
+                title="Xác nhận xóa device model này?"
+                description={`Xóa device model "${row.original.name || ''}"?`}
+                onConfirm={async () => handleDelete(row.original.id)}
+                trigger={
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    disabled={deletingId === row.original.id}
+                  >
+                    {deletingId === row.original.id ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trash className="h-4 w-4" />
+                    )}
+                  </Button>
+                }
+              />
+            </ActionGuard>
+          </div>
+        ),
+      },
+    ]
+  }, [consumableCounts, countsLoading, deletingId, handleSaved, handleDelete])
 
   return (
-    <div className="space-y-6">
-      {/* Header with Gradient */}
-      <div className="rounded-2xl bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 p-6 text-white shadow-lg">
-        <div className="flex items-center justify-between">
-          <div className="space-y-2">
-            <div className="flex items-center gap-3">
-              <Package className="h-10 w-10" />
-              <div>
-                <h1 className="text-2xl font-bold">Device Models</h1>
-                <p className="mt-1 text-white/90">Quản lý các mẫu thiết bị</p>
-              </div>
-            </div>
-          </div>
-
-          <ActionGuard pageId="device-models" actionId="create">
-            <DeviceModelFormModal mode="create" onSaved={handleSaved} />
-          </ActionGuard>
-        </div>
-
-        {/* Quick Stats */}
-        <div className="mt-6 grid grid-cols-3 gap-4">
-          <div className="rounded-lg border border-white/20 bg-white/10 p-3 backdrop-blur-sm">
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-white/20 p-2">
-                <Package className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-sm text-white/80">Tổng models</p>
-                <p className="text-2xl font-bold">{models.length}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-lg border border-white/20 bg-white/10 p-3 backdrop-blur-sm">
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-green-500/20 p-2">
-                <CheckCircle2 className="h-5 w-5 text-green-300" />
-              </div>
-              <div>
-                <p className="text-sm text-white/80">Đang hoạt động</p>
-                <p className="text-2xl font-bold">{activeCount}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-lg border border-white/20 bg-white/10 p-3 backdrop-blur-sm">
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-gray-500/20 p-2">
-                <XCircle className="h-5 w-5 text-gray-300" />
-              </div>
-              <div>
-                <p className="text-sm text-white/80">Không hoạt động</p>
-                <p className="text-2xl font-bold">{inactiveCount}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content Card */}
-      <Card>
-        <CardHeader>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <Settings className="h-5 w-5 text-violet-600" />
-                  Danh sách Device Models
-                </CardTitle>
-                <CardDescription className="mt-1">
-                  Quản lý và theo dõi tất cả các mẫu thiết bị
-                </CardDescription>
-              </div>
-
-              {/* Search */}
-              <div className="relative w-64">
-                <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-                <Input
-                  placeholder="Tìm kiếm..."
-                  value={searchTerm}
-                  onChange={(e) => {
-                    const v = e.target.value
-                    setSearchTerm(v)
-
-                    // debounce server search by 2s
-                    if (searchDebounceRef.current) window.clearTimeout(searchDebounceRef.current)
-                    searchDebounceRef.current = window.setTimeout(() => {
-                      load(v?.trim() ? v : undefined)
-                    }, 2000)
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      const v = (e.target as HTMLInputElement).value
-                      if (searchDebounceRef.current) window.clearTimeout(searchDebounceRef.current)
-                      load(v?.trim() ? v : undefined)
-                    }
-                  }}
-                  className="pl-9"
-                />
-              </div>
-            </div>
-
-            {/* Filters */}
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4 text-violet-600" />
-                <span className="text-sm font-semibold">Bộ lọc:</span>
-              </div>
-
-              {can('filter-by-manufacturer') && (
-                <Select
-                  value={manufacturerFilter || 'ALL'}
-                  onValueChange={(v) => setManufacturerFilter(v === 'ALL' ? '' : v)}
-                >
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Nhà sản xuất" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ALL">Tất cả NSX</SelectItem>
-                    <SelectItem value="HP">HP</SelectItem>
-                    <SelectItem value="Canon">Canon</SelectItem>
-                    <SelectItem value="Epson">Epson</SelectItem>
-                    <SelectItem value="Brother">Brother</SelectItem>
-                    <SelectItem value="Samsung">Samsung</SelectItem>
-                    <SelectItem value="Xerox">Xerox</SelectItem>
-                  </SelectContent>
-                </Select>
-              )}
-
-              {can('filter-by-type') && (
-                <Select
-                  value={typeFilter || 'ALL'}
-                  onValueChange={(v) => setTypeFilter(v === 'ALL' ? '' : v)}
-                >
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Loại thiết bị" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ALL">Tất cả loại</SelectItem>
-                    <SelectItem value="PRINTER">Máy in</SelectItem>
-                    <SelectItem value="SCANNER">Máy quét</SelectItem>
-                    <SelectItem value="COPIER">Máy photocopy</SelectItem>
-                    <SelectItem value="FAX">Máy fax</SelectItem>
-                    <SelectItem value="MULTIFUNCTION">Đa năng</SelectItem>
-                  </SelectContent>
-                </Select>
-              )}
-
-              <Select
-                value={isActiveFilter || 'ALL'}
-                onValueChange={(v) => setIsActiveFilter(v === 'ALL' ? '' : v)}
-              >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Trạng thái" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">Tất cả</SelectItem>
-                  <SelectItem value="true">Đang hoạt động</SelectItem>
-                  <SelectItem value="false">Không hoạt động</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select value={sortBy} onValueChange={(v) => setSortBy(v)}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Sắp xếp theo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="createdAt">Ngày tạo</SelectItem>
-                  <SelectItem value="name">Tên</SelectItem>
-                  <SelectItem value="manufacturer">Nhà sản xuất</SelectItem>
-                  <SelectItem value="type">Loại</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select value={sortOrder} onValueChange={(v) => setSortOrder(v as 'asc' | 'desc')}>
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Thứ tự" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="asc">Tăng dần</SelectItem>
-                  <SelectItem value="desc">Giảm dần</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {(manufacturerFilter ||
-                typeFilter ||
-                isActiveFilter ||
-                searchTerm ||
-                sortBy !== 'createdAt' ||
-                sortOrder !== 'desc') && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setManufacturerFilter('')
-                    setTypeFilter('')
-                    setIsActiveFilter('')
-                    setSearchTerm('')
-                    setSortBy('createdAt')
-                    setSortOrder('desc')
-                  }}
-                  className="gap-2"
-                >
-                  <XCircle className="h-4 w-4" />
-                  Xóa bộ lọc
-                </Button>
-              )}
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-hidden rounded-lg border">
-            <table className="w-full">
-              <thead className="bg-gradient-to-r from-violet-50 to-purple-50">
-                <tr>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">#</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">
-                    <div className="flex items-center gap-2">
-                      <Package className="h-4 w-4 text-violet-600" />
-                      Tên Model
-                    </div>
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">
-                    <div className="flex items-center gap-2">
-                      <Hash className="h-4 w-4 text-purple-600" />
-                      Part Number
-                    </div>
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">
-                    <div className="flex items-center gap-2">
-                      <Factory className="h-4 w-4 text-fuchsia-600" />
-                      Nhà sản xuất
-                    </div>
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">Trạng thái</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">Số loại tiêu hao</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">Số thiết bị</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">Vật tư tiêu hao</th>
-                  <th className="px-4 py-3 text-right text-sm font-semibold">Thao tác</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                {filteredModels.length === 0 ? (
-                  <tr>
-                    <td colSpan={8} className="px-4 py-12 text-center">
-                      <div className="text-muted-foreground flex flex-col items-center gap-3">
-                        {searchTerm ? (
-                          <>
-                            <Search className="h-12 w-12 opacity-20" />
-                            <p>Không tìm thấy model phù hợp với "{searchTerm}"</p>
-                          </>
-                        ) : (
-                          <>
-                            <Package className="h-12 w-12 opacity-20" />
-                            <p>Chưa có device model nào</p>
-                            <ActionGuard pageId="device-models" actionId="create">
-                              <DeviceModelFormModal mode="create" onSaved={handleSaved} />
-                            </ActionGuard>
-                          </>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
+    <>
+      <TableWrapper<DeviceModel>
+        tableId="device-models"
+        columns={columns}
+        data={models}
+        totalCount={totalCount}
+        pageIndex={0}
+        pageSize={models.length || 10}
+        onSortingChange={(nextSorting) => {
+          startTransition(() => onSortingChange(nextSorting))
+        }}
+        sorting={sorting}
+        defaultSorting={{ sortBy: 'createdAt', sortOrder: 'desc' }}
+        enableColumnVisibility
+        renderColumnVisibilityMenu={renderColumnVisibilityMenu}
+        isPending={isPending}
+        emptyState={
+          models.length === 0 ? (
+            <div className="px-4 py-12 text-center">
+              <div className="text-muted-foreground flex flex-col items-center gap-3">
+                {rawSearch ? (
+                  <>
+                    <Search className="h-12 w-12 opacity-20" />
+                    <p>Không tìm thấy model phù hợp với "{rawSearch}"</p>
+                  </>
                 ) : (
-                  filteredModels.map((m, index) => (
-                    <tr
-                      key={m.id}
-                      className="transition-colors hover:bg-gradient-to-r hover:from-violet-50/50 hover:to-purple-50/50"
-                    >
-                      <td className="text-muted-foreground px-4 py-3 text-sm">{index + 1}</td>
-                      <td className="px-4 py-3">
-                        <Link
-                          href={`/system/device-models/${encodeURIComponent(m.id)}`}
-                          className="font-semibold text-violet-600 hover:text-violet-700 hover:underline"
-                        >
-                          {m.name || '-'}
-                        </Link>
-                      </td>
-                      <td className="px-4 py-3">
-                        {m.partNumber ? (
-                          <code className="rounded bg-purple-100 px-2 py-1 text-xs text-purple-700">
-                            {m.partNumber}
-                          </code>
-                        ) : (
-                          <span className="text-muted-foreground text-sm">-</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-sm">{m.manufacturer || '-'}</td>
-                      <td className="px-4 py-3">
-                        <Badge
-                          variant={m.isActive ? 'default' : 'secondary'}
-                          className={cn(
-                            'flex w-fit items-center gap-1.5',
-                            m.isActive
-                              ? 'bg-green-500 hover:bg-green-600'
-                              : 'bg-gray-400 hover:bg-gray-500'
-                          )}
-                        >
-                          {m.isActive ? (
-                            <CheckCircle2 className="h-3 w-3" />
-                          ) : (
-                            <XCircle className="h-3 w-3" />
-                          )}
-                          {m.isActive ? 'Active' : 'Inactive'}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-3">
-                        {countsLoading && consumableCounts[m.id] === undefined ? (
-                          <span className="text-muted-foreground text-sm">—</span>
-                        ) : (
-                          <Badge variant="outline" className="font-mono text-xs">
-                            {typeof consumableCounts[m.id] === 'number'
-                              ? consumableCounts[m.id]
-                              : 0}
-                          </Badge>
-                        )}
-                      </td>
-
-                      <td className="px-4 py-3">
-                        <Badge variant="outline" className="font-mono text-xs">
-                          {typeof m.deviceCount === 'number' ? m.deviceCount : 0}
-                        </Badge>
-                      </td>
-
-                      <td className="px-4 py-3">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() =>
-                            setCompatibilityModal({
-                              open: true,
-                              deviceModelId: m.id,
-                              deviceModelName: m.name || 'N/A',
-                            })
-                          }
-                          className="gap-2"
-                        >
-                          <Package className="h-4 w-4" />
-                          Quản lý
-                        </Button>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex justify-end gap-2">
-                          <ActionGuard pageId="device-models" actionId="update">
-                            <DeviceModelFormModal mode="edit" model={m} onSaved={handleSaved} />
-                          </ActionGuard>
-                          <ActionGuard pageId="device-models" actionId="delete">
-                            <DeleteDialog
-                              title="Xác nhận xóa device model này?"
-                              description={`Xác nhận xóa device model "${m.name || ''}"?`}
-                              onConfirm={async () => handleDelete(m.id)}
-                              trigger={
-                                <Button
-                                  type="button"
-                                  variant="destructive"
-                                  size="sm"
-                                  disabled={deletingId === m.id}
-                                >
-                                  {deletingId === m.id ? (
-                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                  ) : (
-                                    <Trash className="h-4 w-4" />
-                                  )}
-                                </Button>
-                              }
-                            />
-                          </ActionGuard>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
+                  <>
+                    <Package className="h-12 w-12 opacity-20" />
+                    <p>Chưa có device model nào</p>
+                    <ActionGuard pageId="device-models" actionId="create">
+                      <DeviceModelFormModal mode="create" onSaved={handleSaved} />
+                    </ActionGuard>
+                  </>
                 )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Footer Stats */}
-          {filteredModels.length > 0 && (
-            <div className="text-muted-foreground mt-4 flex items-center justify-between text-sm">
-              <div className="flex items-center gap-2">
-                <BarChart3 className="h-4 w-4" />
-                <span>
-                  Hiển thị{' '}
-                  <span className="text-foreground font-semibold">{filteredModels.length}</span>
-                  {searchTerm && models.length !== filteredModels.length && (
-                    <span> / {models.length}</span>
-                  )}{' '}
-                  models
-                </span>
               </div>
-
-              {searchTerm && models.length !== filteredModels.length && (
-                <Button variant="ghost" size="sm" onClick={() => setSearchTerm('')} className="h-8">
-                  Xóa bộ lọc
-                </Button>
-              )}
             </div>
-          )}
-        </CardContent>
-      </Card>
+          ) : undefined
+        }
+        skeletonRows={10}
+      />
 
-      {/* Consumable Compatibility Modal */}
       {compatibilityModal && (
         <ConsumableCompatibilityModal
           deviceModelId={compatibilityModal.deviceModelId}
@@ -657,6 +613,29 @@ export default function DeviceModelList() {
           }}
         />
       )}
-    </div>
+    </>
+  )
+}
+
+interface SelectInputProps {
+  value: string
+  onChange: (value: string) => void
+  options: Array<{ label: string; value: string }>
+}
+
+function SelectInput({ value, onChange, options }: SelectInputProps) {
+  return (
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger className="w-full">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {options.map((option) => (
+          <SelectItem key={option.value} value={option.value}>
+            {option.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   )
 }

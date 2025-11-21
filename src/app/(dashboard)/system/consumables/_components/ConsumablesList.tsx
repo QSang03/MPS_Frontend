@@ -1,229 +1,126 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Suspense, useEffect, useMemo, useState } from 'react'
+import type { ReactNode } from 'react'
 import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Loader2, Search, ChevronLeft, ChevronRight } from 'lucide-react'
-import { consumablesClientService } from '@/lib/api/services/consumables-client.service'
-import Link from 'next/link'
+import { StatsCards } from '@/components/system/StatsCard'
+import { Package, CheckCircle2, AlertCircle, Search } from 'lucide-react'
+import { FilterSection } from '@/components/system/FilterSection'
+import { TableSkeleton } from '@/components/system/TableSkeleton'
+import { ConsumablesTable } from './ConsumablesTable'
+
+interface ConsumableStats {
+  total: number
+  active: number
+  inactive: number
+}
 
 export default function ConsumablesList() {
-  const [consumables, setConsumables] = useState<Record<string, unknown>[]>([])
-  const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [page, setPage] = useState(1)
-  const [limit] = useState(20)
-  const [total, setTotal] = useState(0)
-  const [totalPages, setTotalPages] = useState(1)
+  const [limit, setLimit] = useState(20)
+  const [stats, setStats] = useState<ConsumableStats>({ total: 0, active: 0, inactive: 0 })
+  const [columnVisibilityMenu, setColumnVisibilityMenu] = useState<ReactNode | null>(null)
 
-  const loadConsumables = useCallback(
-    async (p = 1) => {
-      try {
-        setLoading(true)
-        const params: Record<string, unknown> = { page: p, limit }
-        if (debouncedSearch) params.search = debouncedSearch
-        const res = await consumablesClientService.list<
-          { items?: unknown[]; total?: number; totalPages?: number } | unknown[]
-        >(params)
-
-        const isRecordPayload = res && typeof res === 'object' && !Array.isArray(res)
-
-        const items = isRecordPayload
-          ? Array.isArray((res as { items?: unknown[] }).items)
-            ? (res as { items?: unknown[] }).items!
-            : []
-          : Array.isArray(res)
-            ? (res as unknown[])
-            : []
-
-        setConsumables(items as Record<string, unknown>[])
-
-        const totalFromRes =
-          isRecordPayload && typeof (res as { total?: number }).total === 'number'
-            ? (res as { total?: number }).total!
-            : undefined
-
-        const totalPagesFromRes =
-          isRecordPayload && typeof (res as { totalPages?: number }).totalPages === 'number'
-            ? (res as { totalPages?: number }).totalPages!
-            : undefined
-
-        setTotal(totalFromRes ?? items.length)
-        setTotalPages(totalPagesFromRes ?? Math.ceil((totalFromRes ?? items.length) / limit))
-      } catch (err) {
-        console.error('Load consumables failed', err)
-        setConsumables([])
-      } finally {
-        setLoading(false)
-      }
-    },
-    [limit, debouncedSearch]
-  )
-
-  useEffect(() => {
-    void loadConsumables(page)
-  }, [page, loadConsumables])
-
-  // Debounce input by 2s
   useEffect(() => {
     const t = setTimeout(() => {
       setDebouncedSearch(searchTerm.trim())
       setPage(1)
-    }, 2000)
+    }, 700)
     return () => clearTimeout(t)
   }, [searchTerm])
 
-  const filteredConsumables = consumables
+  const activeFilters = useMemo(
+    () =>
+      searchTerm
+        ? [
+            {
+              label: `Tìm kiếm: "${searchTerm}"`,
+              value: searchTerm,
+              onRemove: () => {
+                setSearchTerm('')
+                setDebouncedSearch('')
+                setPage(1)
+              },
+            },
+          ]
+        : [],
+    [searchTerm]
+  )
+
+  const handleResetFilters = () => {
+    setSearchTerm('')
+    setDebouncedSearch('')
+    setPage(1)
+  }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
+    <div className="space-y-6">
+      <StatsCards
+        cards={[
+          {
+            label: 'Tổng vật tư',
+            value: stats.total,
+            icon: <Package className="h-6 w-6" />,
+            borderColor: 'emerald',
+          },
+          {
+            label: 'Hoạt động',
+            value: stats.active,
+            icon: <CheckCircle2 className="h-6 w-6" />,
+            borderColor: 'green',
+          },
+          {
+            label: 'Không hoạt động',
+            value: stats.inactive,
+            icon: <AlertCircle className="h-6 w-6" />,
+            borderColor: 'gray',
+          },
+        ]}
+      />
+
+      <FilterSection
+        title="Bộ lọc & Tìm kiếm"
+        subtitle="Tìm kiếm vật tư theo tên, serial number, hoặc part number"
+        onReset={handleResetFilters}
+        activeFilters={activeFilters}
+        columnVisibilityMenu={columnVisibilityMenu}
+      >
+        <div className="grid gap-4 md:grid-cols-1">
           <div>
-            <CardTitle>Danh sách vật tư tiêu hao</CardTitle>
-            <CardDescription>Quản lý tất cả vật tư trong kho</CardDescription>
-          </div>
-          <div className="relative w-80">
-            <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-            <Input
-              placeholder="Tìm kiếm vật tư..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  setDebouncedSearch(searchTerm.trim())
-                  setPage(1)
-                }
-              }}
-              className="pl-9"
-            />
+            <label className="mb-2 block text-sm font-medium">Tìm kiếm</label>
+            <div className="relative">
+              <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <Input
+                placeholder="Tìm kiếm vật tư..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    setDebouncedSearch(searchTerm.trim())
+                    setPage(1)
+                  }
+                }}
+                className="pl-10"
+              />
+            </div>
           </div>
         </div>
-      </CardHeader>
-      <CardContent>
-        {loading ? (
-          <div className="flex items-center justify-center p-8">
-            <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
-          </div>
-        ) : filteredConsumables.length === 0 ? (
-          <div className="text-muted-foreground p-8 text-center">
-            {searchTerm ? 'Không tìm thấy vật tư phù hợp' : 'Chưa có vật tư nào'}
-          </div>
-        ) : (
-          <>
-            <div className="overflow-hidden rounded-lg border">
-              <table className="w-full">
-                <thead className="bg-gradient-to-r from-emerald-50 to-teal-50">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-sm font-semibold">#</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold">Part (Serial)</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold">Tên</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold">Dòng tương thích</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold">Dung lượng</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold">Tồn kho</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold">Trạng thái</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold">Hành động</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {filteredConsumables.map((c: Record<string, unknown>, idx: number) => (
-                    <tr
-                      key={(c.id as string) ?? idx}
-                      className="hover:bg-muted/30 transition-colors"
-                    >
-                      <td className="px-4 py-3 text-sm">{(page - 1) * limit + idx + 1}</td>
-                      <td className="px-4 py-3 font-mono text-xs">
-                        {String(c.serialNumber ?? '-')}
-                      </td>
-                      <td className="px-4 py-3 font-medium">
-                        {String((c.consumableType as Record<string, unknown>)?.name ?? '-')}
-                      </td>
-                      <td className="text-muted-foreground px-4 py-3 text-sm">
-                        {(
-                          ((c.consumableType as Record<string, unknown>)?.compatibleDeviceModels as
-                            | unknown[]
-                            | undefined) || []
-                        )
-                          .map((dm) => String((dm as Record<string, unknown>).name ?? ''))
-                          .filter(Boolean)
-                          .join(', ') || '-'}
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        {c.capacity ? `${c.capacity} trang` : '-'}
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        {c.remaining !== null && c.remaining !== undefined ? (
-                          <span
-                            className={
-                              Number(c.remaining) === 0 ? 'font-semibold text-red-600' : ''
-                            }
-                          >
-                            {String(c.remaining ?? '-')} / {String(c.capacity ?? '?')}
-                          </span>
-                        ) : (
-                          '-'
-                        )}
-                      </td>
-                      <td className="px-4 py-3">
-                        <Badge
-                          variant={String(c.status) === 'ACTIVE' ? 'default' : 'secondary'}
-                          className={
-                            String(c.status) === 'ACTIVE'
-                              ? 'bg-green-500 hover:bg-green-600'
-                              : 'bg-gray-400 hover:bg-gray-500'
-                          }
-                        >
-                          {String(c.status ?? '-')}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-3">
-                        <Link
-                          href={`/system/consumables/${String(c.id ?? '')}`}
-                          className="text-sm text-emerald-600 hover:underline"
-                        >
-                          Chi tiết
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+      </FilterSection>
 
-            {/* Pagination */}
-            <div className="mt-4 flex items-center justify-between border-t pt-4">
-              <div className="text-muted-foreground text-sm">
-                Trang {page} / {totalPages} — Hiển thị {filteredConsumables.length} / {total}
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page <= 1 || loading}
-                  className="gap-1"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                  Trước
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={page >= totalPages || loading}
-                  className="gap-1"
-                >
-                  Sau
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </>
-        )}
-      </CardContent>
-    </Card>
+      <Suspense fallback={<TableSkeleton rows={10} columns={8} />}>
+        <ConsumablesTable
+          page={page}
+          pageSize={limit}
+          search={debouncedSearch}
+          searchInput={searchTerm}
+          onPageChange={setPage}
+          onPageSizeChange={setLimit}
+          onStatsChange={setStats}
+          renderColumnVisibilityMenu={setColumnVisibilityMenu}
+        />
+      </Suspense>
+    </div>
   )
 }

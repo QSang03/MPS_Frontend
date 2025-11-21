@@ -12,6 +12,8 @@ interface GetAllParams {
   limit?: number
   search?: string
   isActive?: boolean
+  sortBy?: string
+  sortOrder?: 'asc' | 'desc'
 }
 
 class ConsumableTypesClientService {
@@ -27,6 +29,8 @@ class ConsumableTypesClientService {
             limit: params?.limit ?? 10,
             search: params?.search,
             isActive: typeof params?.isActive === 'boolean' ? params?.isActive : undefined,
+            sortBy: params?.sortBy,
+            sortOrder: params?.sortOrder,
           },
         }
       )

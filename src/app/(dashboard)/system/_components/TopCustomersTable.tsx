@@ -100,13 +100,13 @@ export function TopCustomersTable({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.2 }}
     >
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Building2 className="h-5 w-5 text-cyan-600" />
+      <Card className="border-0 shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-base font-semibold text-[#1F2937]">
+            <Building2 className="h-5 w-5 text-[#0066CC]" />
             Top khách hàng
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-[13px] text-[#6B7280]">
             Khách hàng chi tiêu cao nhất trong tháng (Top {topCustomers.length})
           </CardDescription>
         </CardHeader>
@@ -245,12 +245,17 @@ export function TopCustomersTable({
             </div>
           )}
         </CardContent>
-        <CardFooter className="flex justify-end gap-2 border-t bg-gray-50/50 p-4">
-          <Button variant="outline" size="sm" onClick={onExport} className="gap-2">
+        <CardFooter className="flex justify-end gap-2 border-t border-gray-100 bg-gray-50/50 p-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onExport}
+            className="gap-2 border-gray-200 text-[#6B7280] hover:bg-white hover:text-[#1F2937]"
+          >
             <Download className="h-4 w-4" />
             Xuất danh sách
           </Button>
-          <Button size="sm" onClick={onViewAll} className="gap-2">
+          <Button size="sm" onClick={onViewAll} className="gap-2 bg-[#0066CC] hover:bg-[#0052a3]">
             <Users className="h-4 w-4" />
             Xem tất cả
           </Button>

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import type { Device } from '@/types/models/device'
 
 import { PageHeader } from '@/components/ui/PageHeader'
@@ -325,7 +325,7 @@ export default function DevicesPageClient() {
       <PageHeader
         title="Danh sách thiết bị"
         subtitle="Quản lý tất cả thiết bị của bạn"
-        icon={<Monitor className="h-6 w-6 text-white" />}
+        icon={<Monitor className="h-6 w-6 text-black dark:text-white" />}
         actions={
           <ActionGuard pageId="devices" actionId="create">
             <DeviceFormModal
@@ -344,7 +344,7 @@ export default function DevicesPageClient() {
         <Card className="shadow-card">
           <CardContent className="flex items-center gap-4 p-6">
             <div className="rounded-full bg-blue-100 p-3 dark:bg-blue-900/30">
-              <Monitor className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              <Monitor className="h-6 w-6 text-black dark:text-white" />
             </div>
             <div>
               <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
@@ -358,7 +358,7 @@ export default function DevicesPageClient() {
         <Card className="shadow-card">
           <CardContent className="flex items-center gap-4 p-6">
             <div className="rounded-full bg-green-100 p-3 dark:bg-green-900/30">
-              <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400" />
+              <CheckCircle2 className="h-6 w-6 text-black dark:text-white" />
             </div>
             <div>
               <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Hoạt động</p>
@@ -370,7 +370,7 @@ export default function DevicesPageClient() {
         <Card className="shadow-card">
           <CardContent className="flex items-center gap-4 p-6">
             <div className="rounded-full bg-gray-100 p-3 dark:bg-gray-800">
-              <AlertCircle className="h-6 w-6 text-gray-600 dark:text-gray-400" />
+              <AlertCircle className="h-6 w-6 text-black dark:text-white" />
             </div>
             <div>
               <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
@@ -388,7 +388,7 @@ export default function DevicesPageClient() {
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
               <CardTitle className="flex items-center gap-2">
-                <Package className="h-5 w-5 text-blue-600" />
+                <Package className="h-5 w-5 text-black dark:text-white" />
                 Danh sách thiết bị
               </CardTitle>
               <CardDescription className="mt-1">
@@ -497,25 +497,25 @@ export default function DevicesPageClient() {
                   <TableHead>#</TableHead>
                   <TableHead>
                     <div className="flex items-center gap-2">
-                      <Monitor className="h-4 w-4 text-blue-600" />
+                      <Monitor className="h-4 w-4 text-black dark:text-white" />
                       Serial
                     </div>
                   </TableHead>
                   <TableHead>
                     <div className="flex items-center gap-2">
-                      <Package className="h-4 w-4 text-cyan-600" />
+                      <Package className="h-4 w-4 text-black dark:text-white" />
                       Model
                     </div>
                   </TableHead>
                   <TableHead>
                     <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4 text-rose-600" />
+                      <Users className="h-4 w-4 text-black dark:text-white" />
                       Khách hàng
                     </div>
                   </TableHead>
                   <TableHead>
                     <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-teal-600" />
+                      <MapPin className="h-4 w-4 text-black dark:text-white" />
                       Vị trí
                     </div>
                   </TableHead>
@@ -595,7 +595,7 @@ export default function DevicesPageClient() {
                                 }}
                                 title="Chỉnh sửa khách hàng"
                               >
-                                <Edit2 className="h-3.5 w-3.5 text-rose-600" />
+                                <Edit2 className="h-3.5 w-3.5 text-black dark:text-white" />
                               </Button>
                             )}
                             {(
@@ -624,7 +624,7 @@ export default function DevicesPageClient() {
                                       disabled={updatingCustomer}
                                       title="Gỡ về kho"
                                     >
-                                      <X className="h-3.5 w-3.5 text-red-600" />
+                                      <X className="h-3.5 w-3.5 text-black dark:text-white" />
                                     </Button>
                                   }
                                 />
@@ -750,27 +750,29 @@ export default function DevicesPageClient() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-8 w-8 p-0 text-indigo-600 hover:bg-indigo-50"
+                              className="h-8 w-8 p-0 text-black hover:bg-indigo-50 dark:text-white"
                               title="Tạo yêu cầu từ thiết bị"
                             >
-                              <FileText className="h-4 w-4" />
+                              <FileText className="h-4 w-4 text-black dark:text-white" />
                             </Button>
                           </ServiceRequestFormModal>
 
-                          <DevicePricingModal device={d} compact onSaved={() => fetchDevices()} />
+                          <ActionGuard pageId="devices" actionId="assign-pricing">
+                            <DevicePricingModal device={d} compact onSaved={() => fetchDevices()} />
+                          </ActionGuard>
 
                           <ActionGuard pageId="devices" actionId="set-a4-pricing">
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-8 w-8 p-0 text-sky-600 hover:bg-sky-50"
+                              className="h-8 w-8 p-0 text-black hover:bg-sky-50 dark:text-white"
                               onClick={() => {
                                 setA4ModalDevice(d)
                                 setA4ModalOpen(true)
                               }}
                               title="Ghi/Chỉnh sửa snapshot A4"
                             >
-                              <BarChart3 className="h-4 w-4" />
+                              <BarChart3 className="h-4 w-4 text-black dark:text-white" />
                             </Button>
                           </ActionGuard>
 

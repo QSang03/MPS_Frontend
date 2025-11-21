@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import Cookies from 'js-cookie'
@@ -23,6 +23,18 @@ export function useNotifications() {
   const queryClient = useQueryClient()
   const router = useRouter()
   const [isPanelOpen, setIsPanelOpen] = useState(false)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+
+  // Preload notification sound để tránh trễ lần đầu
+  useEffect(() => {
+    const audio = new Audio('/sounds/notification-chime.mp3')
+    audio.preload = 'auto'
+    audioRef.current = audio
+
+    return () => {
+      audioRef.current = null
+    }
+  }, [])
 
   // Query for notifications list
   const notificationsQuery = useQuery({
@@ -43,6 +55,8 @@ export function useNotifications() {
     queryFn: () => notificationsClientService.getUnreadCount(),
     refetchInterval: 30000, // Refetch every 30 seconds
   })
+  const normalizedUnreadCount = Number(unreadCountQuery.data ?? 0)
+  const safeUnreadCount = Number.isFinite(normalizedUnreadCount) ? normalizedUnreadCount : 0
 
   // Mutation for mark as read
   const markAsReadMutation = useMutation({
@@ -130,6 +144,18 @@ export function useNotifications() {
       // Mark notification as received ngay lập tức để tránh duplicate
       receivedNotificationIds.add(payload.id)
       notificationTimestamps.set(payload.id, Date.now())
+
+      // Phát âm thanh thông báo (bỏ qua nếu user chưa tương tác nên bị block)
+      if (audioRef.current) {
+        try {
+          audioRef.current.currentTime = 0
+          void audioRef.current.play().catch((error) => {
+            console.warn('Không thể phát âm thanh thông báo:', error)
+          })
+        } catch (error) {
+          console.warn('Không thể phát âm thanh thông báo:', error)
+        }
+      }
 
       console.log('New notification received:', payload.id, payload.title)
 
@@ -240,7 +266,7 @@ export function useNotifications() {
 
   return {
     notifications: notificationsQuery.data?.data ?? [],
-    unreadCount: unreadCountQuery.data ?? 0,
+    unreadCount: safeUnreadCount,
     isLoading: notificationsQuery.isLoading,
     isUnreadCountLoading: unreadCountQuery.isLoading,
     isPanelOpen,
