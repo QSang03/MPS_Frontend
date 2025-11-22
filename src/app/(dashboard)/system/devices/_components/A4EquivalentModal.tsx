@@ -1,14 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/components/ui/dialog'
+import { Dialog } from '@/components/ui/dialog'
+import { SystemModalLayout } from '@/components/system/SystemModalLayout'
+import { FileText } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
@@ -188,23 +183,39 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md rounded-2xl border-0 p-0 shadow-2xl">
-        <DialogHeader className="relative overflow-hidden bg-gradient-to-r from-sky-600 to-cyan-600 p-0">
-          <div className="absolute inset-0 bg-black/10"></div>
-          <div className="relative z-10 px-6 py-5 text-white">
-            <DialogTitle className="text-xl font-bold">Ghi nhật ký A4 cho thiết bị</DialogTitle>
-            <DialogDescription className="mt-1 text-white/90">
-              Thiết bị: {device.serialNumber || device.id}
-            </DialogDescription>
-          </div>
-        </DialogHeader>
-
+      <SystemModalLayout
+        title="Ghi nhật ký A4 cho thiết bị"
+        description={`Thiết bị: ${device.serialNumber || device.id}`}
+        icon={FileText}
+        variant="create"
+        footer={
+          <>
+            <Button
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={submitting}
+              className="min-w-[100px]"
+            >
+              Hủy
+            </Button>
+            <Button
+              type="submit"
+              form="a4-form"
+              disabled={submitting}
+              className="min-w-[120px] bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+            >
+              {submitting ? 'Đang lưu...' : 'Lưu'}
+            </Button>
+          </>
+        }
+      >
         <form
+          id="a4-form"
           onSubmit={(e) => {
             e.preventDefault()
             handleSubmit()
           }}
-          className="space-y-4 bg-white p-6"
+          className="space-y-4"
         >
           <div>
             <Label className="text-sm font-semibold">Tổng trang màu (A4)</Label>
@@ -256,17 +267,8 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
             <Checkbox checked={updateLatest} onCheckedChange={(v) => setUpdateLatest(Boolean(v))} />
             <Label className="text-sm">Cập nhật bản ghi mới nhất (updateLatest)</Label>
           </div>
-
-          <DialogFooter className="flex justify-end gap-3 border-t border-gray-200 pt-4">
-            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={submitting}>
-              Hủy
-            </Button>
-            <Button type="submit" disabled={submitting}>
-              {submitting ? 'Đang lưu...' : 'Lưu'}
-            </Button>
-          </DialogFooter>
         </form>
-      </DialogContent>
+      </SystemModalLayout>
     </Dialog>
   )
 }

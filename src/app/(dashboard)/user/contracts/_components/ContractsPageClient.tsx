@@ -48,8 +48,11 @@ import { useActionPermission } from '@/lib/hooks/useActionPermission'
 import { ActionGuard } from '@/components/shared/ActionGuard'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { getPublicUrl } from '@/lib/utils/publicUrl'
 
 export default function ContractsPageClient() {
+  type ContractWithDoc = Contract &
+    Partial<Record<'documentUrl' | 'document_url' | 'pdfUrl' | 'pdf_url', string>>
   const { canCreate, canUpdate, canDelete } = useActionPermission('contracts')
   const hasAnyAction = Boolean(canCreate || canUpdate || canDelete)
   const router = useRouter()
@@ -504,6 +507,34 @@ export default function ContractsPageClient() {
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
+                          {(() => {
+                            const docUrl =
+                              (c as ContractWithDoc).documentUrl ||
+                              (c as ContractWithDoc).document_url ||
+                              (c as ContractWithDoc).pdfUrl ||
+                              (c as ContractWithDoc).pdf_url ||
+                              undefined
+
+                            return (
+                              docUrl && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-gray-500 hover:text-emerald-600"
+                                  title="Xem tài liệu PDF"
+                                  onClick={(event) => {
+                                    event.stopPropagation()
+                                    const url = getPublicUrl(docUrl as string)
+                                    if (url) {
+                                      window.open(url, '_blank', 'noopener,noreferrer')
+                                    }
+                                  }}
+                                >
+                                  <FileText className="h-4 w-4" />
+                                </Button>
+                              )
+                            )
+                          })()}
                           {hasAnyAction && (
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
@@ -634,7 +665,12 @@ export default function ContractsPageClient() {
                         startDate: editingContract.startDate,
                         endDate: editingContract.endDate,
                         description: editingContract.description ?? undefined,
-                        documentUrl: editingContract.documentUrl ?? undefined,
+                        documentUrl:
+                          (editingContract as ContractWithDoc).documentUrl ||
+                          (editingContract as ContractWithDoc).document_url ||
+                          (editingContract as ContractWithDoc).pdfUrl ||
+                          (editingContract as ContractWithDoc).pdf_url ||
+                          undefined,
                       }
                     : undefined
 

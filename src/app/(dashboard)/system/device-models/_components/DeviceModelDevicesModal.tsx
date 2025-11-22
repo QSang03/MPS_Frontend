@@ -3,13 +3,8 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
+import { Dialog } from '@/components/ui/dialog'
+import { SystemModalLayout } from '@/components/system/SystemModalLayout'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
@@ -91,39 +86,30 @@ export default function DeviceModelDevicesModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[900px] overflow-hidden rounded-2xl border-0 p-0 shadow-2xl">
-        {/* Header with Gradient */}
-        <DialogHeader className="relative overflow-hidden bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600 p-0">
-          <div className="absolute inset-0 bg-black/10"></div>
-          <div className="relative z-10 px-6 py-5 text-white">
-            <DialogTitle className="flex items-center gap-3 text-2xl font-bold">
-              <Monitor className="h-6 w-6" />
-              Thiết bị thuộc model
-            </DialogTitle>
-            <DialogDescription className="mt-2 text-white/90">
-              Danh sách thiết bị thuộc model: <strong>{deviceModelName}</strong>
-            </DialogDescription>
-
-            {/* Quick Stats */}
-            <div className="mt-4 grid grid-cols-3 gap-3">
-              <div className="rounded-lg border border-white/20 bg-white/10 p-2.5 backdrop-blur-sm">
-                <p className="text-xs text-white/80">Tổng thiết bị</p>
-                <p className="mt-1 text-xl font-bold">{devices.length}</p>
-              </div>
-              <div className="rounded-lg border border-white/20 bg-white/10 p-2.5 backdrop-blur-sm">
-                <p className="text-xs text-white/80">Hoạt động</p>
-                <p className="mt-1 text-xl font-bold">{activeCount}</p>
-              </div>
-              <div className="rounded-lg border border-white/20 bg-white/10 p-2.5 backdrop-blur-sm">
-                <p className="text-xs text-white/80">Tạm dừng</p>
-                <p className="mt-1 text-xl font-bold">{inactiveCount}</p>
-              </div>
-            </div>
+      <SystemModalLayout
+        title="Thiết bị thuộc model"
+        description={`Danh sách thiết bị thuộc model: ${deviceModelName}`}
+        icon={Monitor}
+        variant="view"
+        maxWidth="!max-w-[75vw]"
+      >
+        {/* Quick Stats */}
+        <div className="mb-4 grid grid-cols-3 gap-3 rounded-lg border border-gray-200 bg-gradient-to-r from-blue-50 to-cyan-50 p-4">
+          <div className="rounded-lg border border-blue-200 bg-white p-2.5">
+            <p className="text-xs text-gray-600">Tổng thiết bị</p>
+            <p className="mt-1 text-xl font-bold text-blue-600">{devices.length}</p>
           </div>
-        </DialogHeader>
+          <div className="rounded-lg border border-green-200 bg-white p-2.5">
+            <p className="text-xs text-gray-600">Hoạt động</p>
+            <p className="mt-1 text-xl font-bold text-green-600">{activeCount}</p>
+          </div>
+          <div className="rounded-lg border border-gray-200 bg-white p-2.5">
+            <p className="text-xs text-gray-600">Tạm dừng</p>
+            <p className="mt-1 text-xl font-bold text-gray-600">{inactiveCount}</p>
+          </div>
+        </div>
 
-        {/* Content */}
-        <div className="max-h-[70vh] overflow-y-auto bg-white p-6">
+        <div className="space-y-4">
           {loading ? (
             <div className="py-12 text-center">
               <Loader2 className="mx-auto mb-3 h-8 w-8 animate-spin text-blue-600" />
@@ -194,9 +180,9 @@ export default function DeviceModelDevicesModal({
                         >
                           <td className="text-muted-foreground px-4 py-3 text-sm">{idx + 1}</td>
                           <td className="px-4 py-3">
-                            <code className="rounded bg-blue-100 px-2 py-1 text-sm font-semibold text-blue-700">
+                            <Badge variant="outline" className="font-mono text-xs">
                               {d.serialNumber}
-                            </code>
+                            </Badge>
                           </td>
                           <td className="px-4 py-3 text-sm">
                             {d.model || d.deviceModel?.name || '—'}
@@ -233,9 +219,12 @@ export default function DeviceModelDevicesModal({
                           </td>
                           <td className="px-4 py-3 text-right">
                             <Link href={`/system/devices/${d.id}`}>
-                              <Button size="sm" className="gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="transition-all hover:bg-gray-100 hover:text-gray-700"
+                              >
                                 <Eye className="h-4 w-4" />
-                                Xem
                               </Button>
                             </Link>
                           </td>
@@ -278,7 +267,7 @@ export default function DeviceModelDevicesModal({
             </div>
           )}
         </div>
-      </DialogContent>
+      </SystemModalLayout>
     </Dialog>
   )
 }

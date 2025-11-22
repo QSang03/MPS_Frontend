@@ -5,14 +5,8 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription,
-} from '@/components/ui/dialog'
+import { Dialog } from '@/components/ui/dialog'
+import { SystemModalLayout } from '@/components/system/SystemModalLayout'
 import { deviceModelsClientService } from '@/lib/api/services/device-models-client.service'
 import { devicesClientService } from '@/lib/api/services/devices-client.service'
 import { toast } from 'sonner'
@@ -27,7 +21,6 @@ import {
   Loader2,
   CheckCircle2,
   AlertCircle,
-  Sparkles,
   Eye,
   MapPin,
   Wifi,
@@ -291,23 +284,42 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
 
       {/* Create Modal */}
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent className="max-w-[700px] overflow-hidden rounded-2xl border-0 p-0 shadow-2xl">
-          <DialogHeader className="relative overflow-hidden bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-0">
-            <div className="absolute inset-0 bg-black/10"></div>
-            <div className="relative z-10 px-6 py-5">
-              <div className="flex items-center gap-3">
-                <Sparkles className="h-6 w-6 text-white" />
-                <DialogTitle className="text-2xl font-bold text-white">
-                  Tạo thiết bị mới
-                </DialogTitle>
-              </div>
-              <DialogDescription className="mt-2 text-white/90">
-                Thêm thiết bị cho model {modelName}
-              </DialogDescription>
-            </div>
-          </DialogHeader>
-
-          <div className="space-y-5 bg-white px-6 py-6">
+        <SystemModalLayout
+          title="Tạo thiết bị mới"
+          description={`Thêm thiết bị cho model ${modelName}`}
+          icon={Plus}
+          variant="create"
+          maxWidth="!max-w-[70vw]"
+          footer={
+            <>
+              <Button
+                variant="outline"
+                onClick={() => setShowCreate(false)}
+                className="min-w-[100px]"
+              >
+                Hủy
+              </Button>
+              <Button
+                onClick={() => void handleCreate()}
+                disabled={creating}
+                className="min-w-[120px] bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+              >
+                {creating ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Đang tạo...
+                  </>
+                ) : (
+                  <>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Tạo thiết bị
+                  </>
+                )}
+              </Button>
+            </>
+          }
+        >
+          <div className="space-y-5">
             <div className="rounded-lg border border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-4">
               <p className="text-muted-foreground mb-1 text-sm font-medium">Model</p>
               <p className="text-lg font-bold text-blue-700">{modelName}</p>
@@ -380,34 +392,7 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
               </div>
             </div>
           </div>
-
-          <DialogFooter className="border-t bg-gray-50 px-6 py-4">
-            <Button
-              variant="outline"
-              onClick={() => setShowCreate(false)}
-              className="min-w-[100px]"
-            >
-              Hủy
-            </Button>
-            <Button
-              onClick={() => void handleCreate()}
-              disabled={creating}
-              className="min-w-[120px] bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-            >
-              {creating ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Đang tạo...
-                </>
-              ) : (
-                <>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Tạo thiết bị
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
+        </SystemModalLayout>
       </Dialog>
     </div>
   )

@@ -11,18 +11,15 @@ import {
   Loader2,
   Monitor,
   Package,
-  Settings,
   Info,
   Plus,
   CheckCircle2,
   AlertCircle,
   Wifi,
   MapPin,
-  HardDrive,
   Calendar,
   Wrench,
   Sparkles,
-  Box,
   Search,
   RefreshCw,
   BarChart3,
@@ -49,14 +46,8 @@ import {
   SelectItem,
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription,
-} from '@/components/ui/dialog'
+import { Dialog } from '@/components/ui/dialog'
+import { SystemModalLayout } from '@/components/system/SystemModalLayout'
 import { DeleteDialog } from '@/components/shared/DeleteDialog'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
@@ -68,6 +59,8 @@ import { ActionGuard } from '@/components/shared/ActionGuard'
 import { cn } from '@/lib/utils'
 import { Separator } from '@/components/ui/separator'
 import { removeEmpty } from '@/lib/utils/clean'
+import DeviceHeader from '@/components/device/DeviceHeader'
+import InfoCard from '@/components/ui/InfoCard'
 import type { MonthlyUsagePagesItem, MonthlyUsagePagesResponse } from '@/types/api'
 import internalApiClient from '@/lib/api/internal-client'
 
@@ -474,120 +467,118 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
 
   return (
     <div className="space-y-6">
-      {/* Header with Gradient */}
-      <div className="rounded-2xl bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600 p-6 text-white shadow-xl">
-        <div className="flex items-center justify-between">
-          <div className="space-y-2">
-            <div className="flex items-center gap-3">
-              <Link
-                href={
-                  backHref ??
-                  (modelId ? `/system/device-models/${modelId}` : '/system/device-models')
-                }
-              >
-                <Button variant="ghost" className="gap-2 text-white hover:bg-white/20">
-                  <ArrowLeft className="h-4 w-4" />
-                  Quay lại
-                </Button>
-              </Link>
-            </div>
-            <div className="flex items-center gap-4">
-              <Monitor className="h-10 w-10" />
-              <div>
-                <h1 className="text-3xl font-bold">Thiết bị {device.serialNumber}</h1>
-                <p className="mt-1 text-white/80">
-                  {device.deviceModel?.name || device.model || 'N/A'}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            {getStatusBadge(device.isActive)}
-            {renderStatusChip()}
-            <ActionGuard pageId="devices" actionId="set-a4-pricing">
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setA4ModalOpen(true)}
-                className="gap-2 bg-white text-black"
-                title="Ghi/Chỉnh sửa snapshot A4"
-              >
-                <BarChart3 className="h-4 w-4 text-black" />
-                A4
+      {/* Neutral Header */}
+      <div>
+        <div className="mb-3 flex items-center justify-between">
+          <div>
+            <Link
+              href={
+                backHref ?? (modelId ? `/system/device-models/${modelId}` : '/system/device-models')
+              }
+            >
+              <Button variant="ghost" className="gap-2">
+                <ArrowLeft className="h-4 w-4" />
+                Quay lại
               </Button>
-            </ActionGuard>
-            {Boolean(device?.isActive) ? (
-              <ActionGuard pageId="devices" actionId="update">
+            </Link>
+          </div>
+        </div>
+
+        <DeviceHeader
+          device={{
+            name: device?.serialNumber ?? '---',
+            model: device?.deviceModel?.name ?? device?.model ?? '',
+            iconUrl: undefined,
+            active: Boolean(device?.isActive),
+          }}
+          onPrimaryAction={() => setShowCreateConsumable(true)}
+          rightContent={
+            <>
+              {getStatusBadge(device.isActive)}
+              {renderStatusChip()}
+              <ActionGuard pageId="devices" actionId="set-a4-pricing">
                 <Button
                   variant="secondary"
                   size="sm"
-                  onClick={() => setShowEdit(true)}
-                  className="gap-2"
+                  onClick={() => setA4ModalOpen(true)}
+                  className="gap-2 bg-white text-black"
+                  title="Ghi/Chỉnh sửa snapshot A4"
                 >
-                  <Edit className="h-4 w-4" />
-                  Chỉnh sửa
+                  <BarChart3 className="h-4 w-4 text-black" />
+                  A4
                 </Button>
               </ActionGuard>
-            ) : (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div>
-                    <Button variant="secondary" size="sm" disabled className="gap-2">
-                      <Edit className="h-4 w-4" />
-                      Chỉnh sửa
-                    </Button>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent sideOffset={4}>
-                  {`Thiết bị không hoạt động. Lý do: ${device?.inactiveReason ?? 'Không rõ'}`}
-                </TooltipContent>
-              </Tooltip>
-            )}
+              {Boolean(device?.isActive) ? (
+                <ActionGuard pageId="devices" actionId="update">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setShowEdit(true)}
+                    className="gap-2"
+                  >
+                    <Edit className="h-4 w-4" />
+                    Chỉnh sửa
+                  </Button>
+                </ActionGuard>
+              ) : (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <Button variant="secondary" size="sm" disabled className="gap-2">
+                        <Edit className="h-4 w-4" />
+                        Chỉnh sửa
+                      </Button>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent sideOffset={4}>
+                    {`Thiết bị không hoạt động. Lý do: ${device?.inactiveReason ?? 'Không rõ'}`}
+                  </TooltipContent>
+                </Tooltip>
+              )}
 
-            {Boolean(device?.isActive) ? (
-              <ActionGuard pageId="devices" actionId="delete">
-                <DeleteDialog
-                  title="Xóa thiết bị"
-                  description="Bạn có chắc muốn xóa thiết bị này? Hành động không thể hoàn tác."
-                  onConfirm={async () => {
-                    try {
-                      await devicesClientService.delete(deviceId)
-                      toast.success('Xóa thiết bị thành công')
-                      // navigate back to the provided backHref if present, otherwise fall back to model-based route
-                      if (backHref) router.push(backHref)
-                      else if (modelId) router.push(`/system/device-models/${modelId}`)
-                      else router.push('/system/device-models')
-                    } catch (err) {
-                      console.error('Delete device failed', err)
-                      toast.error('Xóa thiết bị thất bại')
+              {Boolean(device?.isActive) ? (
+                <ActionGuard pageId="devices" actionId="delete">
+                  <DeleteDialog
+                    title="Xóa thiết bị"
+                    description="Bạn có chắc muốn xóa thiết bị này? Hành động không thể hoàn tác."
+                    onConfirm={async () => {
+                      try {
+                        await devicesClientService.delete(deviceId)
+                        toast.success('Xóa thiết bị thành công')
+                        if (backHref) router.push(backHref)
+                        else if (modelId) router.push(`/system/device-models/${modelId}`)
+                        else router.push('/system/device-models')
+                      } catch (err) {
+                        console.error('Delete device failed', err)
+                        toast.error('Xóa thiết bị thất bại')
+                      }
+                    }}
+                    trigger={
+                      <Button variant="destructive" size="sm" className="gap-2">
+                        <Trash2 className="h-4 w-4" />
+                        Xóa
+                      </Button>
                     }
-                  }}
-                  trigger={
-                    <Button variant="destructive" size="sm" className="gap-2">
-                      <Trash2 className="h-4 w-4" />
-                      Xóa
-                    </Button>
-                  }
-                />
-              </ActionGuard>
-            ) : (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div>
-                    <Button variant="destructive" size="sm" disabled className="gap-2">
-                      <Trash2 className="h-4 w-4" />
-                      Xóa
-                    </Button>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent sideOffset={4}>
-                  {`Thiết bị không hoạt động. Lý do: ${device?.inactiveReason ?? 'Không rõ'}`}
-                </TooltipContent>
-              </Tooltip>
-            )}
-          </div>
-        </div>
+                  />
+                </ActionGuard>
+              ) : (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <Button variant="destructive" size="sm" disabled className="gap-2">
+                        <Trash2 className="h-4 w-4" />
+                        Xóa
+                      </Button>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent sideOffset={4}>
+                    {`Thiết bị không hoạt động. Lý do: ${device?.inactiveReason ?? 'Không rõ'}`}
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </>
+          }
+        />
       </div>
 
       {/* Tabs */}
@@ -614,95 +605,34 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-6">
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            {/* Network Info Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Wifi className="h-5 w-5 text-blue-600" />
-                  Thông tin mạng
-                </CardTitle>
-                <CardDescription>Cấu hình kết nối và địa chỉ</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-3">
-                  <div className="flex items-start justify-between rounded-lg bg-blue-50 p-3">
-                    <div>
-                      <p className="text-muted-foreground mb-1 text-sm font-medium">Địa chỉ IP</p>
-                      <p className="font-mono text-base font-semibold text-blue-700">
-                        {device.ipAddress || 'Chưa cấu hình'}
-                      </p>
-                    </div>
-                    <Wifi className="h-5 w-5 text-blue-600" />
-                  </div>
+            <InfoCard
+              title="Thông tin mạng"
+              titleIcon={<Wifi className="h-4 w-4 text-blue-600" />}
+              items={[
+                { label: 'Địa chỉ IP', value: device.ipAddress || 'Chưa cấu hình', mono: true },
+                {
+                  label: 'Địa chỉ MAC',
+                  value: device.macAddress || 'Chưa có thông tin',
+                  mono: true,
+                },
+                { label: 'Firmware', value: device.firmware || 'N/A' },
+              ]}
+            />
 
-                  <div className="flex items-start justify-between rounded-lg bg-purple-50 p-3">
-                    <div>
-                      <p className="text-muted-foreground mb-1 text-sm font-medium">Địa chỉ MAC</p>
-                      <p className="font-mono text-base font-semibold text-purple-700">
-                        {device.macAddress || 'Chưa có thông tin'}
-                      </p>
-                    </div>
-                    <HardDrive className="h-5 w-5 text-purple-600" />
-                  </div>
-
-                  <div className="flex items-start justify-between rounded-lg bg-green-50 p-3">
-                    <div>
-                      <p className="text-muted-foreground mb-1 text-sm font-medium">Firmware</p>
-                      <p className="text-base font-semibold text-green-700">
-                        {device.firmware || 'N/A'}
-                      </p>
-                    </div>
-                    <Settings className="h-5 w-5 text-green-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Device Info Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Monitor className="h-5 w-5 text-teal-600" />
-                  Thông tin thiết bị
-                </CardTitle>
-                <CardDescription>Chi tiết và trạng thái</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-3">
-                  <div className="flex items-start justify-between rounded-lg bg-teal-50 p-3">
-                    <div>
-                      <p className="text-muted-foreground mb-1 text-sm font-medium">Số Serial</p>
-                      <p className="text-base font-semibold text-teal-700">{device.serialNumber}</p>
-                    </div>
-                    <Box className="h-5 w-5 text-teal-600" />
-                  </div>
-
-                  <div className="flex items-start justify-between rounded-lg bg-orange-50 p-3">
-                    <div>
-                      <p className="text-muted-foreground mb-1 text-sm font-medium">Vị trí</p>
-                      <p className="text-base font-semibold text-orange-700">
-                        {device.location || 'Chưa xác định'}
-                      </p>
-                    </div>
-                    <MapPin className="h-5 w-5 text-orange-600" />
-                  </div>
-
-                  <div className="flex items-start justify-between rounded-lg bg-indigo-50 p-3">
-                    <div>
-                      <p className="text-muted-foreground mb-1 text-sm font-medium">
-                        Lần truy cập cuối
-                      </p>
-                      <p className="text-base font-semibold text-indigo-700">
-                        {device.lastSeen
-                          ? new Date(device.lastSeen).toLocaleString('vi-VN')
-                          : 'Chưa có dữ liệu'}
-                      </p>
-                    </div>
-                    <Calendar className="h-5 w-5 text-indigo-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <InfoCard
+              title="Thông tin thiết bị"
+              titleIcon={<Monitor className="h-4 w-4 text-teal-600" />}
+              items={[
+                { label: 'Số Serial', value: device.serialNumber || '-', mono: true },
+                { label: 'Vị trí', value: device.location || 'Chưa xác định' },
+                {
+                  label: 'Lần truy cập cuối',
+                  value: device.lastSeen
+                    ? new Date(device.lastSeen).toLocaleString('vi-VN')
+                    : 'Chưa có dữ liệu',
+                },
+              ]}
+            />
           </div>
 
           {/* Usage Statistics */}
@@ -835,24 +765,24 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                 <div className="overflow-hidden rounded-lg border">
                   <div className="overflow-x-auto">
                     <table className="w-full min-w-[900px]">
-                      <thead className="bg-gradient-to-r from-indigo-50 to-purple-50">
+                      <thead className="bg-gray-100">
                         <tr>
-                          <th className="px-4 py-3 text-left text-sm font-semibold">Tháng</th>
-                          <th className="px-4 py-3 text-left text-sm font-semibold">Tên model</th>
-                          <th className="px-4 py-3 text-left text-sm font-semibold">Số serial</th>
-                          <th className="px-4 py-3 text-left text-sm font-semibold">Mã phần</th>
-                          <th className="px-4 py-3 text-right text-sm font-semibold">
+                          <th className="px-4 py-3 text-left text-xs font-semibold">Tháng</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold">Tên model</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold">Số serial</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold">Mã phần</th>
+                          <th className="px-4 py-3 text-right text-xs font-semibold">
                             Trang đen trắng
                           </th>
-                          <th className="px-4 py-3 text-right text-sm font-semibold">Trang màu</th>
-                          <th className="px-4 py-3 text-right text-sm font-semibold">Tổng trang</th>
-                          <th className="px-4 py-3 text-right text-sm font-semibold">
+                          <th className="px-4 py-3 text-right text-xs font-semibold">Trang màu</th>
+                          <th className="px-4 py-3 text-right text-xs font-semibold">Tổng trang</th>
+                          <th className="px-4 py-3 text-right text-xs font-semibold">
                             Trang đen trắng A4
                           </th>
-                          <th className="px-4 py-3 text-right text-sm font-semibold">
+                          <th className="px-4 py-3 text-right text-xs font-semibold">
                             Trang màu A4
                           </th>
-                          <th className="px-4 py-3 text-right text-sm font-semibold">
+                          <th className="px-4 py-3 text-right text-xs font-semibold">
                             Tổng trang A4
                           </th>
                         </tr>
@@ -971,15 +901,15 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
               ) : (
                 <div className="overflow-hidden rounded-lg border">
                   <table className="w-full">
-                    <thead className="bg-gradient-to-r from-emerald-50 to-teal-50">
+                    <thead className="bg-gray-100">
                       <tr>
-                        <th className="px-4 py-3 text-left text-sm font-semibold">#</th>
-                        <th className="px-4 py-3 text-left text-sm font-semibold">Tên</th>
-                        <th className="px-4 py-3 text-left text-sm font-semibold">Mã / Model</th>
-                        <th className="px-4 py-3 text-left text-sm font-semibold">Trạng thái</th>
-                        <th className="px-4 py-3 text-left text-sm font-semibold">Tỉ giá</th>
-                        <th className="px-4 py-3 text-right text-sm font-semibold">Thời gian</th>
-                        <th className="px-4 py-3 text-center text-sm font-semibold">Thao tác</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold">#</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold">Tên</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold">Mã / Model</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold">Trạng thái</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold">Tỉ giá</th>
+                        <th className="px-4 py-3 text-right text-xs font-semibold">Thời gian</th>
+                        <th className="px-4 py-3 text-center text-xs font-semibold">Thao tác</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y">
@@ -1332,23 +1262,105 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
 
       {/* Edit Modal - Modern Design */}
       <Dialog open={showEdit} onOpenChange={setShowEdit}>
-        <DialogContent className="max-w-[640px] overflow-hidden rounded-2xl border-0 p-0 shadow-2xl">
-          <DialogHeader className="relative overflow-hidden bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600 p-0">
-            <div className="absolute inset-0 bg-black/10"></div>
-            <div className="relative z-10 px-6 py-5">
-              <div className="flex items-center gap-3">
-                <Edit className="h-6 w-6 text-white" />
-                <DialogTitle className="text-2xl font-bold text-white">
-                  Chỉnh sửa thiết bị
-                </DialogTitle>
-              </div>
-              <DialogDescription className="mt-2 text-white/90">
-                Cập nhật thông tin thiết bị {device.serialNumber}
-              </DialogDescription>
-            </div>
-          </DialogHeader>
+        <SystemModalLayout
+          title="Chỉnh sửa thiết bị"
+          description={`Cập nhật thông tin thiết bị ${device.serialNumber}`}
+          icon={Edit}
+          variant="edit"
+          maxWidth="!max-w-[60vw]"
+          footer={
+            <>
+              <Button
+                variant="outline"
+                onClick={() => setShowEdit(false)}
+                className="min-w-[100px]"
+              >
+                Hủy
+              </Button>
+              <Button
+                onClick={async () => {
+                  try {
+                    setEditing(true)
 
-          <div className="space-y-4 bg-white px-6 py-6">
+                    // Determine final isActive/status values (fall back to device values if user didn't touch)
+                    const finalIsActive =
+                      isActiveEdit === null ? Boolean(device?.isActive) : !!isActiveEdit
+                    const finalStatus = String(
+                      statusEdit ||
+                        (device as any)?.status ||
+                        (finalIsActive ? DEVICE_STATUS.ACTIVE : DEVICE_STATUS.DECOMMISSIONED)
+                    ).toUpperCase()
+
+                    // If toggling to inactive, require a reason
+                    let chosenReason: string | undefined = undefined
+                    if (finalIsActive === false) {
+                      if (inactiveReasonOptionEdit === '__other') {
+                        chosenReason = inactiveReasonTextEdit
+                      } else {
+                        chosenReason = inactiveReasonOptionEdit
+                      }
+                      if (!chosenReason || String(chosenReason).trim() === '') {
+                        toast.error('Vui lòng cung cấp lý do khi thay đổi trạng thái')
+                        setEditing(false)
+                        return
+                      }
+                    }
+
+                    // Validate status consistent with isActive
+                    const activeStatuses = ['ACTIVE', 'MAINTENANCE', 'ERROR', 'OFFLINE']
+                    const inactiveStatuses = ['DECOMMISSIONED', 'DISABLED']
+                    const allowedStatuses = finalIsActive ? activeStatuses : inactiveStatuses
+                    if (!allowedStatuses.includes(finalStatus)) {
+                      toast.error(
+                        `Trạng thái không hợp lệ khi isActive=${String(finalIsActive)}. Vui lòng chọn trạng thái hợp lệ.`
+                      )
+                      setEditing(false)
+                      return
+                    }
+
+                    let dto: Record<string, unknown> = {
+                      location: locationAddressEdit || undefined,
+                      ipAddress: ipEdit || undefined,
+                      macAddress: macEdit || undefined,
+                      firmware: firmwareEdit || undefined,
+                      isActive: finalIsActive,
+                      status: finalStatus,
+                      inactiveReason: chosenReason || undefined,
+                      customerId: customerIdEdit || undefined,
+                    }
+
+                    dto = removeEmpty(dto)
+                    const updated = await devicesClientService.update(deviceId, dto)
+                    if (updated) {
+                      setDevice(updated)
+                      toast.success('Cập nhật thiết bị thành công')
+                      setShowEdit(false)
+                    } else {
+                      toast.error('Cập nhật thất bại')
+                    }
+                  } catch (err) {
+                    console.error('Update device failed', err)
+                    toast.error('Cập nhật thiết bị thất bại')
+                  } finally {
+                    setEditing(false)
+                  }
+                }}
+                disabled={editing}
+                className="min-w-[100px] bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+              >
+                {editing ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Đang lưu...
+                  </>
+                ) : (
+                  'Lưu thay đổi'
+                )}
+              </Button>
+            </>
+          }
+        >
+          <div className="space-y-4">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
                 <Label className="text-base font-semibold">Địa chỉ IP</Label>
@@ -1561,114 +1573,109 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
               )}
             </div>
           </div>
-
-          <DialogFooter className="border-t bg-gray-50 px-6 py-4">
-            <Button variant="outline" onClick={() => setShowEdit(false)} className="min-w-[100px]">
-              Hủy
-            </Button>
-            <Button
-              onClick={async () => {
-                try {
-                  setEditing(true)
-
-                  // Determine final isActive/status values (fall back to device values if user didn't touch)
-                  const finalIsActive =
-                    isActiveEdit === null ? Boolean(device?.isActive) : !!isActiveEdit
-                  const finalStatus = String(
-                    statusEdit ||
-                      (device as any)?.status ||
-                      (finalIsActive ? DEVICE_STATUS.ACTIVE : DEVICE_STATUS.DECOMMISSIONED)
-                  ).toUpperCase()
-
-                  // If toggling to inactive, require a reason
-                  let chosenReason: string | undefined = undefined
-                  if (finalIsActive === false) {
-                    if (inactiveReasonOptionEdit === '__other') {
-                      chosenReason = inactiveReasonTextEdit
-                    } else {
-                      chosenReason = inactiveReasonOptionEdit
-                    }
-                    if (!chosenReason || String(chosenReason).trim() === '') {
-                      toast.error('Vui lòng cung cấp lý do khi thay đổi trạng thái')
-                      setEditing(false)
-                      return
-                    }
-                  }
-
-                  // Validate status consistent with isActive
-                  const activeStatuses = ['ACTIVE', 'MAINTENANCE', 'ERROR', 'OFFLINE']
-                  const inactiveStatuses = ['DECOMMISSIONED', 'DISABLED']
-                  const allowedStatuses = finalIsActive ? activeStatuses : inactiveStatuses
-                  if (!allowedStatuses.includes(finalStatus)) {
-                    toast.error(
-                      `Trạng thái không hợp lệ khi isActive=${String(finalIsActive)}. Vui lòng chọn trạng thái hợp lệ.`
-                    )
-                    setEditing(false)
-                    return
-                  }
-
-                  let dto: Record<string, unknown> = {
-                    location: locationAddressEdit || undefined,
-                    ipAddress: ipEdit || undefined,
-                    macAddress: macEdit || undefined,
-                    firmware: firmwareEdit || undefined,
-                    isActive: finalIsActive,
-                    status: finalStatus,
-                    inactiveReason: chosenReason || undefined,
-                    customerId: customerIdEdit || undefined,
-                  }
-
-                  dto = removeEmpty(dto)
-                  const updated = await devicesClientService.update(deviceId, dto)
-                  if (updated) {
-                    setDevice(updated)
-                    toast.success('Cập nhật thiết bị thành công')
-                    setShowEdit(false)
-                  } else {
-                    toast.error('Cập nhật thất bại')
-                  }
-                } catch (err) {
-                  console.error('Update device failed', err)
-                  toast.error('Cập nhật thiết bị thất bại')
-                } finally {
-                  setEditing(false)
-                }
-              }}
-              disabled={editing}
-              className="min-w-[100px] bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
-            >
-              {editing ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Đang lưu...
-                </>
-              ) : (
-                'Lưu thay đổi'
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
+        </SystemModalLayout>
       </Dialog>
 
       {/* Create Consumable Modal - Modern Design */}
       <Dialog open={showCreateConsumable} onOpenChange={setShowCreateConsumable}>
-        <DialogContent className="max-w-[640px] overflow-hidden rounded-2xl border-0 p-0 shadow-2xl">
-          <DialogHeader className="relative overflow-hidden bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 p-0">
-            <div className="absolute inset-0 bg-black/10"></div>
-            <div className="relative z-10 px-6 py-5">
-              <div className="flex items-center gap-3">
-                <Plus className="h-6 w-6 text-white" />
-                <DialogTitle className="text-2xl font-bold text-white">
-                  Tạo và lắp vật tư
-                </DialogTitle>
-              </div>
-              <DialogDescription className="mt-2 text-white/90">
-                Thêm vật tư mới vào thiết bị {device.serialNumber}
-              </DialogDescription>
-            </div>
-          </DialogHeader>
+        <SystemModalLayout
+          title="Tạo và lắp vật tư"
+          description={`Thêm vật tư mới vào thiết bị ${device.serialNumber}`}
+          icon={Plus}
+          variant="create"
+          maxWidth="!max-w-[60vw]"
+          footer={
+            <>
+              <Button
+                variant="outline"
+                onClick={() => setShowCreateConsumable(false)}
+                className="min-w-[100px]"
+              >
+                Hủy
+              </Button>
+              <Button
+                onClick={async () => {
+                  if (!selectedConsumableType) return
+                  try {
+                    setCreatingConsumable(true)
+                    const dto: CreateConsumableDto = {
+                      consumableTypeId: selectedConsumableType.id,
+                      serialNumber: serialNumber || undefined,
+                      batchNumber: batchNumber || undefined,
+                      capacity: capacity || undefined,
+                      remaining: remaining || undefined,
+                      // expiryDate removed per spec
+                    }
 
-          <div className="space-y-5 bg-white px-6 py-6">
+                    const created = await consumablesClientService.create(dto)
+                    if (!created || !created.id) {
+                      toast.error('Tạo vật tư thất bại')
+                      return
+                    }
+
+                    // Prepare install payload per API: installedAt, actualPagesPrinted, price, exchangeRate
+                    let installPayload: Record<string, unknown> = {}
+                    if (createInstalledAt) installPayload.installedAt = createInstalledAt
+                    if (typeof createActualPagesPrinted === 'number')
+                      installPayload.actualPagesPrinted = createActualPagesPrinted
+
+                    // Calculate price based on VND or USD input
+                    if (createPriceVND && createExchangeRate) {
+                      // VND mode: price = VND / exchangeRate
+                      installPayload.price = createPriceVND / createExchangeRate
+                      installPayload.exchangeRate = createExchangeRate
+                    } else if (createPriceUSD) {
+                      // USD mode: price = USD directly
+                      installPayload.price = createPriceUSD
+                    }
+
+                    installPayload = removeEmpty(installPayload)
+
+                    await devicesClientService.installConsumableWithPayload(
+                      deviceId,
+                      created.id,
+                      installPayload
+                    )
+
+                    toast.success('Đã lắp vật tư vào thiết bị')
+                    setShowCreateConsumable(false)
+
+                    setConsumablesLoading(true)
+                    const [installed, compatible] = await Promise.all([
+                      devicesClientService.getConsumables(deviceId).catch(() => []),
+                      deviceModelsClientService
+                        .getCompatibleConsumables(modelId ?? device.deviceModel?.id ?? '')
+                        .catch(() => []),
+                    ])
+                    setInstalledConsumables(Array.isArray(installed) ? installed : [])
+                    setCompatibleConsumables(Array.isArray(compatible) ? compatible : [])
+                  } catch (err) {
+                    console.error('Create/install consumable failed', err)
+                    toast.error('Không thể tạo hoặc lắp vật tư')
+                  } finally {
+                    setCreatingConsumable(false)
+                    setConsumablesLoading(false)
+                  }
+                }}
+                disabled={creatingConsumable}
+                className="min-w-[120px] bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700"
+              >
+                {creatingConsumable ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Đang tạo...
+                  </>
+                ) : (
+                  <>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Tạo và lắp
+                  </>
+                )}
+              </Button>
+            </>
+          }
+        >
+          <div className="space-y-5">
             <div className="rounded-lg border border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50 p-4">
               <p className="text-muted-foreground mb-1 text-sm font-medium">Loại vật tư</p>
               <p className="text-lg font-bold text-emerald-700">
@@ -1781,117 +1788,69 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
               </div>
             </div>
           </div>
-
-          <DialogFooter className="border-t bg-gray-50 px-6 py-4">
-            <Button
-              variant="outline"
-              onClick={() => setShowCreateConsumable(false)}
-              className="min-w-[100px]"
-            >
-              Hủy
-            </Button>
-            <Button
-              onClick={async () => {
-                if (!selectedConsumableType) return
-                try {
-                  setCreatingConsumable(true)
-                  const dto: CreateConsumableDto = {
-                    consumableTypeId: selectedConsumableType.id,
-                    serialNumber: serialNumber || undefined,
-                    batchNumber: batchNumber || undefined,
-                    capacity: capacity || undefined,
-                    remaining: remaining || undefined,
-                    // expiryDate removed per spec
-                  }
-
-                  const created = await consumablesClientService.create(dto)
-                  if (!created || !created.id) {
-                    toast.error('Tạo vật tư thất bại')
-                    return
-                  }
-
-                  // Prepare install payload per API: installedAt, actualPagesPrinted, price, exchangeRate
-                  let installPayload: Record<string, unknown> = {}
-                  if (createInstalledAt) installPayload.installedAt = createInstalledAt
-                  if (typeof createActualPagesPrinted === 'number')
-                    installPayload.actualPagesPrinted = createActualPagesPrinted
-
-                  // Calculate price based on VND or USD input
-                  if (createPriceVND && createExchangeRate) {
-                    // VND mode: price = VND / exchangeRate
-                    installPayload.price = createPriceVND / createExchangeRate
-                    installPayload.exchangeRate = createExchangeRate
-                  } else if (createPriceUSD) {
-                    // USD mode: price = USD directly
-                    installPayload.price = createPriceUSD
-                  }
-
-                  installPayload = removeEmpty(installPayload)
-
-                  await devicesClientService.installConsumableWithPayload(
-                    deviceId,
-                    created.id,
-                    installPayload
-                  )
-
-                  toast.success('Đã lắp vật tư vào thiết bị')
-                  setShowCreateConsumable(false)
-
-                  setConsumablesLoading(true)
-                  const [installed, compatible] = await Promise.all([
-                    devicesClientService.getConsumables(deviceId).catch(() => []),
-                    deviceModelsClientService
-                      .getCompatibleConsumables(modelId ?? device.deviceModel?.id ?? '')
-                      .catch(() => []),
-                  ])
-                  setInstalledConsumables(Array.isArray(installed) ? installed : [])
-                  setCompatibleConsumables(Array.isArray(compatible) ? compatible : [])
-                } catch (err) {
-                  console.error('Create/install consumable failed', err)
-                  toast.error('Không thể tạo hoặc lắp vật tư')
-                } finally {
-                  setCreatingConsumable(false)
-                  setConsumablesLoading(false)
-                }
-              }}
-              disabled={creatingConsumable}
-              className="min-w-[120px] bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700"
-            >
-              {creatingConsumable ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Đang tạo...
-                </>
-              ) : (
-                <>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Tạo và lắp
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
+        </SystemModalLayout>
       </Dialog>
 
       {/* Attach From Orphaned Modal */}
       <Dialog open={showAttachFromOrphaned} onOpenChange={setShowAttachFromOrphaned}>
-        <DialogContent className="max-w-[640px] overflow-hidden rounded-2xl border-0 p-0 shadow-2xl">
-          <DialogHeader className="relative overflow-hidden bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 p-0">
-            <div className="absolute inset-0 bg-black/10"></div>
-            <div className="relative z-10 px-6 py-5">
-              <div className="flex items-center gap-3">
-                <Plus className="h-6 w-6 text-white" />
-                <DialogTitle className="text-2xl font-bold text-white">
-                  Lắp vật tư đã xuất sẵn
-                </DialogTitle>
-              </div>
-              <DialogDescription className="mt-2 text-white/90">
-                Chọn vật tư đã xuất cho khách hàng và cập nhật thông tin trước khi lắp
-              </DialogDescription>
-            </div>
-          </DialogHeader>
+        <SystemModalLayout
+          title="Lắp vật tư đã xuất sẵn"
+          description="Chọn vật tư đã xuất cho khách hàng và cập nhật thông tin trước khi lắp"
+          icon={Plus}
+          variant="create"
+          maxWidth="!max-w-[60vw]"
+          footer={
+            <>
+              <Button
+                variant="outline"
+                onClick={() => setShowAttachFromOrphaned(false)}
+                className="min-w-[100px]"
+              >
+                Hủy
+              </Button>
+              <Button
+                onClick={async () => {
+                  try {
+                    if (!selectedOrphanedId) {
+                      toast.error('Vui lòng chọn vật tư')
+                      return
+                    }
+                    // Update serial/expiry then install
+                    const dto: Record<string, unknown> = {}
+                    if (orphanedSerial) dto.serialNumber = orphanedSerial
+                    if (orphanedExpiry) dto.expiryDate = new Date(orphanedExpiry).toISOString()
+                    await consumablesClientService.update(selectedOrphanedId, dto)
 
-          <div className="space-y-5 bg-white px-6 py-6">
+                    await devicesClientService.installConsumableWithPayload(
+                      deviceId,
+                      selectedOrphanedId,
+                      {}
+                    )
+
+                    toast.success('Đã lắp vật tư từ kho đã xuất sẵn')
+                    setShowAttachFromOrphaned(false)
+
+                    // Refresh installed and orphaned lists
+                    setConsumablesLoading(true)
+                    const installed = await devicesClientService
+                      .getConsumables(deviceId)
+                      .catch(() => [])
+                    setInstalledConsumables(Array.isArray(installed) ? installed : [])
+                  } catch (e) {
+                    console.error('Attach orphaned consumable failed', e)
+                    toast.error('Không thể lắp vật tư')
+                  } finally {
+                    setConsumablesLoading(false)
+                  }
+                }}
+                className="min-w-[120px] bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700"
+              >
+                Lắp vào thiết bị
+              </Button>
+            </>
+          }
+        >
+          <div className="space-y-5">
             <div>
               <Label className="text-base font-semibold">Chọn vật tư</Label>
               <Select
@@ -1957,56 +1916,7 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
               </div>
             </div>
           </div>
-
-          <DialogFooter className="border-t bg-gray-50 px-6 py-4">
-            <Button
-              variant="outline"
-              onClick={() => setShowAttachFromOrphaned(false)}
-              className="min-w-[100px]"
-            >
-              Hủy
-            </Button>
-            <Button
-              onClick={async () => {
-                try {
-                  if (!selectedOrphanedId) {
-                    toast.error('Vui lòng chọn vật tư')
-                    return
-                  }
-                  // Update serial/expiry then install
-                  const dto: Record<string, unknown> = {}
-                  if (orphanedSerial) dto.serialNumber = orphanedSerial
-                  if (orphanedExpiry) dto.expiryDate = new Date(orphanedExpiry).toISOString()
-                  await consumablesClientService.update(selectedOrphanedId, dto)
-
-                  await devicesClientService.installConsumableWithPayload(
-                    deviceId,
-                    selectedOrphanedId,
-                    {}
-                  )
-
-                  toast.success('Đã lắp vật tư từ kho đã xuất sẵn')
-                  setShowAttachFromOrphaned(false)
-
-                  // Refresh installed and orphaned lists
-                  setConsumablesLoading(true)
-                  const installed = await devicesClientService
-                    .getConsumables(deviceId)
-                    .catch(() => [])
-                  setInstalledConsumables(Array.isArray(installed) ? installed : [])
-                } catch (e) {
-                  console.error('Attach orphaned consumable failed', e)
-                  toast.error('Không thể lắp vật tư')
-                } finally {
-                  setConsumablesLoading(false)
-                }
-              }}
-              className="min-w-[120px] bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700"
-            >
-              Lắp vào thiết bị
-            </Button>
-          </DialogFooter>
-        </DialogContent>
+        </SystemModalLayout>
       </Dialog>
 
       {/* A4 Equivalent modal (manual snapshot edit) */}
@@ -2040,24 +1950,134 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
 
       {/* Edit Consumable Modal - Modern Design */}
       <Dialog open={showEditConsumable} onOpenChange={setShowEditConsumable}>
-        <DialogContent className="max-w-[640px] overflow-hidden rounded-2xl border-0 p-0 shadow-2xl">
-          <DialogHeader className="relative overflow-hidden bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600 p-0">
-            <div className="absolute inset-0 bg-black/10"></div>
-            <div className="relative z-10 px-6 py-5">
-              <div className="flex items-center gap-3">
-                <Edit className="h-6 w-6 text-white" />
-                <DialogTitle className="text-2xl font-bold text-white">
-                  Chỉnh sửa vật tư
-                </DialogTitle>
-              </div>
-              <DialogDescription className="mt-2 text-white/90">
-                Cập nhật thông tin vật tư{' '}
-                {editingConsumable?.serialNumber ?? editingConsumable?.consumableType?.name ?? ''}
-              </DialogDescription>
-            </div>
-          </DialogHeader>
+        <SystemModalLayout
+          title="Chỉnh sửa vật tư"
+          description={`Cập nhật thông tin vật tư ${editingConsumable?.serialNumber ?? editingConsumable?.consumableType?.name ?? ''}`}
+          icon={Edit}
+          variant="edit"
+          maxWidth="!max-w-[60vw]"
+          footer={
+            <>
+              <Button
+                variant="outline"
+                onClick={() => setShowEditConsumable(false)}
+                className="min-w-[100px]"
+              >
+                Hủy
+              </Button>
+              <Button
+                onClick={async () => {
+                  if (!editingConsumable?.id) return
 
-          <div className="space-y-5 bg-white px-6 py-6">
+                  // Validation: installedAt must be strictly before removedAt and expiryDate
+                  if (editInstalledAt && editRemovedAt) {
+                    const installedDate = new Date(editInstalledAt).getTime()
+                    const removedDate = new Date(editRemovedAt).getTime()
+                    if (installedDate >= removedDate) {
+                      toast.error('Ngày lắp đặt phải nhỏ hơn ngày gỡ (không được bằng)')
+                      return
+                    }
+                  }
+
+                  if (editInstalledAt && editExpiryDate) {
+                    const installedDate = new Date(editInstalledAt).getTime()
+                    const expiryDate = new Date(editExpiryDate + 'T23:59:59').getTime()
+                    if (installedDate >= expiryDate) {
+                      toast.error('Ngày lắp đặt phải nhỏ hơn ngày hết hạn (không được bằng)')
+                      return
+                    }
+                  }
+
+                  try {
+                    setUpdatingConsumable(true)
+                    let dto: any = {}
+                    if (editingConsumable.consumableType?.id) {
+                      dto.consumableTypeId = editingConsumable.consumableType.id
+                    }
+                    if (editSerialNumber) dto.serialNumber = editSerialNumber
+                    if (editBatchNumber) dto.batchNumber = editBatchNumber
+                    if (editExpiryDate) dto.expiryDate = new Date(editExpiryDate).toISOString()
+                    dto = removeEmpty(dto)
+
+                    // First: update consumable entity
+                    const updated = await consumablesClientService.update(editingConsumable.id, dto)
+                    if (!updated) {
+                      toast.error('Cập nhật vật tư thất bại')
+                      return
+                    }
+
+                    // Second: update device-consumable record (installedAt, removedAt, actualPagesPrinted, price, exchangeRate)
+                    try {
+                      let deviceDto: Record<string, unknown> = {}
+                      if (editInstalledAt) deviceDto.installedAt = editInstalledAt
+                      if (editRemovedAt) deviceDto.removedAt = editRemovedAt
+                      if (typeof editActualPagesPrinted === 'number')
+                        deviceDto.actualPagesPrinted = editActualPagesPrinted
+
+                      // Only include price if removedAt is not being set (checkbox not checked)
+                      if (!editShowRemovedAt) {
+                        // Calculate price based on VND or USD input
+                        if (editPriceVND && editExchangeRate) {
+                          // VND mode: price = VND / exchangeRate
+                          deviceDto.price = editPriceVND / editExchangeRate
+                          deviceDto.exchangeRate = editExchangeRate
+                        } else if (editPriceUSD) {
+                          // USD mode: price = USD directly
+                          deviceDto.price = editPriceUSD
+                        }
+                      }
+
+                      deviceDto = removeEmpty(deviceDto)
+
+                      await devicesClientService.updateDeviceConsumable(
+                        deviceId,
+                        editingConsumable.id,
+                        deviceDto
+                      )
+                    } catch (err) {
+                      console.error('Update device-consumable failed', err)
+                      // Non-fatal: show warning but continue
+                      toast(
+                        'Vật tư đã cập nhật (nhưng có lỗi khi cập nhật thông tin trên thiết bị)'
+                      )
+                    }
+
+                    toast.success('Cập nhật vật tư thành công')
+                    setShowEditConsumable(false)
+
+                    // Refresh installed consumables list
+                    setConsumablesLoading(true)
+                    const installed = await devicesClientService
+                      .getConsumables(deviceId)
+                      .catch(() => [])
+                    setInstalledConsumables(Array.isArray(installed) ? installed : [])
+                  } catch (err) {
+                    console.error('Update consumable failed', err)
+                    toast.error('Không thể cập nhật vật tư')
+                  } finally {
+                    setUpdatingConsumable(false)
+                    setConsumablesLoading(false)
+                  }
+                }}
+                disabled={updatingConsumable || editRemainingInvalid}
+                className="min-w-[120px] bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+              >
+                {updatingConsumable ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Đang lưu...
+                  </>
+                ) : (
+                  <>
+                    <Edit className="mr-2 h-4 w-4" />
+                    Lưu thay đổi
+                  </>
+                )}
+              </Button>
+            </>
+          }
+        >
+          <div className="space-y-5">
             <div className="rounded-lg border border-blue-200 bg-gradient-to-r from-blue-50 to-cyan-50 p-4">
               <p className="text-muted-foreground mb-1 text-sm font-medium">Loại vật tư</p>
               <p className="text-lg font-bold text-blue-700">
@@ -2221,124 +2241,7 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
               )}
             </div>
           </div>
-
-          <DialogFooter className="border-t bg-gray-50 px-6 py-4">
-            <Button
-              variant="outline"
-              onClick={() => setShowEditConsumable(false)}
-              className="min-w-[100px]"
-            >
-              Hủy
-            </Button>
-            <Button
-              onClick={async () => {
-                if (!editingConsumable?.id) return
-
-                // Validation: installedAt must be strictly before removedAt and expiryDate
-                if (editInstalledAt && editRemovedAt) {
-                  const installedDate = new Date(editInstalledAt).getTime()
-                  const removedDate = new Date(editRemovedAt).getTime()
-                  if (installedDate >= removedDate) {
-                    toast.error('Ngày lắp đặt phải nhỏ hơn ngày gỡ (không được bằng)')
-                    return
-                  }
-                }
-
-                if (editInstalledAt && editExpiryDate) {
-                  const installedDate = new Date(editInstalledAt).getTime()
-                  const expiryDate = new Date(editExpiryDate + 'T23:59:59').getTime()
-                  if (installedDate >= expiryDate) {
-                    toast.error('Ngày lắp đặt phải nhỏ hơn ngày hết hạn (không được bằng)')
-                    return
-                  }
-                }
-
-                try {
-                  setUpdatingConsumable(true)
-                  let dto: any = {}
-                  if (editingConsumable.consumableType?.id) {
-                    dto.consumableTypeId = editingConsumable.consumableType.id
-                  }
-                  if (editSerialNumber) dto.serialNumber = editSerialNumber
-                  if (editBatchNumber) dto.batchNumber = editBatchNumber
-                  if (editExpiryDate) dto.expiryDate = new Date(editExpiryDate).toISOString()
-                  dto = removeEmpty(dto)
-
-                  // First: update consumable entity
-                  const updated = await consumablesClientService.update(editingConsumable.id, dto)
-                  if (!updated) {
-                    toast.error('Cập nhật vật tư thất bại')
-                    return
-                  }
-
-                  // Second: update device-consumable record (installedAt, removedAt, actualPagesPrinted, price, exchangeRate)
-                  try {
-                    let deviceDto: Record<string, unknown> = {}
-                    if (editInstalledAt) deviceDto.installedAt = editInstalledAt
-                    if (editRemovedAt) deviceDto.removedAt = editRemovedAt
-                    if (typeof editActualPagesPrinted === 'number')
-                      deviceDto.actualPagesPrinted = editActualPagesPrinted
-
-                    // Only include price if removedAt is not being set (checkbox not checked)
-                    if (!editShowRemovedAt) {
-                      // Calculate price based on VND or USD input
-                      if (editPriceVND && editExchangeRate) {
-                        // VND mode: price = VND / exchangeRate
-                        deviceDto.price = editPriceVND / editExchangeRate
-                        deviceDto.exchangeRate = editExchangeRate
-                      } else if (editPriceUSD) {
-                        // USD mode: price = USD directly
-                        deviceDto.price = editPriceUSD
-                      }
-                    }
-
-                    deviceDto = removeEmpty(deviceDto)
-
-                    await devicesClientService.updateDeviceConsumable(
-                      deviceId,
-                      editingConsumable.id,
-                      deviceDto
-                    )
-                  } catch (err) {
-                    console.error('Update device-consumable failed', err)
-                    // Non-fatal: show warning but continue
-                    toast('Vật tư đã cập nhật (nhưng có lỗi khi cập nhật thông tin trên thiết bị)')
-                  }
-
-                  toast.success('Cập nhật vật tư thành công')
-                  setShowEditConsumable(false)
-
-                  // Refresh installed consumables list
-                  setConsumablesLoading(true)
-                  const installed = await devicesClientService
-                    .getConsumables(deviceId)
-                    .catch(() => [])
-                  setInstalledConsumables(Array.isArray(installed) ? installed : [])
-                } catch (err) {
-                  console.error('Update consumable failed', err)
-                  toast.error('Không thể cập nhật vật tư')
-                } finally {
-                  setUpdatingConsumable(false)
-                  setConsumablesLoading(false)
-                }
-              }}
-              disabled={updatingConsumable || editRemainingInvalid}
-              className="min-w-[120px] bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
-            >
-              {updatingConsumable ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Đang lưu...
-                </>
-              ) : (
-                <>
-                  <Edit className="mr-2 h-4 w-4" />
-                  Lưu thay đổi
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
+        </SystemModalLayout>
       </Dialog>
     </div>
   )

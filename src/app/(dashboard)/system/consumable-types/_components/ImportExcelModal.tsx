@@ -1,15 +1,8 @@
 'use client'
 
 import React, { useState } from 'react'
-import {
-  Dialog,
-  DialogTrigger,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/components/ui/dialog'
+import { Dialog, DialogTrigger } from '@/components/ui/dialog'
+import { SystemModalLayout } from '@/components/system/SystemModalLayout'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { FileText, Loader2, Upload } from 'lucide-react'
@@ -148,131 +141,117 @@ export default function ImportExcelModal({ trigger }: ImportExcelModalProps = {}
         </DialogTrigger>
       )}
 
-      <DialogContent className="max-w-[600px] overflow-hidden rounded-2xl border-0 p-0 shadow-2xl">
-        <DialogHeader className="relative overflow-hidden bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 p-0">
-          <div className="absolute inset-0 bg-black/10"></div>
-          <div className="relative z-10 px-6 py-5 text-white">
-            <div className="flex items-center gap-3">
-              <Upload className="h-6 w-6" />
-              <DialogTitle className="text-2xl font-bold">Import từ Excel</DialogTitle>
+      <SystemModalLayout
+        title="Import từ Excel"
+        description="Upload file Excel (.xlsx, .xls) để thêm loại vật tư tiêu hao. File tối đa 10MB."
+        icon={Upload}
+        variant="create"
+        maxWidth="!max-w-[55vw]"
+        footer={
+          <>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setOpen(false)
+                setFile(null)
+              }}
+              className="min-w-[100px]"
+            >
+              Hủy
+            </Button>
+            <Button
+              onClick={handleUpload}
+              disabled={loading}
+              className="min-w-[120px] bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+            >
+              {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Tải lên
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-semibold">Chọn file</label>
+            <div className="flex items-center gap-2">
+              <Input type="file" accept=".xlsx,.xls" onChange={handleFileChange} className="mt-2" />
+              <Button
+                variant="ghost"
+                onClick={async () => {
+                  // generate template and download
+                  try {
+                    const workbook = new ExcelJS.Workbook()
+                    const sheet = workbook.addWorksheet('Template')
+                    sheet.addRow(['Part', 'Tên', 'Sản lượng', 'Dòng máy tương thích'])
+                    sheet.addRow(['ABC-123', 'Mực in', 1000, 'Model A; Model B'])
+                    sheet.addRow(['DEF-456', 'Bộ lọc', 500, 'Model C'])
+                    sheet.columns = [{ width: 20 }, { width: 30 }, { width: 15 }, { width: 40 }]
+                    const buf = await workbook.xlsx.writeBuffer()
+                    const blob = new Blob([buf], {
+                      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                    })
+                    const url = URL.createObjectURL(blob)
+                    const a = document.createElement('a')
+                    a.href = url
+                    a.download = 'consumable-types-template.xlsx'
+                    document.body.appendChild(a)
+                    a.click()
+                    a.remove()
+                    URL.revokeObjectURL(url)
+                  } catch (err) {
+                    console.error('Failed to generate template', err)
+                    toast.error('Không thể tạo file mẫu')
+                  }
+                }}
+                className="mt-2"
+              >
+                Tải mẫu
+              </Button>
             </div>
-            <DialogDescription className="mt-2 text-white/90">
-              Upload file Excel (.xlsx, .xls) để thêm loại vật tư tiêu hao. File tối đa 10MB.
-            </DialogDescription>
+            {file && <div className="text-muted-foreground mt-2 text-sm">{file.name}</div>}
           </div>
-        </DialogHeader>
 
-        <div className="bg-white px-6 py-6">
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-semibold">Chọn file</label>
-              <div className="flex items-center gap-2">
-                <Input
-                  type="file"
-                  accept=".xlsx,.xls"
-                  onChange={handleFileChange}
-                  className="mt-2"
-                />
-                <Button
-                  variant="ghost"
-                  onClick={async () => {
-                    // generate template and download
-                    try {
-                      const workbook = new ExcelJS.Workbook()
-                      const sheet = workbook.addWorksheet('Template')
-                      sheet.addRow(['Part', 'Tên', 'Sản lượng', 'Dòng máy tương thích'])
-                      sheet.addRow(['ABC-123', 'Mực in', 1000, 'Model A; Model B'])
-                      sheet.addRow(['DEF-456', 'Bộ lọc', 500, 'Model C'])
-                      sheet.columns = [{ width: 20 }, { width: 30 }, { width: 15 }, { width: 40 }]
-                      const buf = await workbook.xlsx.writeBuffer()
-                      const blob = new Blob([buf], {
-                        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                      })
-                      const url = URL.createObjectURL(blob)
-                      const a = document.createElement('a')
-                      a.href = url
-                      a.download = 'consumable-types-template.xlsx'
-                      document.body.appendChild(a)
-                      a.click()
-                      a.remove()
-                      URL.revokeObjectURL(url)
-                    } catch (err) {
-                      console.error('Failed to generate template', err)
-                      toast.error('Không thể tạo file mẫu')
-                    }
-                  }}
-                  className="mt-2"
-                >
-                  Tải mẫu
-                </Button>
-              </div>
-              {file && <div className="text-muted-foreground mt-2 text-sm">{file.name}</div>}
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold">Xem trước (tối đa 10 dòng)</label>
-              <div className="mt-2">
-                {headerValid === false && (
-                  <div className="text-sm text-red-600">
-                    Header file không hợp lệ. Cột mong đợi: Part, Tên, Sản lượng, Dòng máy tương
-                    thích
-                  </div>
-                )}
-                {previewRows.length === 0 && headerValid !== false && (
-                  <div className="text-muted-foreground text-sm">Chưa có dữ liệu để xem trước</div>
-                )}
-                {previewRows.length > 0 && (
-                  <div className="mt-2 overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="text-left">
-                          <th className="px-2 py-1">#</th>
-                          <th className="px-2 py-1">Part</th>
-                          <th className="px-2 py-1">Tên</th>
-                          <th className="px-2 py-1">Sản lượng</th>
-                          <th className="px-2 py-1">Dòng máy tương thích</th>
+          <div>
+            <label className="block text-sm font-semibold">Xem trước (tối đa 10 dòng)</label>
+            <div className="mt-2">
+              {headerValid === false && (
+                <div className="text-sm text-red-600">
+                  Header file không hợp lệ. Cột mong đợi: Part, Tên, Sản lượng, Dòng máy tương thích
+                </div>
+              )}
+              {previewRows.length === 0 && headerValid !== false && (
+                <div className="text-muted-foreground text-sm">Chưa có dữ liệu để xem trước</div>
+              )}
+              {previewRows.length > 0 && (
+                <div className="mt-2 overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-left">
+                        <th className="px-2 py-1">#</th>
+                        <th className="px-2 py-1">Part</th>
+                        <th className="px-2 py-1">Tên</th>
+                        <th className="px-2 py-1">Sản lượng</th>
+                        <th className="px-2 py-1">Dòng máy tương thích</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {previewRows.map((r, idx) => (
+                        <tr key={idx} className="border-t">
+                          <td className="px-2 py-1">{(r.row as number) ?? idx + 2}</td>
+                          <td className="px-2 py-1">{String(r.part ?? '—')}</td>
+                          <td className="px-2 py-1">{String(r.name ?? '—')}</td>
+                          <td className="px-2 py-1">{String(r.capacity ?? '—')}</td>
+                          <td className="px-2 py-1">{String(r.compatible ?? '—')}</td>
                         </tr>
-                      </thead>
-                      <tbody>
-                        {previewRows.map((r, idx) => (
-                          <tr key={idx} className="border-t">
-                            <td className="px-2 py-1">{(r.row as number) ?? idx + 2}</td>
-                            <td className="px-2 py-1">{String(r.part ?? '—')}</td>
-                            <td className="px-2 py-1">{String(r.name ?? '—')}</td>
-                            <td className="px-2 py-1">{String(r.capacity ?? '—')}</td>
-                            <td className="px-2 py-1">{String(r.compatible ?? '—')}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </div>
         </div>
-
-        <DialogFooter className="border-t bg-gray-50 px-6 py-4">
-          <Button
-            variant="outline"
-            onClick={() => {
-              setOpen(false)
-              setFile(null)
-            }}
-            className="min-w-[100px]"
-          >
-            Hủy
-          </Button>
-          <Button
-            onClick={handleUpload}
-            disabled={loading}
-            className="min-w-[120px] bg-emerald-600 text-white"
-          >
-            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            Tải lên
-          </Button>
-        </DialogFooter>
-      </DialogContent>
+      </SystemModalLayout>
     </Dialog>
   )
 }

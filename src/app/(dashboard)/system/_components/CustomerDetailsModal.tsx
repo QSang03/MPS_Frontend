@@ -3,13 +3,8 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog'
+import { Dialog } from '@/components/ui/dialog'
+import { SystemModalLayout } from '@/components/system/SystemModalLayout'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -113,7 +108,14 @@ export function CustomerDetailsModal({ open, onOpenChange, month }: CustomerDeta
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] max-w-4xl overflow-y-auto rounded-2xl border-0 shadow-2xl">
+      <SystemModalLayout
+        title="Top khách hàng"
+        description={`Danh sách ${(topCustomers ?? []).length} khách hàng chi tiêu cao nhất trong tháng ${month}`}
+        icon={Building2}
+        variant="view"
+        maxWidth="!max-w-[80vw]"
+        className="!max-h-[85vh]"
+      >
         <AnimatePresence mode="wait">
           {!selectedCustomerId ? (
             // Customer List View
@@ -124,17 +126,6 @@ export function CustomerDetailsModal({ open, onOpenChange, month }: CustomerDeta
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.2 }}
             >
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2 text-2xl">
-                  <Building2 className="h-6 w-6 text-cyan-600" />
-                  Top khách hàng
-                </DialogTitle>
-                <DialogDescription>
-                  Danh sách {(topCustomers ?? []).length} khách hàng chi tiêu cao nhất trong tháng{' '}
-                  {month}
-                </DialogDescription>
-              </DialogHeader>
-
               <div className="mt-6 space-y-3">
                 {(topCustomers ?? []).map((customer, index) => {
                   const totalRevenue = (topCustomers ?? []).reduce(
@@ -215,22 +206,22 @@ export function CustomerDetailsModal({ open, onOpenChange, month }: CustomerDeta
               exit={{ opacity: 0, x: 20 }}
               transition={{ duration: 0.2 }}
             >
-              <DialogHeader>
+              <div className="mb-4">
                 <div className="flex items-center gap-2">
                   <Button variant="ghost" size="icon" onClick={handleBack}>
                     <ArrowLeft className="h-5 w-5" />
                   </Button>
                   <div>
-                    <DialogTitle className="text-2xl">Chi tiết khách hàng</DialogTitle>
-                    <DialogDescription>
+                    <h3 className="text-2xl font-bold">Chi tiết khách hàng</h3>
+                    <p className="text-sm text-gray-600">
                       {
                         (topCustomers ?? []).find((c) => c.customerId === selectedCustomerId)
                           ?.customerName
                       }
-                    </DialogDescription>
+                    </p>
                   </div>
                 </div>
-              </DialogHeader>
+              </div>
 
               {isLoadingDetails ? (
                 <div className="mt-6 space-y-4">
@@ -435,7 +426,7 @@ export function CustomerDetailsModal({ open, onOpenChange, month }: CustomerDeta
             </motion.div>
           )}
         </AnimatePresence>
-      </DialogContent>
+      </SystemModalLayout>
     </Dialog>
   )
 }

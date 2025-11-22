@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { ContractForm } from '../../_components/ContractForm'
 import ContractDevicesModal from '../../_components/ContractDevicesModal'
-import { Package, Edit } from 'lucide-react'
+import { Package, Edit, FileText } from 'lucide-react'
 import ContractDevicesSection from '../../_components/ContractDevicesSection'
 import { toast } from 'sonner'
 
@@ -79,6 +79,14 @@ export default function ContractDetailClient({ contractId }: Props) {
           <Button variant="outline" onClick={() => router.back()} className="h-9">
             Quay lại
           </Button>
+          {contract.documentUrl && (
+            <Button variant="secondary" size="sm" asChild className="gap-1 text-sky-700">
+              <a href={contract.documentUrl} target="_blank" rel="noopener noreferrer">
+                <FileText className="h-4 w-4" />
+                Xem tài liệu
+              </a>
+            </Button>
+          )}
           <Button variant="secondary" size="sm" onClick={() => setIsDevicesOpen(true)}>
             <Package className="h-4 w-4" /> Gán thiết bị
           </Button>

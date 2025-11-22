@@ -3,13 +3,8 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog'
+import { Dialog } from '@/components/ui/dialog'
+import { SystemModalLayout } from '@/components/system/SystemModalLayout'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -138,15 +133,14 @@ export function ContractsModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] max-w-6xl overflow-y-auto rounded-2xl border-0 shadow-2xl">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-2xl">
-            <FileText className="h-6 w-6 text-indigo-600" />
-            Danh sách hợp đồng
-          </DialogTitle>
-          <DialogDescription>Quản lý và theo dõi tất cả hợp đồng trong hệ thống</DialogDescription>
-        </DialogHeader>
-
+      <SystemModalLayout
+        title="Danh sách hợp đồng"
+        description="Quản lý và theo dõi tất cả hợp đồng trong hệ thống"
+        icon={FileText}
+        variant="view"
+        maxWidth="!max-w-[60vw]"
+        className="!max-h-[85vh]"
+      >
         {/* Filters */}
         <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
           <div className="relative">
@@ -306,7 +300,7 @@ export function ContractsModal({
           </div>
         )}
         {/* Contract Detail is opened by parent page to allow closing this modal while detail is open */}
-      </DialogContent>
+      </SystemModalLayout>
     </Dialog>
   )
 }

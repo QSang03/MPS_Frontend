@@ -15,6 +15,7 @@ import { useRolesQuery } from '@/lib/hooks/queries/useRolesQuery'
 import type { UserRole } from '@/types/users'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { TableWrapper } from '@/components/system/TableWrapper'
 import type { ColumnDef } from '@tanstack/react-table'
 import {
@@ -32,10 +33,12 @@ import {
   Plus,
   Search,
   Layers,
-  RefreshCw,
   CheckCircle2,
   XCircle,
   Calendar,
+  FileText,
+  Hash,
+  Settings,
 } from 'lucide-react'
 import { DeleteDialog } from '@/components/shared/DeleteDialog'
 import { useActionPermission } from '@/lib/hooks/useActionPermission'
@@ -189,30 +192,35 @@ export function RolesTable({ onCreateTrigger, onCreateTriggerReset }: RolesTable
 
       <FilterSection
         title="Bộ lọc & Tìm kiếm"
+        subtitle="Tìm kiếm vai trò theo tên hoặc mô tả"
         onReset={handleResetFilters}
         activeFilters={activeFilters}
         columnVisibilityMenu={columnVisibilityMenu}
       >
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div className="group relative">
-            <Search className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-emerald-400 transition-colors group-focus-within:text-emerald-600" />
-            <Input
-              placeholder="🔍 Tìm kiếm vai trò..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  setDebouncedSearch(search)
-                  setPage(1)
-                }
-              }}
-              className="rounded-xl border-2 border-gray-200 bg-gradient-to-r from-gray-50 to-white py-2.5 pr-4 pl-12 text-base transition-all duration-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
-            />
+        <div className="grid gap-4 md:grid-cols-2">
+          <div>
+            <label className="mb-2 block text-sm font-medium">Tìm kiếm</label>
+            <div className="relative">
+              <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <Input
+                placeholder="Tìm kiếm vai trò..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    setDebouncedSearch(search)
+                    setPage(1)
+                  }
+                }}
+                className="pl-10"
+              />
+            </div>
           </div>
 
-          <div className="relative flex gap-2">
+          <div>
+            <label className="mb-2 block text-sm font-medium">Trạng thái</label>
             <Select value={isActive} onValueChange={setIsActive}>
-              <SelectTrigger className="h-10 rounded-xl border-2 border-gray-200 bg-gradient-to-r from-gray-50 to-white text-base focus:border-teal-500 focus:ring-2 focus:ring-teal-200">
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Chọn trạng thái" />
               </SelectTrigger>
               <SelectContent>
@@ -236,24 +244,6 @@ export function RolesTable({ onCreateTrigger, onCreateTriggerReset }: RolesTable
                 </SelectItem>
               </SelectContent>
             </Select>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => queryClient.invalidateQueries({ queryKey: ['roles'] })}
-              className="h-10 w-10 cursor-pointer rounded-xl border-2 border-gray-200 transition-all duration-300 hover:border-emerald-400 hover:bg-emerald-50"
-              title="Làm mới dữ liệu"
-            >
-              <RefreshCw className="h-5 w-5" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={handleOpenCreate}
-              className="h-10 w-10 rounded-xl border-2 border-gray-200 transition-all hover:border-emerald-400 hover:bg-emerald-50"
-              title="Tạo vai trò"
-            >
-              <Plus className="h-5 w-5" />
-            </Button>
           </div>
         </div>
       </FilterSection>
@@ -371,7 +361,7 @@ function RolesTableContent({
         cell: ({ row, table }) => {
           const index = table.getSortedRowModel().rows.findIndex((r) => r.id === row.id)
           return (
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-r from-emerald-100 to-teal-100 text-emerald-700">
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded bg-gradient-to-r from-gray-100 to-gray-50 text-sm font-medium text-gray-700">
               {(pagination.page - 1) * pagination.limit + index + 1}
             </span>
           )
@@ -383,7 +373,7 @@ function RolesTableContent({
         enableSorting: true,
         header: () => (
           <div className="flex items-center gap-2">
-            <Layers className="h-5 w-5 text-emerald-600" />
+            <Layers className="h-4 w-4 text-gray-600" />
             Vai trò
           </div>
         ),
@@ -396,7 +386,7 @@ function RolesTableContent({
         enableSorting: true,
         header: () => (
           <div className="flex items-center gap-2">
-            <span className="text-lg">📄</span>
+            <FileText className="h-4 w-4 text-gray-600" />
             Mô tả
           </div>
         ),
@@ -409,14 +399,14 @@ function RolesTableContent({
         enableSorting: true,
         header: () => (
           <div className="flex items-center gap-2">
-            <span className="text-lg">🔢</span>
+            <Hash className="h-4 w-4 text-gray-600" />
             Level
           </div>
         ),
         cell: ({ row }) => (
-          <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100 text-sm font-bold text-amber-700">
+          <Badge variant="outline" className="font-mono text-sm">
             {row.original.level}
-          </span>
+          </Badge>
         ),
       },
       {
@@ -424,29 +414,35 @@ function RolesTableContent({
         enableSorting: true,
         header: () => (
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+            <CheckCircle2 className="h-4 w-4 text-gray-600" />
             Trạng thái
           </div>
         ),
-        cell: ({ row }) =>
-          row.original.isActive ? (
-            <span className="inline-flex items-center gap-2 rounded-xl border-2 border-emerald-300 bg-gradient-to-r from-emerald-100 to-emerald-50 px-4 py-2 text-xs font-bold text-emerald-700 shadow-sm">
-              <CheckCircle2 className="h-4 w-4" />
-              Hoạt động
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-2 rounded-xl border-2 border-red-300 bg-gradient-to-r from-red-100 to-red-50 px-4 py-2 text-xs font-bold text-red-700 shadow-sm">
-              <XCircle className="h-4 w-4" />
-              Ngừng
-            </span>
-          ),
+        cell: ({ row }) => (
+          <Badge
+            variant={row.original.isActive ? 'default' : 'secondary'}
+            className={row.original.isActive ? 'bg-green-500 text-white' : 'bg-gray-400 text-white'}
+          >
+            {row.original.isActive ? (
+              <>
+                <CheckCircle2 className="mr-1 h-3 w-3" />
+                Hoạt động
+              </>
+            ) : (
+              <>
+                <XCircle className="mr-1 h-3 w-3" />
+                Ngừng
+              </>
+            )}
+          </Badge>
+        ),
       },
       {
         accessorKey: 'createdAt',
         enableSorting: true,
         header: () => (
           <div className="flex items-center gap-2">
-            <Calendar className="h-5 w-5 text-pink-600" />
+            <Calendar className="h-4 w-4 text-gray-600" />
             Ngày tạo
           </div>
         ),
@@ -458,7 +454,12 @@ function RolesTableContent({
       },
       {
         id: 'actions',
-        header: '⚙️ Hành động',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <Settings className="h-4 w-4 text-gray-600" />
+            Hành động
+          </div>
+        ),
         enableSorting: false,
         cell: ({ row }) => (
           <div className="flex items-center justify-end gap-1.5">
@@ -467,7 +468,7 @@ function RolesTableContent({
                 size="sm"
                 variant="ghost"
                 onClick={() => onEditRole(row.original)}
-                className="transform rounded-lg transition-all duration-300 hover:scale-110 hover:bg-emerald-100 hover:text-emerald-700"
+                className="transition-all hover:bg-blue-100 hover:text-blue-700"
                 title="Chỉnh sửa"
               >
                 <Edit className="h-4 w-4" />
@@ -484,7 +485,7 @@ function RolesTableContent({
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="transform rounded-lg transition-all duration-300 hover:scale-110 hover:bg-red-100 hover:text-red-700"
+                    className="transition-all hover:bg-red-100 hover:text-red-700"
                     title="Xóa"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -521,21 +522,21 @@ function RolesTableContent({
       isPending={isPending}
       emptyState={
         roles.length === 0 ? (
-          <div className="p-16 text-center">
-            <div className="mb-6 inline-flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200">
-              <Layers className="h-10 w-10 text-gray-400" />
+          <div className="p-12 text-center">
+            <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200">
+              <Layers className="h-12 w-12 opacity-20" />
             </div>
-            <h3 className="mb-2 text-2xl font-bold text-gray-700">Không có vai trò nào</h3>
-            <p className="mb-8 text-base text-gray-500">
+            <h3 className="mb-2 text-xl font-bold text-gray-700">Không có vai trò nào</h3>
+            <p className="mb-6 text-gray-500">
               {searchValue || statusFilterIsFiltered(statusFilter)
-                ? '🔍 Thử điều chỉnh bộ lọc hoặc tạo vai trò mới'
-                : '🚀 Bắt đầu bằng cách tạo vai trò đầu tiên'}
+                ? 'Thử điều chỉnh bộ lọc hoặc tạo vai trò mới'
+                : 'Bắt đầu bằng cách tạo vai trò đầu tiên'}
             </p>
             <Button
               onClick={onCreateRole}
-              className="transform rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-8 py-3 font-bold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:from-emerald-700 hover:to-teal-700 hover:shadow-xl"
+              className="rounded-lg bg-blue-600 px-6 py-2 text-white transition-all hover:bg-blue-700"
             >
-              <Plus className="mr-2 h-5 w-5" />
+              <Plus className="mr-2 h-4 w-4" />
               Tạo Vai trò
             </Button>
           </div>

@@ -84,20 +84,23 @@ export function CustomerList() {
         activeFilters={activeFilters}
       >
         <div className="grid gap-4 md:grid-cols-1">
-          <div className="relative">
-            <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
-            <Input
-              placeholder="Tìm kiếm tên, mã, địa chỉ..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  setDebouncedSearch(searchTerm.trim())
-                  setPage(1)
-                }
-              }}
-              className="pl-10"
-            />
+          <div>
+            <label className="mb-2 block text-sm font-medium">Tìm kiếm</label>
+            <div className="relative">
+              <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <Input
+                placeholder="Tìm kiếm tên, mã, địa chỉ..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    setDebouncedSearch(searchTerm.trim())
+                    setPage(1)
+                  }
+                }}
+                className="pl-10"
+              />
+            </div>
           </div>
         </div>
       </FilterSection>

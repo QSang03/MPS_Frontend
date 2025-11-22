@@ -1,14 +1,9 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/components/ui/dialog'
+import { Dialog } from '@/components/ui/dialog'
+import { SystemModalLayout } from '@/components/system/SystemModalLayout'
+import { FileText } from 'lucide-react'
 import {
   Loader2,
   Search,
@@ -438,39 +433,31 @@ export default function ConsumableHistoryModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="!max-w-[75vw] overflow-hidden rounded-3xl border-0 p-0 shadow-2xl">
-        {/* Gradient Header */}
-        <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 px-8 py-6">
-          <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
-          <DialogHeader className="relative z-10">
-            <DialogTitle className="text-3xl font-bold text-white">📊 Lịch sử Vật tư</DialogTitle>
-            <DialogDescription className="mt-2 text-blue-100">
-              Vật tư: <span className="font-semibold text-white">{title}</span>
-            </DialogDescription>
-          </DialogHeader>
-        </div>
-
-        {/* Content */}
-        <div className="max-h-[80vh] overflow-y-auto p-8">
-          <ConsumableUsageHistory deviceId={deviceId} consumableId={consumableId} />
-        </div>
-
-        {/* Footer */}
-        <DialogFooter className="border-t border-slate-200 bg-gradient-to-r from-slate-50 to-slate-100 px-8 py-4 dark:border-slate-800 dark:from-slate-900 dark:to-slate-950">
-          <div className="flex w-full items-center justify-between">
-            <Button variant="outline" className="gap-2 rounded-full">
+      <SystemModalLayout
+        title="Lịch sử Vật tư"
+        description={`Vật tư: ${title}`}
+        icon={FileText}
+        variant="view"
+        maxWidth="!max-w-[75vw]"
+        footer={
+          <>
+            <Button variant="outline" className="gap-2">
               <Download className="h-4 w-4" />
               Xuất dữ liệu
             </Button>
             <Button
               onClick={() => onOpenChange(false)}
-              className="rounded-full bg-gradient-to-r from-blue-600 to-purple-600 px-8 text-white shadow-lg transition-all hover:scale-105 hover:shadow-xl"
+              className="min-w-[100px] bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
             >
               Đóng
             </Button>
-          </div>
-        </DialogFooter>
-      </DialogContent>
+          </>
+        }
+      >
+        <div className="max-h-[60vh] overflow-y-auto">
+          <ConsumableUsageHistory deviceId={deviceId} consumableId={consumableId} />
+        </div>
+      </SystemModalLayout>
     </Dialog>
   )
 }

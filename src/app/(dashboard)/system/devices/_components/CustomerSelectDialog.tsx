@@ -2,14 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/components/ui/dialog'
+import { Dialog } from '@/components/ui/dialog'
+import { SystemModalLayout } from '@/components/system/SystemModalLayout'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -136,159 +130,150 @@ export function CustomerSelectDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[600px] overflow-hidden rounded-2xl border-0 p-0 shadow-2xl">
-        <DialogHeader className="relative overflow-hidden bg-gradient-to-r from-rose-600 via-pink-600 to-purple-600 p-0">
-          <div className="absolute inset-0 bg-black/10"></div>
-          <div className="relative z-10 px-6 py-5">
-            <div className="flex items-center gap-3">
-              <Building2 className="h-6 w-6 text-white" />
-              <DialogTitle className="text-2xl font-bold text-white">Chọn khách hàng</DialogTitle>
-            </div>
-            <DialogDescription className="mt-2 text-white/90">
-              Chọn khách hàng cho thiết bị này
-            </DialogDescription>
+      <SystemModalLayout
+        title="Chọn khách hàng"
+        description="Chọn khách hàng cho thiết bị này"
+        icon={Building2}
+        variant="view"
+        footer={
+          <>
+            <Button
+              variant="outline"
+              onClick={() => {
+                onOpenChange(false)
+                setSelectedCustomer(null)
+                setSearchTerm('')
+                setCustomerLocation('')
+              }}
+              className="min-w-[100px]"
+            >
+              Hủy
+            </Button>
+            <Button
+              onClick={handleConfirm}
+              disabled={!selectedCustomer || (!!requiresLocation && !customerLocation.trim())}
+              className="min-w-[120px] bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+            >
+              <CheckCircle2 className="mr-2 h-4 w-4" />
+              Xác nhận
+            </Button>
+          </>
+        }
+      >
+        {/* Search */}
+        <div>
+          <Label className="text-base font-semibold">Tìm kiếm</Label>
+          <div className="relative mt-2">
+            <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+            <Input
+              placeholder="Tìm theo tên, mã khách hàng..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="h-11 pl-9"
+            />
           </div>
-        </DialogHeader>
+        </div>
 
-        <div className="space-y-4 bg-white px-6 py-6">
-          {/* Search */}
-          <div>
-            <Label className="text-base font-semibold">Tìm kiếm</Label>
-            <div className="relative mt-2">
-              <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-              <Input
-                placeholder="Tìm theo tên, mã khách hàng..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="h-11 pl-9"
-              />
+        {/* Customer List */}
+        <div className="max-h-[400px] space-y-2 overflow-y-auto">
+          {loading ? (
+            <div className="flex items-center justify-center p-8">
+              <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
             </div>
-          </div>
+          ) : filteredCustomers.length === 0 ? (
+            <div className="text-muted-foreground p-8 text-center">
+              <Building2 className="mx-auto mb-3 h-12 w-12 opacity-20" />
+              <p>Không tìm thấy khách hàng</p>
+            </div>
+          ) : (
+            filteredCustomers.map((customer) => {
+              const isSelected = selectedCustomer?.id === customer.id
+              const isCurrent = currentCustomerId === customer.id
 
-          {/* Customer List */}
-          <div className="max-h-[400px] space-y-2 overflow-y-auto">
-            {loading ? (
-              <div className="flex items-center justify-center p-8">
-                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-              </div>
-            ) : filteredCustomers.length === 0 ? (
-              <div className="text-muted-foreground p-8 text-center">
-                <Building2 className="mx-auto mb-3 h-12 w-12 opacity-20" />
-                <p>Không tìm thấy khách hàng</p>
-              </div>
-            ) : (
-              filteredCustomers.map((customer) => {
-                const isSelected = selectedCustomer?.id === customer.id
-                const isCurrent = currentCustomerId === customer.id
-
-                return (
-                  <button
-                    key={customer.id}
-                    onClick={() => setSelectedCustomer(customer)}
-                    className={cn(
-                      'w-full rounded-lg border p-4 text-left transition-all hover:border-blue-500 hover:bg-blue-50',
-                      isSelected && 'border-blue-500 bg-blue-50 ring-2 ring-blue-500',
-                      isCurrent && 'border-green-500 bg-green-50'
-                    )}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <Building2 className="h-4 w-4 text-rose-600" />
-                          <span className="font-semibold">{customer.name}</span>
-                          {isCurrent && (
-                            <span className="rounded bg-green-500 px-2 py-0.5 text-xs text-white">
-                              Hiện tại
-                            </span>
-                          )}
-                        </div>
-                        <div className="text-muted-foreground mt-1 flex items-center gap-3 text-sm">
-                          <span>Mã: {customer.code || '—'}</span>
-                        </div>
-                        {customer.address && (
-                          <div className="text-muted-foreground mt-1 text-sm">
-                            {Array.isArray(customer.address)
-                              ? customer.address[0] || '—'
-                              : customer.address}
-                          </div>
+              return (
+                <button
+                  key={customer.id}
+                  onClick={() => setSelectedCustomer(customer)}
+                  className={cn(
+                    'w-full rounded-lg border p-4 text-left transition-all hover:border-blue-500 hover:bg-blue-50',
+                    isSelected && 'border-blue-500 bg-blue-50 ring-2 ring-blue-500',
+                    isCurrent && 'border-green-500 bg-green-50'
+                  )}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <Building2 className="h-4 w-4 text-rose-600" />
+                        <span className="font-semibold">{customer.name}</span>
+                        {isCurrent && (
+                          <span className="rounded bg-green-500 px-2 py-0.5 text-xs text-white">
+                            Hiện tại
+                          </span>
                         )}
                       </div>
-                      {isSelected && <CheckCircle2 className="h-5 w-5 text-blue-600" />}
+                      <div className="text-muted-foreground mt-1 flex items-center gap-3 text-sm">
+                        <span>Mã: {customer.code || '—'}</span>
+                      </div>
+                      {customer.address && (
+                        <div className="text-muted-foreground mt-1 text-sm">
+                          {Array.isArray(customer.address)
+                            ? customer.address[0] || '—'
+                            : customer.address}
+                        </div>
+                      )}
                     </div>
-                  </button>
-                )
-              })
-            )}
-          </div>
-
-          {/* Customer Location Input - Show when customer is not warehouse */}
-          {requiresLocation && (
-            <div className="space-y-2 rounded-lg border border-blue-200 bg-blue-50/50 p-4">
-              <Label className="flex items-center gap-2 text-base font-semibold text-blue-900">
-                <MapPin className="h-4 w-4 text-blue-600" />
-                Vị trí tại khách hàng
-                <span className="text-red-500">*</span>
-              </Label>
-              {loadingAddresses ? (
-                <Select disabled>
-                  <SelectTrigger className="h-11 border-blue-200 bg-white">
-                    <SelectValue placeholder="Đang tải địa chỉ..." />
-                  </SelectTrigger>
-                </Select>
-              ) : customerAddresses.length > 0 ? (
-                <Select value={customerLocation} onValueChange={setCustomerLocation}>
-                  <SelectTrigger className="h-11 border-blue-200 bg-white">
-                    <SelectValue placeholder="Chọn địa chỉ..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {customerAddresses.map((addr, idx) => (
-                      <SelectItem key={idx} value={addr}>
-                        {addr}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              ) : (
-                <Input
-                  value={customerLocation}
-                  onChange={(e) => setCustomerLocation(e.target.value)}
-                  placeholder="Nhập vị trí lắp đặt tại khách hàng..."
-                  className="h-11 border-blue-200 bg-white"
-                  autoFocus
-                />
-              )}
-              <p className="text-xs text-blue-700">
-                {customerAddresses.length > 0
-                  ? 'Chọn địa chỉ từ danh sách hoặc liên hệ để cập nhật địa chỉ mới'
-                  : 'Nhập vị trí cụ thể của thiết bị tại khách hàng (phòng, tầng, khu vực...)'}
-              </p>
-            </div>
+                    {isSelected && <CheckCircle2 className="h-5 w-5 text-blue-600" />}
+                  </div>
+                </button>
+              )
+            })
           )}
         </div>
 
-        <DialogFooter className="border-t bg-gray-50 px-6 py-4">
-          <Button
-            variant="outline"
-            onClick={() => {
-              onOpenChange(false)
-              setSelectedCustomer(null)
-              setSearchTerm('')
-              setCustomerLocation('')
-            }}
-            className="min-w-[100px]"
-          >
-            Hủy
-          </Button>
-          <Button
-            onClick={handleConfirm}
-            disabled={!selectedCustomer || (!!requiresLocation && !customerLocation.trim())}
-            className="min-w-[120px] bg-gradient-to-r from-rose-600 to-purple-600 hover:from-rose-700 hover:to-purple-700"
-          >
-            <CheckCircle2 className="mr-2 h-4 w-4" />
-            Xác nhận
-          </Button>
-        </DialogFooter>
-      </DialogContent>
+        {/* Customer Location Input - Show when customer is not warehouse */}
+        {requiresLocation && (
+          <div className="space-y-2 rounded-lg border border-blue-200 bg-blue-50/50 p-4">
+            <Label className="flex items-center gap-2 text-base font-semibold text-blue-900">
+              <MapPin className="h-4 w-4 text-blue-600" />
+              Vị trí tại khách hàng
+              <span className="text-red-500">*</span>
+            </Label>
+            {loadingAddresses ? (
+              <Select disabled>
+                <SelectTrigger className="h-11 border-blue-200 bg-white">
+                  <SelectValue placeholder="Đang tải địa chỉ..." />
+                </SelectTrigger>
+              </Select>
+            ) : customerAddresses.length > 0 ? (
+              <Select value={customerLocation} onValueChange={setCustomerLocation}>
+                <SelectTrigger className="h-11 border-blue-200 bg-white">
+                  <SelectValue placeholder="Chọn địa chỉ..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {customerAddresses.map((addr, idx) => (
+                    <SelectItem key={idx} value={addr}>
+                      {addr}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Input
+                value={customerLocation}
+                onChange={(e) => setCustomerLocation(e.target.value)}
+                placeholder="Nhập vị trí lắp đặt tại khách hàng..."
+                className="h-11 border-blue-200 bg-white"
+                autoFocus
+              />
+            )}
+            <p className="text-xs text-blue-700">
+              {customerAddresses.length > 0
+                ? 'Chọn địa chỉ từ danh sách hoặc liên hệ để cập nhật địa chỉ mới'
+                : 'Nhập vị trí cụ thể của thiết bị tại khách hàng (phòng, tầng, khu vực...)'}
+            </p>
+          </div>
+        )}
+      </SystemModalLayout>
     </Dialog>
   )
 }

@@ -27,6 +27,11 @@ export interface CreateContractDto {
   endDate?: string
   description?: string
   documentUrl?: string
+  /**
+   * Optional PDF file to be uploaded alongside the rest of the payload.
+   * This is only used on the client to decide whether we should send multipart/form-data.
+   */
+  pdfFile?: File | Blob | null
 }
 
 export type UpdateContractDto = Partial<CreateContractDto>

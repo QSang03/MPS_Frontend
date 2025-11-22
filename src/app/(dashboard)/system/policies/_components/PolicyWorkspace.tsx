@@ -12,13 +12,8 @@ import {
 } from '@/lib/policies/policy-form.utils'
 
 import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
+import { Dialog, DialogTrigger } from '@/components/ui/dialog'
+import { SystemModalLayout } from '@/components/system/SystemModalLayout'
 import { PolicyDraftPanel } from './PolicyDraftPanel'
 import { AssistantPanel } from './AssistantPanel'
 import { useAutoAnalyze } from '../_hooks/useAutoAnalyze'
@@ -194,33 +189,31 @@ export function PolicyWorkspace({ initialPolicy, onPolicyCreated }: PolicyWorksp
               AI Assistant
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Bot className="h-6 w-6 text-indigo-600" />
-                AI Assistant
-              </DialogTitle>
-            </DialogHeader>
-            <div className="mt-4">
-              <AssistantPanel
-                analysis={analysis}
-                analysisError={analysisError || null}
-                isAnalyzing={isAnalyzing}
-                isCreating={isCreating}
-                onAnalyze={handleAnalyze}
-                onCreate={handleCreatePolicy}
-                safeToCreate={analysis?.safeToCreate ?? false}
-                draftValid={draftReady}
-                draft={draftPolicy || undefined}
-                onUseSuggestion={(suggestedPolicy) => {
-                  // Convert suggested policy to draft
-                  const suggestedDraft = policyToDraftInput(suggestedPolicy as Policy)
-                  setDraft(suggestedDraft)
-                  toast.success('Đã áp dụng gợi ý từ AI')
-                }}
-              />
-            </div>
-          </DialogContent>
+          <SystemModalLayout
+            title="AI Assistant"
+            description="Hỗ trợ tạo và phân tích policy với AI"
+            icon={Bot}
+            variant="view"
+            maxWidth="!max-w-[75vw]"
+          >
+            <AssistantPanel
+              analysis={analysis}
+              analysisError={analysisError || null}
+              isAnalyzing={isAnalyzing}
+              isCreating={isCreating}
+              onAnalyze={handleAnalyze}
+              onCreate={handleCreatePolicy}
+              safeToCreate={analysis?.safeToCreate ?? false}
+              draftValid={draftReady}
+              draft={draftPolicy || undefined}
+              onUseSuggestion={(suggestedPolicy) => {
+                // Convert suggested policy to draft
+                const suggestedDraft = policyToDraftInput(suggestedPolicy as Policy)
+                setDraft(suggestedDraft)
+                toast.success('Đã áp dụng gợi ý từ AI')
+              }}
+            />
+          </SystemModalLayout>
         </Dialog>
       </div>
 

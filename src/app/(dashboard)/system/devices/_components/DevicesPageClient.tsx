@@ -29,6 +29,7 @@ import {
   Power,
   BarChart3,
   Trash2,
+  Settings,
 } from 'lucide-react'
 import { FilterSection } from '@/components/system/FilterSection'
 import { StatsCards } from '@/components/system/StatsCard'
@@ -43,6 +44,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
@@ -486,11 +488,11 @@ function DevicesTableContent({
     return [
       {
         id: 'index',
-        header: '#',
+        header: 'STT',
         cell: ({ row, table }) => {
           const index = table.getSortedRowModel().rows.findIndex((r) => r.id === row.id)
           return (
-            <span className="inline-flex h-6 w-6 items-center justify-center rounded bg-purple-100 text-sm text-purple-700">
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded bg-gradient-to-r from-gray-100 to-gray-50 text-sm font-medium text-gray-700">
               {(paginationMeta.page - 1) * paginationMeta.limit + index + 1}
             </span>
           )
@@ -501,7 +503,7 @@ function DevicesTableContent({
         accessorKey: 'serialNumber',
         header: () => (
           <div className="flex items-center gap-2">
-            <Monitor className="h-4 w-4 text-blue-600" />
+            <Monitor className="h-4 w-4 text-gray-600" />
             Serial
           </div>
         ),
@@ -521,7 +523,7 @@ function DevicesTableContent({
         accessorKey: 'deviceModel',
         header: () => (
           <div className="flex items-center gap-2">
-            <Package className="h-4 w-4 text-cyan-600" />
+            <Package className="h-4 w-4 text-gray-600" />
             Model
           </div>
         ),
@@ -536,7 +538,7 @@ function DevicesTableContent({
         accessorKey: 'customer',
         header: () => (
           <div className="flex items-center gap-2">
-            <Users className="h-4 w-4 text-rose-600" />
+            <Users className="h-4 w-4 text-gray-600" />
             Khách hàng
           </div>
         ),
@@ -595,7 +597,7 @@ function DevicesTableContent({
         accessorKey: 'location',
         header: () => (
           <div className="flex items-center gap-2">
-            <MapPin className="h-4 w-4 text-teal-600" />
+            <MapPin className="h-4 w-4 text-gray-600" />
             Vị trí
           </div>
         ),
@@ -615,7 +617,12 @@ function DevicesTableContent({
       },
       {
         accessorKey: 'status',
-        header: 'Trạng thái',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-gray-600" />
+            Trạng thái
+          </div>
+        ),
         enableSorting: true,
         cell: ({ row }) => {
           const device = row.original
@@ -638,16 +645,18 @@ function DevicesTableContent({
           const cls = colorClassMap[meta.color] || 'bg-gray-400 text-white'
           return (
             <div className="flex items-center gap-3">
-              <span className={`inline-flex items-center gap-1 rounded px-2 py-1 text-sm ${cls}`}>
-                <span className="text-xs">{meta.icon}</span>
-                <span className="font-medium">{meta.label}</span>
-              </span>
+              <Badge className={cls}>
+                {meta.icon && <span className="mr-1 text-xs">{meta.icon}</span>}
+                {meta.label}
+              </Badge>
               {device.isActive ? (
-                <button
+                <Button
+                  variant="ghost"
+                  size="sm"
                   type="button"
                   aria-label="On"
                   title="Hoạt động"
-                  className="inline-flex items-center justify-center rounded-full bg-green-500 p-2 text-white"
+                  className="h-7 w-7 p-0 transition-all hover:bg-green-100 hover:text-green-700"
                   onClick={() => {
                     setToggleTargetDevice(device)
                     setToggleTargetActive(false)
@@ -655,15 +664,17 @@ function DevicesTableContent({
                   }}
                 >
                   <Power className="h-4 w-4" />
-                </button>
+                </Button>
               ) : (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       type="button"
                       aria-label="Off"
                       title="Tạm dừng"
-                      className="inline-flex items-center justify-center rounded-full bg-gray-300 p-2 text-gray-700"
+                      className="h-7 w-7 p-0 transition-all hover:bg-gray-100 hover:text-gray-700"
                       onClick={() => {
                         setToggleTargetDevice(device)
                         setToggleTargetActive(true)
@@ -671,7 +682,7 @@ function DevicesTableContent({
                       }}
                     >
                       <Power className="h-4 w-4" />
-                    </button>
+                    </Button>
                   </TooltipTrigger>
                   <TooltipContent>
                     <div className="max-w-xs text-xs">
@@ -687,7 +698,12 @@ function DevicesTableContent({
       },
       {
         id: 'actions',
-        header: 'Thao tác',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <Settings className="h-4 w-4 text-gray-600" />
+            Thao tác
+          </div>
+        ),
         enableSorting: false,
         cell: ({ row }) => {
           const device = row.original
@@ -776,29 +792,33 @@ function DevicesTableContent({
         isPending={isPending}
         emptyState={
           devices.length === 0 ? (
-            <div className="px-4 py-12 text-center">
-              <div className="text-muted-foreground flex flex-col items-center gap-3">
+            <div className="p-12 text-center">
+              <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200">
                 {rawSearch ? (
-                  <>
-                    <Search className="h-12 w-12 opacity-20" />
-                    <p>Không tìm thấy thiết bị phù hợp với "{rawSearch}"</p>
-                  </>
+                  <Search className="h-12 w-12 opacity-20" />
                 ) : (
-                  <>
-                    <Monitor className="h-12 w-12 opacity-20" />
-                    <p>Chưa có thiết bị nào</p>
-                    <ActionGuard pageId="devices" actionId="create">
-                      <DeviceFormModal
-                        mode="create"
-                        onSaved={async () => {
-                          toast.success('Tạo thiết bị thành công')
-                          await invalidateDevices()
-                        }}
-                      />
-                    </ActionGuard>
-                  </>
+                  <Monitor className="h-12 w-12 opacity-20" />
                 )}
               </div>
+              <h3 className="mb-2 text-xl font-bold text-gray-700">
+                {rawSearch
+                  ? `Không tìm thấy thiết bị phù hợp với "${rawSearch}"`
+                  : 'Chưa có thiết bị nào'}
+              </h3>
+              <p className="mb-6 text-gray-500">
+                {rawSearch ? 'Thử điều chỉnh bộ lọc hoặc tìm kiếm' : 'Hãy tạo thiết bị đầu tiên'}
+              </p>
+              {!rawSearch && (
+                <ActionGuard pageId="devices" actionId="create">
+                  <DeviceFormModal
+                    mode="create"
+                    onSaved={async () => {
+                      toast.success('Tạo thiết bị thành công')
+                      await invalidateDevices()
+                    }}
+                  />
+                </ActionGuard>
+              )}
             </div>
           ) : undefined
         }

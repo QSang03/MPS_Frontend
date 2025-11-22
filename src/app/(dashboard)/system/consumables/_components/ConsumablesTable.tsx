@@ -7,6 +7,8 @@ import type { ColumnDef } from '@tanstack/react-table'
 import { Badge } from '@/components/ui/badge'
 import { TableWrapper } from '@/components/system/TableWrapper'
 import { useConsumablesQuery } from '@/lib/hooks/queries/useConsumablesQuery'
+import { Package, Settings } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 interface ConsumablesTableProps {
   page: number
@@ -98,10 +100,14 @@ export function ConsumablesTable({
     () => [
       {
         id: 'index',
-        header: '#',
+        header: 'STT',
         cell: ({ row, table }) => {
           const index = table.getSortedRowModel().rows.findIndex((r) => r.id === row.id)
-          return <span className="text-sm">{(page - 1) * pageSize + index + 1}</span>
+          return (
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded bg-gradient-to-r from-gray-100 to-gray-50 text-sm font-medium text-gray-700">
+              {(page - 1) * pageSize + index + 1}
+            </span>
+          )
         },
         enableSorting: false,
       },
@@ -175,8 +181,8 @@ export function ConsumablesTable({
               variant={status === 'ACTIVE' ? 'default' : 'secondary'}
               className={
                 status === 'ACTIVE'
-                  ? 'bg-green-500 hover:bg-green-600'
-                  : 'bg-gray-400 hover:bg-gray-500'
+                  ? 'bg-green-500 text-white hover:bg-green-600'
+                  : 'bg-gray-400 text-white hover:bg-gray-500'
               }
             >
               {status}
@@ -186,14 +192,21 @@ export function ConsumablesTable({
       },
       {
         id: 'actions',
-        header: 'Hành động',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <Settings className="h-4 w-4 text-gray-600" />
+            Hành động
+          </div>
+        ),
         cell: ({ row }) => (
-          <Link
-            href={`/system/consumables/${String(row.original.id ?? '')}`}
-            className="text-sm text-emerald-600 hover:underline"
+          <Button
+            variant="ghost"
+            size="sm"
+            asChild
+            className="transition-all hover:bg-gray-100 hover:text-gray-700"
           >
-            Chi tiết
-          </Link>
+            <Link href={`/system/consumables/${String(row.original.id ?? '')}`}>Chi tiết</Link>
+          </Button>
         ),
         enableSorting: false,
       },
@@ -229,9 +242,15 @@ export function ConsumablesTable({
       isPending={isPending}
       emptyState={
         items.length === 0 ? (
-          <div className="p-8 text-center">
-            <p className="text-muted-foreground">
+          <div className="p-12 text-center">
+            <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200">
+              <Package className="h-12 w-12 opacity-20" />
+            </div>
+            <h3 className="mb-2 text-xl font-bold text-gray-700">
               {searchInput ? 'Không tìm thấy vật tư phù hợp' : 'Chưa có vật tư nào'}
+            </h3>
+            <p className="mb-6 text-gray-500">
+              {searchInput ? 'Thử điều chỉnh bộ lọc hoặc tìm kiếm' : 'Hãy thêm vật tư đầu tiên'}
             </p>
           </div>
         ) : undefined

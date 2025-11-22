@@ -1,24 +1,29 @@
 'use client'
 
 import ContractDevicesSection from './ContractDevicesSection'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Dialog } from '@/components/ui/dialog'
+import { SystemModalLayout } from '@/components/system/SystemModalLayout'
 import { Button } from '@/components/ui/button'
-import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
-import { MonitorSmartphone, Sparkles, CheckCircle2, Circle } from 'lucide-react'
+import {
+  MonitorSmartphone,
+  CheckCircle2,
+  Circle,
+  Search,
+  Calendar,
+  AlertCircle,
+  Loader2,
+  X,
+  Info,
+} from 'lucide-react'
 import { useState, useMemo } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { contractsClientService } from '@/lib/api/services/contracts-client.service'
 import { devicesClientService } from '@/lib/api/services/devices-client.service'
-import { DialogFooter } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
 
 import type { ContractDevice } from '@/types/models/contract-device'
 
@@ -27,34 +32,42 @@ interface Props {
   onOpenChange: (open: boolean) => void
   contractId?: string | null
   contractNumber?: string | null
-  attachedDevices?: ContractDevice[] // Truyền danh sách thiết bị đã gán từ component cha
+  attachedDevices?: ContractDevice[]
   allContracts?: Array<{
     id: string
     contractNumber: string
     contractDevices?: Array<{ deviceId?: string }>
-  }> // Danh sách tất cả hợp đồng để kiểm tra thiết bị đã gán cho hợp đồng khác
+  }>
 }
+
+// Định nghĩa type cho device đơn giản dùng trong list chọn
+type SimpleDevice = {
+  id: string
+  serialNumber?: string | null
+  deviceModel?: { name?: string } | null
+  model?: string | null
+}
+
+// Định nghĩa type cho filter status để tránh dùng any
+type FilterStatus = 'all' | 'attached' | 'unattached' | 'other'
 
 export default function ContractDevicesModal({
   open,
   onOpenChange,
   contractId,
   contractNumber,
-  attachedDevices = [], // Nhận danh sách thiết bị đã gán từ props
-  allContracts = [], // Danh sách tất cả hợp đồng
+  attachedDevices = [],
+  allContracts = [],
 }: Props) {
   const [attachOpen, setAttachOpen] = useState(false)
   const [hideOuter, setHideOuter] = useState(false)
   const [selectedToAttach, setSelectedToAttach] = useState<string[]>([])
   const [activeFrom, setActiveFrom] = useState<string>('')
   const [activeTo, setActiveTo] = useState<string>('')
+  const [searchTerm, setSearchTerm] = useState('')
 
-  type SimpleDevice = {
-    id: string
-    serialNumber?: string | null
-    deviceModel?: { name?: string } | null
-    model?: string | null
-  }
+  // Sử dụng type FilterStatus thay vì string chung chung
+  const [filterStatus, setFilterStatus] = useState<FilterStatus>('all')
 
   const queryClient = useQueryClient()
 
@@ -64,7 +77,7 @@ export default function ContractDevicesModal({
     enabled: !!contractId,
   })
 
-  const { data: allDevicesResp } = useQuery({
+  const { data: allDevicesResp, isLoading: devicesLoading } = useQuery({
     queryKey: ['devices', { page: 1, limit: 200, customerId: contract?.customerId }],
     queryFn: () =>
       devicesClientService
@@ -73,25 +86,27 @@ export default function ContractDevicesModal({
     enabled: attachOpen,
   })
 
-  // Sử dụng danh sách thiết bị đã gán từ props, không cần fetch lại
-  const allDevices: SimpleDevice[] = (allDevicesResp ?? []) as SimpleDevice[]
-  const attachedDeviceIds = new Set(attachedDevices.map((d) => d.deviceId))
+  // FIX 1: Memoize allDevices để mảng này không bị tạo mới mỗi lần render
+  const allDevices = useMemo(() => (allDevicesResp ?? []) as SimpleDevice[], [allDevicesResp])
 
-  // Tạo Map để lưu thông tin thiết bị đã gán cho hợp đồng khác
+  // FIX 2: Memoize attachedDeviceIds.
+  // Nếu không có useMemo, Set này sẽ là object mới sau mỗi render, phá vỡ logic của filteredDevices bên dưới
+  const attachedDeviceIds = useMemo(() => {
+    return new Set(attachedDevices.map((d) => d.deviceId))
+  }, [attachedDevices])
+
   const deviceToOtherContractMap = useMemo(() => {
     const map = new Map<string, { contractNumber: string; contractId: string }>()
     if (!contractId || !allContracts.length) return map
 
-    allContracts.forEach((contract) => {
-      // Bỏ qua hợp đồng hiện tại
-      if (contract.id === contractId) return
+    allContracts.forEach((contractItem) => {
+      if (contractItem.id === contractId) return
 
-      // Duyệt qua các thiết bị của hợp đồng khác
-      contract.contractDevices?.forEach((cd) => {
+      contractItem.contractDevices?.forEach((cd) => {
         if (cd.deviceId) {
           map.set(cd.deviceId, {
-            contractNumber: contract.contractNumber,
-            contractId: contract.id,
+            contractNumber: contractItem.contractNumber,
+            contractId: contractItem.id,
           })
         }
       })
@@ -99,7 +114,28 @@ export default function ContractDevicesModal({
     return map
   }, [allContracts, contractId])
 
-  // Kiểm tra xem có thiết bị đã gán nào được chọn không
+  // Filter and search devices
+  // filteredDevices giờ sẽ hoạt động hiệu quả vì các dependencies (allDevices, attachedDeviceIds) đã ổn định
+  const filteredDevices = useMemo(() => {
+    return allDevices.filter((device) => {
+      const matchesSearch =
+        device.serialNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        device.deviceModel?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        device.model?.toLowerCase().includes(searchTerm.toLowerCase())
+
+      const isAttached = attachedDeviceIds.has(device.id)
+      const hasOtherContract = deviceToOtherContractMap.has(device.id)
+
+      const matchesFilter =
+        filterStatus === 'all' ||
+        (filterStatus === 'attached' && isAttached) ||
+        (filterStatus === 'unattached' && !isAttached && !hasOtherContract) ||
+        (filterStatus === 'other' && hasOtherContract)
+
+      return matchesSearch && matchesFilter
+    })
+  }, [allDevices, searchTerm, filterStatus, attachedDeviceIds, deviceToOtherContractMap])
+
   const hasAttachedDevicesSelected = selectedToAttach.some((id) => attachedDeviceIds.has(id))
 
   const attachMutation = useMutation({
@@ -115,9 +151,10 @@ export default function ContractDevicesModal({
       const hasUpdates = selectedToAttach.some((id) => attachedDeviceIds.has(id))
       toast.success(hasUpdates ? 'Cập nhật thiết bị thành công' : 'Đính kèm thiết bị thành công')
       setAttachOpen(false)
-      // un-hide outer modal content and refresh parent list
       setHideOuter(false)
       setSelectedToAttach([])
+      setSearchTerm('')
+      setFilterStatus('all')
       queryClient.invalidateQueries({ queryKey: ['contract-devices', contractId] })
     },
     onError: (err) => {
@@ -138,19 +175,15 @@ export default function ContractDevicesModal({
         (err as { message?: string })?.message ||
         'Đính kèm thiết bị thất bại'
 
-      // Kiểm tra nếu là lỗi conflict với hợp đồng active khác
       if (
         apiMessage.includes(
           'Cannot attach devices that are already attached to an active contract'
         ) &&
         apiMessage.includes('Conflicting devices:')
       ) {
-        // Extract danh sách thiết bị conflict từ error message
-        // Format: "Cannot attach devices that are already attached to an active contract. Conflicting devices: SN12345678900 (019a9537-ab27-75a2-864e-771e3cb523cb), sn123456789 (019a6c06-eb7b-7485-8409-eb1b62fa7ac9)"
         const conflictingDevicesMatch = apiMessage.match(/Conflicting devices: (.+)$/)
         if (conflictingDevicesMatch && conflictingDevicesMatch[1]) {
           const conflictingDevicesStr = conflictingDevicesMatch[1]
-          // Parse danh sách: "SN12345678900 (id), sn123456789 (id)"
           const deviceMatches = conflictingDevicesStr.match(/([^(]+)\s*\([^)]+\)/g)
           if (deviceMatches && deviceMatches.length > 0) {
             const serialNumbers = deviceMatches
@@ -191,7 +224,6 @@ export default function ContractDevicesModal({
 
     const items = selectedToAttach.map((deviceId) => ({
       deviceId,
-      // Backend yêu cầu activeFrom và activeTo, nếu không có thì truyền null
       activeFrom: activeFrom && activeFrom.trim() ? activeFrom.trim() : null,
       activeTo: activeTo && activeTo.trim() ? activeTo.trim() : null,
     }))
@@ -199,245 +231,425 @@ export default function ContractDevicesModal({
     await attachMutation.mutateAsync(items)
   }
 
+  // Stats
+  const stats = useMemo(() => {
+    const attached = allDevices.filter((d) => attachedDeviceIds.has(d.id)).length
+    const other = allDevices.filter((d) => deviceToOtherContractMap.has(d.id)).length
+    const unattached = allDevices.length - attached - other
+    return { total: allDevices.length, attached, other, unattached }
+  }, [allDevices, attachedDeviceIds, deviceToOtherContractMap])
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        className={`${hideOuter ? 'hidden' : '!max-w-[75vw]'} rounded-2xl border-0 p-0 shadow-2xl`}
+      <SystemModalLayout
+        title="Quản lý thiết bị của hợp đồng"
+        description={
+          contractNumber
+            ? `Mã hợp đồng: ${contractNumber}`
+            : 'Danh sách thiết bị được quản lý theo hợp đồng'
+        }
+        icon={MonitorSmartphone}
+        variant="view"
+        maxWidth={`${hideOuter ? 'hidden' : '!max-w-[80vw]'}`}
+        footer={
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="min-w-[100px]">
+            Đóng
+          </Button>
+        }
       >
-        {/* Gradient header */}
-        <DialogHeader className="relative overflow-hidden bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-0">
-          <div className="absolute inset-0 bg-black/10"></div>
-          <div className="absolute inset-0 opacity-20">
-            <div className="absolute top-0 right-0 h-32 w-32 translate-x-1/2 -translate-y-1/2 rounded-full bg-white"></div>
-            <div className="absolute bottom-0 left-0 h-20 w-20 -translate-x-1/2 translate-y-1/2 rounded-full bg-white"></div>
-          </div>
-          <div className="relative z-10 flex items-center gap-4 px-7 py-6 text-white">
-            <div className="rounded-xl border border-white/30 bg-white/20 p-2.5 backdrop-blur-lg">
-              <MonitorSmartphone className="h-6 w-6 text-white" />
-            </div>
-            <div className="flex-1">
-              <DialogTitle className="flex items-center gap-2 text-2xl font-bold">
-                Quản lý thiết bị của hợp đồng
-              </DialogTitle>
-              <DialogDescription className="mt-1 flex items-center gap-2 text-white/90">
-                <Sparkles className="h-4 w-4" />
-                {contractNumber ? (
-                  <span>
-                    Mã hợp đồng: <span className="font-semibold">{contractNumber}</span>
-                  </span>
-                ) : (
-                  'Danh sách thiết bị được quản lý theo hợp đồng'
-                )}
-              </DialogDescription>
-            </div>
-          </div>
-        </DialogHeader>
+        <ContractDevicesSection
+          contractId={contractId}
+          onRequestOpenAttach={() => {
+            setHideOuter(true)
+            setActiveFrom(contract?.startDate ? String(contract.startDate).slice(0, 10) : '')
+            setActiveTo(contract?.endDate ? String(contract.endDate).slice(0, 10) : '')
+            setAttachOpen(true)
+          }}
+        />
 
-        {/* Content section */}
-        <div className="bg-gradient-to-br from-white via-indigo-50/30 to-white px-8 py-6">
-          <ContractDevicesSection
-            contractId={contractId}
-            onRequestOpenAttach={() => {
-              // Hide outer modal content (keep component mounted) then open attach dialog
-              setHideOuter(true)
-              // set defaults from contract dates (YYYY-MM-DD)
-              setActiveFrom(contract?.startDate ? String(contract.startDate).slice(0, 10) : '')
-              setActiveTo(contract?.endDate ? String(contract.endDate).slice(0, 10) : '')
-              setAttachOpen(true)
-            }}
-          />
-        </div>
-
-        <Separator className="my-0" />
-
-        {/* Attach Dialog (lifted here so it can open while parent is closed) */}
+        {/* Attach Dialog */}
         <Dialog
           open={attachOpen}
           onOpenChange={(v) => {
             setAttachOpen(v)
             if (!v) {
-              // when child attach dialog closes, un-hide the outer modal content
               setHideOuter(false)
+              setSelectedToAttach([])
+              setSearchTerm('')
+              setFilterStatus('all')
             }
           }}
         >
-          <DialogContent className="!max-w-[75vw] rounded-xl border-0 p-0 shadow-xl">
-            <DialogHeader className="relative overflow-hidden bg-gradient-to-r from-indigo-700 via-blue-500 to-cyan-500 p-0">
-              <div className="absolute inset-0 bg-black/10"></div>
-              <div className="absolute inset-0 opacity-20">
-                <div className="absolute top-0 right-0 h-24 w-24 translate-x-1/2 -translate-y-1/2 rounded-full bg-white"></div>
+          <SystemModalLayout
+            title="Thêm và Cập nhật thiết bị"
+            description="Chọn các thiết bị để đính kèm vào hợp đồng"
+            icon={MonitorSmartphone}
+            variant="create"
+            maxWidth="!max-w-[85vw]"
+            footer={
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => setAttachOpen(false)}
+                  disabled={attachMutation.status === 'pending'}
+                >
+                  Hủy
+                </Button>
+                <Button
+                  onClick={handleAttach}
+                  disabled={attachMutation.status === 'pending' || selectedToAttach.length === 0}
+                  className="gap-2 bg-gradient-to-r from-blue-600 to-cyan-600 shadow-sm hover:from-blue-700 hover:to-cyan-700 hover:shadow-md"
+                >
+                  {attachMutation.status === 'pending' ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Đang xử lý...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="h-4 w-4" />
+                      {hasAttachedDevicesSelected ? 'Cập nhật' : 'Đính kèm'}
+                      {selectedToAttach.length > 0 && ` (${selectedToAttach.length})`}
+                    </>
+                  )}
+                </Button>
+              </>
+            }
+          >
+            <div className="space-y-5">
+              {/* Stats Cards */}
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="rounded-lg border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-3 shadow-sm"
+                >
+                  <div className="text-xs font-medium text-slate-500">Tổng thiết bị</div>
+                  <div className="mt-1 text-2xl font-bold text-slate-900">{stats.total}</div>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.05 }}
+                  className="rounded-lg border border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 p-3 shadow-sm"
+                >
+                  <div className="text-xs font-medium text-amber-700">Đã gán (HĐ này)</div>
+                  <div className="mt-1 text-2xl font-bold text-amber-900">{stats.attached}</div>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                  className="rounded-lg border border-blue-200 bg-gradient-to-br from-blue-50 to-cyan-50 p-3 shadow-sm"
+                >
+                  <div className="text-xs font-medium text-blue-700">HĐ khác</div>
+                  <div className="mt-1 text-2xl font-bold text-blue-900">{stats.other}</div>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.15 }}
+                  className="rounded-lg border border-emerald-200 bg-gradient-to-br from-emerald-50 to-green-50 p-3 shadow-sm"
+                >
+                  <div className="text-xs font-medium text-emerald-700">Chưa gán</div>
+                  <div className="mt-1 text-2xl font-bold text-emerald-900">{stats.unattached}</div>
+                </motion.div>
               </div>
-              <div className="relative z-10 flex items-center gap-4 px-6 py-5 text-white">
-                <DialogTitle className="flex items-center gap-2 text-xl font-bold">
-                  Thêm và Cập nhật thiết bị
-                </DialogTitle>
-              </div>
-            </DialogHeader>
 
-            <div className="space-y-4 rounded-b-xl bg-gradient-to-br from-white via-indigo-50 to-white p-4">
-              <div className="mb-2 space-y-1">
-                <div className="text-sm font-semibold text-indigo-700">
-                  Chọn các thiết bị để đính kèm
-                </div>
+              {/* Warning for attached devices */}
+              <AnimatePresence>
                 {hasAttachedDevicesSelected && (
-                  <div className="text-xs font-medium text-amber-600">
-                    ⚠️ Một số thiết bị đã được gán vào hợp đồng. Chọn lại sẽ cập nhật thông tin của
-                    chúng.
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="overflow-hidden rounded-lg border border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 p-4"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="rounded-lg bg-amber-100 p-2">
+                        <AlertCircle className="h-5 w-5 text-amber-600" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-amber-900">Cập nhật thiết bị đã gán</p>
+                        <p className="mt-1 text-sm text-amber-700">
+                          Một số thiết bị đã được gán vào hợp đồng này. Chọn lại sẽ cập nhật thông
+                          tin thời gian của chúng.
+                        </p>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Search and Filter */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <Input
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      placeholder="Tìm theo serial hoặc model..."
+                      className="pl-9"
+                    />
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setSearchTerm('')
+                      setFilterStatus('all')
+                    }}
+                    disabled={!searchTerm && filterStatus === 'all'}
+                    className="gap-2"
+                  >
+                    <X className="h-4 w-4" />
+                    Xóa
+                  </Button>
+                </div>
+
+                {/* Filter Chips */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-medium text-slate-600">Lọc nhanh:</span>
+                  {[
+                    { value: 'all', label: 'Tất cả', count: stats.total },
+                    { value: 'unattached', label: 'Chưa gán', count: stats.unattached },
+                    { value: 'attached', label: 'Đã gán (HĐ này)', count: stats.attached },
+                    { value: 'other', label: 'HĐ khác', count: stats.other },
+                  ].map((filter) => (
+                    <Button
+                      key={filter.value}
+                      variant="outline"
+                      size="sm"
+                      // FIX 3: Ép kiểu về FilterStatus thay vì any
+                      onClick={() => setFilterStatus(filter.value as FilterStatus)}
+                      className={cn(
+                        'h-8 gap-1.5 px-3 text-xs transition-all',
+                        filterStatus === filter.value
+                          ? 'border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100'
+                          : 'hover:border-slate-300'
+                      )}
+                    >
+                      {filter.label}
+                      <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
+                        {filter.count}
+                      </Badge>
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Devices Table */}
+              <div className="overflow-hidden rounded-xl border border-slate-200 shadow-sm">
+                {devicesLoading ? (
+                  <div className="flex flex-col items-center justify-center space-y-3 p-12">
+                    <Loader2 className="h-10 w-10 animate-spin text-blue-500" />
+                    <p className="text-sm text-slate-600">Đang tải danh sách thiết bị...</p>
+                  </div>
+                ) : filteredDevices.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center space-y-3 p-12">
+                    <div className="rounded-full bg-slate-100 p-4">
+                      <Search className="h-8 w-8 text-slate-400" />
+                    </div>
+                    <div className="text-center">
+                      <p className="font-medium text-slate-700">Không tìm thấy thiết bị</p>
+                      <p className="mt-1 text-sm text-slate-500">
+                        Thử điều chỉnh bộ lọc hoặc tìm kiếm khác
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="max-h-[400px] overflow-y-auto">
+                    <table className="w-full">
+                      <thead className="sticky top-0 z-10 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-slate-100/50">
+                        <tr>
+                          <th className="w-12 px-4 py-3 text-center">
+                            <input
+                              type="checkbox"
+                              className="h-4 w-4 accent-blue-600"
+                              checked={
+                                filteredDevices.length > 0 &&
+                                filteredDevices
+                                  .filter((d) => !deviceToOtherContractMap.has(d.id))
+                                  .every((d) => selectedToAttach.includes(d.id))
+                              }
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  const selectableIds = filteredDevices
+                                    .filter((d) => !deviceToOtherContractMap.has(d.id))
+                                    .map((d) => d.id)
+                                  setSelectedToAttach(selectableIds)
+                                } else {
+                                  setSelectedToAttach([])
+                                }
+                              }}
+                            />
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-slate-600 uppercase">
+                            Serial Number
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-slate-600 uppercase">
+                            Model
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-slate-600 uppercase">
+                            Trạng thái
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {filteredDevices.map((device, idx) => {
+                          const isAttached = attachedDeviceIds.has(device.id)
+                          const otherContract = deviceToOtherContractMap.get(device.id)
+                          const isDisabled = !!otherContract
+                          const isSelected = selectedToAttach.includes(device.id)
+
+                          return (
+                            <motion.tr
+                              key={device.id}
+                              initial={{ opacity: 0, y: -5 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: idx * 0.02 }}
+                              className={cn(
+                                'group transition-all duration-200',
+                                isDisabled && 'cursor-not-allowed opacity-60',
+                                isSelected && 'bg-blue-50',
+                                !isDisabled && !isSelected && 'hover:bg-slate-50',
+                                isAttached && 'border-l-4 border-l-amber-400 bg-amber-50/40',
+                                otherContract && 'border-l-4 border-l-blue-400 bg-blue-50/40'
+                              )}
+                            >
+                              <td className="px-4 py-3 text-center">
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  onChange={() => {
+                                    if (!isDisabled) {
+                                      toggleSelectAttach(device.id)
+                                    }
+                                  }}
+                                  disabled={isDisabled}
+                                  className={cn(
+                                    'h-4 w-4 accent-blue-600 transition-all',
+                                    isDisabled && 'cursor-not-allowed opacity-50'
+                                  )}
+                                  title={
+                                    isDisabled
+                                      ? `Thiết bị đã được gán cho hợp đồng ${otherContract?.contractNumber}`
+                                      : ''
+                                  }
+                                />
+                              </td>
+                              <td className="px-4 py-3">
+                                <div className="flex items-center gap-2">
+                                  {isAttached ? (
+                                    <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-amber-600" />
+                                  ) : otherContract ? (
+                                    <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-blue-600" />
+                                  ) : (
+                                    <Circle className="h-4 w-4 flex-shrink-0 text-slate-300" />
+                                  )}
+                                  <span
+                                    className={cn(
+                                      'font-mono text-sm font-medium',
+                                      isAttached && 'text-amber-700',
+                                      otherContract && 'text-blue-700',
+                                      !isAttached && !otherContract && 'text-slate-800'
+                                    )}
+                                  >
+                                    {device.serialNumber}
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="px-4 py-3 text-sm text-slate-700">
+                                {device.deviceModel?.name ?? device.model ?? '—'}
+                              </td>
+                              <td className="px-4 py-3">
+                                {isAttached ? (
+                                  <Badge
+                                    variant="outline"
+                                    className="border-amber-300 bg-amber-100 text-xs font-medium text-amber-700"
+                                  >
+                                    <CheckCircle2 className="mr-1 h-3 w-3" />
+                                    Đã gán (HĐ này)
+                                  </Badge>
+                                ) : otherContract ? (
+                                  <Badge
+                                    variant="outline"
+                                    className="border-blue-300 bg-blue-100 text-xs font-medium text-blue-700"
+                                  >
+                                    <Info className="mr-1 h-3 w-3" />
+                                    {otherContract.contractNumber}
+                                  </Badge>
+                                ) : (
+                                  <Badge
+                                    variant="outline"
+                                    className="border-slate-300 bg-slate-100 text-xs text-slate-600"
+                                  >
+                                    Chưa gán
+                                  </Badge>
+                                )}
+                              </td>
+                            </motion.tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
                   </div>
                 )}
               </div>
-              <div className="max-h-64 overflow-y-auto rounded border border-indigo-100">
-                <table className="w-full">
-                  <thead className="bg-gradient-to-r from-indigo-50 to-cyan-50 text-indigo-700">
-                    <tr>
-                      <th className="px-3 py-2 text-left text-sm font-bold"> </th>
-                      <th className="px-3 py-2 text-left text-sm font-bold">Serial</th>
-                      <th className="px-3 py-2 text-left text-sm font-bold">Model</th>
-                      <th className="px-3 py-2 text-left text-sm font-bold">Trạng thái</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {allDevices.length === 0 ? (
-                      <tr>
-                        <td colSpan={4} className="px-5 py-7 text-center text-indigo-400">
-                          Không có thiết bị
-                        </td>
-                      </tr>
-                    ) : (
-                      allDevices.map((ad: SimpleDevice) => {
-                        const isAttached = attachedDeviceIds.has(ad.id)
-                        const otherContract = deviceToOtherContractMap.get(ad.id)
-                        const isDisabled = !!otherContract
-                        return (
-                          <tr
-                            key={ad.id}
-                            className={`transition even:bg-indigo-50/40 ${isDisabled ? 'cursor-not-allowed opacity-60' : 'hover:bg-indigo-100'} ${
-                              isAttached
-                                ? 'border-l-4 border-l-amber-400 bg-amber-50/60'
-                                : otherContract
-                                  ? 'border-l-4 border-l-blue-400 bg-blue-50/60'
-                                  : ''
-                            }`}
-                          >
-                            <td className="px-3 py-2">
-                              <input
-                                type="checkbox"
-                                checked={selectedToAttach.includes(ad.id)}
-                                onChange={() => {
-                                  if (!isDisabled) {
-                                    toggleSelectAttach(ad.id)
-                                  }
-                                }}
-                                disabled={isDisabled}
-                                className={`h-4 w-4 accent-indigo-600 ${isDisabled ? 'cursor-not-allowed opacity-50' : ''}`}
-                                title={
-                                  isDisabled
-                                    ? `Thiết bị đã được gán cho hợp đồng ${otherContract?.contractNumber}`
-                                    : ''
-                                }
-                              />
-                            </td>
-                            <td className="px-3 py-2 font-mono text-sm">
-                              <div className="flex items-center gap-2">
-                                {isAttached ? (
-                                  <CheckCircle2 className="h-4 w-4 text-amber-600" />
-                                ) : otherContract ? (
-                                  <CheckCircle2 className="h-4 w-4 text-blue-600" />
-                                ) : (
-                                  <Circle className="h-4 w-4 text-slate-300" />
-                                )}
-                                <span
-                                  className={
-                                    isAttached
-                                      ? 'font-medium text-amber-700'
-                                      : otherContract
-                                        ? 'font-medium text-blue-700'
-                                        : 'text-slate-800'
-                                  }
-                                >
-                                  {ad.serialNumber}
-                                </span>
-                              </div>
-                            </td>
-                            <td className="px-3 py-2 text-sm">
-                              {ad.deviceModel?.name ?? ad.model}
-                            </td>
-                            <td className="px-3 py-2">
-                              {isAttached ? (
-                                <Badge
-                                  variant="outline"
-                                  className="border-amber-300 bg-amber-100 text-xs font-semibold text-amber-700"
-                                >
-                                  <CheckCircle2 className="mr-1 h-3 w-3" />
-                                  Đã gán
-                                </Badge>
-                              ) : otherContract ? (
-                                <Badge
-                                  variant="outline"
-                                  className="border-blue-300 bg-blue-100 text-xs font-semibold text-blue-700"
-                                >
-                                  <CheckCircle2 className="mr-1 h-3 w-3" />
-                                  Đã gán cho {otherContract.contractNumber}
-                                </Badge>
-                              ) : (
-                                <Badge
-                                  variant="outline"
-                                  className="border-slate-300 bg-slate-100 text-xs text-slate-600"
-                                >
-                                  Chưa gán
-                                </Badge>
-                              )}
-                            </td>
-                          </tr>
-                        )
-                      })
-                    )}
-                  </tbody>
-                </table>
+
+              {/* Date Range Inputs */}
+              <div className="rounded-lg border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-4">
+                <div className="mb-3 flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-slate-600" />
+                  <h4 className="text-sm font-semibold text-slate-700">Thời gian hiệu lực</h4>
+                </div>
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium text-slate-600">
+                      Từ ngày
+                    </label>
+                    <Input
+                      type="date"
+                      value={activeFrom}
+                      onChange={(e) => setActiveFrom(e.target.value)}
+                      className="h-10"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium text-slate-600">
+                      Đến ngày
+                    </label>
+                    <Input
+                      type="date"
+                      value={activeTo}
+                      onChange={(e) => setActiveTo(e.target.value)}
+                      className="h-10"
+                    />
+                  </div>
+                </div>
+                <p className="mt-2 text-xs text-slate-500">
+                  Nếu để trống, hệ thống sẽ sử dụng thời gian của hợp đồng
+                </p>
               </div>
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                <Input
-                  type="date"
-                  value={activeFrom}
-                  onChange={(e) => setActiveFrom(e.target.value)}
-                  className="h-11"
-                  placeholder="Từ ngày"
-                />
-                <Input
-                  type="date"
-                  value={activeTo}
-                  onChange={(e) => setActiveTo(e.target.value)}
-                  className="h-11"
-                  placeholder="Đến ngày"
-                />
-              </div>
+
+              {/* Selected Count */}
+              {selectedToAttach.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="rounded-lg border border-blue-200 bg-gradient-to-br from-blue-50 to-cyan-50 p-3 text-center"
+                >
+                  <p className="text-sm font-medium text-blue-900">
+                    Đã chọn <span className="text-lg font-bold">{selectedToAttach.length}</span>{' '}
+                    thiết bị
+                  </p>
+                </motion.div>
+              )}
             </div>
-
-            <DialogFooter className="flex w-full justify-end gap-2 rounded-b-xl bg-gradient-to-r from-transparent via-indigo-50 to-transparent px-6 pb-6">
-              <Button variant="outline" onClick={() => setAttachOpen(false)}>
-                Hủy
-              </Button>
-              <Button
-                onClick={handleAttach}
-                disabled={attachMutation.status === 'pending'}
-                className="bg-gradient-to-r from-indigo-600 to-cyan-600 px-6 font-bold text-white shadow"
-              >
-                {attachMutation.status === 'pending'
-                  ? 'Đang gửi...'
-                  : hasAttachedDevicesSelected
-                    ? 'Cập nhật'
-                    : 'Đính kèm'}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
+          </SystemModalLayout>
         </Dialog>
-
-        <div className="flex justify-end gap-2 rounded-b-2xl bg-gradient-to-r from-transparent via-blue-50 to-transparent p-6">
-          <Button variant="outline" onClick={() => onOpenChange(false)} className="font-semibold">
-            Đóng
-          </Button>
-        </div>
-      </DialogContent>
+      </SystemModalLayout>
     </Dialog>
   )
 }

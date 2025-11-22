@@ -31,6 +31,7 @@ import internalApiClient from '@/lib/api/internal-client'
 import { exportToExcel } from '@/lib/utils/export'
 import { SystemPageLayout } from '@/components/system/SystemPageLayout'
 import { SystemPageHeader } from '@/components/system/SystemPageHeader'
+import { getPublicUrl } from '@/lib/utils/publicUrl'
 
 function DashboardSkeleton() {
   return (
@@ -99,7 +100,8 @@ export default function CustomerAdminDashboard() {
       })
 
       if (resp?.data?.success && resp.data.data?.url) {
-        window.open(resp.data.data.url, '_blank')
+        const url = getPublicUrl(resp.data.data.url)
+        if (url) window.open(url, '_blank')
         toast.success('Báo cáo PDF đã được tạo, mở ở tab mới')
         return
       }
@@ -150,7 +152,8 @@ export default function CustomerAdminDashboard() {
       })
 
       if (resp?.data?.success && resp.data.data?.url) {
-        window.open(resp.data.data.url, '_blank')
+        const url = getPublicUrl(resp.data.data.url)
+        if (url) window.open(url, '_blank')
         toast.success('Báo cáo PDF đã được tạo, mở ở tab mới')
         return
       }
@@ -187,7 +190,8 @@ export default function CustomerAdminDashboard() {
       })
 
       if (resp?.data?.success && resp.data.data?.url) {
-        window.open(resp.data.data.url, '_blank')
+        const url = getPublicUrl(resp.data.data.url)
+        if (url) window.open(url, '_blank')
         toast.success('CSV báo cáo đã được tạo, mở ở tab mới')
         return
       }

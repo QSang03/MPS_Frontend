@@ -7,6 +7,7 @@ import type { Policy } from '@/types/policies'
 import { CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import {
   Table,
   TableBody,
@@ -39,6 +40,7 @@ import {
   XCircle,
   Zap,
   Lock,
+  Settings,
 } from 'lucide-react'
 import { DeleteDialog } from '@/components/shared/DeleteDialog'
 import { PolicyFormModal } from './PolicyFormModal'
@@ -242,7 +244,7 @@ export function PoliciesTable() {
                     setPage(1)
                   }
                 }}
-                className="rounded-xl border-2 border-gray-200 bg-gradient-to-r from-gray-50 to-white py-2.5 pr-4 pl-12 text-base transition-all duration-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                className="rounded-xl border-2 border-gray-200 bg-gradient-to-r from-gray-50 to-white pr-4 pl-12 text-base transition-all duration-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
               />
             </div>
 
@@ -281,7 +283,7 @@ export function PoliciesTable() {
                 placeholder="🎯 Lọc theo action..."
                 value={action}
                 onChange={(e) => setAction(e.target.value)}
-                className="rounded-xl border-2 border-gray-200 bg-gradient-to-r from-gray-50 to-white py-2.5 pr-4 pl-4 text-base transition-all duration-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+                className="rounded-xl border-2 border-gray-200 bg-gradient-to-r from-gray-50 to-white pr-4 pl-4 text-base transition-all duration-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
               />
               <Button
                 variant="outline"
@@ -381,30 +383,33 @@ export function PoliciesTable() {
                     </TableHead>
                     <TableHead className="min-w-[250px] font-bold text-gray-700">
                       <div className="flex items-center gap-2">
-                        <FileText className="h-5 w-5 text-blue-600" />
+                        <FileText className="h-4 w-4 text-gray-600" />
                         Policy
                       </div>
                     </TableHead>
                     <TableHead className="w-[150px] font-bold text-gray-700">
                       <div className="flex items-center gap-2">
-                        <Lock className="h-5 w-5 text-purple-600" />
+                        <Lock className="h-4 w-4 text-gray-600" />
                         Tình trạng
                       </div>
                     </TableHead>
                     <TableHead className="min-w-[220px] font-bold text-gray-700">
                       <div className="flex items-center gap-2">
-                        <Zap className="h-5 w-5 text-amber-600" />
+                        <Zap className="h-4 w-4 text-gray-600" />
                         Quyền
                       </div>
                     </TableHead>
                     <TableHead className="w-[160px] text-center font-bold text-gray-700">
                       <div className="flex items-center gap-2">
-                        <Calendar className="h-5 w-5 text-pink-600" />
+                        <Calendar className="h-4 w-4 text-gray-600" />
                         Ngày tạo
                       </div>
                     </TableHead>
                     <TableHead className="w-[150px] text-center font-bold text-gray-700">
-                      ⚙️ Thao tác
+                      <div className="flex items-center gap-2">
+                        <Settings className="h-4 w-4 text-gray-600" />
+                        Thao tác
+                      </div>
                     </TableHead>
                   </TableRow>
                 </TableHeader>
@@ -421,7 +426,7 @@ export function PoliciesTable() {
                       }`}
                     >
                       <TableCell className="text-center text-base font-bold text-gray-600">
-                        <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-r from-blue-100 to-purple-100 text-blue-700">
+                        <span className="inline-flex h-6 w-6 items-center justify-center rounded bg-gradient-to-r from-gray-100 to-gray-50 text-sm font-medium text-gray-700">
                           {(pagination.page - 1) * pagination.limit + idx + 1}
                         </span>
                       </TableCell>
@@ -430,15 +435,15 @@ export function PoliciesTable() {
                       </TableCell>
                       <TableCell>
                         {p.effect === 'ALLOW' ? (
-                          <span className="inline-flex transform items-center gap-2 rounded-xl border-2 border-emerald-300 bg-gradient-to-r from-emerald-100 to-emerald-50 px-4 py-2 text-xs font-bold whitespace-nowrap text-emerald-700 shadow-sm transition-all duration-300 hover:scale-105 hover:shadow-md">
-                            <CheckCircle2 className="h-4 w-4" />
-                            Họat động
-                          </span>
+                          <Badge className="bg-green-500 text-white">
+                            <CheckCircle2 className="mr-1 h-3 w-3" />
+                            Hoạt động
+                          </Badge>
                         ) : (
-                          <span className="inline-flex transform items-center gap-2 rounded-xl border-2 border-red-300 bg-gradient-to-r from-red-100 to-red-50 px-4 py-2 text-xs font-bold whitespace-nowrap text-red-700 shadow-sm transition-all duration-300 hover:scale-105 hover:shadow-md">
-                            <XCircle className="h-4 w-4" />
+                          <Badge className="bg-gray-400 text-white">
+                            <XCircle className="mr-1 h-3 w-3" />
                             Khóa
-                          </span>
+                          </Badge>
                         )}
                       </TableCell>
                       <TableCell>
@@ -474,7 +479,7 @@ export function PoliciesTable() {
                             size="sm"
                             variant="ghost"
                             onClick={() => openView(p)}
-                            className="transform rounded-lg transition-all duration-300 hover:scale-110 hover:bg-blue-100 hover:text-blue-700"
+                            className="transition-all hover:bg-gray-100 hover:text-gray-700"
                             title="Xem chi tiết"
                           >
                             <Eye className="h-4 w-4" />
@@ -484,7 +489,7 @@ export function PoliciesTable() {
                               size="sm"
                               variant="ghost"
                               onClick={() => openEdit(p)}
-                              className="transform rounded-lg transition-all duration-300 hover:scale-110 hover:bg-purple-100 hover:text-purple-700"
+                              className="transition-all hover:bg-blue-100 hover:text-blue-700"
                               title="Chỉnh sửa"
                             >
                               <Edit className="h-4 w-4" />
@@ -499,7 +504,7 @@ export function PoliciesTable() {
                                 <Button
                                   size="sm"
                                   variant="ghost"
-                                  className="transform rounded-lg transition-all duration-300 hover:scale-110 hover:bg-red-100 hover:text-red-700"
+                                  className="transition-all hover:bg-red-100 hover:text-red-700"
                                   title="Xóa"
                                 >
                                   <Trash2 className="h-4 w-4" />

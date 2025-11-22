@@ -265,7 +265,64 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    scroll-behavior: smooth;
+  }
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Custom Scrollbar Styles - Đồng bộ cho toàn bộ website */
+/* Firefox và Webkit browsers (Chrome, Safari, Edge) */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--neutral-300) var(--neutral-100);
+}
+
+/* Webkit browsers (Chrome, Safari, Edge) */
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--neutral-100);
+  border-radius: 10px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--neutral-300);
+  border-radius: 10px;
+  border: 2px solid var(--neutral-100);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--neutral-400);
+}
+
+*::-webkit-scrollbar-corner {
+  background: var(--neutral-100);
+}
+
+/* Dark mode scrollbar */
+.dark * {
+  scrollbar-color: var(--neutral-700) var(--neutral-200);
+}
+
+.dark *::-webkit-scrollbar-track {
+  background: var(--neutral-200);
+}
+
+.dark *::-webkit-scrollbar-thumb {
+  background: var(--neutral-700);
+  border-color: var(--neutral-200);
+}
+
+.dark *::-webkit-scrollbar-thumb:hover {
+  background: var(--neutral-600);
+}
+
+.dark *::-webkit-scrollbar-corner {
+  background: var(--neutral-200);
 }

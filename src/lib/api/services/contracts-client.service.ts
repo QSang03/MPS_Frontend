@@ -7,6 +7,36 @@ import type {
   DetachDevicesDto,
 } from '@/types/models/contract-device'
 
+function isFileLike(value: unknown): value is File | Blob {
+  if (!value) return false
+  if (typeof File !== 'undefined' && value instanceof File) return true
+  if (typeof Blob !== 'undefined' && value instanceof Blob) return true
+  return false
+}
+
+function buildContractFormData(
+  payload: Record<string, unknown>,
+  pdfFile?: File | Blob | null
+): FormData {
+  const formData = new FormData()
+  Object.entries(payload).forEach(([key, value]) => {
+    if (value === undefined || value === null) return
+    if (Array.isArray(value)) {
+      value.forEach((item) => formData.append(`${key}[]`, String(item)))
+      return
+    }
+    if (typeof value === 'object') {
+      formData.append(key, JSON.stringify(value))
+      return
+    }
+    formData.append(key, String(value))
+  })
+  if (isFileLike(pdfFile)) {
+    formData.append('pdf', pdfFile)
+  }
+  return formData
+}
+
 export const contractsClientService = {
   async getAll(params?: {
     page?: number
@@ -93,7 +123,16 @@ export const contractsClientService = {
   },
 
   async create(payload: CreateContractDto): Promise<Contract | null> {
-    const response = await internalApiClient.post('/api/contracts', payload)
+    const { pdfFile, ...rest } = payload
+    if (isFileLike(pdfFile)) {
+      const formData = buildContractFormData(rest, pdfFile)
+      const response = await internalApiClient.post('/api/contracts', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      return response.data?.data ?? null
+    }
+
+    const response = await internalApiClient.post('/api/contracts', rest)
     return response.data?.data ?? null
   },
 
@@ -103,7 +142,17 @@ export const contractsClientService = {
   },
 
   async update(id: string, payload: UpdateContractDto): Promise<Contract | null> {
-    const response = await internalApiClient.patch(`/api/contracts/${id}`, payload)
+    const { pdfFile, ...rest } = payload
+
+    if (isFileLike(pdfFile)) {
+      const formData = buildContractFormData(rest, pdfFile)
+      const response = await internalApiClient.patch(`/api/contracts/${id}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      return response.data?.data ?? null
+    }
+
+    const response = await internalApiClient.patch(`/api/contracts/${id}`, rest)
     return response.data?.data ?? null
   },
 

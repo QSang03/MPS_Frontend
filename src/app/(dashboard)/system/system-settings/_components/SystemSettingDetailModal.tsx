@@ -1,13 +1,8 @@
 'use client'
 
 import React from 'react'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog'
+import { Dialog } from '@/components/ui/dialog'
+import { SystemModalLayout } from '@/components/system/SystemModalLayout'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import type { SystemSetting } from '@/types/system-settings'
@@ -124,24 +119,13 @@ export default function SystemSettingDetailModal({ setting, open, onOpenChange }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[700px] overflow-hidden rounded-2xl border-0 p-0 shadow-2xl">
-        {/* Header with Gradient */}
-        <DialogHeader className="relative overflow-hidden bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-0">
-          <div className="absolute inset-0 bg-black/10"></div>
-          <div className="relative z-10 px-6 py-5 text-white">
-            <div className="flex items-center gap-3">
-              <Settings className="h-6 w-6" />
-              <DialogTitle className="text-2xl font-bold">Chi tiết cấu hình</DialogTitle>
-            </div>
-            <DialogDescription className="mt-2 text-white/90">
-              Thông tin chi tiết về cấu hình hệ thống
-            </DialogDescription>
-          </div>
-          <div className="absolute -top-10 -right-10 h-40 w-40 rounded-full bg-white/10 blur-3xl"></div>
-          <div className="absolute -bottom-10 -left-10 h-40 w-40 rounded-full bg-white/10 blur-3xl"></div>
-        </DialogHeader>
-
-        <div className="space-y-6 p-6">
+      <SystemModalLayout
+        title="Chi tiết cấu hình"
+        description="Thông tin chi tiết về cấu hình hệ thống"
+        icon={Settings}
+        variant="view"
+      >
+        <div className="space-y-6">
           {/* Setting Key */}
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-sm font-medium text-gray-500">
@@ -227,7 +211,7 @@ export default function SystemSettingDetailModal({ setting, open, onOpenChange }
             </div>
           </div>
         </div>
-      </DialogContent>
+      </SystemModalLayout>
     </Dialog>
   )
 }

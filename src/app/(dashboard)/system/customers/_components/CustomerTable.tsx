@@ -18,7 +18,23 @@ import { customersClientService } from '@/lib/api/services/customers-client.serv
 import { consumablesClientService } from '@/lib/api/services/consumables-client.service'
 import type { Customer } from '@/types/models/customer'
 import { toast } from 'sonner'
-import { Check, Edit, Eye, Loader2, X, Building2, Search } from 'lucide-react'
+import {
+  Check,
+  Edit,
+  Eye,
+  Loader2,
+  X,
+  Building2,
+  Search,
+  User,
+  Hash,
+  MapPin,
+  CheckCircle2,
+  Calendar,
+  Settings,
+  Package,
+  Trash2,
+} from 'lucide-react'
 
 interface CustomerTableProps {
   page: number
@@ -162,11 +178,11 @@ export function CustomerTable({
     () => [
       {
         id: 'index',
-        header: '#',
+        header: 'STT',
         cell: ({ row, table }) => {
           const index = table.getSortedRowModel().rows.findIndex((r) => r.id === row.id)
           return (
-            <span className="text-muted-foreground text-sm">
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded bg-gradient-to-r from-gray-100 to-gray-50 text-sm font-medium text-gray-700">
               {(page - 1) * pageSize + index + 1}
             </span>
           )
@@ -175,7 +191,12 @@ export function CustomerTable({
       },
       {
         accessorKey: 'name',
-        header: 'Tên',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <User className="h-4 w-4 text-gray-600" />
+            Tên
+          </div>
+        ),
         enableSorting: true,
         cell: ({ row }) => (
           <Link
@@ -188,7 +209,12 @@ export function CustomerTable({
       },
       {
         accessorKey: 'code',
-        header: 'Mã',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <Hash className="h-4 w-4 text-gray-600" />
+            Mã
+          </div>
+        ),
         enableSorting: true,
         cell: ({ row }) => (
           <Badge variant="outline" className="font-mono text-xs">
@@ -198,7 +224,12 @@ export function CustomerTable({
       },
       {
         accessorKey: 'address',
-        header: 'Địa chỉ',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <MapPin className="h-4 w-4 text-gray-600" />
+            Địa chỉ
+          </div>
+        ),
         enableSorting: false,
         cell: ({ row }) => {
           const customer = row.original
@@ -273,12 +304,13 @@ export function CustomerTable({
                 />
               ) : (
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
                   onClick={() => {
                     setEditingAddressFor(customer.id)
                     setEditingAddressValue(first === '—' ? '' : String(first))
                   }}
+                  className="transition-all hover:bg-blue-100 hover:text-blue-700"
                   aria-label="Chỉnh sửa địa chỉ"
                 >
                   <Edit className="h-4 w-4" />
@@ -290,14 +322,19 @@ export function CustomerTable({
       },
       {
         accessorKey: 'isActive',
-        header: 'Trạng thái',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-gray-600" />
+            Trạng thái
+          </div>
+        ),
         enableSorting: true,
         cell: ({ row }) => {
           const isActive = (row.original as unknown as { isActive?: boolean }).isActive
           return (
             <Badge
               variant={isActive ? 'default' : 'secondary'}
-              className={isActive ? 'bg-green-500' : 'bg-gray-400'}
+              className={isActive ? 'bg-green-500 text-white' : 'bg-gray-400 text-white'}
             >
               {isActive ? 'Hoạt động' : 'Tạm dừng'}
             </Badge>
@@ -306,7 +343,12 @@ export function CustomerTable({
       },
       {
         accessorKey: 'billingDay',
-        header: 'Ngày thanh toán',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-gray-600" />
+            Ngày thanh toán
+          </div>
+        ),
         enableSorting: true,
         cell: ({ row }) => {
           const billingDay = (row.original as unknown as { billingDay?: number | null }).billingDay
@@ -319,7 +361,12 @@ export function CustomerTable({
       },
       {
         id: 'actions',
-        header: 'Thao tác',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <Settings className="h-4 w-4 text-gray-600" />
+            Thao tác
+          </div>
+        ),
         enableSorting: false,
         cell: ({ row }) => {
           const customer = row.original
@@ -329,8 +376,9 @@ export function CustomerTable({
                 variant="outline"
                 size="sm"
                 onClick={() => void loadConsumablesForCustomer(customer)}
+                className="transition-all hover:bg-blue-100 hover:text-blue-700"
               >
-                <Eye className="mr-2 h-4 w-4" />
+                <Package className="mr-2 h-4 w-4" />
                 Vật tư
               </Button>
               <ActionGuard pageId="customers" actionId="update">
@@ -342,14 +390,16 @@ export function CustomerTable({
                   description={`Xác nhận xóa khách hàng "${customer.name || ''}"?`}
                   onConfirm={async () => handleDelete(customer.id)}
                   trigger={
-                    <Button variant="destructive" size="sm" disabled={deletingId === customer.id}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={deletingId === customer.id}
+                      className="transition-all hover:bg-red-100 hover:text-red-700"
+                    >
                       {deletingId === customer.id ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Đang xóa...
-                        </>
+                        <Loader2 className="h-4 w-4 animate-spin" />
                       ) : (
-                        'Xóa'
+                        <Trash2 className="h-4 w-4" />
                       )}
                     </Button>
                   }
@@ -401,23 +451,27 @@ export function CustomerTable({
           isPending={isPending}
           emptyState={
             customers.length === 0 ? (
-              <div className="px-4 py-12 text-center">
-                <div className="text-muted-foreground flex flex-col items-center gap-3">
+              <div className="p-12 text-center">
+                <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200">
                   {searchInput ? (
-                    <>
-                      <Search className="h-12 w-12 opacity-20" />
-                      <p>Không tìm thấy khách hàng phù hợp</p>
-                    </>
+                    <Search className="h-12 w-12 opacity-20" />
                   ) : (
-                    <>
-                      <Building2 className="h-12 w-12 opacity-20" />
-                      <p>Chưa có khách hàng nào</p>
-                      <ActionGuard pageId="customers" actionId="create">
-                        <CustomerFormModal mode="create" onSaved={handleSaved} />
-                      </ActionGuard>
-                    </>
+                    <Building2 className="h-12 w-12 opacity-20" />
                   )}
                 </div>
+                <h3 className="mb-2 text-xl font-bold text-gray-700">
+                  {searchInput ? 'Không tìm thấy khách hàng phù hợp' : 'Chưa có khách hàng nào'}
+                </h3>
+                <p className="mb-6 text-gray-500">
+                  {searchInput
+                    ? 'Thử điều chỉnh bộ lọc hoặc tìm kiếm'
+                    : 'Hãy tạo khách hàng đầu tiên'}
+                </p>
+                {!searchInput && (
+                  <ActionGuard pageId="customers" actionId="create">
+                    <CustomerFormModal mode="create" onSaved={handleSaved} />
+                  </ActionGuard>
+                )}
               </div>
             ) : undefined
           }

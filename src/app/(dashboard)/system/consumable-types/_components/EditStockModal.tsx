@@ -4,14 +4,9 @@ import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
+import { Dialog } from '@/components/ui/dialog'
+import { SystemModalLayout } from '@/components/system/SystemModalLayout'
+import { Package } from 'lucide-react'
 import { Loader2 } from 'lucide-react'
 
 interface EditStockModalProps {
@@ -60,15 +55,42 @@ export function EditStockModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Chỉnh sửa thông tin tồn kho</DialogTitle>
-          <DialogDescription>
-            Cập nhật số lượng tồn và ngưỡng cảnh báo cho <strong>{consumableName}</strong>
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-4 py-4">
+      <SystemModalLayout
+        title="Chỉnh sửa thông tin tồn kho"
+        description={`Cập nhật số lượng tồn và ngưỡng cảnh báo cho ${consumableName}`}
+        icon={Package}
+        variant="edit"
+        maxWidth="!max-w-[60vw]"
+        footer={
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={saving}
+              className="min-w-[100px]"
+            >
+              Hủy
+            </Button>
+            <Button
+              type="button"
+              onClick={handleSave}
+              disabled={saving}
+              className="min-w-[120px] bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Đang lưu...
+                </>
+              ) : (
+                'Lưu thay đổi'
+              )}
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="quantity">Số lượng tồn</Label>
             <Input
@@ -96,28 +118,7 @@ export function EditStockModal({
             </p>
           </div>
         </div>
-
-        <DialogFooter>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={saving}
-          >
-            Hủy
-          </Button>
-          <Button type="button" onClick={handleSave} disabled={saving}>
-            {saving ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Đang lưu...
-              </>
-            ) : (
-              'Lưu thay đổi'
-            )}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
+      </SystemModalLayout>
     </Dialog>
   )
 }

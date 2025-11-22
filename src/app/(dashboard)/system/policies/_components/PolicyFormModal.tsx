@@ -4,14 +4,8 @@ import { useEffect, useState, useMemo } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
+import { Dialog } from '@/components/ui/dialog'
+import { SystemModalLayout } from '@/components/system/SystemModalLayout'
 import {
   Form,
   FormControl,
@@ -939,27 +933,66 @@ export function PolicyFormModal({
   // [PHẦN UI MỚI - THIẾT KẾ ĐẸP HƠN]
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-h-[90vh] !max-w-[75vw] overflow-y-auto">
-        <DialogHeader>
-          <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 p-2">
-              <Shield className="h-6 w-6 text-white" />
-            </div>
-            <div>
-              <DialogTitle className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-2xl font-bold text-transparent">
-                {viewOnly ? 'Chi tiết Policy' : initialData ? 'Chỉnh sửa Policy' : 'Tạo Policy Mới'}
-              </DialogTitle>
-              <DialogDescription className="text-muted-foreground mt-1 text-sm">
-                {viewOnly
-                  ? 'Chế độ xem chi tiết'
-                  : initialData
-                    ? 'Cập nhật thông tin policy'
-                    : 'Định nghĩa quy tắc truy cập và phân quyền'}
-              </DialogDescription>
-            </div>
-          </div>
-        </DialogHeader>
+      <SystemModalLayout
+        title={viewOnly ? 'Chi tiết Policy' : initialData ? 'Chỉnh sửa Policy' : 'Tạo Policy Mới'}
+        description={
+          viewOnly
+            ? 'Chế độ xem chi tiết'
+            : initialData
+              ? 'Cập nhật thông tin policy'
+              : 'Định nghĩa quy tắc truy cập và phân quyền'
+        }
+        icon={Shield}
+        variant={viewOnly ? 'view' : initialData ? 'edit' : 'create'}
+        maxWidth="!max-w-[75vw]"
+        footer={
+          <>
+            <Button type="button" variant="outline" onClick={onClose} className="min-w-[100px]">
+              {viewOnly ? 'Đóng' : 'Hủy'}
+            </Button>
 
+            {localViewOnly ? (
+              <Button
+                type="button"
+                onClick={() => {
+                  console.debug('[PolicyFormModal] onRequestEdit clicked')
+                  setLocalViewOnly(false)
+                  try {
+                    if (typeof form.setFocus === 'function') form.setFocus('name')
+                  } catch {}
+                  if (typeof onRequestEdit === 'function') onRequestEdit()
+                }}
+                style={{ pointerEvents: 'auto' }}
+                aria-disabled={false}
+                className="min-w-[120px] bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+              >
+                <Settings className="mr-2 h-4 w-4" />
+                Chỉnh sửa
+              </Button>
+            ) : (
+              <Button
+                type="submit"
+                form="policy-form"
+                disabled={isLoading}
+                onClick={form.handleSubmit(handleSubmit)}
+                className="min-w-[120px] bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Đang xử lý...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="mr-2 h-4 w-4" />
+                    {initialData ? 'Lưu thay đổi' : 'Tạo Policy'}
+                  </>
+                )}
+              </Button>
+            )}
+          </>
+        }
+      >
         <Form {...form}>
           <form
             onSubmit={localViewOnly ? (e) => e.preventDefault() : form.handleSubmit(handleSubmit)}
@@ -1961,57 +1994,7 @@ export function PolicyFormModal({
             </fieldset>
           </form>
         </Form>
-
-        <DialogFooter className="flex gap-3 border-t pt-6">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onClose}
-            className="border-gray-300 hover:bg-gray-50"
-          >
-            {viewOnly ? 'Đóng' : 'Hủy'}
-          </Button>
-
-          {localViewOnly ? (
-            <Button
-              type="button"
-              onClick={() => {
-                console.debug('[PolicyFormModal] onRequestEdit clicked')
-                setLocalViewOnly(false)
-                try {
-                  if (typeof form.setFocus === 'function') form.setFocus('name')
-                } catch {}
-                if (typeof onRequestEdit === 'function') onRequestEdit()
-              }}
-              style={{ pointerEvents: 'auto' }}
-              aria-disabled={false}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700"
-            >
-              <Settings className="mr-2 h-4 w-4" />
-              Chỉnh sửa
-            </Button>
-          ) : (
-            <Button
-              type="submit"
-              disabled={isLoading}
-              onClick={form.handleSubmit(handleSubmit)}
-              className="min-w-[120px] bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Đang xử lý...
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="mr-2 h-4 w-4" />
-                  {initialData ? 'Lưu thay đổi' : 'Tạo Policy'}
-                </>
-              )}
-            </Button>
-          )}
-        </DialogFooter>
-      </DialogContent>
+      </SystemModalLayout>
     </Dialog>
   )
 }

@@ -15,6 +15,7 @@ import { useDepartmentsQuery } from '@/lib/hooks/queries/useDepartmentsQuery'
 import type { Department } from '@/types/users'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { TableWrapper } from '@/components/system/TableWrapper'
 import type { ColumnDef } from '@tanstack/react-table'
 import {
@@ -36,6 +37,9 @@ import {
   CheckCircle2,
   XCircle,
   Calendar,
+  Hash,
+  FileText,
+  Settings,
 } from 'lucide-react'
 import { DeleteDialog } from '@/components/shared/DeleteDialog'
 import { useActionPermission } from '@/lib/hooks/useActionPermission'
@@ -195,20 +199,23 @@ export function DepartmentsTable({
         columnVisibilityMenu={columnVisibilityMenu}
       >
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div className="group relative">
-            <Search className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-blue-400 transition-colors group-focus-within:text-blue-600" />
-            <Input
-              placeholder="🔍 Tìm kiếm tên hoặc mã bộ phận..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  setDebouncedSearch(search)
-                  setPage(1)
-                }
-              }}
-              className="rounded-xl border-2 border-gray-200 bg-gradient-to-r from-gray-50 to-white py-2.5 pr-4 pl-12 text-base transition-all duration-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-            />
+          <div>
+            <label className="mb-2 block text-sm font-medium">Tìm kiếm</label>
+            <div className="group relative">
+              <Search className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-blue-400 transition-colors group-focus-within:text-blue-600" />
+              <Input
+                placeholder="🔍 Tìm kiếm tên hoặc mã bộ phận..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    setDebouncedSearch(search)
+                    setPage(1)
+                  }
+                }}
+                className="rounded-xl border-2 border-gray-200 bg-gradient-to-r from-gray-50 to-white pr-4 pl-12 text-base transition-all duration-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+              />
+            </div>
           </div>
 
           <div className="relative flex gap-2">
@@ -372,7 +379,7 @@ function DepartmentsTableContent({
         cell: ({ row, table }) => {
           const index = table.getSortedRowModel().rows.findIndex((r) => r.id === row.id)
           return (
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-700">
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded bg-gradient-to-r from-gray-100 to-gray-50 text-sm font-medium text-gray-700">
               {(pagination.page - 1) * pagination.limit + index + 1}
             </span>
           )
@@ -384,7 +391,7 @@ function DepartmentsTableContent({
         enableSorting: true,
         header: () => (
           <div className="flex items-center gap-2">
-            <Building2 className="h-5 w-5 text-blue-600" />
+            <Building2 className="h-4 w-4 text-gray-600" />
             Bộ phận
           </div>
         ),
@@ -397,14 +404,14 @@ function DepartmentsTableContent({
         enableSorting: true,
         header: () => (
           <div className="flex items-center gap-2">
-            <span className="text-lg">🔖</span>
+            <Hash className="h-4 w-4 text-gray-600" />
             Mã
           </div>
         ),
         cell: ({ row }) => (
-          <span className="inline-flex items-center justify-center rounded-lg border border-amber-200 bg-gradient-to-r from-amber-100 to-amber-50 px-2.5 py-1 text-sm font-bold text-amber-700">
+          <Badge variant="outline" className="font-mono text-xs">
             {row.original.code}
-          </span>
+          </Badge>
         ),
       },
       {
@@ -412,7 +419,7 @@ function DepartmentsTableContent({
         enableSorting: true,
         header: () => (
           <div className="flex items-center gap-2">
-            <span className="text-lg">📝</span>
+            <FileText className="h-4 w-4 text-gray-600" />
             Mô tả
           </div>
         ),
@@ -425,29 +432,35 @@ function DepartmentsTableContent({
         enableSorting: true,
         header: () => (
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="h-5 w-5 text-blue-600" />
+            <CheckCircle2 className="h-4 w-4 text-gray-600" />
             Trạng thái
           </div>
         ),
-        cell: ({ row }) =>
-          row.original.isActive ? (
-            <span className="inline-flex items-center gap-2 rounded-xl border-2 border-blue-300 bg-gradient-to-r from-blue-100 to-blue-50 px-4 py-2 text-xs font-bold text-blue-700 shadow-sm">
-              <CheckCircle2 className="h-4 w-4" />
-              Hoạt động
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-2 rounded-xl border-2 border-red-300 bg-gradient-to-r from-red-100 to-red-50 px-4 py-2 text-xs font-bold text-red-700 shadow-sm">
-              <XCircle className="h-4 w-4" />
-              Ngừng
-            </span>
-          ),
+        cell: ({ row }) => (
+          <Badge
+            variant={row.original.isActive ? 'default' : 'secondary'}
+            className={row.original.isActive ? 'bg-green-500 text-white' : 'bg-gray-400 text-white'}
+          >
+            {row.original.isActive ? (
+              <>
+                <CheckCircle2 className="mr-1 h-3 w-3" />
+                Hoạt động
+              </>
+            ) : (
+              <>
+                <XCircle className="mr-1 h-3 w-3" />
+                Ngừng
+              </>
+            )}
+          </Badge>
+        ),
       },
       {
         accessorKey: 'createdAt',
         enableSorting: true,
         header: () => (
           <div className="flex items-center gap-2">
-            <Calendar className="h-5 w-5 text-pink-600" />
+            <Calendar className="h-4 w-4 text-gray-600" />
             Ngày tạo
           </div>
         ),
@@ -459,7 +472,12 @@ function DepartmentsTableContent({
       },
       {
         id: 'actions',
-        header: '⚙️ Hành động',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <Settings className="h-4 w-4 text-gray-600" />
+            Hành động
+          </div>
+        ),
         enableSorting: false,
         cell: ({ row }) => (
           <div className="flex items-center justify-end gap-1.5">
@@ -468,7 +486,7 @@ function DepartmentsTableContent({
                 size="sm"
                 variant="ghost"
                 onClick={() => onEditDepartment(row.original)}
-                className="transform rounded-lg transition-all duration-300 hover:scale-110 hover:bg-blue-100 hover:text-blue-700"
+                className="transition-all hover:bg-blue-100 hover:text-blue-700"
                 title="Chỉnh sửa"
               >
                 <Edit className="h-4 w-4" />
@@ -485,7 +503,7 @@ function DepartmentsTableContent({
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="transform rounded-lg transition-all duration-300 hover:scale-110 hover:bg-red-100 hover:text-red-700"
+                    className="transition-all hover:bg-red-100 hover:text-red-700"
                     title="Xóa"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -522,21 +540,21 @@ function DepartmentsTableContent({
       isPending={isPending}
       emptyState={
         departments.length === 0 ? (
-          <div className="p-16 text-center">
-            <div className="mb-6 inline-flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200">
-              <Building2 className="h-10 w-10 text-gray-400" />
+          <div className="p-12 text-center">
+            <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200">
+              <Building2 className="h-12 w-12 opacity-20" />
             </div>
-            <h3 className="mb-2 text-2xl font-bold text-gray-700">Không có bộ phận nào</h3>
-            <p className="mb-8 text-base text-gray-500">
+            <h3 className="mb-2 text-xl font-bold text-gray-700">Không có bộ phận nào</h3>
+            <p className="mb-6 text-gray-500">
               {searchValue || statusFilter !== 'all'
-                ? '🔍 Thử điều chỉnh bộ lọc hoặc tạo bộ phận mới'
-                : '🚀 Bắt đầu bằng cách tạo bộ phận đầu tiên'}
+                ? 'Thử điều chỉnh bộ lọc hoặc tạo bộ phận mới'
+                : 'Bắt đầu bằng cách tạo bộ phận đầu tiên'}
             </p>
             <Button
               onClick={onCreateDepartment}
-              className="transform rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 px-8 py-3 font-bold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:from-blue-700 hover:to-cyan-700 hover:shadow-xl"
+              className="rounded-lg bg-blue-600 px-6 py-2 text-white transition-all hover:bg-blue-700"
             >
-              <Plus className="mr-2 h-5 w-5" />
+              <Plus className="mr-2 h-4 w-4" />
               Tạo Bộ phận
             </Button>
           </div>

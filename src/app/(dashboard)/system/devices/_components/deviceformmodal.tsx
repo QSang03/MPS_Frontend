@@ -3,15 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-  DialogDescription,
-} from '@/components/ui/dialog'
+import { Dialog, DialogTrigger } from '@/components/ui/dialog'
+import { SystemModalLayout } from '@/components/system/SystemModalLayout'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
@@ -405,453 +398,15 @@ export default function DeviceFormModal({
         </DialogTrigger>
       )}
 
-      <DialogContent className="max-w-[700px] overflow-hidden rounded-2xl border-0 p-0 shadow-2xl">
-        {/* Header with Gradient */}
-        <DialogHeader className="relative overflow-hidden bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600 p-0">
-          <div className="absolute inset-0 bg-black/10"></div>
-          <div className="relative z-10 px-6 py-5 text-white">
-            <div className="flex items-center gap-3">
-              {mode === 'create' ? <Sparkles className="h-6 w-6" /> : <Edit className="h-6 w-6" />}
-              <DialogTitle className="text-2xl font-bold">
-                {mode === 'create' ? 'Tạo thiết bị mới' : 'Chỉnh sửa thiết bị'}
-              </DialogTitle>
-            </div>
-            <DialogDescription className="mt-2 text-white/90">
-              {mode === 'create' ? 'Thêm thiết bị mới vào hệ thống' : 'Cập nhật thông tin thiết bị'}
-            </DialogDescription>
-          </div>
-        </DialogHeader>
-
-        <form onSubmit={handleSubmit} className="bg-white">
-          <div className="max-h-[60vh] space-y-6 overflow-y-auto px-6 py-6">
-            {/* Device Model Section */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 text-sm font-semibold text-blue-700">
-                <Package className="h-4 w-4" />
-                Thông tin Model
-              </div>
-
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2 text-base font-semibold">
-                  <Monitor className="h-4 w-4 text-blue-600" />
-                  Device Model
-                </Label>
-                <Select
-                  value={form.deviceModelId}
-                  onValueChange={(v) => setForm((s: any) => ({ ...s, deviceModelId: v }))}
-                >
-                  <SelectTrigger className="h-11">
-                    <SelectValue
-                      placeholder={modelsLoading ? 'Đang tải model...' : 'Chọn model thiết bị'}
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {modelsLoading && (
-                      <SelectItem value="__loading" disabled>
-                        <div className="flex items-center gap-2">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          Đang tải...
-                        </div>
-                      </SelectItem>
-                    )}
-                    {!modelsLoading && models.length === 0 && (
-                      <SelectItem value="__empty" disabled>
-                        Không có model
-                      </SelectItem>
-                    )}
-                    {models.map((m) => (
-                      <SelectItem key={m.id} value={m.id}>
-                        {m.partNumber ? `${m.partNumber} — ${m.name}` : m.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Customer Section - Only in CREATE mode */}
-            {mode === 'create' && (
-              <>
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 text-sm font-semibold text-rose-700">
-                    <Package className="h-4 w-4" />
-                    Thông tin Khách hàng
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="flex items-center gap-2 text-base font-semibold">
-                      <Package className="h-4 w-4 text-rose-600" />
-                      Khách hàng
-                    </Label>
-                    <Select
-                      value={form.customerId}
-                      onValueChange={(v) => setForm((s: any) => ({ ...s, customerId: v }))}
-                    >
-                      <SelectTrigger className="h-11">
-                        <SelectValue
-                          placeholder={
-                            customersLoading ? 'Đang tải khách hàng...' : 'Chọn khách hàng'
-                          }
-                        />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {customersLoading && (
-                          <SelectItem value="__loading" disabled>
-                            <div className="flex items-center gap-2">
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                              Đang tải...
-                            </div>
-                          </SelectItem>
-                        )}
-                        {!customersLoading && customers.length === 0 && (
-                          <SelectItem value="__empty" disabled>
-                            Không có khách hàng
-                          </SelectItem>
-                        )}
-                        {customers.map((c) => (
-                          <SelectItem key={c.id} value={c.id}>
-                            {c.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <p className="text-xs text-gray-500">
-                      Chọn khách hàng để gán thiết bị. Để trong kho, chọn "Kho Công Ty"
-                    </p>
-                  </div>
-
-                  {/* Customer Location - Only show when customer is NOT warehouse (SYS code) */}
-                  {(() => {
-                    const selectedCustomer = customers.find((c) => c.id === form.customerId)
-                    const isSystemWarehouse = selectedCustomer?.code === 'SYS'
-                    const showField = form.customerId && !isSystemWarehouse
-
-                    return showField ? (
-                      <div className="space-y-2">
-                        <Label className="flex items-center gap-2 text-base font-semibold">
-                          <MapPin className="h-4 w-4 text-rose-600" />
-                          Vị trí tại khách hàng
-                          <span className="text-red-500">*</span>
-                        </Label>
-                        {/* If customer has address as array, show a Select so user can pick an address.
-                            If address is a string or missing, fall back to an Input. */}
-                        {(() => {
-                          const addr = (selectedCustomer as any)?.address
-                          if (Array.isArray(addr) && addr.length > 0) {
-                            return (
-                              <Select
-                                value={form.customerLocation}
-                                onValueChange={(v) =>
-                                  setForm((s: any) => ({ ...s, customerLocation: v }))
-                                }
-                              >
-                                <SelectTrigger className="h-11">
-                                  <SelectValue placeholder="Chọn địa chỉ khách hàng" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {addr.map((a: string, i: number) => (
-                                    <SelectItem key={i} value={a}>
-                                      {a}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            )
-                          }
-
-                          // fallback to text input for single-string addresses or missing addresses
-                          return (
-                            <Input
-                              value={form.customerLocation}
-                              onChange={(e) =>
-                                setForm((s: any) => ({ ...s, customerLocation: e.target.value }))
-                              }
-                              placeholder="Vị trí lắp đặt tại khách hàng..."
-                              className="h-11"
-                              required
-                            />
-                          )
-                        })()}
-
-                        <p className="text-xs text-gray-500">
-                          Chọn hoặc nhập vị trí cụ thể của thiết bị tại khách hàng (phòng, tầng, khu
-                          vực...)
-                        </p>
-                      </div>
-                    ) : null
-                  })()}
-                </div>
-                <Separator />
-              </>
-            )}
-
-            {/* Basic Info Section */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 text-sm font-semibold text-cyan-700">
-                <Hash className="h-4 w-4" />
-                Thông tin cơ bản
-              </div>
-
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2 text-base font-semibold">
-                  <Hash className="h-4 w-4 text-cyan-600" />
-                  Serial Number *
-                </Label>
-                <Input
-                  value={form.serialNumber}
-                  onChange={(e) => setForm((s: any) => ({ ...s, serialNumber: e.target.value }))}
-                  placeholder="SN123456789"
-                  required
-                  className="h-11"
-                />
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-1">
-                <div className="space-y-2">
-                  <Label className="flex items-center gap-2 text-base font-semibold">
-                    <Settings className="h-4 w-4 text-indigo-600" />
-                    Firmware
-                  </Label>
-                  <Input
-                    value={form.firmware}
-                    onChange={(e) => setForm((s: any) => ({ ...s, firmware: e.target.value }))}
-                    placeholder="v1.0.0"
-                    className="h-11"
-                  />
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <p className="text-sm font-semibold text-slate-800">Thuộc sở hữu khách hàng</p>
-                    <p className="text-xs text-slate-500">
-                      Bật nếu thiết bị do khách hàng sở hữu (không thuộc kho công ty).
-                    </p>
-                  </div>
-                  <Switch
-                    checked={!!form.isCustomerOwned}
-                    onCheckedChange={(checked: boolean) =>
-                      setForm((s: any) => ({ ...s, isCustomerOwned: checked }))
-                    }
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Address field in edit mode - Show when device has a customer (not System warehouse) */}
-            {mode === 'edit' &&
-              (() => {
-                const currentCustomerId =
-                  form.customerId || (device as any)?.customerId || (device as any)?.customer?.id
-                const selectedCustomer = customers.find((c) => c.id === currentCustomerId)
-                const isSystemWarehouse = selectedCustomer?.code === 'SYS'
-                const showAddressField =
-                  currentCustomerId &&
-                  !isSystemWarehouse &&
-                  (customerAddresses.length > 0 || loadingAddresses)
-
-                return showAddressField ? (
-                  <div className="mt-4">
-                    <Label className="flex items-center gap-2 text-base font-semibold">
-                      <MapPin className="h-4 w-4 text-rose-600" />
-                      Địa chỉ
-                    </Label>
-                    {loadingAddresses ? (
-                      <div className="mt-2 flex items-center gap-2 text-sm text-gray-500">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Đang tải địa chỉ...
-                      </div>
-                    ) : customerAddresses.length > 0 ? (
-                      <Select
-                        value={form.customerLocation}
-                        onValueChange={(v) => setForm((s: any) => ({ ...s, customerLocation: v }))}
-                      >
-                        <SelectTrigger className="mt-2 h-11">
-                          <SelectValue placeholder="Chọn địa chỉ khách hàng" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {customerAddresses.map((addr, i) => (
-                            <SelectItem key={i} value={addr}>
-                              {addr}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <Input
-                        value={form.customerLocation}
-                        onChange={(e) =>
-                          setForm((s: any) => ({ ...s, customerLocation: e.target.value }))
-                        }
-                        placeholder="Nhập địa chỉ..."
-                        className="mt-2 h-11"
-                      />
-                    )}
-                    <p className="mt-1 text-xs text-gray-500">
-                      {customerAddresses.length > 0
-                        ? 'Chọn địa chỉ từ danh sách địa chỉ của khách hàng'
-                        : 'Nhập địa chỉ của thiết bị tại khách hàng'}
-                    </p>
-                  </div>
-                ) : null
-              })()}
-
-            {/* Active toggle & reason (only in edit mode) */}
-            {mode === 'edit' && (
-              <div className="mt-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-base font-semibold text-gray-700">
-                    <Package className="h-4 w-4 text-gray-600" />
-                    Trạng thái hoạt động
-                  </div>
-                  <div>
-                    <Switch
-                      checked={!!form.isActive}
-                      onCheckedChange={(v: any) =>
-                        setForm((s: any) => {
-                          const isActiveNew = !!v
-                          // adjust status default when toggling
-                          let newStatus = s.status
-                          if (!isActiveNew) {
-                            // switch to a safe inactive status if current is active-type
-                            if (
-                              ['ACTIVE', 'MAINTENANCE', 'ERROR', 'OFFLINE'].includes(
-                                String(s.status) as any
-                              )
-                            ) {
-                              newStatus = DEVICE_STATUS.DECOMMISSIONED
-                            }
-                          } else {
-                            // switching to active: if currently DECOMMISSIONED/SUSPENDED, set to ACTIVE
-                            if (
-                              [DEVICE_STATUS.DECOMMISSIONED, DEVICE_STATUS.SUSPENDED].includes(
-                                String(s.status) as any
-                              )
-                            ) {
-                              newStatus = DEVICE_STATUS.ACTIVE
-                            }
-                          }
-                          return {
-                            ...s,
-                            isActive: isActiveNew,
-                            status: newStatus,
-                            // clear reasons when re-activating
-                            inactiveReasonOption: isActiveNew ? '' : s.inactiveReasonOption,
-                            inactiveReasonText: isActiveNew ? '' : s.inactiveReasonText,
-                          }
-                        })
-                      }
-                    />
-                  </div>
-                </div>
-
-                {/* Status selector */}
-                <div className="mt-3">
-                  <Label className="text-sm font-medium">Trạng thái</Label>
-                  <Select
-                    value={form.status}
-                    onValueChange={(v) => setForm((s: any) => ({ ...s, status: v }))}
-                  >
-                    <SelectTrigger className="h-11">
-                      <SelectValue placeholder="Chọn trạng thái" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {form.isActive ? (
-                        <>
-                          <SelectItem value="ACTIVE">Active</SelectItem>
-                          <SelectItem value="MAINTENANCE">Maintenance</SelectItem>
-                          <SelectItem value="ERROR">Error</SelectItem>
-                          <SelectItem value="OFFLINE">Offline</SelectItem>
-                        </>
-                      ) : (
-                        <>
-                          <SelectItem value="DECOMMISSIONED">Decommissioned</SelectItem>
-                          <SelectItem value="SUSPENDED">Suspended</SelectItem>
-                        </>
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Show reason selector when isActive is false */}
-                {form.isActive === false && (
-                  <div className="mt-3 space-y-2">
-                    <Label className="text-sm font-medium">Lý do</Label>
-                    <Select
-                      value={form.inactiveReasonOption}
-                      onValueChange={(v) =>
-                        setForm((s: any) => ({ ...s, inactiveReasonOption: v }))
-                      }
-                    >
-                      <SelectTrigger className="h-11">
-                        <SelectValue placeholder="Chọn lý do " />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Tạm dừng do lỗi">Tạm dừng do lỗi</SelectItem>
-                        <SelectItem value="Hủy HĐ">Hủy HĐ</SelectItem>
-                        <SelectItem value="Hoàn tất HĐ">Hoàn tất HĐ</SelectItem>
-                        <SelectItem value="__other">Khác</SelectItem>
-                      </SelectContent>
-                    </Select>
-
-                    {form.inactiveReasonOption === '__other' && (
-                      <Input
-                        value={form.inactiveReasonText}
-                        onChange={(e) =>
-                          setForm((s: any) => ({ ...s, inactiveReasonText: e.target.value }))
-                        }
-                        placeholder="Nhập lý do..."
-                        className="h-11"
-                      />
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-
-            <Separator />
-
-            {/* Network Info Section */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 text-sm font-semibold text-teal-700">
-                <Wifi className="h-4 w-4" />
-                Thông tin mạng
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label className="flex items-center gap-2 text-base font-semibold">
-                    <Wifi className="h-4 w-4 text-blue-600" />
-                    Địa chỉ IP
-                  </Label>
-                  <Input
-                    value={form.ipAddress}
-                    onChange={(e) => setForm((s: any) => ({ ...s, ipAddress: e.target.value }))}
-                    placeholder="192.168.1.100"
-                    className="h-11 font-mono"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="flex items-center gap-2 text-base font-semibold">
-                    <HardDrive className="h-4 w-4 text-purple-600" />
-                    Địa chỉ MAC
-                  </Label>
-                  <Input
-                    value={form.macAddress}
-                    onChange={(e) => setForm((s: any) => ({ ...s, macAddress: e.target.value }))}
-                    placeholder="00:00:00:00:00:00"
-                    className="h-11 font-mono"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <DialogFooter className="border-t bg-gray-50 px-6 py-4">
+      <SystemModalLayout
+        title={mode === 'create' ? 'Tạo thiết bị mới' : 'Chỉnh sửa thiết bị'}
+        description={
+          mode === 'create' ? 'Thêm thiết bị mới vào hệ thống' : 'Cập nhật thông tin thiết bị'
+        }
+        icon={mode === 'create' ? Sparkles : Edit}
+        variant={mode}
+        footer={
+          <>
             <Button
               type="button"
               variant="outline"
@@ -863,6 +418,7 @@ export default function DeviceFormModal({
             </Button>
             <Button
               type="submit"
+              form="device-form"
               disabled={submitting}
               className="min-w-[120px] bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
             >
@@ -883,9 +439,435 @@ export default function DeviceFormModal({
                 </>
               )}
             </Button>
-          </DialogFooter>
+          </>
+        }
+      >
+        <form id="device-form" onSubmit={handleSubmit} className="space-y-6">
+          {/* Device Model Section */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 text-sm font-semibold text-blue-700">
+              <Package className="h-4 w-4" />
+              Thông tin Model
+            </div>
+
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2 text-base font-semibold">
+                <Monitor className="h-4 w-4 text-blue-600" />
+                Device Model
+              </Label>
+              <Select
+                value={form.deviceModelId}
+                onValueChange={(v) => setForm((s: any) => ({ ...s, deviceModelId: v }))}
+              >
+                <SelectTrigger className="h-11">
+                  <SelectValue
+                    placeholder={modelsLoading ? 'Đang tải model...' : 'Chọn model thiết bị'}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {modelsLoading && (
+                    <SelectItem value="__loading" disabled>
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Đang tải...
+                      </div>
+                    </SelectItem>
+                  )}
+                  {!modelsLoading && models.length === 0 && (
+                    <SelectItem value="__empty" disabled>
+                      Không có model
+                    </SelectItem>
+                  )}
+                  {models.map((m) => (
+                    <SelectItem key={m.id} value={m.id}>
+                      {m.partNumber ? `${m.partNumber} — ${m.name}` : m.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Customer Section - Only in CREATE mode */}
+          {mode === 'create' && (
+            <>
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-sm font-semibold text-rose-700">
+                  <Package className="h-4 w-4" />
+                  Thông tin Khách hàng
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2 text-base font-semibold">
+                    <Package className="h-4 w-4 text-rose-600" />
+                    Khách hàng
+                  </Label>
+                  <Select
+                    value={form.customerId}
+                    onValueChange={(v) => setForm((s: any) => ({ ...s, customerId: v }))}
+                  >
+                    <SelectTrigger className="h-11">
+                      <SelectValue
+                        placeholder={
+                          customersLoading ? 'Đang tải khách hàng...' : 'Chọn khách hàng'
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {customersLoading && (
+                        <SelectItem value="__loading" disabled>
+                          <div className="flex items-center gap-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Đang tải...
+                          </div>
+                        </SelectItem>
+                      )}
+                      {!customersLoading && customers.length === 0 && (
+                        <SelectItem value="__empty" disabled>
+                          Không có khách hàng
+                        </SelectItem>
+                      )}
+                      {customers.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>
+                          {c.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-gray-500">
+                    Chọn khách hàng để gán thiết bị. Để trong kho, chọn "Kho Công Ty"
+                  </p>
+                </div>
+
+                {/* Customer Location - Only show when customer is NOT warehouse (SYS code) */}
+                {(() => {
+                  const selectedCustomer = customers.find((c) => c.id === form.customerId)
+                  const isSystemWarehouse = selectedCustomer?.code === 'SYS'
+                  const showField = form.customerId && !isSystemWarehouse
+
+                  return showField ? (
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-2 text-base font-semibold">
+                        <MapPin className="h-4 w-4 text-rose-600" />
+                        Vị trí tại khách hàng
+                        <span className="text-red-500">*</span>
+                      </Label>
+                      {/* If customer has address as array, show a Select so user can pick an address.
+                            If address is a string or missing, fall back to an Input. */}
+                      {(() => {
+                        const addr = (selectedCustomer as any)?.address
+                        if (Array.isArray(addr) && addr.length > 0) {
+                          return (
+                            <Select
+                              value={form.customerLocation}
+                              onValueChange={(v) =>
+                                setForm((s: any) => ({ ...s, customerLocation: v }))
+                              }
+                            >
+                              <SelectTrigger className="h-11">
+                                <SelectValue placeholder="Chọn địa chỉ khách hàng" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {addr.map((a: string, i: number) => (
+                                  <SelectItem key={i} value={a}>
+                                    {a}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          )
+                        }
+
+                        // fallback to text input for single-string addresses or missing addresses
+                        return (
+                          <Input
+                            value={form.customerLocation}
+                            onChange={(e) =>
+                              setForm((s: any) => ({ ...s, customerLocation: e.target.value }))
+                            }
+                            placeholder="Vị trí lắp đặt tại khách hàng..."
+                            className="h-11"
+                            required
+                          />
+                        )
+                      })()}
+
+                      <p className="text-xs text-gray-500">
+                        Chọn hoặc nhập vị trí cụ thể của thiết bị tại khách hàng (phòng, tầng, khu
+                        vực...)
+                      </p>
+                    </div>
+                  ) : null
+                })()}
+              </div>
+              <Separator />
+            </>
+          )}
+
+          {/* Basic Info Section */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 text-sm font-semibold text-cyan-700">
+              <Hash className="h-4 w-4" />
+              Thông tin cơ bản
+            </div>
+
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2 text-base font-semibold">
+                <Hash className="h-4 w-4 text-cyan-600" />
+                Serial Number *
+              </Label>
+              <Input
+                value={form.serialNumber}
+                onChange={(e) => setForm((s: any) => ({ ...s, serialNumber: e.target.value }))}
+                placeholder="SN123456789"
+                required
+                className="h-11"
+              />
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-1">
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2 text-base font-semibold">
+                  <Settings className="h-4 w-4 text-indigo-600" />
+                  Firmware
+                </Label>
+                <Input
+                  value={form.firmware}
+                  onChange={(e) => setForm((s: any) => ({ ...s, firmware: e.target.value }))}
+                  placeholder="v1.0.0"
+                  className="h-11"
+                />
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm font-semibold text-slate-800">Thuộc sở hữu khách hàng</p>
+                  <p className="text-xs text-slate-500">
+                    Bật nếu thiết bị do khách hàng sở hữu (không thuộc kho công ty).
+                  </p>
+                </div>
+                <Switch
+                  checked={!!form.isCustomerOwned}
+                  onCheckedChange={(checked: boolean) =>
+                    setForm((s: any) => ({ ...s, isCustomerOwned: checked }))
+                  }
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Address field in edit mode - Show when device has a customer (not System warehouse) */}
+          {mode === 'edit' &&
+            (() => {
+              const currentCustomerId =
+                form.customerId || (device as any)?.customerId || (device as any)?.customer?.id
+              const selectedCustomer = customers.find((c) => c.id === currentCustomerId)
+              const isSystemWarehouse = selectedCustomer?.code === 'SYS'
+              const showAddressField =
+                currentCustomerId &&
+                !isSystemWarehouse &&
+                (customerAddresses.length > 0 || loadingAddresses)
+
+              return showAddressField ? (
+                <div className="mt-4">
+                  <Label className="flex items-center gap-2 text-base font-semibold">
+                    <MapPin className="h-4 w-4 text-rose-600" />
+                    Địa chỉ
+                  </Label>
+                  {loadingAddresses ? (
+                    <div className="mt-2 flex items-center gap-2 text-sm text-gray-500">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Đang tải địa chỉ...
+                    </div>
+                  ) : customerAddresses.length > 0 ? (
+                    <Select
+                      value={form.customerLocation}
+                      onValueChange={(v) => setForm((s: any) => ({ ...s, customerLocation: v }))}
+                    >
+                      <SelectTrigger className="mt-2 h-11">
+                        <SelectValue placeholder="Chọn địa chỉ khách hàng" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {customerAddresses.map((addr, i) => (
+                          <SelectItem key={i} value={addr}>
+                            {addr}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Input
+                      value={form.customerLocation}
+                      onChange={(e) =>
+                        setForm((s: any) => ({ ...s, customerLocation: e.target.value }))
+                      }
+                      placeholder="Nhập địa chỉ..."
+                      className="mt-2 h-11"
+                    />
+                  )}
+                  <p className="mt-1 text-xs text-gray-500">
+                    {customerAddresses.length > 0
+                      ? 'Chọn địa chỉ từ danh sách địa chỉ của khách hàng'
+                      : 'Nhập địa chỉ của thiết bị tại khách hàng'}
+                  </p>
+                </div>
+              ) : null
+            })()}
+
+          {/* Active toggle & reason (only in edit mode) */}
+          {mode === 'edit' && (
+            <div className="mt-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-base font-semibold text-gray-700">
+                  <Package className="h-4 w-4 text-gray-600" />
+                  Trạng thái hoạt động
+                </div>
+                <div>
+                  <Switch
+                    checked={!!form.isActive}
+                    onCheckedChange={(v: any) =>
+                      setForm((s: any) => {
+                        const isActiveNew = !!v
+                        // adjust status default when toggling
+                        let newStatus = s.status
+                        if (!isActiveNew) {
+                          // switch to a safe inactive status if current is active-type
+                          if (
+                            ['ACTIVE', 'MAINTENANCE', 'ERROR', 'OFFLINE'].includes(
+                              String(s.status) as any
+                            )
+                          ) {
+                            newStatus = DEVICE_STATUS.DECOMMISSIONED
+                          }
+                        } else {
+                          // switching to active: if currently DECOMMISSIONED/SUSPENDED, set to ACTIVE
+                          if (
+                            [DEVICE_STATUS.DECOMMISSIONED, DEVICE_STATUS.SUSPENDED].includes(
+                              String(s.status) as any
+                            )
+                          ) {
+                            newStatus = DEVICE_STATUS.ACTIVE
+                          }
+                        }
+                        return {
+                          ...s,
+                          isActive: isActiveNew,
+                          status: newStatus,
+                          // clear reasons when re-activating
+                          inactiveReasonOption: isActiveNew ? '' : s.inactiveReasonOption,
+                          inactiveReasonText: isActiveNew ? '' : s.inactiveReasonText,
+                        }
+                      })
+                    }
+                  />
+                </div>
+              </div>
+
+              {/* Status selector */}
+              <div className="mt-3">
+                <Label className="text-sm font-medium">Trạng thái</Label>
+                <Select
+                  value={form.status}
+                  onValueChange={(v) => setForm((s: any) => ({ ...s, status: v }))}
+                >
+                  <SelectTrigger className="h-11">
+                    <SelectValue placeholder="Chọn trạng thái" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {form.isActive ? (
+                      <>
+                        <SelectItem value="ACTIVE">Active</SelectItem>
+                        <SelectItem value="MAINTENANCE">Maintenance</SelectItem>
+                        <SelectItem value="ERROR">Error</SelectItem>
+                        <SelectItem value="OFFLINE">Offline</SelectItem>
+                      </>
+                    ) : (
+                      <>
+                        <SelectItem value="DECOMMISSIONED">Decommissioned</SelectItem>
+                        <SelectItem value="SUSPENDED">Suspended</SelectItem>
+                      </>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Show reason selector when isActive is false */}
+              {form.isActive === false && (
+                <div className="mt-3 space-y-2">
+                  <Label className="text-sm font-medium">Lý do</Label>
+                  <Select
+                    value={form.inactiveReasonOption}
+                    onValueChange={(v) => setForm((s: any) => ({ ...s, inactiveReasonOption: v }))}
+                  >
+                    <SelectTrigger className="h-11">
+                      <SelectValue placeholder="Chọn lý do " />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Tạm dừng do lỗi">Tạm dừng do lỗi</SelectItem>
+                      <SelectItem value="Hủy HĐ">Hủy HĐ</SelectItem>
+                      <SelectItem value="Hoàn tất HĐ">Hoàn tất HĐ</SelectItem>
+                      <SelectItem value="__other">Khác</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  {form.inactiveReasonOption === '__other' && (
+                    <Input
+                      value={form.inactiveReasonText}
+                      onChange={(e) =>
+                        setForm((s: any) => ({ ...s, inactiveReasonText: e.target.value }))
+                      }
+                      placeholder="Nhập lý do..."
+                      className="h-11"
+                    />
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          <Separator />
+
+          {/* Network Info Section */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 text-sm font-semibold text-teal-700">
+              <Wifi className="h-4 w-4" />
+              Thông tin mạng
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2 text-base font-semibold">
+                  <Wifi className="h-4 w-4 text-blue-600" />
+                  Địa chỉ IP
+                </Label>
+                <Input
+                  value={form.ipAddress}
+                  onChange={(e) => setForm((s: any) => ({ ...s, ipAddress: e.target.value }))}
+                  placeholder="192.168.1.100"
+                  className="h-11 font-mono"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2 text-base font-semibold">
+                  <HardDrive className="h-4 w-4 text-purple-600" />
+                  Địa chỉ MAC
+                </Label>
+                <Input
+                  value={form.macAddress}
+                  onChange={(e) => setForm((s: any) => ({ ...s, macAddress: e.target.value }))}
+                  placeholder="00:00:00:00:00:00"
+                  className="h-11 font-mono"
+                />
+              </div>
+            </div>
+          </div>
         </form>
-      </DialogContent>
+      </SystemModalLayout>
     </Dialog>
   )
 }

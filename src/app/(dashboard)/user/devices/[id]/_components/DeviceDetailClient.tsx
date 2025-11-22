@@ -12,12 +12,12 @@ import {
   Package,
   Info,
   Wifi,
-  MapPin,
   Box,
   Calendar,
   Wrench,
   BarChart3,
   AlertCircle,
+  RefreshCw,
 } from 'lucide-react'
 import { FileText } from 'lucide-react'
 import { ServiceRequestFormModal } from '@/app/(dashboard)/user/my-requests/_components/ServiceRequestFormModal'
@@ -28,6 +28,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { devicesClientService } from '@/lib/api/services/devices-client.service'
+import internalApiClient from '@/lib/api/internal-client'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -44,6 +45,9 @@ import { useRouter } from 'next/navigation'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { ActionGuard } from '@/components/shared/ActionGuard'
 import { cn } from '@/lib/utils'
+import DeviceHeader from '@/components/device/DeviceHeader'
+import InfoCard from '@/components/ui/InfoCard'
+import type { MonthlyUsagePagesItem } from '@/types/api'
 
 interface Props {
   deviceId: string
@@ -68,6 +72,32 @@ export default function DeviceDetailClient({ deviceId, backHref }: Props) {
   const [installedConsumables, setInstalledConsumables] = useState<any[]>([])
   const [consumablesLoading, setConsumablesLoading] = useState(false)
   const [activeTab, setActiveTab] = useState('overview')
+
+  // monthly usage state (aligned with admin)
+  const [usageFromMonth, setUsageFromMonth] = useState('')
+  const [usageToMonth, setUsageToMonth] = useState('')
+  const [monthlyUsageItems, setMonthlyUsageItems] = useState<MonthlyUsagePagesItem[]>([])
+  const [monthlyUsageLoading, setMonthlyUsageLoading] = useState(false)
+  const [monthlyUsageError, setMonthlyUsageError] = useState<string | null>(null)
+
+  const customerId = (device as any)?.customer?.id
+
+  const getDefaultDateRange = () => {
+    const now = new Date()
+    const to = new Date(now.getFullYear(), now.getMonth(), 1)
+    const from = new Date(to)
+    from.setMonth(from.getMonth() - 11)
+    const fmt = (d: Date) =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}` as string
+    return {
+      fromMonth: fmt(from),
+      toMonth: fmt(to),
+    }
+  }
+
+  const fmtNumber = (v?: number | null) => (typeof v === 'number' ? v.toLocaleString('vi-VN') : '-')
+  const fmtNumberA4 = (v?: number | null) =>
+    typeof v === 'number' ? v.toLocaleString('vi-VN', { maximumFractionDigits: 2 }) : '-'
 
   useEffect(() => {
     let mounted = true
@@ -98,6 +128,35 @@ export default function DeviceDetailClient({ deviceId, backHref }: Props) {
       mounted = false
     }
   }, [deviceId])
+
+  useEffect(() => {
+    const range = getDefaultDateRange()
+    setUsageFromMonth(range.fromMonth)
+    setUsageToMonth(range.toMonth)
+  }, [])
+
+  const refetchMonthlyUsage = async () => {
+    if (!deviceId) return
+    setMonthlyUsageLoading(true)
+    setMonthlyUsageError(null)
+    try {
+      const res = await internalApiClient.get<{
+        items: MonthlyUsagePagesItem[]
+      }>(
+        `/api/reports/usage/pages?deviceId=${encodeURIComponent(
+          deviceId
+        )}&fromMonth=${encodeURIComponent(usageFromMonth)}&toMonth=${encodeURIComponent(
+          usageToMonth
+        )}`
+      )
+      setMonthlyUsageItems(res?.data?.items ?? [])
+    } catch (err) {
+      console.error('Failed to load monthly usage (user view)', err)
+      setMonthlyUsageError('Đã xảy ra lỗi khi tải dữ liệu')
+    } finally {
+      setMonthlyUsageLoading(false)
+    }
+  }
 
   useEffect(() => {
     let mounted = true
@@ -227,130 +286,136 @@ export default function DeviceDetailClient({ deviceId, backHref }: Props) {
 
   return (
     <div className="space-y-6">
-      {/* Header with Gradient (system-like) */}
-      <div className="rounded-2xl bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600 p-6 text-white shadow-lg">
-        <div className="flex items-center justify-between">
-          <div className="space-y-2">
+      {/* Header: use new DeviceHeader component and keep back button above it */}
+      <div>
+        <div className="mb-2">
+          <Link href={backHref ?? '/user/devices'}>
+            <Button variant="ghost" className="gap-2">
+              <ArrowLeft className="h-4 w-4" /> Quay lại
+            </Button>
+          </Link>
+        </div>
+
+        {/* prepare right-side actions to pass into DeviceHeader */}
+        {/** preserve previous status badges and action buttons by passing as rightContent */}
+        {(() => {
+          const headerRight = (
             <div className="flex items-center gap-3">
-              <Link href={backHref ?? '/user/devices'}>
-                <Button variant="ghost" className="gap-2 text-white hover:bg-white/20">
-                  <ArrowLeft className="h-4 w-4" />
-                  Quay lại
-                </Button>
-              </Link>
-            </div>
-            <div className="flex items-center gap-4">
-              <Monitor className="h-10 w-10 text-white" />
-              <div>
-                <h1 className="text-3xl font-bold">Thiết bị {device.serialNumber}</h1>
-                <p className="mt-1 text-white/80">
-                  {device.deviceModel?.name || device.model || 'N/A'}
-                </p>
-              </div>
-            </div>
-          </div>
+              {getStatusBadge(device.isActive)}
+              {renderStatusChip()}
 
-          <div className="flex items-center gap-3">
-            {getStatusBadge(device.isActive)}
-            {renderStatusChip()}
-
-            <ActionGuard pageId="devices" actionId="set-a4-pricing">
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => toast('A4 snapshot (user view)')}
-                className="gap-2 bg-white text-black"
-                title="Ghi/Chỉnh sửa snapshot A4"
-              >
-                <BarChart3 className="h-4 w-4 text-black dark:text-white" />
-                A4
-              </Button>
-            </ActionGuard>
-
-            {/* Create Service Request (user) - preselect this device */}
-            <ServiceRequestFormModal
-              customerId={(device as unknown as { customer?: { id?: string } })?.customer?.id ?? ''}
-              preselectedDeviceId={deviceId}
-              onSuccess={() => {
-                toast.success('Yêu cầu đã được gửi')
-              }}
-            >
-              <Button variant="secondary" size="sm" className="gap-2">
-                <FileText className="h-4 w-4 text-black dark:text-white" />
-                Tạo yêu cầu
-              </Button>
-            </ServiceRequestFormModal>
-
-            {Boolean(device?.isActive) ? (
-              <ActionGuard pageId="devices" actionId="update">
+              <ActionGuard pageId="devices" actionId="set-a4-pricing">
                 <Button
                   variant="secondary"
                   size="sm"
-                  onClick={() => setShowEdit(true)}
-                  className="gap-2"
+                  onClick={() => toast('A4 snapshot (user view)')}
+                  className="gap-2 bg-white text-black"
+                  title="Ghi/Chỉnh sửa snapshot A4"
                 >
-                  <Edit className="h-4 w-4 text-black dark:text-white" />
-                  Chỉnh sửa
+                  <BarChart3 className="h-4 w-4 text-black dark:text-white" />
+                  A4
                 </Button>
               </ActionGuard>
-            ) : (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div>
-                    <Button variant="secondary" size="sm" disabled className="gap-2">
-                      <Edit className="h-4 w-4" />
-                      Chỉnh sửa
-                    </Button>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent sideOffset={4}>{`Thiết bị không hoạt động.`}</TooltipContent>
-              </Tooltip>
-            )}
 
-            {Boolean(device?.isActive) ? (
-              <ActionGuard pageId="devices" actionId="delete">
-                <DeleteDialog
-                  title="Xóa thiết bị"
-                  description="Bạn có chắc muốn xóa thiết bị này? Hành động không thể hoàn tác."
-                  onConfirm={async () => {
-                    try {
-                      await devicesClientService.delete(deviceId)
-                      toast.success('Xóa thiết bị thành công')
-                      if (backHref) router.push(backHref)
-                      else router.push('/user/devices')
-                    } catch (err) {
-                      console.error('Delete device failed', err)
-                      toast.error('Xóa thiết bị thất bại')
+              <ServiceRequestFormModal
+                customerId={
+                  (device as unknown as { customer?: { id?: string } })?.customer?.id ?? ''
+                }
+                preselectedDeviceId={deviceId}
+                onSuccess={() => {
+                  toast.success('Yêu cầu đã được gửi')
+                }}
+              >
+                <Button variant="secondary" size="sm" className="gap-2">
+                  <FileText className="h-4 w-4 text-black dark:text-white" />
+                  Tạo yêu cầu
+                </Button>
+              </ServiceRequestFormModal>
+
+              {Boolean(device?.isActive) ? (
+                <ActionGuard pageId="devices" actionId="update">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setShowEdit(true)}
+                    className="gap-2"
+                  >
+                    <Edit className="h-4 w-4 text-black dark:text-white" />
+                    Chỉnh sửa
+                  </Button>
+                </ActionGuard>
+              ) : (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <Button variant="secondary" size="sm" disabled className="gap-2">
+                        <Edit className="h-4 w-4" />
+                        Chỉnh sửa
+                      </Button>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent sideOffset={4}>{`Thiết bị không hoạt động.`}</TooltipContent>
+                </Tooltip>
+              )}
+
+              {Boolean(device?.isActive) ? (
+                <ActionGuard pageId="devices" actionId="delete">
+                  <DeleteDialog
+                    title="Xóa thiết bị"
+                    description="Bạn có chắc muốn xóa thiết bị này? Hành động không thể hoàn tác."
+                    onConfirm={async () => {
+                      try {
+                        await devicesClientService.delete(deviceId)
+                        toast.success('Xóa thiết bị thành công')
+                        if (backHref) router.push(backHref)
+                        else router.push('/user/devices')
+                      } catch (err) {
+                        console.error('Delete device failed', err)
+                        toast.error('Xóa thiết bị thất bại')
+                      }
+                    }}
+                    trigger={
+                      <Button variant="destructive" size="sm" className="gap-2">
+                        <Trash2 className="h-4 w-4 text-black dark:text-white" />
+                        Xóa
+                      </Button>
                     }
-                  }}
-                  trigger={
-                    <Button variant="destructive" size="sm" className="gap-2">
-                      <Trash2 className="h-4 w-4 text-black dark:text-white" />
-                      Xóa
-                    </Button>
-                  }
-                />
-              </ActionGuard>
-            ) : (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div>
-                    <Button variant="destructive" size="sm" disabled className="gap-2">
-                      <Trash2 className="h-4 w-4" />
-                      Xóa
-                    </Button>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent sideOffset={4}>{`Thiết bị không hoạt động.`}</TooltipContent>
-              </Tooltip>
-            )}
-          </div>
-        </div>
+                  />
+                </ActionGuard>
+              ) : (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <Button variant="destructive" size="sm" disabled className="gap-2">
+                        <Trash2 className="h-4 w-4" />
+                        Xóa
+                      </Button>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent sideOffset={4}>{`Thiết bị không hoạt động.`}</TooltipContent>
+                </Tooltip>
+              )}
+            </div>
+          )
+
+          return (
+            <DeviceHeader
+              device={{
+                // Match admin: show serial only without prefix
+                name: device.serialNumber ?? '---',
+                model: device.deviceModel?.name || device.model,
+                iconUrl: undefined,
+                active: Boolean(device.isActive),
+              }}
+              rightContent={headerRight}
+            />
+          )
+        })()}
       </div>
 
-      {/* Tabs (system-like) */}
+      {/* Tabs - align with admin layout (4 tabs) */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="mb-6 grid w-full grid-cols-3">
+        <TabsList className="mb-6 grid w-full grid-cols-4">
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <Info className="h-4 w-4 text-black dark:text-white" />
             Tổng quan
@@ -363,107 +428,254 @@ export default function DeviceDetailClient({ deviceId, backHref }: Props) {
             <Wrench className="h-4 w-4 text-black dark:text-white" />
             Bảo trì
           </TabsTrigger>
+          <TabsTrigger value="history" className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4 text-black dark:text-white" />
+            Lịch sử vật tư
+          </TabsTrigger>
         </TabsList>
 
+        {/* Overview Tab - align with admin (info cards + usage stats + monthly table) */}
         <TabsContent value="overview" className="space-y-6">
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Wifi className="h-5 w-5 text-black dark:text-white" />
-                  Thông tin mạng
-                </CardTitle>
-                <CardDescription>Cấu hình kết nối và địa chỉ</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-3">
-                  <div className="flex items-start justify-between rounded-lg bg-blue-50 p-3">
-                    <div>
-                      <p className="text-muted-foreground mb-1 text-sm font-medium">Địa chỉ IP</p>
-                      <p className="font-mono text-base font-semibold text-blue-700">
-                        {device.ipAddress || 'Chưa cấu hình'}
-                      </p>
-                    </div>
-                    <Wifi className="h-5 w-5 text-black dark:text-white" />
-                  </div>
+            <InfoCard
+              title="Thông tin mạng"
+              titleIcon={<Wifi className="h-4 w-4 text-blue-600" />}
+              items={[
+                { label: 'Địa chỉ IP', value: device.ipAddress || 'Chưa cấu hình', mono: true },
+                {
+                  label: 'Địa chỉ MAC',
+                  value: device.macAddress || 'Chưa có thông tin',
+                  mono: true,
+                },
+                { label: 'Firmware', value: device.firmware || 'N/A' },
+              ]}
+            />
 
-                  <div className="flex items-start justify-between rounded-lg bg-purple-50 p-3">
-                    <div>
-                      <p className="text-muted-foreground mb-1 text-sm font-medium">Địa chỉ MAC</p>
-                      <p className="font-mono text-base font-semibold text-purple-700">
-                        {device.macAddress || 'Chưa có thông tin'}
-                      </p>
-                    </div>
-                    <Box className="h-5 w-5 text-black dark:text-white" />
-                  </div>
-
-                  <div className="flex items-start justify-between rounded-lg bg-green-50 p-3">
-                    <div>
-                      <p className="text-muted-foreground mb-1 text-sm font-medium">Firmware</p>
-                      <p className="text-base font-semibold text-green-700">
-                        {device.firmware || 'N/A'}
-                      </p>
-                    </div>
-                    <Monitor className="h-5 w-5 text-black dark:text-white" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Monitor className="h-5 w-5 text-black dark:text-white" />
-                  Thông tin thiết bị
-                </CardTitle>
-                <CardDescription>Chi tiết và trạng thái</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-3">
-                  <div className="flex items-start justify-between rounded-lg bg-teal-50 p-3">
-                    <div>
-                      <p className="text-muted-foreground mb-1 text-sm font-medium">Số Serial</p>
-                      <p className="text-base font-semibold text-teal-700">{device.serialNumber}</p>
-                    </div>
-                    <Box className="h-5 w-5 text-black dark:text-white" />
-                  </div>
-
-                  <div className="flex items-start justify-between rounded-lg bg-orange-50 p-3">
-                    <div>
-                      <p className="text-muted-foreground mb-1 text-sm font-medium">Vị trí</p>
-                      <p className="text-base font-semibold text-orange-700">
-                        {device.location || 'Chưa xác định'}
-                      </p>
-                    </div>
-                    <MapPin className="h-5 w-5 text-black dark:text-white" />
-                  </div>
-
-                  <div className="flex items-start justify-between rounded-lg bg-indigo-50 p-3">
-                    <div>
-                      <p className="text-muted-foreground mb-1 text-sm font-medium">
-                        Lần truy cập cuối
-                      </p>
-                      <p className="text-base font-semibold text-indigo-700">
-                        {device.lastSeen
-                          ? new Date(device.lastSeen).toLocaleString('vi-VN')
-                          : 'Chưa có dữ liệu'}
-                      </p>
-                    </div>
-                    <Calendar className="h-5 w-5 text-black dark:text-white" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <InfoCard
+              title="Thông tin thiết bị"
+              titleIcon={<Monitor className="h-4 w-4 text-teal-600" />}
+              items={[
+                { label: 'Số Serial', value: device.serialNumber || '-', mono: true },
+                { label: 'Vị trí', value: device.location || 'Chưa xác định' },
+                {
+                  label: 'Lần truy cập cuối',
+                  value: device.lastSeen
+                    ? new Date(device.lastSeen).toLocaleString('vi-VN')
+                    : 'Chưa có dữ liệu',
+                },
+              ]}
+            />
           </div>
+
+          {/* Thống kê sử dụng */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="h-5 w-5 text-cyan-600" />
+                Thống kê sử dụng
+              </CardTitle>
+              <CardDescription>Số liệu hoạt động của thiết bị</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                <div className="rounded-xl border border-cyan-200 bg-gradient-to-br from-cyan-50 to-blue-50 p-4">
+                  <p className="text-muted-foreground mb-2 text-sm font-medium">
+                    Tổng số trang đã in
+                  </p>
+                  <p className="text-3xl font-bold text-cyan-700">
+                    {device.totalPagesUsed?.toLocaleString('vi-VN') || '0'}
+                  </p>
+                  <p className="text-muted-foreground mt-1 text-xs">trang</p>
+                </div>
+
+                <div className="rounded-xl border border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 p-4">
+                  <p className="text-muted-foreground mb-2 text-sm font-medium">Trạng thái</p>
+                  <p className="text-2xl font-bold text-green-700">
+                    {Boolean(device?.isActive) ? 'Hoạt động' : 'Tạm dừng'}
+                  </p>
+                  <p className="text-muted-foreground mt-1 text-xs">hiện tại</p>
+                </div>
+
+                <div className="rounded-xl border border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50 p-4">
+                  <p className="text-muted-foreground mb-2 text-sm font-medium">Model</p>
+                  <p className="text-lg font-bold text-purple-700">
+                    {device.deviceModel?.name || 'N/A'}
+                  </p>
+                  <p className="text-muted-foreground mt-1 text-xs">thiết bị</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Sử dụng trang theo tháng */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5 text-indigo-600" />
+                    Sử dụng trang theo tháng
+                  </CardTitle>
+                  <CardDescription>Thống kê số trang in theo tháng</CardDescription>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => refetchMonthlyUsage()}
+                  className="gap-2"
+                  disabled={monthlyUsageLoading}
+                >
+                  <RefreshCw className={cn('h-4 w-4', monthlyUsageLoading && 'animate-spin')} />
+                  Làm mới
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Bộ lọc khoảng tháng */}
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+                <div className="flex-1">
+                  <Label className="text-sm font-medium">Từ tháng</Label>
+                  <Input
+                    type="month"
+                    value={usageFromMonth}
+                    onChange={(e) => setUsageFromMonth(e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+                <div className="flex-1">
+                  <Label className="text-sm font-medium">Đến tháng</Label>
+                  <Input
+                    type="month"
+                    value={usageToMonth}
+                    onChange={(e) => setUsageToMonth(e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+                <Button
+                  onClick={() => {
+                    const range = getDefaultDateRange()
+                    setUsageFromMonth(range.fromMonth)
+                    setUsageToMonth(range.toMonth)
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                >
+                  Mặc định (12 tháng)
+                </Button>
+              </div>
+
+              {/* Bảng dữ liệu sử dụng theo tháng */}
+              {monthlyUsageLoading ? (
+                <div className="flex items-center justify-center p-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                </div>
+              ) : monthlyUsageError ? (
+                <div className="text-muted-foreground p-8 text-center">
+                  <AlertCircle className="mx-auto mb-3 h-12 w-12 text-red-500 opacity-20" />
+                  <p className="text-red-600">{monthlyUsageError}</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => refetchMonthlyUsage()}
+                    className="mt-4"
+                  >
+                    Thử lại
+                  </Button>
+                </div>
+              ) : !customerId ? (
+                <div className="text-muted-foreground p-8 text-center">
+                  <AlertCircle className="mx-auto mb-3 h-12 w-12 opacity-20" />
+                  <p>Thiết bị chưa có khách hàng</p>
+                </div>
+              ) : monthlyUsageItems.length === 0 ? (
+                <div className="text-muted-foreground p-8 text-center">
+                  <BarChart3 className="mx-auto mb-3 h-12 w-12 opacity-20" />
+                  <p>Chưa có dữ liệu sử dụng trong khoảng thời gian này</p>
+                </div>
+              ) : (
+                <div className="overflow-hidden rounded-lg border">
+                  <div className="overflow-x-auto">
+                    <table className="w-full min-w-[900px]">
+                      <thead className="bg-gray-100">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-semibold">Tháng</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold">Tên model</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold">Số serial</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold">Mã phần</th>
+                          <th className="px-4 py-3 text-right text-xs font-semibold">
+                            Trang đen trắng
+                          </th>
+                          <th className="px-4 py-3 text-right text-xs font-semibold">Trang màu</th>
+                          <th className="px-4 py-3 text-right text-xs font-semibold">Tổng trang</th>
+                          <th className="px-4 py-3 text-right text-xs font-semibold">
+                            Trang đen trắng A4
+                          </th>
+                          <th className="px-4 py-3 text-right text-xs font-semibold">
+                            Trang màu A4
+                          </th>
+                          <th className="px-4 py-3 text-right text-xs font-semibold">
+                            Tổng trang A4
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {monthlyUsageItems
+                          .slice()
+                          .sort((a, b) => b.month.localeCompare(a.month))
+                          .map((item, idx) => {
+                            const [year, month] = item.month.split('-')
+                            const monthDisplay = `Tháng ${month}/${year}`
+
+                            return (
+                              <tr
+                                key={`${item.deviceId}-${item.month}-${idx}`}
+                                className="hover:bg-muted/30 transition-colors"
+                              >
+                                <td className="px-4 py-3 font-medium">{monthDisplay}</td>
+                                <td className="px-4 py-3 text-sm">{item.deviceModelName || '-'}</td>
+                                <td className="px-4 py-3 font-mono text-sm">
+                                  {item.serialNumber || '-'}
+                                </td>
+                                <td className="px-4 py-3 text-sm">{item.partNumber || '-'}</td>
+                                <td className="px-4 py-3 text-right text-sm">
+                                  {fmtNumber(item.bwPages)}
+                                </td>
+                                <td className="px-4 py-3 text-right text-sm">
+                                  {fmtNumber(item.colorPages)}
+                                </td>
+                                <td className="px-4 py-3 text-right text-sm font-semibold">
+                                  {fmtNumber(item.totalPages)}
+                                </td>
+                                <td className="px-4 py-3 text-right text-sm text-blue-600">
+                                  {fmtNumberA4(item.bwPagesA4)}
+                                </td>
+                                <td className="px-4 py-3 text-right text-sm text-blue-600">
+                                  {fmtNumberA4(item.colorPagesA4)}
+                                </td>
+                                <td className="px-4 py-3 text-right text-sm font-semibold text-blue-600">
+                                  {fmtNumberA4(item.totalPagesA4)}
+                                </td>
+                              </tr>
+                            )
+                          })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
+        {/* Vật tư Tab */}
         <TabsContent value="consumables" className="space-y-6">
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="flex items-center gap-2">
-                    <Package className="h-5 w-5 text-black dark:text-white" />
+                    <Package className="h-5 w-5 text-emerald-600" />
                     Vật tư đã lắp
                   </CardTitle>
                   <CardDescription className="mt-1">
@@ -496,14 +708,14 @@ export default function DeviceDetailClient({ deviceId, backHref }: Props) {
               ) : (
                 <div className="overflow-hidden rounded-lg border">
                   <table className="w-full">
-                    <thead className="bg-gradient-to-r from-emerald-50 to-teal-50">
+                    <thead className="bg-gray-100">
                       <tr>
-                        <th className="px-4 py-3 text-left text-sm font-semibold">#</th>
-                        <th className="px-4 py-3 text-left text-sm font-semibold">Tên</th>
-                        <th className="px-4 py-3 text-left text-sm font-semibold">Mã / Model</th>
-                        <th className="px-4 py-3 text-left text-sm font-semibold">Trạng thái</th>
-                        <th className="px-4 py-3 text-left text-sm font-semibold">Tỉ giá</th>
-                        <th className="px-4 py-3 text-right text-sm font-semibold">Thời gian</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold">#</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold">Tên</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold">Mã / Model</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold">Trạng thái</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold">Tỉ giá</th>
+                        <th className="px-4 py-3 text-right text-xs font-semibold">Thời gian</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y">
@@ -605,8 +817,25 @@ export default function DeviceDetailClient({ deviceId, backHref }: Props) {
               )}
             </CardContent>
           </Card>
+          {/* Vật tư tương thích - align with admin */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Box className="h-5 w-5 text-indigo-600" />
+                Vật tư tương thích
+              </CardTitle>
+              <CardDescription>Danh sách vật tư tương thích với thiết bị</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-muted-foreground p-8 text-center">
+                <Package className="mx-auto mb-3 h-12 w-12 opacity-20" />
+                <p>Chức năng đang được triển khai cho phiên bản người dùng.</p>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
+        {/* Bảo trì Tab */}
         <TabsContent value="maintenance" className="space-y-6">
           <Card>
             <CardHeader>
@@ -652,6 +881,25 @@ export default function DeviceDetailClient({ deviceId, backHref }: Props) {
                   </div>
                 </div>
               )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Lịch sử vật tư Tab */}
+        <TabsContent value="history" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="h-5 w-5 text-emerald-600" />
+                Lịch sử sử dụng vật tư
+              </CardTitle>
+              <CardDescription>Lịch sử thay thế/tiêu hao vật tư theo thiết bị</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-muted-foreground p-8 text-center">
+                <Package className="mx-auto mb-3 h-12 w-12 opacity-20" />
+                <p>Chức năng xem lịch sử vật tư cho người dùng sẽ sớm được cập nhật.</p>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

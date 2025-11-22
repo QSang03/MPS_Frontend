@@ -1,5 +1,29 @@
 import { z } from 'zod'
 
+export const CONTRACT_PDF_MAX_BYTES = 50 * 1024 * 1024 // 50MB
+const CONTRACT_PDF_MAX_MB = Math.round(CONTRACT_PDF_MAX_BYTES / (1024 * 1024))
+
+const pdfFileSchema = z
+  .custom<File | Blob | null | undefined>(
+    (file) => {
+      if (file === undefined || file === null) return true
+      const isFile = typeof File !== 'undefined' && file instanceof File
+      const isBlob = typeof Blob !== 'undefined' && file instanceof Blob
+      return isFile || isBlob
+    },
+    { message: 'PDF file is invalid' }
+  )
+  .refine(
+    (file) => {
+      if (!file) return true
+      const size = (file as { size?: number }).size
+      if (typeof size !== 'number') return true
+      return size <= CONTRACT_PDF_MAX_BYTES
+    },
+    { message: `PDF must be <= ${CONTRACT_PDF_MAX_MB}MB` }
+  )
+  .optional()
+
 // Schema for form validation (no preprocess/transform, works with zodResolver)
 export const contractFormSchema = z.object({
   customerId: z.string().uuid({ message: 'Customer is required' }),
@@ -26,6 +50,7 @@ export const contractFormSchema = z.object({
     .refine((v) => !v || v.trim() === '' || z.string().url().safeParse(v).success, {
       message: 'Document URL must be a valid URL',
     }),
+  pdfFile: pdfFileSchema,
 })
 
 // Schema for backend data (with preprocess for number enum indices)

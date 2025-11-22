@@ -2,14 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import type { Device } from '@/types/models/device'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/components/ui/dialog'
+import { Dialog } from '@/components/ui/dialog'
+import { SystemModalLayout } from '@/components/system/SystemModalLayout'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
@@ -99,34 +93,43 @@ export default function ToggleActiveModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md rounded-2xl border-0 p-0 shadow-2xl">
-        <DialogHeader className="relative overflow-hidden bg-gradient-to-r from-green-600 to-teal-600 p-0">
-          <div className="absolute inset-0 bg-black/20"></div>
-          <div className="relative z-10 flex items-center gap-3 px-6 py-5 text-white">
-            {targetActive ? (
-              <CheckCircle2 className="h-7 w-7 text-green-300" />
-            ) : (
-              <XCircle className="h-7 w-7 text-red-400" />
-            )}
-            <div>
-              <DialogTitle className="flex items-center gap-2 text-xl font-bold">
-                {targetActive ? 'Bật thiết bị' : 'Tắt thiết bị'}
-              </DialogTitle>
-              <DialogDescription className="mt-1 text-white/90">
-                {targetActive
-                  ? 'Kích hoạt thiết bị để sử dụng bình thường'
-                  : 'Tắt thiết bị và cung cấp lý do'}
-              </DialogDescription>
-            </div>
-          </div>
-        </DialogHeader>
-
+      <SystemModalLayout
+        title={targetActive ? 'Bật thiết bị' : 'Tắt thiết bị'}
+        description={
+          targetActive
+            ? 'Kích hoạt thiết bị để sử dụng bình thường'
+            : 'Tắt thiết bị và cung cấp lý do'
+        }
+        icon={targetActive ? CheckCircle2 : XCircle}
+        variant="edit"
+        footer={
+          <>
+            <Button
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={submitting}
+              className="min-w-[100px]"
+            >
+              Hủy
+            </Button>
+            <Button
+              type="submit"
+              form="toggle-active-form"
+              disabled={submitting}
+              className="min-w-[120px] bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+            >
+              {submitting ? 'Đang xử lý...' : targetActive ? 'Bật' : 'Tắt'}
+            </Button>
+          </>
+        }
+      >
         <form
+          id="toggle-active-form"
           onSubmit={(e) => {
             e.preventDefault()
             handleConfirm()
           }}
-          className="space-y-6 bg-white p-6"
+          className="space-y-6"
         >
           <div>
             <Label className="text-sm font-semibold">Thiết bị</Label>
@@ -185,17 +188,8 @@ export default function ToggleActiveModal({
               )}
             </div>
           )}
-
-          <DialogFooter className="flex justify-end gap-3 border-t border-gray-200 pt-4">
-            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={submitting}>
-              Hủy
-            </Button>
-            <Button type="submit" disabled={submitting}>
-              {submitting ? 'Đang xử lý...' : targetActive ? 'Bật' : 'Tắt'}
-            </Button>
-          </DialogFooter>
         </form>
-      </DialogContent>
+      </SystemModalLayout>
     </Dialog>
   )
 }

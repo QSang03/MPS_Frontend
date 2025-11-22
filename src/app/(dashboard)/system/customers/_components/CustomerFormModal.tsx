@@ -3,15 +3,8 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogDescription,
-  DialogFooter,
-} from '@/components/ui/dialog'
+import { Dialog, DialogTrigger } from '@/components/ui/dialog'
+import { SystemModalLayout } from '@/components/system/SystemModalLayout'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
@@ -329,279 +322,16 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
         )}
       </DialogTrigger>
 
-      <DialogContent className="max-w-[720px] overflow-hidden rounded-2xl border-0 p-0 shadow-2xl">
-        <DialogHeader className="relative overflow-hidden bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 p-0">
-          <div className="absolute inset-0 bg-black/10"></div>
-          <div className="relative z-10 px-6 py-5">
-            <div className="flex items-center gap-3">
-              {mode === 'create' ? (
-                <Building2 className="h-6 w-6 text-white" />
-              ) : (
-                <Edit className="h-6 w-6 text-white" />
-              )}
-              <DialogTitle className="text-2xl font-bold text-white">
-                {mode === 'create' ? 'Tạo khách hàng mới' : 'Chỉnh sửa khách hàng'}
-              </DialogTitle>
-            </div>
-            <DialogDescription className="mt-2 text-white/90">
-              {mode === 'create' ? 'Thêm khách hàng vào hệ thống' : 'Cập nhật thông tin khách hàng'}
-            </DialogDescription>
-          </div>
-        </DialogHeader>
-
-        <form onSubmit={handleSubmit} className="bg-white">
-          <div className="max-h-[70vh] space-y-6 overflow-y-auto px-6 py-6">
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 text-sm font-semibold text-violet-700">
-                <User className="h-4 w-4" />
-                Thông tin cơ bản
-              </div>
-
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label className="text-base font-semibold">Tên khách hàng *</Label>
-                  <Input
-                    ref={nameRef}
-                    value={form.name || ''}
-                    onChange={(e) => {
-                      setForm((s) => ({ ...s, name: e.target.value }))
-                      clearFieldError('name')
-                    }}
-                    placeholder="Tên khách hàng"
-                    className={`h-11 ${fieldErrors.name ? 'border-destructive focus-visible:ring-destructive/50' : ''}`}
-                    required
-                  />
-                  {fieldErrors.name && (
-                    <p className="text-destructive mt-1 text-sm">{fieldErrors.name}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-base font-semibold">Mã (code)</Label>
-                  <Input
-                    ref={codeRef}
-                    value={form.code || ''}
-                    onChange={(e) => {
-                      setForm((s) => ({ ...s, code: e.target.value }))
-                      clearFieldError('code')
-                    }}
-                    placeholder="Mã khách hàng (ví dụ ABC_CORP)"
-                    className={`h-11 ${fieldErrors.code ? 'border-destructive focus-visible:ring-destructive/50' : ''}`}
-                  />
-                  {fieldErrors.code && (
-                    <p className="text-destructive mt-1 text-sm">{fieldErrors.code}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-base font-semibold">Email liên hệ</Label>
-                  <Input
-                    ref={contactEmailRef}
-                    value={form.contactEmail || ''}
-                    onChange={(e) => {
-                      setForm((s) => ({ ...s, contactEmail: e.target.value }))
-                      clearFieldError('contactEmail')
-                    }}
-                    placeholder="contact@company.com"
-                    className={`h-11 ${fieldErrors.contactEmail ? 'border-destructive focus-visible:ring-destructive/50' : ''}`}
-                    type="email"
-                  />
-                  {fieldErrors.contactEmail && (
-                    <p className="text-destructive mt-1 text-sm">{fieldErrors.contactEmail}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-base font-semibold">Số điện thoại</Label>
-                  <Input
-                    ref={contactPhoneRef}
-                    value={form.contactPhone || ''}
-                    onChange={(e) => {
-                      setForm((s) => ({ ...s, contactPhone: e.target.value }))
-                      clearFieldError('contactPhone')
-                    }}
-                    placeholder="+84123456789"
-                    className={`h-11 ${fieldErrors.contactPhone ? 'border-destructive focus-visible:ring-destructive/50' : ''}`}
-                  />
-                  {fieldErrors.contactPhone && (
-                    <p className="text-destructive mt-1 text-sm">{fieldErrors.contactPhone}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-base font-semibold">Người liên hệ</Label>
-                  <Input
-                    ref={contactPersonRef}
-                    value={form.contactPerson || ''}
-                    onChange={(e) => {
-                      setForm((s) => ({ ...s, contactPerson: e.target.value }))
-                      clearFieldError('contactPerson')
-                    }}
-                    placeholder="Tên người liên hệ"
-                    className={`h-11 ${fieldErrors.contactPerson ? 'border-destructive focus-visible:ring-destructive/50' : ''}`}
-                  />
-                  {fieldErrors.contactPerson && (
-                    <p className="text-destructive mt-1 text-sm">{fieldErrors.contactPerson}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-base font-semibold">Cấp (Tier)</Label>
-                  <Select
-                    value={(form.tier as string) || 'BASIC'}
-                    onValueChange={(v) => setForm((s) => ({ ...s, tier: v }))}
-                  >
-                    <SelectTrigger className="h-11">
-                      <SelectValue placeholder="Chọn tier" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="BASIC">BASIC</SelectItem>
-                      <SelectItem value="PREMIUM">PREMIUM</SelectItem>
-                      <SelectItem value="ENTERPRISE">ENTERPRISE</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-base font-semibold">Ngày thanh toán</Label>
-                  <Input
-                    ref={billingDayRef}
-                    type="number"
-                    min="1"
-                    max="31"
-                    value={
-                      form.billingDay !== undefined && form.billingDay !== null
-                        ? form.billingDay
-                        : ''
-                    }
-                    onChange={(e) => {
-                      const value = e.target.value
-                      setForm((s) => ({
-                        ...s,
-                        billingDay: value === '' ? undefined : Number(value),
-                      }))
-                      clearFieldError('billingDay')
-                    }}
-                    placeholder="Nhập ngày (1-31)"
-                    className={`h-11 ${fieldErrors.billingDay ? 'border-destructive focus-visible:ring-destructive/50' : ''}`}
-                  />
-                  {fieldErrors.billingDay && (
-                    <p className="text-destructive mt-1 text-sm">{fieldErrors.billingDay}</p>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <Separator />
-
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 text-sm font-semibold text-violet-700">
-                <MapPin className="h-4 w-4" />
-                Địa chỉ & mô tả
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-base font-semibold">Địa chỉ</Label>
-                {(Array.isArray(form.address) && form.address.length > 0 ? form.address : ['']).map(
-                  (addr, idx) => (
-                    <div key={idx} className="flex items-center gap-2">
-                      <Input
-                        ref={idx === 0 ? addressRef : undefined}
-                        value={addr || ''}
-                        onChange={(e) => {
-                          setForm((s) => {
-                            const arr = Array.isArray(s.address) ? [...s.address] : []
-                            arr[idx] = e.target.value
-                            return { ...s, address: arr }
-                          })
-                          clearFieldError('address')
-                        }}
-                        placeholder={`Địa chỉ ${idx + 1}`}
-                        className={`h-11 ${fieldErrors.address ? 'border-destructive focus-visible:ring-destructive/50' : ''} flex-1`}
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        onClick={() =>
-                          setForm((s) => {
-                            const arr = Array.isArray(s.address) ? [...s.address] : []
-                            arr.splice(idx, 1)
-                            return { ...s, address: arr }
-                          })
-                        }
-                        disabled={!(Array.isArray(form.address) && form.address.length > 1)}
-                        className="min-w-[64px]"
-                      >
-                        Xóa
-                      </Button>
-                    </div>
-                  )
-                )}
-
-                <div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      setForm((s) => ({
-                        ...(s || {}),
-                        address: [...(Array.isArray(s.address) ? s.address : []), ''],
-                      }))
-                    }
-                  >
-                    Thêm địa chỉ
-                  </Button>
-                </div>
-                {fieldErrors.address && (
-                  <p className="text-destructive mt-1 text-sm">{fieldErrors.address}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-base font-semibold">Mô tả</Label>
-                <Input
-                  ref={descriptionRef}
-                  value={form.description || ''}
-                  onChange={(e) => {
-                    setForm((s) => ({ ...s, description: e.target.value }))
-                    clearFieldError('description')
-                  }}
-                  placeholder="Ghi chú thêm về khách hàng"
-                  className={`h-11 ${fieldErrors.description ? 'border-destructive focus-visible:ring-destructive/50' : ''}`}
-                />
-                {fieldErrors.description && (
-                  <p className="text-destructive mt-1 text-sm">{fieldErrors.description}</p>
-                )}
-              </div>
-            </div>
-
-            <Separator />
-
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 text-sm font-semibold text-violet-700">
-                <CheckCircle2 className="h-4 w-4" />
-                Trạng thái
-              </div>
-
-              <div className="flex items-center justify-between rounded-lg border-2 p-4">
-                <div>
-                  <label className="flex items-center gap-2 text-base font-semibold">
-                    Trạng thái hoạt động
-                  </label>
-                  <p className="text-muted-foreground text-sm">
-                    Bật/tắt trạng thái hoạt động của khách hàng
-                  </p>
-                </div>
-                <Switch
-                  checked={!!form.isActive}
-                  onCheckedChange={(v) => setForm((s) => ({ ...s, isActive: v }))}
-                />
-              </div>
-            </div>
-          </div>
-
-          <DialogFooter className="border-t bg-gray-50 px-6 py-4">
+      <SystemModalLayout
+        title={mode === 'create' ? 'Tạo khách hàng mới' : 'Chỉnh sửa khách hàng'}
+        description={
+          mode === 'create' ? 'Thêm khách hàng vào hệ thống' : 'Cập nhật thông tin khách hàng'
+        }
+        icon={mode === 'create' ? Building2 : Edit}
+        variant={mode}
+        maxWidth="max-w-[720px]"
+        footer={
+          <>
             <Button
               variant="outline"
               onClick={() => setOpen(false)}
@@ -613,7 +343,8 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
             </Button>
             <Button
               type="submit"
-              className="min-w-[140px] bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700"
+              form="customer-form"
+              className="min-w-[140px] bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
               disabled={submitting}
             >
               {submitting ? (
@@ -637,9 +368,258 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
                 </>
               )}
             </Button>
-          </DialogFooter>
+          </>
+        }
+      >
+        <form id="customer-form" onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 text-sm font-semibold text-violet-700">
+              <User className="h-4 w-4" />
+              Thông tin cơ bản
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label className="text-base font-semibold">Tên khách hàng *</Label>
+                <Input
+                  ref={nameRef}
+                  value={form.name || ''}
+                  onChange={(e) => {
+                    setForm((s) => ({ ...s, name: e.target.value }))
+                    clearFieldError('name')
+                  }}
+                  placeholder="Tên khách hàng"
+                  className={`h-11 ${fieldErrors.name ? 'border-destructive focus-visible:ring-destructive/50' : ''}`}
+                  required
+                />
+                {fieldErrors.name && (
+                  <p className="text-destructive mt-1 text-sm">{fieldErrors.name}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-base font-semibold">Mã (code)</Label>
+                <Input
+                  ref={codeRef}
+                  value={form.code || ''}
+                  onChange={(e) => {
+                    setForm((s) => ({ ...s, code: e.target.value }))
+                    clearFieldError('code')
+                  }}
+                  placeholder="Mã khách hàng (ví dụ ABC_CORP)"
+                  className={`h-11 ${fieldErrors.code ? 'border-destructive focus-visible:ring-destructive/50' : ''}`}
+                />
+                {fieldErrors.code && (
+                  <p className="text-destructive mt-1 text-sm">{fieldErrors.code}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-base font-semibold">Email liên hệ</Label>
+                <Input
+                  ref={contactEmailRef}
+                  value={form.contactEmail || ''}
+                  onChange={(e) => {
+                    setForm((s) => ({ ...s, contactEmail: e.target.value }))
+                    clearFieldError('contactEmail')
+                  }}
+                  placeholder="contact@company.com"
+                  className={`h-11 ${fieldErrors.contactEmail ? 'border-destructive focus-visible:ring-destructive/50' : ''}`}
+                  type="email"
+                />
+                {fieldErrors.contactEmail && (
+                  <p className="text-destructive mt-1 text-sm">{fieldErrors.contactEmail}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-base font-semibold">Số điện thoại</Label>
+                <Input
+                  ref={contactPhoneRef}
+                  value={form.contactPhone || ''}
+                  onChange={(e) => {
+                    setForm((s) => ({ ...s, contactPhone: e.target.value }))
+                    clearFieldError('contactPhone')
+                  }}
+                  placeholder="+84123456789"
+                  className={`h-11 ${fieldErrors.contactPhone ? 'border-destructive focus-visible:ring-destructive/50' : ''}`}
+                />
+                {fieldErrors.contactPhone && (
+                  <p className="text-destructive mt-1 text-sm">{fieldErrors.contactPhone}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-base font-semibold">Người liên hệ</Label>
+                <Input
+                  ref={contactPersonRef}
+                  value={form.contactPerson || ''}
+                  onChange={(e) => {
+                    setForm((s) => ({ ...s, contactPerson: e.target.value }))
+                    clearFieldError('contactPerson')
+                  }}
+                  placeholder="Tên người liên hệ"
+                  className={`h-11 ${fieldErrors.contactPerson ? 'border-destructive focus-visible:ring-destructive/50' : ''}`}
+                />
+                {fieldErrors.contactPerson && (
+                  <p className="text-destructive mt-1 text-sm">{fieldErrors.contactPerson}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-base font-semibold">Cấp (Tier)</Label>
+                <Select
+                  value={(form.tier as string) || 'BASIC'}
+                  onValueChange={(v) => setForm((s) => ({ ...s, tier: v }))}
+                >
+                  <SelectTrigger className="h-11">
+                    <SelectValue placeholder="Chọn tier" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="BASIC">BASIC</SelectItem>
+                    <SelectItem value="PREMIUM">PREMIUM</SelectItem>
+                    <SelectItem value="ENTERPRISE">ENTERPRISE</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-base font-semibold">Ngày thanh toán</Label>
+                <Input
+                  ref={billingDayRef}
+                  type="number"
+                  min="1"
+                  max="31"
+                  value={
+                    form.billingDay !== undefined && form.billingDay !== null ? form.billingDay : ''
+                  }
+                  onChange={(e) => {
+                    const value = e.target.value
+                    setForm((s) => ({
+                      ...s,
+                      billingDay: value === '' ? undefined : Number(value),
+                    }))
+                    clearFieldError('billingDay')
+                  }}
+                  placeholder="Nhập ngày (1-31)"
+                  className={`h-11 ${fieldErrors.billingDay ? 'border-destructive focus-visible:ring-destructive/50' : ''}`}
+                />
+                {fieldErrors.billingDay && (
+                  <p className="text-destructive mt-1 text-sm">{fieldErrors.billingDay}</p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <Separator />
+
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 text-sm font-semibold text-violet-700">
+              <MapPin className="h-4 w-4" />
+              Địa chỉ & mô tả
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-base font-semibold">Địa chỉ</Label>
+              {(Array.isArray(form.address) && form.address.length > 0 ? form.address : ['']).map(
+                (addr, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <Input
+                      ref={idx === 0 ? addressRef : undefined}
+                      value={addr || ''}
+                      onChange={(e) => {
+                        setForm((s) => {
+                          const arr = Array.isArray(s.address) ? [...s.address] : []
+                          arr[idx] = e.target.value
+                          return { ...s, address: arr }
+                        })
+                        clearFieldError('address')
+                      }}
+                      placeholder={`Địa chỉ ${idx + 1}`}
+                      className={`h-11 ${fieldErrors.address ? 'border-destructive focus-visible:ring-destructive/50' : ''} flex-1`}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={() =>
+                        setForm((s) => {
+                          const arr = Array.isArray(s.address) ? [...s.address] : []
+                          arr.splice(idx, 1)
+                          return { ...s, address: arr }
+                        })
+                      }
+                      disabled={!(Array.isArray(form.address) && form.address.length > 1)}
+                      className="min-w-[64px]"
+                    >
+                      Xóa
+                    </Button>
+                  </div>
+                )
+              )}
+
+              <div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    setForm((s) => ({
+                      ...(s || {}),
+                      address: [...(Array.isArray(s.address) ? s.address : []), ''],
+                    }))
+                  }
+                >
+                  Thêm địa chỉ
+                </Button>
+              </div>
+              {fieldErrors.address && (
+                <p className="text-destructive mt-1 text-sm">{fieldErrors.address}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-base font-semibold">Mô tả</Label>
+              <Input
+                ref={descriptionRef}
+                value={form.description || ''}
+                onChange={(e) => {
+                  setForm((s) => ({ ...s, description: e.target.value }))
+                  clearFieldError('description')
+                }}
+                placeholder="Ghi chú thêm về khách hàng"
+                className={`h-11 ${fieldErrors.description ? 'border-destructive focus-visible:ring-destructive/50' : ''}`}
+              />
+              {fieldErrors.description && (
+                <p className="text-destructive mt-1 text-sm">{fieldErrors.description}</p>
+              )}
+            </div>
+          </div>
+
+          <Separator />
+
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 text-sm font-semibold text-violet-700">
+              <CheckCircle2 className="h-4 w-4" />
+              Trạng thái
+            </div>
+
+            <div className="flex items-center justify-between rounded-lg border-2 p-4">
+              <div>
+                <label className="flex items-center gap-2 text-base font-semibold">
+                  Trạng thái hoạt động
+                </label>
+                <p className="text-muted-foreground text-sm">
+                  Bật/tắt trạng thái hoạt động của khách hàng
+                </p>
+              </div>
+              <Switch
+                checked={!!form.isActive}
+                onCheckedChange={(v) => setForm((s) => ({ ...s, isActive: v }))}
+              />
+            </div>
+          </div>
         </form>
-      </DialogContent>
+      </SystemModalLayout>
     </Dialog>
   )
 }

@@ -10,7 +10,20 @@ import { consumableTypesClientService } from '@/lib/api/services/consumable-type
 import type { ConsumableType } from '@/types/models/consumable-type'
 import ConsumableTypeFormModal from './ConsumableTypeFormModal'
 import { DeleteDialog } from '@/components/shared/DeleteDialog'
-import { Loader2, Package, Search, Pencil } from 'lucide-react'
+import {
+  Loader2,
+  Package,
+  Search,
+  Pencil,
+  Hash,
+  FileText,
+  Link2,
+  Gauge,
+  Box,
+  CheckCircle2,
+  Settings,
+  Trash2,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { useActionPermission } from '@/lib/hooks/useActionPermission'
 import { ActionGuard } from '@/components/shared/ActionGuard'
@@ -109,16 +122,25 @@ export function ConsumableTypeTable({
     () => [
       {
         id: 'index',
-        header: '#',
+        header: 'STT',
         cell: ({ row, table }) => {
           const index = table.getSortedRowModel().rows.findIndex((r) => r.id === row.id)
-          return <span className="text-sm">{(page - 1) * pageSize + index + 1}</span>
+          return (
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded bg-gradient-to-r from-gray-100 to-gray-50 text-sm font-medium text-gray-700">
+              {(page - 1) * pageSize + index + 1}
+            </span>
+          )
         },
         enableSorting: false,
       },
       {
         accessorKey: 'partNumber',
-        header: 'Mã/Part',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <Hash className="h-4 w-4 text-gray-600" />
+            Mã/Part
+          </div>
+        ),
         enableSorting: true,
         cell: ({ row }) => (
           <span className="font-mono text-sm text-gray-900">{row.original.partNumber || '—'}</span>
@@ -126,7 +148,12 @@ export function ConsumableTypeTable({
       },
       {
         accessorKey: 'name',
-        header: 'Tên',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <FileText className="h-4 w-4 text-gray-600" />
+            Tên
+          </div>
+        ),
         enableSorting: true,
         cell: ({ row }) => (
           <span className="font-medium text-gray-900">{row.original.name || '—'}</span>
@@ -134,7 +161,12 @@ export function ConsumableTypeTable({
       },
       {
         id: 'compatible',
-        header: 'Dòng tương thích',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <Link2 className="h-4 w-4 text-gray-600" />
+            Dòng tương thích
+          </div>
+        ),
         enableSorting: false,
         cell: ({ row }) => {
           const m = row.original
@@ -146,13 +178,23 @@ export function ConsumableTypeTable({
       },
       {
         accessorKey: 'capacity',
-        header: 'Dung lượng',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <Gauge className="h-4 w-4 text-gray-600" />
+            Dung lượng
+          </div>
+        ),
         enableSorting: true,
         cell: ({ row }) => <span className="text-sm">{row.original.capacity ?? '—'}</span>,
       },
       {
         id: 'stock',
-        header: 'Số lượng tồn',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <Box className="h-4 w-4 text-gray-600" />
+            Số lượng tồn
+          </div>
+        ),
         enableSorting: false,
         cell: ({ row }) => {
           const m = row.original
@@ -193,17 +235,30 @@ export function ConsumableTypeTable({
       },
       {
         accessorKey: 'isActive',
-        header: 'Trạng thái',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-gray-600" />
+            Trạng thái
+          </div>
+        ),
         enableSorting: true,
         cell: ({ row }) => (
-          <Badge variant={row.original.isActive ? 'default' : 'secondary'}>
+          <Badge
+            variant={row.original.isActive ? 'default' : 'secondary'}
+            className={row.original.isActive ? 'bg-green-500 text-white' : 'bg-gray-400 text-white'}
+          >
             {row.original.isActive ? 'Hoạt động' : 'Tạm dừng'}
           </Badge>
         ),
       },
       {
         id: 'actions',
-        header: 'Thao tác',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <Settings className="h-4 w-4 text-gray-600" />
+            Thao tác
+          </div>
+        ),
         cell: ({ row }) => {
           const m = row.original
           return (
@@ -217,14 +272,16 @@ export function ConsumableTypeTable({
                   description={`Xác nhận xóa loại vật tư "${m.name || ''}"?`}
                   onConfirm={async () => handleDelete(m.id)}
                   trigger={
-                    <Button variant="destructive" size="sm" disabled={deletingId === m.id}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={deletingId === m.id}
+                      className="transition-all hover:bg-red-100 hover:text-red-700"
+                    >
                       {deletingId === m.id ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Đang xóa...
-                        </>
+                        <Loader2 className="h-4 w-4 animate-spin" />
                       ) : (
-                        'Xóa'
+                        <Trash2 className="h-4 w-4" />
                       )}
                     </Button>
                   }
@@ -267,23 +324,29 @@ export function ConsumableTypeTable({
       isPending={isPending}
       emptyState={
         models.length === 0 ? (
-          <div className="px-4 py-12 text-center">
-            <div className="text-muted-foreground flex flex-col items-center gap-3">
+          <div className="p-12 text-center">
+            <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200">
               {searchInput ? (
-                <>
-                  <Search className="h-12 w-12 opacity-20" />
-                  <p>Không tìm thấy loại vật tư phù hợp</p>
-                </>
+                <Search className="h-12 w-12 opacity-20" />
               ) : (
-                <>
-                  <Package className="h-12 w-12 opacity-20" />
-                  <p>Chưa có loại vật tư tiêu hao nào</p>
-                  <ActionGuard pageId="consumable-types" actionId="create">
-                    <ConsumableTypeFormModal mode="create" onSaved={handleSaved} />
-                  </ActionGuard>
-                </>
+                <Package className="h-12 w-12 opacity-20" />
               )}
             </div>
+            <h3 className="mb-2 text-xl font-bold text-gray-700">
+              {searchInput
+                ? 'Không tìm thấy loại vật tư phù hợp'
+                : 'Chưa có loại vật tư tiêu hao nào'}
+            </h3>
+            <p className="mb-6 text-gray-500">
+              {searchInput
+                ? 'Thử điều chỉnh bộ lọc hoặc tìm kiếm'
+                : 'Hãy tạo loại vật tư tiêu hao đầu tiên'}
+            </p>
+            {!searchInput && (
+              <ActionGuard pageId="consumable-types" actionId="create">
+                <ConsumableTypeFormModal mode="create" onSaved={handleSaved} />
+              </ActionGuard>
+            )}
           </div>
         ) : undefined
       }

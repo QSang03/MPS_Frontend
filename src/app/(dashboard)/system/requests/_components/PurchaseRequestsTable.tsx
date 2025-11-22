@@ -5,7 +5,19 @@ import type { ReactNode } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import type { ColumnDef } from '@tanstack/react-table'
-import { Loader2, ListOrdered } from 'lucide-react'
+import {
+  Loader2,
+  ListOrdered,
+  Hash,
+  Heading,
+  Building2,
+  TrendingUp,
+  DollarSign,
+  Tag,
+  CheckCircle2,
+  Calendar,
+  Package,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { TableWrapper } from '@/components/system/TableWrapper'
 import { TableSkeleton } from '@/components/system/TableSkeleton'
@@ -326,8 +338,26 @@ function PurchaseRequestsTableContent({
   const columns = useMemo<ColumnDef<PurchaseRequestRow>[]>(
     () => [
       {
+        id: 'index',
+        header: 'STT',
+        cell: ({ row, table }) => {
+          const index = table.getSortedRowModel().rows.findIndex((r) => r.id === row.id)
+          return (
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded bg-gradient-to-r from-gray-100 to-gray-50 text-sm font-medium text-gray-700">
+              {pagination.pageIndex * pagination.pageSize + index + 1}
+            </span>
+          )
+        },
+        enableSorting: false,
+      },
+      {
         accessorKey: 'id',
-        header: 'Mã yêu cầu',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <Hash className="h-4 w-4 text-gray-600" />
+            Mã yêu cầu
+          </div>
+        ),
         cell: ({ row }) => (
           <Link
             href={`/system/purchase-requests/${row.original.id}`}
@@ -340,7 +370,12 @@ function PurchaseRequestsTableContent({
       {
         accessorKey: 'title',
         enableSorting: true,
-        header: 'Tiêu đề',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <Heading className="h-4 w-4 text-gray-600" />
+            Tiêu đề
+          </div>
+        ),
         cell: ({ row }) => (
           <div className="max-w-[260px]">
             <p className="font-semibold">{row.original.title ?? row.original.itemName}</p>
@@ -354,7 +389,12 @@ function PurchaseRequestsTableContent({
       },
       {
         accessorKey: 'customer',
-        header: 'Khách hàng',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <Building2 className="h-4 w-4 text-gray-600" />
+            Khách hàng
+          </div>
+        ),
         cell: ({ row }) => (
           <div className="flex flex-col">
             <span className="font-medium">{row.original.customer?.name ?? '—'}</span>
@@ -364,7 +404,12 @@ function PurchaseRequestsTableContent({
       },
       {
         accessorKey: 'priority',
-        header: 'Ưu tiên',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <Tag className="h-4 w-4 text-gray-600" />
+            Ưu tiên
+          </div>
+        ),
         cell: ({ row }) => (
           <Badge className={cn('text-xs', priorityBadgeMap[row.original.priority])}>
             {row.original.priority}
@@ -373,7 +418,12 @@ function PurchaseRequestsTableContent({
       },
       {
         id: 'progress',
-        header: 'Tiến trình',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <TrendingUp className="h-4 w-4 text-gray-600" />
+            Tiến trình
+          </div>
+        ),
         cell: ({ row }) => {
           const steps = buildTimelineSteps(row.original)
           if (steps.length === 0) {
@@ -407,7 +457,12 @@ function PurchaseRequestsTableContent({
       },
       {
         accessorKey: 'totalAmount',
-        header: 'Tổng dự toán',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <DollarSign className="h-4 w-4 text-gray-600" />
+            Tổng dự toán
+          </div>
+        ),
         cell: ({ row }) => {
           const total =
             row.original.totalAmount ??
@@ -419,7 +474,12 @@ function PurchaseRequestsTableContent({
       },
       {
         accessorKey: 'items',
-        header: 'Chi tiết vật tư',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <Package className="h-4 w-4 text-gray-600" />
+            Chi tiết vật tư
+          </div>
+        ),
         cell: ({ row }) => {
           const items = row.original.items ?? []
           if (items.length === 0) {
@@ -458,7 +518,12 @@ function PurchaseRequestsTableContent({
       },
       {
         accessorKey: 'status',
-        header: 'Trạng thái',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-gray-600" />
+            Trạng thái
+          </div>
+        ),
         cell: ({ row }) => (
           <Select
             value={row.original.status}
@@ -489,7 +554,12 @@ function PurchaseRequestsTableContent({
       },
       {
         accessorKey: 'createdAt',
-        header: 'Ngày tạo',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-gray-600" />
+            Ngày tạo
+          </div>
+        ),
         cell: ({ row }) => (
           <div className="text-sm">
             <p>{new Date(row.original.createdAt).toLocaleDateString('vi-VN')}</p>
@@ -500,7 +570,13 @@ function PurchaseRequestsTableContent({
         ),
       },
     ],
-    [handleStatusChange, mutation.isPending, statusUpdatingId]
+    [
+      handleStatusChange,
+      mutation.isPending,
+      statusUpdatingId,
+      pagination.pageIndex,
+      pagination.pageSize,
+    ]
   )
 
   return (
@@ -528,12 +604,12 @@ function PurchaseRequestsTableContent({
       isPending={isPending}
       emptyState={
         requests.length === 0 ? (
-          <div className="p-8 text-center">
-            <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200">
-              <ListOrdered className="h-8 w-8 text-gray-400" />
+          <div className="p-12 text-center">
+            <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200">
+              <ListOrdered className="h-12 w-12 opacity-20" />
             </div>
             <h3 className="mb-2 text-xl font-bold text-gray-700">Không có yêu cầu mua hàng</h3>
-            <p className="text-gray-500">
+            <p className="mb-6 text-gray-500">
               {searchInput ? 'Không tìm thấy yêu cầu phù hợp' : 'Hãy tạo yêu cầu mua hàng đầu tiên'}
             </p>
           </div>

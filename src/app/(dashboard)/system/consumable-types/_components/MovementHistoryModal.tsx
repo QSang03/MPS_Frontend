@@ -3,16 +3,10 @@
 import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { stockItemsClientService } from '@/lib/api/services/stock-items-client.service'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
+import { Dialog } from '@/components/ui/dialog'
+import { SystemModalLayout } from '@/components/system/SystemModalLayout'
 import { Button } from '@/components/ui/button'
-import { Loader2, Eye, FileText } from 'lucide-react'
+import { Loader2, Eye } from 'lucide-react'
 import { format } from 'date-fns'
 import { consumablesClientService } from '@/lib/api/services/consumables-client.service'
 import { devicesClientService } from '@/lib/api/services/devices-client.service'
@@ -264,130 +258,110 @@ export default function MovementHistoryModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="!max-w-[75vw] rounded-2xl border-0 p-0 shadow-2xl">
-        {/* Gradient Header */}
-        <DialogHeader className="relative overflow-hidden bg-gradient-to-r from-emerald-600 via-teal-500 to-cyan-600 p-0">
-          <div className="absolute inset-0 bg-black/10"></div>
-          <div className="absolute inset-0 opacity-20">
-            <div className="absolute top-0 right-0 h-28 w-28 translate-x-1/2 -translate-y-1/2 rounded-full bg-white"></div>
-          </div>
-          <div className="relative z-10 flex items-center gap-4 px-6 py-5 text-white">
-            <div className="rounded-xl border border-white/30 bg-white/20 p-2.5 backdrop-blur-lg">
-              <Eye className="h-6 w-6 text-white" />
-            </div>
-            <div className="flex-1">
-              <DialogTitle className="flex items-center gap-2 text-2xl font-bold">
-                Lịch sử nhập/xuất kho
-              </DialogTitle>
-              <DialogDescription className="mt-1 flex items-center gap-2 text-white/90">
-                <FileText className="h-4 w-4" />
-                {namesLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-                <span>
-                  {consumableName || stockId}
-                  {' — gần nhất ở đầu'}
-                </span>
-              </DialogDescription>
+      <SystemModalLayout
+        title="Lịch sử nhập/xuất kho"
+        description={`${consumableName || stockId} — gần nhất ở đầu`}
+        icon={Eye}
+        variant="view"
+        maxWidth="!max-w-[75vw]"
+      >
+        {isLoading || namesLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="flex flex-col items-center gap-3">
+              <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
+              {namesLoading && !isLoading && (
+                <span className="text-sm text-emerald-600">Đang tải thông tin tham chiếu...</span>
+              )}
             </div>
           </div>
-        </DialogHeader>
-
-        <div className="rounded-b-2xl bg-gradient-to-b from-white via-emerald-50/40 to-white p-6">
-          {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-6 w-6 animate-spin text-emerald-600" />
-            </div>
-          ) : movements.length === 0 ? (
-            <div className="py-8 text-center text-base font-semibold text-emerald-700">
-              Không có lịch sử
-            </div>
-          ) : (
-            <div className="mb-4 overflow-x-auto rounded-xl border-2 border-emerald-100 shadow">
-              <table className="w-full table-auto">
-                <thead className="bg-gradient-to-r from-emerald-100 via-teal-100 to-cyan-100 text-teal-800">
-                  <tr>
-                    <th className="px-3 py-2">Thời gian</th>
-                    <th className="px-3 py-2">Loại</th>
-                    <th className="px-3 py-2">Số lượng thay đổi</th>
-                    <th className="px-3 py-2">Số lượng sau</th>
-                    <th className="px-3 py-2">Ghi chú</th>
-                    <th className="px-3 py-2">Tham chiếu</th>
+        ) : movements.length === 0 ? (
+          <div className="py-8 text-center text-base font-semibold text-emerald-700">
+            Không có lịch sử
+          </div>
+        ) : (
+          <div className="mb-4 overflow-x-auto rounded-xl border-2 border-emerald-100 shadow">
+            <table className="w-full table-auto">
+              <thead className="bg-gradient-to-r from-emerald-100 via-teal-100 to-cyan-100 text-teal-800">
+                <tr>
+                  <th className="px-3 py-2">Thời gian</th>
+                  <th className="px-3 py-2">Loại</th>
+                  <th className="px-3 py-2">Số lượng thay đổi</th>
+                  <th className="px-3 py-2">Số lượng sau</th>
+                  <th className="px-3 py-2">Ghi chú</th>
+                  <th className="px-3 py-2">Tham chiếu</th>
+                </tr>
+              </thead>
+              <tbody>
+                {movements.map((mv) => (
+                  <tr key={mv.id} className="transition even:bg-emerald-50/40 hover:bg-emerald-100">
+                    <td className="px-3 py-2 font-mono text-sm text-gray-700">
+                      {mv.createdAt ? format(new Date(mv.createdAt), 'yyyy-MM-dd HH:mm') : '—'}
+                    </td>
+                    <td className="px-3 py-2 text-sm font-semibold">
+                      {mv.type === 'IN' && <span className="text-green-700">Nhập</span>}
+                      {mv.type === 'OUT' && <span className="text-red-600">Xuất</span>}
+                      {mv.type !== 'IN' && mv.type !== 'OUT' && mv.type}
+                    </td>
+                    <td className="px-3 py-2 text-sm">{mv.quantityChanged}</td>
+                    <td className="px-3 py-2 text-sm">{mv.quantityAfter}</td>
+                    <td className="px-3 py-2 text-sm">{formatNotes(mv.notes)}</td>
+                    <td className="px-3 py-2 font-mono text-sm">{mv.relatedPurchaseId ?? '—'}</td>
                   </tr>
-                </thead>
-                <tbody>
-                  {movements.map((mv) => (
-                    <tr
-                      key={mv.id}
-                      className="transition even:bg-emerald-50/40 hover:bg-emerald-100"
-                    >
-                      <td className="px-3 py-2 font-mono text-sm text-gray-700">
-                        {mv.createdAt ? format(new Date(mv.createdAt), 'yyyy-MM-dd HH:mm') : '—'}
-                      </td>
-                      <td className="px-3 py-2 text-sm font-semibold">
-                        {mv.type === 'IN' && <span className="text-green-700">Nhập</span>}
-                        {mv.type === 'OUT' && <span className="text-red-600">Xuất</span>}
-                        {mv.type !== 'IN' && mv.type !== 'OUT' && mv.type}
-                      </td>
-                      <td className="px-3 py-2 text-sm">{mv.quantityChanged}</td>
-                      <td className="px-3 py-2 text-sm">{mv.quantityAfter}</td>
-                      <td className="px-3 py-2 text-sm">{formatNotes(mv.notes)}</td>
-                      <td className="px-3 py-2 font-mono text-sm">{mv.relatedPurchaseId ?? '—'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
 
-          {/* Pagination */}
-          <DialogFooter className="flex w-full items-center justify-between pt-2">
-            <div className="text-muted-foreground flex items-center gap-2 text-sm">
-              <span>
-                Trang {pagination?.page ?? page} / {pagination?.totalPages ?? 1} — Tổng{' '}
-                {pagination?.total ?? movements.length}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <select
-                value={limit}
-                onChange={(e) => {
-                  setLimit(Number(e.target.value))
-                  setPage(1)
-                }}
-                className="rounded-md border-emerald-200 px-3 py-1.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-              >
-                <option value={10}>10 / trang</option>
-                <option value={25}>25 / trang</option>
-                <option value={50}>50 / trang</option>
-              </select>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  if ((pagination?.page ?? page) <= 1) return
-                  setPage((p) => Math.max(1, p - 1))
-                }}
-                disabled={(pagination?.page ?? page) <= 1}
-              >
-                Trước
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  if ((pagination?.page ?? page) >= (pagination?.totalPages ?? 1)) return
-                  setPage((p) => p + 1)
-                }}
-                disabled={(pagination?.page ?? page) >= (pagination?.totalPages ?? 1)}
-              >
-                Sau
-              </Button>
-              <Button onClick={() => onOpenChange(false)} variant="ghost" size="sm">
-                Đóng
-              </Button>
-            </div>
-          </DialogFooter>
+        {/* Pagination */}
+        <div className="flex w-full items-center justify-between border-t pt-4">
+          <div className="text-muted-foreground flex items-center gap-2 text-sm">
+            <span>
+              Trang {pagination?.page ?? page} / {pagination?.totalPages ?? 1} — Tổng{' '}
+              {pagination?.total ?? movements.length}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <select
+              value={limit}
+              onChange={(e) => {
+                setLimit(Number(e.target.value))
+                setPage(1)
+              }}
+              className="rounded-md border-emerald-200 px-3 py-1.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+            >
+              <option value={10}>10 / trang</option>
+              <option value={25}>25 / trang</option>
+              <option value={50}>50 / trang</option>
+            </select>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                if ((pagination?.page ?? page) <= 1) return
+                setPage((p) => Math.max(1, p - 1))
+              }}
+              disabled={(pagination?.page ?? page) <= 1}
+            >
+              Trước
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                if ((pagination?.page ?? page) >= (pagination?.totalPages ?? 1)) return
+                setPage((p) => p + 1)
+              }}
+              disabled={(pagination?.page ?? page) >= (pagination?.totalPages ?? 1)}
+            >
+              Sau
+            </Button>
+            <Button onClick={() => onOpenChange(false)} variant="ghost" size="sm">
+              Đóng
+            </Button>
+          </div>
         </div>
-      </DialogContent>
+      </SystemModalLayout>
     </Dialog>
   )
 }

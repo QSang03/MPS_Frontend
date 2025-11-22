@@ -21,6 +21,11 @@ export const deviceModelsClientService = {
     data: DeviceModel[]
     pagination?: ListPagination
   }> {
+    // Ensure this only runs on client-side
+    if (typeof window === 'undefined') {
+      throw new Error('deviceModelsClientService.getAll can only be called on the client-side')
+    }
+
     const response = await internalApiClient.get<ApiListResponse<DeviceModel>>(
       '/api/device-models',
       {

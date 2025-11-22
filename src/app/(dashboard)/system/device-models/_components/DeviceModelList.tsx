@@ -5,6 +5,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   useTransition,
   type ReactNode,
@@ -36,7 +37,17 @@ import {
 import { toast } from 'sonner'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
-import { Package, Search, Factory, Hash, CheckCircle2, XCircle, Trash, Loader2 } from 'lucide-react'
+import {
+  Package,
+  Search,
+  Factory,
+  Hash,
+  CheckCircle2,
+  XCircle,
+  Trash2,
+  Loader2,
+  Settings,
+} from 'lucide-react'
 
 interface DeviceModelStats {
   total: number
@@ -49,9 +60,9 @@ export default function DeviceModelList() {
 
   const [searchInput, setSearchInput] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
-  const [manufacturerFilter, setManufacturerFilter] = useState('')
-  const [typeFilter, setTypeFilter] = useState('')
-  const [isActiveFilter, setIsActiveFilter] = useState('') // '', 'true', 'false'
+  const [manufacturerFilter, setManufacturerFilter] = useState<string>('all')
+  const [typeFilter, setTypeFilter] = useState<string>('all')
+  const [isActiveFilter, setIsActiveFilter] = useState<string>('all') // 'all', 'true', 'false'
   const [sorting, setSorting] = useState<{ sortBy?: string; sortOrder?: 'asc' | 'desc' }>({
     sortBy: 'createdAt',
     sortOrder: 'desc',
@@ -75,25 +86,25 @@ export default function DeviceModelList() {
         onRemove: () => setSearchInput(''),
       })
     }
-    if (manufacturerFilter) {
+    if (manufacturerFilter && manufacturerFilter !== 'all') {
       filters.push({
         label: `NSX: ${manufacturerFilter}`,
         value: manufacturerFilter,
-        onRemove: () => setManufacturerFilter(''),
+        onRemove: () => setManufacturerFilter('all'),
       })
     }
-    if (typeFilter) {
+    if (typeFilter && typeFilter !== 'all') {
       filters.push({
         label: `Loại: ${typeFilter}`,
         value: typeFilter,
-        onRemove: () => setTypeFilter(''),
+        onRemove: () => setTypeFilter('all'),
       })
     }
-    if (isActiveFilter) {
+    if (isActiveFilter && isActiveFilter !== 'all') {
       filters.push({
         label: `Trạng thái: ${isActiveFilter === 'true' ? 'Hoạt động' : 'Không hoạt động'}`,
         value: isActiveFilter,
-        onRemove: () => setIsActiveFilter(''),
+        onRemove: () => setIsActiveFilter('all'),
       })
     }
     if (sorting.sortBy !== 'createdAt' || sorting.sortOrder !== 'desc') {
@@ -108,11 +119,15 @@ export default function DeviceModelList() {
 
   const handleResetFilters = () => {
     setSearchInput('')
-    setManufacturerFilter('')
-    setTypeFilter('')
-    setIsActiveFilter('')
+    setManufacturerFilter('all')
+    setTypeFilter('all')
+    setIsActiveFilter('all')
     setSorting({ sortBy: 'createdAt', sortOrder: 'desc' })
   }
+
+  // Memoize permission checks to avoid re-renders
+  const canFilterByManufacturer = can('filter-by-manufacturer')
+  const canFilterByType = can('filter-by-type')
 
   return (
     <div className="space-y-6">
@@ -146,98 +161,80 @@ export default function DeviceModelList() {
         columnVisibilityMenu={columnVisibilityMenu}
         activeFilters={activeFilters}
       >
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
-          <div className="relative">
-            <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
-            <Input
-              placeholder="Tìm kiếm..."
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  setDebouncedSearch(searchInput.trim())
-                }
-              }}
-              className="pl-10"
-            />
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div>
+            <label className="mb-2 block text-sm font-medium">Tìm kiếm</label>
+            <div className="relative">
+              <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <Input
+                placeholder="Tìm kiếm..."
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    setDebouncedSearch(searchInput.trim())
+                  }
+                }}
+                className="pl-10"
+              />
+            </div>
           </div>
 
-          {can('filter-by-manufacturer') && (
-            <div>
-              <label className="mb-2 block text-sm font-medium">Nhà sản xuất</label>
-              <SelectInput
-                value={manufacturerFilter || 'ALL'}
-                onChange={(value) => setManufacturerFilter(value === 'ALL' ? '' : value)}
-                options={[
-                  { label: 'Tất cả NSX', value: 'ALL' },
-                  { label: 'HP', value: 'HP' },
-                  { label: 'Canon', value: 'Canon' },
-                  { label: 'Epson', value: 'Epson' },
-                  { label: 'Brother', value: 'Brother' },
-                  { label: 'Samsung', value: 'Samsung' },
-                  { label: 'Xerox', value: 'Xerox' },
-                ]}
-              />
-            </div>
-          )}
+          <div>
+            <label className="mb-2 block text-sm font-medium">Nhà sản xuất</label>
+            <Select
+              value={manufacturerFilter}
+              onValueChange={(value) => setManufacturerFilter(value)}
+              disabled={!canFilterByManufacturer}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả NSX</SelectItem>
+                <SelectItem value="HP">HP</SelectItem>
+                <SelectItem value="Canon">Canon</SelectItem>
+                <SelectItem value="Epson">Epson</SelectItem>
+                <SelectItem value="Brother">Brother</SelectItem>
+                <SelectItem value="Samsung">Samsung</SelectItem>
+                <SelectItem value="Xerox">Xerox</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-          {can('filter-by-type') && (
-            <div>
-              <label className="mb-2 block text-sm font-medium">Loại thiết bị</label>
-              <SelectInput
-                value={typeFilter || 'ALL'}
-                onChange={(value) => setTypeFilter(value === 'ALL' ? '' : value)}
-                options={[
-                  { label: 'Tất cả loại', value: 'ALL' },
-                  { label: 'Máy in', value: 'PRINTER' },
-                  { label: 'Máy quét', value: 'SCANNER' },
-                  { label: 'Máy photocopy', value: 'COPIER' },
-                  { label: 'Máy fax', value: 'FAX' },
-                  { label: 'Đa năng', value: 'MULTIFUNCTION' },
-                ]}
-              />
-            </div>
-          )}
+          <div>
+            <label className="mb-2 block text-sm font-medium">Loại thiết bị</label>
+            <Select
+              value={typeFilter}
+              onValueChange={(value) => setTypeFilter(value)}
+              disabled={!canFilterByType}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả loại</SelectItem>
+                <SelectItem value="PRINTER">Máy in</SelectItem>
+                <SelectItem value="SCANNER">Máy quét</SelectItem>
+                <SelectItem value="COPIER">Máy photocopy</SelectItem>
+                <SelectItem value="FAX">Máy fax</SelectItem>
+                <SelectItem value="MULTIFUNCTION">Đa năng</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
           <div>
             <label className="mb-2 block text-sm font-medium">Trạng thái</label>
-            <SelectInput
-              value={isActiveFilter || 'ALL'}
-              onChange={(value) => setIsActiveFilter(value === 'ALL' ? '' : value)}
-              options={[
-                { label: 'Tất cả', value: 'ALL' },
-                { label: 'Đang hoạt động', value: 'true' },
-                { label: 'Không hoạt động', value: 'false' },
-              ]}
-            />
-          </div>
-
-          <div>
-            <label className="mb-2 block text-sm font-medium">Sắp xếp theo</label>
-            <SelectInput
-              value={sorting.sortBy || 'createdAt'}
-              onChange={(value) => setSorting((prev) => ({ ...prev, sortBy: value }))}
-              options={[
-                { label: 'Ngày tạo', value: 'createdAt' },
-                { label: 'Tên', value: 'name' },
-                { label: 'Nhà sản xuất', value: 'manufacturer' },
-                { label: 'Loại', value: 'type' },
-              ]}
-            />
-          </div>
-
-          <div>
-            <label className="mb-2 block text-sm font-medium">Thứ tự</label>
-            <SelectInput
-              value={sorting.sortOrder || 'desc'}
-              onChange={(value) =>
-                setSorting((prev) => ({ ...prev, sortOrder: value as 'asc' | 'desc' }))
-              }
-              options={[
-                { label: 'Tăng dần', value: 'asc' },
-                { label: 'Giảm dần', value: 'desc' },
-              ]}
-            />
+            <Select value={isActiveFilter} onValueChange={(value) => setIsActiveFilter(value)}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả</SelectItem>
+                <SelectItem value="true">Đang hoạt động</SelectItem>
+                <SelectItem value="false">Không hoạt động</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </FilterSection>
@@ -292,15 +289,16 @@ function DeviceModelsTableContent({
   const [countsLoading, setCountsLoading] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const queryClient = useQueryClient()
+  const fetchedModelIdsRef = useRef<Set<string>>(new Set())
 
   const queryParams = useMemo(
     () => ({
       page: 1,
       limit: 100,
       search: search || undefined,
-      manufacturer: manufacturer || undefined,
-      type: type || undefined,
-      isActive: isActive ? (isActive === 'true' ? true : false) : undefined,
+      manufacturer: manufacturer && manufacturer !== 'all' ? manufacturer : undefined,
+      type: type && type !== 'all' ? type : undefined,
+      isActive: isActive && isActive !== 'all' ? (isActive === 'true' ? true : false) : undefined,
       sortBy: sorting.sortBy || 'createdAt',
       sortOrder: sorting.sortOrder || 'desc',
     }),
@@ -338,6 +336,7 @@ function DeviceModelsTableContent({
     }
   }, [])
 
+  // Update stats when models or totalCount changes
   useEffect(() => {
     const total = totalCount
     const active = models.filter((model) => model.isActive).length
@@ -346,7 +345,10 @@ function DeviceModelsTableContent({
       active,
       inactive: Math.max(total - active, 0),
     })
+  }, [models, totalCount, onStatsChange])
 
+  // Fetch consumable counts when models change (separate effect to avoid infinite loop)
+  useEffect(() => {
     if (!models.length) return
 
     const initialCounts: Record<string, number> = {}
@@ -356,19 +358,32 @@ function DeviceModelsTableContent({
       const maybeCount = (model as unknown as { consumableTypeCount?: number }).consumableTypeCount
       if (typeof maybeCount === 'number') {
         initialCounts[model.id] = maybeCount
-      } else if (consumableCounts[model.id] === undefined) {
+        fetchedModelIdsRef.current.add(model.id)
+      } else if (!fetchedModelIdsRef.current.has(model.id)) {
+        // Only add to missing if we haven't fetched it yet
         missing.push(model)
       }
     }
 
+    // Update counts from initial data if available
     if (Object.keys(initialCounts).length) {
-      setConsumableCounts((prev) => ({ ...prev, ...initialCounts }))
+      setConsumableCounts((prev) => {
+        // Only update if there are new counts to avoid unnecessary re-renders
+        const hasNewCounts = Object.keys(initialCounts).some((id) => prev[id] !== initialCounts[id])
+        return hasNewCounts ? { ...prev, ...initialCounts } : prev
+      })
     }
 
+    // Fetch missing counts
     if (missing.length) {
-      void fetchMissingCounts(missing)
+      // Mark as being fetched
+      missing.forEach((model) => fetchedModelIdsRef.current.add(model.id))
+      void fetchMissingCounts(missing).then(() => {
+        // Counts are updated in fetchMissingCounts callback
+      })
     }
-  }, [models, totalCount, onStatsChange, fetchMissingCounts, consumableCounts])
+    // Only depend on models and fetchMissingCounts, not consumableCounts to avoid infinite loop
+  }, [models, fetchMissingCounts])
 
   const invalidateModels = useCallback(
     () => queryClient.invalidateQueries({ queryKey: ['device-models'] }),
@@ -400,10 +415,14 @@ function DeviceModelsTableContent({
     return [
       {
         id: 'index',
-        header: '#',
+        header: 'STT',
         cell: ({ row, table }) => {
           const index = table.getSortedRowModel().rows.findIndex((r) => r.id === row.id)
-          return <span className="text-muted-foreground text-sm">{index + 1}</span>
+          return (
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded bg-gradient-to-r from-gray-100 to-gray-50 text-sm font-medium text-gray-700">
+              {index + 1}
+            </span>
+          )
         },
         enableSorting: false,
       },
@@ -411,7 +430,7 @@ function DeviceModelsTableContent({
         accessorKey: 'name',
         header: () => (
           <div className="flex items-center gap-2">
-            <Package className="h-4 w-4 text-violet-600" />
+            <Package className="h-4 w-4 text-gray-600" />
             Tên Model
           </div>
         ),
@@ -429,16 +448,16 @@ function DeviceModelsTableContent({
         accessorKey: 'partNumber',
         header: () => (
           <div className="flex items-center gap-2">
-            <Hash className="h-4 w-4 text-purple-600" />
+            <Hash className="h-4 w-4 text-gray-600" />
             Part Number
           </div>
         ),
         enableSorting: true,
         cell: ({ row }) =>
           row.original.partNumber ? (
-            <code className="rounded bg-purple-100 px-2 py-1 text-xs text-purple-700">
+            <Badge variant="outline" className="font-mono text-xs">
               {row.original.partNumber}
-            </code>
+            </Badge>
           ) : (
             <span className="text-muted-foreground text-sm">-</span>
           ),
@@ -447,7 +466,7 @@ function DeviceModelsTableContent({
         accessorKey: 'manufacturer',
         header: () => (
           <div className="flex items-center gap-2">
-            <Factory className="h-4 w-4 text-fuchsia-600" />
+            <Factory className="h-4 w-4 text-gray-600" />
             Nhà sản xuất
           </div>
         ),
@@ -456,7 +475,12 @@ function DeviceModelsTableContent({
       },
       {
         accessorKey: 'isActive',
-        header: 'Trạng thái',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-gray-600" />
+            Trạng thái
+          </div>
+        ),
         enableSorting: true,
         cell: ({ row }) => {
           const m = row.original
@@ -465,7 +489,9 @@ function DeviceModelsTableContent({
               variant={m.isActive ? 'default' : 'secondary'}
               className={cn(
                 'flex w-fit items-center gap-1 px-2 py-0.5 text-xs',
-                m.isActive ? 'bg-green-500 hover:bg-green-600' : 'bg-gray-400 hover:bg-gray-500'
+                m.isActive
+                  ? 'bg-green-500 text-white hover:bg-green-600'
+                  : 'bg-gray-400 text-white hover:bg-gray-500'
               )}
             >
               {m.isActive ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
@@ -525,7 +551,12 @@ function DeviceModelsTableContent({
       },
       {
         id: 'actions',
-        header: 'Thao tác',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <Settings className="h-4 w-4 text-gray-600" />
+            Thao tác
+          </div>
+        ),
         enableSorting: false,
         cell: ({ row }) => (
           <div className="flex justify-end gap-2">
@@ -540,14 +571,15 @@ function DeviceModelsTableContent({
                 trigger={
                   <Button
                     type="button"
-                    variant="destructive"
+                    variant="ghost"
                     size="sm"
                     disabled={deletingId === row.original.id}
+                    className="transition-all hover:bg-red-100 hover:text-red-700"
                   >
                     {deletingId === row.original.id ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
-                      <Trash className="h-4 w-4" />
+                      <Trash2 className="h-4 w-4" />
                     )}
                   </Button>
                 }
@@ -578,23 +610,29 @@ function DeviceModelsTableContent({
         isPending={isPending}
         emptyState={
           models.length === 0 ? (
-            <div className="px-4 py-12 text-center">
-              <div className="text-muted-foreground flex flex-col items-center gap-3">
+            <div className="p-12 text-center">
+              <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200">
                 {rawSearch ? (
-                  <>
-                    <Search className="h-12 w-12 opacity-20" />
-                    <p>Không tìm thấy model phù hợp với "{rawSearch}"</p>
-                  </>
+                  <Search className="h-12 w-12 opacity-20" />
                 ) : (
-                  <>
-                    <Package className="h-12 w-12 opacity-20" />
-                    <p>Chưa có device model nào</p>
-                    <ActionGuard pageId="device-models" actionId="create">
-                      <DeviceModelFormModal mode="create" onSaved={handleSaved} />
-                    </ActionGuard>
-                  </>
+                  <Package className="h-12 w-12 opacity-20" />
                 )}
               </div>
+              <h3 className="mb-2 text-xl font-bold text-gray-700">
+                {rawSearch
+                  ? `Không tìm thấy model phù hợp với "${rawSearch}"`
+                  : 'Chưa có device model nào'}
+              </h3>
+              <p className="mb-6 text-gray-500">
+                {rawSearch
+                  ? 'Thử điều chỉnh bộ lọc hoặc tìm kiếm'
+                  : 'Hãy tạo device model đầu tiên'}
+              </p>
+              {!rawSearch && (
+                <ActionGuard pageId="device-models" actionId="create">
+                  <DeviceModelFormModal mode="create" onSaved={handleSaved} />
+                </ActionGuard>
+              )}
             </div>
           ) : undefined
         }
@@ -614,28 +652,5 @@ function DeviceModelsTableContent({
         />
       )}
     </>
-  )
-}
-
-interface SelectInputProps {
-  value: string
-  onChange: (value: string) => void
-  options: Array<{ label: string; value: string }>
-}
-
-function SelectInput({ value, onChange, options }: SelectInputProps) {
-  return (
-    <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className="w-full">
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent>
-        {options.map((option) => (
-          <SelectItem key={option.value} value={option.value}>
-            {option.label}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
   )
 }

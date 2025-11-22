@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Columns3 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -19,16 +19,18 @@ interface ColumnVisibilityMenuProps<TData> {
 }
 
 export function ColumnVisibilityMenu<TData>({ table, tableId }: ColumnVisibilityMenuProps<TData>) {
+  // 1. Load initial state from localStorage
   const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>(() => {
+    if (typeof window === 'undefined') return {}
     try {
-      const stored =
-        typeof window !== 'undefined' ? localStorage.getItem(`table-${tableId}-columns`) : null
+      const stored = localStorage.getItem(`table-${tableId}-columns`)
       if (stored) {
         return JSON.parse(stored) as Record<string, boolean>
       }
     } catch {
-      // ignore and fallback to table defaults
+      // ignore
     }
+    // Fallback: get current table state
     const initialVisibility: Record<string, boolean> = {}
     table.getAllColumns().forEach((col) => {
       initialVisibility[col.id] = col.getIsVisible()
@@ -36,48 +38,57 @@ export function ColumnVisibilityMenu<TData>({ table, tableId }: ColumnVisibility
     return initialVisibility
   })
 
-  // Sync table column visibility with the restored/initial visibility
+  // 2. Use useRef instead of useState to track initialization
+  // This prevents re-renders and fixes 'set-state-in-effect'
+  const isInitializedRef = useRef(false)
+
+  // Sync table column visibility with the restored visibility
   useEffect(() => {
+    if (isInitializedRef.current) return
+
     try {
       table.getAllColumns().forEach((column) => {
         const visible = columnVisibility[column.id]
         if (typeof visible === 'boolean') {
-          column.toggleVisibility(visible)
+          const currentVisible = column.getIsVisible()
+          if (currentVisible !== visible) {
+            column.toggleVisibility(visible) // Pass explicit value
+          }
         }
       })
-    } catch {
-      // Silently ignore apply failures
+    } catch (error) {
+      console.error('Failed to sync column visibility', error)
+    } finally {
+      // Mark as initialized without triggering re-render
+      isInitializedRef.current = true
     }
-  }, [table, columnVisibility])
+  }, [table, columnVisibility]) // Dependencies are safe now
 
   const handleVisibilityChange = useCallback(
     (column: Column<TData>, visible: boolean) => {
-      // Update local state immediately for instant UI feedback
-      setColumnVisibility((prev) => ({
-        ...prev,
-        [column.id]: visible,
-      }))
+      // Check current state and only toggle if needed
+      const currentVisible = column.getIsVisible()
+      if (currentVisible !== visible) {
+        column.toggleVisibility(visible)
+      }
 
-      // Update table column visibility
-      column.toggleVisibility(visible)
+      // Update local state with new visibility value
+      const newVisibility = {
+        ...columnVisibility,
+        [column.id]: visible,
+      }
+      setColumnVisibility(newVisibility)
 
       // Save to localStorage
       try {
-        const visibility: Record<string, boolean> = {}
-        table.getAllColumns().forEach((col) => {
-          visibility[col.id] = col.getIsVisible()
-        })
-        localStorage.setItem(`table-${tableId}-columns`, JSON.stringify(visibility))
-        // Update state to match table state (in case table state differs)
-        setColumnVisibility(visibility)
+        localStorage.setItem(`table-${tableId}-columns`, JSON.stringify(newVisibility))
       } catch {
         // Silently ignore save failures
       }
     },
-    [table, tableId]
+    // 3. Remove 'table' from dependencies as it is not used inside this callback
+    [columnVisibility, tableId]
   )
-
-  // Render immediately; column visibility initialized above
 
   const visibleColumns = table.getAllColumns().filter((column) => column.getCanHide())
 

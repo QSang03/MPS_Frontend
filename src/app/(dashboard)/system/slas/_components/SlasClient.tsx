@@ -13,7 +13,6 @@ import type { ReactNode } from 'react'
 import type { ColumnDef } from '@tanstack/react-table'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  AlertTriangle,
   ArrowLeft,
   CheckCircle2,
   Clock4,
@@ -21,6 +20,13 @@ import {
   ShieldCheck,
   Zap,
   Edit3,
+  FileText,
+  Building2,
+  Tag,
+  Clock,
+  Calendar,
+  Settings,
+  Trash2,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
@@ -532,8 +538,26 @@ function SlasTableContent({
   const columns = useMemo<ColumnDef<SlaRow>[]>(
     () => [
       {
+        id: 'index',
+        header: 'STT',
+        cell: ({ row, table }) => {
+          const index = table.getSortedRowModel().rows.findIndex((r) => r.id === row.id)
+          return (
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded bg-gradient-to-r from-gray-100 to-gray-50 text-sm font-medium text-gray-700">
+              {pagination.pageIndex * pagination.pageSize + index + 1}
+            </span>
+          )
+        },
+        enableSorting: false,
+      },
+      {
         accessorKey: 'name',
-        header: 'SLA',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <FileText className="h-4 w-4 text-gray-600" />
+            SLA
+          </div>
+        ),
         cell: ({ row }) => (
           <div>
             <p className="font-semibold">{row.original.name}</p>
@@ -545,7 +569,12 @@ function SlasTableContent({
       },
       {
         accessorKey: 'customer',
-        header: 'Khách hàng',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <Building2 className="h-4 w-4 text-gray-600" />
+            Khách hàng
+          </div>
+        ),
         cell: ({ row }) => (
           <div className="text-sm">
             <p className="font-medium">{row.original.customer?.name ?? '—'}</p>
@@ -555,7 +584,12 @@ function SlasTableContent({
       },
       {
         accessorKey: 'priority',
-        header: 'Ưu tiên',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <Tag className="h-4 w-4 text-gray-600" />
+            Ưu tiên
+          </div>
+        ),
         cell: ({ row }) => (
           <Badge className={priorityBadgeMap[row.original.priority]}>
             {row.original.priority === Priority.URGENT
@@ -570,7 +604,12 @@ function SlasTableContent({
       },
       {
         id: 'timing',
-        header: 'Thời hạn (giờ)',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <Clock className="h-4 w-4 text-gray-600" />
+            Thời hạn (giờ)
+          </div>
+        ),
         cell: ({ row }) => (
           <div className="text-sm">
             <p className="font-semibold">{row.original.responseTimeHours}h phản hồi</p>
@@ -582,7 +621,12 @@ function SlasTableContent({
       },
       {
         id: 'status',
-        header: 'Trạng thái',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-gray-600" />
+            Trạng thái
+          </div>
+        ),
         cell: ({ row }) => (
           <Badge
             className={row.original.isActive ? statusBadgeMap.active : statusBadgeMap.inactive}
@@ -593,7 +637,12 @@ function SlasTableContent({
       },
       {
         accessorKey: 'updatedAt',
-        header: 'Cập nhật',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-gray-600" />
+            Cập nhật
+          </div>
+        ),
         cell: ({ row }) => (
           <div className="text-xs">
             <p>{formatRelativeTime(row.original.updatedAt ?? row.original.createdAt ?? '')}</p>
@@ -605,14 +654,20 @@ function SlasTableContent({
       },
       {
         id: 'actions',
-        header: 'Thao tác',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <Settings className="h-4 w-4 text-gray-600" />
+            Thao tác
+          </div>
+        ),
         cell: ({ row }) => (
           <div className="flex justify-end gap-2">
             {canUpdate && (
               <Button
                 variant="ghost"
-                size="icon"
+                size="sm"
                 onClick={() => onEdit(row.original)}
+                className="transition-all hover:bg-blue-100 hover:text-blue-700"
                 title="Chỉnh sửa"
               >
                 <Edit3 className="h-4 w-4" />
@@ -626,8 +681,13 @@ function SlasTableContent({
                   await onDelete(row.original.id)
                 }}
                 trigger={
-                  <Button variant="ghost" size="icon" title="Xóa">
-                    <AlertTriangle className="h-4 w-4 text-red-500" />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="transition-all hover:bg-red-100 hover:text-red-700"
+                    title="Xóa"
+                  >
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 }
               />
@@ -636,7 +696,7 @@ function SlasTableContent({
         ),
       },
     ],
-    [canDelete, canUpdate, onDelete, onEdit]
+    [canDelete, canUpdate, onDelete, onEdit, pagination.pageIndex, pagination.pageSize]
   )
 
   return (
@@ -664,12 +724,12 @@ function SlasTableContent({
       isPending={isPending}
       emptyState={
         rows.length === 0 ? (
-          <div className="p-8 text-center">
-            <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200">
-              <ShieldCheck className="h-8 w-8 text-gray-400" />
+          <div className="p-12 text-center">
+            <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200">
+              <ShieldCheck className="h-12 w-12 opacity-20" />
             </div>
             <h3 className="mb-2 text-xl font-bold text-gray-700">Không có SLA nào</h3>
-            <p className="text-gray-500">
+            <p className="mb-6 text-gray-500">
               {searchInput ? 'Không tìm thấy SLA phù hợp' : 'Hãy tạo SLA đầu tiên'}
             </p>
           </div>

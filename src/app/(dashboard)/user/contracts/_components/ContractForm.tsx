@@ -1,11 +1,11 @@
 'use client'
 
 import { useForm, useWatch } from 'react-hook-form'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { Loader2, FileText, Calendar, Tag, Building, Clock } from 'lucide-react'
+import { Loader2, FileText, Calendar, Tag, Building, Clock, Paperclip, Link2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Form,
@@ -27,17 +27,24 @@ import {
 } from '@/components/ui/select'
 import CustomerSelect from '@/components/shared/CustomerSelect'
 import { Textarea } from '@/components/ui/textarea'
-import { contractFormSchema, type ContractFormData } from '@/lib/validations/contract.schema'
+import {
+  contractFormSchema,
+  type ContractFormData,
+  CONTRACT_PDF_MAX_BYTES,
+} from '@/lib/validations/contract.schema'
 import type { Contract } from '@/types/models/contract'
 import { contractsClientService } from '@/lib/api/services/contracts-client.service'
 import { removeEmpty } from '@/lib/utils/clean'
 import { cn } from '@/lib/utils'
 import ContractDevicesSection from './ContractDevicesSection'
+import { getPublicUrl } from '@/lib/utils/publicUrl'
 
 interface ContractFormProps {
   initial?: Partial<ContractFormData>
   onSuccess?: (created?: Contract | null) => void
 }
+
+const CONTRACT_PDF_MAX_MB = Math.round(CONTRACT_PDF_MAX_BYTES / (1024 * 1024))
 
 export function ContractForm({ initial, onSuccess }: ContractFormProps) {
   const queryClient = useQueryClient()
@@ -54,8 +61,11 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
       durationYears: initial?.durationYears ?? undefined,
       description: initial?.description || '',
       documentUrl: initial?.documentUrl || '',
+      pdfFile: undefined,
     },
   })
+
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   const createMutation = useMutation({
     mutationFn: (payload: ContractFormData) => contractsClientService.create(payload),
@@ -117,8 +127,17 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
       }
       if ('durationYears' in copy) delete copy.durationYears
 
-      console.log('ContractForm submit (payload)', copy)
+      const pdfFile = copy.pdfFile as File | null | undefined
+      if ('pdfFile' in copy) delete copy.pdfFile
+
+      // If a new PDF file is uploaded, remove any explicit documentUrl so backend
+      // will generate the URL from the uploaded file instead of using the old value.
+      if (pdfFile && 'documentUrl' in copy) delete copy.documentUrl
+
       const payload = removeEmpty(copy) as ContractFormData
+      if (pdfFile) {
+        payload.pdfFile = pdfFile
+      }
 
       const id = (initial as unknown as { id?: string })?.id
       if (id) {
@@ -136,7 +155,57 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
     (createMutation as unknown as { isLoading?: boolean }).isLoading ||
     (updateMutation as unknown as { isLoading?: boolean }).isLoading
   const id = (initial as unknown as { id?: string })?.id
-  const watched = useWatch({ control: form.control })
+  const watched = useWatch({ control: form.control }) as ContractFormData
+  const selectedFile = (watched?.pdfFile as File | undefined) || undefined
+  const documentUrlValue =
+    typeof watched?.documentUrl === 'string' ? watched.documentUrl.trim() : ''
+
+  const resolvedDocumentUrl = documentUrlValue
+    ? (getPublicUrl(documentUrlValue) ?? documentUrlValue)
+    : ''
+
+  const formatFileSize = (bytes: number) => {
+    if (!bytes) return '0 B'
+    const units = ['B', 'KB', 'MB', 'GB']
+    let size = bytes
+    let unit = 0
+    while (size >= 1024 && unit < units.length - 1) {
+      size /= 1024
+      unit += 1
+    }
+    const formatted = unit === 0 ? size.toFixed(0) : size.toFixed(1)
+    return `${formatted} ${units[unit]}`
+  }
+
+  const setPdfFileValue = (file?: File | null) => {
+    if (!file) {
+      form.setValue('pdfFile', undefined, { shouldDirty: true })
+      form.clearErrors('pdfFile')
+      if (fileInputRef.current) fileInputRef.current.value = ''
+      return true
+    }
+
+    if (file.type !== 'application/pdf') {
+      form.setError('pdfFile', { type: 'manual', message: 'Chỉ chấp nhận file PDF' })
+      toast.error('Chỉ chấp nhận file PDF')
+      if (fileInputRef.current) fileInputRef.current.value = ''
+      return false
+    }
+
+    if (file.size > CONTRACT_PDF_MAX_BYTES) {
+      form.setError('pdfFile', {
+        type: 'manual',
+        message: `Tệp vượt quá ${CONTRACT_PDF_MAX_MB}MB`,
+      })
+      toast.error(`File vượt quá ${CONTRACT_PDF_MAX_MB}MB`)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+      return false
+    }
+
+    form.clearErrors('pdfFile')
+    form.setValue('pdfFile', file, { shouldDirty: true })
+    return true
+  }
   // form state errors are available via `form.formState.errors` when needed
 
   // keep the hidden endDate form value in sync with startDate + durationYears - 1 day
@@ -427,6 +496,139 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
                 </FormControl>
                 <FormDescription>
                   Mô tả tổng quát hoặc điều kiện đặc biệt của hợp đồng
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <Separator />
+
+        {/* Document Section */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <div className="rounded-lg bg-slate-100 p-2">
+              <Paperclip className="h-4 w-4 text-slate-600" />
+            </div>
+            <div>
+              <h3 className="font-bold text-gray-900">Tài liệu hợp đồng</h3>
+              <p className="text-muted-foreground text-xs">
+                Đính kèm file PDF hoặc dán liên kết có sẵn
+              </p>
+            </div>
+          </div>
+
+          <FormField
+            control={form.control}
+            name="documentUrl"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="flex items-center gap-2 text-base font-semibold">
+                  <Link2 className="h-4 w-4 text-slate-600" />
+                  Liên kết tài liệu
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    type="url"
+                    placeholder="https://storage.example.com/contracts/HD-2025-001.pdf"
+                    disabled={isPending}
+                    className="h-11"
+                  />
+                </FormControl>
+                {documentUrlValue && (
+                  <div className="mt-2 flex items-center gap-3">
+                    <a
+                      href={resolvedDocumentUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm break-all text-blue-600 hover:underline"
+                    >
+                      {resolvedDocumentUrl}
+                    </a>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        try {
+                          void navigator.clipboard.writeText(resolvedDocumentUrl)
+                          toast.success('Đã copy link')
+                        } catch {
+                          toast.error('Không thể copy liên kết')
+                        }
+                      }}
+                    >
+                      Sao chép
+                    </Button>
+                  </div>
+                )}
+                <FormDescription>
+                  Nếu bạn đã lưu file ở dịch vụ khác, nhập URL trực tiếp để mọi người có thể xem.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="pdfFile"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="flex items-center gap-2 text-base font-semibold">
+                  <Paperclip className="h-4 w-4 text-slate-600" />
+                  Upload PDF (tối đa {CONTRACT_PDF_MAX_MB}MB)
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    name={field.name}
+                    onBlur={field.onBlur}
+                    ref={(node) => {
+                      fileInputRef.current = node
+                      if (node) field.ref(node)
+                    }}
+                    type="file"
+                    accept="application/pdf"
+                    disabled={isPending}
+                    className="h-11"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0]
+                      if (!file) {
+                        setPdfFileValue(undefined)
+                        field.onChange(undefined)
+                        return
+                      }
+                      const accepted = setPdfFileValue(file)
+                      field.onChange(accepted ? file : undefined)
+                    }}
+                  />
+                </FormControl>
+                {selectedFile && (
+                  <div className="mt-2 flex items-center justify-between rounded border bg-white px-3 py-2 text-sm">
+                    <div>
+                      <p className="font-medium text-gray-900">{selectedFile.name}</p>
+                      <p className="text-muted-foreground text-xs">
+                        {formatFileSize(selectedFile.size)}
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="text-red-600 hover:text-red-700"
+                      onClick={() => {
+                        setPdfFileValue(undefined)
+                        field.onChange(undefined)
+                      }}
+                    >
+                      Xóa
+                    </Button>
+                  </div>
+                )}
+                <FormDescription>
+                  File PDF sẽ được tải lên backend và tự động tạo URL cho trường phía trên.
                 </FormDescription>
                 <FormMessage />
               </FormItem>

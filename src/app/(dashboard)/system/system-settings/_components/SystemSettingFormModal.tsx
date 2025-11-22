@@ -1,15 +1,8 @@
 'use client'
 
 import React, { useState } from 'react'
-import {
-  Dialog,
-  DialogTrigger,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/components/ui/dialog'
+import { Dialog, DialogTrigger } from '@/components/ui/dialog'
+import { SystemModalLayout } from '@/components/system/SystemModalLayout'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -169,24 +162,44 @@ export default function SystemSettingFormModal({ setting, onSaved }: Props) {
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="max-w-[700px] overflow-hidden rounded-2xl border-0 p-0 shadow-2xl">
-        {/* Header with Gradient */}
-        <DialogHeader className="relative overflow-hidden bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-0">
-          <div className="absolute inset-0 bg-black/10"></div>
-          <div className="relative z-10 px-6 py-5 text-white">
-            <div className="flex items-center gap-3">
-              <Settings className="h-6 w-6" />
-              <DialogTitle className="text-2xl font-bold">Chỉnh sửa cấu hình hệ thống</DialogTitle>
-            </div>
-            <DialogDescription className="mt-2 text-white/90">
-              Cập nhật giá trị và mô tả cho cấu hình hệ thống
-            </DialogDescription>
-          </div>
-          <div className="absolute -top-10 -right-10 h-40 w-40 rounded-full bg-white/10 blur-3xl"></div>
-          <div className="absolute -bottom-10 -left-10 h-40 w-40 rounded-full bg-white/10 blur-3xl"></div>
-        </DialogHeader>
-
-        <form onSubmit={handleSubmit} className="space-y-6 p-6">
+      <SystemModalLayout
+        title="Chỉnh sửa cấu hình hệ thống"
+        description="Cập nhật giá trị và mô tả cho cấu hình hệ thống"
+        icon={Settings}
+        variant="edit"
+        footer={
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+              disabled={mutation.isPending}
+              className="min-w-[100px]"
+            >
+              Hủy
+            </Button>
+            <Button
+              type="submit"
+              form="system-setting-form"
+              disabled={mutation.isPending || !form.value}
+              className="min-w-[120px] bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+            >
+              {mutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Đang lưu...
+                </>
+              ) : (
+                <>
+                  <Settings className="mr-2 h-4 w-4" />
+                  Cập nhật
+                </>
+              )}
+            </Button>
+          </>
+        }
+      >
+        <form id="system-setting-form" onSubmit={handleSubmit} className="space-y-6">
           {/* Setting Key (Read-only) */}
           <div className="space-y-3">
             <Label className="flex items-center gap-2 text-sm font-medium text-gray-700">
@@ -249,38 +262,8 @@ export default function SystemSettingFormModal({ setting, onSaved }: Props) {
           </div>
 
           <Separator />
-
-          {/* Footer */}
-          <DialogFooter className="gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setOpen(false)}
-              disabled={mutation.isPending}
-              className="transition-all hover:bg-gray-100"
-            >
-              Hủy
-            </Button>
-            <Button
-              type="submit"
-              disabled={mutation.isPending || !form.value}
-              className="gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 transition-all hover:from-blue-700 hover:to-indigo-700"
-            >
-              {mutation.isPending ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Đang lưu...
-                </>
-              ) : (
-                <>
-                  <Settings className="h-4 w-4" />
-                  Cập nhật
-                </>
-              )}
-            </Button>
-          </DialogFooter>
         </form>
-      </DialogContent>
+      </SystemModalLayout>
     </Dialog>
   )
 }

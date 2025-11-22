@@ -4,14 +4,9 @@ import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Loader2 } from 'lucide-react'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog'
+import { Loader2, FileText } from 'lucide-react'
+import { Dialog } from '@/components/ui/dialog'
+import { SystemModalLayout } from '@/components/system/SystemModalLayout'
 import { Button } from '@/components/ui/button'
 import {
   Form,
@@ -118,16 +113,36 @@ export function SlaFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>{initialData ? 'Cập nhật SLA' : 'Tạo SLA mới'}</DialogTitle>
-          <DialogDescription>
-            Định nghĩa cam kết thời gian phản hồi & xử lý để đồng bộ với hợp đồng dịch vụ.
-          </DialogDescription>
-        </DialogHeader>
-
+      <SystemModalLayout
+        title={initialData ? 'Cập nhật SLA' : 'Tạo SLA mới'}
+        description="Định nghĩa cam kết thời gian phản hồi & xử lý để đồng bộ với hợp đồng dịch vụ."
+        icon={FileText}
+        variant={initialData ? 'edit' : 'create'}
+        footer={
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={isSubmitting}
+              className="min-w-[100px]"
+            >
+              Hủy
+            </Button>
+            <Button
+              type="submit"
+              form="sla-form"
+              disabled={isSubmitting}
+              className="min-w-[120px] bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+            >
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {initialData ? 'Lưu thay đổi' : 'Tạo SLA'}
+            </Button>
+          </>
+        }
+      >
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+          <form id="sla-form" onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
             <div className="grid gap-4 md:grid-cols-2">
               <FormField
                 control={form.control}
@@ -308,24 +323,9 @@ export function SlaFormDialog({
                 )}
               />
             </div>
-
-            <div className="flex justify-end gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                disabled={isSubmitting}
-              >
-                Hủy
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {initialData ? 'Lưu thay đổi' : 'Tạo SLA'}
-              </Button>
-            </div>
           </form>
         </Form>
-      </DialogContent>
+      </SystemModalLayout>
     </Dialog>
   )
 }

@@ -1,19 +1,28 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Dialog } from '@/components/ui/dialog'
+import { SystemModalLayout } from '@/components/system/SystemModalLayout'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Loader2, FileText, Calendar, Tag, Building2, X } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import {
+  Loader2,
+  FileText,
+  Calendar,
+  Tag,
+  Building2,
+  Search,
+  Filter,
+  X,
+  ChevronDown,
+  ExternalLink,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { VN } from '@/constants/vietnamese'
+import Link from 'next/link'
 
 interface Contract {
   id: string
@@ -43,6 +52,11 @@ export default function CustomerContractsModal({
   const [loading, setLoading] = useState(false)
   const [page] = useState(1)
   const [limit] = useState(20)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [statusFilter, setStatusFilter] = useState<string>('')
+  const [typeFilter, setTypeFilter] = useState<string>('')
+  const [showFilters, setShowFilters] = useState(false)
+  const [expandedRow, setExpandedRow] = useState<string | null>(null)
 
   useEffect(() => {
     if (!open || !customerId) return
@@ -86,16 +100,27 @@ export default function CustomerContractsModal({
     fetchCustomerContracts()
   }, [open, customerId, page, limit])
 
+  // Reset filters when modal closes
+  useEffect(() => {
+    if (!open) {
+      setSearchTerm('')
+      setStatusFilter('')
+      setTypeFilter('')
+      setShowFilters(false)
+      setExpandedRow(null)
+    }
+  }, [open])
+
   const getStatusColor = (status?: string) => {
     switch (status) {
       case 'ACTIVE':
-        return 'bg-green-500 hover:bg-green-600'
+        return 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-200'
       case 'PENDING':
-        return 'bg-yellow-500 hover:bg-yellow-600'
+        return 'bg-amber-500 hover:bg-amber-600 shadow-amber-200'
       case 'EXPIRED':
-        return 'bg-red-500 hover:bg-red-600'
+        return 'bg-rose-500 hover:bg-rose-600 shadow-rose-200'
       default:
-        return 'bg-gray-500 hover:bg-gray-600'
+        return 'bg-slate-500 hover:bg-slate-600 shadow-slate-200'
     }
   }
 
@@ -117,141 +142,471 @@ export default function CustomerContractsModal({
 
   const getTypeColor = (type?: string) => {
     switch (type) {
-      case 'MPS':
-        return 'bg-blue-100 text-blue-700 border-blue-300'
-      case 'CONSUMABLE_ONLY':
-        return 'bg-purple-100 text-purple-700 border-purple-300'
-      case 'REPAIR':
-        return 'bg-orange-100 text-orange-700 border-orange-300'
+      case 'MPS_CLICK_CHARGE':
+      case 'MPS_CONSUMABLE':
+        return 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100'
+      case 'CMPS_CLICK_CHARGE':
+      case 'CMPS_CONSUMABLE':
+        return 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100'
+      case 'PARTS_REPAIR_SERVICE':
+        return 'bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100'
       default:
-        return 'bg-gray-100 text-gray-700 border-gray-300'
+        return 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
     }
   }
 
+  const filteredContracts = contracts.filter((contract) => {
+    const matchesSearch = contract.contractNumber.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesStatus = !statusFilter || contract.status === statusFilter
+    const matchesType = !typeFilter || contract.type === typeFilter
+    return matchesSearch && matchesStatus && matchesType
+  })
+
+  const hasActiveFilters = searchTerm || statusFilter || typeFilter
+
+  const clearAllFilters = () => {
+    setSearchTerm('')
+    setStatusFilter('')
+    setTypeFilter('')
+  }
+
+  const toggleRowExpansion = (contractId: string) => {
+    setExpandedRow(expandedRow === contractId ? null : contractId)
+  }
+
+  // Count contracts by status
+  const statusCounts = contracts.reduce(
+    (acc, contract) => {
+      acc[contract.status] = (acc[contract.status] || 0) + 1
+      return acc
+    },
+    {} as Record<string, number>
+  )
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl overflow-hidden rounded-3xl border-0 p-0 shadow-2xl">
-        {/* Header */}
-        <div className="relative overflow-hidden bg-gradient-to-br from-sky-600 via-cyan-600 to-blue-600 px-8 py-6">
-          <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
-          <DialogHeader className="relative z-10">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="rounded-xl border border-white/30 bg-white/20 p-3 backdrop-blur-sm">
-                  <Building2 className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <DialogTitle className="text-2xl font-bold text-white">
-                    Hợp đồng của khách hàng
-                  </DialogTitle>
-                  <DialogDescription className="mt-1 text-blue-100">
-                    <span className="font-semibold text-white">{customerName}</span>
-                  </DialogDescription>
-                </div>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => onOpenChange(false)}
-                className="text-white hover:bg-white/20"
-              >
-                <X className="h-5 w-5" />
-              </Button>
+      <SystemModalLayout
+        title="Hợp đồng của khách hàng"
+        description={customerName}
+        icon={Building2}
+        variant="view"
+        maxWidth="!max-w-[85vw]"
+      >
+        {loading ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex flex-col items-center justify-center space-y-4 p-20"
+          >
+            <div className="relative">
+              <Loader2 className="h-14 w-14 animate-spin text-sky-500" />
+              <div className="absolute inset-0 h-14 w-14 animate-ping rounded-full bg-sky-400 opacity-20" />
             </div>
-          </DialogHeader>
-        </div>
-
-        {/* Content */}
-        <div className="max-h-[70vh] overflow-y-auto p-6">
-          {loading ? (
-            <div className="flex flex-col items-center justify-center space-y-4 p-16">
-              <Loader2 className="h-12 w-12 animate-spin text-sky-600" />
-              <p className="text-sm font-medium text-slate-600">Đang tải danh sách hợp đồng...</p>
+            <p className="text-sm font-medium text-slate-600">Đang tải danh sách hợp đồng...</p>
+          </motion.div>
+        ) : contracts.length === 0 ? (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="flex flex-col items-center justify-center space-y-4 rounded-xl border-2 border-dashed border-slate-300 bg-slate-50/50 p-20"
+          >
+            <div className="rounded-full bg-slate-100 p-6">
+              <FileText className="h-12 w-12 text-slate-400" />
             </div>
-          ) : contracts.length === 0 ? (
-            <div className="flex flex-col items-center justify-center space-y-3 p-16">
-              <div className="rounded-full bg-slate-100 p-6">
-                <FileText className="h-12 w-12 text-slate-400" />
-              </div>
-              <p className="text-lg font-medium text-slate-600">Chưa có hợp đồng nào</p>
-              <p className="text-sm text-slate-500">
+            <div className="text-center">
+              <p className="text-lg font-semibold text-slate-700">Chưa có hợp đồng nào</p>
+              <p className="mt-1 text-sm text-slate-500">
                 Khách hàng này chưa có hợp đồng nào trong hệ thống
               </p>
             </div>
-          ) : (
-            <div className="overflow-hidden rounded-xl border-2 border-gray-200 shadow-lg">
-              <table className="w-full">
-                <thead className="bg-gradient-to-r from-sky-50 to-blue-50">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-sm font-semibold">
-                      <div className="flex items-center gap-2">
-                        <FileText className="h-4 w-4 text-sky-600" />
-                        Mã hợp đồng
-                      </div>
-                    </th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold">
-                      <div className="flex items-center gap-2">
-                        <Tag className="h-4 w-4 text-blue-600" />
-                        Loại
-                      </div>
-                    </th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold">Trạng thái</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-purple-600" />
-                        Thời gian
-                      </div>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {contracts.map((c) => (
-                    <tr
-                      key={c.id}
-                      className="transition-all hover:bg-gradient-to-r hover:from-sky-50 hover:to-blue-50"
-                    >
-                      <td className="px-4 py-3">
-                        <code className="rounded bg-sky-100 px-2 py-1 text-sm font-semibold text-sky-700">
-                          {c.contractNumber}
-                        </code>
-                      </td>
-                      <td className="px-4 py-3">
-                        <Badge className={`border-2 ${getTypeColor(c.type)}`}>{c.type}</Badge>
-                      </td>
-                      <td className="px-4 py-3">
-                        <Badge className={cn('border-0 text-white', getStatusColor(c.status))}>
-                          {getStatusLabel(c.status)}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="text-muted-foreground h-3.5 w-3.5" />
-                          <span>
-                            {new Date(c.startDate).toLocaleDateString('vi-VN')} —{' '}
-                            {new Date(c.endDate).toLocaleDateString('vi-VN')}
-                          </span>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+          </motion.div>
+        ) : (
+          <div className="space-y-4">
+            {/* Stats Cards */}
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="rounded-xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-4 shadow-sm"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-medium text-slate-500">Tổng hợp đồng</p>
+                    <p className="mt-1 text-2xl font-bold text-slate-900">{contracts.length}</p>
+                  </div>
+                  <div className="rounded-lg bg-blue-100 p-2">
+                    <FileText className="h-5 w-5 text-blue-600" />
+                  </div>
+                </div>
+              </motion.div>
 
-          {contracts.length > 0 && (
-            <div className="mt-4 flex items-center justify-between text-sm text-slate-600">
-              <div className="flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                <span>
-                  Tổng cộng:{' '}
-                  <span className="font-semibold text-slate-900">{contracts.length}</span> hợp đồng
-                </span>
-              </div>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15 }}
+                className="rounded-xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-green-50 p-4 shadow-sm"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-medium text-emerald-700">Đang hoạt động</p>
+                    <p className="mt-1 text-2xl font-bold text-emerald-900">
+                      {statusCounts.ACTIVE || 0}
+                    </p>
+                  </div>
+                  <div className="rounded-lg bg-emerald-100 p-2">
+                    <FileText className="h-5 w-5 text-emerald-600" />
+                  </div>
+                </div>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="rounded-xl border border-amber-200 bg-gradient-to-br from-amber-50 to-yellow-50 p-4 shadow-sm"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-medium text-amber-700">Chờ xử lý</p>
+                    <p className="mt-1 text-2xl font-bold text-amber-900">
+                      {statusCounts.PENDING || 0}
+                    </p>
+                  </div>
+                  <div className="rounded-lg bg-amber-100 p-2">
+                    <FileText className="h-5 w-5 text-amber-600" />
+                  </div>
+                </div>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.25 }}
+                className="rounded-xl border border-rose-200 bg-gradient-to-br from-rose-50 to-red-50 p-4 shadow-sm"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-medium text-rose-700">Hết hạn</p>
+                    <p className="mt-1 text-2xl font-bold text-rose-900">
+                      {statusCounts.EXPIRED || 0}
+                    </p>
+                  </div>
+                  <div className="rounded-lg bg-rose-100 p-2">
+                    <FileText className="h-5 w-5 text-rose-600" />
+                  </div>
+                </div>
+              </motion.div>
             </div>
-          )}
-        </div>
-      </DialogContent>
+
+            {/* Search and Filter Bar */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="space-y-3"
+            >
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <Input
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Tìm theo mã hợp đồng..."
+                    className="pl-9"
+                  />
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowFilters(!showFilters)}
+                  className={cn(
+                    'gap-2 transition-colors',
+                    hasActiveFilters && 'border-sky-300 bg-sky-50 text-sky-700'
+                  )}
+                >
+                  <Filter className="h-4 w-4" />
+                  Bộ lọc
+                  {hasActiveFilters && (
+                    <Badge variant="secondary" className="ml-1 h-5 w-5 rounded-full p-0 text-xs">
+                      !
+                    </Badge>
+                  )}
+                </Button>
+                {hasActiveFilters && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearAllFilters}
+                    className="gap-2 text-slate-600"
+                  >
+                    <X className="h-4 w-4" />
+                    Xóa bộ lọc
+                  </Button>
+                )}
+              </div>
+
+              {/* Filter Panel */}
+              <AnimatePresence>
+                {showFilters && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 md:grid-cols-2">
+                      <div>
+                        <label className="mb-1.5 block text-xs font-medium text-slate-700">
+                          Trạng thái
+                        </label>
+                        <select
+                          value={statusFilter}
+                          onChange={(e) => setStatusFilter(e.target.value)}
+                          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm transition-colors focus:border-sky-500 focus:ring-2 focus:ring-sky-200 focus:outline-none"
+                        >
+                          <option value="">Tất cả trạng thái</option>
+                          <option value="PENDING">Chờ xử lý</option>
+                          <option value="ACTIVE">Đang hoạt động</option>
+                          <option value="EXPIRED">Hết hạn</option>
+                          <option value="TERMINATED">Đã chấm dứt</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="mb-1.5 block text-xs font-medium text-slate-700">
+                          Loại hợp đồng
+                        </label>
+                        <select
+                          value={typeFilter}
+                          onChange={(e) => setTypeFilter(e.target.value)}
+                          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm transition-colors focus:border-sky-500 focus:ring-2 focus:ring-sky-200 focus:outline-none"
+                        >
+                          <option value="">Tất cả loại</option>
+                          <option value="MPS_CLICK_CHARGE">MPS Click Charge</option>
+                          <option value="MPS_CONSUMABLE">MPS Consumable</option>
+                          <option value="CMPS_CLICK_CHARGE">CMPS Click Charge</option>
+                          <option value="CMPS_CONSUMABLE">CMPS Consumable</option>
+                          <option value="PARTS_REPAIR_SERVICE">Parts & Repair</option>
+                        </select>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+
+            {/* Contracts Table */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.35 }}
+              className="overflow-hidden rounded-xl border border-slate-200 shadow-lg"
+            >
+              {filteredContracts.length === 0 ? (
+                <div className="flex flex-col items-center justify-center space-y-3 p-12">
+                  <div className="rounded-full bg-slate-100 p-4">
+                    <Search className="h-8 w-8 text-slate-400" />
+                  </div>
+                  <div className="text-center">
+                    <p className="font-medium text-slate-700">Không tìm thấy kết quả</p>
+                    <p className="mt-1 text-sm text-slate-500">
+                      Thử điều chỉnh bộ lọc hoặc tìm kiếm khác
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <table className="w-full">
+                  <thead className="border-b border-slate-200 bg-gradient-to-r from-slate-50 to-slate-100/50">
+                    <tr>
+                      <th className="w-12 px-4 py-3.5 text-center">
+                        <div className="text-xs font-semibold tracking-wide text-slate-600 uppercase">
+                          #
+                        </div>
+                      </th>
+                      <th className="px-4 py-3.5 text-left">
+                        <div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-slate-600 uppercase">
+                          <FileText className="h-4 w-4" />
+                          Mã hợp đồng
+                        </div>
+                      </th>
+                      <th className="px-4 py-3.5 text-left">
+                        <div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-slate-600 uppercase">
+                          <Tag className="h-4 w-4" />
+                          Loại
+                        </div>
+                      </th>
+                      <th className="px-4 py-3.5 text-left">
+                        <div className="text-xs font-semibold tracking-wide text-slate-600 uppercase">
+                          Trạng thái
+                        </div>
+                      </th>
+                      <th className="px-4 py-3.5 text-left">
+                        <div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-slate-600 uppercase">
+                          <Calendar className="h-4 w-4" />
+                          Thời gian
+                        </div>
+                      </th>
+                      <th className="w-12 px-4 py-3.5"></th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {filteredContracts.map((contract, idx) => (
+                      <motion.tr
+                        key={contract.id}
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: idx * 0.05 }}
+                        className={cn(
+                          'group transition-all duration-200',
+                          expandedRow === contract.id ? 'bg-sky-50/50' : 'hover:bg-slate-50/80'
+                        )}
+                      >
+                        <td className="px-4 py-3.5 text-center text-sm text-slate-500">
+                          {idx + 1}
+                        </td>
+                        <td className="px-4 py-3.5">
+                          <div className="flex items-center gap-2">
+                            <Badge
+                              variant="outline"
+                              className="font-mono text-sm font-medium transition-colors group-hover:border-sky-300 group-hover:bg-sky-50"
+                            >
+                              {contract.contractNumber}
+                            </Badge>
+                            <Link href={`/system/contracts/${contract.id}`}>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0 opacity-0 transition-opacity group-hover:opacity-100"
+                              >
+                                <ExternalLink className="h-3.5 w-3.5" />
+                              </Button>
+                            </Link>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3.5">
+                          <Badge
+                            variant="outline"
+                            className={cn('text-xs font-medium', getTypeColor(contract.type))}
+                          >
+                            {contract.type}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-3.5">
+                          <Badge
+                            className={cn(
+                              'border-0 text-xs font-medium text-white shadow-sm',
+                              getStatusColor(contract.status)
+                            )}
+                          >
+                            {getStatusLabel(contract.status)}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-3.5">
+                          <div className="flex items-center gap-2 text-sm text-slate-600">
+                            <Calendar className="h-3.5 w-3.5 text-slate-400" />
+                            <span>
+                              {new Date(contract.startDate).toLocaleDateString('vi-VN')}
+                              {' — '}
+                              {new Date(contract.endDate).toLocaleDateString('vi-VN')}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3.5 text-right">
+                          {contract.description && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                              onClick={() => toggleRowExpansion(contract.id)}
+                            >
+                              <motion.div
+                                animate={{ rotate: expandedRow === contract.id ? 180 : 0 }}
+                                transition={{ duration: 0.2 }}
+                              >
+                                <ChevronDown className="h-4 w-4" />
+                              </motion.div>
+                            </Button>
+                          )}
+                        </td>
+                      </motion.tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </motion.div>
+
+            {/* Expanded Row Details */}
+            <AnimatePresence>
+              {expandedRow && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="overflow-hidden rounded-xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-4 shadow-sm"
+                >
+                  {(() => {
+                    const contract = contracts.find((c) => c.id === expandedRow)
+                    if (!contract) return null
+                    return (
+                      <div>
+                        <h4 className="mb-2 text-sm font-semibold text-slate-700">
+                          Mô tả hợp đồng
+                        </h4>
+                        <p className="text-sm text-slate-600">
+                          {contract.description || 'Không có mô tả'}
+                        </p>
+                        {contract.documentUrl && (
+                          <div className="mt-3">
+                            <a
+                              href={contract.documentUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-2 text-sm text-sky-600 hover:text-sky-700"
+                            >
+                              <FileText className="h-4 w-4" />
+                              Xem tài liệu hợp đồng
+                              <ExternalLink className="h-3.5 w-3.5" />
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })()}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Summary Footer */}
+            {filteredContracts.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.4 }}
+                className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm"
+              >
+                <div className="flex items-center gap-2 text-slate-600">
+                  <FileText className="h-4 w-4" />
+                  <span>
+                    Hiển thị{' '}
+                    <span className="font-semibold text-slate-900">{filteredContracts.length}</span>
+                    {filteredContracts.length !== contracts.length && (
+                      <span> / {contracts.length}</span>
+                    )}{' '}
+                    hợp đồng
+                  </span>
+                </div>
+                {hasActiveFilters && (
+                  <Badge variant="outline" className="border-sky-300 bg-sky-50 text-sky-700">
+                    Đang lọc
+                  </Badge>
+                )}
+              </motion.div>
+            )}
+          </div>
+        )}
+      </SystemModalLayout>
     </Dialog>
   )
 }

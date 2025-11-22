@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import {
   Table,
   TableHeader,
@@ -55,22 +56,22 @@ export function TestScenarioTable({ scenarios }: TestScenarioTableProps) {
                 </pre>
               </TableCell>
               <TableCell>
-                <span
-                  className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
+                <Badge
+                  className={
                     scenario.expected === 'ALLOW'
-                      ? 'bg-emerald-50 text-emerald-700'
-                      : 'bg-red-50 text-red-700'
-                  }`}
+                      ? 'bg-green-500 text-white'
+                      : 'bg-gray-400 text-white'
+                  }
                 >
                   {scenario.expected}
-                </span>
+                </Badge>
               </TableCell>
               <TableCell className="text-right">
                 <Button
                   variant="ghost"
-                  size="icon"
+                  size="sm"
                   onClick={() => handleCopy(scenario, idx)}
-                  className="hover:text-indigo-600"
+                  className="transition-all hover:bg-gray-100 hover:text-gray-700"
                 >
                   {copiedIndex === idx ? (
                     <CheckCheck className="h-4 w-4" />

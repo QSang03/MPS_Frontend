@@ -9,7 +9,6 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Skeleton } from '@/components/ui/skeleton'
 import {
   ChevronDown,
   ChevronUp,
@@ -20,18 +19,19 @@ import {
   Eye,
   BarChart3,
   Edit,
-  Sparkles,
   FileText,
   ArrowRight,
   Plus,
   Trash2,
   MonitorSmartphone,
   User,
-  MapPin,
   Info,
-  BadgeCheck,
   CheckCircle2,
   AlertCircle,
+  X,
+  Filter,
+  RefreshCw,
+  Receipt,
 } from 'lucide-react'
 import customerOverviewClientService from '@/lib/api/services/customer-overview-client.service'
 import customerConsumablesClientService from '@/lib/api/services/customer-consumables-client.service'
@@ -47,13 +47,8 @@ import A4EquivalentModal from '@/app/(dashboard)/system/devices/_components/A4Eq
 import DeviceFormModal from '@/app/(dashboard)/system/devices/_components/deviceformmodal'
 import ContractDevicesModal from './ContractDevicesModal'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
+import { Dialog } from '@/components/ui/dialog'
+import { SystemModalLayout } from '@/components/system/SystemModalLayout'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -71,6 +66,10 @@ import { DeleteDialog } from '@/components/shared/DeleteDialog'
 import { useActionPermission } from '@/lib/hooks/useActionPermission'
 import { VN } from '@/constants/vietnamese'
 import { cn } from '@/lib/utils'
+import { DetailInfoCard } from '@/components/system/DetailInfoCard'
+import { CreateBillingModal } from './CreateBillingModal'
+import { InvoicesList } from './InvoicesList'
+// removed unused Invoice type import (was causing lint error)
 
 type Props = {
   customerId: string
@@ -107,6 +106,7 @@ export default function CustomerDetailClient({ customerId }: Props) {
     contractId: string
     deviceId: string
   } | null>(null)
+  const [showFilters, setShowFilters] = useState(false)
 
   const contracts = useMemo(() => overview?.contracts?.items ?? [], [overview?.contracts?.items])
   const pagination = overview?.contracts?.pagination
@@ -126,60 +126,48 @@ export default function CustomerDetailClient({ customerId }: Props) {
     pagination?: { page: number; limit: number; total: number; totalPages: number }
   } | null>(null)
   const [expandedConsumableTypes, setExpandedConsumableTypes] = useState<Set<string>>(new Set())
-  const [activeTab, setActiveTab] = useState<'contracts' | 'inventory'>('contracts')
+  const [activeTab, setActiveTab] = useState<'contracts' | 'inventory' | 'invoices'>('contracts')
   const [customerInfo, setCustomerInfo] = useState<Customer | null>(null)
   const [loadingCustomerInfo, setLoadingCustomerInfo] = useState(true)
   const [customerInfoError, setCustomerInfoError] = useState<string | null>(null)
   const [createContractOpen, setCreateContractOpen] = useState(false)
+  const [createBillingContract, setCreateBillingContract] = useState<{
+    id: string
+    number?: string
+  } | null>(null)
 
   const formatPrice = (value?: number | null) => {
     if (value === undefined || value === null) return '—'
-
-    // Tách phần nguyên và phần thập phân
     const parts = value.toString().split('.')
     const integerPart = Math.abs(parseInt(parts[0] ?? '0', 10))
     const decimalPart = parts[1]
-
-    // Format phần nguyên với dấu phẩy cho hàng nghìn
     const formattedInteger = integerPart.toLocaleString('en-US')
-
-    // Nếu có phần thập phân, giữ lại với dấu chấm
     if (decimalPart) {
-      // Loại bỏ trailing zeros
       const trimmedDecimal = decimalPart.replace(/0+$/, '')
       if (trimmedDecimal) {
         return `${value < 0 ? '-' : ''}${formattedInteger}.${trimmedDecimal}`
       }
     }
-
     return `${value < 0 ? '-' : ''}${formattedInteger}`
   }
 
   const formatNumber = (value?: number | null) => {
     if (value === undefined || value === null) return '—'
-
-    // Tách phần nguyên và phần thập phân
     const parts = value.toString().split('.')
     const integerPart = Math.abs(parseInt(parts[0] ?? '0', 10))
     const decimalPart = parts[1]
-
-    // Format phần nguyên với dấu phẩy cho hàng nghìn
     const formattedInteger = integerPart.toLocaleString('en-US')
-
-    // Nếu có phần thập phân, giữ lại với dấu chấm (tối đa 2 chữ số)
     if (decimalPart) {
       const decimal = decimalPart.slice(0, 2).replace(/0+$/, '')
       if (decimal) {
         return `${value < 0 ? '-' : ''}${formattedInteger}.${decimal}`
       }
     }
-
     return `${value < 0 ? '-' : ''}${formattedInteger}`
   }
 
   const formatInteger = (value?: number | null) => {
     if (value === undefined || value === null) return '—'
-    // Format số nguyên với dấu phẩy cho hàng nghìn
     return Math.abs(value).toLocaleString('en-US')
   }
 
@@ -197,6 +185,10 @@ export default function CustomerDetailClient({ customerId }: Props) {
     if (contracts.length === 0) return false
     return contracts.every((contract) => expandedContracts.has(contract.id))
   }, [contracts, expandedContracts])
+
+  const hasActiveFilters = useMemo(() => {
+    return search || statusFilter || typeFilter
+  }, [search, statusFilter, typeFilter])
 
   const loadCustomerInfo = useCallback(async () => {
     setLoadingCustomerInfo(true)
@@ -232,13 +224,13 @@ export default function CustomerDetailClient({ customerId }: Props) {
   const getStatusColor = (status?: string) => {
     switch (status) {
       case 'ACTIVE':
-        return 'bg-green-500 hover:bg-green-600'
+        return 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-200'
       case 'PENDING':
-        return 'bg-yellow-500 hover:bg-yellow-600'
+        return 'bg-amber-500 hover:bg-amber-600 shadow-amber-200'
       case 'EXPIRED':
-        return 'bg-red-500 hover:bg-red-600'
+        return 'bg-rose-500 hover:bg-rose-600 shadow-rose-200'
       default:
-        return 'bg-gray-500 hover:bg-gray-600'
+        return 'bg-slate-500 hover:bg-slate-600 shadow-slate-200'
     }
   }
 
@@ -262,14 +254,14 @@ export default function CustomerDetailClient({ customerId }: Props) {
     switch (type) {
       case 'MPS_CLICK_CHARGE':
       case 'MPS_CONSUMABLE':
-        return 'bg-blue-100 text-blue-700 border-blue-300'
+        return 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100'
       case 'CMPS_CLICK_CHARGE':
       case 'CMPS_CONSUMABLE':
-        return 'bg-purple-100 text-purple-700 border-purple-300'
+        return 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100'
       case 'PARTS_REPAIR_SERVICE':
-        return 'bg-orange-100 text-orange-700 border-orange-300'
+        return 'bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100'
       default:
-        return 'bg-gray-100 text-gray-700 border-gray-300'
+        return 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
     }
   }
 
@@ -322,7 +314,7 @@ export default function CustomerDetailClient({ customerId }: Props) {
   }, [loadCustomerInfo])
 
   const loadConsumables = useCallback(async () => {
-    if (activeTab !== 'inventory') return // Only fetch when inventory tab is active
+    if (activeTab !== 'inventory') return
 
     setConsumablesLoading(true)
     setConsumablesError(null)
@@ -335,7 +327,6 @@ export default function CustomerDetailClient({ customerId }: Props) {
         sortOrder: consumablesSortOrder,
       })
       setConsumablesData(data)
-      // Auto-expand all groups when data loads
       const typeIds = new Set(data.items.map((item) => item.consumableTypeId).filter(Boolean))
       setExpandedConsumableTypes(typeIds)
     } catch (err: unknown) {
@@ -403,7 +394,6 @@ export default function CustomerDetailClient({ customerId }: Props) {
     }
   }
 
-  // Group consumables by consumableTypeId
   const groupedConsumables = useMemo(() => {
     if (!consumablesData?.items) return []
 
@@ -443,7 +433,7 @@ export default function CustomerDetailClient({ customerId }: Props) {
   const renderDeviceStatus = (status?: string) => {
     if (!status) {
       return (
-        <Badge variant="outline" className="bg-slate-100 text-xs text-slate-700">
+        <Badge variant="outline" className="border-slate-200 bg-slate-50 text-xs text-slate-600">
           Không rõ
         </Badge>
       )
@@ -451,27 +441,30 @@ export default function CustomerDetailClient({ customerId }: Props) {
     const normalized = status.toLowerCase()
     if (normalized.includes('active')) {
       return (
-        <Badge variant="outline" className="bg-green-100 text-xs text-green-700">
+        <Badge
+          variant="outline"
+          className="border-emerald-200 bg-emerald-50 text-xs text-emerald-700"
+        >
           Đang hoạt động
         </Badge>
       )
     }
     if (normalized.includes('inactive') || normalized.includes('suspend')) {
       return (
-        <Badge variant="outline" className="bg-amber-100 text-xs text-amber-700">
+        <Badge variant="outline" className="border-amber-200 bg-amber-50 text-xs text-amber-700">
           Tạm dừng
         </Badge>
       )
     }
     if (normalized.includes('error')) {
       return (
-        <Badge variant="outline" className="bg-red-100 text-xs text-red-700">
+        <Badge variant="outline" className="border-rose-200 bg-rose-50 text-xs text-rose-700">
           Lỗi
         </Badge>
       )
     }
     return (
-      <Badge variant="outline" className="bg-slate-200 text-xs text-slate-700">
+      <Badge variant="outline" className="border-slate-200 bg-slate-50 text-xs text-slate-700">
         {status}
       </Badge>
     )
@@ -480,11 +473,11 @@ export default function CustomerDetailClient({ customerId }: Props) {
   const renderUsageBadge = (item: CustomerOverviewConsumable) => {
     const used = (item.deviceCount ?? 0) > 0 || (item.activeDeviceIds?.length ?? 0) > 0
     return used ? (
-      <Badge variant="outline" className="bg-green-100 text-green-700">
+      <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">
         Đã sử dụng
       </Badge>
     ) : (
-      <Badge variant="outline" className="bg-slate-100 text-slate-600">
+      <Badge variant="outline" className="border-slate-200 bg-slate-50 text-slate-600">
         Chưa sử dụng
       </Badge>
     )
@@ -521,14 +514,12 @@ export default function CustomerDetailClient({ customerId }: Props) {
 
   const handleAssignDeviceToContract = async (contractId: string, deviceId: string) => {
     try {
-      // Tìm contract để lấy thời hạn
       const contract = contracts.find((c) => c.id === contractId)
       if (!contract) {
         toast.error('Không tìm thấy hợp đồng')
         return
       }
 
-      // Sử dụng thời hạn hợp đồng cho activeFrom và activeTo
       await contractsClientService.attachDevices(contractId, {
         items: [
           {
@@ -559,58 +550,73 @@ export default function CustomerDetailClient({ customerId }: Props) {
     const devices = contract.contractDevices ?? []
     if (devices.length === 0) {
       return (
-        <tr className="border-b last:border-b-0">
-          <td className="px-3 py-4" />
-          <td colSpan={8} className="py-4 pr-3 pl-5 text-xs text-slate-500">
+        <tr className="border-b border-slate-100 last:border-b-0">
+          <td className="px-4 py-6" />
+          <td colSpan={8} className="py-6 pr-4 pl-6 text-center text-sm text-slate-400">
             Chưa có thiết bị nào trong hợp đồng này
           </td>
-          <td className="px-3 py-4" />
-          <td className="px-3 py-4" />
+          <td className="px-4 py-6" />
+          <td className="px-4 py-6" />
         </tr>
       )
     }
 
-    return devices.map((device) => (
-      <tr
+    return devices.map((device, idx) => (
+      <motion.tr
         key={device.id}
-        className="border-b transition-colors last:border-b-0 hover:bg-slate-50/50"
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: idx * 0.05 }}
+        className="group border-b border-slate-100 transition-all duration-200 last:border-b-0 hover:bg-slate-50/80"
       >
-        <td className="px-3 py-4 text-center text-xs text-slate-300">│</td>
-        <td className="py-4 pr-3 pl-5">
-          <div className="font-mono text-xs font-medium text-slate-800">
+        <td className="px-4 py-4 text-center text-xs text-slate-300">│</td>
+        <td className="py-4 pr-4 pl-6">
+          <div className="font-mono text-sm font-semibold text-slate-800">
             {device.device?.serialNumber ?? '—'}
           </div>
           <div className="line-clamp-1 text-xs text-slate-500">
             {device.device?.deviceModel?.name ?? device.device?.model ?? 'Không rõ model'}
           </div>
         </td>
-        <td className="py-4 pr-4 pl-3 text-right text-xs font-medium text-slate-700">
-          ${formatPrice(device.monthlyRent)}
+        <td className="py-4 pr-4 pl-4 text-right">
+          <span className="text-sm font-semibold text-slate-700">
+            ${formatPrice(device.monthlyRent)}
+          </span>
         </td>
-        <td className="px-3 py-4 text-right text-xs font-medium text-slate-700">
-          ${formatPrice(device.pricePerBWPage)}
+        <td className="px-4 py-4 text-right">
+          <span className="text-sm font-medium text-slate-600">
+            ${formatPrice(device.pricePerBWPage)}
+          </span>
         </td>
-        <td className="px-3 py-4 text-right text-xs font-medium text-slate-700">
-          ${formatPrice(device.pricePerColorPage)}
+        <td className="px-4 py-4 text-right">
+          <span className="text-sm font-medium text-slate-600">
+            ${formatPrice(device.pricePerColorPage)}
+          </span>
         </td>
-        <td className="px-3 py-4 text-right text-xs font-medium text-slate-700">
-          {device.totalPageCountA4 != null ? formatNumber(device.totalPageCountA4) : '—'}
+        <td className="px-4 py-4 text-right">
+          <span className="text-sm font-medium text-slate-700">
+            {device.totalPageCountA4 != null ? formatNumber(device.totalPageCountA4) : '—'}
+          </span>
         </td>
-        <td className="px-3 py-4 text-right text-xs font-medium text-slate-700">
-          {device.totalColorPagesA4 != null ? formatNumber(device.totalColorPagesA4) : '—'}
+        <td className="px-4 py-4 text-right">
+          <span className="text-sm font-medium text-slate-700">
+            {device.totalColorPagesA4 != null ? formatNumber(device.totalColorPagesA4) : '—'}
+          </span>
         </td>
-        <td className="px-3 py-4 text-right text-xs font-medium text-slate-700">
-          {device.totalBlackWhitePagesA4 != null
-            ? formatNumber(device.totalBlackWhitePagesA4)
-            : '—'}
+        <td className="px-4 py-4 text-right">
+          <span className="text-sm font-medium text-slate-700">
+            {device.totalBlackWhitePagesA4 != null
+              ? formatNumber(device.totalBlackWhitePagesA4)
+              : '—'}
+          </span>
         </td>
-        <td className="line-clamp-2 px-4 py-4 text-xs text-slate-600">
+        <td className="line-clamp-2 px-4 py-4 text-sm text-slate-600">
           {device.device?.location ?? '—'}
         </td>
-        <td className="px-3 py-4">{renderDeviceStatus(device.device?.status)}</td>
-        <td className="px-3 py-4">
+        <td className="px-4 py-4">{renderDeviceStatus(device.device?.status)}</td>
+        <td className="px-4 py-4">
           {device.device?.id && (
-            <div className="flex items-center justify-end gap-1">
+            <div className="flex items-center justify-end gap-1.5 opacity-0 transition-opacity group-hover:opacity-100">
               <DeviceFormModal
                 mode="edit"
                 device={device.device}
@@ -631,14 +637,14 @@ export default function CustomerDetailClient({ customerId }: Props) {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="h-7 w-7 bg-sky-50 p-0 text-sky-600 hover:bg-sky-100"
+                    className="h-8 w-8 border-sky-200 bg-sky-50 p-0 text-sky-600 transition-colors hover:border-sky-300 hover:bg-sky-100"
                     onClick={() => {
                       setA4ModalDevice(device)
                       setA4ModalOpen(true)
                     }}
                     title="Ghi/Chỉnh sửa snapshot A4"
                   >
-                    <BarChart3 className="h-3.5 w-3.5" />
+                    <BarChart3 className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent sideOffset={4}>Gán số trang A4</TooltipContent>
@@ -649,7 +655,7 @@ export default function CustomerDetailClient({ customerId }: Props) {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-7 w-7 p-0 text-sky-600 hover:bg-sky-50 hover:text-sky-700"
+                      className="h-8 w-8 p-0 text-sky-600 hover:bg-sky-50 hover:text-sky-700"
                       aria-label="Xem thiết bị"
                     >
                       <Eye className="h-4 w-4" />
@@ -664,7 +670,7 @@ export default function CustomerDetailClient({ customerId }: Props) {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-7 w-7 p-0 text-red-600 hover:bg-red-50 hover:text-red-700"
+                      className="h-8 w-8 p-0 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
                       onClick={() => {
                         if (device.deviceId) {
                           handleDetachDevice(contract.id, device.deviceId)
@@ -672,7 +678,7 @@ export default function CustomerDetailClient({ customerId }: Props) {
                       }}
                       aria-label="Gỡ thiết bị"
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent sideOffset={4}>Gỡ thiết bị</TooltipContent>
@@ -681,7 +687,7 @@ export default function CustomerDetailClient({ customerId }: Props) {
             </div>
           )}
         </td>
-      </tr>
+      </motion.tr>
     ))
   }
 
@@ -689,52 +695,62 @@ export default function CustomerDetailClient({ customerId }: Props) {
     if (devices.length === 0) return null
     return (
       <Fragment>
-        <tr className="bg-amber-50/60 text-amber-900">
-          <td className="px-3 py-4">
+        <tr className="bg-gradient-to-r from-amber-50 to-orange-50 text-amber-900">
+          <td className="px-4 py-4">
             <Checkbox aria-label="Thiết bị chưa có hợp đồng" disabled checked />
           </td>
-          <td colSpan={8} className="py-4 pr-3 pl-5 text-xs font-semibold">
-            Thiết bị chưa có hợp đồng
+          <td colSpan={8} className="py-4 pr-4 pl-6 text-sm font-semibold">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="h-4 w-4" />
+              Thiết bị chưa có hợp đồng
+            </div>
           </td>
-          <td className="px-3 py-4 text-xs font-semibold">{devices.length} thiết bị</td>
-          <td className="px-3 py-4" />
+          <td className="px-4 py-4">
+            <Badge variant="outline" className="border-amber-300 bg-amber-100 text-amber-800">
+              {devices.length} thiết bị
+            </Badge>
+          </td>
+          <td className="px-4 py-4" />
         </tr>
-        {devices.map((device) => (
-          <tr
+        {devices.map((device, idx) => (
+          <motion.tr
             key={device.id}
-            className="border-b transition-colors last:border-b-0 hover:bg-slate-50/50"
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: idx * 0.05 }}
+            className="group border-b border-slate-100 transition-all duration-200 last:border-b-0 hover:bg-amber-50/50"
           >
-            <td className="px-3 py-4 text-center text-xs text-slate-300">│</td>
-            <td className="py-4 pr-3 pl-5">
-              <div className="font-mono text-xs font-medium text-slate-800">
+            <td className="px-4 py-4 text-center text-xs text-slate-300">│</td>
+            <td className="py-4 pr-4 pl-6">
+              <div className="font-mono text-sm font-semibold text-slate-800">
                 {device.serialNumber}
               </div>
               <div className="line-clamp-1 text-xs text-slate-500">
                 {device.deviceModel?.name ?? device.model ?? 'Không rõ model'}
               </div>
             </td>
-            <td className="py-4 pr-4 pl-3 text-center text-xs text-slate-400" colSpan={6}>
+            <td className="py-4 pr-4 pl-4 text-center text-sm text-slate-400" colSpan={6}>
               Chưa có bảng giá
             </td>
-            <td className="line-clamp-2 px-4 py-4 text-xs text-slate-600">
+            <td className="line-clamp-2 px-4 py-4 text-sm text-slate-600">
               {device.location ?? '—'}
             </td>
-            <td className="px-3 py-4">{renderDeviceStatus(device.status as string)}</td>
-            <td className="px-3 py-4">
-              <div className="flex items-center justify-end gap-1">
+            <td className="px-4 py-4">{renderDeviceStatus(device.status as string)}</td>
+            <td className="px-4 py-4">
+              <div className="flex items-center justify-end gap-1.5 opacity-0 transition-opacity group-hover:opacity-100">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
-                      className="h-7 w-7 p-0 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
+                      className="h-8 w-8 border-emerald-200 bg-emerald-50 p-0 text-emerald-600 transition-colors hover:border-emerald-300 hover:bg-emerald-100"
                       onClick={() => {
                         setSelectedDeviceForAssign(device)
                         setAssignDeviceModalOpen(true)
                       }}
                       aria-label="Gán thiết bị"
                     >
-                      <Plus className="h-3.5 w-3.5" />
+                      <Plus className="h-4 w-4" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent sideOffset={4}>Gán thiết bị</TooltipContent>
@@ -745,7 +761,7 @@ export default function CustomerDetailClient({ customerId }: Props) {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-7 w-7 p-0 text-sky-600 hover:bg-sky-50 hover:text-sky-700"
+                        className="h-8 w-8 p-0 text-sky-600 hover:bg-sky-50 hover:text-sky-700"
                         aria-label="Xem thiết bị"
                       >
                         <Eye className="h-4 w-4" />
@@ -756,45 +772,23 @@ export default function CustomerDetailClient({ customerId }: Props) {
                 </Tooltip>
               </div>
             </td>
-          </tr>
+          </motion.tr>
         ))}
       </Fragment>
     )
   }
 
   const renderCustomerInfoPanel = () => {
-    if (customerInfoError) {
-      return (
-        <Card className="border-red-200 bg-red-50/60">
-          <CardContent className="p-4 text-sm text-red-700">{customerInfoError}</CardContent>
-        </Card>
-      )
-    }
-
-    if (loadingCustomerInfo) {
-      return (
-        <Card className="border-slate-200 shadow-sm">
-          <CardHeader className="space-y-2">
-            <Skeleton className="h-4 w-48" />
-            <Skeleton className="h-6 w-64" />
-          </CardHeader>
-          <CardContent className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-            {Array.from({ length: 6 }).map((_, index) => (
-              <Skeleton key={index} className="h-16 w-full" />
-            ))}
-            <Skeleton className="h-16 w-full md:col-span-2 lg:col-span-3" />
-          </CardContent>
-        </Card>
-      )
-    }
-
     if (!customerInfo) {
       return (
-        <Card className="border-slate-200 bg-slate-50">
-          <CardContent className="p-4 text-sm text-slate-600">
-            Không tìm thấy thông tin khách hàng.
-          </CardContent>
-        </Card>
+        <DetailInfoCard
+          title="Không tìm thấy thông tin"
+          loading={loadingCustomerInfo}
+          error={
+            customerInfoError ||
+            (!loadingCustomerInfo ? 'Không tìm thấy thông tin khách hàng.' : undefined)
+          }
+        />
       )
     }
 
@@ -820,874 +814,1020 @@ export default function CustomerDetailClient({ customerId }: Props) {
       },
     ]
 
+    const badges = [
+      {
+        label: customerInfo.isActive ? 'Đang hoạt động' : 'Tạm dừng',
+        variant: 'outline' as const,
+        className: customerInfo.isActive
+          ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+          : 'border-amber-200 bg-amber-50 text-amber-700',
+      },
+      ...(customerInfo.tier
+        ? [
+            {
+              label: customerInfo.tier,
+              variant: 'outline' as const,
+              className: 'border-sky-200 bg-sky-50 text-sky-700',
+            },
+          ]
+        : []),
+    ]
+
+    const statsCards = [
+      {
+        label: 'Tổng hợp đồng',
+        value: formatInteger(customerInfo.contractCount ?? 0),
+        icon: <FileText className="h-6 w-6" />,
+        borderColor: 'blue',
+      },
+      {
+        label: 'Thiết bị',
+        value: formatInteger(customerInfo.deviceCount ?? 0),
+        icon: <MonitorSmartphone className="h-6 w-6" />,
+        borderColor: 'green',
+      },
+      {
+        label: 'Người dùng',
+        value: formatInteger(customerInfo.userCount ?? 0),
+        icon: <User className="h-6 w-6" />,
+        borderColor: 'purple',
+      },
+      ...(contracts.length > 0
+        ? [
+            {
+              label: 'Đang hoạt động',
+              value: contracts.filter((c) => c.status === 'ACTIVE').length,
+              icon: <CheckCircle2 className="h-6 w-6" />,
+              borderColor: 'green' as const,
+            },
+            {
+              label: 'Chờ xử lý',
+              value: contracts.filter((c) => c.status === 'PENDING').length,
+              icon: <AlertCircle className="h-6 w-6" />,
+              borderColor: 'orange' as const,
+            },
+          ]
+        : []),
+    ]
+
     return (
-      <Card className="border-slate-200 shadow-sm">
-        <CardHeader className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="rounded-xl bg-slate-100 p-3 text-slate-600">
-              <Info className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-xs tracking-wide text-slate-500 uppercase">Khách hàng</p>
-              <CardTitle className="text-2xl text-slate-900">{customerInfo.name}</CardTitle>
-            </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge
-              variant="outline"
-              className={
-                customerInfo.isActive
-                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                  : 'border-amber-200 bg-amber-50 text-amber-700'
-              }
-            >
-              <BadgeCheck className="mr-1.5 h-3.5 w-3.5" />
-              {customerInfo.isActive ? 'Đang hoạt động' : 'Tạm dừng'}
-            </Badge>
-            {customerInfo.tier && (
-              <Badge variant="outline" className="border-sky-200 bg-sky-50 text-sky-700">
-                {customerInfo.tier}
-              </Badge>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-            {infoItems.map((item) => (
-              <div
-                key={item.label}
-                className="rounded-xl border border-slate-100 bg-slate-50/50 p-3"
-              >
-                <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
-                  {item.label}
-                </p>
-                <p className="mt-1 text-sm font-semibold text-slate-900">{item.value}</p>
-              </div>
-            ))}
-          </div>
-          <div className="grid gap-3 md:grid-cols-3">
-            <div className="rounded-xl border border-slate-100 bg-white p-4">
-              <div className="flex items-center gap-2 text-sm text-slate-500">
-                <FileText className="h-4 w-4 text-slate-400" />
-                Tổng hợp đồng
-              </div>
-              <p className="mt-2 text-2xl font-semibold text-slate-900">
-                {formatInteger(customerInfo.contractCount ?? 0)}
-              </p>
-            </div>
-            <div className="rounded-xl border border-slate-100 bg-white p-4">
-              <div className="flex items-center gap-2 text-sm text-slate-500">
-                <MonitorSmartphone className="h-4 w-4 text-slate-400" />
-                Thiết bị
-              </div>
-              <p className="mt-2 text-2xl font-semibold text-slate-900">
-                {formatInteger(customerInfo.deviceCount ?? 0)}
-              </p>
-            </div>
-            <div className="rounded-xl border border-slate-100 bg-white p-4">
-              <div className="flex items-center gap-2 text-sm text-slate-500">
-                <User className="h-4 w-4 text-slate-400" />
-                Người dùng
-              </div>
-              <p className="mt-2 text-2xl font-semibold text-slate-900">
-                {formatInteger(customerInfo.userCount ?? 0)}
-              </p>
-            </div>
-          </div>
-          <div className="rounded-xl border border-slate-100 bg-slate-50/80 p-4">
-            <div className="flex items-center gap-2 text-sm font-semibold text-slate-600">
-              <MapPin className="h-4 w-4 text-slate-500" />
-              Địa chỉ
-            </div>
-            <p className="mt-1 text-sm text-slate-800">{address}</p>
-          </div>
-        </CardContent>
-      </Card>
+      <DetailInfoCard
+        title={customerInfo.name}
+        titleIcon={<Info className="h-5 w-5" />}
+        badges={badges}
+        infoItems={infoItems}
+        statsCards={statsCards}
+        address={address}
+        loading={loadingCustomerInfo}
+        error={customerInfoError ?? undefined}
+      />
     )
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <h2 className="text-3xl font-bold text-slate-900">Chi tiết khách hàng</h2>
-        <Link href="/system/customers" className="text-sm text-slate-500 hover:text-slate-700">
-          Quay lại danh sách
-        </Link>
-      </div>
-
-      <Tabs
-        value={activeTab}
-        onValueChange={(value) => setActiveTab(value as 'contracts' | 'inventory')}
-        className="space-y-4"
+    <div className="space-y-6 pb-8">
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-wrap items-center justify-between gap-4"
       >
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="contracts" className="text-base">
-            Hợp đồng
-          </TabsTrigger>
-          <TabsTrigger value="inventory" className="text-base">
-            Kho khách hàng
-          </TabsTrigger>
-        </TabsList>
+        <div>
+          <h2 className="bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-3xl font-bold text-transparent">
+            Chi tiết khách hàng
+          </h2>
+          <p className="mt-1 text-sm text-slate-500">Quản lý thông tin và hợp đồng khách hàng</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Link href="/system/customers">
+            <Button variant="outline" size="sm" className="gap-2">
+              <ArrowRight className="h-4 w-4 rotate-180" />
+              Quay lại danh sách
+            </Button>
+          </Link>
+        </div>
+      </motion.div>
 
-        <TabsContent value="contracts" className="space-y-4">
-          {renderCustomerInfoPanel()}
+      {/* Customer Info Panel */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+      >
+        {renderCustomerInfoPanel()}
+      </motion.div>
 
-          {/* Statistics Cards */}
-          {!loadingOverview && contracts.length > 0 && (
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-              <Card className="border-slate-200 bg-gradient-to-br from-sky-50 to-blue-50">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="rounded-lg bg-sky-100 p-2">
-                      <Package className="h-5 w-5 text-sky-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-slate-600">Tổng hợp đồng</p>
-                      <p className="text-2xl font-bold text-slate-900">{contracts.length}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card className="border-slate-200 bg-gradient-to-br from-green-50 to-emerald-50">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="rounded-lg bg-green-100 p-2">
-                      <CheckCircle2 className="h-5 w-5 text-green-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-slate-600">Đang hoạt động</p>
-                      <p className="text-2xl font-bold text-slate-900">
-                        {contracts.filter((c) => c.status === 'ACTIVE').length}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card className="border-slate-200 bg-gradient-to-br from-yellow-50 to-amber-50">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="rounded-lg bg-yellow-100 p-2">
-                      <AlertCircle className="h-5 w-5 text-yellow-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-slate-600">Chờ xử lý</p>
-                      <p className="text-2xl font-bold text-slate-900">
-                        {contracts.filter((c) => c.status === 'PENDING').length}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
+      {/* Tabs */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+      >
+        <Tabs
+          value={activeTab}
+          onValueChange={(value) => setActiveTab(value as 'contracts' | 'inventory' | 'invoices')}
+          className="space-y-6"
+        >
+          <TabsList className="grid w-full grid-cols-3 bg-slate-100 p-1">
+            <TabsTrigger
+              value="contracts"
+              className="gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm"
+            >
+              <FileText className="h-4 w-4" />
+              Hợp đồng
+            </TabsTrigger>
+            <TabsTrigger
+              value="inventory"
+              className="gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm"
+            >
+              <Package className="h-4 w-4" />
+              Kho khách hàng
+            </TabsTrigger>
+            <TabsTrigger
+              value="invoices"
+              className="gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm"
+            >
+              <Receipt className="h-4 w-4" />
+              Hóa đơn
+            </TabsTrigger>
+          </TabsList>
 
-          <Card className="border-slate-200 shadow-lg">
-            <CardHeader className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2 text-2xl text-slate-900">
-                  <Package className="h-6 w-6 text-sky-600" />
-                  Hợp đồng & thiết bị
-                </CardTitle>
-                <CardDescription>
-                  Tổng quan các hợp đồng đang hoạt động cùng danh sách thiết bị trực thuộc.
-                </CardDescription>
-              </div>
-              <div className="flex flex-wrap items-center gap-3">
-                <select
-                  suppressHydrationWarning
-                  value={statusFilter ?? ''}
-                  onChange={(e) => {
-                    setStatusFilter(e.target.value ? e.target.value : undefined)
-                    setPage(1)
-                  }}
-                  className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none"
-                >
-                  <option value="">Tất cả trạng thái</option>
-                  <option value="PENDING">Chờ xử lý</option>
-                  <option value="ACTIVE">Đang hoạt động</option>
-                  <option value="EXPIRED">Hết hạn</option>
-                  <option value="TERMINATED">Đã chấm dứt</option>
-                </select>
-
-                <select
-                  suppressHydrationWarning
-                  value={typeFilter ?? ''}
-                  onChange={(e) => {
-                    setTypeFilter(e.target.value ? e.target.value : undefined)
-                    setPage(1)
-                  }}
-                  className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none"
-                >
-                  <option value="">Tất cả loại</option>
-                  <option value="MPS_CLICK_CHARGE">MPS_CLICK_CHARGE</option>
-                  <option value="MPS_CONSUMABLE">MPS_CONSUMABLE</option>
-                  <option value="CMPS_CLICK_CHARGE">CMPS_CLICK_CHARGE</option>
-                  <option value="CMPS_CONSUMABLE">CMPS_CONSUMABLE</option>
-                  <option value="PARTS_REPAIR_SERVICE">PARTS_REPAIR_SERVICE</option>
-                </select>
-
-                <div className="relative">
-                  <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                  <Input
-                    value={search}
-                    onChange={(event) => setSearch(event.target.value)}
-                    placeholder="Tìm số hợp đồng..."
-                    className="w-64 pl-9"
-                  />
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSortOrder((prev) => (prev === 'desc' ? 'asc' : 'desc'))}
-                >
-                  Sắp xếp: {sortOrder === 'desc' ? 'Mới nhất' : 'Cũ nhất'}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setSearch('')
-                    setDebouncedSearch('')
-                    setStatusFilter(undefined)
-                    setTypeFilter(undefined)
-                    setPage(1)
-                  }}
-                  disabled={!search && !statusFilter && !typeFilter}
-                >
-                  Xóa bộ lọc
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={toggleAllContracts}
-                  disabled={!contracts.length}
-                >
-                  {isAllExpanded ? 'Thu gọn tất cả' : 'Mở tất cả'}
-                </Button>
-                {canCreateContract && (
-                  <Button size="sm" onClick={() => setCreateContractOpen(true)}>
-                    <Plus className="mr-1.5 h-4 w-4" />
-                    Tạo hợp đồng
-                  </Button>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent>
-              {error ? (
-                <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-700">
-                  {error}
-                </div>
-              ) : loadingOverview ? (
-                <div className="flex flex-col items-center justify-center gap-3 py-12 text-slate-500">
-                  <Loader2 className="h-8 w-8 animate-spin text-sky-500" />
-                  Đang tải dữ liệu hợp đồng...
-                </div>
-              ) : contracts.length === 0 && unassignedDevices.length === 0 ? (
-                <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-slate-300 py-16 text-center text-slate-500">
-                  <PackageSearch className="h-10 w-10 text-slate-400" />
+          <TabsContent value="contracts" className="space-y-4">
+            <Card className="border-slate-200 shadow-lg">
+              <CardHeader className="space-y-4 border-b border-slate-100 bg-gradient-to-br from-white to-slate-50/50">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                   <div>
-                    <p className="text-base font-semibold">Chưa có hợp đồng nào</p>
-                    <p className="text-sm text-slate-500">
-                      Hãy tạo hợp đồng mới hoặc gán thiết bị.
+                    <CardTitle className="flex items-center gap-2.5 text-2xl text-slate-900">
+                      <div className="rounded-lg bg-sky-100 p-2">
+                        <Package className="h-5 w-5 text-sky-600" />
+                      </div>
+                      Hợp đồng & thiết bị
+                    </CardTitle>
+                    <CardDescription className="mt-2">
+                      Tổng quan các hợp đồng đang hoạt động cùng danh sách thiết bị trực thuộc
+                    </CardDescription>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {canCreateContract && (
+                      <Button
+                        size="sm"
+                        onClick={() => setCreateContractOpen(true)}
+                        className="gap-2 bg-gradient-to-r from-sky-600 to-blue-600 shadow-sm hover:from-sky-700 hover:to-blue-700"
+                      >
+                        <Plus className="h-4 w-4" />
+                        Tạo hợp đồng
+                      </Button>
+                    )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={toggleAllContracts}
+                      disabled={!contracts.length}
+                      className="gap-2"
+                    >
+                      {isAllExpanded ? (
+                        <>
+                          <ChevronUp className="h-4 w-4" />
+                          Thu gọn
+                        </>
+                      ) : (
+                        <>
+                          <ChevronDown className="h-4 w-4" />
+                          Mở tất cả
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowFilters(!showFilters)}
+                      className={cn(
+                        'gap-2',
+                        hasActiveFilters && 'border-sky-300 bg-sky-50 text-sky-700'
+                      )}
+                    >
+                      <Filter className="h-4 w-4" />
+                      Bộ lọc
+                      {hasActiveFilters && (
+                        <Badge
+                          variant="secondary"
+                          className="ml-1 h-5 w-5 rounded-full p-0 text-xs"
+                        >
+                          !
+                        </Badge>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Filter Panel */}
+                <AnimatePresence>
+                  {showFilters && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="rounded-lg border border-slate-200 bg-white p-4">
+                        <div className="grid gap-4 md:grid-cols-4">
+                          <div className="relative">
+                            <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                            <Input
+                              value={search}
+                              onChange={(event) => setSearch(event.target.value)}
+                              placeholder="Tìm số hợp đồng..."
+                              className="pl-9"
+                            />
+                          </div>
+
+                          <select
+                            value={statusFilter ?? ''}
+                            onChange={(e) => {
+                              setStatusFilter(e.target.value ? e.target.value : undefined)
+                              setPage(1)
+                            }}
+                            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm transition-colors focus:border-sky-500 focus:ring-2 focus:ring-sky-200 focus:outline-none"
+                          >
+                            <option value="">Tất cả trạng thái</option>
+                            <option value="PENDING">Chờ xử lý</option>
+                            <option value="ACTIVE">Đang hoạt động</option>
+                            <option value="EXPIRED">Hết hạn</option>
+                            <option value="TERMINATED">Đã chấm dứt</option>
+                          </select>
+
+                          <select
+                            value={typeFilter ?? ''}
+                            onChange={(e) => {
+                              setTypeFilter(e.target.value ? e.target.value : undefined)
+                              setPage(1)
+                            }}
+                            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm transition-colors focus:border-sky-500 focus:ring-2 focus:ring-sky-200 focus:outline-none"
+                          >
+                            <option value="">Tất cả loại</option>
+                            <option value="MPS_CLICK_CHARGE">MPS Click Charge</option>
+                            <option value="MPS_CONSUMABLE">MPS Consumable</option>
+                            <option value="CMPS_CLICK_CHARGE">CMPS Click Charge</option>
+                            <option value="CMPS_CONSUMABLE">CMPS Consumable</option>
+                            <option value="PARTS_REPAIR_SERVICE">Parts & Repair</option>
+                          </select>
+
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                setSortOrder((prev) => (prev === 'desc' ? 'asc' : 'desc'))
+                              }
+                              className="flex-1 gap-2"
+                            >
+                              <RefreshCw className="h-4 w-4" />
+                              {sortOrder === 'desc' ? 'Mới nhất' : 'Cũ nhất'}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setSearch('')
+                                setDebouncedSearch('')
+                                setStatusFilter(undefined)
+                                setTypeFilter(undefined)
+                                setPage(1)
+                              }}
+                              disabled={!hasActiveFilters}
+                              className="gap-2"
+                            >
+                              <X className="h-4 w-4" />
+                              Xóa
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </CardHeader>
+
+              <CardContent className="p-0">
+                {error ? (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="m-6 rounded-xl border border-rose-200 bg-gradient-to-br from-rose-50 to-red-50 p-6 text-sm text-rose-700"
+                  >
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0" />
+                      <div>
+                        <p className="font-semibold">Đã xảy ra lỗi</p>
+                        <p className="mt-1">{error}</p>
+                      </div>
+                    </div>
+                  </motion.div>
+                ) : loadingOverview ? (
+                  <div className="flex flex-col items-center justify-center gap-4 py-16">
+                    <div className="relative">
+                      <Loader2 className="h-12 w-12 animate-spin text-sky-500" />
+                      <div className="absolute inset-0 h-12 w-12 animate-ping rounded-full bg-sky-400 opacity-20" />
+                    </div>
+                    <p className="text-sm font-medium text-slate-600">
+                      Đang tải dữ liệu hợp đồng...
                     </p>
                   </div>
-                </div>
-              ) : (
-                <div className="overflow-x-auto rounded-2xl border border-slate-200 shadow-sm">
-                  <table className="w-full min-w-[1200px] table-auto">
-                    <thead className="bg-slate-50 text-slate-600">
-                      <tr>
-                        <th className="w-12 px-3 py-4 text-center text-xs font-semibold tracking-wide uppercase">
-                          &nbsp;
-                        </th>
-                        <th className="min-w-[200px] py-4 pr-3 pl-5 text-left text-xs font-semibold tracking-wide uppercase">
-                          Thiết bị / Hợp đồng
-                        </th>
-                        <th className="w-28 py-4 pr-4 pl-3 text-right text-xs font-semibold tracking-wide uppercase">
-                          Giá thuê/tháng
-                        </th>
-                        <th className="w-24 px-3 py-4 text-right text-xs font-semibold tracking-wide uppercase">
-                          Giá B/W
-                        </th>
-                        <th className="w-24 px-3 py-4 text-right text-xs font-semibold tracking-wide uppercase">
-                          Giá Màu
-                        </th>
-                        <th className="w-28 px-3 py-4 text-right text-xs font-semibold tracking-wide uppercase">
-                          Tổng A4
-                        </th>
-                        <th className="w-24 px-3 py-4 text-right text-xs font-semibold tracking-wide uppercase">
-                          Màu A4
-                        </th>
-                        <th className="w-24 px-3 py-4 text-right text-xs font-semibold tracking-wide uppercase">
-                          B/W A4
-                        </th>
-                        <th className="min-w-[150px] px-4 py-4 text-left text-xs font-semibold tracking-wide uppercase">
-                          Vị trí
-                        </th>
-                        <th className="w-28 px-3 py-4 text-left text-xs font-semibold tracking-wide uppercase">
-                          Trạng thái
-                        </th>
-                        <th className="w-24 px-3 py-4 text-right text-xs font-semibold tracking-wide uppercase">
-                          Hành động
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {contracts.map((contract) => (
-                        <Fragment key={contract.id}>
-                          <tr className="bg-gradient-to-r from-sky-50 to-indigo-50">
-                            <td className="px-3 py-4 align-top">
-                              <Checkbox aria-label={`Hợp đồng ${contract.contractNumber}`} />
-                            </td>
-                            <td colSpan={7} className="px-5 py-4">
-                              <div className="flex flex-col gap-2 text-slate-800">
-                                <div className="flex flex-wrap items-center gap-3">
-                                  <span className="text-base font-semibold text-sky-700">
-                                    {contract.contractNumber}
-                                  </span>
-                                  <Badge
-                                    variant="outline"
-                                    className={cn('text-xs', getTypeColor(contract.type))}
-                                  >
-                                    {contract.type}
-                                  </Badge>
-                                  <Badge
-                                    className={cn(
-                                      'border-0 text-xs text-white',
-                                      getStatusColor(contract.status)
-                                    )}
-                                  >
-                                    {getStatusLabel(contract.status)}
-                                  </Badge>
-                                  {canUpdateContract && (
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          className="h-7 w-7 p-0 text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-                                          onClick={() => setEditingContract(contract)}
-                                          aria-label="Chỉnh sửa hợp đồng"
-                                        >
-                                          <Edit className="h-3.5 w-3.5" />
-                                        </Button>
-                                      </TooltipTrigger>
-                                      <TooltipContent sideOffset={4}>
-                                        Chỉnh sửa hợp đồng
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  )}
-                                  {canAttachDevices && (
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          className="h-7 w-7 p-0 text-sky-600 hover:bg-sky-50 hover:text-sky-700"
-                                          onClick={() => {
-                                            setAttachModalContractId(contract.id)
-                                            setAttachModalOpen(true)
-                                          }}
-                                          aria-label="Gán thiết bị"
-                                        >
-                                          <MonitorSmartphone className="h-3.5 w-3.5" />
-                                        </Button>
-                                      </TooltipTrigger>
-                                      <TooltipContent sideOffset={4}>Gán thiết bị</TooltipContent>
-                                    </Tooltip>
-                                  )}
-                                  {canDeleteContract && (
-                                    <Tooltip>
-                                      <DeleteDialog
-                                        title="Xóa hợp đồng"
-                                        description={`Bạn có chắc chắn muốn xóa hợp đồng "${contract.contractNumber}" không? Hành động này không thể hoàn tác.`}
-                                        onConfirm={async () => {
-                                          try {
-                                            await contractsClientService.delete(contract.id)
-                                            await loadOverview()
-                                            toast.success('Xóa hợp đồng thành công')
-                                          } catch (err: unknown) {
-                                            console.error('Delete contract error', err)
-                                            const apiMsg = extractApiMessage(err)
-                                            toast.error(apiMsg || 'Có lỗi khi xóa hợp đồng')
-                                          }
-                                        }}
-                                        trigger={
+                ) : contracts.length === 0 && unassignedDevices.length === 0 ? (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="m-6 flex flex-col items-center justify-center gap-4 rounded-xl border-2 border-dashed border-slate-300 bg-slate-50/50 py-20 text-center"
+                  >
+                    <div className="rounded-full bg-slate-100 p-4">
+                      <PackageSearch className="h-10 w-10 text-slate-400" />
+                    </div>
+                    <div>
+                      <p className="text-lg font-semibold text-slate-700">Chưa có hợp đồng nào</p>
+                      <p className="mt-1 text-sm text-slate-500">
+                        Hãy tạo hợp đồng mới hoặc gán thiết bị
+                      </p>
+                    </div>
+                  </motion.div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full min-w-[1200px] table-auto">
+                      <thead className="border-b border-slate-200 bg-gradient-to-r from-slate-50 to-slate-100/50">
+                        <tr>
+                          <th className="w-12 px-4 py-4 text-center text-xs font-semibold tracking-wide text-slate-600 uppercase">
+                            &nbsp;
+                          </th>
+                          <th className="min-w-[200px] py-4 pr-4 pl-6 text-left text-xs font-semibold tracking-wide text-slate-600 uppercase">
+                            Thiết bị / Hợp đồng
+                          </th>
+                          <th className="w-28 py-4 pr-4 pl-4 text-right text-xs font-semibold tracking-wide text-slate-600 uppercase">
+                            Giá thuê/tháng
+                          </th>
+                          <th className="w-24 px-4 py-4 text-right text-xs font-semibold tracking-wide text-slate-600 uppercase">
+                            Giá B/W
+                          </th>
+                          <th className="w-24 px-4 py-4 text-right text-xs font-semibold tracking-wide text-slate-600 uppercase">
+                            Giá Màu
+                          </th>
+                          <th className="w-28 px-4 py-4 text-right text-xs font-semibold tracking-wide text-slate-600 uppercase">
+                            Tổng A4
+                          </th>
+                          <th className="w-24 px-4 py-4 text-right text-xs font-semibold tracking-wide text-slate-600 uppercase">
+                            Màu A4
+                          </th>
+                          <th className="w-24 px-4 py-4 text-right text-xs font-semibold tracking-wide text-slate-600 uppercase">
+                            B/W A4
+                          </th>
+                          <th className="min-w-[150px] px-4 py-4 text-left text-xs font-semibold tracking-wide text-slate-600 uppercase">
+                            Vị trí
+                          </th>
+                          <th className="w-28 px-4 py-4 text-left text-xs font-semibold tracking-wide text-slate-600 uppercase">
+                            Trạng thái
+                          </th>
+                          <th className="w-32 px-4 py-4 text-right text-xs font-semibold tracking-wide text-slate-600 uppercase">
+                            Hành động
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {contracts.map((contract, idx) => (
+                          <Fragment key={contract.id}>
+                            <motion.tr
+                              initial={{ opacity: 0, y: -10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: idx * 0.05 }}
+                              className="border-t border-slate-200 bg-gradient-to-r from-sky-50/50 via-blue-50/30 to-indigo-50/50"
+                            >
+                              <td className="px-4 py-5 align-top">
+                                <Checkbox aria-label={`Hợp đồng ${contract.contractNumber}`} />
+                              </td>
+                              <td colSpan={7} className="px-6 py-5">
+                                <div className="flex flex-col gap-2.5">
+                                  <div className="flex flex-wrap items-center gap-2.5">
+                                    <span className="text-base font-bold text-sky-700">
+                                      {contract.contractNumber}
+                                    </span>
+                                    <Badge
+                                      variant="outline"
+                                      className={cn(
+                                        'text-xs font-medium',
+                                        getTypeColor(contract.type)
+                                      )}
+                                    >
+                                      {contract.type}
+                                    </Badge>
+                                    <Badge
+                                      className={cn(
+                                        'border-0 text-xs font-medium text-white shadow-sm',
+                                        getStatusColor(contract.status)
+                                      )}
+                                    >
+                                      {getStatusLabel(contract.status)}
+                                    </Badge>
+                                    <div className="ml-auto flex items-center gap-1.5">
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-8 w-8 p-0 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
+                                            onClick={() =>
+                                              setCreateBillingContract({
+                                                id: contract.id,
+                                                number: contract.contractNumber,
+                                              })
+                                            }
+                                            aria-label="Tạo billing"
+                                          >
+                                            <Receipt className="h-4 w-4" />
+                                          </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent sideOffset={4}>
+                                          Tạo hóa đơn billing
+                                        </TooltipContent>
+                                      </Tooltip>
+                                      {canUpdateContract && (
+                                        <Tooltip>
                                           <TooltipTrigger asChild>
                                             <Button
                                               variant="ghost"
                                               size="sm"
-                                              className="h-7 w-7 p-0 text-red-600 hover:bg-red-50 hover:text-red-700"
-                                              aria-label="Xóa hợp đồng"
+                                              className="h-8 w-8 p-0 text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                                              onClick={() => setEditingContract(contract)}
+                                              aria-label="Chỉnh sửa hợp đồng"
                                             >
-                                              <Trash2 className="h-3.5 w-3.5" />
+                                              <Edit className="h-4 w-4" />
                                             </Button>
                                           </TooltipTrigger>
-                                        }
-                                      />
-                                      <TooltipContent sideOffset={4}>Xóa hợp đồng</TooltipContent>
-                                    </Tooltip>
+                                          <TooltipContent sideOffset={4}>
+                                            Chỉnh sửa hợp đồng
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      )}
+                                      {canAttachDevices && (
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <Button
+                                              variant="ghost"
+                                              size="sm"
+                                              className="h-8 w-8 p-0 text-sky-600 hover:bg-sky-50 hover:text-sky-700"
+                                              onClick={() => {
+                                                setAttachModalContractId(contract.id)
+                                                setAttachModalOpen(true)
+                                              }}
+                                              aria-label="Gán thiết bị"
+                                            >
+                                              <MonitorSmartphone className="h-4 w-4" />
+                                            </Button>
+                                          </TooltipTrigger>
+                                          <TooltipContent sideOffset={4}>
+                                            Gán thiết bị
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      )}
+                                      {canDeleteContract && (
+                                        <Tooltip>
+                                          <DeleteDialog
+                                            title="Xóa hợp đồng"
+                                            description={`Bạn có chắc chắn muốn xóa hợp đồng "${contract.contractNumber}" không? Hành động này không thể hoàn tác.`}
+                                            onConfirm={async () => {
+                                              try {
+                                                await contractsClientService.delete(contract.id)
+                                                await loadOverview()
+                                                toast.success('Xóa hợp đồng thành công')
+                                              } catch (err: unknown) {
+                                                console.error('Delete contract error', err)
+                                                const apiMsg = extractApiMessage(err)
+                                                toast.error(apiMsg || 'Có lỗi khi xóa hợp đồng')
+                                              }
+                                            }}
+                                            trigger={
+                                              <TooltipTrigger asChild>
+                                                <Button
+                                                  variant="ghost"
+                                                  size="sm"
+                                                  className="h-8 w-8 p-0 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                                                  aria-label="Xóa hợp đồng"
+                                                >
+                                                  <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                              </TooltipTrigger>
+                                            }
+                                          />
+                                          <TooltipContent sideOffset={4}>
+                                            Xóa hợp đồng
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-4 text-xs text-slate-600">
+                                    <span className="flex items-center gap-1.5">
+                                      <span className="font-medium">Hiệu lực:</span>
+                                      {formatDateRange(contract.startDate, contract.endDate)}
+                                    </span>
+                                  </div>
+                                  {contract.description && (
+                                    <p className="line-clamp-1 text-xs text-slate-500">
+                                      {contract.description}
+                                    </p>
                                   )}
                                 </div>
-                                <p className="text-xs text-slate-600">
-                                  Hiệu lực: {formatDateRange(contract.startDate, contract.endDate)}
-                                </p>
-                                {contract.description && (
-                                  <p className="line-clamp-1 text-xs text-slate-500">
-                                    {contract.description}
-                                  </p>
-                                )}
-                              </div>
-                            </td>
-                            <td className="px-3 py-4 text-xs text-slate-600">
-                              {contract.customer?.name}
-                            </td>
-                            <td className="px-3 py-4 text-xs text-slate-600">
-                              {(contract.contractDevices?.length ?? 0) > 0 ? (
-                                <Badge
-                                  variant="outline"
-                                  className="bg-slate-900/5 text-xs text-slate-900"
-                                >
-                                  {contract.contractDevices?.length ?? 0} thiết bị
-                                </Badge>
-                              ) : (
-                                <span className="text-xs text-slate-400">Chưa có thiết bị</span>
-                              )}
-                            </td>
-                            <td className="px-3 py-4 text-right">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => toggleContract(contract.id)}
-                              >
-                                {expandedContracts.has(contract.id) ? (
-                                  <ChevronUp className="h-4 w-4" />
+                              </td>
+                              <td className="px-4 py-5 text-sm text-slate-600">
+                                {contract.customer?.name}
+                              </td>
+                              <td className="px-4 py-5">
+                                {(contract.contractDevices?.length ?? 0) > 0 ? (
+                                  <Badge
+                                    variant="outline"
+                                    className="border-slate-300 bg-slate-100 text-xs font-medium text-slate-800"
+                                  >
+                                    {contract.contractDevices?.length ?? 0} thiết bị
+                                  </Badge>
                                 ) : (
-                                  <ChevronDown className="h-4 w-4" />
+                                  <span className="text-xs text-slate-400">Chưa có thiết bị</span>
                                 )}
-                              </Button>
-                            </td>
-                          </tr>
-                          {expandedContracts.has(contract.id) && renderContractDevices(contract)}
-                        </Fragment>
-                      ))}
-                      {renderUnassignedDevices(unassignedDevices)}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </CardContent>
-            {pagination && contracts.length > 0 && (
-              <div className="flex flex-wrap items-center justify-between gap-4 border-t border-slate-100 px-6 py-4 text-sm text-slate-600">
-                <div>
-                  Trang {pagination.page}/{pagination.totalPages} • Tổng{' '}
-                  {formatInteger(pagination.total)} hợp đồng
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={page <= 1}
-                    onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-                  >
-                    Trang trước
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={pagination.totalPages ? page >= pagination.totalPages : false}
-                    onClick={() =>
-                      setPage((prev) =>
-                        pagination.totalPages ? Math.min(pagination.totalPages, prev + 1) : prev + 1
-                      )
-                    }
-                  >
-                    Trang sau
-                  </Button>
-                </div>
-              </div>
-            )}
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="inventory" className="space-y-4">
-          {renderCustomerInfoPanel()}
-          <Card className="border-slate-200 shadow-lg">
-            <CardHeader className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2 text-2xl text-slate-900">
-                  <PackageSearch className="h-6 w-6 text-amber-500" />
-                  Kho khách hàng
-                </CardTitle>
-                <CardDescription>
-                  Toàn bộ vật tư sở hữu bởi khách hàng và trạng thái sử dụng hiện tại.
-                </CardDescription>
-              </div>
-              <div className="flex flex-wrap items-center gap-3">
-                <Badge variant="outline" className="border-amber-200 text-amber-600">
-                  {consumablesData?.pagination?.total ?? consumablesData?.items.length ?? 0} vật tư
-                </Badge>
-                {groupedConsumables.length > 0 && (
-                  <Button variant="outline" size="sm" onClick={toggleAllConsumableTypes}>
-                    {expandedConsumableTypes.size === groupedConsumables.length
-                      ? 'Thu gọn tất cả'
-                      : 'Mở tất cả'}
-                  </Button>
+                              </td>
+                              <td className="px-4 py-5 text-right">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => toggleContract(contract.id)}
+                                  className="h-8 w-8 transition-transform hover:bg-slate-100"
+                                >
+                                  <motion.div
+                                    animate={{
+                                      rotate: expandedContracts.has(contract.id) ? 180 : 0,
+                                    }}
+                                    transition={{ duration: 0.2 }}
+                                  >
+                                    <ChevronDown className="h-4 w-4" />
+                                  </motion.div>
+                                </Button>
+                              </td>
+                            </motion.tr>
+                            <AnimatePresence>
+                              {expandedContracts.has(contract.id) &&
+                                renderContractDevices(contract)}
+                            </AnimatePresence>
+                          </Fragment>
+                        ))}
+                        {renderUnassignedDevices(unassignedDevices)}
+                      </tbody>
+                    </table>
+                  </div>
                 )}
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="mb-4 flex flex-wrap items-center gap-3">
-                <div className="relative min-w-[200px] flex-1">
-                  <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                  <Input
-                    value={consumablesSearch}
-                    onChange={(event) => setConsumablesSearch(event.target.value)}
-                    placeholder="Tìm vật tư..."
-                    className="pl-9"
-                  />
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() =>
-                    setConsumablesSortOrder((prev) => (prev === 'desc' ? 'asc' : 'desc'))
-                  }
-                >
-                  Sắp xếp: {consumablesSortOrder === 'desc' ? 'Mới nhất' : 'Cũ nhất'}
-                </Button>
-              </div>
+              </CardContent>
 
-              {consumablesError ? (
-                <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-700">
-                  {consumablesError}
-                </div>
-              ) : consumablesLoading ? (
-                <div className="flex flex-col items-center justify-center gap-3 py-12 text-slate-500">
-                  <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
-                  Đang tải kho khách hàng...
-                </div>
-              ) : !consumablesData || groupedConsumables.length === 0 ? (
-                <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-slate-300 py-16 text-center text-slate-500">
-                  <Package className="h-10 w-10 text-slate-400" />
-                  <div>
-                    <p className="text-base font-semibold">Kho đang trống</p>
-                    <p className="text-sm text-slate-500">
-                      Chưa ghi nhận vật tư nào cho khách hàng.
-                    </p>
+              {pagination && contracts.length > 0 && (
+                <div className="flex flex-wrap items-center justify-between gap-4 border-t border-slate-100 bg-slate-50/50 px-6 py-4">
+                  <div className="text-sm text-slate-600">
+                    Trang <span className="font-semibold">{pagination.page}</span> /{' '}
+                    <span className="font-semibold">{pagination.totalPages}</span> • Tổng{' '}
+                    <span className="font-semibold">{formatInteger(pagination.total)}</span> hợp
+                    đồng
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={page <= 1}
+                      onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                      className="gap-2"
+                    >
+                      <ChevronUp className="h-4 w-4 rotate-90" />
+                      Trang trước
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={pagination.totalPages ? page >= pagination.totalPages : false}
+                      onClick={() =>
+                        setPage((prev) =>
+                          pagination.totalPages
+                            ? Math.min(pagination.totalPages, prev + 1)
+                            : prev + 1
+                        )
+                      }
+                      className="gap-2"
+                    >
+                      Trang sau
+                      <ChevronDown className="h-4 w-4 -rotate-90" />
+                    </Button>
                   </div>
                 </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
+              )}
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="inventory" className="space-y-4">
+            <Card className="border-slate-200 shadow-lg">
+              <CardHeader className="border-b border-slate-100 bg-gradient-to-br from-white to-amber-50/30">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2.5 text-2xl text-slate-900">
+                      <div className="rounded-lg bg-amber-100 p-2">
+                        <PackageSearch className="h-5 w-5 text-amber-600" />
+                      </div>
+                      Kho khách hàng
+                    </CardTitle>
+                    <CardDescription className="mt-2">
+                      Toàn bộ vật tư sở hữu bởi khách hàng và trạng thái sử dụng hiện tại
+                    </CardDescription>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Badge
+                      variant="outline"
+                      className="border-amber-300 bg-amber-50 text-amber-700"
+                    >
+                      {consumablesData?.pagination?.total ?? consumablesData?.items.length ?? 0} vật
+                      tư
+                    </Badge>
+                    {groupedConsumables.length > 0 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={toggleAllConsumableTypes}
+                        className="gap-2"
+                      >
+                        {expandedConsumableTypes.size === groupedConsumables.length ? (
+                          <>
+                            <ChevronUp className="h-4 w-4" />
+                            Thu gọn
+                          </>
+                        ) : (
+                          <>
+                            <ChevronDown className="h-4 w-4" />
+                            Mở tất cả
+                          </>
+                        )}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3 pt-4">
+                  <div className="relative min-w-[250px] flex-1">
+                    <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <Input
+                      value={consumablesSearch}
+                      onChange={(event) => setConsumablesSearch(event.target.value)}
+                      placeholder="Tìm vật tư..."
+                      className="pl-9"
+                    />
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setConsumablesSortOrder((prev) => (prev === 'desc' ? 'asc' : 'desc'))
+                    }
+                    className="gap-2"
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                    {consumablesSortOrder === 'desc' ? 'Mới nhất' : 'Cũ nhất'}
+                  </Button>
+                </div>
+              </CardHeader>
+
+              <CardContent className="p-0">
+                {consumablesError ? (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="m-6 rounded-xl border border-rose-200 bg-gradient-to-br from-rose-50 to-red-50 p-6 text-sm text-rose-700"
+                  >
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0" />
+                      <div>
+                        <p className="font-semibold">Đã xảy ra lỗi</p>
+                        <p className="mt-1">{consumablesError}</p>
+                      </div>
+                    </div>
+                  </motion.div>
+                ) : consumablesLoading ? (
+                  <div className="flex flex-col items-center justify-center gap-4 py-16">
+                    <div className="relative">
+                      <Loader2 className="h-12 w-12 animate-spin text-amber-500" />
+                      <div className="absolute inset-0 h-12 w-12 animate-ping rounded-full bg-amber-400 opacity-20" />
+                    </div>
+                    <p className="text-sm font-medium text-slate-600">Đang tải kho khách hàng...</p>
+                  </div>
+                ) : !consumablesData || groupedConsumables.length === 0 ? (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="m-6 flex flex-col items-center justify-center gap-4 rounded-xl border-2 border-dashed border-amber-300 bg-amber-50/50 py-20 text-center"
+                  >
+                    <div className="rounded-full bg-amber-100 p-4">
+                      <Package className="h-10 w-10 text-amber-500" />
+                    </div>
+                    <div>
+                      <p className="text-lg font-semibold text-amber-900">Kho đang trống</p>
+                      <p className="mt-1 text-sm text-amber-700">
+                        Chưa ghi nhận vật tư nào cho khách hàng
+                      </p>
+                    </div>
+                  </motion.div>
+                ) : (
+                  <div className="overflow-x-auto">
                     <table className="w-full table-auto">
-                      <thead className="bg-amber-50 text-amber-900">
+                      <thead className="border-b border-slate-200 bg-gradient-to-r from-amber-50 to-orange-50/50">
                         <tr>
-                          <th className="w-12 px-3 py-4 text-center text-xs font-semibold tracking-wide uppercase">
+                          <th className="w-12 px-4 py-4 text-center text-xs font-semibold tracking-wide text-amber-900 uppercase">
                             &nbsp;
                           </th>
-                          <th className="px-5 py-4 text-left text-xs font-semibold tracking-wide uppercase">
-                            Part
+                          <th className="px-6 py-4 text-left text-xs font-semibold tracking-wide text-amber-900 uppercase">
+                            Part Number
                           </th>
-                          <th className="px-5 py-4 text-left text-xs font-semibold tracking-wide uppercase">
+                          <th className="px-6 py-4 text-left text-xs font-semibold tracking-wide text-amber-900 uppercase">
                             Tên vật tư
                           </th>
-                          <th className="px-5 py-4 text-left text-xs font-semibold tracking-wide uppercase">
+                          <th className="px-6 py-4 text-left text-xs font-semibold tracking-wide text-amber-900 uppercase">
                             Dòng tương thích
                           </th>
-                          <th className="px-5 py-4 text-left text-xs font-semibold tracking-wide uppercase">
+                          <th className="px-6 py-4 text-left text-xs font-semibold tracking-wide text-amber-900 uppercase">
                             Dung lượng
                           </th>
-                          <th className="px-5 py-4 text-left text-xs font-semibold tracking-wide uppercase">
+                          <th className="px-6 py-4 text-left text-xs font-semibold tracking-wide text-amber-900 uppercase">
                             Trạng thái sử dụng
                           </th>
-                          <th className="px-5 py-4 text-left text-xs font-semibold tracking-wide uppercase">
+                          <th className="px-6 py-4 text-left text-xs font-semibold tracking-wide text-amber-900 uppercase">
                             Trạng thái
                           </th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
-                        {groupedConsumables.map((group) => (
+                        {groupedConsumables.map((group, groupIdx) => (
                           <Fragment key={group.typeId}>
-                            <tr className="bg-gradient-to-r from-amber-50 to-orange-50">
-                              <td className="px-3 py-4 text-center">
+                            <motion.tr
+                              initial={{ opacity: 0, y: -10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: groupIdx * 0.05 }}
+                              className="bg-gradient-to-r from-amber-50/50 via-orange-50/30 to-yellow-50/50"
+                            >
+                              <td className="px-4 py-5 text-center">
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="h-6 w-6"
+                                  className="h-8 w-8 transition-transform hover:bg-amber-100"
                                   onClick={() => toggleConsumableType(group.typeId)}
                                 >
-                                  {expandedConsumableTypes.has(group.typeId) ? (
-                                    <ChevronUp className="h-4 w-4" />
-                                  ) : (
+                                  <motion.div
+                                    animate={{
+                                      rotate: expandedConsumableTypes.has(group.typeId) ? 180 : 0,
+                                    }}
+                                    transition={{ duration: 0.2 }}
+                                  >
                                     <ChevronDown className="h-4 w-4" />
-                                  )}
+                                  </motion.div>
                                 </Button>
                               </td>
-                              <td className="px-5 py-4">
+                              <td className="px-6 py-5">
                                 <Badge
                                   variant="outline"
-                                  className="border-amber-300 bg-amber-100 font-mono text-xs"
+                                  className="border-amber-300 bg-amber-100 font-mono text-sm text-amber-900"
                                 >
                                   {group.type?.partNumber ?? '—'}
                                 </Badge>
                               </td>
-                              <td className="px-5 py-4">
+                              <td className="px-6 py-5">
                                 <div className="font-semibold text-amber-900">
                                   {group.type?.name ?? 'Không rõ tên'}
                                 </div>
                               </td>
-                              <td className="px-5 py-4 text-sm text-amber-700">
+                              <td className="px-6 py-5 text-sm text-amber-800">
                                 {group.type?.compatibleDeviceModels
                                   ?.map((model) => model?.name)
                                   .filter(Boolean)
                                   .join(', ') || '—'}
                               </td>
-                              <td className="px-5 py-4 text-sm text-amber-700">
+                              <td className="px-6 py-5 text-sm text-amber-800">
                                 {group.type?.capacity
                                   ? `${formatInteger(group.type.capacity)} trang`
                                   : '—'}
                               </td>
-                              <td className="px-5 py-4">
-                                <div className="flex flex-col gap-1">
+                              <td className="px-6 py-5">
+                                <div className="flex flex-wrap items-center gap-2">
                                   <Badge
                                     variant="outline"
-                                    className="w-fit bg-slate-100 text-xs text-slate-700"
+                                    className="border-slate-300 bg-slate-100 text-xs text-slate-700"
                                   >
                                     Tổng: {group.total}
                                   </Badge>
                                   <Badge
                                     variant="outline"
-                                    className="w-fit bg-green-100 text-xs text-green-700"
+                                    className="border-emerald-300 bg-emerald-100 text-xs text-emerald-700"
                                   >
                                     Đã dùng: {group.used}
                                   </Badge>
                                   <Badge
                                     variant="outline"
-                                    className="w-fit bg-blue-100 text-xs text-blue-700"
+                                    className="border-blue-300 bg-blue-100 text-xs text-blue-700"
                                   >
                                     Còn lại: {group.available}
                                   </Badge>
                                 </div>
                               </td>
-                              <td className="px-5 py-4">
+                              <td className="px-6 py-5">
                                 <Badge
                                   variant="outline"
-                                  className="bg-amber-100 text-xs text-amber-700"
+                                  className="border-amber-300 bg-amber-100 text-amber-800"
                                 >
                                   {group.total} vật tư
                                 </Badge>
                               </td>
-                            </tr>
-                            {expandedConsumableTypes.has(group.typeId) &&
-                              group.items.map((item) => (
-                                <tr key={item.id} className="hover:bg-amber-50/50">
-                                  <td className="px-3 py-4 text-center text-xs text-slate-300">
-                                    │
-                                  </td>
-                                  <td className="px-5 py-4">
-                                    <Badge variant="outline" className="font-mono text-xs">
-                                      {item.consumableType?.partNumber ?? '—'}
-                                    </Badge>
-                                  </td>
-                                  <td className="px-5 py-4">
-                                    <div className="font-medium text-slate-800">
-                                      {item.consumableType?.name ?? 'Không rõ tên'}
-                                    </div>
-                                    <p className="text-xs text-slate-500">
-                                      {item.serialNumber ?? '—'}
-                                    </p>
-                                  </td>
-                                  <td className="px-5 py-4 text-sm text-slate-600">
-                                    {item.consumableType?.compatibleDeviceModels
-                                      ?.map((model) => model?.name)
-                                      .filter(Boolean)
-                                      .join(', ') || '—'}
-                                  </td>
-                                  <td className="px-5 py-4 text-sm text-slate-600">
-                                    {item.consumableType?.capacity
-                                      ? `${formatInteger(item.consumableType.capacity)} trang`
-                                      : '—'}
-                                  </td>
-                                  <td className="px-5 py-4">{renderUsageBadge(item)}</td>
-                                  <td className="px-5 py-4 text-sm text-slate-600">
-                                    {item.status ?? '—'}
-                                  </td>
-                                </tr>
-                              ))}
+                            </motion.tr>
+                            <AnimatePresence>
+                              {expandedConsumableTypes.has(group.typeId) &&
+                                group.items.map((item, itemIdx) => (
+                                  <motion.tr
+                                    key={item.id}
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: itemIdx * 0.03 }}
+                                    className="group hover:bg-amber-50/30"
+                                  >
+                                    <td className="px-4 py-4 text-center text-xs text-slate-300">
+                                      │
+                                    </td>
+                                    <td className="px-6 py-4">
+                                      <Badge variant="outline" className="font-mono text-xs">
+                                        {item.consumableType?.partNumber ?? '—'}
+                                      </Badge>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                      <div className="font-medium text-slate-800">
+                                        {item.consumableType?.name ?? 'Không rõ tên'}
+                                      </div>
+                                      <p className="mt-0.5 text-xs text-slate-500">
+                                        SN: {item.serialNumber ?? '—'}
+                                      </p>
+                                    </td>
+                                    <td className="px-6 py-4 text-sm text-slate-600">
+                                      {item.consumableType?.compatibleDeviceModels
+                                        ?.map((model) => model?.name)
+                                        .filter(Boolean)
+                                        .join(', ') || '—'}
+                                    </td>
+                                    <td className="px-6 py-4 text-sm text-slate-600">
+                                      {item.consumableType?.capacity
+                                        ? `${formatInteger(item.consumableType.capacity)} trang`
+                                        : '—'}
+                                    </td>
+                                    <td className="px-6 py-4">{renderUsageBadge(item)}</td>
+                                    <td className="px-6 py-4 text-sm text-slate-600">
+                                      {item.status ?? '—'}
+                                    </td>
+                                  </motion.tr>
+                                ))}
+                            </AnimatePresence>
                           </Fragment>
                         ))}
                       </tbody>
                     </table>
                   </div>
-                  {consumablesData.pagination && consumablesData.pagination.totalPages > 1 && (
-                    <div className="flex flex-wrap items-center justify-between gap-4 border-t border-slate-100 px-6 py-4 text-sm text-slate-600">
-                      <div>
-                        Trang {consumablesData.pagination.page}/
-                        {consumablesData.pagination.totalPages} • Tổng{' '}
-                        {formatInteger(consumablesData.pagination.total)} vật tư
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled={consumablesPage <= 1}
-                          onClick={() => setConsumablesPage((prev) => Math.max(1, prev - 1))}
-                        >
-                          Trang trước
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled={
-                            consumablesData.pagination.totalPages
-                              ? consumablesPage >= consumablesData.pagination.totalPages
-                              : false
-                          }
-                          onClick={() =>
-                            setConsumablesPage((prev) =>
-                              consumablesData.pagination?.totalPages
-                                ? Math.min(consumablesData.pagination.totalPages, prev + 1)
-                                : prev + 1
-                            )
-                          }
-                        >
-                          Trang sau
-                        </Button>
-                      </div>
-                    </div>
-                  )}
+                )}
+              </CardContent>
+
+              {consumablesData?.pagination && consumablesData.pagination.totalPages > 1 && (
+                <div className="flex flex-wrap items-center justify-between gap-4 border-t border-slate-100 bg-amber-50/30 px-6 py-4">
+                  <div className="text-sm text-slate-600">
+                    Trang <span className="font-semibold">{consumablesData.pagination.page}</span> /{' '}
+                    <span className="font-semibold">{consumablesData.pagination.totalPages}</span> •
+                    Tổng{' '}
+                    <span className="font-semibold">
+                      {formatInteger(consumablesData.pagination.total)}
+                    </span>{' '}
+                    vật tư
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={consumablesPage <= 1}
+                      onClick={() => setConsumablesPage((prev) => Math.max(1, prev - 1))}
+                      className="gap-2"
+                    >
+                      <ChevronUp className="h-4 w-4 rotate-90" />
+                      Trang trước
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={
+                        consumablesData.pagination.totalPages
+                          ? consumablesPage >= consumablesData.pagination.totalPages
+                          : false
+                      }
+                      onClick={() =>
+                        setConsumablesPage((prev) =>
+                          consumablesData.pagination?.totalPages
+                            ? Math.min(consumablesData.pagination.totalPages, prev + 1)
+                            : prev + 1
+                        )
+                      }
+                      className="gap-2"
+                    >
+                      Trang sau
+                      <ChevronDown className="h-4 w-4 -rotate-90" />
+                    </Button>
+                  </div>
                 </div>
               )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="invoices" className="space-y-4">
+            <InvoicesList customerId={customerId} />
+          </TabsContent>
+        </Tabs>
+      </motion.div>
+
+      {/* Create Billing Dialog */}
+      {createBillingContract && (
+        <CreateBillingModal
+          open={!!createBillingContract}
+          onOpenChange={(open) => {
+            if (!open) setCreateBillingContract(null)
+          }}
+          customerId={customerId}
+          contractId={createBillingContract.id}
+          customerName={customerInfo?.name}
+          contractNumber={createBillingContract.number}
+          onSuccess={(invoice) => {
+            if (invoice) {
+              // Refresh invoices list if needed
+              setActiveTab('invoices')
+            }
+            setCreateBillingContract(null)
+          }}
+        />
+      )}
 
       {/* Create Contract Dialog */}
       <Dialog open={createContractOpen} onOpenChange={setCreateContractOpen}>
-        <DialogContent className="max-h-[90vh] !max-w-[75vw] overflow-y-auto rounded-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-slate-900">
-              Tạo hợp đồng mới
-            </DialogTitle>
-            <DialogDescription className="text-sm text-slate-500">
-              Hợp đồng sẽ gắn với khách hàng{' '}
-              <span className="font-semibold text-slate-700">{customerInfo?.name}</span>.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="pb-2">
-            <ContractForm
-              initial={{ customerId }}
-              onSuccess={(created) => {
-                setCreateContractOpen(false)
-                if (created) {
-                  loadOverview()
-                  loadCustomerInfo()
-                }
-              }}
-            />
-          </div>
-        </DialogContent>
+        <SystemModalLayout
+          title="Tạo hợp đồng mới"
+          description={`Hợp đồng sẽ gắn với khách hàng ${customerInfo?.name || ''}`}
+          icon={FileText}
+          variant="create"
+          maxWidth="!max-w-[75vw]"
+        >
+          <ContractForm
+            initial={{ customerId }}
+            onSuccess={(created) => {
+              setCreateContractOpen(false)
+              if (created) {
+                loadOverview()
+                loadCustomerInfo()
+              }
+            }}
+          />
+        </SystemModalLayout>
       </Dialog>
 
       {/* Edit Contract Dialog */}
       <Dialog open={!!editingContract} onOpenChange={(open) => !open && setEditingContract(null)}>
         <AnimatePresence>
           {editingContract && (
-            <DialogContent className="max-h-[90vh] !max-w-[75vw] rounded-2xl border-0 p-0 shadow-2xl">
+            <SystemModalLayout
+              title="Chỉnh sửa hợp đồng"
+              description={`Cập nhật thông tin hợp đồng ${editingContract.contractNumber}`}
+              icon={FileText}
+              variant="edit"
+              maxWidth="!max-w-[75vw]"
+            >
               <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                transition={{ duration: 0.3, ease: 'easeOut' }}
-                className="flex h-full flex-col"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2, duration: 0.3 }}
               >
-                {/* Header with Gradient Background */}
-                <DialogHeader className="relative overflow-hidden bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-0">
-                  <div className="absolute inset-0 bg-black/10"></div>
-                  <div className="absolute inset-0 opacity-20">
-                    <div className="absolute top-0 right-0 h-40 w-40 translate-x-1/2 -translate-y-1/2 rounded-full bg-white"></div>
-                    <div className="absolute bottom-0 left-0 h-32 w-32 -translate-x-1/2 translate-y-1/2 rounded-full bg-white"></div>
-                  </div>
-                  <div className="relative z-10 px-6 py-6 text-white">
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.1, duration: 0.2 }}
-                      className="flex items-center gap-4"
-                    >
-                      <motion.div
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
-                        className="rounded-xl border border-white/30 bg-white/20 p-2.5 backdrop-blur-lg"
-                      >
-                        <Sparkles className="h-6 w-6 text-white" />
-                      </motion.div>
-                      <div className="flex-1">
-                        <DialogTitle className="flex items-center gap-2 text-2xl font-bold text-white">
-                          ✨ Chỉnh sửa hợp đồng
-                        </DialogTitle>
-                        <DialogDescription className="mt-1 flex items-center gap-2 text-white/90">
-                          <FileText className="h-4 w-4" />
-                          Cập nhật thông tin hợp đồng {editingContract.contractNumber}
-                        </DialogDescription>
-                      </div>
-                    </motion.div>
-                  </div>
-                </DialogHeader>
-
-                {/* Content Area */}
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.2, duration: 0.3 }}
-                  className="flex-1 overflow-y-auto bg-gradient-to-b from-white via-blue-50/30 to-white"
-                >
-                  <div className="p-6">
-                    {/* Progress indicator */}
-                    <div className="mb-6 flex items-center gap-3 text-xs font-semibold text-gray-600">
-                      <div className="flex items-center gap-2">
-                        <div className="h-2 w-2 rounded-full bg-blue-600"></div>
-                        Thông tin cơ bản
-                      </div>
-                      <ArrowRight className="h-4 w-4 text-gray-400" />
-                      <div className="flex items-center gap-2">
-                        <div className="h-2 w-2 rounded-full bg-gray-300"></div>
-                        Khách hàng & Thời hạn
-                      </div>
-                      <ArrowRight className="h-4 w-4 text-gray-400" />
-                      <div className="flex items-center gap-2">
-                        <div className="h-2 w-2 rounded-full bg-gray-300"></div>
-                        Chi tiết
-                      </div>
-                    </div>
-
-                    <ContractForm
-                      initial={{
-                        ...({
-                          id: editingContract.id,
-                          customerId: editingContract.customerId,
-                          contractNumber: editingContract.contractNumber,
-                          type: editingContract.type,
-                          status: editingContract.status,
-                          startDate: editingContract.startDate,
-                          endDate: editingContract.endDate,
-                          description: editingContract.description ?? undefined,
-                          documentUrl: editingContract.documentUrl ?? undefined,
-                        } as unknown as Parameters<typeof ContractForm>[0]['initial']),
-                      }}
-                      onSuccess={(created) => {
-                        setEditingContract(null)
-                        if (created) {
-                          loadOverview()
-                        }
-                      }}
-                    />
-                  </div>
-                </motion.div>
+                <ContractForm
+                  initial={{
+                    ...({
+                      id: editingContract.id,
+                      customerId: editingContract.customerId,
+                      contractNumber: editingContract.contractNumber,
+                      type: editingContract.type,
+                      status: editingContract.status,
+                      startDate: editingContract.startDate,
+                      endDate: editingContract.endDate,
+                      description: editingContract.description ?? undefined,
+                      documentUrl: editingContract.documentUrl ?? undefined,
+                    } as unknown as Parameters<typeof ContractForm>[0]['initial']),
+                  }}
+                  onSuccess={(created) => {
+                    setEditingContract(null)
+                    if (created) {
+                      loadOverview()
+                    }
+                  }}
+                />
               </motion.div>
-            </DialogContent>
+            </SystemModalLayout>
           )}
         </AnimatePresence>
       </Dialog>
@@ -1713,7 +1853,6 @@ export default function CustomerDetailClient({ customerId }: Props) {
           onOpenChange={(open) => {
             setAttachModalOpen(open)
             if (!open) {
-              // Reload overview when modal closes (after successful attach)
               loadOverview()
               setAttachModalContractId(null)
             }
@@ -1762,46 +1901,43 @@ export default function CustomerDetailClient({ customerId }: Props) {
 
       {/* Assign Device to Contract Modal */}
       <Dialog open={assignDeviceModalOpen} onOpenChange={setAssignDeviceModalOpen}>
-        <DialogContent className="max-w-md rounded-2xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <MonitorSmartphone className="h-5 w-5 text-sky-600" />
-              Gán thiết bị vào hợp đồng
-            </DialogTitle>
-            {selectedDeviceForAssign && (
-              <DialogDescription asChild>
-                <div className="mt-2">
-                  <div className="font-medium text-slate-800">
-                    Thiết bị: {selectedDeviceForAssign.serialNumber}
-                  </div>
-                  <div className="text-sm text-slate-600">
-                    {selectedDeviceForAssign.deviceModel?.name ??
-                      selectedDeviceForAssign.model ??
-                      'Không rõ model'}
-                  </div>
-                </div>
-              </DialogDescription>
-            )}
-          </DialogHeader>
-          <div className="py-4">
-            {contracts.length === 0 ? (
-              <p className="text-center text-sm text-slate-500">
-                Không có hợp đồng nào để gán thiết bị
-              </p>
-            ) : (
-              <div className="max-h-[300px] space-y-2 overflow-y-auto">
-                {contracts.map((contract) => (
+        <SystemModalLayout
+          title="Gán thiết bị vào hợp đồng"
+          description={
+            selectedDeviceForAssign
+              ? `Thiết bị: ${selectedDeviceForAssign.serialNumber} - ${selectedDeviceForAssign.deviceModel?.name ?? selectedDeviceForAssign.model ?? 'Không rõ model'}`
+              : 'Chọn hợp đồng để gán thiết bị'
+          }
+          icon={MonitorSmartphone}
+          variant="view"
+          maxWidth="!max-w-[60vw]"
+        >
+          {contracts.length === 0 ? (
+            <div className="flex flex-col items-center gap-3 py-8 text-center">
+              <div className="rounded-full bg-slate-100 p-3">
+                <AlertCircle className="h-8 w-8 text-slate-400" />
+              </div>
+              <p className="text-sm text-slate-500">Không có hợp đồng nào để gán thiết bị</p>
+            </div>
+          ) : (
+            <div className="max-h-[400px] space-y-2 overflow-y-auto">
+              {contracts.map((contract, idx) => (
+                <motion.div
+                  key={contract.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.05 }}
+                >
                   <Button
-                    key={contract.id}
                     variant="outline"
-                    className="h-auto w-full justify-start px-4 py-3 text-left hover:border-sky-300 hover:bg-sky-50"
+                    className="h-auto w-full justify-start px-4 py-3 text-left transition-all hover:border-sky-300 hover:bg-sky-50 hover:shadow-sm"
                     onClick={() => {
                       if (selectedDeviceForAssign?.id) {
                         handleAssignDeviceToContract(contract.id, selectedDeviceForAssign.id)
                       }
                     }}
                   >
-                    <div className="flex flex-col gap-1">
+                    <div className="flex flex-col gap-1.5">
                       <div className="flex items-center gap-2">
                         <span className="font-semibold text-sky-700">
                           {contract.contractNumber}
@@ -1814,7 +1950,7 @@ export default function CustomerDetailClient({ customerId }: Props) {
                         </Badge>
                         <Badge
                           className={cn(
-                            'border-0 text-xs text-white',
+                            'border-0 text-xs text-white shadow-sm',
                             getStatusColor(contract.status)
                           )}
                         >
@@ -1826,11 +1962,11 @@ export default function CustomerDetailClient({ customerId }: Props) {
                       </p>
                     </div>
                   </Button>
-                ))}
-              </div>
-            )}
-          </div>
-        </DialogContent>
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </SystemModalLayout>
       </Dialog>
 
       {/* Detach Device Confirmation Dialog */}
@@ -1846,7 +1982,9 @@ export default function CustomerDetailClient({ customerId }: Props) {
         <AlertDialogContent className="rounded-2xl">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
-              <Trash2 className="h-5 w-5 text-red-600" />
+              <div className="rounded-full bg-rose-100 p-2">
+                <Trash2 className="h-5 w-5 text-rose-600" />
+              </div>
               Xác nhận gỡ thiết bị
             </AlertDialogTitle>
             <AlertDialogDescription className="text-base">
@@ -1857,7 +1995,7 @@ export default function CustomerDetailClient({ customerId }: Props) {
             <AlertDialogCancel onClick={() => setPendingDetach(null)}>Hủy</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDetachDevice}
-              className="bg-red-600 text-white hover:bg-red-700"
+              className="bg-rose-600 text-white hover:bg-rose-700"
             >
               Gỡ thiết bị
             </AlertDialogAction>

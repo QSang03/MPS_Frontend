@@ -32,20 +32,15 @@ import {
   Search,
   Edit,
   Trash2,
-  MoreHorizontal,
   Mail,
   Calendar,
   RotateCcw,
   Users,
   CheckCircle2,
   AlertCircle,
+  Building2,
+  UserCog,
 } from 'lucide-react'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import { formatDate } from '@/lib/utils/formatters'
 import { EditUserModal } from './EditUserModal'
 import { UserFormModal } from './UserFormModal'
@@ -90,12 +85,6 @@ export function UsersTable() {
   const [stats, setStats] = useState<UsersStats>({ total: 0, active: 0, inactive: 0 })
   const [editingUser, setEditingUser] = useState<User | null>(null)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-  const [isMounted, setIsMounted] = useState(false)
-
-  useEffect(() => {
-    const t = setTimeout(() => setIsMounted(true), 0)
-    return () => clearTimeout(t)
-  }, [])
 
   useEffect(() => {
     const timer = setTimeout(
@@ -309,50 +298,42 @@ export function UsersTable() {
 
           <div className="space-y-2">
             <label className="text-sm font-bold text-gray-700">🎭 Vai trò</label>
-            {isMounted ? (
-              <Select
-                value={filters.roleId}
-                onValueChange={(value) => setFilters((prev) => ({ ...prev, roleId: value }))}
-              >
-                <SelectTrigger className="rounded-lg border-2 border-gray-200 transition-all focus:border-purple-500 focus:ring-2 focus:ring-purple-200">
-                  <SelectValue placeholder="Chọn vai trò" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tất cả vai trò</SelectItem>
-                  {roles.map((role: UserRole) => (
-                    <SelectItem key={role.id} value={role.id}>
-                      {role.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : (
-              <div className="h-10 w-full rounded-lg border-2 border-gray-200 bg-transparent" />
-            )}
+            <Select
+              value={filters.roleId}
+              onValueChange={(value) => setFilters((prev) => ({ ...prev, roleId: value }))}
+            >
+              <SelectTrigger className="rounded-lg border-2 border-gray-200 transition-all focus:border-purple-500 focus:ring-2 focus:ring-purple-200">
+                <SelectValue placeholder="Chọn vai trò" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả vai trò</SelectItem>
+                {roles.map((role: UserRole) => (
+                  <SelectItem key={role.id} value={role.id}>
+                    {role.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">
             <label className="text-sm font-bold text-gray-700">🏪 Khách hàng</label>
-            {isMounted ? (
-              <Select
-                value={filters.customerId}
-                onValueChange={(value) => setFilters((prev) => ({ ...prev, customerId: value }))}
-              >
-                <SelectTrigger className="rounded-lg border-2 border-gray-200 transition-all focus:border-purple-500 focus:ring-2 focus:ring-purple-200">
-                  <SelectValue placeholder="Chọn mã KH" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tất cả KH</SelectItem>
-                  {availableCustomerCodes.map((code) => (
-                    <SelectItem key={code} value={customerCodeToId[code] || code}>
-                      {code}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : (
-              <div className="h-10 w-full rounded-lg border-2 border-gray-200 bg-transparent" />
-            )}
+            <Select
+              value={filters.customerId}
+              onValueChange={(value) => setFilters((prev) => ({ ...prev, customerId: value }))}
+            >
+              <SelectTrigger className="rounded-lg border-2 border-gray-200 transition-all focus:border-purple-500 focus:ring-2 focus:ring-purple-200">
+                <SelectValue placeholder="Chọn mã KH" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả KH</SelectItem>
+                {availableCustomerCodes.map((code) => (
+                  <SelectItem key={code} value={customerCodeToId[code] || code}>
+                    {code}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="flex gap-2">
@@ -467,23 +448,34 @@ function UsersTableContent({
     }
   }, [data, pagination.page, pagination.limit, users.length])
 
+  // Update pagination meta and stats when data or pagination changes
+  // Separate into two effects to avoid infinite loop (paginationMeta depends on these values)
   useEffect(() => {
+    const meta = data?.pagination
+      ? data.pagination
+      : {
+          page: pagination.page,
+          limit: pagination.limit,
+          total: users.length,
+          totalPages: Math.max(1, Math.ceil(users.length / pagination.limit)),
+        }
     onPaginationMetaChange({
-      page: paginationMeta.page ?? pagination.page,
-      limit: paginationMeta.limit ?? pagination.limit,
-      total: paginationMeta.total ?? users.length,
-      totalPages:
-        paginationMeta.totalPages ?? Math.max(1, Math.ceil(users.length / pagination.limit)),
+      page: meta.page ?? pagination.page,
+      limit: meta.limit ?? pagination.limit,
+      total: meta.total ?? users.length,
+      totalPages: meta.totalPages ?? Math.max(1, Math.ceil(users.length / pagination.limit)),
     })
+  }, [data?.pagination, users.length, pagination.page, pagination.limit, onPaginationMetaChange])
 
-    const totalUsers = paginationMeta.total ?? users.length
+  useEffect(() => {
+    const totalUsers = data?.pagination?.total ?? users.length
     const activeUsers = users.filter((user) => user.isActive !== false).length
     onStatsChange({
       total: totalUsers,
       active: activeUsers,
       inactive: totalUsers - activeUsers,
     })
-  }, [paginationMeta, users, pagination, onPaginationMetaChange, onStatsChange])
+  }, [data?.pagination?.total, users, onStatsChange])
 
   const columns = useMemo<ColumnDef<User>[]>(() => {
     const getRoleBadgeColorLocal = (roleName?: string) => getRoleBadgeColor(roleName)
@@ -495,7 +487,7 @@ function UsersTableContent({
         cell: ({ row, table }) => {
           const index = table.getSortedRowModel().rows.findIndex((r) => r.id === row.id)
           return (
-            <span className="inline-flex h-6 w-6 items-center justify-center rounded bg-purple-100 text-sm text-purple-700">
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded bg-gradient-to-r from-gray-100 to-gray-50 text-sm font-medium text-gray-700">
               {(pagination.page - 1) * pagination.limit + index + 1}
             </span>
           )
@@ -507,7 +499,7 @@ function UsersTableContent({
         enableSorting: true,
         header: () => (
           <div className="flex items-center gap-2">
-            <Mail className="h-4 w-4 text-purple-600" />
+            <Mail className="h-4 w-4 text-gray-600" />
             Người dùng
           </div>
         ),
@@ -522,14 +514,14 @@ function UsersTableContent({
         accessorKey: 'customer',
         header: () => (
           <div className="flex items-center gap-2">
-            <span className="text-lg">🏪</span>
+            <Building2 className="h-4 w-4 text-gray-600" />
             Khách hàng
           </div>
         ),
         cell: ({ row }) => (
-          <span className="inline-block rounded-lg border border-amber-300 bg-amber-100 px-3 py-1 text-xs font-bold text-amber-700">
+          <Badge variant="outline" className="font-mono text-xs">
             {row.original.customer?.code || '—'}
-          </span>
+          </Badge>
         ),
         enableSorting: false,
       },
@@ -537,13 +529,13 @@ function UsersTableContent({
         accessorKey: 'role',
         header: () => (
           <div className="flex items-center gap-2">
-            <span className="text-lg">🎭</span>
+            <UserCog className="h-4 w-4 text-gray-600" />
             Vai trò
           </div>
         ),
         cell: ({ row }) => (
           <div className="space-y-1">
-            <Badge className={`${getRoleBadgeColorLocal(row.original.role?.name)} border-2`}>
+            <Badge className={getRoleBadgeColorLocal(row.original.role?.name)}>
               {row.original.role?.name || '—'}
             </Badge>
             <div className="text-xs text-gray-500">Level {row.original.role?.level || '—'}</div>
@@ -556,7 +548,7 @@ function UsersTableContent({
         enableSorting: true,
         header: () => (
           <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-rose-600" />
+            <Calendar className="h-4 w-4 text-gray-600" />
             Ngày tạo
           </div>
         ),
@@ -569,67 +561,65 @@ function UsersTableContent({
       },
       {
         id: 'actions',
-        header: '⚙️ Thao tác',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <UserCog className="h-4 w-4 text-gray-600" />
+            Thao tác
+          </div>
+        ),
         enableSorting: false,
         cell: ({ row }) => (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+          <div className="flex items-center justify-end gap-1.5">
+            {canUpdate && (
               <Button
-                variant="ghost"
                 size="sm"
-                className="transition-all hover:bg-purple-100 hover:text-purple-700"
+                variant="ghost"
+                onClick={() => onEditUser(row.original)}
+                className="transition-all hover:bg-blue-100 hover:text-blue-700"
+                title="Chỉnh sửa"
               >
-                <MoreHorizontal className="h-4 w-4" />
+                <Edit className="h-4 w-4" />
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="rounded-lg border-2 shadow-xl">
-              {canUpdate && (
-                <DropdownMenuItem
-                  onClick={() => onEditUser(row.original)}
-                  className="flex cursor-pointer items-center gap-2 py-2 transition-all hover:bg-purple-50 hover:text-purple-700"
+            )}
+            <ConfirmDialog
+              title="Đặt lại mật khẩu"
+              description={`Bạn có chắc muốn đặt lại mật khẩu người dùng "${row.original.email}" về mật khẩu mặc định không?`}
+              confirmLabel="Đặt lại"
+              cancelLabel="Hủy"
+              onConfirm={async () => {
+                await onResetPassword(row.original.id)
+              }}
+              trigger={
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="transition-all hover:bg-blue-100 hover:text-blue-700"
+                  title="Đặt lại mật khẩu"
                 >
-                  <Edit className="h-4 w-4" />
-                  Chỉnh sửa
-                </DropdownMenuItem>
-              )}
-              <ConfirmDialog
-                title="Đặt lại mật khẩu"
-                description={`Bạn có chắc muốn đặt lại mật khẩu người dùng "${row.original.email}" về mật khẩu mặc định không?`}
-                confirmLabel="Đặt lại"
-                cancelLabel="Hủy"
+                  <RotateCcw className="h-4 w-4" />
+                </Button>
+              }
+            />
+            {canDelete && (
+              <DeleteDialog
+                title="Xóa người dùng"
+                description={`Bạn có chắc chắn muốn xóa người dùng "${row.original.email}" không?\n\nHành động này không thể hoàn tác.`}
                 onConfirm={async () => {
-                  await onResetPassword(row.original.id)
+                  await onDeleteUser(row.original.id)
                 }}
                 trigger={
-                  <DropdownMenuItem
-                    className="flex cursor-pointer items-center gap-2 py-2 transition-all hover:bg-purple-50 hover:text-purple-700"
-                    onSelect={(e) => e.preventDefault()}
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="transition-all hover:bg-red-100 hover:text-red-700"
+                    title="Xóa"
                   >
-                    <RotateCcw className="h-4 w-4" />
-                    Đặt lại mật khẩu
-                  </DropdownMenuItem>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 }
               />
-              {canDelete && (
-                <DeleteDialog
-                  title="Xóa người dùng"
-                  description={`Bạn có chắc chắn muốn xóa người dùng "${row.original.email}" không?\n\nHành động này không thể hoàn tác.`}
-                  onConfirm={async () => {
-                    await onDeleteUser(row.original.id)
-                  }}
-                  trigger={
-                    <DropdownMenuItem
-                      className="flex cursor-pointer items-center gap-2 py-2 text-red-600 transition-all hover:bg-red-50"
-                      onSelect={(e) => e.preventDefault()}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      Xóa
-                    </DropdownMenuItem>
-                  }
-                />
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+            )}
+          </div>
         ),
       },
     ]
@@ -669,8 +659,8 @@ function UsersTableContent({
       emptyState={
         users.length === 0 ? (
           <div className="p-12 text-center">
-            <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200">
-              <Users className="h-8 w-8 text-gray-400" />
+            <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200">
+              <Users className="h-12 w-12 opacity-20" />
             </div>
             <h3 className="mb-2 text-xl font-bold text-gray-700">Không có người dùng nào</h3>
             <p className="mb-6 text-gray-500">
@@ -698,14 +688,14 @@ function UsersTableContent({
 function getRoleBadgeColor(roleName?: string) {
   switch (roleName) {
     case 'super-admin':
-      return 'bg-red-100 text-red-800 border-red-300'
+      return 'bg-red-100 text-red-800'
     case 'admin':
-      return 'bg-orange-100 text-orange-800 border-orange-300'
+      return 'bg-orange-100 text-orange-800'
     case 'manager':
-      return 'bg-blue-100 text-blue-800 border-blue-300'
+      return 'bg-blue-100 text-blue-800'
     case 'developer':
-      return 'bg-emerald-100 text-emerald-800 border-emerald-300'
+      return 'bg-emerald-100 text-emerald-800'
     default:
-      return 'bg-gray-100 text-gray-800 border-gray-300'
+      return 'bg-gray-100 text-gray-800'
   }
 }

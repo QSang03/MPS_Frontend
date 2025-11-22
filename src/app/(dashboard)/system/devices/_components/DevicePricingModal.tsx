@@ -2,19 +2,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogTrigger,
-  DialogFooter,
-} from '@/components/ui/dialog'
+import { Dialog, DialogTrigger } from '@/components/ui/dialog'
+import { SystemModalLayout } from '@/components/system/SystemModalLayout'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
-import { Loader2, Edit, Tag, Sparkles } from 'lucide-react'
+import { Loader2, Edit, Tag } from 'lucide-react'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { toast } from 'sonner'
 import { devicesClientService } from '@/lib/api/services/devices-client.service'
@@ -491,246 +484,27 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
         </DialogTrigger>
       )}
 
-      <DialogContent className="max-w-[520px] overflow-hidden rounded-2xl border-0 p-0 shadow-2xl">
-        {/* Gradient Header */}
-        <DialogHeader className="relative overflow-hidden bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-600 p-0">
-          <div className="absolute inset-0 bg-black/10"></div>
-          <div className="absolute inset-0 opacity-20">
-            <div className="absolute top-0 right-0 h-20 w-20 translate-x-1/2 -translate-y-1/2 rounded-full bg-white"></div>
-          </div>
-          <div className="relative z-10 flex items-center gap-3 px-6 py-5 text-white">
-            <div className="rounded-xl border border-white/30 bg-white/20 p-2.5 backdrop-blur-lg">
-              <Tag className="h-6 w-6 text-white" />
-            </div>
-            <div>
-              <DialogTitle className="flex items-center gap-2 text-xl font-bold">
-                Cập nhật giá thiết bị
-              </DialogTitle>
-              <DialogDescription className="mt-1 flex items-center gap-2 text-white/80">
-                <Sparkles className="h-4 w-4" /> Gán giá / trang đen trắng & màu, hiệu lực theo thời
-                gian
-              </DialogDescription>
-            </div>
-          </div>
-        </DialogHeader>
-
-        <form onSubmit={handleSubmit} className="bg-white">
-          <div className="space-y-4 px-6 py-6">
-            {loading ? (
-              <div className="flex items-center gap-2 font-medium text-indigo-700">
-                <Loader2 className="h-4 w-4 animate-spin" /> Đang tải giá hiện hành...
-              </div>
-            ) : (
-              <>
-                <div className="grid grid-cols-2 gap-5">
-                  <div className="space-y-2">
-                    <Label>Giá mỗi trang trắng đen</Label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <Input
-                        inputMode="decimal"
-                        value={pricePerBWPageVNDRaw}
-                        onChange={(e) => {
-                          const raw = e.target.value
-                          setPricePerBWPageVNDRaw(raw)
-                          const v = raw ? Number(raw) : ''
-                          setPricePerBWPageVND(v)
-                          if (v) {
-                            setPricePerBWPageUSDRaw('')
-                          }
-                        }}
-                        placeholder="VND"
-                        className="h-11 text-base"
-                      />
-                      <Input
-                        inputMode="decimal"
-                        value={pricePerBWPageUSDRaw}
-                        onChange={(e) => {
-                          const raw = e.target.value
-                          setPricePerBWPageUSDRaw(raw)
-                          if (raw) {
-                            setPricePerBWPageVND('')
-                            setPricePerBWPageVNDRaw('')
-                            setExchangeRate('')
-                            setExchangeRateRaw('')
-                          }
-                        }}
-                        placeholder="USD"
-                        className="h-11 text-base"
-                        disabled={!!pricePerBWPageVND}
-                      />
-                    </div>
-                    {exchangeRate && pricePerBWPageVND ? (
-                      <p className="mt-1 text-sm font-medium text-emerald-600">
-                        💵 Giá B/W sau quy đổi: $ {(pricePerBWPageVND / exchangeRate).toFixed(2)}{' '}
-                        USD
-                      </p>
-                    ) : null}
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Giá mỗi trang màu</Label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <Input
-                        inputMode="decimal"
-                        value={pricePerColorPageVNDRaw}
-                        onChange={(e) => {
-                          const raw = e.target.value
-                          setPricePerColorPageVNDRaw(raw)
-                          const v = raw ? Number(raw) : ''
-                          setPricePerColorPageVND(v)
-                          if (v) {
-                            setPricePerColorPageUSDRaw('')
-                          }
-                        }}
-                        placeholder="VND"
-                        className="h-11 text-base"
-                      />
-                      <Input
-                        inputMode="decimal"
-                        value={pricePerColorPageUSDRaw}
-                        onChange={(e) => {
-                          const raw = e.target.value
-                          setPricePerColorPageUSDRaw(raw)
-                          if (raw) {
-                            setPricePerColorPageVND('')
-                            setPricePerColorPageVNDRaw('')
-                            setExchangeRate('')
-                            setExchangeRateRaw('')
-                          }
-                        }}
-                        placeholder="USD"
-                        className="h-11 text-base"
-                        disabled={!!pricePerColorPageVND}
-                      />
-                    </div>
-                    {exchangeRate && pricePerColorPageVND ? (
-                      <p className="mt-1 text-sm font-medium text-emerald-600">
-                        💵 Giá Color sau quy đổi: ${' '}
-                        {(pricePerColorPageVND / exchangeRate).toFixed(2)} USD
-                      </p>
-                    ) : null}
-                  </div>
-                </div>
-                <Separator />
-                <div className="space-y-2">
-                  <Label className={!canEditMonthlyRent ? 'text-muted-foreground' : ''}>
-                    Giá thuê hàng tháng
-                  </Label>
-                  {!canEditMonthlyRent && (
-                    <p className="text-xs text-amber-600">
-                      {contractRentError ||
-                        'Không tìm thấy thông tin giá thuê trong hợp đồng hiện tại. Không thể chỉnh sửa mục này.'}
-                    </p>
-                  )}
-                  <div className="grid grid-cols-2 gap-2">
-                    <Input
-                      inputMode="decimal"
-                      value={monthlyRentVNDRaw}
-                      onChange={(e) => {
-                        const newValue = e.target.value
-                        const formatted = formatNumberWithCommas(newValue)
-                        setMonthlyRentVNDRaw(formatted)
-                        if (formatted) {
-                          setMonthlyRentUSDRaw('')
-                        } else {
-                          setExchangeRateRaw('')
-                        }
-                      }}
-                      placeholder="VND"
-                      className="h-11 text-base"
-                      disabled={!canEditMonthlyRent || !!monthlyRentUSDRaw}
-                    />
-                    <Input
-                      inputMode="decimal"
-                      value={monthlyRentUSDRaw}
-                      onChange={(e) => {
-                        const newValue = e.target.value
-                        const formatted = formatNumberWithCommas(newValue)
-                        setMonthlyRentUSDRaw(formatted)
-                        if (formatted) {
-                          setMonthlyRentVNDRaw('')
-                          setExchangeRateRaw('')
-                        }
-                      }}
-                      placeholder="USD"
-                      className="h-11 text-base"
-                      disabled={!canEditMonthlyRent || !!monthlyRentVNDRaw}
-                    />
-                  </div>
-                  {canEditMonthlyRent && monthlyRentVNDRaw && exchangeRateRaw && (
-                    <div className="mt-1 flex items-center gap-2">
-                      <p className="text-sm font-medium text-emerald-600">
-                        ≈ ${' '}
-                        {(() => {
-                          const v = parseFormattedNumber(monthlyRentVNDRaw)
-                          const ex = parseFormattedNumber(exchangeRateRaw)
-                          if (!Number.isFinite(v) || !Number.isFinite(ex) || ex === 0) return '-'
-                          return roundToDecimals(v / ex, MONTHLY_RENT_DECIMALS).toFixed(
-                            MONTHLY_RENT_DECIMALS
-                          )
-                        })()}{' '}
-                        USD
-                      </p>
-                    </div>
-                  )}
-                </div>
-                <Separator />
-                <div className="grid grid-cols-2 gap-5">
-                  <div className="space-y-2">
-                    <Label>Hiệu lực từ</Label>
-                    <Input
-                      type="datetime-local"
-                      value={form.effectiveFrom}
-                      onChange={(e) =>
-                        setForm((s: any) => ({ ...s, effectiveFrom: e.target.value }))
-                      }
-                      className="h-11"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className={!canEditMonthlyRent ? 'text-muted-foreground' : ''}>
-                      Tỷ giá (nếu nhập VND)
-                    </Label>
-                    <Input
-                      inputMode="decimal"
-                      value={exchangeRateRaw}
-                      onChange={(e) => {
-                        const newValue = e.target.value
-                        const formatted = formatNumberWithCommas(newValue)
-                        setExchangeRateRaw(formatted)
-                        setExchangeRate(formatted ? parseFormattedNumber(formatted) : '')
-                      }}
-                      placeholder="25000"
-                      className="h-11"
-                      disabled={!canEditMonthlyRent || !monthlyRentVNDRaw}
-                    />
-                    {canEditMonthlyRent &&
-                    (exchangeRate ||
-                      pricePerBWPageVND ||
-                      pricePerColorPageVND ||
-                      monthlyRentVNDRaw) ? (
-                      <p className="text-muted-foreground mt-2 text-sm">
-                        Nếu nhập giá bằng VND, giá sẽ được quy đổi sang USD bằng tỷ giá trên.
-                      </p>
-                    ) : null}
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-
-          <DialogFooter className="border-t bg-gray-50 px-6 py-4">
+      <SystemModalLayout
+        title="Cập nhật giá thiết bị"
+        description="Gán giá / trang đen trắng & màu, hiệu lực theo thời gian"
+        icon={Tag}
+        variant="edit"
+        footer={
+          <>
             <Button
               type="button"
               variant="outline"
               onClick={() => setOpen(false)}
               disabled={submitting}
+              className="min-w-[100px]"
             >
               Hủy
             </Button>
             <Button
               type="submit"
+              form="device-pricing-form"
               disabled={submitting}
-              className="bg-gradient-to-r from-blue-600 to-cyan-600 font-bold text-white shadow"
+              className="min-w-[120px] bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
             >
               {submitting ? (
                 <>
@@ -740,9 +514,209 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
                 <>Lưu giá</>
               )}
             </Button>
-          </DialogFooter>
+          </>
+        }
+      >
+        <form id="device-pricing-form" onSubmit={handleSubmit} className="space-y-4">
+          {loading ? (
+            <div className="flex items-center gap-2 font-medium text-indigo-700">
+              <Loader2 className="h-4 w-4 animate-spin" /> Đang tải giá hiện hành...
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-5">
+                <div className="space-y-2">
+                  <Label>Giá mỗi trang trắng đen</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Input
+                      inputMode="decimal"
+                      value={pricePerBWPageVNDRaw}
+                      onChange={(e) => {
+                        const raw = e.target.value
+                        setPricePerBWPageVNDRaw(raw)
+                        const v = raw ? Number(raw) : ''
+                        setPricePerBWPageVND(v)
+                        if (v) {
+                          setPricePerBWPageUSDRaw('')
+                        }
+                      }}
+                      placeholder="VND"
+                      className="h-11 text-base"
+                    />
+                    <Input
+                      inputMode="decimal"
+                      value={pricePerBWPageUSDRaw}
+                      onChange={(e) => {
+                        const raw = e.target.value
+                        setPricePerBWPageUSDRaw(raw)
+                        if (raw) {
+                          setPricePerBWPageVND('')
+                          setPricePerBWPageVNDRaw('')
+                          setExchangeRate('')
+                          setExchangeRateRaw('')
+                        }
+                      }}
+                      placeholder="USD"
+                      className="h-11 text-base"
+                      disabled={!!pricePerBWPageVND}
+                    />
+                  </div>
+                  {exchangeRate && pricePerBWPageVND ? (
+                    <p className="mt-1 text-sm font-medium text-emerald-600">
+                      💵 Giá B/W sau quy đổi: $ {(pricePerBWPageVND / exchangeRate).toFixed(2)} USD
+                    </p>
+                  ) : null}
+                </div>
+                <div className="space-y-2">
+                  <Label>Giá mỗi trang màu</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Input
+                      inputMode="decimal"
+                      value={pricePerColorPageVNDRaw}
+                      onChange={(e) => {
+                        const raw = e.target.value
+                        setPricePerColorPageVNDRaw(raw)
+                        const v = raw ? Number(raw) : ''
+                        setPricePerColorPageVND(v)
+                        if (v) {
+                          setPricePerColorPageUSDRaw('')
+                        }
+                      }}
+                      placeholder="VND"
+                      className="h-11 text-base"
+                    />
+                    <Input
+                      inputMode="decimal"
+                      value={pricePerColorPageUSDRaw}
+                      onChange={(e) => {
+                        const raw = e.target.value
+                        setPricePerColorPageUSDRaw(raw)
+                        if (raw) {
+                          setPricePerColorPageVND('')
+                          setPricePerColorPageVNDRaw('')
+                          setExchangeRate('')
+                          setExchangeRateRaw('')
+                        }
+                      }}
+                      placeholder="USD"
+                      className="h-11 text-base"
+                      disabled={!!pricePerColorPageVND}
+                    />
+                  </div>
+                  {exchangeRate && pricePerColorPageVND ? (
+                    <p className="mt-1 text-sm font-medium text-emerald-600">
+                      💵 Giá Color sau quy đổi: $ {(pricePerColorPageVND / exchangeRate).toFixed(2)}{' '}
+                      USD
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+              <Separator />
+              <div className="space-y-2">
+                <Label className={!canEditMonthlyRent ? 'text-muted-foreground' : ''}>
+                  Giá thuê hàng tháng
+                </Label>
+                {!canEditMonthlyRent && (
+                  <p className="text-xs text-amber-600">
+                    {contractRentError ||
+                      'Không tìm thấy thông tin giá thuê trong hợp đồng hiện tại. Không thể chỉnh sửa mục này.'}
+                  </p>
+                )}
+                <div className="grid grid-cols-2 gap-2">
+                  <Input
+                    inputMode="decimal"
+                    value={monthlyRentVNDRaw}
+                    onChange={(e) => {
+                      const newValue = e.target.value
+                      const formatted = formatNumberWithCommas(newValue)
+                      setMonthlyRentVNDRaw(formatted)
+                      if (formatted) {
+                        setMonthlyRentUSDRaw('')
+                      } else {
+                        setExchangeRateRaw('')
+                      }
+                    }}
+                    placeholder="VND"
+                    className="h-11 text-base"
+                    disabled={!canEditMonthlyRent || !!monthlyRentUSDRaw}
+                  />
+                  <Input
+                    inputMode="decimal"
+                    value={monthlyRentUSDRaw}
+                    onChange={(e) => {
+                      const newValue = e.target.value
+                      const formatted = formatNumberWithCommas(newValue)
+                      setMonthlyRentUSDRaw(formatted)
+                      if (formatted) {
+                        setMonthlyRentVNDRaw('')
+                        setExchangeRateRaw('')
+                      }
+                    }}
+                    placeholder="USD"
+                    className="h-11 text-base"
+                    disabled={!canEditMonthlyRent || !!monthlyRentVNDRaw}
+                  />
+                </div>
+                {canEditMonthlyRent && monthlyRentVNDRaw && exchangeRateRaw && (
+                  <div className="mt-1 flex items-center gap-2">
+                    <p className="text-sm font-medium text-emerald-600">
+                      ≈ ${' '}
+                      {(() => {
+                        const v = parseFormattedNumber(monthlyRentVNDRaw)
+                        const ex = parseFormattedNumber(exchangeRateRaw)
+                        if (!Number.isFinite(v) || !Number.isFinite(ex) || ex === 0) return '-'
+                        return roundToDecimals(v / ex, MONTHLY_RENT_DECIMALS).toFixed(
+                          MONTHLY_RENT_DECIMALS
+                        )
+                      })()}{' '}
+                      USD
+                    </p>
+                  </div>
+                )}
+              </div>
+              <Separator />
+              <div className="grid grid-cols-2 gap-5">
+                <div className="space-y-2">
+                  <Label>Hiệu lực từ</Label>
+                  <Input
+                    type="datetime-local"
+                    value={form.effectiveFrom}
+                    onChange={(e) => setForm((s: any) => ({ ...s, effectiveFrom: e.target.value }))}
+                    className="h-11"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className={!canEditMonthlyRent ? 'text-muted-foreground' : ''}>
+                    Tỷ giá (nếu nhập VND)
+                  </Label>
+                  <Input
+                    inputMode="decimal"
+                    value={exchangeRateRaw}
+                    onChange={(e) => {
+                      const newValue = e.target.value
+                      const formatted = formatNumberWithCommas(newValue)
+                      setExchangeRateRaw(formatted)
+                      setExchangeRate(formatted ? parseFormattedNumber(formatted) : '')
+                    }}
+                    placeholder="25000"
+                    className="h-11"
+                    disabled={!canEditMonthlyRent || !monthlyRentVNDRaw}
+                  />
+                  {canEditMonthlyRent &&
+                  (exchangeRate ||
+                    pricePerBWPageVND ||
+                    pricePerColorPageVND ||
+                    monthlyRentVNDRaw) ? (
+                    <p className="text-muted-foreground mt-2 text-sm">
+                      Nếu nhập giá bằng VND, giá sẽ được quy đổi sang USD bằng tỷ giá trên.
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+            </>
+          )}
         </form>
-      </DialogContent>
+      </SystemModalLayout>
     </Dialog>
   )
 }
