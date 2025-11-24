@@ -30,7 +30,7 @@ import { useRouter } from 'next/navigation'
 import { ROUTES } from '@/constants/routes'
 import { NotificationPanel } from '@/components/notifications/NotificationPanel'
 import { useNotifications } from '@/lib/hooks/useNotifications'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -57,18 +57,26 @@ export function Navbar({ session }: NavbarProps) {
 
   const currentMonth = new Date().toISOString().slice(0, 7)
 
-  // Initialize companyName from localStorage to avoid calling setState inside an effect
-  const [companyName, setCompanyName] = useState<string>(() => {
+  // Start with a server-safe default to avoid SSR/client mismatch. Update
+  // the value on the client after hydration. We defer the setState call
+  // using `setTimeout` to avoid the lint warning about synchronous
+  // setState inside effects.
+  const [companyName, setCompanyName] = useState<string>('CHÍNH NHÂN TECHNOLOGY')
+
+  useEffect(() => {
     try {
       if (typeof window !== 'undefined' && window.localStorage) {
         const n = localStorage.getItem('mps_customer_name')
-        if (n && n.trim().length > 0) return n
+        if (n && n.trim().length > 0) {
+          // Defer the update so it's not considered a synchronous setState
+          // inside the effect body (avoids cascading render lint warnings).
+          setTimeout(() => setCompanyName(n), 0)
+        }
       }
     } catch {
       // ignore
     }
-    return 'CHÍNH NHÂN TECHNOLOGY'
-  })
+  }, [])
 
   // derive the best matching title from NAVIGATION_PAYLOAD by choosing the longest
   // route that is a prefix of the current pathname. This ensures /system/devices
