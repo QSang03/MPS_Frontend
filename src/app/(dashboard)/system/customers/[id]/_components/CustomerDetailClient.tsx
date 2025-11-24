@@ -814,6 +814,20 @@ export default function CustomerDetailClient({ customerId }: Props) {
       },
     ]
 
+    // Include invoiceInfo fields if present
+    if (customerInfo.invoiceInfo) {
+      const inv = customerInfo.invoiceInfo
+      infoItems.push({ label: 'Invoice - Bill To', value: inv.billTo || '—' })
+      infoItems.push({ label: 'Invoice - Address', value: inv.address || '—' })
+      infoItems.push({ label: 'Invoice - ATT', value: inv.att || '—' })
+      infoItems.push({ label: 'Invoice - HP/PO Ref', value: inv.hpPoRef || '—' })
+      infoItems.push({ label: 'Invoice - ERP ID', value: inv.erpId || '—' })
+      infoItems.push({
+        label: 'Invoice - Emails',
+        value: Array.isArray(inv.emails) && inv.emails.length ? inv.emails.join(', ') : '—',
+      })
+    }
+
     const badges = [
       {
         label: customerInfo.isActive ? 'Đang hoạt động' : 'Tạm dừng',

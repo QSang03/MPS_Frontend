@@ -30,8 +30,16 @@ type LocalCustomerForm = Partial<Customer> & {
   isActive?: boolean
   description?: string
   billingDay?: number
+  invoiceInfo?: {
+    billTo?: string
+    address?: string
+    att?: string
+    hpPoRef?: string
+    erpId?: string
+    emails?: string[]
+  }
 }
-import { Plus, Edit, Loader2, Building2, User, MapPin, CheckCircle2 } from 'lucide-react'
+import { Plus, Edit, Loader2, Building2, User, MapPin, CheckCircle2, FileText } from 'lucide-react'
 
 interface Props {
   mode?: 'create' | 'edit'
@@ -55,6 +63,14 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
     isActive: true,
     description: '',
     billingDay: undefined,
+    invoiceInfo: {
+      billTo: '',
+      address: '',
+      att: '',
+      hpPoRef: '',
+      erpId: '',
+      emails: [],
+    },
   })
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const clearFieldError = (key: string) =>
@@ -136,6 +152,18 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
         tier: (customer as any).tier || 'BASIC',
         isActive: (customer as any).isActive ?? true,
         billingDay: (customer as any).billingDay,
+        invoiceInfo: (customer as any).invoiceInfo
+          ? {
+              billTo: (customer as any).invoiceInfo?.billTo || '',
+              address: (customer as any).invoiceInfo?.address || '',
+              att: (customer as any).invoiceInfo?.att || '',
+              hpPoRef: (customer as any).invoiceInfo?.hpPoRef || '',
+              erpId: (customer as any).invoiceInfo?.erpId || '',
+              emails: Array.isArray((customer as any).invoiceInfo?.emails)
+                ? (customer as any).invoiceInfo.emails
+                : [],
+            }
+          : { billTo: '', address: '', att: '', hpPoRef: '', erpId: '', emails: [] },
       })
     }, 0)
     return () => clearTimeout(t)
@@ -596,6 +624,160 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
           </div>
 
           <Separator />
+
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 text-sm font-semibold text-violet-700">
+              <FileText className="h-4 w-4" />
+              Thông tin hóa đơn
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label className="text-base font-semibold">Bill To</Label>
+                <Input
+                  value={form.invoiceInfo?.billTo || ''}
+                  onChange={(e) =>
+                    setForm((s) => ({
+                      ...s,
+                      invoiceInfo: { ...(s.invoiceInfo || {}), billTo: e.target.value },
+                    }))
+                  }
+                  placeholder="Tên người/đơn vị nhận hóa đơn"
+                  className="h-11"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-base font-semibold">Invoice Address</Label>
+                <Input
+                  value={form.invoiceInfo?.address || ''}
+                  onChange={(e) =>
+                    setForm((s) => ({
+                      ...s,
+                      invoiceInfo: { ...(s.invoiceInfo || {}), address: e.target.value },
+                    }))
+                  }
+                  placeholder="Địa chỉ nhận hóa đơn"
+                  className="h-11"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-base font-semibold">ATT</Label>
+                <Input
+                  value={form.invoiceInfo?.att || ''}
+                  onChange={(e) =>
+                    setForm((s) => ({
+                      ...s,
+                      invoiceInfo: { ...(s.invoiceInfo || {}), att: e.target.value },
+                    }))
+                  }
+                  placeholder="Người nhận"
+                  className="h-11"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-base font-semibold">HP / PO Ref</Label>
+                <Input
+                  value={form.invoiceInfo?.hpPoRef || ''}
+                  onChange={(e) =>
+                    setForm((s) => ({
+                      ...s,
+                      invoiceInfo: { ...(s.invoiceInfo || {}), hpPoRef: e.target.value },
+                    }))
+                  }
+                  placeholder="Số PO/Ref"
+                  className="h-11"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-base font-semibold">ERP ID</Label>
+                <Input
+                  value={form.invoiceInfo?.erpId || ''}
+                  onChange={(e) =>
+                    setForm((s) => ({
+                      ...s,
+                      invoiceInfo: { ...(s.invoiceInfo || {}), erpId: e.target.value },
+                    }))
+                  }
+                  placeholder="Mã ERP"
+                  className="h-11"
+                />
+              </div>
+
+              <div className="space-y-2 md:col-span-2">
+                <Label className="text-base font-semibold">Email hóa đơn</Label>
+                {(Array.isArray(form.invoiceInfo?.emails) && form.invoiceInfo!.emails!.length > 0
+                  ? form.invoiceInfo!.emails!
+                  : ['']
+                ).map((em, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <Input
+                      value={em || ''}
+                      onChange={(e) =>
+                        setForm((s) => {
+                          const emails = Array.isArray(s.invoiceInfo?.emails)
+                            ? [...(s.invoiceInfo?.emails || [])]
+                            : []
+                          emails[idx] = e.target.value
+                          return { ...s, invoiceInfo: { ...(s.invoiceInfo || {}), emails } }
+                        })
+                      }
+                      placeholder={`invoice${idx + 1}@example.com`}
+                      className="h-11 flex-1"
+                      type="email"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={() =>
+                        setForm((s) => {
+                          const emails = Array.isArray(s.invoiceInfo?.emails)
+                            ? [...(s.invoiceInfo?.emails || [])]
+                            : []
+                          emails.splice(idx, 1)
+                          return { ...s, invoiceInfo: { ...(s.invoiceInfo || {}), emails } }
+                        })
+                      }
+                      disabled={
+                        !(
+                          Array.isArray(form.invoiceInfo?.emails) &&
+                          form.invoiceInfo!.emails!.length > 1
+                        )
+                      }
+                      className="min-w-[64px]"
+                    >
+                      Xóa
+                    </Button>
+                  </div>
+                ))}
+
+                <div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setForm((s) => ({
+                        ...(s || {}),
+                        invoiceInfo: {
+                          ...(s.invoiceInfo || {}),
+                          emails: [
+                            ...(Array.isArray(s.invoiceInfo?.emails) ? s.invoiceInfo!.emails! : []),
+                            '',
+                          ],
+                        },
+                      }))
+                    }
+                  >
+                    Thêm email
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
 
           <div className="space-y-4">
             <div className="flex items-center gap-2 text-sm font-semibold text-violet-700">

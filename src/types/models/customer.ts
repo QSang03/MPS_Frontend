@@ -9,6 +9,7 @@ export interface Customer {
   contactEmail?: string
   contactPhone?: string
   contactPerson?: string
+  invoiceInfo?: InvoiceInfo
   tier?: string
   isActive?: boolean
   description?: string
@@ -26,9 +27,19 @@ export interface Customer {
 export interface CreateCustomerDto {
   name: string
   address?: string[]
+  invoiceInfo?: InvoiceInfo
 }
 
 /**
  * Update customer DTO
  */
 export type UpdateCustomerDto = Partial<CreateCustomerDto>
+
+export interface InvoiceInfo {
+  billTo?: string
+  address?: string
+  att?: string
+  hpPoRef?: string
+  erpId?: string
+  emails?: string[]
+}
