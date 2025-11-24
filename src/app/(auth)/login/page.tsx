@@ -28,6 +28,14 @@ export default function LoginPage() {
             sameSite: 'lax',
           })
         }
+        // Persist customer name to localStorage for header display
+        if (typeof window !== 'undefined' && state.success.customerName) {
+          try {
+            localStorage.setItem('mps_customer_name', state.success.customerName)
+          } catch {
+            // ignore
+          }
+        }
       } catch {
         // ignore
       }

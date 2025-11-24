@@ -10,6 +10,45 @@ import { ROUTES } from '@/constants/routes'
 import type { AuthResponse } from '@/types/auth'
 
 /**
+ * Safely resolve a human-readable customer name from the API response.
+ * The API may return the name in different shapes (nested under user.customer,
+ * a top-level customerName, or user.attributes.customerName). This helper
+ * accepts an unknown payload and performs type-checked checks without using
+ * `any`.
+ */
+function resolveCustomerName(payload: unknown): string {
+  try {
+    if (!payload || typeof payload !== 'object') return ''
+    const d = payload as Record<string, unknown>
+
+    // Check nested user.customer.name
+    const user = d.user as Record<string, unknown> | undefined
+    if (user && typeof user === 'object') {
+      const customer = user.customer as Record<string, unknown> | undefined
+      if (customer && typeof customer === 'object') {
+        const name = customer.name
+        if (typeof name === 'string' && name.trim().length > 0) return name
+      }
+    }
+
+    // Check top-level customerName
+    const topName = d.customerName
+    if (typeof topName === 'string' && topName.trim().length > 0) return topName
+
+    // Check user.attributes.customerName
+    if (user && typeof user.attributes === 'object') {
+      const attrs = user.attributes as Record<string, unknown>
+      const attrName = attrs.customerName
+      if (typeof attrName === 'string' && attrName.trim().length > 0) return attrName
+    }
+  } catch {
+    // ignore
+  }
+
+  return ''
+}
+
+/**
  * Login action state
  */
 export type LoginActionState = {
@@ -22,6 +61,7 @@ export type LoginActionState = {
     message?: string
     isDefaultPassword?: boolean
     isDefaultCustomer?: boolean
+    customerName?: string
   }
 } | null
 
@@ -79,6 +119,10 @@ export async function login(
         localStorage.setItem('mps_is_default_customer', String(isDefaultCustomer))
         localStorage.setItem('mps_user_id', data?.user?.id || '')
         localStorage.setItem('mps_customer_id', data?.user?.customerId || '')
+
+        // Resolve customer name from the API payload without using `any`.
+        const customerName = resolveCustomerName(data)
+        localStorage.setItem('mps_customer_name', customerName)
       } catch (error) {
         console.error('Failed to save to localStorage:', error)
       }
@@ -105,6 +149,9 @@ export async function login(
         message: 'Đăng nhập thành công!',
         isDefaultPassword: data?.isDefaultPassword || false,
         isDefaultCustomer: data?.isDefaultCustomer || false,
+        // include customer name so client can persist it when server action
+        // runs on the server and cannot access window.localStorage.
+        customerName: resolveCustomerName(data),
       },
     }
   } catch (error: unknown) {
@@ -185,6 +232,7 @@ export async function logout(): Promise<void> {
       localStorage.removeItem('mps_is_default_customer')
       localStorage.removeItem('mps_user_id')
       localStorage.removeItem('mps_customer_id')
+      localStorage.removeItem('mps_customer_name')
     } catch (error) {
       console.error('Failed to clear localStorage:', error)
     }

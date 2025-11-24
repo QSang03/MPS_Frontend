@@ -56,7 +56,19 @@ export function Navbar({ session }: NavbarProps) {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
 
   const currentMonth = new Date().toISOString().slice(0, 7)
-  const companyName = 'CHÍNH NHÂN TECHNOLOGY'
+
+  // Initialize companyName from localStorage to avoid calling setState inside an effect
+  const [companyName, setCompanyName] = useState<string>(() => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const n = localStorage.getItem('mps_customer_name')
+        if (n && n.trim().length > 0) return n
+      }
+    } catch {
+      // ignore
+    }
+    return 'CHÍNH NHÂN TECHNOLOGY'
+  })
 
   // derive the best matching title from NAVIGATION_PAYLOAD by choosing the longest
   // route that is a prefix of the current pathname. This ensures /system/devices
@@ -77,6 +89,9 @@ export function Navbar({ session }: NavbarProps) {
     try {
       if (typeof window !== 'undefined' && window.localStorage) {
         localStorage.removeItem('mps_navigation')
+        localStorage.removeItem('mps_customer_name')
+        // Reset displayed company name immediately on logout
+        setCompanyName('CHÍNH NHÂN TECHNOLOGY')
       }
     } catch {
       // ignore

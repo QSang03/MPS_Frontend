@@ -21,7 +21,6 @@ import {
   RefreshCw,
   PlayCircle,
   FileText,
-  Settings,
   LayoutDashboard,
   ChevronRight,
 } from 'lucide-react'
@@ -259,13 +258,7 @@ export default function CustomerAdminDashboard() {
               <FileText className="mr-2 h-4 w-4" />
               Xem báo cáo chi tiết
             </Button>
-            <Button
-              variant="outline"
-              className="h-10 rounded-full border-white/30 bg-white/10 px-5 text-sm font-semibold text-white backdrop-blur hover:bg-white/20"
-            >
-              <Settings className="mr-2 h-4 w-4" />
-              Cấu hình hiển thị
-            </Button>
+            {/* 'Cấu hình hiển thị' button removed per request */}
           </>
         }
       />
