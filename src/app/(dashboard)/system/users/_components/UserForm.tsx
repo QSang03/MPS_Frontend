@@ -1,7 +1,7 @@
 'use client'
 
-import { useForm } from 'react-hook-form'
-import { useState } from 'react'
+import { useForm, useWatch } from 'react-hook-form'
+import { useState, useMemo, useEffect } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
@@ -25,10 +25,12 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import CustomerSelect from '@/components/shared/CustomerSelect'
+import { DynamicAttributesFields } from '@/components/shared/DynamicAttributesFields'
 import { userSchema, type UserFormData } from '@/lib/validations/user.schema'
 import removeEmpty from '@/lib/utils/clean'
 import { getRolesForClient } from '@/lib/auth/data-actions'
-import { usersClientService } from '@/lib/api/services/users-client.service' // Thay đổi ở đây
+import { usersClientService } from '@/lib/api/services/users-client.service'
+import { useRoleAttributeSchema } from '@/lib/hooks/useRoleAttributeSchema'
 import type { User } from '@/types/users'
 
 type BackendDetails = {
@@ -69,6 +71,36 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
   type FormFieldName = Parameters<typeof form.setError>[0]
 
   const [serverError, setServerError] = useState<string | null>(null)
+
+  // Dynamic attributes state
+  const [attributes, setAttributes] = useState<Record<string, unknown>>(
+    initialData?.attributes || {}
+  )
+  const [attributeErrors, setAttributeErrors] = useState<Record<string, string>>({})
+
+  // Watch selected role to get its schema (use useWatch to avoid incompatible-library warning)
+  const selectedRoleId = useWatch({ control: form.control, name: 'roleId' })
+  const selectedRole = useMemo(
+    () => roles.find((r) => r.id === selectedRoleId),
+    [roles, selectedRoleId]
+  )
+
+  // Parse role attribute schema
+  const { schema: attributeSchema, validate: validateAttributes } = useRoleAttributeSchema(
+    selectedRole?.attributeSchema
+  )
+
+  // Reset attributes when role changes (schedule state update to avoid synchronous setState in effect)
+  useEffect(() => {
+    if (mode === 'create' && selectedRoleId !== initialData?.roleId) {
+      const t = setTimeout(() => {
+        setAttributes({})
+        setAttributeErrors({})
+      }, 0)
+      return () => clearTimeout(t)
+    }
+    return undefined
+  }, [selectedRoleId, initialData?.roleId, mode])
 
   // Sử dụng usersClientService thay vì Server Action
   const createMutation = useMutation({
@@ -246,9 +278,23 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
   })
 
   const onSubmit = (data: UserFormData) => {
+    // Validate attributes if schema exists
+    if (attributeSchema) {
+      const validation = validateAttributes(attributes)
+      if (!validation.valid) {
+        setAttributeErrors(validation.errors)
+        toast.error('Vui lòng kiểm tra các thuộc tính bổ sung')
+        return
+      }
+      setAttributeErrors({})
+    }
+
     // Don't send password from client; let backend generate a default password when creating
     // Remove empty fields so backend won't receive blank strings
-    const payload = removeEmpty(data as unknown as Record<string, unknown>)
+    const payload = removeEmpty({
+      ...data,
+      attributes: attributeSchema ? attributes : undefined,
+    } as unknown as Record<string, unknown>)
 
     if (mode === 'create') {
       createMutation.mutate(payload as UserFormData)
@@ -369,6 +415,17 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
 
           {/* Department selection removed from system user form per request */}
         </div>
+
+        {/* Dynamic Attributes Fields */}
+        {attributeSchema && (
+          <DynamicAttributesFields
+            schema={attributeSchema}
+            values={attributes}
+            onChange={setAttributes}
+            errors={attributeErrors}
+            disabled={isPending}
+          />
+        )}
 
         <div className="flex gap-4">
           <Button type="submit" disabled={isPending}>

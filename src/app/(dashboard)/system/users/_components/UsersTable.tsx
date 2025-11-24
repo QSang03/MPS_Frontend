@@ -282,7 +282,7 @@ export function UsersTable() {
         activeFilters={activeFilters}
         columnVisibilityMenu={columnVisibilityMenu}
       >
-        <div className="grid items-end gap-4 md:grid-cols-5">
+        <div className="grid items-end gap-4 md:grid-cols-4">
           <div className="space-y-2">
             <label className="text-sm font-bold text-gray-700">🔍 Tìm kiếm</label>
             <div className="relative">
@@ -291,7 +291,7 @@ export function UsersTable() {
                 placeholder="Tìm theo email..."
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
-                className="rounded-lg border-2 border-gray-200 pl-10 transition-all focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                className="w-full rounded-lg border-2 border-gray-200 pl-10 transition-all focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
               />
             </div>
           </div>
@@ -302,7 +302,7 @@ export function UsersTable() {
               value={filters.roleId}
               onValueChange={(value) => setFilters((prev) => ({ ...prev, roleId: value }))}
             >
-              <SelectTrigger className="rounded-lg border-2 border-gray-200 transition-all focus:border-purple-500 focus:ring-2 focus:ring-purple-200">
+              <SelectTrigger className="w-full rounded-lg border-2 border-gray-200 transition-all focus:border-purple-500 focus:ring-2 focus:ring-purple-200">
                 <SelectValue placeholder="Chọn vai trò" />
               </SelectTrigger>
               <SelectContent>
@@ -322,7 +322,7 @@ export function UsersTable() {
               value={filters.customerId}
               onValueChange={(value) => setFilters((prev) => ({ ...prev, customerId: value }))}
             >
-              <SelectTrigger className="rounded-lg border-2 border-gray-200 transition-all focus:border-purple-500 focus:ring-2 focus:ring-purple-200">
+              <SelectTrigger className="w-full rounded-lg border-2 border-gray-200 transition-all focus:border-purple-500 focus:ring-2 focus:ring-purple-200">
                 <SelectValue placeholder="Chọn mã KH" />
               </SelectTrigger>
               <SelectContent>
@@ -336,15 +336,7 @@ export function UsersTable() {
             </Select>
           </div>
 
-          <div className="flex gap-2">
-            <ActionGuard pageId="users" actionId="create">
-              <UserFormModal
-                customerId={
-                  filters.customerId && filters.customerId !== 'all' ? filters.customerId : ''
-                }
-              />
-            </ActionGuard>
-          </div>
+          {/* create button moved to page header */}
         </div>
       </FilterSection>
 

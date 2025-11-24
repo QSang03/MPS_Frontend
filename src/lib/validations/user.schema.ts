@@ -24,6 +24,8 @@ export const userSchema = z.object({
   departmentId: z.string().optional(),
   // The customer the user belongs to (optional for system admins)
   customerId: z.string().optional(),
+  // Dynamic attributes based on role schema
+  attributes: z.record(z.string(), z.unknown()).optional(),
 })
 
 export type UserFormData = z.infer<typeof userSchema>

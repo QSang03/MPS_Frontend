@@ -6,7 +6,7 @@ import { FilterSection } from '@/components/system/FilterSection'
 import { StatsCards } from '@/components/system/StatsCard'
 import { TableSkeleton } from '@/components/system/TableSkeleton'
 import { Input } from '@/components/ui/input'
-import { Search, Users, MapPin } from 'lucide-react'
+import { Search, Users } from 'lucide-react'
 import { CustomerTable } from './CustomerTable'
 
 export function CustomerList() {
@@ -14,7 +14,7 @@ export function CustomerList() {
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [page, setPage] = useState(1)
   const [limit, setLimit] = useState(10)
-  const [stats, setStats] = useState({ total: 0, active: 0, locations: 0 })
+  const [stats, setStats] = useState({ total: 0, active: 0 })
   const [columnVisibilityMenu, setColumnVisibilityMenu] = useState<ReactNode | null>(null)
 
   useEffect(() => {
@@ -25,12 +25,9 @@ export function CustomerList() {
     return () => clearTimeout(timeout)
   }, [searchTerm])
 
-  const handleStatsChange = useCallback(
-    (next: { total: number; active: number; locations: number }) => {
-      setStats(next)
-    },
-    []
-  )
+  const handleStatsChange = useCallback((next: { total: number; active: number }) => {
+    setStats(next)
+  }, [])
 
   const activeFilters = useMemo(() => {
     if (!searchTerm) return []
@@ -63,12 +60,7 @@ export function CustomerList() {
             icon: <Users className="h-6 w-6" />,
             borderColor: 'green',
           },
-          {
-            label: 'Địa chỉ lắp đặt',
-            value: stats.locations,
-            icon: <MapPin className="h-6 w-6" />,
-            borderColor: 'purple',
-          },
+          /* 'Địa chỉ lắp đặt' stat removed as requested */
         ]}
       />
 

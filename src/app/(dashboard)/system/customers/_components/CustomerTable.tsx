@@ -43,7 +43,7 @@ interface CustomerTableProps {
   searchInput: string
   onPageChange: (page: number) => void
   onPageSizeChange: (size: number) => void
-  onStatsChange: (stats: { total: number; active: number; locations: number }) => void
+  onStatsChange: (stats: { total: number; active: number }) => void
   renderColumnVisibilityMenu: (menu: ReactNode | null) => void
 }
 
@@ -103,7 +103,6 @@ export function CustomerTable({
     onStatsChange({
       total: totalCount,
       active: activeCount,
-      locations: queryCustomers.length,
     })
   }, [queryCustomers, totalCount, onStatsChange])
 
@@ -346,7 +345,7 @@ export function CustomerTable({
         header: () => (
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-gray-600" />
-            Ngày thanh toán
+            Ngày lấy số liệu
           </div>
         ),
         enableSorting: true,

@@ -9,6 +9,7 @@ export interface UserRole {
   isActive: boolean
   createdAt: string
   updatedAt: string
+  attributeSchema?: Record<string, unknown> | null | undefined
 }
 
 /**

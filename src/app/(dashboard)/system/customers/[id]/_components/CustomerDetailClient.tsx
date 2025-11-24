@@ -809,7 +809,7 @@ export default function CustomerDetailClient({ customerId }: Props) {
         value: customerInfo.updatedAt ? formatDate(customerInfo.updatedAt) : '—',
       },
       {
-        label: 'Billing Day',
+        label: 'Ngày lấy số liệu',
         value: typeof customerInfo.billingDay === 'number' ? customerInfo.billingDay : '—',
       },
     ]

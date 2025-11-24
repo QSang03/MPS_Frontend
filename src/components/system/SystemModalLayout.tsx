@@ -58,11 +58,16 @@ export function SystemModalLayout({
         </div>
       </DialogHeader>
 
-      {/* Body */}
-      <div className="max-h-[60vh] space-y-6 overflow-y-auto bg-white px-6 py-6">{children}</div>
-
-      {/* Footer */}
-      {footer && <DialogFooter className="border-t bg-gray-50 px-6 py-4">{footer}</DialogFooter>}
+      {/* Body: make scrollable area larger so content can fit comfortably */}
+      <div className="flex max-h-[75vh] flex-col overflow-hidden bg-white">
+        <div className="overflow-y-auto px-6 py-6">{children}</div>
+        {/* Footer: sticky so action buttons remain visible */}
+        {footer && (
+          <DialogFooter className="sticky bottom-0 z-20 border-t bg-gray-50 px-6 py-4">
+            {footer}
+          </DialogFooter>
+        )}
+      </div>
     </DialogContent>
   )
 }

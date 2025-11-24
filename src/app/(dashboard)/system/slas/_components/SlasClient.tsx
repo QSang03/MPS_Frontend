@@ -289,7 +289,7 @@ export default function SlasClient({ session }: SlasClientProps) {
             <Link href="/system/requests">
               <Button
                 variant="outline"
-                className="border-white/20 bg-white/10 text-white hover:bg-white/20"
+                className="border-white/20 bg-white/10 text-[#0066CC] hover:bg-blue-50"
               >
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Quay lại
@@ -375,7 +375,7 @@ export default function SlasClient({ session }: SlasClientProps) {
                 setPagination((prev) => ({ ...prev, pageIndex: 0 }))
               }}
             >
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Ưu tiên" />
               </SelectTrigger>
               <SelectContent>
@@ -396,7 +396,7 @@ export default function SlasClient({ session }: SlasClientProps) {
                 setPagination((prev) => ({ ...prev, pageIndex: 0 }))
               }}
             >
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Trạng thái" />
               </SelectTrigger>
               <SelectContent>

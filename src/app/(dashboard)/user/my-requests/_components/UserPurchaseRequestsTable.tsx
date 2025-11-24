@@ -1,12 +1,9 @@
 'use client'
 
-import { Suspense, useCallback, useEffect, useMemo, useState, useTransition } from 'react'
+import { Suspense, useEffect, useMemo, useState, useTransition } from 'react'
 import type { ReactNode } from 'react'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import Link from 'next/link'
 import type { ColumnDef } from '@tanstack/react-table'
 import {
-  Loader2,
   ListOrdered,
   Hash,
   Heading,
@@ -18,7 +15,6 @@ import {
   Calendar,
   Package,
 } from 'lucide-react'
-import { toast } from 'sonner'
 import { TableWrapper } from '@/components/system/TableWrapper'
 import { TableSkeleton } from '@/components/system/TableSkeleton'
 import { Badge } from '@/components/ui/badge'
@@ -26,7 +22,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { FilterSection } from '@/components/system/FilterSection'
 import { StatsCards } from '@/components/system/StatsCard'
-// Removed unused Card/CardContent imports
 import {
   Select,
   SelectContent,
@@ -39,7 +34,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { CustomerSelect } from '@/components/shared/CustomerSelect'
 import { formatCurrency, formatDateTime, formatRelativeTime } from '@/lib/utils/formatters'
 import { cn } from '@/lib/utils/cn'
-import { purchaseRequestsClientService } from '@/lib/api/services/purchase-requests-client.service'
+// purchaseRequestsClientService removed for user table (no mutation performed here)
 import { Priority, PurchaseRequestStatus } from '@/constants/status'
 import type { PurchaseRequest } from '@/types/models/purchase-request'
 import type { Customer } from '@/types/models/customer'
@@ -101,7 +96,11 @@ function useDebouncedValue<T>(value: T, delay = 400) {
   return debounced
 }
 
-export function PurchaseRequestsTable() {
+interface UserPurchaseRequestsTableProps {
+  defaultCustomerId?: string
+}
+
+export function UserPurchaseRequestsTable({ defaultCustomerId }: UserPurchaseRequestsTableProps) {
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 })
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<PurchaseRequestStatus | 'all'>('all')
@@ -232,12 +231,12 @@ export function PurchaseRequestsTable() {
       </FilterSection>
 
       <Suspense fallback={<TableSkeleton rows={10} columns={10} />}>
-        <PurchaseRequestsTableContent
+        <UserPurchaseRequestsTableContent
           pagination={pagination}
           search={debouncedSearch}
           searchInput={search}
           statusFilter={statusFilter}
-          customerFilter={customerFilter}
+          customerFilter={customerFilter || defaultCustomerId || ''}
           sorting={sorting}
           onPaginationChange={setPagination}
           onSortingChange={setSorting}
@@ -249,7 +248,7 @@ export function PurchaseRequestsTable() {
   )
 }
 
-interface PurchaseRequestsTableContentProps {
+interface UserPurchaseRequestsTableContentProps {
   pagination: { pageIndex: number; pageSize: number }
   search: string
   searchInput: string
@@ -267,7 +266,7 @@ interface PurchaseRequestsTableContentProps {
   renderColumnVisibilityMenu: (menu: ReactNode | null) => void
 }
 
-function PurchaseRequestsTableContent({
+function UserPurchaseRequestsTableContent({
   pagination,
   search,
   searchInput,
@@ -278,9 +277,7 @@ function PurchaseRequestsTableContent({
   onSortingChange,
   onStatsChange,
   renderColumnVisibilityMenu,
-}: PurchaseRequestsTableContentProps) {
-  const queryClient = useQueryClient()
-  const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null)
+}: UserPurchaseRequestsTableContentProps) {
   const [isPending, startTransition] = useTransition()
 
   const queryParams = useMemo(
@@ -312,29 +309,6 @@ function PurchaseRequestsTableContent({
     })
   }, [requests, totalCount, onStatsChange])
 
-  const mutation = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: PurchaseRequestStatus }) =>
-      purchaseRequestsClientService.updateStatus(id, { status }),
-    onSuccess: () => {
-      toast.success('Cập nhật trạng thái mua hàng thành công')
-      queryClient.invalidateQueries({ queryKey: ['purchase-requests', queryParams] })
-      queryClient.invalidateQueries({ queryKey: ['system-requests-purchase'] })
-    },
-    onError: (error: unknown) => {
-      const message = error instanceof Error ? error.message : 'Không thể cập nhật trạng thái'
-      toast.error(message)
-    },
-    onSettled: () => setStatusUpdatingId(null),
-  })
-
-  const handleStatusChange = useCallback(
-    (id: string, status: PurchaseRequestStatus) => {
-      setStatusUpdatingId(id)
-      mutation.mutate({ id, status })
-    },
-    [mutation]
-  )
-
   const columns = useMemo<ColumnDef<PurchaseRequestRow>[]>(
     () => [
       {
@@ -359,12 +333,7 @@ function PurchaseRequestsTableContent({
           </div>
         ),
         cell: ({ row }) => (
-          <Link
-            href={`/system/purchase-requests/${row.original.id}`}
-            className="text-primary font-mono text-sm font-semibold hover:underline"
-          >
-            #{row.original.id.slice(0, 8)}
-          </Link>
+          <span className="font-mono text-sm font-semibold">#{row.original.id.slice(0, 8)}</span>
         ),
       },
       {
@@ -525,31 +494,9 @@ function PurchaseRequestsTableContent({
           </div>
         ),
         cell: ({ row }) => (
-          <Select
-            value={row.original.status}
-            onValueChange={(value) =>
-              handleStatusChange(row.original.id, value as PurchaseRequestStatus)
-            }
-            disabled={statusUpdatingId === row.original.id && mutation.isPending}
-          >
-            <SelectTrigger className="h-9 w-full justify-between">
-              <SelectValue placeholder="Chọn trạng thái">
-                <Badge className={cn('text-xs', statusBadgeMap[row.original.status])}>
-                  {row.original.status}
-                </Badge>
-              </SelectValue>
-              {statusUpdatingId === row.original.id && mutation.isPending && (
-                <Loader2 className="text-muted-foreground h-4 w-4 animate-spin" />
-              )}
-            </SelectTrigger>
-            <SelectContent>
-              {statusOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Badge className={cn('text-xs', statusBadgeMap[row.original.status])}>
+            {row.original.status}
+          </Badge>
         ),
       },
       {
@@ -570,18 +517,12 @@ function PurchaseRequestsTableContent({
         ),
       },
     ],
-    [
-      handleStatusChange,
-      mutation.isPending,
-      statusUpdatingId,
-      pagination.pageIndex,
-      pagination.pageSize,
-    ]
+    [pagination.pageIndex, pagination.pageSize]
   )
 
   return (
     <TableWrapper<PurchaseRequestRow>
-      tableId="purchase-requests"
+      tableId="user-purchase-requests"
       columns={columns}
       data={requests}
       totalCount={totalCount}

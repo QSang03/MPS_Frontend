@@ -3,7 +3,25 @@ import type { PurchaseRequest, UpdatePurchaseRequestDto } from '@/types/models'
 import type { ApiListResponse, ListPagination } from '@/types/api'
 import { PurchaseRequestStatus } from '@/constants/status'
 
+type PurchaseRequestItemPayload = {
+  consumableTypeId: string
+  quantity: number
+  unitPrice?: number
+  notes?: string
+}
+
 export const purchaseRequestsClientService = {
+  async create(payload: {
+    customerId: string
+    deviceId?: string
+    title?: string
+    description?: string
+    items: PurchaseRequestItemPayload[]
+  }): Promise<PurchaseRequest | null> {
+    const response = await internalApiClient.post('/api/purchase-requests', payload)
+    return response.data?.data ?? null
+  },
+
   async getAll(params?: {
     page?: number
     limit?: number
@@ -41,10 +59,42 @@ export const purchaseRequestsClientService = {
     return response.status === 200 || response.data?.success === true
   },
 
-  async updateStatus(id: string, status: PurchaseRequestStatus): Promise<PurchaseRequest | null> {
-    const response = await internalApiClient.patch(`/api/purchase-requests/${id}/status`, {
-      status,
-    })
+  async updateStatus(
+    id: string,
+    payload: {
+      status: PurchaseRequestStatus
+      customerInitiatedCancel?: boolean
+      customerCancelReason?: string
+    }
+  ): Promise<PurchaseRequest | null> {
+    const response = await internalApiClient.patch(`/api/purchase-requests/${id}/status`, payload)
     return response.data?.data ?? null
+  },
+
+  async addItem(
+    requestId: string,
+    item: PurchaseRequestItemPayload & { unitPrice?: number }
+  ): Promise<PurchaseRequest | null> {
+    const response = await internalApiClient.post(`/api/purchase-requests/${requestId}/items`, item)
+    return response.data?.data ?? null
+  },
+
+  async updateItem(
+    requestId: string,
+    itemId: string,
+    patch: Partial<PurchaseRequestItemPayload>
+  ): Promise<PurchaseRequest | null> {
+    const response = await internalApiClient.patch(
+      `/api/purchase-requests/${requestId}/items/${itemId}`,
+      patch
+    )
+    return response.data?.data ?? null
+  },
+
+  async removeItem(requestId: string, itemId: string): Promise<boolean> {
+    const response = await internalApiClient.delete(
+      `/api/purchase-requests/${requestId}/items/${itemId}`
+    )
+    return response.status === 200 || response.data?.success === true
   },
 }

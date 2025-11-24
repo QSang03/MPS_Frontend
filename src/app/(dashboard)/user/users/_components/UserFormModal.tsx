@@ -36,31 +36,33 @@ export function UserFormModal({ customerId = '' }: UserFormModalProps) {
 
       <AnimatePresence>
         {open && (
-          <DialogContent className="max-h-[90vh] overflow-hidden overflow-y-auto sm:max-w-2xl">
-            <DialogHeader className="border-b px-6 py-4">
-              <div className="flex items-center gap-3">
-                <div className="bg-primary/10 rounded-lg p-2">
-                  <Users className="text-primary h-6 w-6" />
+          <DialogContent className="max-h-[90vh] w-full sm:max-w-3xl">
+            <div className="flex min-h-[40px] flex-col">
+              <DialogHeader className="sticky top-0 z-30 border-b bg-white/90 px-6 py-4 backdrop-blur-sm">
+                <div className="flex items-center gap-3">
+                  <div className="bg-primary/10 rounded-lg p-2">
+                    <Users className="text-primary h-6 w-6" />
+                  </div>
+                  <div>
+                    <DialogTitle className="text-xl font-bold">Tạo người dùng mới</DialogTitle>
+                    <DialogDescription className="text-muted-foreground text-sm">
+                      Điền thông tin chi tiết để tạo tài khoản người dùng
+                    </DialogDescription>
+                  </div>
                 </div>
-                <div>
-                  <DialogTitle className="text-xl font-bold">Tạo người dùng mới</DialogTitle>
-                  <DialogDescription>
-                    Điền thông tin chi tiết để tạo tài khoản người dùng
-                  </DialogDescription>
-                </div>
-              </div>
-            </DialogHeader>
+              </DialogHeader>
 
-            {/* Form Content */}
-            <div className="px-6 py-6">
-              <UserForm
-                customerId={customerId}
-                mode="create"
-                onSuccess={() => {
-                  setOpen(false)
-                  router.refresh()
-                }}
-              />
+              {/* Scrollable content */}
+              <div className="flex-1 overflow-y-auto px-6 py-6">
+                <UserForm
+                  customerId={customerId}
+                  mode="create"
+                  onSuccess={() => {
+                    setOpen(false)
+                    router.refresh()
+                  }}
+                />
+              </div>
             </div>
           </DialogContent>
         )}

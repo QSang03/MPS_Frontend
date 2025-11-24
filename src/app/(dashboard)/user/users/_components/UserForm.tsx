@@ -1,7 +1,7 @@
 'use client'
 
-import { useForm } from 'react-hook-form'
-import { useState } from 'react'
+import { useForm, useWatch } from 'react-hook-form'
+import { useState, useMemo, useEffect } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
@@ -17,7 +17,6 @@ import {
   FormLabel,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import CustomerSelect from '@/components/shared/CustomerSelect'
 import {
   Select,
   SelectContent,
@@ -25,10 +24,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { DynamicAttributesFields } from '@/components/shared/DynamicAttributesFields'
 import { rolesClientService } from '@/lib/api/services/roles-client.service'
 import { userSchema, type UserFormData } from '@/lib/validations/user.schema'
 import removeEmpty from '@/lib/utils/clean'
 import { usersClientService } from '@/lib/api/services/users-client.service'
+import { useRoleAttributeSchema } from '@/lib/hooks/useRoleAttributeSchema'
 import type { User, UserRole } from '@/types/users'
 
 type BackendDetails = {
@@ -62,6 +63,43 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
   type FormFieldName = Parameters<typeof form.setError>[0]
 
   const [serverError, setServerError] = useState<string | null>(null)
+
+  // Dynamic attributes state
+  const [attributes, setAttributes] = useState<Record<string, unknown>>(
+    initialData?.attributes || {}
+  )
+  const [attributeErrors, setAttributeErrors] = useState<Record<string, string>>({})
+
+  // Load roles for role select
+  const { data: roles = [], isLoading: isLoadingRoles } = useQuery({
+    queryKey: ['roles'],
+    queryFn: async () => (await rolesClientService.getRoles({ page: 1, limit: 100 })).data,
+    enabled: true,
+  })
+
+  // Watch selected role to get its schema (use useWatch to avoid incompatible-library warning)
+  const selectedRoleId = useWatch({ control: form.control, name: 'roleId' })
+  const selectedRole = useMemo(
+    () => roles.find((r) => r.id === selectedRoleId),
+    [roles, selectedRoleId]
+  )
+
+  // Parse role attribute schema
+  const { schema: attributeSchema, validate: validateAttributes } = useRoleAttributeSchema(
+    selectedRole?.attributeSchema
+  )
+
+  // Reset attributes when role changes (schedule state update to avoid synchronous setState in effect)
+  useEffect(() => {
+    if (mode === 'create' && selectedRoleId !== initialData?.roleId) {
+      const t = setTimeout(() => {
+        setAttributes({})
+        setAttributeErrors({})
+      }, 0)
+      return () => clearTimeout(t)
+    }
+    return undefined
+  }, [selectedRoleId, initialData?.roleId, mode])
 
   const createMutation = useMutation({
     mutationFn: (data: UserFormData) => usersClientService.createUser(data),
@@ -224,7 +262,21 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
   })
 
   const onSubmit = (data: UserFormData) => {
-    const payload = removeEmpty(data as unknown as Record<string, unknown>)
+    // Validate attributes if schema exists
+    if (attributeSchema) {
+      const validation = validateAttributes(attributes)
+      if (!validation.valid) {
+        setAttributeErrors(validation.errors)
+        toast.error('Vui lòng kiểm tra các thuộc tính bổ sung')
+        return
+      }
+      setAttributeErrors({})
+    }
+
+    const payload = removeEmpty({
+      ...data,
+      attributes: attributeSchema ? attributes : undefined,
+    } as unknown as Record<string, unknown>)
 
     if (mode === 'create') {
       createMutation.mutate(payload as UserFormData)
@@ -234,14 +286,6 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
   }
 
   const isPending = createMutation.isPending || updateMutation.isPending
-
-  // Load roles for role select
-  const { data: roles = [], isLoading: isLoadingRoles } = useQuery({
-    queryKey: ['roles'],
-    queryFn: async () => (await rolesClientService.getRoles({ page: 1, limit: 100 })).data,
-    // enabled: will be controlled by navigation permissions in practice; keep true so UI attempts to load
-    enabled: true,
-  })
 
   return (
     <Form {...form}>
@@ -290,26 +334,6 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
             </FormItem>
           )}
         />
-
-        <FormField
-          control={form.control}
-          name="customerId"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Khách hàng</FormLabel>
-              <FormControl>
-                <CustomerSelect
-                  {...field}
-                  value={(field.value as string) || ''}
-                  onChange={(id: string) => field.onChange(id)}
-                  disabled={isPending}
-                />
-              </FormControl>
-              <FormDescription>Khách hàng mà tài khoản thuộc về (tùy chọn)</FormDescription>
-            </FormItem>
-          )}
-        />
-
         <FormField
           control={form.control}
           name="roleId"
@@ -344,6 +368,17 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
             </FormItem>
           )}
         />
+
+        {/* Dynamic Attributes Fields */}
+        {attributeSchema && (
+          <DynamicAttributesFields
+            schema={attributeSchema}
+            values={attributes}
+            onChange={setAttributes}
+            errors={attributeErrors}
+            disabled={isPending}
+          />
+        )}
 
         <div className="flex gap-4">
           <Button type="submit" disabled={isPending}>

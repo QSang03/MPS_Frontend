@@ -49,7 +49,10 @@ import {
 } from '@/lib/validations/service-request.schema'
 import { serviceRequestsClientService } from '@/lib/api/services/service-requests-client.service'
 import { devicesClientService } from '@/lib/api/services/devices-client.service'
+import { purchaseRequestsClientService } from '@/lib/api/services/purchase-requests-client.service'
+import deviceModelsClientService from '@/lib/api/services/device-models-client.service'
 import { Priority } from '@/constants/status'
+import slasClientService from '@/lib/api/services/slas-client.service'
 import { removeEmpty } from '@/lib/utils/clean'
 
 interface ServiceRequestFormModalProps {
@@ -100,7 +103,12 @@ export function ServiceRequestFormModal({
   preselectedDeviceId,
 }: ServiceRequestFormModalProps) {
   const [open, setOpen] = useState(false)
+  const [mode, setMode] = useState<'SERVICE' | 'PURCHASE'>('SERVICE')
   const queryClient = useQueryClient()
+  const [purchaseItems, setPurchaseItems] = useState<
+    Array<{ consumableTypeId: string; quantity: number; name?: string }>
+  >([])
+  const [consumableSearch, setConsumableSearch] = useState('')
 
   type AnyRecord = Record<string, unknown>
 
@@ -130,7 +138,7 @@ export function ServiceRequestFormModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [preselectedDeviceId, open])
 
-  const createMutation = useMutation({
+  const createServiceMutation = useMutation({
     mutationFn: serviceRequestsClientService.create,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['service-requests', customerId] })
@@ -160,14 +168,104 @@ export function ServiceRequestFormModal({
     },
   })
 
+  const createPurchaseMutation = useMutation({
+    mutationFn: purchaseRequestsClientService.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['purchase-requests', customerId] })
+      queryClient.invalidateQueries({ queryKey: ['purchase-requests'] })
+      toast.success('Tạo yêu cầu mua hàng thành công!', {
+        description: 'Yêu cầu mua đã được gửi đi',
+        icon: <CheckCircle className="h-5 w-5 text-black dark:text-white" />,
+      })
+      setPurchaseItems([])
+      form.reset({
+        customerId,
+        deviceId: '',
+        title: '',
+        description: '',
+        priority: Priority.NORMAL,
+      })
+      setOpen(false)
+      if (onSuccess) onSuccess()
+    },
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : 'Tạo yêu cầu mua hàng thất bại'
+      toast.error(message, {
+        description: 'Vui lòng thử lại sau',
+        icon: <AlertCircle className="h-5 w-5 text-black dark:text-white" />,
+      })
+    },
+  })
+
   const onSubmit = (data: ServiceRequestFormData) => {
-    // Ensure we do NOT send `status` from the user modal (server should set default)
-    const rest = data as unknown as AnyRecord
-    const merged = { ...rest, customerId } as AnyRecord
-    // Remove any status field if present
-    if ('status' in merged) delete merged['status']
-    const payload = removeEmpty(merged) as ServiceRequestFormData
-    createMutation.mutate(payload)
+    if (mode === 'SERVICE') {
+      const rest = data as unknown as AnyRecord
+      const merged = { ...rest, customerId } as AnyRecord
+      // Do not send deviceId to the service request create API
+      if ('deviceId' in merged) delete merged.deviceId
+      if ('status' in merged) delete merged['status']
+      const payload = removeEmpty(merged) as ServiceRequestFormData
+      createServiceMutation.mutate(payload)
+      return
+    }
+
+    // PURCHASE mode
+    if (!data.deviceId) {
+      toast.error('Vui lòng chọn thiết bị trước khi mua hàng')
+      return
+    }
+    if (purchaseItems.length === 0) {
+      toast.error('Thêm ít nhất một vật tư cần mua')
+      return
+    }
+    createPurchaseMutation.mutate({
+      customerId,
+      title: data.title,
+      description: data.description,
+      items: purchaseItems.map(({ consumableTypeId, quantity }) => ({
+        consumableTypeId,
+        quantity,
+      })),
+    })
+  }
+
+  // Fetch compatible consumables when device changes & mode is PURCHASE
+  const selectedDeviceId = form.watch('deviceId')
+  const selectedDevice = devicesData?.data.find((d) => d.id === selectedDeviceId)
+  const deviceModelId = selectedDevice?.deviceModel?.id
+  const { data: compatibleConsumables, isLoading: compatibleLoading } = useQuery({
+    queryKey: ['compatible-consumables', deviceModelId],
+    queryFn: () =>
+      deviceModelId ? deviceModelsClientService.getCompatibleConsumables(deviceModelId) : [],
+    enabled: !!deviceModelId && mode === 'PURCHASE',
+  })
+
+  // Fetch SLAs for this customer to show detailed priority options in SERVICE mode
+  const { data: slasData, isLoading: slasLoading } = useQuery({
+    queryKey: ['slas', { customerId }],
+    queryFn: () => slasClientService.getAll({ page: 1, limit: 100, customerId }),
+    enabled: !!customerId && mode === 'SERVICE',
+  })
+
+  const filteredConsumables = (compatibleConsumables || []).filter((c) =>
+    !consumableSearch ? true : (c.name || '').toLowerCase().includes(consumableSearch.toLowerCase())
+  )
+
+  const addPurchaseItem = (consumableTypeId: string, name?: string) => {
+    setPurchaseItems((prev) => {
+      if (prev.some((p) => p.consumableTypeId === consumableTypeId)) return prev
+      return [...prev, { consumableTypeId, quantity: 1, name }]
+    })
+  }
+
+  const updatePurchaseItemQuantity = (consumableTypeId: string, quantity: number) => {
+    setPurchaseItems((prev) =>
+      prev.map((p) => (p.consumableTypeId === consumableTypeId ? { ...p, quantity } : p))
+    )
+  }
+
+  const removePurchaseItem = (consumableTypeId: string) => {
+    setPurchaseItems((prev) => prev.filter((p) => p.consumableTypeId !== consumableTypeId))
   }
 
   return (
@@ -229,7 +327,10 @@ export function ServiceRequestFormModal({
                             onValueChange={field.onChange}
                             value={field.value}
                             disabled={
-                              createMutation.isPending || devicesLoading || !!preselectedDeviceId
+                              createServiceMutation.isPending ||
+                              createPurchaseMutation.isPending ||
+                              devicesLoading ||
+                              !!preselectedDeviceId
                             }
                           >
                             <FormControl>
@@ -287,13 +388,39 @@ export function ServiceRequestFormModal({
                           </Select>
                           <FormDescription className="mt-1.5 flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
                             <Sparkles className="h-3 w-3 text-black dark:text-white" />
-                            Chọn thiết bị cần được bảo trì
+                            Chọn thiết bị cho yêu cầu
                           </FormDescription>
                           <FormMessage className="mt-1 text-xs" />
                         </FormItem>
                       )}
                     />
                   </motion.div>
+
+                  {/* Mode Switch Tabs */}
+                  <div className="mt-2 flex w-full items-center justify-start gap-2 rounded-xl bg-slate-100 p-1 dark:bg-slate-700/60">
+                    <button
+                      type="button"
+                      onClick={() => setMode('SERVICE')}
+                      className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
+                        mode === 'SERVICE'
+                          ? 'bg-white text-blue-600 shadow dark:bg-slate-800 dark:text-blue-400'
+                          : 'text-slate-600 hover:text-slate-800 dark:text-slate-300 dark:hover:text-white'
+                      }`}
+                    >
+                      Yêu cầu bảo trì
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMode('PURCHASE')}
+                      className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
+                        mode === 'PURCHASE'
+                          ? 'bg-white text-indigo-600 shadow dark:bg-slate-800 dark:text-indigo-400'
+                          : 'text-slate-600 hover:text-slate-800 dark:text-slate-300 dark:hover:text-white'
+                      }`}
+                    >
+                      Yêu cầu mua hàng
+                    </button>
+                  </div>
 
                   {/* Title */}
                   <motion.div
@@ -314,7 +441,7 @@ export function ServiceRequestFormModal({
                             <Input
                               placeholder="Nhập tiêu đề ngắn gọn cho yêu cầu..."
                               {...field}
-                              disabled={createMutation.isPending}
+                              disabled={createServiceMutation.isPending}
                               className="h-12 rounded-xl border-slate-300/50 bg-white/60 backdrop-blur-xl transition-all duration-300 hover:border-indigo-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-600/50 dark:bg-slate-700/60 dark:hover:border-indigo-500 dark:focus:border-indigo-400"
                             />
                           </FormControl>
@@ -347,7 +474,7 @@ export function ServiceRequestFormModal({
                               placeholder="Mô tả chi tiết vấn đề, triệu chứng, thời điểm xảy ra..."
                               rows={6}
                               {...field}
-                              disabled={createMutation.isPending}
+                              disabled={createServiceMutation.isPending}
                               className="resize-none rounded-xl border-slate-300/50 bg-white/60 backdrop-blur-xl transition-all duration-300 hover:border-indigo-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-600/50 dark:bg-slate-700/60 dark:hover:border-indigo-500 dark:focus:border-indigo-400"
                             />
                           </FormControl>
@@ -360,62 +487,196 @@ export function ServiceRequestFormModal({
                     />
                   </motion.div>
 
-                  {/* Priority */}
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.4 }}
-                  >
-                    <FormField
-                      control={form.control}
-                      name="priority"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-300">
-                            <Flag className="h-4 w-4 text-black dark:text-white" />
-                            Độ ưu tiên
-                          </FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            value={field.value}
-                            disabled={createMutation.isPending}
-                          >
-                            <FormControl>
-                              <SelectTrigger className="h-12 rounded-xl border-slate-300/50 bg-white/60 backdrop-blur-xl transition-all duration-300 hover:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-600/50 dark:bg-slate-700/60 dark:hover:border-indigo-500">
-                                <SelectValue placeholder="Chọn mức độ ưu tiên" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent className="rounded-xl border-slate-200 bg-white/95 backdrop-blur-xl dark:border-slate-700 dark:bg-slate-800/95">
-                              {Object.entries(priorityConfig).map(([key, config]) => (
-                                <SelectItem
-                                  key={key}
-                                  value={key}
-                                  className="cursor-pointer transition-colors hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
-                                >
-                                  <div className="flex items-center gap-3">
-                                    <span className="text-lg">{config.icon}</span>
-                                    <div className="flex flex-col">
-                                      <span className={`font-semibold ${config.color}`}>
-                                        {config.label}
-                                      </span>
-                                      <span className="text-xs text-slate-500 dark:text-slate-400">
-                                        {config.description}
-                                      </span>
+                  {/* Priority only in SERVICE mode */}
+                  {mode === 'SERVICE' && (
+                    <motion.div
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.4 }}
+                    >
+                      <FormField
+                        control={form.control}
+                        name="priority"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-300">
+                              <Flag className="h-4 w-4 text-black dark:text-white" />
+                              Độ ưu tiên
+                            </FormLabel>
+                            <div className="space-y-2">
+                              {slasLoading ? (
+                                <div className="text-xs text-slate-500">Đang tải các SLA...</div>
+                              ) : slasData?.data && slasData.data.length > 0 ? (
+                                slasData.data.map((sla) => (
+                                  <label
+                                    key={sla.id}
+                                    className={`flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-indigo-50 dark:hover:bg-indigo-900/20 ${field.value === sla.priority ? 'ring-2 ring-indigo-200 dark:ring-indigo-500' : ''}`}
+                                  >
+                                    <input
+                                      type="radio"
+                                      name="priority"
+                                      value={sla.priority}
+                                      checked={field.value === sla.priority}
+                                      onChange={() => field.onChange(sla.priority)}
+                                      disabled={createServiceMutation.isPending}
+                                      className="h-4 w-4"
+                                    />
+                                    <div className="flex-1">
+                                      <div className="flex items-center justify-between">
+                                        <span
+                                          className={`font-semibold ${priorityConfig[sla.priority]?.color}`}
+                                        >
+                                          {sla.name}
+                                        </span>
+                                        <span className="text-[11px] text-slate-400">
+                                          {sla.priority}
+                                        </span>
+                                      </div>
+                                      <div className="truncate text-xs text-slate-500">
+                                        {sla.description} • R: {sla.responseTimeHours}h • Res:{' '}
+                                        {sla.resolutionTimeHours}h
+                                      </div>
                                     </div>
-                                  </div>
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormDescription className="mt-1.5 flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
-                            <Sparkles className="h-3 w-3 text-black dark:text-white" />
-                            Đặt mức độ khẩn cấp của yêu cầu
-                          </FormDescription>
-                          <FormMessage className="mt-1 text-xs" />
-                        </FormItem>
-                      )}
-                    />
-                  </motion.div>
+                                  </label>
+                                ))
+                              ) : (
+                                Object.entries(priorityConfig).map(([key, config]) => (
+                                  <label
+                                    key={key}
+                                    className={`flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-indigo-50 dark:hover:bg-indigo-900/20 ${field.value === key ? 'ring-2 ring-indigo-200 dark:ring-indigo-500' : ''}`}
+                                  >
+                                    <input
+                                      type="radio"
+                                      name="priority"
+                                      value={key}
+                                      checked={field.value === key}
+                                      onChange={() => field.onChange(key)}
+                                      disabled={createServiceMutation.isPending}
+                                      className="h-4 w-4"
+                                    />
+                                    <div className="flex-1">
+                                      <div className="flex items-center justify-between">
+                                        <span className={`font-semibold ${config.color}`}>
+                                          {config.label}
+                                        </span>
+                                        <span className="text-[11px] text-slate-400">{key}</span>
+                                      </div>
+                                      <div className="text-xs text-slate-500">
+                                        {config.description}
+                                      </div>
+                                    </div>
+                                  </label>
+                                ))
+                              )}
+                            </div>
+                            <FormDescription className="mt-1.5 flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+                              <Sparkles className="h-3 w-3 text-black dark:text-white" />
+                              Đặt mức độ khẩn cấp của yêu cầu
+                            </FormDescription>
+                            <FormMessage className="mt-1 text-xs" />
+                          </FormItem>
+                        )}
+                      />
+                    </motion.div>
+                  )}
+
+                  {/* Purchase Items Section */}
+                  {mode === 'PURCHASE' && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.35 }}
+                      className="space-y-4"
+                    >
+                      <div className="rounded-xl border border-slate-200/60 p-4 dark:border-slate-600/50">
+                        <div className="mb-3 flex items-center justify-between">
+                          <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                            Vật tư tương thích
+                          </h3>
+                          <Input
+                            placeholder="Tìm kiếm vật tư..."
+                            value={consumableSearch}
+                            onChange={(e) => setConsumableSearch(e.target.value)}
+                            className="h-8 w-40 rounded-lg border-slate-300/50 bg-white/70 text-xs dark:border-slate-600/50 dark:bg-slate-700/60"
+                          />
+                        </div>
+                        <div className="max-h-56 overflow-y-auto rounded-md bg-slate-50 p-2 dark:bg-slate-800/40">
+                          {compatibleLoading && (
+                            <div className="flex items-center gap-2 p-2 text-xs text-slate-500 dark:text-slate-400">
+                              <Loader2 className="h-4 w-4 animate-spin text-black dark:text-white" />
+                              Đang tải danh sách...
+                            </div>
+                          )}
+                          {!compatibleLoading && filteredConsumables.length === 0 && (
+                            <div className="p-2 text-xs text-slate-500 dark:text-slate-400">
+                              Không có vật tư phù hợp hoặc trống.
+                            </div>
+                          )}
+                          {filteredConsumables.map((c) => (
+                            <button
+                              type="button"
+                              key={c.id}
+                              onClick={() => addPurchaseItem(c.id, c.name)}
+                              className="group flex w-full items-center justify-between rounded-md p-2 text-left text-xs transition-colors hover:bg-indigo-50 dark:hover:bg-indigo-900/30"
+                            >
+                              <span className="font-medium text-slate-700 dark:text-slate-200">
+                                {c.name}
+                              </span>
+                              <span className="text-[10px] text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
+                                Thêm
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="rounded-xl border border-slate-200/60 p-4 dark:border-slate-600/50">
+                        <h3 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                          Danh sách cần mua
+                        </h3>
+                        {purchaseItems.length === 0 && (
+                          <p className="text-xs text-slate-500 dark:text-slate-400">
+                            Chưa có mục nào được thêm.
+                          </p>
+                        )}
+                        <div className="space-y-2">
+                          {purchaseItems.map((item) => (
+                            <div
+                              key={item.consumableTypeId}
+                              className="flex items-center gap-3 rounded-lg bg-white/70 p-2 text-xs shadow-sm dark:bg-slate-700/60"
+                            >
+                              <span className="flex-1 font-medium text-slate-700 dark:text-slate-200">
+                                {item.name || item.consumableTypeId}
+                              </span>
+                              <Input
+                                type="number"
+                                min={1}
+                                value={item.quantity}
+                                onChange={(e) =>
+                                  updatePurchaseItemQuantity(
+                                    item.consumableTypeId,
+                                    Math.max(1, Number(e.target.value) || 1)
+                                  )
+                                }
+                                className="h-8 w-20 rounded-md border-slate-300/50 bg-white/90 px-2 text-right dark:border-slate-600/50 dark:bg-slate-800/60"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removePurchaseItem(item.consumableTypeId)}
+                                className="rounded-md px-2 py-1 text-[10px] font-semibold text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30"
+                              >
+                                Xóa
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                        {purchaseItems.length > 0 && (
+                          <p className="mt-2 text-[10px] text-slate-500 dark:text-slate-400">
+                            Tổng mục: {purchaseItems.length}
+                          </p>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
 
                   {/* Action Buttons */}
                   <motion.div
@@ -426,10 +687,10 @@ export function ServiceRequestFormModal({
                   >
                     <Button
                       type="submit"
-                      disabled={createMutation.isPending}
+                      disabled={createServiceMutation.isPending || createPurchaseMutation.isPending}
                       className="h-12 flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 font-semibold text-white shadow-lg shadow-blue-500/30 transition-all duration-300 hover:scale-105 hover:from-blue-700 hover:to-indigo-700 hover:shadow-xl hover:shadow-blue-500/40"
                     >
-                      {createMutation.isPending ? (
+                      {createServiceMutation.isPending || createPurchaseMutation.isPending ? (
                         <>
                           <Loader2 className="mr-2 h-5 w-5 animate-spin text-black dark:text-white" />
                           Đang tạo...
@@ -437,7 +698,7 @@ export function ServiceRequestFormModal({
                       ) : (
                         <>
                           <CheckCircle className="mr-2 h-5 w-5 text-black dark:text-white" />
-                          Tạo Yêu Cầu
+                          {mode === 'SERVICE' ? 'Tạo Yêu Cầu Bảo Trì' : 'Tạo Yêu Cầu Mua Hàng'}
                         </>
                       )}
                     </Button>
@@ -445,7 +706,7 @@ export function ServiceRequestFormModal({
                       type="button"
                       variant="outline"
                       onClick={() => setOpen(false)}
-                      disabled={createMutation.isPending}
+                      disabled={createServiceMutation.isPending || createPurchaseMutation.isPending}
                       className="h-12 flex-1 border-slate-300/50 bg-white/60 font-semibold backdrop-blur-xl transition-all duration-300 hover:scale-105 hover:bg-white/80 dark:border-slate-600/50 dark:bg-slate-700/60 dark:hover:bg-slate-700/80"
                     >
                       Hủy

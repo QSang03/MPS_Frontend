@@ -203,7 +203,7 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
     if (form.billingDay !== undefined && form.billingDay !== null) {
       const day = Number(form.billingDay)
       if (isNaN(day) || day < 1 || day > 31) {
-        errors.billingDay = 'Ngày thanh toán phải từ 1 đến 31'
+        errors.billingDay = 'ngày lấy số liệu phải từ 1 đến 31'
       }
     }
 
@@ -512,7 +512,7 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
               </div>
 
               <div className="space-y-2">
-                <Label className="text-base font-semibold">Ngày thanh toán</Label>
+                <Label className="text-base font-semibold">ngày lấy số liệu</Label>
                 <Input
                   ref={billingDayRef}
                   type="number"

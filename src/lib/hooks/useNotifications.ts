@@ -205,9 +205,40 @@ export function useNotifications() {
       // Determine if we should show action button
       const shouldShowAction = (isServiceRequest || isPurchaseRequest) && requestId
 
+      // Clean and format message for toast: remove updater UUID and translate status codes
+      let cleanedMessage = payload.message ?? ''
+      // Remove patterns like "Người cập nhật: <uuid>"
+      cleanedMessage = cleanedMessage.replace(
+        /Người cập nhật:\s*[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi,
+        ''
+      )
+
+      // Map technical status codes to friendly Vietnamese labels
+      const statusMap: Record<string, string> = {
+        RESOLVED: 'Đã giải quyết',
+        CLOSED: 'Đã đóng',
+        OPEN: 'Mở',
+        PENDING: 'Đang chờ',
+        IN_PROGRESS: 'Đang xử lý',
+        APPROVED: 'Đã duyệt',
+        REJECTED: 'Bị từ chối',
+      }
+
+      // Replace status tokens (word boundaries, case-insensitive)
+      Object.keys(statusMap).forEach((code) => {
+        const label = statusMap[code] ?? ''
+        const regex = new RegExp(`\\b${code}\\b`, 'gi')
+        if (label) {
+          cleanedMessage = cleanedMessage.replace(regex, label)
+        }
+      })
+
+      // Remove extra whitespace and clean punctuation left by removals
+      cleanedMessage = cleanedMessage.replace(/\s{2,}/g, ' ').trim()
+
       // Show toast notification with action button
       const toastId = toast.info(payload.title, {
-        description: payload.message,
+        description: cleanedMessage || undefined,
         duration: Infinity, // Toast không tự đóng
         action: shouldShowAction
           ? {

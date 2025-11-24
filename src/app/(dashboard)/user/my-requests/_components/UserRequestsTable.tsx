@@ -1,13 +1,9 @@
 'use client'
 
-import { Suspense, useCallback, useEffect, useMemo, useState, useTransition } from 'react'
+import { Suspense, useEffect, useMemo, useState, useTransition } from 'react'
 import type { ReactNode } from 'react'
-import Link from 'next/link'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { ColumnDef } from '@tanstack/react-table'
-import { toast } from 'sonner'
 import {
-  Loader2,
   FileText,
   Info,
   Tag,
@@ -19,6 +15,7 @@ import {
   CheckCircle2,
   Calendar,
   Settings,
+  Eye,
 } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { StatusBadge } from '@/components/shared/StatusBadge'
@@ -36,12 +33,15 @@ import {
 } from '@/components/ui/select'
 import { CustomerSelect } from '@/components/shared/CustomerSelect'
 import { formatDateTime } from '@/lib/utils/formatters'
-import { serviceRequestsClientService } from '@/lib/api/services/service-requests-client.service'
+// serviceRequestsClientService not required in the user table (no status mutation)
 import { ServiceRequestStatus, Priority } from '@/constants/status'
 import type { ServiceRequest } from '@/types/models/service-request'
 import { useServiceRequestsQuery } from '@/lib/hooks/queries/useServiceRequestsQuery'
 import { TableSkeleton } from '@/components/system/TableSkeleton'
+import { ServiceRequestDetailModal } from './ServiceRequestDetailModal'
+
 type ServiceRequestRow = ServiceRequest
+
 const statusOptions = [
   { label: 'Mở', value: ServiceRequestStatus.OPEN },
   { label: 'Đang xử lý', value: ServiceRequestStatus.IN_PROGRESS },
@@ -56,8 +56,6 @@ const priorityOptions = [
   { label: 'Cao', value: Priority.HIGH },
   { label: 'Khẩn cấp', value: Priority.URGENT },
 ]
-
-// Removed unused priorityBadgeMap and statusBadgeMap
 
 const renderTimestamp = (timestamp?: string) => {
   if (!timestamp) {
@@ -77,7 +75,11 @@ function useDebouncedValue<T>(value: T, delay = 400) {
   return debounced
 }
 
-export function ServiceRequestsTable() {
+interface UserRequestsTableProps {
+  defaultCustomerId?: string
+}
+
+export function UserRequestsTable({ defaultCustomerId }: UserRequestsTableProps) {
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 })
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<ServiceRequestStatus | 'all'>('all')
@@ -95,6 +97,14 @@ export function ServiceRequestsTable() {
     resolved: 0,
     urgent: 0,
   })
+
+  // Use defaultCustomerId if provided and no filter is set, or allow filter to override?
+  // Requirement says "Add Filter Field for Customer".
+  // If defaultCustomerId is present (user is logged in), we should probably lock it or use it as base.
+  // But if the user can see multiple customers, they can filter.
+  // For now, I'll assume if defaultCustomerId is set, we use it, unless the user picks something else (if they have permission).
+  // But usually normal users only see their own.
+  // I will pass defaultCustomerId to the query if customerFilter is empty.
 
   const debouncedSearch = useDebouncedValue(search, 400)
 
@@ -249,13 +259,13 @@ export function ServiceRequestsTable() {
       </FilterSection>
 
       <Suspense fallback={<TableSkeleton rows={10} columns={10} />}>
-        <ServiceRequestsTableContent
+        <UserRequestsTableContent
           pagination={pagination}
           search={debouncedSearch}
           searchInput={search}
           statusFilter={statusFilter}
           priorityFilter={priorityFilter}
-          customerFilter={customerFilter}
+          customerFilter={customerFilter || defaultCustomerId || ''}
           sorting={sorting}
           onPaginationChange={setPagination}
           onSortingChange={setSorting}
@@ -267,7 +277,7 @@ export function ServiceRequestsTable() {
   )
 }
 
-interface ServiceRequestsTableContentProps {
+interface UserRequestsTableContentProps {
   pagination: { pageIndex: number; pageSize: number }
   search: string
   searchInput: string
@@ -287,7 +297,7 @@ interface ServiceRequestsTableContentProps {
   renderColumnVisibilityMenu: (menu: ReactNode | null) => void
 }
 
-function ServiceRequestsTableContent({
+function UserRequestsTableContent({
   pagination,
   search,
   searchInput,
@@ -299,10 +309,10 @@ function ServiceRequestsTableContent({
   onSortingChange,
   onStatsChange,
   renderColumnVisibilityMenu,
-}: ServiceRequestsTableContentProps) {
-  const queryClient = useQueryClient()
-  const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null)
+}: UserRequestsTableContentProps) {
   const [isPending, startTransition] = useTransition()
+  const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null)
+  const [isDetailOpen, setIsDetailOpen] = useState(false)
 
   const queryParams = useMemo(
     () => ({
@@ -337,28 +347,10 @@ function ServiceRequestsTableContent({
     })
   }, [requests, totalCount, onStatsChange])
 
-  const mutation = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: ServiceRequestStatus }) =>
-      serviceRequestsClientService.updateStatus(id, status),
-    onSuccess: () => {
-      toast.success('Cập nhật trạng thái thành công')
-      queryClient.invalidateQueries({ queryKey: ['service-requests', queryParams] })
-      queryClient.invalidateQueries({ queryKey: ['system-requests-service'] })
-    },
-    onError: (error: unknown) => {
-      const message = error instanceof Error ? error.message : 'Không thể cập nhật trạng thái'
-      toast.error(message)
-    },
-    onSettled: () => setStatusUpdatingId(null),
-  })
-
-  const handleStatusChange = useCallback(
-    (id: string, status: ServiceRequestStatus) => {
-      setStatusUpdatingId(id)
-      mutation.mutate({ id, status })
-    },
-    [mutation]
-  )
+  const handleViewDetail = (id: string) => {
+    setSelectedRequestId(id)
+    setIsDetailOpen(true)
+  }
 
   const columns = useMemo<ColumnDef<ServiceRequestRow>[]>(
     () => [
@@ -395,9 +387,12 @@ function ServiceRequestsTableContent({
           </div>
         ),
         cell: ({ row }) => (
-          <Link href={`/system/service-requests/${row.original.id}`} className="font-mono text-sm">
+          <button
+            onClick={() => handleViewDetail(row.original.id)}
+            className="font-mono text-sm text-blue-600 hover:underline"
+          >
             #{row.original.id.slice(0, 8)}
-          </Link>
+          </button>
         ),
       },
       {
@@ -491,31 +486,7 @@ function ServiceRequestsTableContent({
             Trạng thái
           </div>
         ),
-        cell: ({ row }) => (
-          <Select
-            value={row.original.status}
-            onValueChange={(value) =>
-              handleStatusChange(row.original.id, value as ServiceRequestStatus)
-            }
-            disabled={statusUpdatingId === row.original.id && mutation.isPending}
-          >
-            <SelectTrigger className="h-9 w-[180px] justify-between">
-              <SelectValue placeholder="Chọn trạng thái">
-                <StatusBadge serviceStatus={row.original.status} />
-              </SelectValue>
-              {statusUpdatingId === row.original.id && mutation.isPending && (
-                <Loader2 className="text-muted-foreground h-4 w-4 animate-spin" />
-              )}
-            </SelectTrigger>
-            <SelectContent>
-              {statusOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        ),
+        cell: ({ row }) => <StatusBadge serviceStatus={row.original.status} />,
       },
       {
         accessorKey: 'createdAt',
@@ -540,60 +511,63 @@ function ServiceRequestsTableContent({
           <Button
             variant="ghost"
             size="sm"
-            asChild
+            onClick={() => handleViewDetail(row.original.id)}
             className="transition-all hover:bg-gray-100 hover:text-gray-700"
           >
-            <Link href={`/system/service-requests/${row.original.id}`}>Chi tiết</Link>
+            <Eye className="mr-2 h-4 w-4" />
+            Chi tiết
           </Button>
         ),
       },
     ],
-    [
-      handleStatusChange,
-      mutation.isPending,
-      statusUpdatingId,
-      pagination.pageIndex,
-      pagination.pageSize,
-    ]
+    [pagination.pageIndex, pagination.pageSize]
   )
 
   return (
-    <TableWrapper<ServiceRequestRow>
-      tableId="service-requests"
-      columns={columns}
-      data={requests}
-      totalCount={totalCount}
-      pageIndex={pagination.pageIndex}
-      pageSize={pagination.pageSize}
-      onPaginationChange={(next) => {
-        startTransition(() => {
-          onPaginationChange(next)
-        })
-      }}
-      onSortingChange={(nextSorting) => {
-        startTransition(() => {
-          onSortingChange(nextSorting)
-        })
-      }}
-      sorting={sorting}
-      defaultSorting={{ sortBy: 'createdAt', sortOrder: 'desc' }}
-      enableColumnVisibility
-      renderColumnVisibilityMenu={renderColumnVisibilityMenu}
-      isPending={isPending}
-      emptyState={
-        requests.length === 0 ? (
-          <div className="p-12 text-center">
-            <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200">
-              <FileText className="h-12 w-12 opacity-20" />
+    <>
+      <TableWrapper<ServiceRequestRow>
+        tableId="user-service-requests"
+        columns={columns}
+        data={requests}
+        totalCount={totalCount}
+        pageIndex={pagination.pageIndex}
+        pageSize={pagination.pageSize}
+        onPaginationChange={(next) => {
+          startTransition(() => {
+            onPaginationChange(next)
+          })
+        }}
+        onSortingChange={(nextSorting) => {
+          startTransition(() => {
+            onSortingChange(nextSorting)
+          })
+        }}
+        sorting={sorting}
+        defaultSorting={{ sortBy: 'createdAt', sortOrder: 'desc' }}
+        enableColumnVisibility
+        renderColumnVisibilityMenu={renderColumnVisibilityMenu}
+        isPending={isPending}
+        emptyState={
+          requests.length === 0 ? (
+            <div className="p-12 text-center">
+              <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200">
+                <FileText className="h-12 w-12 opacity-20" />
+              </div>
+              <h3 className="mb-2 text-xl font-bold text-gray-700">Không có yêu cầu dịch vụ</h3>
+              <p className="mb-6 text-gray-500">
+                {searchInput ? 'Không tìm thấy yêu cầu phù hợp' : 'Hãy tạo yêu cầu đầu tiên'}
+              </p>
             </div>
-            <h3 className="mb-2 text-xl font-bold text-gray-700">Không có yêu cầu dịch vụ</h3>
-            <p className="mb-6 text-gray-500">
-              {searchInput ? 'Không tìm thấy yêu cầu phù hợp' : 'Hãy tạo yêu cầu đầu tiên'}
-            </p>
-          </div>
-        ) : undefined
-      }
-      skeletonRows={10}
-    />
+          ) : undefined
+        }
+        skeletonRows={10}
+      />
+
+      <ServiceRequestDetailModal
+        requestId={selectedRequestId}
+        open={isDetailOpen}
+        onOpenChange={setIsDetailOpen}
+      />
+    </>
   )
 }

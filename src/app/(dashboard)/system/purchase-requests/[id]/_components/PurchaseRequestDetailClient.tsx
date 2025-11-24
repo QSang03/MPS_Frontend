@@ -99,7 +99,7 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
 
   const updateStatusMutation = useMutation({
     mutationFn: (status: PurchaseRequestStatus) =>
-      purchaseRequestsClientService.updateStatus(id, status),
+      purchaseRequestsClientService.updateStatus(id, { status }),
     onMutate: () => setStatusUpdating(true),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['purchase-requests'] })

@@ -194,7 +194,7 @@ export function PolicyListPage({ onEdit, onCreate }: PolicyListPageProps) {
           <div>
             <label className="mb-2 block text-sm font-medium">Effect</label>
             <Select value={effect} onValueChange={setEffect}>
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Chọn Effect" />
               </SelectTrigger>
               <SelectContent>

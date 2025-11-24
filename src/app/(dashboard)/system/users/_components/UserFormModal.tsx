@@ -33,7 +33,7 @@ export function UserFormModal({ customerId = '' }: UserFormModalProps) {
         description="Điền thông tin chi tiết để tạo tài khoản người dùng"
         icon={Users}
         variant="create"
-        maxWidth="!max-w-[60vw]"
+        maxWidth="!max-w-3xl"
       >
         <UserForm
           customerId={customerId}
