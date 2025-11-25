@@ -149,13 +149,16 @@ export interface ServiceRequestMessage {
   serviceRequestId: string
   authorId?: string
   authorName?: string
-  content: string
+  /** The message body returned by backend (field name `message`) */
+  message: string
+  /** Legacy alias – some older frontend code used `content` */
+  content?: string
   createdAt: string
 }
 
 export interface CreateServiceRequestMessageDto {
-  content: string
-  authorId?: string
+  /** Message body to send to backend. Backend expects `message` field. */
+  message: string
 }
 
 /**

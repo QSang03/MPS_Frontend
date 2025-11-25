@@ -110,8 +110,26 @@ export const serviceRequestsClientService = {
     return { data: Array.isArray(data) ? data : [], pagination }
   },
 
-  async createMessage(id: string, payload: CreateServiceRequestMessageDto) {
-    const response = await internalApiClient.post(`/api/service-requests/${id}/messages`, payload)
+  async createMessage(
+    id: string,
+    payload: CreateServiceRequestMessageDto | { message: string; authorId?: string }
+  ) {
+    // Backend expects field 'message' — older frontend callers may still send { content }.
+    // Normalize payload to { message } so the proxy/BE validation accepts it.
+    // Normalize payload so backend always receives { message, authorId? }
+    // Backend accepts only { message } — do not forward any authorId from client.
+    let body: { message?: string }
+    if ('message' in payload) {
+      body = { message: payload.message }
+    } else if ('content' in (payload as unknown as Record<string, unknown>)) {
+      // backward compatibility: some callers may still pass { content }
+      const p = payload as unknown as { content?: string }
+      body = { message: p.content }
+    } else {
+      body = {}
+    }
+
+    const response = await internalApiClient.post(`/api/service-requests/${id}/messages`, body)
     return response.data?.data ?? null
   },
 

@@ -39,6 +39,18 @@ import type { ServiceRequest } from '@/types/models/service-request'
 import { useServiceRequestsQuery } from '@/lib/hooks/queries/useServiceRequestsQuery'
 import { TableSkeleton } from '@/components/system/TableSkeleton'
 import { ServiceRequestDetailModal } from './ServiceRequestDetailModal'
+import { serviceRequestsClientService } from '@/lib/api/services/service-requests-client.service'
+import { useToast } from '@/components/ui/use-toast'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Textarea } from '@/components/ui/textarea'
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog'
 
 type ServiceRequestRow = ServiceRequest
 
@@ -313,6 +325,15 @@ function UserRequestsTableContent({
   const [isPending, startTransition] = useTransition()
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null)
   const [isDetailOpen, setIsDetailOpen] = useState(false)
+  const [closeReason, setCloseReason] = useState('')
+  const [isCloseDialogOpen, setIsCloseDialogOpen] = useState(false)
+  const [closingRequestId, setClosingRequestId] = useState<string | null>(null)
+  const [isClosing, setIsClosing] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [isBulkCloseDialogOpen, setIsBulkCloseDialogOpen] = useState(false)
+  const [bulkCloseReason, setBulkCloseReason] = useState('')
+  const [isBulkClosing, setIsBulkClosing] = useState(false)
+  const { toast } = useToast()
 
   const queryParams = useMemo(
     () => ({
@@ -328,10 +349,19 @@ function UserRequestsTableContent({
     [pagination, search, statusFilter, priorityFilter, customerFilter, sorting]
   )
 
-  const { data } = useServiceRequestsQuery(queryParams)
+  const { data, refetch } = useServiceRequestsQuery(queryParams)
 
   const requests = useMemo(() => (data?.data ?? []) as ServiceRequestRow[], [data?.data])
   const totalCount = data?.pagination?.total ?? requests.length
+
+  // Clean up selectedIds when requests change (remove ids that are now CLOSED or missing)
+  useEffect(() => {
+    setSelectedIds((prev) =>
+      prev.filter((id) =>
+        requests.some((r) => r.id === id && r.status !== ServiceRequestStatus.CLOSED)
+      )
+    )
+  }, [requests])
 
   useEffect(() => {
     const open = requests.filter((r) => r.status === ServiceRequestStatus.OPEN).length
@@ -352,8 +382,160 @@ function UserRequestsTableContent({
     setIsDetailOpen(true)
   }
 
+  const openCloseDialog = (id: string) => {
+    setClosingRequestId(id)
+    setCloseReason('')
+    setIsCloseDialogOpen(true)
+  }
+
+  const handleConfirmClose = async () => {
+    if (!closingRequestId || !closeReason.trim()) {
+      toast({
+        title: 'Vui lòng nhập lý do đóng yêu cầu',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    try {
+      setIsClosing(true)
+      await serviceRequestsClientService.updateStatus(closingRequestId, {
+        status: ServiceRequestStatus.CLOSED,
+        customerInitiatedClose: true,
+        customerCloseReason: closeReason.trim(),
+      })
+      toast({ title: 'Đóng yêu cầu thành công' })
+      setIsCloseDialogOpen(false)
+    } catch (error) {
+      console.error('Failed to close service request', error)
+      toast({
+        title: 'Đóng yêu cầu thất bại',
+        description: 'Vui lòng thử lại sau.',
+        variant: 'destructive',
+      })
+    } finally {
+      setIsClosing(false)
+    }
+    // Refresh list after single close
+    try {
+      await refetch()
+    } catch {
+      // ignore
+    }
+  }
+
+  const openBulkCloseDialog = () => {
+    setBulkCloseReason('')
+    setIsBulkCloseDialogOpen(true)
+  }
+
+  const handleConfirmBulkClose = async () => {
+    if (selectedIds.length === 0) {
+      toast({ title: 'Vui lòng chọn ít nhất một yêu cầu', variant: 'destructive' })
+      return
+    }
+    if (!bulkCloseReason.trim()) {
+      toast({ title: 'Vui lòng nhập lý do đóng yêu cầu', variant: 'destructive' })
+      return
+    }
+
+    setIsBulkClosing(true)
+    try {
+      const promises = selectedIds.map((id) =>
+        serviceRequestsClientService.updateStatus(id, {
+          status: ServiceRequestStatus.CLOSED,
+          customerInitiatedClose: true,
+          customerCloseReason: bulkCloseReason.trim(),
+        })
+      )
+
+      const results = await Promise.allSettled(promises)
+      const successes = results.filter((r) => r.status === 'fulfilled').length
+      const failures = results.length - successes
+
+      if (successes > 0) {
+        toast({ title: `Đóng ${successes} yêu cầu thành công` })
+      }
+      if (failures > 0) {
+        toast({
+          title: `Có ${failures} yêu cầu không đóng được`,
+          description: 'Vui lòng thử lại sau.',
+          variant: 'destructive',
+        })
+      }
+
+      setIsBulkCloseDialogOpen(false)
+      setSelectedIds([])
+    } catch (error) {
+      console.error('Bulk close failed', error)
+      toast({
+        title: 'Đóng yêu cầu thất bại',
+        description: 'Vui lòng thử lại sau.',
+        variant: 'destructive',
+      })
+    } finally {
+      setIsBulkClosing(false)
+      try {
+        await refetch()
+      } catch {
+        // ignore
+      }
+    }
+  }
+
   const columns = useMemo<ColumnDef<ServiceRequestRow>[]>(
     () => [
+      {
+        id: 'select',
+        header: () => {
+          // only consider selectable ids (not CLOSED)
+          const selectableIdsOnPage = requests
+            .filter((r) => r.status !== ServiceRequestStatus.CLOSED)
+            .map((r) => r.id)
+          const allSelected =
+            selectableIdsOnPage.length > 0 &&
+            selectableIdsOnPage.every((id) => selectedIds.includes(id))
+          const someSelected =
+            selectableIdsOnPage.some((id) => selectedIds.includes(id)) && !allSelected
+
+          return (
+            <div className="flex items-center">
+              <Checkbox
+                checked={allSelected}
+                aria-checked={someSelected ? 'mixed' : allSelected}
+                disabled={selectableIdsOnPage.length === 0}
+                onCheckedChange={(v) => {
+                  if (v) {
+                    // select all selectable on current page
+                    setSelectedIds((prev) => Array.from(new Set([...prev, ...selectableIdsOnPage])))
+                  } else {
+                    // deselect all selectable on current page
+                    setSelectedIds((prev) => prev.filter((id) => !selectableIdsOnPage.includes(id)))
+                  }
+                }}
+              />
+            </div>
+          )
+        },
+        cell: ({ row }) => {
+          const id = row.original.id
+          const disabled = row.original.status === ServiceRequestStatus.CLOSED
+          return (
+            <div>
+              <Checkbox
+                checked={selectedIds.includes(id)}
+                disabled={disabled}
+                onCheckedChange={(v) => {
+                  if (disabled) return
+                  if (v) setSelectedIds((prev) => Array.from(new Set([...prev, id])))
+                  else setSelectedIds((prev) => prev.filter((x) => x !== id))
+                }}
+              />
+            </div>
+          )
+        },
+        enableSorting: false,
+      },
       {
         id: 'index',
         header: 'STT',
@@ -507,20 +689,37 @@ function UserRequestsTableContent({
             Thao tác
           </div>
         ),
-        cell: ({ row }) => (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleViewDetail(row.original.id)}
-            className="transition-all hover:bg-gray-100 hover:text-gray-700"
-          >
-            <Eye className="mr-2 h-4 w-4" />
-            Chi tiết
-          </Button>
-        ),
+        cell: ({ row }) => {
+          const canClose =
+            row.original.status !== ServiceRequestStatus.CLOSED &&
+            row.original.status !== ServiceRequestStatus.RESOLVED
+
+          return (
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleViewDetail(row.original.id)}
+                className="transition-all hover:bg-gray-100 hover:text-gray-700"
+              >
+                <Eye className="mr-2 h-4 w-4" />
+                Chi tiết
+              </Button>
+              {canClose && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => openCloseDialog(row.original.id)}
+                >
+                  Đóng yêu cầu
+                </Button>
+              )}
+            </div>
+          )
+        },
       },
     ],
-    [pagination.pageIndex, pagination.pageSize]
+    [pagination.pageIndex, pagination.pageSize, selectedIds, requests]
   )
 
   return (
@@ -530,6 +729,18 @@ function UserRequestsTableContent({
         columns={columns}
         data={requests}
         totalCount={totalCount}
+        actions={
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={openBulkCloseDialog}
+              disabled={selectedIds.length === 0}
+            >
+              Đóng yêu cầu đã chọn ({selectedIds.length})
+            </Button>
+          </div>
+        }
         pageIndex={pagination.pageIndex}
         pageSize={pagination.pageSize}
         onPaginationChange={(next) => {
@@ -568,6 +779,71 @@ function UserRequestsTableContent({
         open={isDetailOpen}
         onOpenChange={setIsDetailOpen}
       />
+
+      <Dialog open={isCloseDialogOpen} onOpenChange={setIsCloseDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Đóng yêu cầu dịch vụ</DialogTitle>
+            <DialogDescription>
+              Vui lòng nhập lý do đóng yêu cầu. Lý do này sẽ được lưu lại cùng yêu cầu.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Lý do đóng yêu cầu</label>
+            <Textarea
+              value={closeReason}
+              onChange={(e) => setCloseReason(e.target.value)}
+              placeholder="Ví dụ: Tôi tạo yêu cầu nhầm, không cần xử lý nữa..."
+              rows={4}
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsCloseDialogOpen(false)}
+              disabled={isClosing}
+            >
+              Hủy
+            </Button>
+            <Button onClick={handleConfirmClose} disabled={isClosing}>
+              {isClosing ? 'Đang đóng...' : 'Xác nhận đóng'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isBulkCloseDialogOpen} onOpenChange={setIsBulkCloseDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Đóng nhiều yêu cầu</DialogTitle>
+            <DialogDescription>
+              Vui lòng nhập lý do đóng các yêu cầu đã chọn. Lý do này sẽ được lưu lại cùng yêu cầu.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Lý do đóng yêu cầu</label>
+            <Textarea
+              value={bulkCloseReason}
+              onChange={(e) => setBulkCloseReason(e.target.value)}
+              placeholder="Ví dụ: Tôi tạo các yêu cầu nhầm, không cần xử lý nữa..."
+              rows={4}
+            />
+            <p className="text-muted-foreground text-sm">Số yêu cầu: {selectedIds.length}</p>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsBulkCloseDialogOpen(false)}
+              disabled={isBulkClosing}
+            >
+              Hủy
+            </Button>
+            <Button onClick={handleConfirmBulkClose} disabled={isBulkClosing}>
+              {isBulkClosing ? 'Đang đóng...' : 'Xác nhận đóng'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

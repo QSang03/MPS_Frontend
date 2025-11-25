@@ -18,6 +18,7 @@ import {
 import type { LucideIcon } from 'lucide-react'
 import { ArrowLeft, CheckCircle2, Clock4, Wrench, XCircle } from 'lucide-react'
 import { formatDateTime, formatRelativeTime } from '@/lib/utils/formatters'
+import ServiceRequestMessages from '@/components/service-request/ServiceRequestMessages'
 import {
   Table,
   TableBody,
@@ -91,16 +92,8 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
       queryClient.invalidateQueries({ queryKey: ['service-requests'] })
       queryClient.invalidateQueries({ queryKey: ['service-requests', 'detail', id] })
       toast.success('Cập nhật trạng thái thành công')
-      // If we had an action note, also create a message to ensure conversation shows it
-      if (actionNote && actionNote.trim().length > 0) {
-        try {
-          await serviceRequestsClientService.createMessage(id, { content: actionNote.trim() })
-          queryClient.invalidateQueries({ queryKey: ['service-requests', id, 'messages'] })
-          setActionNote('')
-        } catch (e) {
-          console.error('Failed to create message for status action:', e)
-        }
-      }
+      // Previously we created a conversation message for action notes here.
+      // That behavior has been removed — status updates will no longer auto-create messages.
     },
     onError: (err: unknown) => {
       const msg = err instanceof Error ? err.message : 'Không thể cập nhật'
@@ -130,7 +123,6 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
   })
 
   const [showAddCost, setShowAddCost] = useState(false)
-  const [newCostDeviceId, setNewCostDeviceId] = useState<string | undefined>(undefined)
   const [newItems, setNewItems] = useState<
     Array<{ type: 'LABOR' | 'PARTS' | 'OTHER'; amount: number; note?: string }>
   >([{ type: 'LABOR', amount: 0, note: '' }])
@@ -341,6 +333,20 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
         </CardContent>
       </Card>
 
+      {/* Conversation */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Cuộc trò chuyện</CardTitle>
+          <CardDescription>Thông tin trao đổi giữa nhân viên và khách hàng</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ServiceRequestMessages
+            serviceRequestId={id}
+            currentUserId={typeof session?.userId === 'string' ? session.userId : null}
+          />
+        </CardContent>
+      </Card>
+
       {/* Costs card (system admins) */}
       <Card>
         <CardHeader>
@@ -357,14 +363,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
               fallback={null}
             >
               <div className="flex items-center gap-2">
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    // seed deviceId from loaded request when opening to avoid effect-setState
-                    setNewCostDeviceId(data?.device?.id ?? undefined)
-                    setShowAddCost(true)
-                  }}
-                >
+                <Button size="sm" onClick={() => setShowAddCost(true)}>
                   Thêm chi phí
                 </Button>
               </div>
@@ -453,7 +452,8 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                     }
 
                     createCostMutation.mutate({
-                      deviceId: newCostDeviceId,
+                      // Use the service request's device id automatically (if any)
+                      deviceId: data?.device?.id ?? undefined,
                       totalAmount: totalAmountForDraft,
                       items: newItems.map((it) => ({
                         type: it.type,
@@ -470,16 +470,6 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
             }
           >
             <div className="mt-3 space-y-3">
-              <div>
-                <label className="text-muted-foreground text-sm">Thiết bị (tuỳ chọn)</label>
-                <Input
-                  value={newCostDeviceId ?? ''}
-                  onChange={(e) => setNewCostDeviceId(e.target.value || undefined)}
-                  placeholder="Device ID (optional)"
-                  className="mt-1"
-                />
-              </div>
-
               <div className="space-y-2">
                 <label className="text-muted-foreground text-sm">Mục chi phí</label>
                 {newItems.map((it, idx) => (

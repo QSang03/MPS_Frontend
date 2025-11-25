@@ -360,27 +360,10 @@ function ServiceRequestsTableContent({
       actionNote?: string
     }) =>
       serviceRequestsClientService.updateStatus(id, actionNote ? { status, actionNote } : status),
-    onSuccess: async (_data, variables) => {
+    onSuccess: async () => {
       toast.success('Cập nhật trạng thái thành công')
       queryClient.invalidateQueries({ queryKey: ['service-requests', queryParams] })
       queryClient.invalidateQueries({ queryKey: ['system-requests-service'] })
-
-      // If admin provided an action note, persist it as a conversation message so backend
-      // can record it and broadcast via websocket (BE may emit 'service-request:message.created')
-      try {
-        if (variables?.actionNote && variables.actionNote.trim().length > 0) {
-          await serviceRequestsClientService.createMessage(variables.id, {
-            content: variables.actionNote.trim(),
-          })
-          queryClient.invalidateQueries({
-            queryKey: ['service-requests', variables.id, 'messages'],
-          })
-        }
-      } catch (err) {
-        // Don't fail overall flow if creating message fails — just log and show a toast
-        console.error('Failed to create message after status update', err)
-        toast.error('Cập nhật trạng thái thành công nhưng không lưu được ghi chú')
-      }
     },
     onError: (error: unknown) => {
       const message = error instanceof Error ? error.message : 'Không thể cập nhật trạng thái'

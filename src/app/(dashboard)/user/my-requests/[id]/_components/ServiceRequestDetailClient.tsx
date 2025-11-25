@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import { formatRelativeTime } from '@/lib/utils/formatters'
 import { serviceRequestsClientService } from '@/lib/api/services/service-requests-client.service'
+import ServiceRequestMessages from '@/components/service-request/ServiceRequestMessages'
 import { ServiceRequestStatus } from '@/constants/status'
 // type Session removed - not needed here
 import {
@@ -432,6 +433,10 @@ export function ServiceRequestDetailClient(props: Props) {
                           </Table>
                         </div>
                       )}
+                      {/* Conversation (user) */}
+                      <div className="mt-6">
+                        <ServiceRequestMessages serviceRequestId={id} />
+                      </div>
                     </div>
                   ))}
                 </div>

@@ -80,6 +80,14 @@ export function useRealtimeNotifications() {
       })
     })
 
+    // Debug helper: log all incoming events (helps debug missing emissions / payloads)
+    const onAny = (event: string, ...args: unknown[]) => {
+      // keep this quiet in CI by using console.debug
+      console.debug('[WS] event received:', event, args)
+    }
+
+    socket.onAny(onAny)
+
     return () => {
       socket.off('device:status-changed')
       socket.off('service-request:created')
@@ -88,6 +96,7 @@ export function useRealtimeNotifications() {
       socket.off('service-request:cost.created')
       socket.off('consumable:low')
       socket.off('maintenance:reminder')
+      socket.offAny(onAny)
     }
   }, [socket, queryClient])
 }

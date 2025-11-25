@@ -47,6 +47,11 @@ interface TableWrapperProps<TData> {
   renderColumnVisibilityMenu?: (menu: React.ReactNode) => void
   sorting?: { sortBy?: string; sortOrder?: 'asc' | 'desc' }
   isPending?: boolean
+  /**
+   * Optional list of row ids that should be visually treated as selected.
+   * This is used by callers that manage selection outside of TanStack table state.
+   */
+  selectedRowIds?: string[]
 }
 
 export function TableWrapper<TData>({
@@ -70,6 +75,7 @@ export function TableWrapper<TData>({
   renderColumnVisibilityMenu,
   sorting: externalSorting,
   isPending = false,
+  selectedRowIds,
 }: TableWrapperProps<TData>) {
   const [internalSorting, setInternalSorting] = useState<SortingState>(() => {
     if (externalSorting) {
@@ -310,15 +316,25 @@ export function TableWrapper<TData>({
                 </TableHeader>
                 <TableBody>
                   {hasData ? (
-                    table.getRowModel().rows.map((row) => (
-                      <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
-                        {row.getVisibleCells().map((cell) => (
-                          <TableCell key={cell.id}>
-                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                          </TableCell>
-                        ))}
-                      </TableRow>
-                    ))
+                    table.getRowModel().rows.map((row) => {
+                      const rowId = (row.original as unknown as { id?: string })?.id
+                      const isExternallySelected =
+                        rowId !== undefined && selectedRowIds?.includes(rowId)
+                      return (
+                        <TableRow
+                          key={row.id}
+                          data-state={
+                            isExternallySelected || row.getIsSelected() ? 'selected' : undefined
+                          }
+                        >
+                          {row.getVisibleCells().map((cell) => (
+                            <TableCell key={cell.id}>
+                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      )
+                    })
                   ) : (
                     <TableRow>
                       <TableCell colSpan={finalColumns.length} className="h-32 p-0 align-middle">
