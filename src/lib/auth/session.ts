@@ -76,7 +76,7 @@ export async function createSessionWithTokens(payload: SessionWithTokens): Promi
   // Set session cookie
   cookieStore.set(SESSION_COOKIE_NAME, sessionToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: IS_SECURE_COOKIES,
     sameSite: 'lax',
     maxAge: 60 * 60 * 8, // 8 hours
     path: '/',
