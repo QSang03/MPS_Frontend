@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import backendApiClient from '@/lib/api/backend-client'
 import { API_ENDPOINTS } from '@/lib/api/endpoints'
+import { removeEmpty } from '@/lib/utils/clean'
 
 export async function GET(request: NextRequest) {
   try {
@@ -50,13 +51,23 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   let reqBody: unknown = undefined
   try {
+    // Debug logs to help trace why backend may not be called
+    // These logs are temporary; remove them after debugging
+    console.debug(
+      'API Route /api/contracts POST - incoming headers:',
+      Object.fromEntries(request.headers.entries())
+    )
     const cookieStore = await cookies()
     const accessToken = cookieStore.get('access_token')?.value
     if (!accessToken) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const contentType = (request.headers.get('content-type') || '').toLowerCase()
+    console.debug('API Route /api/contracts POST - content-type:', contentType)
     if (contentType.includes('multipart/form-data')) {
       const formData = await request.formData()
+      console.debug(
+        'API Route /api/contracts POST - detected multipart/form-data; forwarding as multipart'
+      )
       return forwardContractMultipart({
         formData,
         accessToken,
@@ -67,8 +78,13 @@ export async function POST(request: NextRequest) {
     }
 
     reqBody = await request.json()
+    const cleanedBody = removeEmpty(reqBody as Record<string, unknown>)
+    console.debug(
+      'API Route /api/contracts POST - JSON body parsed & cleaned:',
+      JSON.stringify(cleanedBody)
+    )
 
-    const response = await backendApiClient.post(API_ENDPOINTS.CONTRACTS, reqBody, {
+    const response = await backendApiClient.post(API_ENDPOINTS.CONTRACTS, cleanedBody, {
       headers: { Authorization: `Bearer ${accessToken}` },
     })
 
@@ -139,9 +155,13 @@ export async function POST(request: NextRequest) {
               ? JSON.parse(String(err.config.data))
               : {}
 
-        const retryResp = await backendApiClient.post(API_ENDPOINTS.CONTRACTS, originalBody, {
-          headers: { Authorization: `Bearer ${newAccessToken}` },
-        })
+        const retryResp = await backendApiClient.post(
+          API_ENDPOINTS.CONTRACTS,
+          removeEmpty(originalBody as Record<string, unknown>),
+          {
+            headers: { Authorization: `Bearer ${newAccessToken}` },
+          }
+        )
         return NextResponse.json(retryResp.data)
       } catch (retryErr: unknown) {
         const rerr = retryErr as { message?: string } | undefined

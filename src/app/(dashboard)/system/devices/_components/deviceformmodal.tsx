@@ -46,6 +46,10 @@ interface Props {
   // When true, render compact icon-only trigger button (used in table action column)
   compact?: boolean
   trigger?: React.ReactNode
+  // When provided, prefill create form with a customer id (used when creating from customer context)
+  initialCustomerId?: string
+  // When provided, prefill the isCustomerOwned flag for create mode
+  initialIsCustomerOwned?: boolean
 }
 
 const buildInitialForm = () => ({
@@ -69,6 +73,8 @@ export default function DeviceFormModal({
   onSaved,
   compact = false,
   trigger,
+  initialCustomerId,
+  initialIsCustomerOwned,
 }: Props) {
   const [open, setOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -139,9 +145,21 @@ export default function DeviceFormModal({
         customerId: device.customerId || device.customer?.id || '',
       })
     } else {
-      setForm(buildInitialForm())
+      // Pre-fill create form when initial props provided (creating device under a customer)
+      const base = buildInitialForm()
+      if (typeof initialCustomerId === 'string' || typeof initialIsCustomerOwned === 'boolean') {
+        setForm(() => ({
+          ...base,
+          ...(initialCustomerId ? { customerId: initialCustomerId } : {}),
+          ...(typeof initialIsCustomerOwned === 'boolean'
+            ? { isCustomerOwned: initialIsCustomerOwned }
+            : {}),
+        }))
+      } else {
+        setForm(base)
+      }
     }
-  }, [open, mode, device])
+  }, [open, mode, device, initialCustomerId, initialIsCustomerOwned])
 
   // Fetch customer addresses when modal opens in edit mode and device has a customer
   useEffect(() => {

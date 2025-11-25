@@ -9,9 +9,11 @@ import {
   Monitor,
   Flag,
   AlertCircle,
+  Image as ImageIcon,
   CheckCircle,
   Sparkles,
 } from 'lucide-react'
+
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -108,6 +110,7 @@ export function ServiceRequestFormModal({
   const [purchaseItems, setPurchaseItems] = useState<
     Array<{ consumableTypeId: string; quantity: number; name?: string }>
   >([])
+  const [images, setImages] = useState<File[]>([])
   const [consumableSearch, setConsumableSearch] = useState('')
 
   type AnyRecord = Record<string, unknown>
@@ -205,7 +208,41 @@ export function ServiceRequestFormModal({
       if ('deviceId' in merged) delete merged.deviceId
       if ('status' in merged) delete merged['status']
       const payload = removeEmpty(merged) as ServiceRequestFormData
-      createServiceMutation.mutate(payload)
+      // If there are images selected, send multipart/form-data
+      if (images && images.length > 0) {
+        const form = new FormData()
+        // append simple fields
+        Object.entries(payload).forEach(([k, v]) => {
+          if (v === undefined || v === null) return
+          // for arrays/objects stringify
+          if (typeof v === 'object') {
+            try {
+              form.append(k, JSON.stringify(v))
+            } catch {
+              // fallback
+              form.append(k, String(v))
+            }
+          } else {
+            form.append(k, String(v))
+          }
+        })
+
+        // append images; backend expects multiple 'images' fields
+        images.forEach((file) => {
+          form.append('images', file)
+        })
+
+        // debug
+        console.debug(
+          '[ServiceRequestFormModal] submitting FormData with images, keys:',
+          Array.from(form.keys())
+        )
+        createServiceMutation.mutate(form)
+      } else {
+        // debug
+        console.debug('[ServiceRequestFormModal] submitting payload:', payload)
+        createServiceMutation.mutate(payload)
+      }
       return
     }
 
@@ -486,6 +523,78 @@ export function ServiceRequestFormModal({
                       )}
                     />
                   </motion.div>
+
+                  {/* Images upload (SERVICE mode only) */}
+                  {mode === 'SERVICE' && (
+                    <motion.div
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.35 }}
+                    >
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-300">
+                          <FileText className="h-4 w-4 text-black dark:text-white" />
+                          Hình ảnh (tùy chọn)
+                        </FormLabel>
+                        <div className="mt-2 flex flex-col gap-2">
+                          <label className="relative flex cursor-pointer items-center justify-between rounded-xl border-2 border-dashed border-slate-300/60 bg-white/60 p-3 hover:border-indigo-400 dark:border-slate-600/50 dark:bg-slate-700/60">
+                            <div className="flex items-center gap-3">
+                              <ImageIcon className="h-5 w-5 text-slate-500 dark:text-slate-300" />
+                              <div className="text-sm text-slate-700 dark:text-slate-300">
+                                Kéo & thả hoặc bấm để chọn ảnh
+                                <div className="text-xs text-slate-400">(JPEG, PNG, WebP, GIF)</div>
+                              </div>
+                            </div>
+                            <div className="text-xs text-slate-500">Chọn nhiều</div>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              multiple
+                              onChange={(e) => {
+                                const files = Array.from(e.target.files || [])
+                                setImages((prev) => [...prev, ...files])
+                                // reset input value so same file can be re-selected if removed
+                                e.currentTarget.value = ''
+                              }}
+                              className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                              disabled={createServiceMutation.isPending}
+                            />
+                          </label>
+
+                          {images.length > 0 && (
+                            <div className="flex flex-wrap gap-2">
+                              {images.map((file, idx) => (
+                                <div
+                                  key={`${file.name}-${idx}`}
+                                  className="relative flex h-20 w-20 flex-col items-center overflow-hidden rounded-lg border bg-white/60 p-1 text-xs shadow-sm dark:bg-slate-700/60"
+                                >
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img
+                                    src={URL.createObjectURL(file)}
+                                    alt={file.name || ''}
+                                    className="h-full w-full object-cover"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setImages((prev) => prev.filter((_, i) => i !== idx))
+                                    }
+                                    className="absolute top-0 right-0 rounded-bl bg-red-600/90 px-1 py-0.5 text-[10px] text-white"
+                                  >
+                                    Xóa
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <FormDescription className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
+                          Tải lên nhiều ảnh (JPEG, PNG, WebP, GIF). Các ảnh sẽ được gửi cùng yêu
+                          cầu.
+                        </FormDescription>
+                      </FormItem>
+                    </motion.div>
+                  )}
 
                   {/* Priority only in SERVICE mode */}
                   {mode === 'SERVICE' && (

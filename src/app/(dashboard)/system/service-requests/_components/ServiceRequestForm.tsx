@@ -24,12 +24,13 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { Input } from '@/components/ui/input'
 import {
   serviceRequestSchema,
   type ServiceRequestFormData,
 } from '@/lib/validations/service-request.schema'
-import { serviceRequestService } from '@/lib/api/services/service-request.service'
-import { deviceService } from '@/lib/api/services/device.service'
+import { serviceRequestsClientService } from '@/lib/api/services/service-requests-client.service'
+import { devicesClientService } from '@/lib/api/services/devices-client.service'
 import { Priority } from '@/constants/status'
 import { removeEmpty } from '@/lib/utils/clean'
 
@@ -43,22 +44,27 @@ export function ServiceRequestForm({ customerId, onSuccess }: ServiceRequestForm
   const queryClient = useQueryClient()
 
   // Fetch devices for dropdown
+  // Use the client-safe devices client which calls Next.js API routes (/api/devices)
+  // instead of calling the backend directly. This avoids CORS and uses the proxy.
   const { data: devicesData } = useQuery({
     queryKey: ['devices', customerId],
-    queryFn: () => deviceService.getAll({ page: 1, limit: 100, customerId }),
+    queryFn: () => devicesClientService.getAll({ page: 1, limit: 100, customerId }),
   })
 
   const form = useForm<ServiceRequestFormData>({
     resolver: zodResolver(serviceRequestSchema),
     defaultValues: {
       deviceId: '',
+      title: '',
       description: '',
       priority: Priority.NORMAL,
+      customerId,
     },
   })
 
   const createMutation = useMutation({
-    mutationFn: serviceRequestService.create,
+    // Use client-safe API route so the browser calls /api/service-requests (Next.js proxy)
+    mutationFn: serviceRequestsClientService.create,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['service-requests'] })
       toast.success('Tạo yêu cầu bảo trì thành công!')
@@ -100,7 +106,7 @@ export function ServiceRequestForm({ customerId, onSuccess }: ServiceRequestForm
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {devicesData?.items.map((device) => (
+                  {devicesData?.data?.map((device) => (
                     <SelectItem key={device.id} value={device.id}>
                       {device.serialNumber} - {device.model} ({device.location})
                     </SelectItem>
@@ -110,6 +116,31 @@ export function ServiceRequestForm({ customerId, onSuccess }: ServiceRequestForm
               <FormDescription>Chọn thiết bị cần bảo trì</FormDescription>
               <FormMessage />
             </FormItem>
+          )}
+        />
+        {/* Title (required by validation) */}
+        <FormField
+          control={form.control}
+          name="title"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Tiêu đề</FormLabel>
+              <FormControl>
+                <Input placeholder="Tiêu đề ngắn gọn" {...field} />
+              </FormControl>
+              <FormDescription>Tiêu đề tóm tắt vấn đề (ít nhất 3 ký tự)</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Hidden customerId so the form includes the prop value */}
+        <FormField
+          control={form.control}
+          name="customerId"
+          render={({ field }) => (
+            // Hidden input — keep in form state so validation and payload include it
+            <input type="hidden" {...field} />
           )}
         />
 

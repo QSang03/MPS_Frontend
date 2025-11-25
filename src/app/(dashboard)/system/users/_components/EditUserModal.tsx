@@ -1,8 +1,8 @@
 'use client'
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useState, useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import { useState, useEffect, useMemo } from 'react'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Dialog } from '@/components/ui/dialog'
@@ -26,6 +26,8 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Loader2, User, Mail, Shield } from 'lucide-react'
 import { getRolesForClient, updateUserForClient } from '@/lib/auth/data-actions'
+import { useRoleAttributeSchema } from '@/lib/hooks/useRoleAttributeSchema'
+import { DynamicAttributesFields } from '@/components/shared/DynamicAttributesFields'
 import removeEmpty from '@/lib/utils/clean'
 import type { User as UserType, UserRole } from '@/types/users'
 import { toast } from 'sonner'
@@ -58,6 +60,9 @@ export function EditUserModal({
 }: EditUserModalProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [roles, setRoles] = useState<UserRole[]>([])
+  // Dynamic attributes state (edit mode should start with user's existing attributes)
+  const [attributes, setAttributes] = useState<Record<string, unknown>>(user?.attributes || {})
+  const [attributeErrors, setAttributeErrors] = useState<Record<string, string>>({})
 
   const form = useForm<EditUserFormData>({
     resolver: zodResolver(editUserSchema),
@@ -67,6 +72,17 @@ export function EditUserModal({
       customerId: '',
     },
   })
+
+  // Watch roleId so we can parse attribute schema
+  const selectedRoleId = useWatch({ control: form.control, name: 'roleId' })
+  const selectedRole = useMemo(
+    () => roles.find((r) => r.id === selectedRoleId),
+    [roles, selectedRoleId]
+  )
+
+  const { schema: attributeSchema, validate: validateAttributes } = useRoleAttributeSchema(
+    selectedRole?.attributeSchema
+  )
 
   // Load roles and departments when modal opens
   useEffect(() => {
@@ -83,6 +99,8 @@ export function EditUserModal({
         roleId: user.roleId,
         customerId: user.customerId || '',
       })
+      // ensure attributes state tracks the current user when opening edit modal
+      setAttributes(user.attributes || {})
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
@@ -100,6 +118,17 @@ export function EditUserModal({
   const onSubmit = async (data: EditUserFormData) => {
     if (!user) return
 
+    // Validate dynamic attributes (when schema exists)
+    if (attributeSchema) {
+      const validation = validateAttributes(attributes)
+      if (!validation.valid) {
+        setAttributeErrors(validation.errors)
+        toast.error('Vui lòng kiểm tra các thuộc tính bổ sung')
+        return
+      }
+      setAttributeErrors({})
+    }
+
     setIsLoading(true)
     try {
       // Ensure we send a proper customerId
@@ -113,6 +142,8 @@ export function EditUserModal({
         email: data.email,
         roleId: data.roleId,
         customerId: customerIdToSend,
+        // only include attributes when the role defines a schema
+        attributes: attributeSchema ? attributes : undefined,
       })
 
       // Update user
@@ -134,7 +165,14 @@ export function EditUserModal({
         if (err?.errors && typeof err.errors === 'object') {
           Object.entries(err.errors).forEach(([field, messages]) => {
             const message = Array.isArray(messages) ? String(messages[0]) : String(messages)
-            // Only set known form fields
+            // Map to attribute errors if field targets attributes (e.g. attributes.x)
+            if (typeof field === 'string' && field.startsWith('attributes.')) {
+              const key = field.replace(/^attributes\./, '')
+              setAttributeErrors((s) => ({ ...s, [key]: message }))
+              return
+            }
+
+            // Only set known top-level form fields
             if (['email', 'roleId', 'customerId'].includes(field)) {
               form.setError(field as any, { type: 'server', message })
             }
@@ -288,6 +326,17 @@ export function EditUserModal({
                 </FormItem>
               )}
             />
+
+            {/* Dynamic Attributes Fields (if any exist on the selected role) */}
+            {attributeSchema && (
+              <DynamicAttributesFields
+                schema={attributeSchema}
+                values={attributes}
+                onChange={setAttributes}
+                errors={attributeErrors}
+                disabled={isLoading}
+              />
+            )}
 
             {/* Info card */}
             <div className="rounded-lg border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-purple-50 p-4">

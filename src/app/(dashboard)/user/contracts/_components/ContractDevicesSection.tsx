@@ -1,31 +1,23 @@
 'use client'
 
 import { useState } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Button } from '@/components/ui/button'
+import { useQuery } from '@tanstack/react-query'
 import { Separator } from '@/components/ui/separator'
 import { contractsClientService } from '@/lib/api/services/contracts-client.service'
 import type { ContractDevice } from '@/types/models/contract-device'
-import { toast } from 'sonner'
 import { MonitorSmartphone, Plug2 } from 'lucide-react'
 
 interface Props {
   contractId?: string | null
+  // onRequestOpenAttach: optional callback to request opening attach dialog
+  // kept optional because user view may be read-only
   onRequestOpenAttach?: () => void
   attachedDevices?: ContractDevice[] // Truyền danh sách thiết bị đã gán
 }
-
-export default function ContractDevicesSection({
-  contractId,
-  onRequestOpenAttach,
-  attachedDevices,
-}: Props) {
-  const queryClient = useQueryClient()
+export default function ContractDevicesSection({ contractId, attachedDevices }: Props) {
   const [page] = useState(1)
   const [limit] = useState(50)
-  const [selectedIds, setSelectedIds] = useState<string[]>([])
-  // attach dialog is lifted to parent modal; request parent to open when needed
-  // local inputs were removed - attach dialog is lifted to parent
+  // attach/detach actions removed for user contracts (managed only by admin)
 
   const canManage = !!contractId
 
@@ -40,39 +32,7 @@ export default function ContractDevicesSection({
   // Ưu tiên sử dụng attachedDevices từ props, nếu không có thì dùng data từ query
   const devices: ContractDevice[] = attachedDevices ?? listResp?.data ?? []
 
-  const detachMutation = useMutation({
-    mutationFn: (deviceIds: string[]) =>
-      contractsClientService.detachDevices(contractId as string, { deviceIds }),
-    onSuccess: () => {
-      toast.success('Gỡ thiết bị thành công')
-      queryClient.invalidateQueries({ queryKey: ['contract-devices', contractId] })
-      setSelectedIds([])
-    },
-    onError: (err) => {
-      console.error('detach error', err)
-      toast.error('Gỡ thiết bị thất bại')
-    },
-  })
-
-  // attach dialog is handled by parent modal
-
-  const toggleSelect = (id: string) => {
-    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]))
-  }
-  // attach dialog selection handled by parent
-
-  const handleDetach = async () => {
-    if (!contractId) return
-    if (selectedIds.length === 0) {
-      toast.error('Vui lòng chọn ít nhất 1 thiết bị để gỡ')
-      return
-    }
-    await detachMutation.mutateAsync(selectedIds)
-  }
-  // attach action handled by parent
-  const openAttachDialog = () => {
-    if (typeof onRequestOpenAttach === 'function') onRequestOpenAttach()
-  }
+  // attach/detach functionality removed for user view — read-only list
 
   if (!canManage) {
     return (
@@ -87,8 +47,13 @@ export default function ContractDevicesSection({
 
   const formatPrice = (value?: number | null) => {
     if (value === undefined || value === null) return '—'
-    if (typeof value === 'number') return value.toFixed(5)
-    return String(value)
+    if (typeof value !== 'number') return String(value)
+    // keep up to 5 decimal places, then remove unnecessary trailing zeros
+    // e.g. 0.50000 -> "0.5", 2.00000 -> "2", 1.234567 -> "1.23457"
+    return value
+      .toFixed(5)
+      .replace(/(?:\.0+|(?<=\.[0-9]*?)0+)$/, '')
+      .replace(/\.$/, '')
   }
 
   return (
@@ -99,22 +64,7 @@ export default function ContractDevicesSection({
           Thiết bị của hợp đồng
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Button
-            size="sm"
-            variant="ghost"
-            className="bg-gradient-to-r from-blue-100 to-indigo-100 font-bold text-indigo-700"
-            onClick={openAttachDialog}
-          >
-            + Thêm và Cập nhật
-          </Button>
-          <Button
-            size="sm"
-            onClick={handleDetach}
-            disabled={selectedIds.length === 0}
-            className="bg-gradient-to-r from-red-400 to-pink-400 font-semibold text-white"
-          >
-            Gỡ thiết bị
-          </Button>
+          {/* No device management actions for users */}
         </div>
       </div>
 
@@ -122,7 +72,6 @@ export default function ContractDevicesSection({
         <table className="w-full">
           <thead className="bg-gradient-to-r from-indigo-50 via-blue-50 to-white text-indigo-700">
             <tr>
-              <th className="px-3 py-2 text-left text-sm font-bold"> </th>
               <th className="px-3 py-2 text-left text-sm font-bold">Serial</th>
               <th className="px-3 py-2 text-left text-sm font-bold">Model</th>
               <th className="px-3 py-2 text-left text-sm font-bold">Giá thuê/tháng</th>
@@ -135,27 +84,19 @@ export default function ContractDevicesSection({
           <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan={8} className="px-4 py-7 text-center text-base text-indigo-400">
+                <td colSpan={7} className="px-4 py-7 text-center text-base text-indigo-400">
                   Đang tải...
                 </td>
               </tr>
             ) : devices.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-4 py-8 text-center text-base text-indigo-400">
+                <td colSpan={7} className="px-4 py-8 text-center text-base text-indigo-400">
                   Chưa có thiết bị nào được gắn
                 </td>
               </tr>
             ) : (
               devices.map((d) => (
                 <tr key={d.id} className="transition even:bg-indigo-50/30 hover:bg-indigo-100">
-                  <td className="px-3 py-2">
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.includes(d.deviceId)}
-                      onChange={() => toggleSelect(d.deviceId)}
-                      className="h-4 w-4 accent-indigo-600"
-                    />
-                  </td>
                   <td className="px-3 py-2 font-mono text-base text-indigo-900">
                     {d.device?.serialNumber ?? d.deviceId}
                   </td>
@@ -176,8 +117,7 @@ export default function ContractDevicesSection({
 
       <Separator />
 
-      {/* Attach Dialog */}
-      {/* Attach dialog is lifted to parent modal; request parent to open it */}
+      {/* Attach dialog is handled by parent modal */}
     </div>
   )
 }

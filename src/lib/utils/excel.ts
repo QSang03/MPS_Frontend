@@ -15,6 +15,7 @@ export class DeviceExcelService {
       { header: 'Serial Number', key: 'serialNumber', width: 20 },
       { header: 'Model', key: 'model', width: 30 },
       { header: 'Vị trí', key: 'location', width: 25 },
+      { header: 'Thuộc sở hữu khách hàng', key: 'isCustomerOwned', width: 18 },
       { header: 'Trạng thái', key: 'status', width: 15 },
       { header: 'Tổng trang đã in', key: 'totalPagesUsed', width: 18 },
       { header: 'Bảo trì cuối', key: 'lastMaintenanceDate', width: 15 },
@@ -105,6 +106,7 @@ export class DeviceExcelService {
       { header: 'Serial Number *', key: 'serialNumber', width: 20 },
       { header: 'Model *', key: 'model', width: 30 },
       { header: 'Vị trí *', key: 'location', width: 25 },
+      { header: 'Thuộc sở hữu khách hàng', key: 'isCustomerOwned', width: 18 },
       { header: 'Trạng thái', key: 'status', width: 15 },
       { header: 'Tổng trang đã in', key: 'totalPagesUsed', width: 18 },
       { header: 'Bảo trì cuối (dd/mm/yyyy)', key: 'lastMaintenanceDate', width: 20 },
@@ -140,6 +142,7 @@ export class DeviceExcelService {
         serialNumber: 'HP-LJ-SAMPLE-001',
         model: 'HP LaserJet Pro MFP M428fdn',
         location: 'Tầng 1, Phòng IT',
+        isCustomerOwned: false,
         status: 'Hoạt động',
         totalPagesUsed: '0',
         lastMaintenanceDate: '',
@@ -149,6 +152,7 @@ export class DeviceExcelService {
         serialNumber: 'CANON-SAMPLE-002',
         model: 'Canon imageCLASS MF445dw',
         location: 'Tầng 2, Phòng Kế toán',
+        isCustomerOwned: true,
         status: 'Hoạt động',
         totalPagesUsed: '1250',
         lastMaintenanceDate: '15/12/2024',
@@ -300,6 +304,7 @@ export class DeviceExcelService {
       const serialNumber = row.getCell(1).value
       const model = row.getCell(2).value
       const location = row.getCell(3).value
+      const isCustomerOwnedCell = row.getCell(4).value
 
       // Skip empty rows
       if (!serialNumber || !model || !location) return
@@ -308,10 +313,12 @@ export class DeviceExcelService {
         serialNumber: String(serialNumber),
         model: String(model),
         location: String(location),
-        status: this.parseStatus(String(row.getCell(4).value || 'Hoạt động')),
-        totalPagesUsed: parseInt(String(row.getCell(5).value || '0')) || 0,
-        lastMaintenanceDate: this.parseDate(String(row.getCell(6).value || '')),
-        nextMaintenanceDate: this.parseDate(String(row.getCell(7).value || '')),
+        isCustomerOwned:
+          isCustomerOwnedCell === true || String(isCustomerOwnedCell).toLowerCase() === 'true',
+        status: this.parseStatus(String(row.getCell(5).value || 'Hoạt động')),
+        totalPagesUsed: parseInt(String(row.getCell(6).value || '0')) || 0,
+        lastMaintenanceDate: this.parseDate(String(row.getCell(7).value || '')),
+        nextMaintenanceDate: this.parseDate(String(row.getCell(8).value || '')),
       }
 
       devices.push(device)

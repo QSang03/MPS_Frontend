@@ -13,7 +13,10 @@ import internalApiClient from '@/lib/api/internal-client'
 import type { Device } from '@/types/models/device'
 
 interface Props {
-  device?: Device | null
+  // Accept any device-like object which must include `id` and optionally `serialNumber`.
+  // This lets the modal be used across different pages where slightly different device types are used
+  // (e.g., Device, CustomerOverviewContractDevice).
+  device?: { id: string; serialNumber?: string } | Device | null
   open: boolean
   onOpenChange: (open: boolean) => void
   onSaved?: () => void
@@ -24,12 +27,19 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
   const [totalPageCountA4, setTotalPageCountA4] = useState<string>('')
   const [totalColorPagesA4, setTotalColorPagesA4] = useState<string>('')
   const [totalBlackWhitePagesA4, setTotalBlackWhitePagesA4] = useState<string>('')
+  // New non-A4 fields
+  const [totalPageCount, setTotalPageCount] = useState<string>('')
+  const [totalColorPages, setTotalColorPages] = useState<string>('')
+  const [totalBlackWhitePages, setTotalBlackWhitePages] = useState<string>('')
   const [recordedAt, setRecordedAt] = useState<string>('')
   const [updateLatest, setUpdateLatest] = useState<boolean>(false)
 
   useEffect(() => {
     if (!device) return
     // Reset form when device changes / modal toggled open
+    setTotalPageCount('')
+    setTotalColorPages('')
+    setTotalBlackWhitePages('')
     setTotalPageCountA4('')
     setTotalColorPagesA4('')
     setTotalBlackWhitePagesA4('')
@@ -40,9 +50,16 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
   if (!device) return null
 
   const handleSubmit = async () => {
-    // basic validation: require at least one of the counts and recordedAt
-    if (!totalPageCountA4.trim() && !totalColorPagesA4.trim() && !totalBlackWhitePagesA4.trim()) {
-      toast.error('Vui lòng nhập ít nhất một giá trị trang (A4)')
+    // basic validation: require at least one of the counts (either non-A4 or A4) and recordedAt
+    if (
+      !totalPageCountA4.trim() &&
+      !totalColorPagesA4.trim() &&
+      !totalBlackWhitePagesA4.trim() &&
+      !totalPageCount.trim() &&
+      !totalColorPages.trim() &&
+      !totalBlackWhitePages.trim()
+    ) {
+      toast.error('Vui lòng nhập ít nhất một giá trị trang (A4 hoặc tổng trang)')
       return
     }
 
@@ -52,12 +69,17 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
     }
 
     // parse numeric inputs (if present)
-    const total = totalPageCountA4.trim() ? Number(totalPageCountA4) : undefined
-    const color = totalColorPagesA4.trim() ? Number(totalColorPagesA4) : undefined
-    const bw = totalBlackWhitePagesA4.trim() ? Number(totalBlackWhitePagesA4) : undefined
+    // parse numeric inputs (if present) for both A4 and non-A4 variants
+    const totalA4 = totalPageCountA4.trim() ? Number(totalPageCountA4) : undefined
+    const colorA4 = totalColorPagesA4.trim() ? Number(totalColorPagesA4) : undefined
+    const bwA4 = totalBlackWhitePagesA4.trim() ? Number(totalBlackWhitePagesA4) : undefined
+
+    const total = totalPageCount.trim() ? Number(totalPageCount) : undefined
+    const color = totalColorPages.trim() ? Number(totalColorPages) : undefined
+    const bw = totalBlackWhitePages.trim() ? Number(totalBlackWhitePages) : undefined
 
     // basic numeric validation
-    const invalidNumber = [total, color, bw].some(
+    const invalidNumber = [total, color, bw, totalA4, colorA4, bwA4].some(
       (v) => v !== undefined && (Number.isNaN(v) || v < 0)
     )
     if (invalidNumber) {
@@ -71,6 +93,11 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
     let finalTotal = total
     let finalColor = color
     let finalBw = bw
+
+    // A4 final values
+    let finalTotalA4 = totalA4
+    let finalColorA4 = colorA4
+    let finalBwA4 = bwA4
 
     if (finalTotal !== undefined) {
       if (finalColor !== undefined && finalBw !== undefined) {
@@ -98,8 +125,43 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
         finalColor = computedColor
         toast('Tự động điền Tổng trang màu = ' + computedColor)
       }
+    }
+
+    // Same validations/auto-compute for A4 numbers
+    if (finalTotalA4 !== undefined) {
+      if (finalColorA4 !== undefined && finalBwA4 !== undefined) {
+        if (finalColorA4 + finalBwA4 !== finalTotalA4) {
+          toast.error(
+            `Tổng trang màu (A4) (${finalColorA4}) + đen trắng (A4) (${finalBwA4}) phải bằng tổng (A4) (${finalTotalA4})`
+          )
+          return
+        }
+      } else if (finalColorA4 !== undefined && finalBwA4 === undefined) {
+        const computedBw = finalTotalA4 - finalColorA4
+        if (computedBw < 0) {
+          toast.error('Giá trị trang (A4) không hợp lệ: trang màu lớn hơn tổng trang')
+          return
+        }
+        finalBwA4 = computedBw
+        toast('Tự động điền Tổng trang đen trắng (A4) = ' + computedBw)
+      } else if (finalBwA4 !== undefined && finalColorA4 === undefined) {
+        const computedColor = finalTotalA4 - finalBwA4
+        if (computedColor < 0) {
+          toast.error('Giá trị trang (A4) không hợp lệ: trang đen trắng lớn hơn tổng trang')
+          return
+        }
+        finalColorA4 = computedColor
+        toast('Tự động điền Tổng trang màu (A4) = ' + computedColor)
+      }
     } else {
-      // total not provided. If color and bw provided, set total to sum so backend gets full info.
+      // A4 total not provided. If color and bw provided, set total to sum so backend gets full info.
+      if (finalColorA4 !== undefined && finalBwA4 !== undefined) {
+        finalTotalA4 = finalColorA4 + finalBwA4
+      }
+    }
+
+    // If non-A4 total not provided but color and bw provided -> fill total
+    if (finalTotal === undefined) {
       if (finalColor !== undefined && finalBw !== undefined) {
         finalTotal = finalColor + finalBw
       }
@@ -111,9 +173,15 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
       updateLatest,
     }
 
-    if (finalTotal !== undefined) body.totalPageCountA4 = finalTotal
-    if (finalColor !== undefined) body.totalColorPagesA4 = finalColor
-    if (finalBw !== undefined) body.totalBlackWhitePagesA4 = finalBw
+    // attach non-A4 values when present
+    if (finalTotal !== undefined) body.totalPageCount = finalTotal
+    if (finalColor !== undefined) body.totalColorPages = finalColor
+    if (finalBw !== undefined) body.totalBlackWhitePages = finalBw
+
+    // attach A4-equivalent values when present
+    if (finalTotalA4 !== undefined) body.totalPageCountA4 = finalTotalA4
+    if (finalColorA4 !== undefined) body.totalColorPagesA4 = finalColorA4
+    if (finalBwA4 !== undefined) body.totalBlackWhitePagesA4 = finalBwA4
 
     setSubmitting(true)
     try {

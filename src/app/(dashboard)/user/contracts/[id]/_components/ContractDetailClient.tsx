@@ -5,10 +5,7 @@ import type { Contract } from '@/types/models/contract'
 import { useRouter } from 'next/navigation'
 import { contractsClientService } from '@/lib/api/services/contracts-client.service'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { ContractForm } from '../../_components/ContractForm'
-import ContractDevicesModal from '../../_components/ContractDevicesModal'
-import { Package, Edit, FileText } from 'lucide-react'
+import { FileText } from 'lucide-react'
 import ContractDevicesSection from '../../_components/ContractDevicesSection'
 import { toast } from 'sonner'
 
@@ -20,8 +17,7 @@ export default function ContractDetailClient({ contractId }: Props) {
   const router = useRouter()
   const [contract, setContract] = useState<Contract | null>(null)
   const [loading, setLoading] = useState(true)
-  const [isEditOpen, setIsEditOpen] = useState(false)
-  const [isDevicesOpen, setIsDevicesOpen] = useState(false)
+  // edit / assign-device removed for user view
 
   useEffect(() => {
     let mounted = true
@@ -53,17 +49,7 @@ export default function ContractDetailClient({ contractId }: Props) {
     return <div className="p-6">Không tìm thấy hợp đồng</div>
   }
 
-  const initialForForm = {
-    id: contract.id,
-    customerId: contract.customerId,
-    contractNumber: contract.contractNumber,
-    type: contract.type,
-    status: contract.status,
-    startDate: contract.startDate,
-    endDate: contract.endDate,
-    description: contract.description ?? undefined,
-    documentUrl: contract.documentUrl ?? undefined,
-  }
+  // initialForForm removed — edit/assign actions are not available in user view
 
   return (
     <div className="space-y-6">
@@ -87,54 +73,12 @@ export default function ContractDetailClient({ contractId }: Props) {
               </a>
             </Button>
           )}
-          <Button variant="secondary" size="sm" onClick={() => setIsDevicesOpen(true)}>
-            <Package className="h-4 w-4" /> Gán thiết bị
-          </Button>
-          <Button variant="secondary" size="sm" onClick={() => setIsEditOpen(true)}>
-            <Edit className="h-4 w-4" /> Chỉnh sửa
-          </Button>
+          {/* Edit and assign-device actions removed for user view */}
         </div>
       </div>
 
-      <ContractDevicesSection
-        contractId={contract.id}
-        onRequestOpenAttach={() => setIsDevicesOpen(true)}
-      />
-
-      {/* Edit dialog */}
-      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        {isEditOpen && (
-          <DialogContent className="max-h-[90vh] max-w-3xl overflow-hidden rounded-2xl border-0 p-0 shadow-2xl">
-            <DialogHeader className="relative overflow-hidden bg-gradient-to-r from-sky-600 via-cyan-600 to-blue-600 p-0">
-              <div className="absolute inset-0 bg-black/10"></div>
-              <div className="relative z-10 px-6 py-5 text-white">
-                <DialogTitle className="text-2xl font-bold">✏️ Chỉnh sửa hợp đồng</DialogTitle>
-              </div>
-            </DialogHeader>
-
-            <div className="max-h-[calc(90vh-120px)] overflow-y-auto bg-white">
-              <div className="p-6">
-                <ContractForm
-                  initial={initialForForm}
-                  onSuccess={(updated) => {
-                    if (updated && updated.id) setContract(updated)
-                    setIsEditOpen(false)
-                    toast.success('Cập nhật hợp đồng thành công')
-                  }}
-                />
-              </div>
-            </div>
-          </DialogContent>
-        )}
-      </Dialog>
-
-      {/* Devices modal */}
-      <ContractDevicesModal
-        open={isDevicesOpen}
-        onOpenChange={(v) => setIsDevicesOpen(v)}
-        contractId={contract.id}
-        contractNumber={contract.contractNumber}
-      />
+      <ContractDevicesSection contractId={contract.id} />
+      {/* devices list (read-only) rendered above; user cannot assign or edit */}
     </div>
   )
 }

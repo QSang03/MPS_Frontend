@@ -607,6 +607,15 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
         },
       },
       {
+        id: 'create',
+        label: 'Tạo yêu cầu',
+        icon: 'Plus',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'service-requests', action: 'create' }],
+        },
+      },
+      {
         id: 'update-purchase-status',
         label: 'Cập nhật purchase request',
         icon: 'ClipboardCheck',

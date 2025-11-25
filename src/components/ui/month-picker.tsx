@@ -16,13 +16,14 @@ import { cn } from '@/lib/utils'
 type Props = {
   value?: string // expected format: YYYY-MM
   onChange?: (v: string) => void
+  onApply?: (v: string) => void
   className?: string
   placeholder?: string
 }
 
 // Small, dependency-free month picker using Radix popover + select components.
 // Years range: currentYear-5 .. currentYear+1 (reasonable default). Adjust if needed.
-export function MonthPicker({ value, onChange, className, placeholder }: Props) {
+export function MonthPicker({ value, onChange, onApply, className, placeholder }: Props) {
   const now = new Date()
   const currentYear = now.getFullYear()
   const minYear = currentYear - 5
@@ -54,18 +55,46 @@ export function MonthPicker({ value, onChange, className, placeholder }: Props) 
   const [open, setOpen] = React.useState(false)
   const [selYear, setSelYear] = React.useState<number>(initial.year)
   const [selMonth, setSelMonth] = React.useState<number>(initial.month)
+  // Refs to store latest selected values synchronously to avoid stale state
+  // when user selects an option and immediately clicks Apply (event ordering).
+  const selYearRef = React.useRef<number>(initial.year)
+  const selMonthRef = React.useRef<number>(initial.month)
 
   React.useEffect(() => {
     const p = parse(value)
     setSelYear(p.year)
     setSelMonth(p.month)
+    selYearRef.current = p.year
+    selMonthRef.current = p.month
   }, [value, parse])
 
   const formatted = value ? value : ''
 
+  // Local display value to update the input immediately when user applies
+  const [displayValue, setDisplayValue] = React.useState<string>(formatted)
+
+  React.useEffect(() => {
+    setDisplayValue(formatted)
+  }, [formatted])
   const apply = () => {
-    const m = String(selMonth).padStart(2, '0')
-    const v = `${selYear}-${m}`
+    // Read from refs to ensure we get the most recent selection even if
+    // the state update for selMonth/selYear hasn't been flushed yet.
+    const year = selYearRef.current
+    const monthNum = selMonthRef.current
+    const m = String(monthNum).padStart(2, '0')
+    const v = `${year}-${m}`
+    // Update local display immediately so the input doesn't flick back
+    setDisplayValue(v)
+    // Call onApply first so callers that use the passed value don't rely on
+    // updated parent state (which may be async). Keep onChange for controlled
+    // usage but call after onApply.
+    try {
+      // small debug log to help trace issues in runtime
+      console.debug('[MonthPicker] apply', v)
+    } catch {
+      // ignore
+    }
+    onApply?.(v)
     onChange?.(v)
     setOpen(false)
   }
@@ -80,13 +109,20 @@ export function MonthPicker({ value, onChange, className, placeholder }: Props) 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger>
-        <Input readOnly placeholder={placeholder} value={formatted} className={cn(className)} />
+        <Input readOnly placeholder={placeholder} value={displayValue} className={cn(className)} />
       </PopoverTrigger>
 
       <PopoverContent className="w-auto">
         <div className="flex items-center gap-2">
           <div className="min-w-[9rem]">
-            <Select value={String(selMonth)} onValueChange={(v) => setSelMonth(Number(v))}>
+            <Select
+              value={String(selMonth)}
+              onValueChange={(v) => {
+                const n = Number(v)
+                selMonthRef.current = n
+                setSelMonth(n)
+              }}
+            >
               <SelectTrigger className="w-full">
                 {/* Let SelectValue render the current value; show placeholder when empty */}
                 <SelectValue placeholder="MM" />
@@ -102,7 +138,14 @@ export function MonthPicker({ value, onChange, className, placeholder }: Props) 
           </div>
 
           <div className="min-w-[9rem]">
-            <Select value={String(selYear)} onValueChange={(v) => setSelYear(Number(v))}>
+            <Select
+              value={String(selYear)}
+              onValueChange={(v) => {
+                const n = Number(v)
+                selYearRef.current = n
+                setSelYear(n)
+              }}
+            >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="YYYY" />
               </SelectTrigger>

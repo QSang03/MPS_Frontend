@@ -10,6 +10,7 @@ import { purchaseRequestsClientService } from '@/lib/api/services/purchase-reque
 import { Loader2, FileText, Wrench, ShoppingCart, Clock } from 'lucide-react'
 import { SystemPageLayout } from '@/components/system/SystemPageLayout'
 import { SystemPageHeader } from '@/components/system/SystemPageHeader'
+import { ServiceRequestCreateModal } from '../service-requests/_components/ServiceRequestCreateModal'
 
 export const dynamic = 'force-dynamic'
 
@@ -38,6 +39,11 @@ export default function RequestsPage() {
         title="Quản trị yêu cầu khách hàng"
         subtitle="Theo dõi và xử lý nhanh các yêu cầu bảo trì & mua vật tư"
         icon={<FileText className="h-6 w-6" />}
+        actions={
+          <div className="flex items-center gap-2">
+            <ServiceRequestCreateModal />
+          </div>
+        }
       />
 
       <Tabs defaultValue="service" className="space-y-4">

@@ -153,7 +153,7 @@ export default function AnalyticsPageClient() {
     [customersPeriod]
   )
 
-  // Prefill current month
+  // Prefill current month (run once on mount)
   useEffect(() => {
     const now = new Date()
     const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
@@ -181,7 +181,12 @@ export default function AnalyticsPageClient() {
         // ignore - loadCustomersProfit handles errors
       }
     })()
-  }, [loadCustomersProfit, loadEnterpriseProfit])
+    // We explicitly only want this to run once on mount. loadEnterpriseProfit and
+    // loadCustomersProfit are stable enough for our initial load — avoid rerunning
+    // this effect when parent state changes (which caused the bug of reloading
+    // the current month after user applied a new month).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Load Customer Detail
   const loadCustomerDetail = useCallback(
@@ -309,6 +314,7 @@ export default function AnalyticsPageClient() {
                 placeholder="Kỳ (YYYY-MM)"
                 value={enterprisePeriod}
                 onChange={(v) => setEnterprisePeriod(v)}
+                onApply={(v) => void loadEnterpriseProfit(v)}
                 className="w-40"
               />
             </div>
@@ -402,6 +408,7 @@ export default function AnalyticsPageClient() {
                 placeholder="Kỳ (YYYY-MM)"
                 value={customersPeriod}
                 onChange={(v) => setCustomersPeriod(v)}
+                onApply={(v) => void loadCustomersProfit(v)}
                 className="w-40"
               />
             </div>
@@ -509,6 +516,7 @@ export default function AnalyticsPageClient() {
                   placeholder="Kỳ (YYYY-MM)"
                   value={customerDetailPeriod}
                   onChange={(v) => setCustomerDetailPeriod(v)}
+                  onApply={(v) => void loadCustomerDetail(undefined, v)}
                   className="w-40"
                 />
               </div>

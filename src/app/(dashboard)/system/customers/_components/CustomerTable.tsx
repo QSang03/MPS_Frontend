@@ -5,6 +5,7 @@ import type { ReactNode } from 'react'
 import Link from 'next/link'
 import type { ColumnDef } from '@tanstack/react-table'
 import { useQueryClient } from '@tanstack/react-query'
+import DeviceFormModal from '@/app/(dashboard)/system/devices/_components/deviceformmodal'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -34,7 +35,9 @@ import {
   Settings,
   Package,
   Trash2,
+  Plus,
 } from 'lucide-react'
+// Service request creation moved to admin Requests page header; not used here
 
 interface CustomerTableProps {
   page: number
@@ -380,9 +383,33 @@ export function CustomerTable({
                 <Package className="mr-2 h-4 w-4" />
                 Vật tư
               </Button>
+
+              {/* Create device for this customer */}
+              <ActionGuard pageId="devices" actionId="create">
+                <DeviceFormModal
+                  mode="create"
+                  initialCustomerId={customer.id}
+                  initialIsCustomerOwned={true}
+                  trigger={
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="transition-all hover:bg-sky-50 hover:text-sky-700"
+                      aria-label="Thêm thiết bị"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  }
+                  onSaved={async () => {
+                    toast.success('Tạo thiết bị thành công')
+                    await queryClient.invalidateQueries({ queryKey: ['customers'] })
+                  }}
+                />
+              </ActionGuard>
               <ActionGuard pageId="customers" actionId="update">
                 <CustomerFormModal mode="edit" customer={customer} onSaved={handleSaved} />
               </ActionGuard>
+              {/* Service request creation moved to System Requests admin header */}
               <ActionGuard pageId="customers" actionId="delete">
                 <DeleteDialog
                   title="Xác nhận xóa khách hàng"
@@ -419,6 +446,7 @@ export function CustomerTable({
       handleSaved,
       handleDelete,
       loadConsumablesForCustomer,
+      queryClient,
     ]
   )
 

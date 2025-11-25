@@ -37,6 +37,7 @@ export const deviceSchema = z.object({
     }),
   firmware: z.string().max(50, 'Phiên bản firmware không được quá 50 ký tự').optional(),
   deviceModelId: z.string().optional(),
+  isCustomerOwned: z.boolean().optional(),
 })
 
 export type DeviceFormData = z.infer<typeof deviceSchema>

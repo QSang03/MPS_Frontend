@@ -1,36 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import backendApiClient from '@/lib/api/backend-client'
+import { removeEmpty } from '@/lib/utils/clean'
 import { API_ENDPOINTS } from '@/lib/api/endpoints'
 
+// LIST service requests
 export async function GET(request: NextRequest) {
   try {
     const cookieStore = await cookies()
     const accessToken = cookieStore.get('access_token')?.value
+    if (!accessToken) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    if (!accessToken) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    // Forward query params từ client
     const searchParams = request.nextUrl.searchParams
     const params: Record<string, string> = {}
     searchParams.forEach((value, key) => {
-      params[key] = value
+      if (value !== undefined && value !== null && value !== '') params[key] = value
     })
 
-    // Gọi backend API trực tiếp
-    // Backend sẽ extract customerId từ JWT nếu không được cung cấp trong query
     const response = await backendApiClient.get(API_ENDPOINTS.SERVICE_REQUESTS.LIST, {
       params,
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
+      headers: { Authorization: `Bearer ${accessToken}` },
     })
-
     return NextResponse.json(response.data)
   } catch (error: unknown) {
-    const err = error as { message?: string; response?: { status?: number } } | undefined
+    const err = error as
+      | { message?: string; response?: { status?: number; data?: unknown } }
+      | undefined
+    if (err?.response?.data && typeof err.response.data === 'object') {
+      return NextResponse.json(err.response.data as Record<string, unknown>, {
+        status: err.response?.status || 500,
+      })
+    }
     return NextResponse.json(
       { error: err?.message || 'Internal Server Error' },
       { status: err?.response?.status || 500 }
@@ -38,20 +38,28 @@ export async function GET(request: NextRequest) {
   }
 }
 
+// CREATE service request with refresh-on-401
 export async function POST(request: NextRequest) {
-  let reqBody: unknown = undefined
+  let originalBody: unknown = undefined
   try {
     const cookieStore = await cookies()
     const accessToken = cookieStore.get('access_token')?.value
     if (!accessToken) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    reqBody = await request.json()
+    const contentType = (request.headers.get('content-type') || '').toLowerCase()
+    // If it's multipart/form-data (contains images), forward as multipart
+    if (contentType.includes('multipart/form-data')) {
+      const formData = await request.formData()
+      return await forwardMultipart({ formData, accessToken })
+    }
 
-    const response = await backendApiClient.post(API_ENDPOINTS.SERVICE_REQUESTS.CREATE, reqBody, {
+    originalBody = await request.json()
+    const cleaned = removeEmpty(originalBody as Record<string, unknown>)
+
+    const resp = await backendApiClient.post(API_ENDPOINTS.SERVICE_REQUESTS.CREATE, cleaned, {
       headers: { Authorization: `Bearer ${accessToken}` },
     })
-
-    return NextResponse.json(response.data)
+    return NextResponse.json(resp.data)
   } catch (error: unknown) {
     const err = error as
       | {
@@ -72,8 +80,7 @@ export async function POST(request: NextRequest) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ refreshToken }),
         })
-
-        if (refreshResp.status !== 200) {
+        if (!refreshResp.ok) {
           cookieStore.delete('access_token')
           cookieStore.delete('refresh_token')
           cookieStore.delete('mps_session')
@@ -85,13 +92,8 @@ export async function POST(request: NextRequest) {
           payload?.data?.accessToken || payload?.accessToken || payload?.access_token
         const newRefreshToken =
           payload?.data?.refreshToken || payload?.refreshToken || payload?.refresh_token
-
-        if (!newAccessToken) {
-          cookieStore.delete('access_token')
-          cookieStore.delete('refresh_token')
-          cookieStore.delete('mps_session')
-          return NextResponse.json({ error: 'No access token in response' }, { status: 401 })
-        }
+        if (!newAccessToken)
+          return NextResponse.json({ error: 'Token refresh failed' }, { status: 401 })
 
         const isProduction = process.env.NODE_ENV === 'production'
         cookieStore.set('access_token', newAccessToken, {
@@ -110,16 +112,16 @@ export async function POST(request: NextRequest) {
             path: '/',
           })
 
-        const originalBody =
-          typeof reqBody !== 'undefined'
-            ? reqBody
+        const bodyForRetry =
+          typeof originalBody !== 'undefined'
+            ? originalBody
             : err?.config?.data && typeof err.config.data === 'string'
               ? JSON.parse(String(err.config.data))
               : {}
-
+        const cleanedRetry = removeEmpty(bodyForRetry as Record<string, unknown>)
         const retryResp = await backendApiClient.post(
           API_ENDPOINTS.SERVICE_REQUESTS.CREATE,
-          originalBody,
+          cleanedRetry,
           {
             headers: { Authorization: `Bearer ${newAccessToken}` },
           }
@@ -135,14 +137,49 @@ export async function POST(request: NextRequest) {
     }
 
     if (err?.response?.data && typeof err.response.data === 'object') {
-      return NextResponse.json(err.response.data as unknown as Record<string, unknown>, {
-        status: err?.response?.status || 500,
+      return NextResponse.json(err.response.data as Record<string, unknown>, {
+        status: err.response?.status || 500,
       })
     }
-
     return NextResponse.json(
       { error: err?.message || 'Internal Server Error' },
       { status: err?.response?.status || 500 }
     )
   }
+}
+
+async function forwardMultipart({
+  formData,
+  accessToken,
+}: {
+  formData: FormData
+  accessToken: string
+}) {
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL
+  if (!baseUrl) {
+    console.error('NEXT_PUBLIC_API_URL is not configured')
+    return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
+  }
+
+  const endpoint = `${baseUrl}${API_ENDPOINTS.SERVICE_REQUESTS.CREATE}`
+
+  const cloned = new FormData()
+  formData.forEach((value, key) => {
+    if (typeof File !== 'undefined' && value instanceof File) {
+      cloned.append(key, value, value.name)
+    } else {
+      cloned.append(key, value as string)
+    }
+  })
+
+  const resp = await fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: cloned,
+  })
+
+  const data = await resp.json().catch(() => null)
+  return NextResponse.json(data ?? {}, { status: resp.status })
 }

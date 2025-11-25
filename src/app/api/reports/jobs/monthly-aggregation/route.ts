@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import backendApiClient from '@/lib/api/backend-client'
 
-export async function POST() {
+export async function POST(request: Request) {
   try {
     const cookieStore = await cookies()
     const accessToken = cookieStore.get('access_token')?.value
@@ -11,13 +11,11 @@ export async function POST() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const response = await backendApiClient.post(
-      '/reports/jobs/monthly-aggregation',
-      {},
-      {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      }
-    )
+    // Forward request body (e.g., { month: '2025-09' }) to backend aggregation job
+    const body = await request.json().catch(() => ({}))
+    const response = await backendApiClient.post('/reports/jobs/monthly-aggregation', body, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
 
     return NextResponse.json(response.data)
   } catch (error: unknown) {

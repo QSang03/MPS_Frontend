@@ -3,10 +3,8 @@
 import { useEffect, useState } from 'react'
 import type { Contract } from '@/types/models/contract'
 import {
-  Edit,
   Trash2,
   Search,
-  Package,
   FileText,
   BarChart3,
   CheckCircle2,
@@ -16,6 +14,7 @@ import {
   LayoutDashboard,
   Clock,
   MoreHorizontal,
+  Package,
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -24,16 +23,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { DeleteDialog } from '@/components/shared/DeleteDialog'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog'
+// Dialog components removed for user view (edit/device modals not available)
 import ContractFormModal from './ContractFormModal'
-import { ContractForm } from './ContractForm'
-import ContractDevicesModal from './ContractDevicesModal'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -81,13 +72,7 @@ export default function ContractsPageClient() {
   const [typeFilter, setTypeFilter] = useState<string | undefined>(undefined)
   const [page, setPage] = useState(1)
   const limit = 100
-  const [editingContract, setEditingContract] = useState<Contract | null>(null)
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-  const [isDevicesModalOpen, setIsDevicesModalOpen] = useState(false)
-  const [devicesModalContract, setDevicesModalContract] = useState<{
-    id: string
-    number?: string
-  } | null>(null)
+  // Edit and assign-device actions removed for user contracts
   const [hoveredRowId, setHoveredRowId] = useState<string | null>(null)
 
   const inFlightRef = useState(() => new Map<string, Promise<unknown>>())[0]
@@ -558,33 +543,7 @@ export default function ContractsPageClient() {
                                   <Eye className="h-4 w-4" />
                                   Xem chi tiết
                                 </DropdownMenuItem>
-                                {canUpdate && (
-                                  <>
-                                    <DropdownMenuItem
-                                      onClick={() => {
-                                        setEditingContract(c)
-                                        setIsEditModalOpen(true)
-                                      }}
-                                      className="flex cursor-pointer items-center gap-2 py-2 transition-all hover:bg-sky-50 hover:text-sky-700"
-                                    >
-                                      <Edit className="h-4 w-4" />
-                                      Chỉnh sửa
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                      onClick={() => {
-                                        setDevicesModalContract({
-                                          id: c.id,
-                                          number: c.contractNumber,
-                                        })
-                                        setIsDevicesModalOpen(true)
-                                      }}
-                                      className="flex cursor-pointer items-center gap-2 py-2 transition-all hover:bg-sky-50 hover:text-sky-700"
-                                    >
-                                      <Package className="h-4 w-4" />
-                                      Gán thiết bị
-                                    </DropdownMenuItem>
-                                  </>
-                                )}
+                                {/* update/assign actions intentionally omitted for user view */}
 
                                 {canDelete && (
                                   <DeleteDialog
@@ -644,68 +603,7 @@ export default function ContractsPageClient() {
         </CardContent>
       </Card>
 
-      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-        {isEditModalOpen && (
-          <DialogContent className="max-h-[90vh] max-w-3xl overflow-hidden rounded-2xl border-0 p-0 shadow-2xl">
-            <DialogHeader className="px-6 pt-6 pb-4">
-              <DialogTitle className="text-xl font-semibold">Chỉnh sửa hợp đồng</DialogTitle>
-              <DialogDescription>Cập nhật thông tin chi tiết cho hợp đồng này</DialogDescription>
-            </DialogHeader>
-
-            <div className="max-h-[calc(90vh-120px)] overflow-y-auto bg-white">
-              <div className="p-6">
-                {(() => {
-                  const initialForForm = editingContract
-                    ? {
-                        id: editingContract.id,
-                        customerId: editingContract.customerId,
-                        contractNumber: editingContract.contractNumber,
-                        type: editingContract.type,
-                        status: editingContract.status,
-                        startDate: editingContract.startDate,
-                        endDate: editingContract.endDate,
-                        description: editingContract.description ?? undefined,
-                        documentUrl:
-                          (editingContract as ContractWithDoc).documentUrl ||
-                          (editingContract as ContractWithDoc).document_url ||
-                          (editingContract as ContractWithDoc).pdfUrl ||
-                          (editingContract as ContractWithDoc).pdf_url ||
-                          undefined,
-                      }
-                    : undefined
-
-                  return (
-                    <ContractForm
-                      initial={initialForForm}
-                      onSuccess={(updated) => {
-                        if (updated && updated.id) {
-                          setContracts((prev) =>
-                            prev.map((p) => (p.id === updated.id ? updated : p))
-                          )
-                        }
-                        setIsEditModalOpen(false)
-                        setEditingContract(null)
-                      }}
-                    />
-                  )
-                })()}
-              </div>
-            </div>
-          </DialogContent>
-        )}
-      </Dialog>
-
-      {devicesModalContract && (
-        <ContractDevicesModal
-          open={isDevicesModalOpen}
-          onOpenChange={(v) => {
-            setIsDevicesModalOpen(v)
-            if (!v) setDevicesModalContract(null)
-          }}
-          contractId={devicesModalContract.id}
-          contractNumber={devicesModalContract.number}
-        />
-      )}
+      {/* Edit dialog and devices modal removed for user contracts */}
     </div>
   )
 }

@@ -13,8 +13,16 @@ import type {
  *
  * Flow: Client → /api/* (Next.js) → Backend API
  */
+// Determine a sensible baseURL. On the browser we can use relative paths ('/').
+// On the Node server, axios needs a full absolute URL — prefer NEXT_PUBLIC_BASE_URL
+// if provided, otherwise fall back to localhost with the current port.
+const defaultBase =
+  typeof window !== 'undefined'
+    ? '/'
+    : process.env.NEXT_PUBLIC_BASE_URL || `http://localhost:${process.env.PORT ?? 3000}`
+
 const internalApiClient: AxiosInstance = axios.create({
-  baseURL: '/', // Gọi vào chính Next.js app
+  baseURL: defaultBase, // Gọi vào chính Next.js app
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
@@ -109,7 +117,13 @@ internalApiClient.interceptors.response.use(
           try {
             console.log('[Internal Client] Access token hết hạn, gọi /api/auth/refresh...')
 
-            const refreshResponse = await fetch('/api/auth/refresh', {
+            // `fetch` in a Node/server context requires an absolute URL.
+            // defaultBase is '/' in the browser and an absolute URL on the server
+            // (NEXT_PUBLIC_BASE_URL or localhost:PORT). Build a refresh URL from
+            // defaultBase so refresh works both in server and client renders.
+            const refreshUrl = `${defaultBase.replace(/\/$/, '')}/api/auth/refresh`
+
+            const refreshResponse = await fetch(refreshUrl, {
               method: 'POST',
               credentials: 'include', // Gửi cookies
             })

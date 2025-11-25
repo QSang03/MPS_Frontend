@@ -50,7 +50,20 @@ export const serviceRequestsClientService = {
     return response.data?.data ?? null
   },
 
-  async create(payload: CreateServiceRequestDto): Promise<ServiceRequest | null> {
+  async create(payload: CreateServiceRequestDto | FormData): Promise<ServiceRequest | null> {
+    // Debug log to help trace create calls
+    console.debug(
+      '[serviceRequestsClientService] create called, payload is FormData?',
+      typeof FormData !== 'undefined' && payload instanceof FormData
+    )
+    // If payload is FormData (contains files), send as multipart/form-data
+    if (typeof FormData !== 'undefined' && payload instanceof FormData) {
+      const response = await internalApiClient.post('/api/service-requests', payload, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      return response.data?.data ?? null
+    }
+
     const response = await internalApiClient.post('/api/service-requests', payload)
     return response.data?.data ?? null
   },
