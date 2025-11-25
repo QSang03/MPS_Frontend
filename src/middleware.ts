@@ -36,6 +36,10 @@ export async function middleware(request: NextRequest) {
     // If already logged in, redirect to appropriate dashboard
     const session = await getSessionFromRequest(request)
     if (session) {
+      // Only perform redirects for browser navigations (GET).
+      // For non-GET requests (POST, PUT, PATCH) we should allow the
+      // request to continue so Server Actions / API handlers can run.
+      if (request.method !== 'GET') return NextResponse.next()
       // If user has default password, force to change-password page
       if (session.isDefaultPassword && pathname !== '/change-password') {
         return NextResponse.redirect(new URL('/change-password?required=true', request.url))
@@ -57,17 +61,37 @@ export async function middleware(request: NextRequest) {
   const session = await getSessionFromRequest(request)
 
   if (!session) {
-    // Not authenticated - redirect to login and clear any invalid cookies
-    const response = NextResponse.redirect(new URL(ROUTES.LOGIN, request.url))
-    response.cookies.delete('mps_session')
-    response.cookies.delete('access_token')
-    response.cookies.delete('refresh_token')
-    return response
+    // Not authenticated:
+    // - For browser navigations (GET) redirect to login (clearing cookies)
+    // - For non-GET (API/Server Actions), return a 401 JSON error so callers
+    //   receive an appropriate status code instead of a 307 redirect.
+    if (request.method === 'GET') {
+      const response = NextResponse.redirect(new URL(ROUTES.LOGIN, request.url))
+      response.cookies.delete('mps_session')
+      response.cookies.delete('access_token')
+      response.cookies.delete('refresh_token')
+      return response
+    }
+
+    return new NextResponse(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { 'content-type': 'application/json' },
+    })
   }
 
   // Check if user must change default password before accessing any protected route
   if (session.isDefaultPassword && pathname !== '/change-password') {
-    return NextResponse.redirect(new URL('/change-password?required=true', request.url))
+    // Browser navigations should be redirected to change-password.
+    if (request.method === 'GET') {
+      return NextResponse.redirect(new URL('/change-password?required=true', request.url))
+    }
+
+    // For non-GET (API/server actions) return 403 so calling code receives a
+    // clear forbidden status rather than being redirected.
+    return new NextResponse(JSON.stringify({ error: 'Password change required' }), {
+      status: 403,
+      headers: { 'content-type': 'application/json' },
+    })
   }
 
   // Access control based on isDefaultCustomer
@@ -75,7 +99,14 @@ export async function middleware(request: NextRequest) {
   // isDefaultCustomer: false -> can access /user routes
   if (pathname.startsWith('/system')) {
     if (!session.isDefaultCustomer) {
-      return NextResponse.redirect(new URL(ROUTES.FORBIDDEN, request.url))
+      if (request.method === 'GET') {
+        return NextResponse.redirect(new URL(ROUTES.FORBIDDEN, request.url))
+      }
+
+      return new NextResponse(JSON.stringify({ error: 'Forbidden' }), {
+        status: 403,
+        headers: { 'content-type': 'application/json' },
+      })
     }
   }
 
