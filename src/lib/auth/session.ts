@@ -10,6 +10,13 @@ const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production'
 )
 
+// Allow disabling secure cookies on local/lan testing by setting
+// ALLOW_INSECURE_COOKIES=true in the environment. By default, secure
+// cookies are enabled when NODE_ENV === 'production'. This flag is
+// useful for testing production build over HTTP on LAN devices.
+const IS_SECURE_COOKIES =
+  process.env.NODE_ENV === 'production' && process.env.ALLOW_INSECURE_COOKIES !== 'true'
+
 /**
  * Session data structure
  */
@@ -46,7 +53,7 @@ export async function createSession(payload: Session): Promise<void> {
   const cookieStore = await cookies()
   cookieStore.set(SESSION_COOKIE_NAME, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: IS_SECURE_COOKIES,
     sameSite: 'lax',
     maxAge: 60 * 60 * 8, // 8 hours
     path: '/',
@@ -78,7 +85,7 @@ export async function createSessionWithTokens(payload: SessionWithTokens): Promi
   // Set access token cookie (15 minutes expiry)
   cookieStore.set(ACCESS_TOKEN_COOKIE_NAME, payload.accessToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: IS_SECURE_COOKIES,
     sameSite: 'lax',
     maxAge: 60 * 15, // 15 minutes
     path: '/',
@@ -87,7 +94,7 @@ export async function createSessionWithTokens(payload: SessionWithTokens): Promi
   // Set refresh token cookie (longer expiry)
   cookieStore.set(REFRESH_TOKEN_COOKIE_NAME, payload.refreshToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: IS_SECURE_COOKIES,
     sameSite: 'lax',
     maxAge: 60 * 60 * 24 * 7, // 7 days
     path: '/',
@@ -155,7 +162,7 @@ export async function updateTokensInCookies(
   // Update access token cookie
   cookieStore.set(ACCESS_TOKEN_COOKIE_NAME, accessToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: IS_SECURE_COOKIES,
     sameSite: 'lax',
     maxAge: 60 * 15, // 15 minutes
     path: '/',
@@ -165,7 +172,7 @@ export async function updateTokensInCookies(
   if (refreshToken) {
     cookieStore.set(REFRESH_TOKEN_COOKIE_NAME, refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: IS_SECURE_COOKIES,
       sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 7, // 7 days
       path: '/',

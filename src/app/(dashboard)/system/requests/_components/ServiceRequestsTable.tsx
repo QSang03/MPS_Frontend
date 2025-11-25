@@ -42,6 +42,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog'
 import { ServiceRequestStatus, Priority } from '@/constants/status'
@@ -623,6 +624,10 @@ function ServiceRequestsTableContent({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Cập nhật trạng thái</DialogTitle>
+            {/* Screen-reader friendly description for accessibility */}
+            <DialogDescription className="sr-only">
+              Nhập ghi chú hành động (tùy chọn) để lưu cùng bản ghi cập nhật trạng thái
+            </DialogDescription>
           </DialogHeader>
 
           <div className="mt-2">

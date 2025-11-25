@@ -271,6 +271,9 @@ export default function ContractDevicesModal({
                 <DialogTitle className="flex items-center gap-2 text-xl font-bold">
                   Thêm và Cập nhật thiết bị
                 </DialogTitle>
+                <DialogDescription className="sr-only">
+                  Thao tác thêm/ cập nhật thiết bị vào hợp đồng
+                </DialogDescription>
               </div>
             </DialogHeader>
 

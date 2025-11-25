@@ -4,7 +4,13 @@ import * as React from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -71,6 +77,9 @@ export function DepartmentFormModal({
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>{initialData ? 'Cập nhật bộ phận' : 'Tạo bộ phận mới'}</DialogTitle>
+          <DialogDescription className="sr-only">
+            Form để tạo hoặc cập nhật thông tin bộ phận
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={submitForm} className="grid gap-4 p-4">

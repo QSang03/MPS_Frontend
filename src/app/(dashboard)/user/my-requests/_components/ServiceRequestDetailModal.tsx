@@ -4,7 +4,13 @@ import { useQuery } from '@tanstack/react-query'
 import { formatRelativeTime } from '@/lib/utils/formatters'
 import { serviceRequestsClientService } from '@/lib/api/services/service-requests-client.service'
 import { ServiceRequestStatus } from '@/constants/status'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog'
 import {
   Table,
   TableBody,
@@ -133,6 +139,9 @@ export function ServiceRequestDetailModal({
             <Info className="h-5 w-5 text-blue-600 dark:text-blue-400" />
             Chi tiết yêu cầu
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            Chi tiết đầy đủ của yêu cầu dịch vụ
+          </DialogDescription>
         </DialogHeader>
 
         <div className="p-6">

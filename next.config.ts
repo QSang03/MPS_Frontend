@@ -35,7 +35,6 @@ const nextConfig: NextConfig = {
   // Allow other dev origins (useful when previewing on LAN devices)
   // Add any origins that will request `/_next/*` during development (include port if used).
   // See: https://nextjs.org/docs/app/api-reference/config/next-config-js/allowedDevOrigins
-  allowedDevOrigins: ['*'],
 
   // // Temporarily ignore ESLint during builds to allow incremental lint fixes
   // eslint: {
