@@ -111,6 +111,7 @@ export function ServiceRequestFormModal({
     Array<{ consumableTypeId: string; quantity: number; name?: string }>
   >([])
   const [images, setImages] = useState<File[]>([])
+  const MAX_IMAGES = 10
   const [consumableSearch, setConsumableSearch] = useState('')
 
   type AnyRecord = Record<string, unknown>
@@ -228,7 +229,7 @@ export function ServiceRequestFormModal({
         })
 
         // append images; backend expects multiple 'images' fields
-        images.forEach((file) => {
+        images.slice(0, MAX_IMAGES).forEach((file) => {
           form.append('images', file)
         })
 
@@ -552,7 +553,14 @@ export function ServiceRequestFormModal({
                               multiple
                               onChange={(e) => {
                                 const files = Array.from(e.target.files || [])
-                                setImages((prev) => [...prev, ...files])
+                                setImages((prev) => {
+                                  const combined = [...prev, ...files]
+                                  if (combined.length > MAX_IMAGES) {
+                                    toast.error(`Chỉ được tải tối đa ${MAX_IMAGES} ảnh`)
+                                    return combined.slice(0, MAX_IMAGES)
+                                  }
+                                  return combined
+                                })
                                 // reset input value so same file can be re-selected if removed
                                 e.currentTarget.value = ''
                               }}
@@ -589,7 +597,7 @@ export function ServiceRequestFormModal({
                           )}
                         </div>
                         <FormDescription className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
-                          Tải lên nhiều ảnh (JPEG, PNG, WebP, GIF). Các ảnh sẽ được gửi cùng yêu
+                          Tải lên tối đa 10 ảnh (JPEG, PNG, WebP, GIF). Các ảnh sẽ được gửi cùng yêu
                           cầu.
                         </FormDescription>
                       </FormItem>
