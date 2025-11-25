@@ -44,6 +44,7 @@ import type { CustomerOverviewConsumable } from '@/types/models/customer-overvie
 import type { Customer } from '@/types/models/customer'
 import DevicePricingModal from '@/app/(dashboard)/system/devices/_components/DevicePricingModal'
 import A4EquivalentModal from '@/app/(dashboard)/system/devices/_components/A4EquivalentModal'
+import A4EquivalentHistoryModal from '@/app/(dashboard)/system/devices/_components/A4EquivalentHistoryModal'
 import DeviceFormModal from '@/app/(dashboard)/system/devices/_components/deviceformmodal'
 import ContractDevicesModal from './ContractDevicesModal'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
@@ -95,6 +96,10 @@ export default function CustomerDetailClient({ customerId }: Props) {
   const [expandedContracts, setExpandedContracts] = useState<Set<string>>(new Set())
   const [a4ModalDevice, setA4ModalDevice] = useState<CustomerOverviewContractDevice | null>(null)
   const [a4ModalOpen, setA4ModalOpen] = useState(false)
+  const [a4HistoryDevice, setA4HistoryDevice] = useState<CustomerOverviewContractDevice | null>(
+    null
+  )
+  const [a4HistoryOpen, setA4HistoryOpen] = useState(false)
   const [editingContract, setEditingContract] = useState<CustomerOverviewContract | null>(null)
   const [attachModalContractId, setAttachModalContractId] = useState<string | null>(null)
   const [attachModalOpen, setAttachModalOpen] = useState(false)
@@ -648,6 +653,23 @@ export default function CustomerDetailClient({ customerId }: Props) {
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent sideOffset={4}>Gán số trang A4</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 text-slate-600 hover:bg-slate-100"
+                    onClick={() => {
+                      setA4HistoryDevice(device)
+                      setA4HistoryOpen(true)
+                    }}
+                    title="Xem lịch sử snapshot A4"
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent sideOffset={4}>Lịch sử snapshot A4</TooltipContent>
               </Tooltip>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -1856,6 +1878,18 @@ export default function CustomerDetailClient({ customerId }: Props) {
             loadOverview()
             setA4ModalOpen(false)
             setA4ModalDevice(null)
+          }}
+        />
+      )}
+
+      {/* A4 history modal (device row) */}
+      {a4HistoryDevice?.device && (
+        <A4EquivalentHistoryModal
+          deviceId={a4HistoryDevice.device.id}
+          open={a4HistoryOpen}
+          onOpenChange={(v) => {
+            setA4HistoryOpen(v)
+            if (!v) setA4HistoryDevice(null)
           }}
         />
       )}

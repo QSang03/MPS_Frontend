@@ -46,3 +46,41 @@ export async function POST(request: NextRequest) {
     )
   }
 }
+
+export async function GET(request: NextRequest) {
+  try {
+    const cookieStore = await cookies()
+    const accessToken = cookieStore.get('access_token')?.value
+
+    if (!accessToken) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Forward query params as-is to backend
+    const url = new URL(request.url)
+    const search = url.search
+
+    const response = await backendApiClient.get(`/reports/usage/a4-equivalent${search}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
+
+    return NextResponse.json(response.data, { status: response.status })
+  } catch (error: unknown) {
+    const axiosError = error as { message?: string; response?: { status?: number; data?: unknown } }
+    console.error('[api/reports/usage/a4-equivalent] GET Error:', axiosError.message)
+
+    if (axiosError.response?.status === 401) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const backendData = axiosError.response?.data
+    if (backendData && typeof backendData === 'object') {
+      return NextResponse.json(backendData, { status: axiosError.response?.status || 500 })
+    }
+
+    return NextResponse.json(
+      { error: axiosError.message || 'Internal Server Error' },
+      { status: 500 }
+    )
+  }
+}

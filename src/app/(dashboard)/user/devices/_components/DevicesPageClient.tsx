@@ -24,6 +24,7 @@ import DeviceFormModal from '@/app/(dashboard)/system/devices/_components/device
 import { devicesClientService } from '@/lib/api/services/devices-client.service'
 import ToggleActiveModal from '@/app/(dashboard)/system/devices/_components/ToggleActiveModal'
 import A4EquivalentModal from '@/app/(dashboard)/system/devices/_components/A4EquivalentModal'
+import A4EquivalentHistoryModal from '@/app/(dashboard)/system/devices/_components/A4EquivalentHistoryModal'
 import { customersClientService } from '@/lib/api/services/customers-client.service'
 import { CustomerSelectDialog } from '@/app/(dashboard)/system/devices/_components/CustomerSelectDialog'
 import type { Customer } from '@/types/models/customer'
@@ -93,6 +94,8 @@ export default function DevicesPageClient() {
   const [toggleTargetActive, setToggleTargetActive] = useState<boolean>(false)
   const [a4ModalOpen, setA4ModalOpen] = useState(false)
   const [a4ModalDevice] = useState<Device | null>(null)
+  const [a4HistoryOpen, setA4HistoryOpen] = useState(false)
+  const [a4HistoryDevice, setA4HistoryDevice] = useState<Device | null>(null)
   const router = useRouter()
   const [columnVisibilityMenu, setColumnVisibilityMenu] = useState<ReactNode | null>(null)
   const [showColumnMenu, setShowColumnMenu] = useState(false)
@@ -916,6 +919,18 @@ export default function DevicesPageClient() {
                                 <FileText className="h-4 w-4 text-black dark:text-white" />
                               </Button>
                             </ServiceRequestFormModal>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 text-black hover:bg-indigo-50 dark:text-white"
+                              title="Xem lịch sử snapshot A4"
+                              onClick={() => {
+                                setA4HistoryDevice(d)
+                                setA4HistoryOpen(true)
+                              }}
+                            >
+                              <FileText className="h-4 w-4 text-black dark:text-white" />
+                            </Button>
                           </div>
                         </TableCell>
                       )}
@@ -983,6 +998,15 @@ export default function DevicesPageClient() {
         open={a4ModalOpen}
         onOpenChange={(v) => setA4ModalOpen(v)}
         onSaved={() => fetchDevices()}
+      />
+      {/* A4 snapshot history modal */}
+      <A4EquivalentHistoryModal
+        deviceId={a4HistoryDevice?.id}
+        open={a4HistoryOpen}
+        onOpenChange={(v) => {
+          setA4HistoryOpen(v)
+          if (!v) setA4HistoryDevice(null)
+        }}
       />
     </div>
   )

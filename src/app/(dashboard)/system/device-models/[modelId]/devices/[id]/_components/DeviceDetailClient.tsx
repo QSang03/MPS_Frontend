@@ -23,11 +23,13 @@ import {
   Search,
   RefreshCw,
   BarChart3,
+  FileText,
 } from 'lucide-react'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { DEVICE_STATUS, STATUS_DISPLAY } from '@/constants/status'
 import { Button } from '@/components/ui/button'
 import A4EquivalentModal from '@/app/(dashboard)/system/devices/_components/A4EquivalentModal'
+import A4EquivalentHistoryModal from '@/app/(dashboard)/system/devices/_components/A4EquivalentHistoryModal'
 import ConsumableHistoryModal from './ConsumableHistoryModal'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -212,6 +214,7 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
   const [editShowRemovedAt, setEditShowRemovedAt] = useState(false) // Checkbox state
   const [updatingConsumable, setUpdatingConsumable] = useState(false)
   const [a4ModalOpen, setA4ModalOpen] = useState(false)
+  const [a4HistoryOpen, setA4HistoryOpen] = useState(false)
 
   const editRemainingInvalid =
     typeof editRemaining === 'number' &&
@@ -508,6 +511,18 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                   A4
                 </Button>
               </ActionGuard>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  setA4HistoryOpen(true)
+                }}
+                className="ml-2 gap-2 bg-white text-black"
+                title="Xem lịch sử snapshot A4"
+              >
+                <FileText className="h-4 w-4 text-black" />
+                Lịch sử
+              </Button>
               {Boolean(device?.isActive) ? (
                 <ActionGuard pageId="devices" actionId="update">
                   <Button
@@ -1933,6 +1948,15 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
           } catch (err) {
             console.error('Failed to refresh device after A4 save', err)
           }
+        }}
+      />
+
+      {/* A4 history modal */}
+      <A4EquivalentHistoryModal
+        deviceId={device?.id}
+        open={a4HistoryOpen}
+        onOpenChange={(v) => {
+          setA4HistoryOpen(v)
         }}
       />
 

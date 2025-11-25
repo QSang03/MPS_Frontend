@@ -10,10 +10,12 @@ export async function POST(request: Request) {
     if (!accessToken) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-
-    // Forward request body (e.g., { month: '2025-09' }) to backend aggregation job
-    const body = await request.json().catch(() => ({}))
-    const response = await backendApiClient.post('/reports/jobs/monthly-aggregation', body, {
+    // Forward query parameters to backend aggregation job (backend expects ?month=YYYY-MM)
+    const reqUrl = new URL(request.url)
+    const search = reqUrl.search || ''
+    const backendPath = `/reports/jobs/monthly-aggregation${search}`
+    // POST with no body; parameters are passed via query string
+    const response = await backendApiClient.post(backendPath, undefined, {
       headers: { Authorization: `Bearer ${accessToken}` },
     })
 

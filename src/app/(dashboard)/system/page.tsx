@@ -72,8 +72,9 @@ export default function CustomerAdminDashboard() {
   const handleMonthlyAggregation = async () => {
     setIsAggregating(true)
     try {
-      await internalApiClient.post('/api/reports/jobs/monthly-aggregation', {
-        month: selectedMonth,
+      // Send `month` as query param via axios `params` to guarantee it's forwarded
+      await internalApiClient.post('/api/reports/jobs/monthly-aggregation', undefined, {
+        params: { month: selectedMonth },
       })
       toast.success('Tổng hợp dữ liệu tháng thành công')
       // Refetch dashboard data after aggregation

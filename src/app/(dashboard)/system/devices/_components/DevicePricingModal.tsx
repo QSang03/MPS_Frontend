@@ -180,27 +180,28 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
           Number.isFinite(parsedExchangeRate) &&
           (parsedExchangeRate as number) > 0
 
-        if (canEditMonthlyRent || hasValidExchangeRate) {
-          const valueToSet = hasValidExchangeRate ? (parsedExchangeRate as number) : ''
+        // Default exchange rate when none provided should be 25000 (editable)
+        const DEFAULT_EXCHANGE = 25000
+        if (hasValidExchangeRate) {
+          const valueToSet = parsedExchangeRate as number
           setExchangeRate(valueToSet)
-          setExchangeRateRaw(
-            valueToSet === '' || valueToSet === undefined
-              ? ''
-              : formatNumberWithCommas(String(valueToSet))
-          )
+          // valueToSet is a number here, so format and set the raw string directly
+          setExchangeRateRaw(formatNumberWithCommas(String(valueToSet)))
         } else {
-          setExchangeRate('')
+          // Keep raw empty so placeholder shows 25000, but use numeric default for conversions
+          setExchangeRate(DEFAULT_EXCHANGE)
           setExchangeRateRaw('')
         }
 
         // Auto backfill VND prices if we have USD prices + exchange rate
-        if (hasValidExchangeRate && data) {
-          const rate = parsedExchangeRate as number
+        // Use parsedExchangeRate if available, otherwise fall back to numeric state or 25000
+        const rateForConversion = hasValidExchangeRate ? (parsedExchangeRate as number) : 25000
+        if (data) {
           const convertUsdToVnd = (usd?: number | string | null) => {
             if (usd === undefined || usd === null) return null
             const usdNumber = typeof usd === 'number' ? usd : Number(usd)
             if (!Number.isFinite(usdNumber)) return null
-            return roundToDecimals(usdNumber * rate, PRICE_DECIMALS)
+            return roundToDecimals(usdNumber * rateForConversion, PRICE_DECIMALS)
           }
 
           const bwVnd = convertUsdToVnd(data.pricePerBWPage)
@@ -227,7 +228,7 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
     return () => {
       cancelled = true
     }
-  }, [open, device, canEditMonthlyRent])
+  }, [open, device, canEditMonthlyRent, exchangeRate])
 
   const parseNum = (v: string) => {
     if (typeof v !== 'string') return NaN
@@ -238,6 +239,16 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
 
   const PRICE_DECIMALS = 5
   const MONTHLY_RENT_DECIMALS = 5
+
+  const DEFAULT_EXCHANGE = 25000
+
+  const getEffectiveExchangeRate = (): number => {
+    const parsedRaw = parseFormattedNumber(exchangeRateRaw)
+    if (Number.isFinite(parsedRaw) && parsedRaw > 0) return parsedRaw
+    if (Number.isFinite(exchangeRate as number) && (exchangeRate as number) > 0)
+      return exchangeRate as number
+    return DEFAULT_EXCHANGE
+  }
 
   const roundToDecimals = (num: number, decimals: number): number => {
     if (!Number.isFinite(num)) return num
@@ -298,17 +309,12 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
           setSubmitting(false)
           return
         }
-        if (!exchangeRateRaw) {
-          toast.error('Vui lòng nhập tỷ giá khi nhập giá bằng VND')
+        const ex = getEffectiveExchangeRate()
+        if (!Number.isFinite(ex) || ex === 0) {
+          toast.error('Vui lòng nhập tỷ giá hợp lệ khi nhập giá bằng VND')
           setSubmitting(false)
           return
         }
-        if (!validateDecimals(exchangeRateRaw)) {
-          toast.error(`Số chữ số sau dấu thập phân cho tỷ giá phải ≤ ${PRICE_DECIMALS}`)
-          setSubmitting(false)
-          return
-        }
-        const ex = parseFormattedNumber(exchangeRateRaw)
         payload.pricePerBWPage = roundToDecimals(v / ex, PRICE_DECIMALS)
         payload.exchangeRate = ex
       } else if (pricePerBWPageUSDRaw) {
@@ -344,19 +350,14 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
           setSubmitting(false)
           return
         }
-        if (!exchangeRateRaw) {
-          toast.error('Vui lòng nhập tỷ giá khi nhập giá bằng VND')
+        const ex2 = getEffectiveExchangeRate()
+        if (!Number.isFinite(ex2) || ex2 === 0) {
+          toast.error('Vui lòng nhập tỷ giá hợp lệ khi nhập giá bằng VND')
           setSubmitting(false)
           return
         }
-        if (!validateDecimals(exchangeRateRaw)) {
-          toast.error(`Số chữ số sau dấu thập phân cho tỷ giá phải ≤ ${PRICE_DECIMALS}`)
-          setSubmitting(false)
-          return
-        }
-        const ex = parseFormattedNumber(exchangeRateRaw)
-        payload.pricePerColorPage = roundToDecimals(v / ex, PRICE_DECIMALS)
-        payload.exchangeRate = ex
+        payload.pricePerColorPage = roundToDecimals(v / ex2, PRICE_DECIMALS)
+        payload.exchangeRate = ex2
       } else if (pricePerColorPageUSDRaw) {
         if (!validateDecimals(pricePerColorPageUSDRaw)) {
           toast.error(`Số chữ số sau dấu thập phân cho USD phải ≤ ${PRICE_DECIMALS}`)
@@ -381,19 +382,14 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
       let monthlyRentValue: number | undefined = undefined
       if (canEditMonthlyRent) {
         if (monthlyRentVNDRaw) {
-          if (!exchangeRateRaw) {
-            toast.error('Vui lòng nhập tỷ giá khi nhập giá bằng VND')
-            setSubmitting(false)
-            return
-          }
+          const ex3 = getEffectiveExchangeRate()
           const v = parseFormattedNumber(monthlyRentVNDRaw)
-          const ex = parseFormattedNumber(exchangeRateRaw)
-          if (!Number.isFinite(v) || !Number.isFinite(ex) || ex === 0) {
+          if (!Number.isFinite(v) || !Number.isFinite(ex3) || ex3 === 0) {
             toast.error('Giá hoặc tỷ giá không hợp lệ')
             setSubmitting(false)
             return
           }
-          monthlyRentValue = roundToDecimals(v / ex, MONTHLY_RENT_DECIMALS)
+          monthlyRentValue = roundToDecimals(v / ex3, MONTHLY_RENT_DECIMALS)
         } else if (monthlyRentUSDRaw) {
           const v = parseFormattedNumber(monthlyRentUSDRaw)
           if (!Number.isFinite(v)) {
@@ -533,10 +529,16 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
                       value={pricePerBWPageVNDRaw}
                       onChange={(e) => {
                         const raw = e.target.value
+                        // keep formatted VND raw as user types
                         setPricePerBWPageVNDRaw(raw)
-                        const v = raw ? Number(raw) : ''
-                        setPricePerBWPageVND(v)
-                        if (v) {
+                        const v = parseFormattedNumber(raw)
+                        setPricePerBWPageVND(Number.isFinite(v) ? v : '')
+                        // if we have an exchange rate numeric, compute USD counterpart
+                        const eff = getEffectiveExchangeRate()
+                        if (Number.isFinite(eff) && Number.isFinite(v)) {
+                          const usd = roundToDecimals(v / eff, PRICE_DECIMALS)
+                          setPricePerBWPageUSDRaw(String(usd))
+                        } else {
                           setPricePerBWPageUSDRaw('')
                         }
                       }}
@@ -549,21 +551,26 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
                       onChange={(e) => {
                         const raw = e.target.value
                         setPricePerBWPageUSDRaw(raw)
-                        if (raw) {
-                          setPricePerBWPageVND('')
+                        const v = parseFormattedNumber(raw)
+                        const eff = getEffectiveExchangeRate()
+                        if (Number.isFinite(v) && Number.isFinite(eff)) {
+                          const vnd = roundToDecimals(v * eff, PRICE_DECIMALS)
+                          setPricePerBWPageVNDRaw(formatNumberWithCommas(String(vnd)))
+                          setPricePerBWPageVND(vnd)
+                        } else {
                           setPricePerBWPageVNDRaw('')
-                          setExchangeRate('')
-                          setExchangeRateRaw('')
+                          setPricePerBWPageVND('')
                         }
                       }}
                       placeholder="USD"
                       className="h-11 text-base"
-                      disabled={!!pricePerBWPageVND}
+                      disabled={false}
                     />
                   </div>
-                  {exchangeRate && pricePerBWPageVND ? (
+                  {pricePerBWPageVND ? (
                     <p className="mt-1 text-sm font-medium text-emerald-600">
-                      💵 Giá B/W sau quy đổi: $ {(pricePerBWPageVND / exchangeRate).toFixed(2)} USD
+                      💵 Giá B/W sau quy đổi: ${' '}
+                      {(pricePerBWPageVND / getEffectiveExchangeRate()).toFixed(2)} USD
                     </p>
                   ) : null}
                 </div>
@@ -576,9 +583,13 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
                       onChange={(e) => {
                         const raw = e.target.value
                         setPricePerColorPageVNDRaw(raw)
-                        const v = raw ? Number(raw) : ''
-                        setPricePerColorPageVND(v)
-                        if (v) {
+                        const v = parseFormattedNumber(raw)
+                        setPricePerColorPageVND(Number.isFinite(v) ? v : '')
+                        const eff = getEffectiveExchangeRate()
+                        if (Number.isFinite(eff) && Number.isFinite(v)) {
+                          const usd = roundToDecimals(v / eff, PRICE_DECIMALS)
+                          setPricePerColorPageUSDRaw(String(usd))
+                        } else {
                           setPricePerColorPageUSDRaw('')
                         }
                       }}
@@ -591,22 +602,26 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
                       onChange={(e) => {
                         const raw = e.target.value
                         setPricePerColorPageUSDRaw(raw)
-                        if (raw) {
-                          setPricePerColorPageVND('')
+                        const v = parseFormattedNumber(raw)
+                        const eff = getEffectiveExchangeRate()
+                        if (Number.isFinite(v) && Number.isFinite(eff)) {
+                          const vnd = roundToDecimals(v * eff, PRICE_DECIMALS)
+                          setPricePerColorPageVNDRaw(formatNumberWithCommas(String(vnd)))
+                          setPricePerColorPageVND(vnd)
+                        } else {
                           setPricePerColorPageVNDRaw('')
-                          setExchangeRate('')
-                          setExchangeRateRaw('')
+                          setPricePerColorPageVND('')
                         }
                       }}
                       placeholder="USD"
                       className="h-11 text-base"
-                      disabled={!!pricePerColorPageVND}
+                      disabled={false}
                     />
                   </div>
-                  {exchangeRate && pricePerColorPageVND ? (
+                  {pricePerColorPageVND ? (
                     <p className="mt-1 text-sm font-medium text-emerald-600">
-                      💵 Giá Color sau quy đổi: $ {(pricePerColorPageVND / exchangeRate).toFixed(2)}{' '}
-                      USD
+                      💵 Giá Color sau quy đổi: ${' '}
+                      {(pricePerColorPageVND / getEffectiveExchangeRate()).toFixed(2)} USD
                     </p>
                   ) : null}
                 </div>
@@ -632,13 +647,11 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
                       setMonthlyRentVNDRaw(formatted)
                       if (formatted) {
                         setMonthlyRentUSDRaw('')
-                      } else {
-                        setExchangeRateRaw('')
                       }
                     }}
                     placeholder="VND"
                     className="h-11 text-base"
-                    disabled={!canEditMonthlyRent || !!monthlyRentUSDRaw}
+                    disabled={!canEditMonthlyRent}
                   />
                   <Input
                     inputMode="decimal"
@@ -649,21 +662,27 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
                       setMonthlyRentUSDRaw(formatted)
                       if (formatted) {
                         setMonthlyRentVNDRaw('')
-                        setExchangeRateRaw('')
+                        // compute VND counterpart when exchangeRate known
+                        const v = parseFormattedNumber(formatted)
+                        const eff = getEffectiveExchangeRate()
+                        if (Number.isFinite(v) && Number.isFinite(eff)) {
+                          const vnd = roundToDecimals(v * eff, MONTHLY_RENT_DECIMALS)
+                          setMonthlyRentVNDRaw(formatNumberWithCommas(String(vnd)))
+                        }
                       }
                     }}
                     placeholder="USD"
                     className="h-11 text-base"
-                    disabled={!canEditMonthlyRent || !!monthlyRentVNDRaw}
+                    disabled={!canEditMonthlyRent}
                   />
                 </div>
-                {canEditMonthlyRent && monthlyRentVNDRaw && exchangeRateRaw && (
+                {canEditMonthlyRent && monthlyRentVNDRaw && (
                   <div className="mt-1 flex items-center gap-2">
                     <p className="text-sm font-medium text-emerald-600">
                       ≈ ${' '}
                       {(() => {
                         const v = parseFormattedNumber(monthlyRentVNDRaw)
-                        const ex = parseFormattedNumber(exchangeRateRaw)
+                        const ex = getEffectiveExchangeRate()
                         if (!Number.isFinite(v) || !Number.isFinite(ex) || ex === 0) return '-'
                         return roundToDecimals(v / ex, MONTHLY_RENT_DECIMALS).toFixed(
                           MONTHLY_RENT_DECIMALS
@@ -696,11 +715,49 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
                       const newValue = e.target.value
                       const formatted = formatNumberWithCommas(newValue)
                       setExchangeRateRaw(formatted)
-                      setExchangeRate(formatted ? parseFormattedNumber(formatted) : '')
+                      const parsed = formatted ? parseFormattedNumber(formatted) : ''
+                      setExchangeRate(parsed)
+
+                      // Recompute counterpart values when exchange rate changes
+                      if (Number.isFinite(parsed as number)) {
+                        const rate = parsed as number
+                        // BW
+                        const bwVnd = parseFormattedNumber(pricePerBWPageVNDRaw)
+                        const bwUsd = parseFormattedNumber(pricePerBWPageUSDRaw)
+                        if (Number.isFinite(bwVnd)) {
+                          const usd = roundToDecimals(bwVnd / rate, PRICE_DECIMALS)
+                          setPricePerBWPageUSDRaw(String(usd))
+                        } else if (Number.isFinite(bwUsd)) {
+                          const vnd = roundToDecimals(bwUsd * rate, PRICE_DECIMALS)
+                          setPricePerBWPageVNDRaw(formatNumberWithCommas(String(vnd)))
+                        }
+
+                        // Color
+                        const colorVnd = parseFormattedNumber(pricePerColorPageVNDRaw)
+                        const colorUsd = parseFormattedNumber(pricePerColorPageUSDRaw)
+                        if (Number.isFinite(colorVnd)) {
+                          const usd = roundToDecimals(colorVnd / rate, PRICE_DECIMALS)
+                          setPricePerColorPageUSDRaw(String(usd))
+                        } else if (Number.isFinite(colorUsd)) {
+                          const vnd = roundToDecimals(colorUsd * rate, PRICE_DECIMALS)
+                          setPricePerColorPageVNDRaw(formatNumberWithCommas(String(vnd)))
+                        }
+
+                        // Monthly rent
+                        const mrVnd = parseFormattedNumber(monthlyRentVNDRaw)
+                        const mrUsd = parseFormattedNumber(monthlyRentUSDRaw)
+                        if (Number.isFinite(mrVnd)) {
+                          const usd = roundToDecimals(mrVnd / rate, MONTHLY_RENT_DECIMALS)
+                          setMonthlyRentUSDRaw(String(usd))
+                        } else if (Number.isFinite(mrUsd)) {
+                          const vnd = roundToDecimals(mrUsd * rate, MONTHLY_RENT_DECIMALS)
+                          setMonthlyRentVNDRaw(formatNumberWithCommas(String(vnd)))
+                        }
+                      }
                     }}
                     placeholder="25000"
                     className="h-11"
-                    disabled={!canEditMonthlyRent || !monthlyRentVNDRaw}
+                    disabled={false}
                   />
                   {canEditMonthlyRent &&
                   (exchangeRate ||

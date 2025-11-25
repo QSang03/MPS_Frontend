@@ -27,6 +27,7 @@ import {
   Edit2,
   X,
   Power,
+  RefreshCw,
   BarChart3,
   Trash2,
   Settings,
@@ -54,6 +55,7 @@ import DeviceFormModal from './deviceformmodal'
 import DevicePricingModal from './DevicePricingModal'
 import ToggleActiveModal from './ToggleActiveModal'
 import A4EquivalentModal from './A4EquivalentModal'
+import A4EquivalentHistoryModal from './A4EquivalentHistoryModal'
 import { CustomerSelectDialog } from './CustomerSelectDialog'
 import { useDevicesQuery } from '@/lib/hooks/queries/useDevicesQuery'
 import { devicesClientService } from '@/lib/api/services/devices-client.service'
@@ -367,6 +369,8 @@ function DevicesTableContent({
   const [toggleTargetActive, setToggleTargetActive] = useState(false)
   const [a4ModalOpen, setA4ModalOpen] = useState(false)
   const [a4ModalDevice, setA4ModalDevice] = useState<Device | null>(null)
+  const [a4HistoryOpen, setA4HistoryOpen] = useState(false)
+  const [a4HistoryDevice, setA4HistoryDevice] = useState<Device | null>(null)
 
   const router = useRouter()
   const queryClient = useQueryClient()
@@ -735,6 +739,18 @@ function DevicesTableContent({
                   <BarChart3 className="h-3.5 w-3.5" />
                 </Button>
               </ActionGuard>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 w-7 p-0 text-slate-600 hover:bg-slate-100"
+                onClick={() => {
+                  setA4HistoryDevice(device)
+                  setA4HistoryOpen(true)
+                }}
+                title="Xem lịch sử snapshot A4"
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+              </Button>
               <ActionGuard pageId="devices" actionId="delete">
                 <DeleteDialog
                   title={`Xóa thiết bị ${device.serialNumber || device.id}`}
@@ -857,6 +873,15 @@ function DevicesTableContent({
         open={a4ModalOpen}
         onOpenChange={setA4ModalOpen}
         onSaved={invalidateDevices}
+      />
+
+      <A4EquivalentHistoryModal
+        deviceId={a4HistoryDevice?.id}
+        open={a4HistoryOpen}
+        onOpenChange={(v) => {
+          setA4HistoryOpen(v)
+          if (!v) setA4HistoryDevice(null)
+        }}
       />
     </>
   )
