@@ -44,6 +44,27 @@ export function useRealtimeNotifications() {
       queryClient.invalidateQueries({ queryKey: ['service-requests'] })
     })
 
+    // New message added to service request
+    socket.on('service-request:message.created', (data: { id: string }) => {
+      // id = serviceRequestId
+      toast('Có tin nhắn mới trên yêu cầu', {
+        description: `Request #${data.id.slice(0, 8)}`,
+      })
+      queryClient.invalidateQueries({ queryKey: ['service-requests'] })
+      queryClient.invalidateQueries({ queryKey: ['service-requests', 'detail', data.id] })
+      queryClient.invalidateQueries({ queryKey: ['service-requests', data.id, 'messages'] })
+    })
+
+    // New cost added to service request
+    socket.on('service-request:cost.created', (data: { id: string }) => {
+      toast('Có chi phí mới được thêm vào yêu cầu', {
+        description: `Request #${data.id.slice(0, 8)}`,
+      })
+      queryClient.invalidateQueries({ queryKey: ['service-requests'] })
+      queryClient.invalidateQueries({ queryKey: ['service-requests', 'detail', data.id] })
+      queryClient.invalidateQueries({ queryKey: ['service-requests', data.id, 'costs'] })
+    })
+
     // Low consumable alert
     socket.on('consumable:low', (data: { deviceName: string; consumable: string }) => {
       toast.error('Low consumable alert', {
@@ -63,6 +84,8 @@ export function useRealtimeNotifications() {
       socket.off('device:status-changed')
       socket.off('service-request:created')
       socket.off('service-request:updated')
+      socket.off('service-request:message.created')
+      socket.off('service-request:cost.created')
       socket.off('consumable:low')
       socket.off('maintenance:reminder')
     }

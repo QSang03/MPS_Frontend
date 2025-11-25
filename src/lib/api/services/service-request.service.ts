@@ -4,6 +4,7 @@ import type {
   ServiceRequest,
   CreateServiceRequestDto,
   UpdateServiceRequestDto,
+  UpdateServiceRequestStatusDto,
   ServiceRequestStats,
   ServiceRequestCost,
   CreateServiceRequestCostDto,
@@ -71,10 +72,15 @@ export const serviceRequestService = {
   /**
    * Update service request status
    */
-  async updateStatus(id: string, status: ServiceRequestStatus): Promise<ServiceRequest> {
+  async updateStatus(
+    id: string,
+    statusOrPayload: ServiceRequestStatus | UpdateServiceRequestStatusDto
+  ): Promise<ServiceRequest> {
+    const payload =
+      typeof statusOrPayload === 'string' ? { status: statusOrPayload } : statusOrPayload
     const response = await apiClient.patch<{ success: boolean; data: ServiceRequest }>(
       API_ENDPOINTS.SERVICE_REQUESTS.STATUS(id),
-      { status }
+      payload
     )
     return response.data.data
   },

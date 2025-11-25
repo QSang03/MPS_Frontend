@@ -36,6 +36,20 @@ export function MonthPicker({ value, onChange, onApply, className, placeholder }
   }, [minYear, maxYear])
 
   const months = Array.from({ length: 12 }, (_, i) => i + 1)
+  const monthNames = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ]
 
   const nowMonth = now.getMonth() + 1
 
@@ -68,14 +82,18 @@ export function MonthPicker({ value, onChange, onApply, className, placeholder }
     selMonthRef.current = p.month
   }, [value, parse])
 
-  const formatted = value ? value : ''
+  // Always normalize incoming `value` prop to `YYYY-MM` so display is consistent
+  const normalizedFromValue = React.useMemo(() => {
+    const p = parse(value)
+    return `${p.year}-${String(p.month).padStart(2, '0')}`
+  }, [value, parse])
 
   // Local display value to update the input immediately when user applies
-  const [displayValue, setDisplayValue] = React.useState<string>(formatted)
+  const [displayValue, setDisplayValue] = React.useState<string>(normalizedFromValue)
 
   React.useEffect(() => {
-    setDisplayValue(formatted)
-  }, [formatted])
+    setDisplayValue(normalizedFromValue)
+  }, [normalizedFromValue])
   const apply = () => {
     // Read from refs to ensure we get the most recent selection even if
     // the state update for selMonth/selYear hasn't been flushed yet.
@@ -109,10 +127,73 @@ export function MonthPicker({ value, onChange, onApply, className, placeholder }
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger>
-        <Input readOnly placeholder={placeholder} value={displayValue} className={cn(className)} />
+        {/* Provide a no-op onChange so the `Input` renders as a controlled input
+            and updates when `displayValue` changes. The input is readOnly. */}
+        <Input
+          readOnly
+          placeholder={placeholder}
+          value={displayValue}
+          onChange={() => {}}
+          className={cn(className)}
+        />
       </PopoverTrigger>
 
       <PopoverContent className="w-auto">
+        <div className="mb-3">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  const n = selYearRef.current - 1
+                  selYearRef.current = n
+                  setSelYear(n)
+                }}
+                className="rounded px-2 py-1 text-sm"
+              >
+                ‹
+              </button>
+              <div className="text-sm font-medium">{selYear}</div>
+              <button
+                type="button"
+                onClick={() => {
+                  const n = selYearRef.current + 1
+                  selYearRef.current = n
+                  setSelYear(n)
+                }}
+                className="rounded px-2 py-1 text-sm"
+              >
+                ›
+              </button>
+            </div>
+            <div className="text-muted-foreground text-xs">Chọn tháng</div>
+          </div>
+
+          <div className="mt-2 grid grid-cols-6 gap-2">
+            {months.map((m, idx) => {
+              const selected = selMonth === m
+              return (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => {
+                    selMonthRef.current = m
+                    setSelMonth(m)
+                  }}
+                  className={cn(
+                    'rounded px-2 py-1 text-sm',
+                    selected
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-transparent text-slate-700 hover:bg-slate-100'
+                  )}
+                >
+                  {monthNames[idx]}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
         <div className="flex items-center gap-2">
           <div className="min-w-[9rem]">
             <Select

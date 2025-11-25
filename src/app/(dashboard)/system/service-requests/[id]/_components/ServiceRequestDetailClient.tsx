@@ -18,6 +18,18 @@ import {
 import type { LucideIcon } from 'lucide-react'
 import { ArrowLeft, CheckCircle2, Clock4, Wrench, XCircle } from 'lucide-react'
 import { formatDateTime, formatRelativeTime } from '@/lib/utils/formatters'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableRow,
+  TableHead,
+  TableHeader,
+} from '@/components/ui/table'
+import { Dialog, DialogContent } from '@/components/ui/dialog'
+import { SystemModalLayout } from '@/components/system/SystemModalLayout'
+import { FileText } from 'lucide-react'
+import { Input } from '@/components/ui/input'
 import { serviceRequestsClientService } from '@/lib/api/services/service-requests-client.service'
 import { Priority, ServiceRequestStatus } from '@/constants/status'
 import { PermissionGuard } from '@/components/shared/PermissionGuard'
@@ -64,6 +76,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
   const router = useRouter()
   const queryClient = useQueryClient()
   const [updating, setUpdating] = useState(false)
+  const [actionNote, setActionNote] = useState('')
 
   const { data, isLoading } = useQuery({
     queryKey: ['service-requests', 'detail', id],
@@ -71,13 +84,23 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
   })
 
   const updateMutation = useMutation({
-    mutationFn: ({ status }: { status: ServiceRequestStatus }) =>
-      serviceRequestsClientService.update(id, { status }),
+    mutationFn: ({ status, actionNote }: { status: ServiceRequestStatus; actionNote?: string }) =>
+      serviceRequestsClientService.updateStatus(id, { status, actionNote }),
     onMutate: () => setUpdating(true),
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ['service-requests'] })
       queryClient.invalidateQueries({ queryKey: ['service-requests', 'detail', id] })
       toast.success('Cập nhật trạng thái thành công')
+      // If we had an action note, also create a message to ensure conversation shows it
+      if (actionNote && actionNote.trim().length > 0) {
+        try {
+          await serviceRequestsClientService.createMessage(id, { content: actionNote.trim() })
+          queryClient.invalidateQueries({ queryKey: ['service-requests', id, 'messages'] })
+          setActionNote('')
+        } catch (e) {
+          console.error('Failed to create message for status action:', e)
+        }
+      }
     },
     onError: (err: unknown) => {
       const msg = err instanceof Error ? err.message : 'Không thể cập nhật'
@@ -98,6 +121,60 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
       toast.error(msg)
     },
   })
+
+  // Costs (create + list)
+  const costsQuery = useQuery({
+    queryKey: ['service-requests', id, 'costs'],
+    queryFn: () => serviceRequestsClientService.getCosts(id),
+    enabled: !!data,
+  })
+
+  const [showAddCost, setShowAddCost] = useState(false)
+  const [newCostDeviceId, setNewCostDeviceId] = useState<string | undefined>(undefined)
+  const [newItems, setNewItems] = useState<
+    Array<{ type: 'LABOR' | 'PARTS' | 'OTHER'; amount: number; note?: string }>
+  >([{ type: 'LABOR', amount: 0, note: '' }])
+
+  const createCostMutation = useMutation({
+    mutationFn: (payload: {
+      deviceId?: string
+      totalAmount?: number
+      items: Array<{ type: 'LABOR' | 'PARTS' | 'OTHER'; amount: number; note?: string }>
+    }) => serviceRequestsClientService.createCost(id, payload),
+    onSuccess: () => {
+      toast.success('Đã lưu chi phí')
+      queryClient.invalidateQueries({ queryKey: ['service-requests', id, 'costs'] })
+      queryClient.invalidateQueries({ queryKey: ['service-requests'] })
+      setShowAddCost(false)
+      // reset draft
+      setNewItems([{ type: 'LABOR', amount: 0, note: '' }])
+    },
+    onError: (err: unknown) => {
+      const msg = err instanceof Error ? err.message : 'Không thể lưu chi phí'
+      toast.error(msg)
+    },
+  })
+
+  // Avoid calling setState synchronously inside an effect. Instead,
+  // set the device ID when opening the Add Cost modal so it reflects the
+  // currently-loaded request's device without triggering cascading renders.
+
+  const totalAmountForDraft = newItems.reduce((s, it) => s + Number(it.amount || 0), 0)
+
+  function updateItemAt(
+    index: number,
+    patch: Partial<{ type: 'LABOR' | 'PARTS' | 'OTHER'; amount: number; note?: string }>
+  ) {
+    setNewItems((prev) => prev.map((it, i) => (i === index ? { ...it, ...patch } : it)))
+  }
+
+  function removeItemAt(index: number) {
+    setNewItems((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  function addItem() {
+    setNewItems((prev) => [...prev, { type: 'PARTS', amount: 0, note: '' }])
+  }
 
   if (isLoading) {
     return (
@@ -205,32 +282,42 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                     <p className="text-muted-foreground text-sm">Bạn không có quyền cập nhật.</p>
                   }
                 >
-                  <Select
-                    value={data.status}
-                    onValueChange={(value) =>
-                      updateMutation.mutate({
-                        status: value as ServiceRequestStatus,
-                      })
-                    }
-                    disabled={updating}
-                  >
-                    <SelectTrigger className="w-[260px] justify-between">
-                      <SelectValue placeholder="Chọn trạng thái">
-                        <div className="flex items-center gap-2">
-                          <Badge className={cn('text-xs', statusBadgeMap[data.status])}>
-                            {data.status}
-                          </Badge>
-                        </div>
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {statusOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="space-y-2">
+                    <Select
+                      value={data.status}
+                      onValueChange={(value) =>
+                        updateMutation.mutate({
+                          status: value as ServiceRequestStatus,
+                          actionNote: actionNote?.trim() ? actionNote.trim() : undefined,
+                        })
+                      }
+                      disabled={updating}
+                    >
+                      <SelectTrigger className="w-[260px] justify-between">
+                        <SelectValue placeholder="Chọn trạng thái">
+                          <div className="flex items-center gap-2">
+                            <Badge className={cn('text-xs', statusBadgeMap[data.status])}>
+                              {data.status}
+                            </Badge>
+                          </div>
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {statusOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    <textarea
+                      placeholder="Ghi chú hành động (tùy chọn)"
+                      className="mt-2 w-full rounded-md border px-3 py-2 text-sm"
+                      value={actionNote}
+                      onChange={(e) => setActionNote(e.target.value)}
+                    />
+                  </div>
                 </PermissionGuard>
               </div>
 
@@ -253,6 +340,204 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Costs card (system admins) */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Chi phí & Phiếu chi</CardTitle>
+              <CardDescription>Ghi nhận chi phí liên quan tới yêu cầu</CardDescription>
+            </div>
+
+            <PermissionGuard
+              session={session}
+              action="create"
+              resource={{ type: 'serviceRequest', customerId: data.customerId }}
+              fallback={null}
+            >
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    // seed deviceId from loaded request when opening to avoid effect-setState
+                    setNewCostDeviceId(data?.device?.id ?? undefined)
+                    setShowAddCost(true)
+                  }}
+                >
+                  Thêm chi phí
+                </Button>
+              </div>
+            </PermissionGuard>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {costsQuery.isLoading ? (
+            <div className="text-muted-foreground text-sm">Đang tải chi phí…</div>
+          ) : costsQuery.data && costsQuery.data.data.length === 0 ? (
+            <div className="text-muted-foreground text-sm">Chưa có chi phí được ghi nhận.</div>
+          ) : (
+            costsQuery.data?.data.map((cost) => (
+              <div key={cost.id} className="rounded-lg border p-3">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="text-sm font-semibold">Phiếu #{cost.id.slice(0, 8)}</div>
+                    <div className="text-muted-foreground text-xs">{cost.createdAt}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-lg font-bold">{cost.totalAmount.toLocaleString()}</div>
+                    <div className="text-muted-foreground text-xs">{cost.currency}</div>
+                  </div>
+                </div>
+
+                {cost.items.length > 0 && (
+                  <div className="mt-3 overflow-x-auto">
+                    {/* Use the system table container classes so nested tables match the app's standard layout */}
+                    <div className="rounded-md border transition-opacity">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Loại</TableHead>
+                            <TableHead>Ghi chú</TableHead>
+                            <TableHead className="text-right">Số tiền</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {cost.items.map((it) => (
+                            <TableRow key={it.id}>
+                              <TableCell>{it.type}</TableCell>
+                              <TableCell>{it.note ?? '—'}</TableCell>
+                              <TableCell className="text-right">
+                                {it.amount.toLocaleString()}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Add cost dialog */}
+      <Dialog open={showAddCost} onOpenChange={(open) => !open && setShowAddCost(false)}>
+        <DialogContent>
+          <SystemModalLayout
+            title="Ghi chi phí mới"
+            description="Ghi nhận chi phí liên quan tới yêu cầu"
+            icon={FileText}
+            variant="create"
+            footer={
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowAddCost(false)}
+                  disabled={createCostMutation.isPending}
+                >
+                  Hủy
+                </Button>
+                <Button
+                  onClick={() => {
+                    // Basic validation: at least one item and amounts > 0
+                    if (newItems.length === 0) {
+                      toast.error('Vui lòng thêm ít nhất 1 mục chi phí')
+                      return
+                    }
+                    if (newItems.some((it) => !it.amount || Number(it.amount) <= 0)) {
+                      toast.error('Số tiền phải lớn hơn 0 cho mỗi mục')
+                      return
+                    }
+
+                    createCostMutation.mutate({
+                      deviceId: newCostDeviceId,
+                      totalAmount: totalAmountForDraft,
+                      items: newItems.map((it) => ({
+                        type: it.type,
+                        amount: Number(it.amount),
+                        note: it.note,
+                      })),
+                    })
+                  }}
+                  disabled={createCostMutation.isPending}
+                >
+                  Lưu chi phí
+                </Button>
+              </>
+            }
+          >
+            <div className="mt-3 space-y-3">
+              <div>
+                <label className="text-muted-foreground text-sm">Thiết bị (tuỳ chọn)</label>
+                <Input
+                  value={newCostDeviceId ?? ''}
+                  onChange={(e) => setNewCostDeviceId(e.target.value || undefined)}
+                  placeholder="Device ID (optional)"
+                  className="mt-1"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-muted-foreground text-sm">Mục chi phí</label>
+                {newItems.map((it, idx) => (
+                  <div key={idx} className="flex items-start gap-2">
+                    <Select
+                      value={it.type}
+                      onValueChange={(v) =>
+                        updateItemAt(idx, { type: v as 'LABOR' | 'PARTS' | 'OTHER' })
+                      }
+                    >
+                      <SelectTrigger className="w-[140px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="LABOR">LABOR</SelectItem>
+                        <SelectItem value="PARTS">PARTS</SelectItem>
+                        <SelectItem value="OTHER">OTHER</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    <Input
+                      value={String(it.amount)}
+                      onChange={(e) => updateItemAt(idx, { amount: Number(e.target.value || 0) })}
+                      placeholder="Số tiền"
+                      type="number"
+                      className="flex-1"
+                    />
+
+                    <Input
+                      value={String(it.note ?? '')}
+                      onChange={(e) => updateItemAt(idx, { note: e.target.value })}
+                      placeholder="Ghi chú (tùy chọn)"
+                      className="flex-1"
+                    />
+
+                    <Button variant="ghost" onClick={() => removeItemAt(idx)}>
+                      Xóa
+                    </Button>
+                  </div>
+                ))}
+
+                <div className="mt-2">
+                  <Button variant="outline" size="sm" onClick={addItem}>
+                    Thêm mục
+                  </Button>
+                </div>
+              </div>
+
+              <div className="border-t pt-2">
+                <div className="flex items-center justify-between">
+                  <div className="text-muted-foreground text-sm">Tổng (tạm tính)</div>
+                  <div className="text-lg font-bold">{totalAmountForDraft.toLocaleString()}</div>
+                </div>
+              </div>
+            </div>
+          </SystemModalLayout>
+        </DialogContent>
+      </Dialog>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>

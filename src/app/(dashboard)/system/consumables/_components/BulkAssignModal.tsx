@@ -112,10 +112,30 @@ function SearchableConsumableTypeSelectInner({
     return types
   }, [types, remoteTypes, debouncedSearch])
 
+  const selectedTypeLabel = useMemo(() => {
+    if (!value) return ''
+    const all = [...types, ...remoteTypes]
+    const sel = all.find(
+      (t) => String((t as Record<string, unknown>).id ?? '') === String(value)
+    ) as Record<string, unknown> | undefined
+    if (!sel) return ''
+    const name = String(sel.name ?? '')
+    const pn = String(sel.partNumber ?? '')
+    return pn ? `${name} • P/N: ${pn}` : name
+  }, [value, types, remoteTypes])
+
   return (
     <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className="h-11">
-        <SelectValue placeholder={loading ? 'Đang tải...' : 'Chọn loại vật tư'} />
+      <SelectTrigger className="h-11 w-full min-w-0">
+        <SelectValue>
+          <div className="max-w-[260px] truncate text-sm">
+            {value
+              ? selectedTypeLabel || (loading ? 'Đang tải...' : 'Chọn loại vật tư')
+              : loading
+                ? 'Đang tải...'
+                : 'Chọn loại vật tư'}
+          </div>
+        </SelectValue>
       </SelectTrigger>
       <SelectContent>
         <div className="px-3 py-2">
@@ -153,18 +173,20 @@ function SearchableConsumableTypeSelectInner({
           const compatibleMachineLine = String(tObj.compatibleMachineLine ?? '')
           return (
             <SelectItem key={String(tObj.id ?? '')} value={String(tObj.id ?? '')}>
-              <div className="grid w-full grid-cols-[1fr,1.5fr] gap-3">
-                <div className="flex flex-col">
-                  <span className="font-medium">{String(tObj.name ?? '')}</span>
+              <div className="grid w-full min-w-0 grid-cols-[1fr,1.5fr] gap-3">
+                <div className="flex min-w-0 flex-col">
+                  <span className="truncate font-medium">{String(tObj.name ?? '')}</span>
                   {partNumber && (
-                    <span className="text-muted-foreground text-xs">P/N: {partNumber}</span>
+                    <span className="text-muted-foreground truncate text-xs">
+                      P/N: {partNumber}
+                    </span>
                   )}
                 </div>
-                <div className="flex flex-col border-l pl-3">
+                <div className="flex min-w-0 flex-col border-l pl-3">
                   <span className="text-muted-foreground text-xs font-semibold">
                     Dòng tương thích:
                   </span>
-                  <span className="text-xs">
+                  <span className="truncate text-xs">
                     {compatibleMachineLine || (
                       <span className="text-gray-400 italic">Chưa có thông tin</span>
                     )}

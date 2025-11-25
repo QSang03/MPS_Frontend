@@ -81,6 +81,7 @@ export const API_ENDPOINTS = {
     STATUS: (id: string) => `/service-requests/${id}/status`,
     STATS: (customerId: string) => `/service-requests/stats/${customerId}`,
     COSTS: (id: string) => `/service-requests/${id}/costs`,
+    MESSAGES: (id: string) => `/service-requests/${id}/messages`,
   },
 
   // Purchase Requests

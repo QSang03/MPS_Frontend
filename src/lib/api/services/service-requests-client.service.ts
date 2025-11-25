@@ -3,8 +3,11 @@ import type {
   ServiceRequest,
   CreateServiceRequestDto,
   UpdateServiceRequestDto,
+  UpdateServiceRequestStatusDto,
   ServiceRequestCost,
   CreateServiceRequestCostDto,
+  CreateServiceRequestMessageDto,
+  ServiceRequestMessage,
 } from '@/types/models'
 import type { ApiListResponse, ListPagination } from '@/types/api'
 import { ServiceRequestStatus, Priority } from '@/constants/status'
@@ -75,9 +78,7 @@ export const serviceRequestsClientService = {
 
   async updateStatus(
     id: string,
-    statusOrPayload:
-      | ServiceRequestStatus
-      | { status: ServiceRequestStatus; customerCloseReason?: string }
+    statusOrPayload: ServiceRequestStatus | UpdateServiceRequestStatusDto
   ): Promise<ServiceRequest | null> {
     const payload =
       typeof statusOrPayload === 'string' ? { status: statusOrPayload } : statusOrPayload
@@ -104,6 +105,22 @@ export const serviceRequestsClientService = {
   }> {
     const response = await internalApiClient.get<ApiListResponse<ServiceRequestCost>>(
       `/api/service-requests/${id}/costs`
+    )
+    const { data, pagination } = response.data || { data: [], pagination: undefined }
+    return { data: Array.isArray(data) ? data : [], pagination }
+  },
+
+  async createMessage(id: string, payload: CreateServiceRequestMessageDto) {
+    const response = await internalApiClient.post(`/api/service-requests/${id}/messages`, payload)
+    return response.data?.data ?? null
+  },
+
+  async getMessages(id: string): Promise<{
+    data: ServiceRequestMessage[]
+    pagination?: ListPagination
+  }> {
+    const response = await internalApiClient.get<ApiListResponse<ServiceRequestMessage>>(
+      `/api/service-requests/${id}/messages`
     )
     const { data, pagination } = response.data || { data: [], pagination: undefined }
     return { data: Array.isArray(data) ? data : [], pagination }

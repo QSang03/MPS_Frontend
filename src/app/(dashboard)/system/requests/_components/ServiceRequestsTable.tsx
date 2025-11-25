@@ -37,6 +37,13 @@ import {
 import { CustomerSelect } from '@/components/shared/CustomerSelect'
 import { formatDateTime } from '@/lib/utils/formatters'
 import { serviceRequestsClientService } from '@/lib/api/services/service-requests-client.service'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog'
 import { ServiceRequestStatus, Priority } from '@/constants/status'
 import type { ServiceRequest } from '@/types/models/service-request'
 import { useServiceRequestsQuery } from '@/lib/hooks/queries/useServiceRequestsQuery'
@@ -302,6 +309,11 @@ function ServiceRequestsTableContent({
 }: ServiceRequestsTableContentProps) {
   const queryClient = useQueryClient()
   const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null)
+  const [pendingStatusChange, setPendingStatusChange] = useState<{
+    id: string
+    status: ServiceRequestStatus
+  } | null>(null)
+  const [actionNoteForPending, setActionNoteForPending] = useState<string>('')
   const [isPending, startTransition] = useTransition()
 
   const queryParams = useMemo(
@@ -338,12 +350,37 @@ function ServiceRequestsTableContent({
   }, [requests, totalCount, onStatsChange])
 
   const mutation = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: ServiceRequestStatus }) =>
-      serviceRequestsClientService.updateStatus(id, status),
-    onSuccess: () => {
+    mutationFn: ({
+      id,
+      status,
+      actionNote,
+    }: {
+      id: string
+      status: ServiceRequestStatus
+      actionNote?: string
+    }) =>
+      serviceRequestsClientService.updateStatus(id, actionNote ? { status, actionNote } : status),
+    onSuccess: async (_data, variables) => {
       toast.success('Cập nhật trạng thái thành công')
       queryClient.invalidateQueries({ queryKey: ['service-requests', queryParams] })
       queryClient.invalidateQueries({ queryKey: ['system-requests-service'] })
+
+      // If admin provided an action note, persist it as a conversation message so backend
+      // can record it and broadcast via websocket (BE may emit 'service-request:message.created')
+      try {
+        if (variables?.actionNote && variables.actionNote.trim().length > 0) {
+          await serviceRequestsClientService.createMessage(variables.id, {
+            content: variables.actionNote.trim(),
+          })
+          queryClient.invalidateQueries({
+            queryKey: ['service-requests', variables.id, 'messages'],
+          })
+        }
+      } catch (err) {
+        // Don't fail overall flow if creating message fails — just log and show a toast
+        console.error('Failed to create message after status update', err)
+        toast.error('Cập nhật trạng thái thành công nhưng không lưu được ghi chú')
+      }
     },
     onError: (error: unknown) => {
       const message = error instanceof Error ? error.message : 'Không thể cập nhật trạng thái'
@@ -352,13 +389,11 @@ function ServiceRequestsTableContent({
     onSettled: () => setStatusUpdatingId(null),
   })
 
-  const handleStatusChange = useCallback(
-    (id: string, status: ServiceRequestStatus) => {
-      setStatusUpdatingId(id)
-      mutation.mutate({ id, status })
-    },
-    [mutation]
-  )
+  const handleStatusChange = useCallback((id: string, status: ServiceRequestStatus) => {
+    // open dialog to allow entering an optional action note for admin
+    setPendingStatusChange({ id, status })
+    setActionNoteForPending('')
+  }, [])
 
   const columns = useMemo<ColumnDef<ServiceRequestRow>[]>(
     () => [
@@ -558,42 +593,91 @@ function ServiceRequestsTableContent({
   )
 
   return (
-    <TableWrapper<ServiceRequestRow>
-      tableId="service-requests"
-      columns={columns}
-      data={requests}
-      totalCount={totalCount}
-      pageIndex={pagination.pageIndex}
-      pageSize={pagination.pageSize}
-      onPaginationChange={(next) => {
-        startTransition(() => {
-          onPaginationChange(next)
-        })
-      }}
-      onSortingChange={(nextSorting) => {
-        startTransition(() => {
-          onSortingChange(nextSorting)
-        })
-      }}
-      sorting={sorting}
-      defaultSorting={{ sortBy: 'createdAt', sortOrder: 'desc' }}
-      enableColumnVisibility
-      renderColumnVisibilityMenu={renderColumnVisibilityMenu}
-      isPending={isPending}
-      emptyState={
-        requests.length === 0 ? (
-          <div className="p-12 text-center">
-            <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200">
-              <FileText className="h-12 w-12 opacity-20" />
+    <>
+      <TableWrapper<ServiceRequestRow>
+        tableId="service-requests"
+        columns={columns}
+        data={requests}
+        totalCount={totalCount}
+        pageIndex={pagination.pageIndex}
+        pageSize={pagination.pageSize}
+        onPaginationChange={(next) => {
+          startTransition(() => {
+            onPaginationChange(next)
+          })
+        }}
+        onSortingChange={(nextSorting) => {
+          startTransition(() => {
+            onSortingChange(nextSorting)
+          })
+        }}
+        sorting={sorting}
+        defaultSorting={{ sortBy: 'createdAt', sortOrder: 'desc' }}
+        enableColumnVisibility
+        renderColumnVisibilityMenu={renderColumnVisibilityMenu}
+        isPending={isPending}
+        emptyState={
+          requests.length === 0 ? (
+            <div className="p-12 text-center">
+              <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200">
+                <FileText className="h-12 w-12 opacity-20" />
+              </div>
+              <h3 className="mb-2 text-xl font-bold text-gray-700">Không có yêu cầu dịch vụ</h3>
+              <p className="mb-6 text-gray-500">
+                {searchInput ? 'Không tìm thấy yêu cầu phù hợp' : 'Hãy tạo yêu cầu đầu tiên'}
+              </p>
             </div>
-            <h3 className="mb-2 text-xl font-bold text-gray-700">Không có yêu cầu dịch vụ</h3>
-            <p className="mb-6 text-gray-500">
-              {searchInput ? 'Không tìm thấy yêu cầu phù hợp' : 'Hãy tạo yêu cầu đầu tiên'}
-            </p>
+          ) : undefined
+        }
+        skeletonRows={10}
+      />
+
+      {/* Dialog shown when admin changes status to allow an optional action note */}
+      <Dialog
+        open={Boolean(pendingStatusChange)}
+        onOpenChange={(open) => !open && setPendingStatusChange(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cập nhật trạng thái</DialogTitle>
+          </DialogHeader>
+
+          <div className="mt-2">
+            <p className="text-muted-foreground text-sm">Ghi chú hành động (tùy chọn)</p>
+            <textarea
+              value={actionNoteForPending}
+              onChange={(e) => setActionNoteForPending(e.target.value)}
+              placeholder="Nhập ghi chú để lưu cùng cập nhật trạng thái (ví dụ: đã kiểm tra onsite, chờ vật tư...)"
+              className="mt-2 w-full rounded-md border px-3 py-2 text-sm"
+            />
           </div>
-        ) : undefined
-      }
-      skeletonRows={10}
-    />
+
+          <DialogFooter className="mt-4">
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setPendingStatusChange(null)}>
+                Hủy
+              </Button>
+              <Button
+                onClick={() => {
+                  if (!pendingStatusChange) return
+                  const { id, status } = pendingStatusChange
+                  setStatusUpdatingId(id)
+                  mutation.mutate({
+                    id,
+                    status,
+                    actionNote: actionNoteForPending?.trim() || undefined,
+                  })
+                  setPendingStatusChange(null)
+                  setActionNoteForPending('')
+                }}
+                disabled={mutation.isPending}
+              >
+                Xác nhận
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }

@@ -220,6 +220,44 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
     }
   }
 
+  // non-A4 helpers (live auto-fill behavior)
+  const handleColorChangeNonA4 = (v: string) => {
+    setTotalColorPages(v)
+    const colorNum = parseNum(v)
+    const bwNum = parseNum(totalBlackWhitePages)
+
+    if (colorNum !== undefined && bwNum !== undefined) {
+      setTotalPageCount(String(colorNum + bwNum))
+    }
+  }
+
+  const handleBwChangeNonA4 = (v: string) => {
+    setTotalBlackWhitePages(v)
+    const bwNum = parseNum(v)
+    const colorNum = parseNum(totalColorPages)
+
+    if (colorNum !== undefined && bwNum !== undefined) {
+      setTotalPageCount(String(colorNum + bwNum))
+    }
+  }
+
+  const handleTotalChangeNonA4 = (v: string) => {
+    setTotalPageCount(v)
+    const totalNum = parseNum(v)
+    const colorNum = parseNum(totalColorPages)
+    const bwNum = parseNum(totalBlackWhitePages)
+
+    if (totalNum !== undefined) {
+      if (colorNum !== undefined && bwNum === undefined) {
+        const computedBw = totalNum - colorNum
+        if (computedBw >= 0) setTotalBlackWhitePages(String(computedBw))
+      } else if (bwNum !== undefined && colorNum === undefined) {
+        const computedColor = totalNum - bwNum
+        if (computedColor >= 0) setTotalColorPages(String(computedColor))
+      }
+    }
+  }
+
   const handleBwChange = (v: string) => {
     setTotalBlackWhitePagesA4(v)
     const bwNum = parseNum(v)
@@ -285,6 +323,44 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
           }}
           className="space-y-4"
         >
+          {/* non-A4 fields (regular counters) */}
+          <div>
+            <Label className="text-sm font-semibold">Tổng trang màu</Label>
+            <Input
+              value={totalColorPages}
+              onChange={(e) => handleColorChangeNonA4(e.target.value)}
+              placeholder="Ví dụ: 2000"
+              className="mt-2 h-11"
+              type="number"
+              min={0}
+            />
+          </div>
+
+          <div>
+            <Label className="text-sm font-semibold">Tổng trang đen trắng</Label>
+            <Input
+              value={totalBlackWhitePages}
+              onChange={(e) => handleBwChangeNonA4(e.target.value)}
+              placeholder="Ví dụ: 8000"
+              className="mt-2 h-11"
+              type="number"
+              min={0}
+            />
+          </div>
+
+          <div>
+            <Label className="text-sm font-semibold">Tổng số trang</Label>
+            <Input
+              value={totalPageCount}
+              onChange={(e) => handleTotalChangeNonA4(e.target.value)}
+              placeholder="Ví dụ: 10000"
+              className="mt-2 h-11"
+              type="number"
+              min={0}
+            />
+          </div>
+
+          {/* A4 fields */}
           <div>
             <Label className="text-sm font-semibold">Tổng trang màu (A4)</Label>
             <Input

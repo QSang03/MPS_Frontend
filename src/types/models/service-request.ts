@@ -87,6 +87,19 @@ export interface UpdateServiceRequestDto {
 }
 
 /**
+ * Update only the status of a service request (status-specific payload)
+ */
+export interface UpdateServiceRequestStatusDto {
+  status: ServiceRequestStatus
+  /** When a customer initiated the close flow */
+  customerInitiatedClose?: boolean
+  /** Optional customer-provided reason for closing */
+  customerCloseReason?: string
+  /** Optional admin action note to explain the change */
+  actionNote?: string
+}
+
+/**
  * Service request statistics
  */
 export interface ServiceRequestStats {
@@ -129,11 +142,30 @@ export interface ServiceRequestCost {
 }
 
 /**
+ * Service request message
+ */
+export interface ServiceRequestMessage {
+  id: string
+  serviceRequestId: string
+  authorId?: string
+  authorName?: string
+  content: string
+  createdAt: string
+}
+
+export interface CreateServiceRequestMessageDto {
+  content: string
+  authorId?: string
+}
+
+/**
  * Create service request cost DTO
  */
 export interface CreateServiceRequestCostDto {
-  deviceId: string
-  totalAmount: number
+  /** Device related to the cost - optional if backend infers from service request */
+  deviceId?: string
+  /** Total amount - optional, backend will sum item amounts if omitted */
+  totalAmount?: number
   items: Array<{
     type: ServiceRequestCostItemType
     amount: number

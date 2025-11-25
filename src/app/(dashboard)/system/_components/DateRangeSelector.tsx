@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react'
+import MonthPicker from '@/components/ui/month-picker'
 import { cn } from '@/lib/utils/cn'
 
 interface DateRangeSelectorProps {
@@ -83,6 +84,16 @@ export function DateRangeSelector({ defaultMonth, onChange }: DateRangeSelectorP
           {/* Month Navigator */}
           <div className="flex items-center gap-3">
             <Calendar className="h-5 w-5 text-gray-500" />
+            {/* small MonthPicker trigger - keeps original layout but provides a place to open calendar */}
+            <div className="hidden sm:block">
+              <MonthPicker
+                value={selectedMonth}
+                onChange={(v) => handleMonthChange(v)}
+                onApply={(v) => handleMonthChange(v)}
+                className="w-44"
+                placeholder=""
+              />
+            </div>
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
