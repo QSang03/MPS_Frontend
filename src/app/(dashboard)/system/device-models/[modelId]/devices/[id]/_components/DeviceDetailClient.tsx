@@ -1,9 +1,8 @@
 'use client'
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   ArrowLeft,
   Edit,
@@ -126,6 +125,9 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
   // create-install specific fields
   const [createInstalledAt, setCreateInstalledAt] = useState<string | null>(null)
   const [createActualPagesPrinted, setCreateActualPagesPrinted] = useState<number | ''>('')
+  const [createActualPagesPrintedError, setCreateActualPagesPrintedError] = useState<string | null>(
+    null
+  )
   const [createPriceVND, setCreatePriceVND] = useState<number | ''>('')
   const [createPriceUSD, setCreatePriceUSD] = useState<number | ''>('')
   const [createExchangeRate, setCreateExchangeRate] = useState<number | ''>('')
@@ -144,6 +146,11 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
   }
 
   const defaultDateRange = getDefaultDateRange()
+  // Current month (YYYY-MM) to prevent selecting future months
+  const currentMonth = (() => {
+    const now = new Date()
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+  })()
   const [usageFromMonth, setUsageFromMonth] = useState<string>(defaultDateRange.fromMonth)
   const [usageToMonth, setUsageToMonth] = useState<string>(defaultDateRange.toMonth)
 
@@ -194,6 +201,42 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
       ? v.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
       : '0,00'
 
+  // Helper: clamp month range to at most 12 months
+  const clampMonthRange = (
+    from: string,
+    to: string,
+    changed: 'from' | 'to'
+  ): { from: string; to: string } => {
+    if (!from || !to) return { from, to }
+    const [fromYear, fromMonth] = from.split('-').map((v) => Number(v))
+    const [toYear, toMonth] = to.split('-').map((v) => Number(v))
+    if (!fromYear || !fromMonth || !toYear || !toMonth) return { from, to }
+
+    const fromDate = new Date(fromYear, fromMonth - 1, 1)
+    const toDate = new Date(toYear, toMonth - 1, 1)
+    // if from is after to, just collapse to same month based on changed side
+    if (fromDate > toDate) {
+      return changed === 'from' ? { from: to, to } : { from, to: from }
+    }
+
+    const diffMonths =
+      (toDate.getFullYear() - fromDate.getFullYear()) * 12 +
+      (toDate.getMonth() - fromDate.getMonth())
+    if (diffMonths <= 11) return { from, to }
+
+    if (changed === 'from') {
+      // user moved start earlier; move end back to keep 12 months window
+      const newTo = new Date(fromDate.getFullYear(), fromDate.getMonth() + 11, 1)
+      const mm = String(newTo.getMonth() + 1).padStart(2, '0')
+      return { from, to: `${newTo.getFullYear()}-${mm}` }
+    } else {
+      // user moved end later; move start forward to keep 12 months window
+      const newFrom = new Date(toDate.getFullYear(), toDate.getMonth() - 11, 1)
+      const mm = String(newFrom.getMonth() + 1).padStart(2, '0')
+      return { from: `${newFrom.getFullYear()}-${mm}`, to }
+    }
+  }
+
   // Edit consumable state
   const [showEditConsumable, setShowEditConsumable] = useState(false)
   const [editingConsumable, setEditingConsumable] = useState<any | null>(null)
@@ -206,6 +249,39 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
   const [editInstalledAt, setEditInstalledAt] = useState<string | null>(null)
   const [editRemovedAt, setEditRemovedAt] = useState<string | null>(null)
   const [editActualPagesPrinted, setEditActualPagesPrinted] = useState<number | ''>('')
+
+  // Maximum allowed actual pages to prevent oversized numbers being sent
+  const MAX_ACTUAL_PAGES = 2000000000
+  const [editActualPagesPrintedError, setEditActualPagesPrintedError] = useState<string | null>(
+    null
+  )
+  // Price precision validation: up to 8 digits before decimal, up to 5 digits after
+  const [createPriceError, setCreatePriceError] = useState<string | null>(null)
+  const [editPriceError, setEditPriceError] = useState<string | null>(null)
+
+  const checkPricePrecision = (n: number) => {
+    if (n === undefined || n === null || Number.isNaN(n)) return `Giá không hợp lệ`
+    // Use absolute value for digit counts
+    const s = String(Math.abs(n))
+    // Split by decimal point or scientific notation
+    const parts = s.split('.')
+    const intPart = (parts[0] ?? '').replace(/e.*$/i, '') // defensive
+    const fracPart = parts[1] ?? ''
+    // If scientific notation present, convert to fixed with sufficient decimals
+    if (/e/i.test(String(n))) {
+      // rely on toFixed with 10 decimals then trim
+      const fixed = Math.abs(n).toFixed(10).replace(/0+$/, '')
+      const p = fixed.split('.')
+      const fixedInt = p[0] ?? ''
+      const fixedFrac = p[1] ?? ''
+      if (fixedInt.length > 8) return `Phần nguyên tối đa 8 chữ số`
+      if (fixedFrac.length > 5) return `Tối đa 5 chữ số thập phân`
+      return null
+    }
+    if (intPart.length > 8) return `Phần nguyên tối đa 8 chữ số`
+    if (fracPart.length > 5) return `Tối đa 5 chữ số thập phân`
+    return null
+  }
   const [editPriceVND, setEditPriceVND] = useState<number | ''>('')
   const [editPriceUSD, setEditPriceUSD] = useState<number | ''>('')
   const [editExchangeRate, setEditExchangeRate] = useState<number | ''>('')
@@ -234,6 +310,14 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
     const hh = pad(d.getHours())
     const min = pad(d.getMinutes())
     return `${yyyy}-${mm}-${dd}T${hh}:${min}`
+  }
+
+  // Helper: limit a numeric value to at most `max` decimal places.
+  const formatDecimal = (v: number | string | undefined | null, max = 8) => {
+    if (v === undefined || v === null || v === '') return undefined
+    const n = Number(v)
+    if (Number.isNaN(n)) return undefined
+    return Number(n.toFixed(max))
   }
 
   useEffect(() => {
@@ -721,7 +805,17 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                   <Input
                     type="month"
                     value={usageFromMonth}
-                    onChange={(e) => setUsageFromMonth(e.target.value)}
+                    max={currentMonth}
+                    onChange={(e) => {
+                      const next = e.target.value
+                      const clamped = clampMonthRange(next, usageToMonth, 'from')
+                      // Ensure we don't allow months in the future
+                      const from =
+                        clamped.from && clamped.from > currentMonth ? currentMonth : clamped.from
+                      const to = clamped.to && clamped.to > currentMonth ? currentMonth : clamped.to
+                      setUsageFromMonth(from)
+                      setUsageToMonth(to)
+                    }}
                     className="mt-1"
                   />
                 </div>
@@ -730,7 +824,17 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                   <Input
                     type="month"
                     value={usageToMonth}
-                    onChange={(e) => setUsageToMonth(e.target.value)}
+                    max={currentMonth}
+                    onChange={(e) => {
+                      const next = e.target.value
+                      const clamped = clampMonthRange(usageFromMonth, next, 'to')
+                      // Ensure we don't allow months in the future
+                      const from =
+                        clamped.from && clamped.from > currentMonth ? currentMonth : clamped.from
+                      const to = clamped.to && clamped.to > currentMonth ? currentMonth : clamped.to
+                      setUsageFromMonth(from)
+                      setUsageToMonth(to)
+                    }}
                     className="mt-1"
                   />
                 </div>
@@ -1058,7 +1162,22 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                                       // device-level fields
                                       setEditInstalledAt(c?.installedAt ?? null)
                                       setEditRemovedAt(c?.removedAt ?? null)
-                                      setEditActualPagesPrinted(c?.actualPagesPrinted ?? '')
+                                      const prefilledPages = c?.actualPagesPrinted ?? ''
+                                      setEditActualPagesPrinted(prefilledPages)
+                                      // mark error if prefilled value exceeds max so user sees it immediately
+                                      setEditActualPagesPrintedError(
+                                        typeof prefilledPages === 'number' &&
+                                          prefilledPages > MAX_ACTUAL_PAGES
+                                          ? `Số trang không được lớn hơn ${MAX_ACTUAL_PAGES.toLocaleString('en-US')}`
+                                          : null
+                                      )
+                                      // clear any edit price error so the UI focuses on the pages error
+                                      if (
+                                        typeof prefilledPages === 'number' &&
+                                        prefilledPages > MAX_ACTUAL_PAGES
+                                      ) {
+                                        setEditPriceError(null)
+                                      }
 
                                       // Always default checkbox to unchecked
                                       setEditShowRemovedAt(false)
@@ -1156,7 +1275,7 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                           </td>
                           <td className="px-4 py-3 text-right">
                             {Boolean(device?.isActive) ? (
-                              <ActionGuard pageId="consumables" actionId="create">
+                              <ActionGuard pageId="devices" actionId="create-consumable">
                                 <Button
                                   size="sm"
                                   onClick={() => {
@@ -1613,6 +1732,19 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                   if (!selectedConsumableType) return
                   try {
                     setCreatingConsumable(true)
+                    // Validate actual pages before attempting to create & install
+                    if (
+                      typeof createActualPagesPrinted === 'number' &&
+                      createActualPagesPrinted > MAX_ACTUAL_PAGES
+                    ) {
+                      setCreateActualPagesPrintedError(
+                        `Số trang không được lớn hơn ${MAX_ACTUAL_PAGES.toLocaleString('en-US')}`
+                      )
+                      // clear any price error so the user sees the page error only
+                      setCreatePriceError(null)
+                      setCreatingConsumable(false)
+                      return
+                    }
                     const dto: CreateConsumableDto = {
                       consumableTypeId: selectedConsumableType.id,
                       serialNumber: serialNumber || undefined,
@@ -1636,12 +1768,36 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
 
                     // Calculate price based on VND or USD input
                     if (createPriceVND && createExchangeRate) {
-                      // VND mode: price = VND / exchangeRate
-                      installPayload.price = createPriceVND / createExchangeRate
-                      installPayload.exchangeRate = createExchangeRate
+                      // VND mode: price = VND / exchangeRate (limit decimals)
+                      const raw = createPriceVND / createExchangeRate
+                      // When auto-converting from VND->USD, limit to 5 fractional digits
+                      const formatted = formatDecimal(raw, 5)
+                      if (formatted !== undefined) {
+                        const priceErr = checkPricePrecision(formatted)
+                        if (priceErr) {
+                          setCreatePriceError(priceErr)
+                          // clear any pages error so user sees price error under price input
+                          setCreateActualPagesPrintedError(null)
+                          setCreatingConsumable(false)
+                          return
+                        }
+                        installPayload.price = formatted
+                        setCreatePriceError(null)
+                      }
+                      installPayload.exchangeRate = formatDecimal(createExchangeRate, 8)
                     } else if (createPriceUSD) {
-                      // USD mode: price = USD directly
-                      installPayload.price = createPriceUSD
+                      // USD mode: price = USD directly (limit decimals)
+                      const formatted = formatDecimal(createPriceUSD, 8)
+                      if (formatted !== undefined) {
+                        const priceErr = checkPricePrecision(formatted)
+                        if (priceErr) {
+                          setCreatePriceError(priceErr)
+                          setCreatingConsumable(false)
+                          return
+                        }
+                        installPayload.price = formatted
+                        setCreatePriceError(null)
+                      }
                     }
 
                     installPayload = removeEmpty(installPayload)
@@ -1738,12 +1894,27 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                 <Input
                   type="number"
                   value={createActualPagesPrinted?.toString() ?? ''}
-                  onChange={(e) =>
-                    setCreateActualPagesPrinted(e.target.value ? Number(e.target.value) : '')
-                  }
+                  onChange={(e) => {
+                    const v = e.target.value ? Number(e.target.value) : ''
+                    setCreateActualPagesPrinted(v)
+                    // validate immediately and show error inline
+                    if (typeof v === 'number' && v > MAX_ACTUAL_PAGES) {
+                      setCreateActualPagesPrintedError(
+                        `Số trang không được lớn hơn ${MAX_ACTUAL_PAGES.toLocaleString('en-US')}`
+                      )
+                      // clear any price error so the UI focuses on the pages error
+                      setCreatePriceError(null)
+                    } else {
+                      setCreateActualPagesPrintedError(null)
+                    }
+                  }}
+                  max="2000000000"
                   placeholder="0"
                   className="mt-2 h-11"
                 />
+                {createActualPagesPrintedError && (
+                  <p className="mt-1 text-sm text-red-600">{createActualPagesPrintedError}</p>
+                )}
               </div>
               <div>
                 <Label className="text-base font-semibold">Giá (VND)</Label>
@@ -1761,6 +1932,9 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                   placeholder="3000000"
                   className="mt-2 h-11"
                 />
+                {createPriceError && createPriceVND !== '' && createPriceVND !== undefined && (
+                  <p className="mt-1 text-sm text-red-600">{createPriceError}</p>
+                )}
               </div>
               {createPriceVND && (
                 <div>
@@ -1800,6 +1974,9 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                   className="mt-2 h-11"
                   disabled={!!createPriceVND}
                 />
+                {createPriceError && createPriceUSD !== '' && createPriceUSD !== undefined && (
+                  <p className="mt-1 text-sm text-red-600">{createPriceError}</p>
+                )}
               </div>
             </div>
           </div>
@@ -2013,6 +2190,18 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                   }
 
                   try {
+                    // Validate actual pages before attempting to update device-consumable
+                    if (
+                      typeof editActualPagesPrinted === 'number' &&
+                      editActualPagesPrinted > MAX_ACTUAL_PAGES
+                    ) {
+                      setEditActualPagesPrintedError(
+                        `Số trang không được lớn hơn ${MAX_ACTUAL_PAGES.toLocaleString('en-US')}`
+                      )
+                      // clear price error to keep focus on pages error
+                      setEditPriceError(null)
+                      return
+                    }
                     setUpdatingConsumable(true)
                     let dto: any = {}
                     if (editingConsumable.consumableType?.id) {
@@ -2043,11 +2232,35 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                         // Calculate price based on VND or USD input
                         if (editPriceVND && editExchangeRate) {
                           // VND mode: price = VND / exchangeRate
-                          deviceDto.price = editPriceVND / editExchangeRate
+                          const raw = editPriceVND / editExchangeRate
+                          // When auto-converting from VND->USD, limit to 5 fractional digits
+                          const formatted = formatDecimal(raw, 5)
+                          if (formatted !== undefined) {
+                            const priceErr = checkPricePrecision(formatted)
+                            if (priceErr) {
+                              setEditPriceError(priceErr)
+                              // clear any pages error so UI focuses on price error
+                              setEditActualPagesPrintedError(null)
+                              setUpdatingConsumable(false)
+                              return
+                            }
+                            deviceDto.price = formatted
+                            setEditPriceError(null)
+                          }
                           deviceDto.exchangeRate = editExchangeRate
                         } else if (editPriceUSD) {
                           // USD mode: price = USD directly
-                          deviceDto.price = editPriceUSD
+                          const formatted = formatDecimal(editPriceUSD, 8)
+                          if (formatted !== undefined) {
+                            const priceErr = checkPricePrecision(formatted)
+                            if (priceErr) {
+                              setEditPriceError(priceErr)
+                              setUpdatingConsumable(false)
+                              return
+                            }
+                            deviceDto.price = formatted
+                            setEditPriceError(null)
+                          }
                         }
                       }
 
@@ -2194,12 +2407,26 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                 <Input
                   type="number"
                   value={editActualPagesPrinted?.toString() ?? ''}
-                  onChange={(e) =>
-                    setEditActualPagesPrinted(e.target.value ? Number(e.target.value) : '')
-                  }
+                  onChange={(e) => {
+                    const v = e.target.value ? Number(e.target.value) : ''
+                    setEditActualPagesPrinted(v)
+                    if (typeof v === 'number' && v > MAX_ACTUAL_PAGES) {
+                      setEditActualPagesPrintedError(
+                        `Số trang không được lớn hơn ${MAX_ACTUAL_PAGES.toLocaleString('en-US')}`
+                      )
+                      // clear any edit price error so user sees pages error
+                      setEditPriceError(null)
+                    } else {
+                      setEditActualPagesPrintedError(null)
+                    }
+                  }}
+                  max="2000000000"
                   placeholder="1500"
                   className="mt-2 h-11"
                 />
+                {editActualPagesPrintedError && (
+                  <p className="mt-1 text-sm text-red-600">{editActualPagesPrintedError}</p>
+                )}
               </div>
 
               {/* Hide price fields when removedAt checkbox is checked */}
@@ -2260,6 +2487,9 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                       className="mt-2 h-11"
                       disabled={!!editPriceVND}
                     />
+                    {editPriceError && editPriceUSD !== '' && editPriceUSD !== undefined && (
+                      <p className="mt-1 text-sm text-red-600">{editPriceError}</p>
+                    )}
                   </div>
                 </>
               )}

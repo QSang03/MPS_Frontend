@@ -69,11 +69,12 @@ export async function POST() {
     }
 
     // Update cookies with new tokens
-    const isProduction = process.env.NODE_ENV === 'production'
+    const IS_SECURE_COOKIES =
+      process.env.NODE_ENV === 'production' && process.env.ALLOW_INSECURE_COOKIES !== 'true'
 
     cookieStore.set(ACCESS_TOKEN_COOKIE_NAME, newAccessToken, {
       httpOnly: true,
-      secure: isProduction,
+      secure: IS_SECURE_COOKIES,
       sameSite: 'lax',
       maxAge: 15 * 60, // 15 minutes
       path: '/',
@@ -82,7 +83,7 @@ export async function POST() {
     if (newRefreshToken) {
       cookieStore.set(REFRESH_TOKEN_COOKIE_NAME, newRefreshToken, {
         httpOnly: true,
-        secure: isProduction,
+        secure: IS_SECURE_COOKIES,
         sameSite: 'lax',
         maxAge: 7 * 24 * 60 * 60, // 7 days
         path: '/',

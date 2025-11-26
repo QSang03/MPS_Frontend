@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import type { LucideIcon } from 'lucide-react'
-import { ArrowLeft, CheckCircle2, Clock4, Wrench, XCircle } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, Clock4, Wrench, XCircle, FileText } from 'lucide-react'
 import { formatDateTime, formatRelativeTime } from '@/lib/utils/formatters'
 import ServiceRequestMessages from '@/components/service-request/ServiceRequestMessages'
 import {
@@ -29,7 +29,6 @@ import {
 } from '@/components/ui/table'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { SystemModalLayout } from '@/components/system/SystemModalLayout'
-import { FileText } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { serviceRequestsClientService } from '@/lib/api/services/service-requests-client.service'
 import { Priority, ServiceRequestStatus } from '@/constants/status'
@@ -92,8 +91,6 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
       queryClient.invalidateQueries({ queryKey: ['service-requests'] })
       queryClient.invalidateQueries({ queryKey: ['service-requests', 'detail', id] })
       toast.success('Cập nhật trạng thái thành công')
-      // Previously we created a conversation message for action notes here.
-      // That behavior has been removed — status updates will no longer auto-create messages.
     },
     onError: (err: unknown) => {
       const msg = err instanceof Error ? err.message : 'Không thể cập nhật'
@@ -138,7 +135,6 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
       queryClient.invalidateQueries({ queryKey: ['service-requests', id, 'costs'] })
       queryClient.invalidateQueries({ queryKey: ['service-requests'] })
       setShowAddCost(false)
-      // reset draft
       setNewItems([{ type: 'LABOR', amount: 0, note: '' }])
     },
     onError: (err: unknown) => {
@@ -146,10 +142,6 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
       toast.error(msg)
     },
   })
-
-  // Avoid calling setState synchronously inside an effect. Instead,
-  // set the device ID when opening the Add Cost modal so it reflects the
-  // currently-loaded request's device without triggering cascading renders.
 
   const totalAmountForDraft = newItems.reduce((s, it) => s + Number(it.amount || 0), 0)
 
@@ -216,7 +208,8 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
   ).filter((event): event is TimelineEntry => Boolean(event.time))
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-6xl space-y-6 pb-6">
+      {/* Back */}
       <Button variant="ghost" asChild className="mb-2 w-fit gap-2">
         <Link href="/system/requests">
           <ArrowLeft className="h-4 w-4" />
@@ -224,16 +217,41 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
         </Link>
       </Button>
 
+      {/* Summary + điều khiển */}
       <Card>
-        <CardHeader>
-          <CardTitle>Chi tiết yêu cầu #{data.id.slice(0, 8)}</CardTitle>
-          <CardDescription>
-            Tạo {formatRelativeTime(data.createdAt)}
-            {data.respondedBy ? ` • phản hồi bởi ${data.respondedBy}` : ''}
-          </CardDescription>
+        <CardHeader className="border-b pb-4">
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div>
+              <CardTitle className="flex flex-wrap items-center gap-2">
+                Chi tiết yêu cầu
+                <span className="text-muted-foreground text-sm font-normal">
+                  #{data.id.slice(0, 8)}
+                </span>
+              </CardTitle>
+              <CardDescription className="mt-1">
+                Tạo {formatRelativeTime(data.createdAt)}
+                {data.respondedBy ? ` • phản hồi bởi ${data.respondedBy}` : ''}
+              </CardDescription>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-4 md:justify-end">
+              <div className="space-y-1 text-right md:text-left">
+                <p className="text-muted-foreground text-xs">Ưu tiên</p>
+                <Badge className={cn('text-xs', priorityBadgeMap[data.priority])}>
+                  {data.priority}
+                </Badge>
+              </div>
+              <div className="space-y-1 text-right md:text-left">
+                <p className="text-muted-foreground text-xs">Trạng thái</p>
+                <Badge className={cn('text-xs', statusBadgeMap[data.status])}>{data.status}</Badge>
+              </div>
+            </div>
+          </div>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid gap-6 md:grid-cols-2">
+
+        <CardContent className="pt-4">
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1.4fr)]">
+            {/* Thông tin mô tả */}
             <div className="space-y-4">
               <div>
                 <p className="text-muted-foreground text-sm">Tiêu đề</p>
@@ -243,27 +261,14 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                 <p className="text-muted-foreground text-sm">Mô tả</p>
                 <p>{data.description || '—'}</p>
               </div>
-              <div className="flex flex-wrap items-center gap-3">
-                <div>
-                  <p className="text-muted-foreground text-sm">Ưu tiên</p>
-                  <Badge className={cn('text-xs', priorityBadgeMap[data.priority])}>
-                    {data.priority}
-                  </Badge>
-                </div>
-                <div>
-                  <p className="text-muted-foreground text-sm">Trạng thái</p>
-                  <Badge className={cn('text-xs', statusBadgeMap[data.status])}>
-                    {data.status}
-                  </Badge>
-                </div>
-              </div>
               <div>
                 <p className="text-muted-foreground text-sm">Người phụ trách</p>
                 <p className="font-medium">{data.assignedTo ?? 'Chưa phân công'}</p>
               </div>
             </div>
 
-            <div className="space-y-4">
+            {/* Panel cập nhật trạng thái + xoá */}
+            <div className="bg-muted/40 space-y-4 rounded-lg border p-4">
               <div>
                 <p className="text-sm font-medium">Cập nhật trạng thái</p>
                 <PermissionGuard
@@ -271,10 +276,12 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                   action="update"
                   resource={{ type: 'serviceRequest', customerId: data.customerId }}
                   fallback={
-                    <p className="text-muted-foreground text-sm">Bạn không có quyền cập nhật.</p>
+                    <p className="text-muted-foreground mt-1 text-sm">
+                      Bạn không có quyền cập nhật.
+                    </p>
                   }
                 >
-                  <div className="space-y-2">
+                  <div className="mt-2 space-y-2">
                     <Select
                       value={data.status}
                       onValueChange={(value) =>
@@ -285,7 +292,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                       }
                       disabled={updating}
                     >
-                      <SelectTrigger className="w-[260px] justify-between">
+                      <SelectTrigger className="w-full justify-between">
                         <SelectValue placeholder="Chọn trạng thái">
                           <div className="flex items-center gap-2">
                             <Badge className={cn('text-xs', statusBadgeMap[data.status])}>
@@ -305,7 +312,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
 
                     <textarea
                       placeholder="Ghi chú hành động (tùy chọn)"
-                      className="mt-2 w-full rounded-md border px-3 py-2 text-sm"
+                      className="bg-background mt-2 w-full rounded-md border px-3 py-2 text-sm"
                       value={actionNote}
                       onChange={(e) => setActionNote(e.target.value)}
                     />
@@ -322,7 +329,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                 <Button
                   variant="destructive"
                   onClick={() => deleteMutation.mutate()}
-                  className="gap-2"
+                  className="w-full gap-2"
                   disabled={deleteMutation.isPending}
                 >
                   Xóa yêu cầu
@@ -339,7 +346,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
           <CardTitle>Cuộc trò chuyện</CardTitle>
           <CardDescription>Thông tin trao đổi giữa nhân viên và khách hàng</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="max-h-[420px] space-y-4 overflow-y-auto">
           <ServiceRequestMessages
             serviceRequestId={id}
             currentUserId={typeof session?.userId === 'string' ? session.userId : null}
@@ -391,7 +398,6 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
 
                 {cost.items.length > 0 && (
                   <div className="mt-3 overflow-x-auto">
-                    {/* Use the system table container classes so nested tables match the app's standard layout */}
                     <div className="rounded-md border transition-opacity">
                       <Table>
                         <TableHeader>
@@ -441,7 +447,6 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                 </Button>
                 <Button
                   onClick={() => {
-                    // Basic validation: at least one item and amounts > 0
                     if (newItems.length === 0) {
                       toast.error('Vui lòng thêm ít nhất 1 mục chi phí')
                       return
@@ -452,7 +457,6 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                     }
 
                     createCostMutation.mutate({
-                      // Use the service request's device id automatically (if any)
                       deviceId: data?.device?.id ?? undefined,
                       totalAmount: totalAmountForDraft,
                       items: newItems.map((it) => ({
@@ -529,6 +533,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
         </DialogContent>
       </Dialog>
 
+      {/* Timeline + Thiết bị + Khách hàng */}
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
@@ -546,7 +551,10 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                 {timeline.map((event) => {
                   const Icon = event.icon
                   return (
-                    <div key={event.label} className="flex items-start gap-3 rounded-lg border p-3">
+                    <div
+                      key={event.label}
+                      className="bg-muted/30 flex items-start gap-3 rounded-lg border p-3"
+                    >
                       <Icon className={`${event.color} h-5 w-5`} />
                       <div className="flex-1 space-y-1 text-sm">
                         <div className="flex items-center justify-between gap-2">

@@ -39,6 +39,7 @@ import {
   XCircle,
 } from 'lucide-react'
 import type { PurchaseRequest } from '@/types/models/purchase-request'
+import { cn } from '@/lib/utils/cn'
 
 interface Props {
   id: string
@@ -194,7 +195,8 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
   ).filter((event): event is TimelineEntry => Boolean(event.time))
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-6xl space-y-6 pb-6">
+      {/* Back Button */}
       <Button variant="ghost" asChild className="mb-2 w-fit gap-2">
         <Link href="/system/requests">
           <ArrowLeft className="h-4 w-4" />
@@ -202,16 +204,47 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
         </Link>
       </Button>
 
+      {/* Header & Control Panel */}
       <Card>
-        <CardHeader>
-          <CardTitle>Yêu cầu mua hàng #{detail.id.slice(0, 8)}</CardTitle>
-          <CardDescription>
-            Tạo {formatRelativeTime(detail.createdAt)}
-            {detail.requestedBy ? ` • bởi ${detail.requestedBy}` : ''}
-          </CardDescription>
+        <CardHeader className="border-b pb-4">
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div>
+              <CardTitle className="flex flex-wrap items-center gap-2">
+                Yêu cầu mua hàng
+                <span className="text-muted-foreground text-sm font-normal">
+                  #{detail.id.slice(0, 8)}
+                </span>
+              </CardTitle>
+              <CardDescription className="mt-1">
+                Tạo {formatRelativeTime(detail.createdAt)}
+                {detail.requestedBy ? ` • bởi ${detail.requestedBy}` : ''}
+              </CardDescription>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-4 md:justify-end">
+              <div className="space-y-1 text-right md:text-left">
+                <p className="text-muted-foreground text-xs">Ưu tiên</p>
+                {detail.priority ? (
+                  <Badge className={cn('text-xs', priorityBadgeMap[detail.priority])}>
+                    {detail.priority}
+                  </Badge>
+                ) : (
+                  <span className="text-sm">—</span>
+                )}
+              </div>
+              <div className="space-y-1 text-right md:text-left">
+                <p className="text-muted-foreground text-xs">Trạng thái</p>
+                <Badge className={cn('text-xs', statusBadgeMap[detail.status])}>
+                  {detail.status}
+                </Badge>
+              </div>
+            </div>
+          </div>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid gap-6 md:grid-cols-2">
+
+        <CardContent className="pt-4">
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1.4fr)]">
+            {/* Left: Main Info */}
             <div className="space-y-4">
               <div>
                 <p className="text-muted-foreground text-sm">Tiêu đề</p>
@@ -221,83 +254,54 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
                 <p className="text-muted-foreground text-sm">Mô tả</p>
                 <p>{detail.description ?? '—'}</p>
               </div>
-              <div className="flex items-center gap-3">
-                <div>
-                  <p className="text-muted-foreground text-sm">Ưu tiên</p>
-                  {detail.priority ? (
-                    <Badge className={priorityBadgeMap[detail.priority]}>{detail.priority}</Badge>
-                  ) : (
-                    <span>—</span>
-                  )}
-                </div>
-                <div>
-                  <p className="text-muted-foreground text-sm">Người yêu cầu</p>
-                  <p className="font-medium">{detail.requestedBy ?? '—'}</p>
-                </div>
-              </div>
-              <div>
-                <p className="text-muted-foreground text-sm">Khách hàng</p>
-                <div className="flex flex-col">
-                  <p className="font-semibold">{detail.customer?.name ?? detail.customerId}</p>
-                  <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-xs">
-                    {detail.customer?.code && (
-                      <Badge variant="outline">{detail.customer.code}</Badge>
-                    )}
-                    {detail.customer?.tier && (
-                      <Badge variant="secondary" className="bg-blue-50 text-blue-700">
-                        {detail.customer.tier}
-                      </Badge>
-                    )}
-                  </div>
-                </div>
+
+              <div className="flex flex-col gap-1">
+                <p className="text-muted-foreground text-sm">Tổng giá trị (ước tính)</p>
+                <p className="text-3xl font-bold tracking-tight text-blue-600">
+                  {formatCurrency(totalAmount)}
+                </p>
               </div>
             </div>
 
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <p className="text-muted-foreground text-sm">Trạng thái hiện tại</p>
-                <Badge className={statusBadgeMap[detail.status]}>{detail.status}</Badge>
-              </div>
+            {/* Right: Actions Panel */}
+            <div className="bg-muted/40 space-y-4 rounded-lg border p-4">
               <div>
-                <p className="text-muted-foreground text-sm">Tổng giá trị</p>
-                <p className="text-3xl font-bold">{formatCurrency(totalAmount)}</p>
-              </div>
-
-              <div className="space-y-2">
                 <p className="text-sm font-medium">Cập nhật trạng thái</p>
                 <PermissionGuard
                   session={session}
                   action="update"
                   resource={{ type: 'purchaseRequest', customerId: detail.customerId }}
                   fallback={
-                    <p className="text-muted-foreground text-sm">
+                    <p className="text-muted-foreground mt-1 text-sm">
                       Bạn không có quyền cập nhật trạng thái.
                     </p>
                   }
                 >
-                  <Select
-                    value={detail.status}
-                    onValueChange={(value) =>
-                      updateStatusMutation.mutate(value as PurchaseRequestStatus)
-                    }
-                    disabled={statusUpdating}
-                  >
-                    <SelectTrigger className="w-[260px] justify-between">
-                      <SelectValue placeholder="Chọn trạng thái">
-                        <div className="flex items-center gap-2">
-                          <Badge className={statusBadgeMap[detail.status]}>{detail.status}</Badge>
-                          {statusUpdating && <Loader2 className="h-4 w-4 animate-spin" />}
-                        </div>
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {statusOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="mt-2">
+                    <Select
+                      value={detail.status}
+                      onValueChange={(value) =>
+                        updateStatusMutation.mutate(value as PurchaseRequestStatus)
+                      }
+                      disabled={statusUpdating}
+                    >
+                      <SelectTrigger className="bg-background w-full justify-between">
+                        <SelectValue placeholder="Chọn trạng thái">
+                          <div className="flex items-center gap-2">
+                            <Badge className={statusBadgeMap[detail.status]}>{detail.status}</Badge>
+                            {statusUpdating && <Loader2 className="h-3 w-3 animate-spin" />}
+                          </div>
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {statusOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </PermissionGuard>
               </div>
 
@@ -311,7 +315,7 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
                   variant="destructive"
                   onClick={() => deleteMutation.mutate()}
                   disabled={deleteMutation.isPending}
-                  className="gap-2"
+                  className="w-full gap-2"
                 >
                   {deleteMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
                   Xóa yêu cầu
@@ -322,6 +326,7 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
         </CardContent>
       </Card>
 
+      {/* Info Grid: Customer + Timeline */}
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
@@ -339,11 +344,14 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
                 {timeline.map((event) => {
                   const Icon = event.icon
                   return (
-                    <div key={event.label} className="flex items-start gap-3 rounded-lg border p-3">
+                    <div
+                      key={event.label}
+                      className="bg-muted/30 flex items-start gap-3 rounded-lg border p-3"
+                    >
                       <Icon className={`${event.color} h-5 w-5`} />
                       <div className="flex-1 space-y-1">
                         <div className="flex items-center justify-between gap-2">
-                          <p className="font-semibold">{event.label}</p>
+                          <p className="text-sm font-semibold">{event.label}</p>
                           <span className="text-muted-foreground text-xs">
                             {formatRelativeTime(event.time)}
                           </span>
@@ -355,7 +363,9 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
                           ) : null}
                         </p>
                         {event.reason && (
-                          <p className="text-muted-foreground text-xs">Lý do: {event.reason}</p>
+                          <p className="text-muted-foreground mt-1 text-xs italic">
+                            Lý do: {event.reason}
+                          </p>
                         )}
                       </div>
                     </div>
@@ -415,6 +425,7 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
         </Card>
       </div>
 
+      {/* Items List */}
       <Card>
         <CardHeader>
           <CardTitle>Chi tiết vật tư</CardTitle>
@@ -422,43 +433,47 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
         </CardHeader>
         <CardContent>
           {detail.items && detail.items.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Tên vật tư</TableHead>
-                  <TableHead>Số lượng</TableHead>
-                  <TableHead>Đơn vị</TableHead>
-                  <TableHead>Đơn giá</TableHead>
-                  <TableHead>Thành tiền</TableHead>
-                  <TableHead>Ghi chú</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {detail.items.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell>
-                      <div className="flex flex-col">
-                        <span className="font-medium">
-                          {item.consumableType?.name ?? item.consumableTypeId ?? '—'}
-                        </span>
-                        {item.consumableType?.unit && (
-                          <span className="text-muted-foreground text-xs">
-                            Đơn vị: {item.consumableType.unit}
-                          </span>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>{item.quantity}</TableCell>
-                    <TableCell>{item.consumableType?.unit ?? '—'}</TableCell>
-                    <TableCell>{formatCurrency(toNumber(item.unitPrice))}</TableCell>
-                    <TableCell>{formatCurrency(toNumber(item.totalPrice))}</TableCell>
-                    <TableCell className="text-muted-foreground text-sm">
-                      {item.notes ?? '—'}
-                    </TableCell>
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Tên vật tư</TableHead>
+                    <TableHead>Số lượng</TableHead>
+                    <TableHead>Đơn vị</TableHead>
+                    <TableHead>Đơn giá</TableHead>
+                    <TableHead>Thành tiền</TableHead>
+                    <TableHead>Ghi chú</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {detail.items.map((item) => (
+                    <TableRow key={item.id}>
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span className="font-medium">
+                            {item.consumableType?.name ?? item.consumableTypeId ?? '—'}
+                          </span>
+                          {item.consumableType?.unit && (
+                            <span className="text-muted-foreground text-xs">
+                              Đơn vị: {item.consumableType.unit}
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>{item.quantity}</TableCell>
+                      <TableCell>{item.consumableType?.unit ?? '—'}</TableCell>
+                      <TableCell>{formatCurrency(toNumber(item.unitPrice))}</TableCell>
+                      <TableCell className="font-medium">
+                        {formatCurrency(toNumber(item.totalPrice))}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground max-w-[200px] truncate text-sm">
+                        {item.notes ?? '—'}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           ) : (
             <div className="text-muted-foreground flex min-h-[120px] items-center justify-center rounded-lg border border-dashed">
               <div className="text-center">

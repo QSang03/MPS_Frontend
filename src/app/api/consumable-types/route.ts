@@ -80,10 +80,13 @@ export async function GET(request: NextRequest) {
               params,
             })
 
+            const IS_SECURE_COOKIES =
+              process.env.NODE_ENV === 'production' && process.env.ALLOW_INSECURE_COOKIES !== 'true'
+
             const response = NextResponse.json(retryResponse.data)
             response.cookies.set('access_token', newAccessToken, {
               httpOnly: true,
-              secure: process.env.NODE_ENV === 'production',
+              secure: IS_SECURE_COOKIES,
               sameSite: 'lax',
               path: '/',
             })
@@ -161,12 +164,15 @@ export async function POST(request: NextRequest) {
               }
             )
 
+            const IS_SECURE_COOKIES =
+              process.env.NODE_ENV === 'production' && process.env.ALLOW_INSECURE_COOKIES !== 'true'
+
             const response = NextResponse.json(retryResponse.data, {
               status: 201,
             })
             response.cookies.set('access_token', newAccessToken, {
               httpOnly: true,
-              secure: process.env.NODE_ENV === 'production',
+              secure: IS_SECURE_COOKIES,
               sameSite: 'lax',
               path: '/',
             })

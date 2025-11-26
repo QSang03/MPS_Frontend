@@ -466,6 +466,15 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
           resources: [{ resource: 'reports', action: 'create' }],
         },
       },
+      {
+        id: 'create-consumable',
+        label: 'Thêm vật tư tương thích',
+        icon: 'Plus',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'consumables', action: 'create' }],
+        },
+      },
     ],
   },
   {

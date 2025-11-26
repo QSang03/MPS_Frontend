@@ -79,9 +79,11 @@ export async function POST(request: NextRequest) {
 
             const json = await retryResp.json().catch(() => null)
             const response = NextResponse.json(json ?? {}, { status: retryResp.status })
+            const IS_SECURE_COOKIES =
+              process.env.NODE_ENV === 'production' && process.env.ALLOW_INSECURE_COOKIES !== 'true'
             response.cookies.set('access_token', newAccessToken, {
               httpOnly: true,
-              secure: process.env.NODE_ENV === 'production',
+              secure: IS_SECURE_COOKIES,
               sameSite: 'lax',
               path: '/',
             })

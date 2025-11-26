@@ -8,7 +8,6 @@ import type { ColumnDef } from '@tanstack/react-table'
 import { toast } from 'sonner'
 import {
   Loader2,
-  FileText,
   Info,
   Tag,
   Clock as ClockIcon,
@@ -19,6 +18,7 @@ import {
   CheckCircle2,
   Calendar,
   Settings,
+  FileText,
 } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { StatusBadge } from '@/components/shared/StatusBadge'
@@ -49,7 +49,10 @@ import { ServiceRequestStatus, Priority } from '@/constants/status'
 import type { ServiceRequest } from '@/types/models/service-request'
 import { useServiceRequestsQuery } from '@/lib/hooks/queries/useServiceRequestsQuery'
 import { TableSkeleton } from '@/components/system/TableSkeleton'
+import { cn } from '@/lib/utils'
+
 type ServiceRequestRow = ServiceRequest
+
 const statusOptions = [
   { label: 'Mở', value: ServiceRequestStatus.OPEN },
   { label: 'Đang xử lý', value: ServiceRequestStatus.IN_PROGRESS },
@@ -65,9 +68,7 @@ const priorityOptions = [
   { label: 'Khẩn cấp', value: Priority.URGENT },
 ]
 
-// Removed unused priorityBadgeMap and statusBadgeMap
-
-const renderTimestamp = (timestamp?: string) => {
+function renderTimestamp(timestamp?: string) {
   if (!timestamp) {
     return <span className="text-muted-foreground text-xs">—</span>
   }
@@ -76,12 +77,10 @@ const renderTimestamp = (timestamp?: string) => {
 
 function useDebouncedValue<T>(value: T, delay = 400) {
   const [debounced, setDebounced] = useState(value)
-
   useEffect(() => {
     const timeout = setTimeout(() => setDebounced(value), delay)
     return () => clearTimeout(timeout)
   }, [value, delay])
-
   return debounced
 }
 
@@ -148,7 +147,8 @@ export function ServiceRequestsTable() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      {/* Stats Cards ở trên cùng, spacing rộng hơn */}
       <StatsCards
         cards={[
           {
@@ -161,13 +161,13 @@ export function ServiceRequestsTable() {
             label: 'Đang mở',
             value: summary.open,
             icon: <FileText className="h-6 w-6" />,
-            borderColor: 'blue',
+            borderColor: 'red',
           },
           {
             label: 'Đang xử lý',
             value: summary.inProgress,
             icon: <FileText className="h-6 w-6" />,
-            borderColor: 'orange',
+            borderColor: 'amber',
           },
           {
             label: 'Đã xử lý',
@@ -179,12 +179,13 @@ export function ServiceRequestsTable() {
             label: 'Ưu tiên khẩn',
             value: summary.urgent,
             icon: <FileText className="h-6 w-6" />,
-            borderColor: 'red',
+            borderColor: 'orange',
           },
         ]}
         className="md:grid-cols-5"
       />
 
+      {/* Bộ lọc - grid 4 cột, luôn border và padding */}
       <FilterSection
         title="Bộ lọc & Tìm kiếm"
         onReset={handleResetFilters}
@@ -256,7 +257,7 @@ export function ServiceRequestsTable() {
         </div>
       </FilterSection>
 
-      <Suspense fallback={<TableSkeleton rows={10} columns={10} />}>
+      <Suspense fallback={<TableSkeleton rows={10} columns={11} />}>
         <ServiceRequestsTableContent
           pagination={pagination}
           search={debouncedSearch}
@@ -332,7 +333,6 @@ function ServiceRequestsTableContent({
   )
 
   const { data } = useServiceRequestsQuery(queryParams)
-
   const requests = useMemo(() => (data?.data ?? []) as ServiceRequestRow[], [data?.data])
   const totalCount = data?.pagination?.total ?? requests.length
 
@@ -374,7 +374,6 @@ function ServiceRequestsTableContent({
   })
 
   const handleStatusChange = useCallback((id: string, status: ServiceRequestStatus) => {
-    // open dialog to allow entering an optional action note for admin
     setPendingStatusChange({ id, status })
     setActionNoteForPending('')
   }, [])
@@ -399,7 +398,7 @@ function ServiceRequestsTableContent({
         enableSorting: true,
         header: () => (
           <div className="flex items-center gap-2">
-            <Hash className="h-4 w-4 text-gray-600" />
+            <Hash className="h-4 w-4 text-gray-500" />
             <span>Mã yêu cầu</span>
             <TooltipProvider>
               <Tooltip>
@@ -414,7 +413,10 @@ function ServiceRequestsTableContent({
           </div>
         ),
         cell: ({ row }) => (
-          <Link href={`/system/service-requests/${row.original.id}`} className="font-mono text-sm">
+          <Link
+            href={`/system/service-requests/${row.original.id}`}
+            className="text-primary font-mono text-sm hover:underline"
+          >
             #{row.original.id.slice(0, 8)}
           </Link>
         ),
@@ -424,7 +426,7 @@ function ServiceRequestsTableContent({
         enableSorting: true,
         header: () => (
           <div className="flex items-center gap-2">
-            <Heading className="h-4 w-4 text-gray-600" />
+            <Heading className="h-4 w-4 text-gray-500" />
             Tiêu đề
           </div>
         ),
@@ -439,7 +441,7 @@ function ServiceRequestsTableContent({
         accessorKey: 'customer',
         header: () => (
           <div className="flex items-center gap-2">
-            <Building2 className="h-4 w-4 text-gray-600" />
+            <Building2 className="h-4 w-4 text-gray-500" />
             Khách hàng
           </div>
         ),
@@ -459,7 +461,7 @@ function ServiceRequestsTableContent({
         accessorKey: 'device',
         header: () => (
           <div className="flex items-center gap-2">
-            <Monitor className="h-4 w-4 text-gray-600" />
+            <Monitor className="h-4 w-4 text-gray-500" />
             Thiết bị
           </div>
         ),
@@ -476,7 +478,7 @@ function ServiceRequestsTableContent({
         accessorKey: 'respondedAt',
         header: () => (
           <div className="flex items-center gap-2">
-            <ClockIcon className="h-4 w-4 text-gray-600" />
+            <ClockIcon className="h-4 w-4 text-gray-500" />
             <span>Phản hồi</span>
           </div>
         ),
@@ -486,7 +488,7 @@ function ServiceRequestsTableContent({
         accessorKey: 'resolvedAt',
         header: () => (
           <div className="flex items-center gap-2">
-            <ClockIcon className="h-4 w-4 text-gray-600" />
+            <ClockIcon className="h-4 w-4 text-gray-500" />
             <span>Giải quyết</span>
           </div>
         ),
@@ -496,17 +498,22 @@ function ServiceRequestsTableContent({
         accessorKey: 'priority',
         header: () => (
           <div className="flex items-center gap-2">
-            <Tag className="h-4 w-4 text-gray-600" />
+            <Tag className="h-4 w-4 text-gray-500" />
             Ưu tiên
           </div>
         ),
-        cell: ({ row }) => <StatusBadge priority={row.original.priority} />,
+        cell: ({ row }) => (
+          <StatusBadge
+            className="flex h-8 min-w-[80px] items-center justify-center rounded px-2 text-center text-xs"
+            priority={row.original.priority}
+          />
+        ),
       },
       {
         accessorKey: 'status',
         header: () => (
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-gray-600" />
+            <CheckCircle2 className="h-4 w-4 text-gray-500" />
             Trạng thái
           </div>
         ),
@@ -518,18 +525,35 @@ function ServiceRequestsTableContent({
             }
             disabled={statusUpdatingId === row.original.id && mutation.isPending}
           >
-            <SelectTrigger className="h-9 w-[180px] justify-between">
-              <SelectValue placeholder="Chọn trạng thái">
-                <StatusBadge serviceStatus={row.original.status} />
-              </SelectValue>
+            <SelectTrigger
+              className={cn(
+                // Chiều cao, chiều rộng đồng nhất
+                'border-muted bg-background flex h-8 max-w-[140px] min-w-[120px] items-center rounded-md border px-2 text-xs font-medium shadow-none transition focus:ring-2',
+                statusUpdatingId === row.original.id && mutation.isPending
+                  ? 'cursor-not-allowed opacity-50'
+                  : ''
+              )}
+            >
+              <SelectValue />
+              {/* Không custom gì ở đây, tránh double */}
               {statusUpdatingId === row.original.id && mutation.isPending && (
-                <Loader2 className="text-muted-foreground h-4 w-4 animate-spin" />
+                <Loader2 className="text-muted-foreground ml-1 h-3 w-3 animate-spin" />
               )}
             </SelectTrigger>
             <SelectContent>
               {statusOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
+                <SelectItem
+                  key={option.value}
+                  value={option.value}
+                  // Giữ cùng kích thước/row
+                  className="h-8"
+                >
+                  <span className="flex min-w-[80px] items-center gap-2">
+                    <StatusBadge
+                      serviceStatus={option.value as ServiceRequestStatus}
+                      className="h-6 w-full justify-center px-2 text-xs"
+                    />
+                  </span>
                 </SelectItem>
               ))}
             </SelectContent>
@@ -541,7 +565,7 @@ function ServiceRequestsTableContent({
         enableSorting: true,
         header: () => (
           <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-gray-600" />
+            <Calendar className="h-4 w-4 text-gray-500" />
             Ngày tạo
           </div>
         ),
@@ -551,18 +575,21 @@ function ServiceRequestsTableContent({
         id: 'actions',
         header: () => (
           <div className="flex items-center gap-2">
-            <Settings className="h-4 w-4 text-gray-600" />
+            <Settings className="h-4 w-4 text-gray-500" />
             Thao tác
           </div>
         ),
         cell: ({ row }) => (
           <Button
-            variant="ghost"
-            size="sm"
             asChild
-            className="transition-all hover:bg-gray-100 hover:text-gray-700"
+            size="sm"
+            variant="outline"
+            className="h-8 min-w-[120px] justify-center gap-1 rounded-lg border-gray-200 px-2 text-xs font-medium text-blue-700 hover:bg-blue-50 hover:text-blue-800"
           >
-            <Link href={`/system/service-requests/${row.original.id}`}>Chi tiết</Link>
+            <Link href={`/system/service-requests/${row.original.id}`}>
+              <FileText className="h-3 w-3" />
+              Chi tiết
+            </Link>
           </Button>
         ),
       },
@@ -585,16 +612,8 @@ function ServiceRequestsTableContent({
         totalCount={totalCount}
         pageIndex={pagination.pageIndex}
         pageSize={pagination.pageSize}
-        onPaginationChange={(next) => {
-          startTransition(() => {
-            onPaginationChange(next)
-          })
-        }}
-        onSortingChange={(nextSorting) => {
-          startTransition(() => {
-            onSortingChange(nextSorting)
-          })
-        }}
+        onPaginationChange={(next) => startTransition(() => onPaginationChange(next))}
+        onSortingChange={(nextSorting) => startTransition(() => onSortingChange(nextSorting))}
         sorting={sorting}
         defaultSorting={{ sortBy: 'createdAt', sortOrder: 'desc' }}
         enableColumnVisibility
@@ -616,7 +635,6 @@ function ServiceRequestsTableContent({
         skeletonRows={10}
       />
 
-      {/* Dialog shown when admin changes status to allow an optional action note */}
       <Dialog
         open={Boolean(pendingStatusChange)}
         onOpenChange={(open) => !open && setPendingStatusChange(null)}
@@ -624,7 +642,6 @@ function ServiceRequestsTableContent({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Cập nhật trạng thái</DialogTitle>
-            {/* Screen-reader friendly description for accessibility */}
             <DialogDescription className="sr-only">
               Nhập ghi chú hành động (tùy chọn) để lưu cùng bản ghi cập nhật trạng thái
             </DialogDescription>

@@ -9,6 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { Skeleton } from '@/components/ui/skeleton'
 import { DataTablePagination } from './DataTablePagination'
 
 interface DataTableProps<TData, TValue> {
@@ -30,9 +31,6 @@ export function DataTable<TData, TValue>({
   onPaginationChange,
   isLoading = false,
 }: DataTableProps<TData, TValue>) {
-  // `useReactTable` returns functions that cannot be safely memoized by React Compiler.
-  // Disable the incompatible-library rule here because TanStack Table intentionally returns
-  // functions (getHeaderGroups, getRowModel, etc.) which are used directly in render.
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     data,
@@ -74,12 +72,18 @@ export function DataTable<TData, TValue>({
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
-                  Loading...
-                </TableCell>
-              </TableRow>
+              // Render Skeleton Rows khi đang loading
+              Array.from({ length: pageSize }).map((_, index) => (
+                <TableRow key={index}>
+                  {columns.map((_, colIndex) => (
+                    <TableCell key={colIndex}>
+                      <Skeleton className="h-6 w-full" />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
             ) : table.getRowModel().rows?.length ? (
+              // Render Data Rows khi có dữ liệu
               table.getRowModel().rows.map((row) => (
                 <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
                   {row.getVisibleCells().map((cell) => (
@@ -90,9 +94,10 @@ export function DataTable<TData, TValue>({
                 </TableRow>
               ))
             ) : (
+              // Render Empty State khi không có dữ liệu
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                  No results.
+                  Không có kết quả nào.
                 </TableCell>
               </TableRow>
             )}

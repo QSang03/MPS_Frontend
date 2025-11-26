@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useCallback, useRef, Fragment, useMemo } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -16,12 +17,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { toast } from 'sonner'
 import {
   Loader2,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Package,
   Plus,
   CheckCircle,
@@ -32,7 +33,6 @@ import {
   Filter,
   RefreshCw,
   Zap,
-  Database,
 } from 'lucide-react'
 import { consumablesClientService } from '@/lib/api/services/consumables-client.service'
 import ConsumableDetailModal from '@/components/consumable/ConsumableDetailModal'
@@ -49,11 +49,9 @@ import {
 } from '@/components/ui/table'
 import { LoadingState } from '@/components/ui/LoadingState'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { StatusBadge } from '@/components/shared/StatusBadge'
 import { StatsCard, StatsCardsGrid } from '@/components/shared/StatsCard'
 import { SearchInput } from '@/components/shared/SearchInput'
 import { CONSUMABLE_STYLES } from '@/constants/consumableStyles'
-import { cn } from '@/lib/utils'
 
 export default function ConsumablesPageClient() {
   const [consumables, setConsumables] = useState<Record<string, unknown>[]>([])
@@ -67,6 +65,7 @@ export default function ConsumablesPageClient() {
   const [statusFilter, setStatusFilter] = useState<string>('ALL')
   const [detailOpen, setDetailOpen] = useState(false)
   const [selectedConsumableId, setSelectedConsumableId] = useState<string | undefined>(undefined)
+  const [expandedConsumableTypes, setExpandedConsumableTypes] = useState<Set<string>>(new Set())
   // columnVisibilityMenu removed because it's not used in this component
   const [showColumnMenu, setShowColumnMenu] = useState(false)
   const columnMenuRef = useRef<HTMLDivElement | null>(null)
@@ -234,6 +233,76 @@ export default function ConsumablesPageClient() {
       document.removeEventListener('keydown', onKey)
     }
   }, [showColumnMenu])
+
+  const groupedConsumables = useMemo(() => {
+    if (!consumables) return []
+
+    const groups = new Map<string, Record<string, unknown>[]>()
+    consumables.forEach((item) => {
+      const typeId = (item.consumableTypeId as string) || 'unknown'
+      if (!groups.has(typeId)) {
+        groups.set(typeId, [])
+      }
+      groups.get(typeId)!.push(item)
+    })
+
+    return Array.from(groups.entries())
+      .map(([typeId, items]) => {
+        const firstItem = items[0]
+        if (!firstItem) return null
+
+        const type = firstItem.consumableType as Record<string, unknown>
+        const total = items.length
+        const used = items.filter(
+          (item) =>
+            Number(item.deviceCount ?? 0) > 0 ||
+            (Array.isArray(item.activeDeviceIds) && item.activeDeviceIds.length > 0)
+        ).length
+        const available = total - used
+
+        return {
+          typeId,
+          type,
+          items,
+          total,
+          used,
+          available,
+        }
+      })
+      .filter((group): group is NonNullable<typeof group> => group !== null)
+  }, [consumables])
+
+  const toggleConsumableType = (typeId: string) => {
+    setExpandedConsumableTypes((prev) => {
+      const next = new Set(prev)
+      if (next.has(typeId)) {
+        next.delete(typeId)
+      } else {
+        next.add(typeId)
+      }
+      return next
+    })
+  }
+
+  const formatInteger = (value?: number | null) => {
+    if (value === undefined || value === null) return '—'
+    return Math.abs(value).toLocaleString('en-US')
+  }
+
+  const renderUsageBadge = (item: Record<string, unknown>) => {
+    const used =
+      Number(item.deviceCount ?? 0) > 0 ||
+      (Array.isArray(item.activeDeviceIds) && item.activeDeviceIds.length > 0)
+    return used ? (
+      <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">
+        Đã sử dụng
+      </Badge>
+    ) : (
+      <Badge variant="outline" className="border-slate-200 bg-slate-50 text-slate-600">
+        Chưa sử dụng
+      </Badge>
+    )
+  }
 
   if (loading && page === 1 && consumables.length === 0) {
     return <LoadingState text="Đang tải danh sách vật tư..." />
@@ -491,64 +560,42 @@ export default function ConsumablesPageClient() {
           <Table>
             <TableHeader className={CONSUMABLE_STYLES.typography.tableHeader}>
               <TableRow>
-                {visibleColumns.index && (
-                  <TableHead className={cn(CONSUMABLE_STYLES.spacing.cellPadding, 'w-[50px]')}>
-                    #
-                  </TableHead>
-                )}
-                {visibleColumns.partNumber && (
-                  <TableHead className={CONSUMABLE_STYLES.spacing.cellPadding}>
-                    Part Number
-                  </TableHead>
-                )}
-                {visibleColumns.serial && (
-                  <TableHead className={CONSUMABLE_STYLES.spacing.cellPadding}>Serial</TableHead>
-                )}
-                {visibleColumns.name && (
-                  <TableHead className={CONSUMABLE_STYLES.spacing.cellPadding}>
-                    Tên vật tư
-                  </TableHead>
-                )}
-                {visibleColumns.compatible && (
-                  <TableHead className={CONSUMABLE_STYLES.spacing.cellPadding}>
-                    Dòng tương thích
-                  </TableHead>
-                )}
-                {visibleColumns.capacity && (
-                  <TableHead className={CONSUMABLE_STYLES.spacing.cellPadding}>
-                    Dung lượng
-                  </TableHead>
-                )}
-                {visibleColumns.installStatus && (
-                  <TableHead className={CONSUMABLE_STYLES.spacing.cellPadding}>
-                    Trạng thái lắp đặt
-                  </TableHead>
-                )}
-                {visibleColumns.status && (
-                  <TableHead className={CONSUMABLE_STYLES.spacing.cellPadding}>
-                    Trạng thái
-                  </TableHead>
-                )}
-                {visibleColumns.actions && (
-                  <TableHead className={cn(CONSUMABLE_STYLES.spacing.cellPadding, 'text-right')}>
-                    Thao tác
-                  </TableHead>
-                )}
+                <TableHead className="w-12 px-4 py-4 text-center text-xs font-semibold tracking-wide text-amber-900 uppercase">
+                  &nbsp;
+                </TableHead>
+                <TableHead className="px-6 py-4 text-left text-xs font-semibold tracking-wide text-amber-900 uppercase">
+                  Part Number
+                </TableHead>
+                <TableHead className="px-6 py-4 text-left text-xs font-semibold tracking-wide text-amber-900 uppercase">
+                  Tên vật tư
+                </TableHead>
+                <TableHead className="px-6 py-4 text-left text-xs font-semibold tracking-wide text-amber-900 uppercase">
+                  Dòng tương thích
+                </TableHead>
+                <TableHead className="px-6 py-4 text-left text-xs font-semibold tracking-wide text-amber-900 uppercase">
+                  Dung lượng
+                </TableHead>
+                <TableHead className="px-6 py-4 text-left text-xs font-semibold tracking-wide text-amber-900 uppercase">
+                  Trạng thái sử dụng
+                </TableHead>
+                <TableHead className="px-6 py-4 text-left text-xs font-semibold tracking-wide text-amber-900 uppercase">
+                  Trạng thái
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="h-24 text-center">
+                  <TableCell colSpan={7} className="h-24 text-center">
                     <div className="flex items-center justify-center gap-2">
                       <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
                       <span>Đang tải dữ liệu...</span>
                     </div>
                   </TableCell>
                 </TableRow>
-              ) : filteredConsumables.length === 0 ? (
+              ) : groupedConsumables.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="h-64 text-center">
+                  <TableCell colSpan={7} className="h-64 text-center">
                     <EmptyState
                       title={
                         searchTerm || statusFilter !== 'ALL'
@@ -574,137 +621,157 @@ export default function ConsumablesPageClient() {
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredConsumables.map((c: Record<string, unknown>, idx: number) => (
-                  <TableRow
-                    key={(c.id as string) ?? idx}
-                    className={cn(
-                      'cursor-pointer transition-colors hover:bg-gray-50',
-                      CONSUMABLE_STYLES.spacing.rowHeight
-                    )}
-                  >
-                    {visibleColumns.index && (
-                      <TableCell
-                        className={cn(
-                          CONSUMABLE_STYLES.spacing.cellPadding,
-                          CONSUMABLE_STYLES.typography.tableBody
-                        )}
-                      >
-                        {(page - 1) * limit + idx + 1}
+                groupedConsumables.map((group, groupIdx) => (
+                  <Fragment key={group.typeId}>
+                    <motion.tr
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: groupIdx * 0.05 }}
+                      className="cursor-pointer bg-gradient-to-r from-amber-50/50 via-orange-50/30 to-yellow-50/50"
+                      onClick={() => toggleConsumableType(group.typeId)}
+                    >
+                      <TableCell className="px-4 py-5 text-center">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 transition-transform hover:bg-amber-100"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            toggleConsumableType(group.typeId)
+                          }}
+                        >
+                          <motion.div
+                            animate={{
+                              rotate: expandedConsumableTypes.has(group.typeId) ? 180 : 0,
+                            }}
+                            transition={{ duration: 0.2 }}
+                          >
+                            <ChevronDown className="h-4 w-4" />
+                          </motion.div>
+                        </Button>
                       </TableCell>
-                    )}
-                    {visibleColumns.partNumber && (
-                      <TableCell className={CONSUMABLE_STYLES.spacing.cellPadding}>
-                        <div className="flex items-center gap-2">
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <span className="font-mono text-sm text-gray-900">
-                                  {String(
-                                    (c.consumableType as Record<string, unknown>)?.partNumber ?? '-'
-                                  )}
-                                </span>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>
-                                  Mã Part:{' '}
-                                  {String(
-                                    (c.consumableType as Record<string, unknown>)?.partNumber ?? '-'
-                                  )}
-                                </p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
+                      <TableCell className="px-6 py-5">
+                        <Badge
+                          variant="outline"
+                          className="border-amber-300 bg-amber-100 font-mono text-sm text-amber-900"
+                        >
+                          {String(group.type?.partNumber ?? '—')}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="px-6 py-5">
+                        <div className="font-semibold text-amber-900">
+                          {String(group.type?.name ?? 'Không rõ tên')}
                         </div>
                       </TableCell>
-                    )}
-                    {visibleColumns.serial && (
-                      <TableCell className={CONSUMABLE_STYLES.spacing.cellPadding}>
-                        <code className="rounded bg-gray-100 px-1.5 py-0.5 font-mono text-xs text-gray-700">
-                          {String(c.serialNumber ?? '-')}
-                        </code>
+                      <TableCell className="px-6 py-5 text-sm text-amber-800">
+                        {((group.type?.compatibleDeviceModels as unknown[]) || [])
+                          .map((model) => (model as Record<string, unknown>)?.name)
+                          .filter(Boolean)
+                          .join(', ') || '—'}
                       </TableCell>
-                    )}
-                    {visibleColumns.name && (
-                      <TableCell className={CONSUMABLE_STYLES.spacing.cellPadding}>
-                        <span className="font-medium text-gray-900">
-                          {String((c.consumableType as Record<string, unknown>)?.name ?? '-')}
-                        </span>
+                      <TableCell className="px-6 py-5 text-sm text-amber-800">
+                        {group.type?.capacity
+                          ? `${formatInteger(Number(group.type.capacity))} trang`
+                          : '—'}
                       </TableCell>
-                    )}
-                    {visibleColumns.compatible && (
-                      <TableCell className={CONSUMABLE_STYLES.spacing.cellPadding}>
-                        <div className="flex flex-wrap gap-1">
-                          {(
-                            ((c.consumableType as Record<string, unknown>)
-                              ?.compatibleDeviceModels as unknown[]) || []
-                          )
-                            .map((dm) => String((dm as Record<string, unknown>).name ?? ''))
-                            .filter(Boolean)
-                            .map((name, i) => (
-                              <Badge key={i} variant="outline" className="text-xs font-normal">
-                                {name}
+                      <TableCell className="px-6 py-5">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge
+                            variant="outline"
+                            className="border-slate-300 bg-slate-100 text-xs text-slate-700"
+                          >
+                            Tổng: {group.total}
+                          </Badge>
+                          <Badge
+                            variant="outline"
+                            className="border-emerald-300 bg-emerald-100 text-xs text-emerald-700"
+                          >
+                            Đã dùng: {group.used}
+                          </Badge>
+                          <Badge
+                            variant="outline"
+                            className="border-blue-300 bg-blue-100 text-xs text-blue-700"
+                          >
+                            Còn lại: {group.available}
+                          </Badge>
+                        </div>
+                      </TableCell>
+                      <TableCell className="px-6 py-5">
+                        <Badge
+                          variant="outline"
+                          className="border-amber-300 bg-amber-100 text-amber-800"
+                        >
+                          {group.total} vật tư
+                        </Badge>
+                      </TableCell>
+                    </motion.tr>
+                    <AnimatePresence>
+                      {expandedConsumableTypes.has(group.typeId) &&
+                        group.items.map((item, itemIdx) => (
+                          <motion.tr
+                            key={String(item.id)}
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: itemIdx * 0.03 }}
+                            className="group hover:bg-amber-50/30"
+                          >
+                            <TableCell className="px-4 py-4 text-center text-xs text-slate-300">
+                              │
+                            </TableCell>
+                            <TableCell className="px-6 py-4">
+                              <Badge variant="outline" className="font-mono text-xs">
+                                {String(group.type?.partNumber ?? '—')}
                               </Badge>
-                            ))}
-                          {(
-                            ((c.consumableType as Record<string, unknown>)
-                              ?.compatibleDeviceModels as unknown[]) || []
-                          ).length === 0 && <span className="text-gray-400">-</span>}
-                        </div>
-                      </TableCell>
-                    )}
-                    {visibleColumns.capacity && (
-                      <TableCell className={CONSUMABLE_STYLES.spacing.cellPadding}>
-                        {c.capacity ? (
-                          <div className="flex items-center gap-1.5 text-sm text-gray-700">
-                            <Database className="h-3.5 w-3.5 text-gray-400" />
-                            {String(c.capacity)} trang
-                          </div>
-                        ) : (
-                          <span className="text-gray-400">-</span>
-                        )}
-                      </TableCell>
-                    )}
-                    {visibleColumns.installStatus && (
-                      <TableCell className={CONSUMABLE_STYLES.spacing.cellPadding}>
-                        {Number(c.deviceCount as unknown as number) > 0 ? (
-                          <StatusBadge status="installed" />
-                        ) : (
-                          <StatusBadge status="not_installed" />
-                        )}
-                      </TableCell>
-                    )}
-                    {visibleColumns.status && (
-                      <TableCell className={CONSUMABLE_STYLES.spacing.cellPadding}>
-                        <StatusBadge status={String(c.status ?? 'inactive')} />
-                      </TableCell>
-                    )}
-                    {visibleColumns.actions && (
-                      <TableCell
-                        className={cn(CONSUMABLE_STYLES.spacing.cellPadding, 'text-right')}
-                      >
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 p-0">
-                              <span className="sr-only">Open menu</span>
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              onClick={() => {
-                                const id = String(c.id ?? '')
-                                setSelectedConsumableId(id || undefined)
-                                setDetailOpen(true)
-                              }}
-                            >
-                              <FileText className="mr-2 h-4 w-4" />
-                              Xem chi tiết
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    )}
-                  </TableRow>
+                            </TableCell>
+                            <TableCell className="px-6 py-4">
+                              <div className="font-medium text-slate-800">
+                                {String(group.type?.name ?? 'Không rõ tên')}
+                              </div>
+                              <p className="mt-0.5 text-xs text-slate-500">
+                                SN: {String(item.serialNumber ?? '—')}
+                              </p>
+                            </TableCell>
+                            <TableCell className="px-6 py-4 text-sm text-slate-600">
+                              {((group.type?.compatibleDeviceModels as unknown[]) || [])
+                                .map((model) => (model as Record<string, unknown>)?.name)
+                                .filter(Boolean)
+                                .join(', ') || '—'}
+                            </TableCell>
+                            <TableCell className="px-6 py-4 text-sm font-medium text-orange-600">
+                              {group.type?.capacity
+                                ? `${formatInteger(Number(group.type.capacity))} trang`
+                                : '—'}
+                            </TableCell>
+                            <TableCell className="px-6 py-4">{renderUsageBadge(item)}</TableCell>
+                            <TableCell className="px-6 py-4 text-sm text-slate-600">
+                              <div className="flex items-center justify-between">
+                                <span>{String(item.status ?? '—')}</span>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 p-0">
+                                      <span className="sr-only">Open menu</span>
+                                      <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem
+                                      onClick={() => {
+                                        const id = String(item.id ?? '')
+                                        setSelectedConsumableId(id || undefined)
+                                        setDetailOpen(true)
+                                      }}
+                                    >
+                                      <FileText className="mr-2 h-4 w-4" />
+                                      Xem chi tiết
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </div>
+                            </TableCell>
+                          </motion.tr>
+                        ))}
+                    </AnimatePresence>
+                  </Fragment>
                 ))
               )}
             </TableBody>

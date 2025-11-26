@@ -26,7 +26,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { FilterSection } from '@/components/system/FilterSection'
 import { StatsCards } from '@/components/system/StatsCard'
-// Removed unused Card/CardContent imports
 import {
   Select,
   SelectContent,
@@ -92,12 +91,10 @@ const buildTimelineSteps = (request: PurchaseRequestRow): TimelineStep[] =>
 
 function useDebouncedValue<T>(value: T, delay = 400) {
   const [debounced, setDebounced] = useState(value)
-
   useEffect(() => {
     const timeout = setTimeout(() => setDebounced(value), delay)
     return () => clearTimeout(timeout)
   }, [value, delay])
-
   return debounced
 }
 
@@ -152,7 +149,7 @@ export function PurchaseRequestsTable() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <StatsCards
         cards={[
           {
@@ -165,10 +162,10 @@ export function PurchaseRequestsTable() {
             label: 'Chờ duyệt',
             value: summary.pending,
             icon: <ListOrdered className="h-6 w-6" />,
-            borderColor: 'orange',
+            borderColor: 'amber',
           },
           {
-            label: 'Đang đặt hàng',
+            label: 'Đặt hàng',
             value: summary.ordered,
             icon: <ListOrdered className="h-6 w-6" />,
             borderColor: 'blue',
@@ -224,14 +221,14 @@ export function PurchaseRequestsTable() {
             <label className="text-sm font-medium">Khách hàng</label>
             <CustomerSelect
               value={customerFilter}
-              onChange={(id) => setCustomerFilter(id)}
+              onChange={setCustomerFilter}
               placeholder="Lọc theo khách hàng"
             />
           </div>
         </div>
       </FilterSection>
 
-      <Suspense fallback={<TableSkeleton rows={10} columns={10} />}>
+      <Suspense fallback={<TableSkeleton rows={10} columns={11} />}>
         <PurchaseRequestsTableContent
           pagination={pagination}
           search={debouncedSearch}
@@ -354,7 +351,7 @@ function PurchaseRequestsTableContent({
         accessorKey: 'id',
         header: () => (
           <div className="flex items-center gap-2">
-            <Hash className="h-4 w-4 text-gray-600" />
+            <Hash className="h-4 w-4 text-gray-500" />
             Mã yêu cầu
           </div>
         ),
@@ -372,7 +369,7 @@ function PurchaseRequestsTableContent({
         enableSorting: true,
         header: () => (
           <div className="flex items-center gap-2">
-            <Heading className="h-4 w-4 text-gray-600" />
+            <Heading className="h-4 w-4 text-gray-500" />
             Tiêu đề
           </div>
         ),
@@ -391,7 +388,7 @@ function PurchaseRequestsTableContent({
         accessorKey: 'customer',
         header: () => (
           <div className="flex items-center gap-2">
-            <Building2 className="h-4 w-4 text-gray-600" />
+            <Building2 className="h-4 w-4 text-gray-500" />
             Khách hàng
           </div>
         ),
@@ -406,7 +403,7 @@ function PurchaseRequestsTableContent({
         accessorKey: 'priority',
         header: () => (
           <div className="flex items-center gap-2">
-            <Tag className="h-4 w-4 text-gray-600" />
+            <Tag className="h-4 w-4 text-gray-500" />
             Ưu tiên
           </div>
         ),
@@ -420,7 +417,7 @@ function PurchaseRequestsTableContent({
         id: 'progress',
         header: () => (
           <div className="flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-gray-600" />
+            <TrendingUp className="h-4 w-4 text-gray-500" />
             Tiến trình
           </div>
         ),
@@ -459,7 +456,7 @@ function PurchaseRequestsTableContent({
         accessorKey: 'totalAmount',
         header: () => (
           <div className="flex items-center gap-2">
-            <DollarSign className="h-4 w-4 text-gray-600" />
+            <DollarSign className="h-4 w-4 text-gray-500" />
             Tổng dự toán
           </div>
         ),
@@ -476,7 +473,7 @@ function PurchaseRequestsTableContent({
         accessorKey: 'items',
         header: () => (
           <div className="flex items-center gap-2">
-            <Package className="h-4 w-4 text-gray-600" />
+            <Package className="h-4 w-4 text-gray-500" />
             Chi tiết vật tư
           </div>
         ),
@@ -505,7 +502,7 @@ function PurchaseRequestsTableContent({
                         )}
                       </div>
                       <div className="text-muted-foreground mt-1 space-y-1 text-xs">
-                        <p>Đơn vị: {item.unitPrice ? formatCurrency(item.unitPrice) : '—'}</p>
+                        <p>Đơn giá: {item.unitPrice ? formatCurrency(item.unitPrice) : '—'}</p>
                         {item.notes && <p>Ghi chú: {item.notes}</p>}
                       </div>
                     </div>
@@ -520,7 +517,7 @@ function PurchaseRequestsTableContent({
         accessorKey: 'status',
         header: () => (
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-gray-600" />
+            <CheckCircle2 className="h-4 w-4 text-gray-500" />
             Trạng thái
           </div>
         ),
@@ -556,7 +553,7 @@ function PurchaseRequestsTableContent({
         accessorKey: 'createdAt',
         header: () => (
           <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-gray-600" />
+            <Calendar className="h-4 w-4 text-gray-500" />
             Ngày tạo
           </div>
         ),

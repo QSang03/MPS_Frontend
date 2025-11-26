@@ -1,4 +1,5 @@
 import { DeviceDetailClient } from '@/app/(dashboard)/system/device-models/[modelId]/devices/[id]/_components/DeviceDetailClient'
+import { devicesClientService } from '@/lib/api/services/devices-client.service'
 
 interface Props {
   // Align with Next's generated PageProps which may treat `params` as a Promise<any>.
@@ -10,6 +11,28 @@ export default async function DevicePage({ params }: Props) {
   // `params` may be a Promise or undefined. Await it and coerce the result shape.
   const resolved = (await params) as { id?: string } | undefined
   const id = resolved?.id ?? ''
-  // DeviceDetailClient is a client component that will fetch device details itself
-  return <DeviceDetailClient deviceId={id} backHref="/system/devices" />
+
+  // Try to fetch the device server-side to obtain its model id so child
+  // client component receives `modelId`. This restores model-scoped
+  // behaviors (e.g. showing "add compatible consumable") when rendered
+  // from the global /system/devices/[id] route.
+  let modelId: string | undefined = undefined
+  try {
+    const device = await devicesClientService.getById(id)
+    // Narrow `device` as an object and access properties safely without `any`.
+    if (device && typeof device === 'object') {
+      const d = device as unknown as Record<string, unknown>
+      const dm = d['deviceModel']
+      if (dm && typeof dm === 'object') {
+        const dmObj = dm as Record<string, unknown>
+        if (dmObj['id']) modelId = String(dmObj['id'])
+      }
+      if (!modelId && d['deviceModelId']) modelId = String(d['deviceModelId'])
+    }
+  } catch {
+    // ignore — component will still fetch device client-side if needed
+    modelId = undefined
+  }
+
+  return <DeviceDetailClient deviceId={id} modelId={modelId} backHref="/system/devices" />
 }

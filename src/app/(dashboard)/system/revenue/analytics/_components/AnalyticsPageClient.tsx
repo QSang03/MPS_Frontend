@@ -161,9 +161,11 @@ export default function AnalyticsPageClient() {
     setCustomersPeriod(currentMonth)
     setCustomerDetailPeriod(currentMonth)
 
-    // For date ranges, set last 3 months
-    const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 2, 1)
-    const fromMonth = `${threeMonthsAgo.getFullYear()}-${String(threeMonthsAgo.getMonth() + 1).padStart(2, '0')}`
+    // For date ranges, set last 12 months
+    const twelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1)
+    const fromMonth = `${twelveMonthsAgo.getFullYear()}-${String(
+      twelveMonthsAgo.getMonth() + 1
+    ).padStart(2, '0')}`
     setDeviceFrom(fromMonth)
     setDeviceTo(currentMonth)
     setConsumableFrom(fromMonth)
