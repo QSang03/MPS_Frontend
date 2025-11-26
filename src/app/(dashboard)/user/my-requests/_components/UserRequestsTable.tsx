@@ -1,6 +1,7 @@
 'use client'
 
-import { Suspense, useEffect, useMemo, useState, useTransition } from 'react'
+import { Suspense, useEffect, useMemo, useState, useTransition, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import type { ReactNode } from 'react'
 import type { ColumnDef } from '@tanstack/react-table'
 import {
@@ -38,7 +39,6 @@ import { ServiceRequestStatus, Priority } from '@/constants/status'
 import type { ServiceRequest } from '@/types/models/service-request'
 import { useServiceRequestsQuery } from '@/lib/hooks/queries/useServiceRequestsQuery'
 import { TableSkeleton } from '@/components/system/TableSkeleton'
-import { ServiceRequestDetailModal } from './ServiceRequestDetailModal'
 import { serviceRequestsClientService } from '@/lib/api/services/service-requests-client.service'
 import { useToast } from '@/components/ui/use-toast'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -323,8 +323,7 @@ function UserRequestsTableContent({
   renderColumnVisibilityMenu,
 }: UserRequestsTableContentProps) {
   const [isPending, startTransition] = useTransition()
-  const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null)
-  const [isDetailOpen, setIsDetailOpen] = useState(false)
+  const router = useRouter()
   const [closeReason, setCloseReason] = useState('')
   const [isCloseDialogOpen, setIsCloseDialogOpen] = useState(false)
   const [closingRequestId, setClosingRequestId] = useState<string | null>(null)
@@ -377,10 +376,12 @@ function UserRequestsTableContent({
     })
   }, [requests, totalCount, onStatsChange])
 
-  const handleViewDetail = (id: string) => {
-    setSelectedRequestId(id)
-    setIsDetailOpen(true)
-  }
+  const handleViewDetail = useCallback(
+    (id: string) => {
+      router.push(`/user/service-requests/${id}`)
+    },
+    [router]
+  )
 
   const openCloseDialog = (id: string) => {
     setClosingRequestId(id)
@@ -719,7 +720,7 @@ function UserRequestsTableContent({
         },
       },
     ],
-    [pagination.pageIndex, pagination.pageSize, selectedIds, requests]
+    [pagination.pageIndex, pagination.pageSize, selectedIds, requests, handleViewDetail]
   )
 
   return (
@@ -774,11 +775,7 @@ function UserRequestsTableContent({
         skeletonRows={10}
       />
 
-      <ServiceRequestDetailModal
-        requestId={selectedRequestId}
-        open={isDetailOpen}
-        onOpenChange={setIsDetailOpen}
-      />
+      {/* Navigation to full page handled via router push - modal removed */}
 
       <Dialog open={isCloseDialogOpen} onOpenChange={setIsCloseDialogOpen}>
         <DialogContent>

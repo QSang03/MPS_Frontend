@@ -104,3 +104,25 @@ export interface PurchaseRequestStats {
   received: number
   cancelled: number
 }
+
+/**
+ * Purchase request message
+ */
+export interface PurchaseRequestMessage {
+  id: string
+  purchaseRequestId: string
+  customerId?: string
+  authorId?: string
+  authorName?: string
+  /** Message body returned by backend (usually field `message`) */
+  message: string
+  /** Legacy alias – some older frontend code used `content` */
+  content?: string
+  statusBefore?: PurchaseRequestStatus
+  statusAfter?: PurchaseRequestStatus
+  createdAt: string
+}
+
+export interface CreatePurchaseRequestMessageDto {
+  message: string
+}

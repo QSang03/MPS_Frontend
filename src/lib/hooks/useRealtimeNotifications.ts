@@ -44,6 +44,23 @@ export function useRealtimeNotifications() {
       queryClient.invalidateQueries({ queryKey: ['service-requests'] })
     })
 
+    // New purchase request created
+    socket.on('purchase-request:created', (data: { id: string }) => {
+      toast('New purchase request received', {
+        description: `Request #${data.id.slice(0, 8)}`,
+      })
+      queryClient.invalidateQueries({ queryKey: ['purchase-requests'] })
+      queryClient.invalidateQueries({ queryKey: ['purchaserequest-stats'] })
+    })
+
+    // Purchase request updated
+    socket.on('purchase-request:updated', (data: { id: string; status: string }) => {
+      toast(`Purchase request ${data.status}`, {
+        description: `Request #${data.id.slice(0, 8)}`,
+      })
+      queryClient.invalidateQueries({ queryKey: ['purchase-requests'] })
+    })
+
     // New message added to service request
     socket.on('service-request:message.created', (data: { id: string }) => {
       // id = serviceRequestId
@@ -53,6 +70,17 @@ export function useRealtimeNotifications() {
       queryClient.invalidateQueries({ queryKey: ['service-requests'] })
       queryClient.invalidateQueries({ queryKey: ['service-requests', 'detail', data.id] })
       queryClient.invalidateQueries({ queryKey: ['service-requests', data.id, 'messages'] })
+    })
+
+    // New message added to purchase request
+    socket.on('purchase-request:message.created', (data: { id: string }) => {
+      // id = purchaseRequestId
+      toast('Có tin nhắn mới trên yêu cầu mua hàng', {
+        description: `Request #${data.id.slice(0, 8)}`,
+      })
+      queryClient.invalidateQueries({ queryKey: ['purchase-requests'] })
+      queryClient.invalidateQueries({ queryKey: ['purchase-requests', 'detail', data.id] })
+      queryClient.invalidateQueries({ queryKey: ['purchase-requests', data.id, 'messages'] })
     })
 
     // New cost added to service request

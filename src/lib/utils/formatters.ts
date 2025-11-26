@@ -50,3 +50,26 @@ export function formatFileSize(bytes: number): string {
 
   return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i]
 }
+
+/**
+ * Format page count in a human-friendly way, distinguishing between
+ * - no data (hasData=false) => N/A
+ * - value is null/undefined => N/A
+ * - 0 => 0 (meaning real zero)
+ * Returns an object with display and optional tooltip for UX clarity.
+ */
+export function formatPageCount(
+  value: number | null | undefined,
+  hasData?: boolean
+): { display: string; tooltip?: string | null } {
+  if (hasData === false) {
+    return { display: 'N/A', tooltip: 'Chưa có dữ liệu' }
+  }
+  if (value === null || value === undefined) {
+    return { display: 'N/A', tooltip: 'Chưa được tính toán' }
+  }
+  if (value === 0) {
+    return { display: '0', tooltip: 'Không có trang in trong kỳ' }
+  }
+  return { display: value.toLocaleString('vi-VN'), tooltip: null }
+}

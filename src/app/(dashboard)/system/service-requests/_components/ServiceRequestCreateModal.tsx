@@ -27,6 +27,7 @@ export function ServiceRequestCreateModal() {
           description="Tạo yêu cầu thay mặt cho khách hàng"
           icon={Wrench}
           variant="create"
+          maxWidth="!max-w-[80vw]"
         >
           <div className="space-y-4">
             <div>

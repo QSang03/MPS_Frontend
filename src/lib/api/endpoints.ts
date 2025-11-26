@@ -82,6 +82,7 @@ export const API_ENDPOINTS = {
     STATS: (customerId: string) => `/service-requests/stats/${customerId}`,
     COSTS: (id: string) => `/service-requests/${id}/costs`,
     MESSAGES: (id: string) => `/service-requests/${id}/messages`,
+    ASSIGN: (id: string) => `/service-requests/${id}/assign`,
   },
 
   // Purchase Requests
@@ -92,6 +93,7 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string) => `/purchase-requests/${id}`,
     DELETE: (id: string) => `/purchase-requests/${id}`,
     STATUS: (id: string) => `/purchase-requests/${id}/status`,
+    MESSAGES: (id: string) => `/purchase-requests/${id}/messages`,
   },
 
   // Service Level Agreements

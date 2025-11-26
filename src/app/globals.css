@@ -326,3 +326,13 @@
 .dark *::-webkit-scrollbar-corner {
   background: var(--neutral-200);
 }
+
+@layer components {
+  .service-request-card {
+    @apply rounded-lg border border-gray-200 p-4 transition-shadow hover:shadow-md;
+  }
+
+  .badge-status {
+    @apply inline-block rounded-full px-3 py-1 text-sm font-medium;
+  }
+}

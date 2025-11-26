@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
 import { useEffect, useState } from 'react'
@@ -22,12 +21,15 @@ import {
 import { FileText } from 'lucide-react'
 import { ServiceRequestFormModal } from '@/app/(dashboard)/user/my-requests/_components/ServiceRequestFormModal'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
+import { formatPageCount } from '@/lib/utils/formatters'
 import { DEVICE_STATUS, STATUS_DISPLAY } from '@/constants/status'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { devicesClientService } from '@/lib/api/services/devices-client.service'
+import type { Device } from '@/types/models/device'
+import type { DeviceConsumable } from '@/types/models/consumable'
 import internalApiClient from '@/lib/api/internal-client'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -57,7 +59,7 @@ interface Props {
 export default function DeviceDetailClient({ deviceId, backHref }: Props) {
   const router = useRouter()
 
-  const [device, setDevice] = useState<any | null>(null)
+  const [device, setDevice] = useState<Device | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -69,7 +71,7 @@ export default function DeviceDetailClient({ deviceId, backHref }: Props) {
   const [macEdit, setMacEdit] = useState('')
   const [firmwareEdit, setFirmwareEdit] = useState('')
 
-  const [installedConsumables, setInstalledConsumables] = useState<any[]>([])
+  const [installedConsumables, setInstalledConsumables] = useState<DeviceConsumable[]>([])
   const [consumablesLoading, setConsumablesLoading] = useState(false)
   const [activeTab, setActiveTab] = useState('overview')
 
@@ -80,7 +82,7 @@ export default function DeviceDetailClient({ deviceId, backHref }: Props) {
   const [monthlyUsageLoading, setMonthlyUsageLoading] = useState(false)
   const [monthlyUsageError, setMonthlyUsageError] = useState<string | null>(null)
 
-  const customerId = (device as any)?.customer?.id
+  const customerId = device?.customerId ?? ''
 
   const getDefaultDateRange = () => {
     const now = new Date()
@@ -95,9 +97,7 @@ export default function DeviceDetailClient({ deviceId, backHref }: Props) {
     }
   }
 
-  const fmtNumber = (v?: number | null) => (typeof v === 'number' ? v.toLocaleString('vi-VN') : '-')
-  const fmtNumberA4 = (v?: number | null) =>
-    typeof v === 'number' ? v.toLocaleString('vi-VN', { maximumFractionDigits: 2 }) : '-'
+  // Use formatPageCount to distinguish N/A vs 0 and show tooltips
 
   useEffect(() => {
     let mounted = true
@@ -165,7 +165,7 @@ export default function DeviceDetailClient({ deviceId, backHref }: Props) {
       try {
         const list = await devicesClientService.getConsumables(deviceId)
         if (!mounted) return
-        setInstalledConsumables(Array.isArray(list) ? list : (list?.items ?? []))
+        setInstalledConsumables(Array.isArray(list) ? list : [])
       } catch (err) {
         console.error('Failed to load installed consumables (user view)', err)
         setInstalledConsumables([])
@@ -483,7 +483,12 @@ export default function DeviceDetailClient({ deviceId, backHref }: Props) {
                     Tổng số trang đã in
                   </p>
                   <p className="text-3xl font-bold text-cyan-700">
-                    {device.totalPagesUsed?.toLocaleString('vi-VN') || '0'}
+                    {
+                      formatPageCount(
+                        device.totalPagesUsed,
+                        typeof device?.totalPagesUsed !== 'undefined'
+                      ).display
+                    }
                   </p>
                   <p className="text-muted-foreground mt-1 text-xs">trang</p>
                 </div>
@@ -639,22 +644,163 @@ export default function DeviceDetailClient({ deviceId, backHref }: Props) {
                                 </td>
                                 <td className="px-4 py-3 text-sm">{item.partNumber || '-'}</td>
                                 <td className="px-4 py-3 text-right text-sm">
-                                  {fmtNumber(item.bwPages)}
+                                  {(() => {
+                                    const hasUsageData =
+                                      item &&
+                                      ((item.bwPages !== null && item.bwPages !== undefined) ||
+                                        (item.colorPages !== null &&
+                                          item.colorPages !== undefined) ||
+                                        (item.totalPages !== null && item.totalPages !== undefined))
+                                    const formatted = formatPageCount(item.bwPages, hasUsageData)
+                                    return formatted.tooltip ? (
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <span>{formatted.display}</span>
+                                        </TooltipTrigger>
+                                        <TooltipContent sideOffset={4}>
+                                          {formatted.tooltip}
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    ) : (
+                                      <span>{formatted.display}</span>
+                                    )
+                                  })()}
                                 </td>
                                 <td className="px-4 py-3 text-right text-sm">
-                                  {fmtNumber(item.colorPages)}
+                                  {(() => {
+                                    const hasUsageData =
+                                      item &&
+                                      ((item.bwPages !== null && item.bwPages !== undefined) ||
+                                        (item.colorPages !== null &&
+                                          item.colorPages !== undefined) ||
+                                        (item.totalPages !== null && item.totalPages !== undefined))
+                                    const formatted = formatPageCount(item.colorPages, hasUsageData)
+                                    return formatted.tooltip ? (
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <span>{formatted.display}</span>
+                                        </TooltipTrigger>
+                                        <TooltipContent sideOffset={4}>
+                                          {formatted.tooltip}
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    ) : (
+                                      <span>{formatted.display}</span>
+                                    )
+                                  })()}
                                 </td>
                                 <td className="px-4 py-3 text-right text-sm font-semibold">
-                                  {fmtNumber(item.totalPages)}
+                                  {(() => {
+                                    const hasUsageData =
+                                      item &&
+                                      ((item.bwPages !== null && item.bwPages !== undefined) ||
+                                        (item.colorPages !== null &&
+                                          item.colorPages !== undefined) ||
+                                        (item.totalPages !== null && item.totalPages !== undefined))
+                                    const formatted = formatPageCount(item.totalPages, hasUsageData)
+                                    return formatted.tooltip ? (
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <span>{formatted.display}</span>
+                                        </TooltipTrigger>
+                                        <TooltipContent sideOffset={4}>
+                                          {formatted.tooltip}
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    ) : (
+                                      <span>{formatted.display}</span>
+                                    )
+                                  })()}
                                 </td>
                                 <td className="px-4 py-3 text-right text-sm text-blue-600">
-                                  {fmtNumberA4(item.bwPagesA4)}
+                                  {(() => {
+                                    const hasUsageData =
+                                      item &&
+                                      ((item.bwPagesA4 !== null && item.bwPagesA4 !== undefined) ||
+                                        (item.colorPagesA4 !== null &&
+                                          item.colorPagesA4 !== undefined) ||
+                                        (item.totalPagesA4 !== null &&
+                                          item.totalPagesA4 !== undefined) ||
+                                        (item.bwPages !== null && item.bwPages !== undefined) ||
+                                        (item.colorPages !== null &&
+                                          item.colorPages !== undefined) ||
+                                        (item.totalPages !== null && item.totalPages !== undefined))
+                                    const formatted = formatPageCount(item.bwPagesA4, hasUsageData)
+                                    return formatted.tooltip ? (
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <span>{formatted.display}</span>
+                                        </TooltipTrigger>
+                                        <TooltipContent sideOffset={4}>
+                                          {formatted.tooltip}
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    ) : (
+                                      <span>{formatted.display}</span>
+                                    )
+                                  })()}
                                 </td>
                                 <td className="px-4 py-3 text-right text-sm text-blue-600">
-                                  {fmtNumberA4(item.colorPagesA4)}
+                                  {(() => {
+                                    const hasUsageData =
+                                      item &&
+                                      ((item.bwPagesA4 !== null && item.bwPagesA4 !== undefined) ||
+                                        (item.colorPagesA4 !== null &&
+                                          item.colorPagesA4 !== undefined) ||
+                                        (item.totalPagesA4 !== null &&
+                                          item.totalPagesA4 !== undefined) ||
+                                        (item.bwPages !== null && item.bwPages !== undefined) ||
+                                        (item.colorPages !== null &&
+                                          item.colorPages !== undefined) ||
+                                        (item.totalPages !== null && item.totalPages !== undefined))
+                                    const formatted = formatPageCount(
+                                      item.colorPagesA4,
+                                      hasUsageData
+                                    )
+                                    return formatted.tooltip ? (
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <span>{formatted.display}</span>
+                                        </TooltipTrigger>
+                                        <TooltipContent sideOffset={4}>
+                                          {formatted.tooltip}
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    ) : (
+                                      <span>{formatted.display}</span>
+                                    )
+                                  })()}
                                 </td>
                                 <td className="px-4 py-3 text-right text-sm font-semibold text-blue-600">
-                                  {fmtNumberA4(item.totalPagesA4)}
+                                  {(() => {
+                                    const hasUsageData =
+                                      item &&
+                                      ((item.bwPagesA4 !== null && item.bwPagesA4 !== undefined) ||
+                                        (item.colorPagesA4 !== null &&
+                                          item.colorPagesA4 !== undefined) ||
+                                        (item.totalPagesA4 !== null &&
+                                          item.totalPagesA4 !== undefined) ||
+                                        (item.bwPages !== null && item.bwPages !== undefined) ||
+                                        (item.colorPages !== null &&
+                                          item.colorPages !== undefined) ||
+                                        (item.totalPages !== null && item.totalPages !== undefined))
+                                    const formatted = formatPageCount(
+                                      item.totalPagesA4,
+                                      hasUsageData
+                                    )
+                                    return formatted.tooltip ? (
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <span>{formatted.display}</span>
+                                        </TooltipTrigger>
+                                        <TooltipContent sideOffset={4}>
+                                          {formatted.tooltip}
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    ) : (
+                                      <span>{formatted.display}</span>
+                                    )
+                                  })()}
                                 </td>
                               </tr>
                             )
@@ -719,7 +865,7 @@ export default function DeviceDetailClient({ deviceId, backHref }: Props) {
                       </tr>
                     </thead>
                     <tbody className="divide-y">
-                      {installedConsumables.map((c: any, idx: number) => {
+                      {installedConsumables.map((c: DeviceConsumable, idx: number) => {
                         const cons = c?.consumable ?? c
                         const usagePercent =
                           cons?.capacity && cons?.remaining
@@ -745,8 +891,7 @@ export default function DeviceDetailClient({ deviceId, backHref }: Props) {
                             <td className="px-4 py-3">
                               <div className="space-y-1">
                                 {(() => {
-                                  const statusText =
-                                    cons?.status ?? (c.isActive ? 'ACTIVE' : 'EMPTY')
+                                  const statusText = cons?.status ?? 'EMPTY'
                                   const statusClass =
                                     statusText === 'ACTIVE'
                                       ? 'bg-green-500 hover:bg-green-600'
@@ -799,7 +944,7 @@ export default function DeviceDetailClient({ deviceId, backHref }: Props) {
                               </div>
                             </td>
                             <td className="px-4 py-3 text-left text-sm">
-                              {(c as any)?.exchangeRate ? String((c as any).exchangeRate) : '-'}
+                              {c.exchangeRate != null ? String(c.exchangeRate) : '-'}
                             </td>
                             <td className="text-muted-foreground px-4 py-3 text-right text-sm">
                               {c?.installedAt

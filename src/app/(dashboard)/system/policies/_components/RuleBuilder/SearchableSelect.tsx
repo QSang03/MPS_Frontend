@@ -24,17 +24,15 @@ interface SearchableSelectProps {
   onChange: (value: unknown) => void
   disabled?: boolean
   placeholder?: string
+  /** Additional fetch params to be merged into the api call (e.g. customerId) */
+  fetchParams?: Record<string, unknown>
 }
 
 // Map field to API service and display field
 const FIELD_CONFIG: Record<
   string,
   {
-    fetchFn: (params: {
-      page?: number
-      limit?: number
-      search?: string
-    }) => Promise<{ data: SelectableItem[] }>
+    fetchFn: (params: Record<string, unknown>) => Promise<{ data: SelectableItem[] }>
     displayField: string
     valueField: string
   }
@@ -104,6 +102,7 @@ export function SearchableSelect({
   onChange,
   disabled = false,
   placeholder,
+  fetchParams,
 }: SearchableSelectProps) {
   const config = FIELD_CONFIG[field]
 
@@ -123,7 +122,12 @@ export function SearchableSelect({
         setItems([])
         return
       }
-      const res = await config.fetchFn({ page: 1, limit: 50, search: searchQuery })
+      const res = await config.fetchFn({
+        page: 1,
+        limit: 50,
+        search: searchQuery,
+        ...(fetchParams || {}),
+      })
       setItems(res.data || [])
     } catch (error) {
       console.error(`Failed to fetch items for ${field}:`, error)
@@ -136,7 +140,7 @@ export function SearchableSelect({
   useEffect(() => {
     fetchItems('')
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [field])
+  }, [field, JSON.stringify(fetchParams)])
 
   useEffect(() => {
     if (debounceRef.current) window.clearTimeout(debounceRef.current)

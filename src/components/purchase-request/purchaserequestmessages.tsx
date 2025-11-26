@@ -6,38 +6,39 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { formatRelativeTime } from '@/lib/utils/formatters'
-import { serviceRequestsClientService } from '@/lib/api/services/service-requests-client.service'
-import type { ServiceRequestMessage } from '@/types/models'
+import { purchaseRequestsClientService } from '@/lib/api/services/purchase-requests-client.service'
+import type { PurchaseRequestMessage } from '@/types/models/purchase-request'
 import { toast } from 'sonner'
 import { Loader2, Send, MessageSquare } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 
 interface Props {
-  serviceRequestId: string
+  purchaseRequestId: string
   /** Optional id of current user for distinguishing own messages */
   currentUserId?: string | null
 }
 
 /**
- * Reusable conversation component for a service request
+ * Reusable conversation component for a purchase request
  */
-export default function ServiceRequestMessages({ serviceRequestId, currentUserId }: Props) {
+export default function PurchaseRequestMessages({ purchaseRequestId, currentUserId }: Props) {
   const queryClient = useQueryClient()
   const [draft, setDraft] = useState('')
   const feedRef = useRef<HTMLDivElement | null>(null)
 
   const { data, isLoading } = useQuery({
-    queryKey: ['service-requests', serviceRequestId, 'messages'],
-    queryFn: () => serviceRequestsClientService.getMessages(serviceRequestId),
+    queryKey: ['purchase-requests', purchaseRequestId, 'messages'],
+    queryFn: () => purchaseRequestsClientService.getMessages(purchaseRequestId),
     staleTime: 5 * 1000,
   })
 
   const createMessage = useMutation({
     mutationFn: (payload: { message: string }) =>
-      serviceRequestsClientService.createMessage(serviceRequestId, { message: payload.message }),
+      // Backend infers author from authenticated session — only send message body
+      purchaseRequestsClientService.createMessage(purchaseRequestId, { message: payload.message }),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ['service-requests', serviceRequestId, 'messages'],
+        queryKey: ['purchase-requests', purchaseRequestId, 'messages'],
       })
       setDraft('')
     },
@@ -82,7 +83,7 @@ export default function ServiceRequestMessages({ serviceRequestId, currentUserId
             <span className="text-xs">Đang tải hội thoại...</span>
           </div>
         ) : messages.length > 0 ? (
-          messages.map((m: ServiceRequestMessage) => {
+          messages.map((m: PurchaseRequestMessage) => {
             const isMe = currentUserId && m.authorId === currentUserId
 
             return (

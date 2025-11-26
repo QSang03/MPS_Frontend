@@ -634,6 +634,15 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
         },
       },
       {
+        id: 'assign-service',
+        label: 'Phân công kỹ thuật viên',
+        icon: 'UserPlus',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'service-requests', action: 'update' }],
+        },
+      },
+      {
         id: 'filter-by-customer',
         label: 'Lọc theo khách hàng',
         icon: 'Filter',

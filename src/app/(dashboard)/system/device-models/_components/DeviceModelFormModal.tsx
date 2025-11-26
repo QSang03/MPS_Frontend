@@ -54,6 +54,7 @@ export function DeviceModelFormModal({ mode = 'create', model = null, onSaved, t
     type: '',
     description: '',
     isActive: true,
+    useA4Counter: true,
   })
 
   useEffect(() => {
@@ -66,6 +67,7 @@ export function DeviceModelFormModal({ mode = 'create', model = null, onSaved, t
         type: model.type,
         description: model.description,
         isActive: model.isActive,
+        useA4Counter: model.useA4Counter,
       })
     }, 0)
     return () => clearTimeout(t)
@@ -322,7 +324,41 @@ export function DeviceModelFormModal({ mode = 'create', model = null, onSaved, t
               <CheckCircle2 className="h-4 w-4" />
               Trạng thái
             </div>
+            <Separator />
 
+            {/* A4 Counter Section */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-sm font-semibold text-violet-700">
+                <CheckCircle2 className="h-4 w-4" />
+                Counter Mode
+              </div>
+
+              <div
+                className={cn(
+                  'flex items-center justify-between rounded-lg border-2 p-4 transition-colors',
+                  form.useA4Counter ? 'border-blue-200 bg-blue-50' : 'border-gray-200 bg-gray-50'
+                )}
+              >
+                <div className="space-y-0.5">
+                  <label className="flex items-center gap-2 text-base font-semibold">
+                    {form.useA4Counter ? (
+                      <FileText className="h-4 w-4 text-blue-600" />
+                    ) : (
+                      <Settings className="h-4 w-4 text-gray-600" />
+                    )}
+                    Sử dụng A4 Counter
+                  </label>
+                  <p className="text-muted-foreground text-sm">
+                    Bật tùy chọn này cho máy in đời mới chỉ trả về số đếm A4. Máy in đời cũ sẽ sử
+                    dụng standard counter và tự động chuyển đổi sang A4.
+                  </p>
+                </div>
+                <Switch
+                  checked={!!form.useA4Counter}
+                  onCheckedChange={(v) => setForm((s) => ({ ...s, useA4Counter: v }))}
+                />
+              </div>
+            </div>
             <div
               className={cn(
                 'flex items-center justify-between rounded-lg border-2 p-4 transition-colors',

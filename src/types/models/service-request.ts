@@ -1,6 +1,7 @@
 import { ServiceRequestStatus, Priority } from '@/constants/status'
 import type { Customer } from './customer'
 import type { Device } from './device'
+import type { SLA } from './sla'
 
 /**
  * Service request model
@@ -8,23 +9,36 @@ import type { Device } from './device'
 export interface ServiceRequest {
   id: string
   customerId: string
+  /** User ID who created the request (provided by backend) */
+  createdBy?: string
+  /** Convenience display name provided by backend for audit fields */
+  createdByName?: string
   slaId?: string
   assignedTo?: string
+  /** Convenience display name for assignedTo returned by backend */
+  assignedToName?: string
   title: string
   description: string
   priority: Priority
   status: ServiceRequestStatus
   respondedAt?: string
   respondedBy?: string
+  respondedByName?: string
   resolvedAt?: string
   resolvedBy?: string
+  resolvedByName?: string
   closedAt?: string
   closedBy?: string
+  closedByName?: string
   customerClosedReason?: string
   customerClosedBy?: string
+  customerClosedByName?: string
   customerClosedAt?: string
   createdAt: string
   updatedAt: string
+  attachments?: string[]
+  /** Optional SLA data included in backend response (non-breaking: SLA remains available via slaId) */
+  sla?: SLA
   customer?: CustomerSummary
   device?: DeviceSummary
 }
@@ -148,6 +162,8 @@ export interface ServiceRequestMessage {
   id: string
   serviceRequestId: string
   authorId?: string
+  /** Type of author, e.g. 'CUSTOMER' | 'STAFF' | 'SYSTEM' */
+  authorType?: string
   authorName?: string
   /** The message body returned by backend (field name `message`) */
   message: string

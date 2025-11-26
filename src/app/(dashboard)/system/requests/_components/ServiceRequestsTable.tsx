@@ -475,6 +475,41 @@ function ServiceRequestsTableContent({
         ),
       },
       {
+        accessorKey: 'assignedTo',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <Tag className="h-4 w-4 text-gray-500" />
+            Người phụ trách
+          </div>
+        ),
+        cell: ({ row }) => (
+          <div className="text-sm">
+            <div className="font-medium">
+              {row.original.assignedToName ?? row.original.assignedTo ?? '—'}
+            </div>
+          </div>
+        ),
+      },
+      {
+        accessorKey: 'sla',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <Tag className="h-4 w-4 text-gray-500" />
+            SLA
+          </div>
+        ),
+        cell: ({ row }) => (
+          <div className="text-sm">
+            <div className="font-medium">{row.original.sla?.name ?? '—'}</div>
+            <div className="text-muted-foreground text-xs">
+              {row.original.sla
+                ? `${row.original.sla.responseTimeHours}h / ${row.original.sla.resolutionTimeHours}h`
+                : '—'}
+            </div>
+          </div>
+        ),
+      },
+      {
         accessorKey: 'respondedAt',
         header: () => (
           <div className="flex items-center gap-2">

@@ -6,9 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
   Loader2,
-  Edit,
   AlertTriangle,
-  History,
   CheckCircle,
   XCircle,
   Clock,
@@ -57,6 +55,7 @@ export default function ConsumableDetailModal({
     expiryDate?: string
     deviceCount?: number | string
     activeDeviceIds?: string[]
+    deviceConsumables?: { deviceId?: string; installedAt?: string; removedAt?: string }[]
     serialNumber?: string
     createdAt?: string
     status?: string
@@ -268,19 +267,18 @@ export default function ConsumableDetailModal({
                       )}
                     </div>
                     {Number(typedItem?.deviceCount ?? 0) > 0 &&
-                      Array.isArray(typedItem?.activeDeviceIds) &&
-                      (typedItem?.activeDeviceIds as string[]).length > 0 && (
+                      Array.isArray(typedItem?.deviceConsumables) &&
+                      (typedItem.deviceConsumables as { installedAt?: string }[]).length > 0 && (
                         <div className="mt-2 rounded-lg bg-slate-50 p-2 text-xs">
-                          <span className="mb-1 block font-medium text-slate-500">Device IDs:</span>
-                          <div className="flex flex-wrap gap-1">
-                            {(typedItem!.activeDeviceIds as string[]).map((id, i) => (
-                              <code
-                                key={i}
-                                className="rounded border border-slate-200 bg-white px-1.5 py-0.5 font-mono text-slate-600"
-                              >
-                                {String(id).slice(0, 8)}...
-                              </code>
-                            ))}
+                          <span className="mb-1 block font-medium text-slate-500">Ngày lắp:</span>
+                          <div className="flex flex-col gap-1">
+                            {(typedItem.deviceConsumables as { installedAt?: string }[]).map(
+                              (dc, i) => (
+                                <div key={i} className="text-slate-700">
+                                  {fmtDate(dc.installedAt)}
+                                </div>
+                              )
+                            )}
                           </div>
                         </div>
                       )}
@@ -325,16 +323,6 @@ export default function ConsumableDetailModal({
                     </div>
                   </div>
                 </div>
-
-                {/* Description */}
-                {typedItem?.consumableType?.description && (
-                  <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm md:col-span-2">
-                    <div className="mb-2 font-semibold text-slate-900">Mô tả chi tiết</div>
-                    <p className="text-sm leading-relaxed text-slate-600">
-                      {String(typedItem!.consumableType!.description)}
-                    </p>
-                  </div>
-                )}
               </div>
             </div>
           )}
@@ -342,32 +330,7 @@ export default function ConsumableDetailModal({
 
         <DialogFooter className="border-t bg-slate-50/50 px-6 py-4">
           <div className="flex w-full flex-col gap-2 sm:flex-row sm:justify-between">
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                className="gap-2 text-slate-600 hover:text-slate-900"
-                onClick={() => toast.info('Tính năng đang phát triển')}
-              >
-                <Edit className="h-4 w-4" />
-                Sửa
-              </Button>
-              <Button
-                variant="outline"
-                className="gap-2 text-red-600 hover:bg-red-50 hover:text-red-700"
-                onClick={() => toast.info('Tính năng đang phát triển')}
-              >
-                <AlertTriangle className="h-4 w-4" />
-                Báo lỗi
-              </Button>
-              <Button
-                variant="outline"
-                className="gap-2 text-blue-600 hover:bg-blue-50 hover:text-blue-700"
-                onClick={() => toast.info('Tính năng đang phát triển')}
-              >
-                <History className="h-4 w-4" />
-                Lịch sử
-              </Button>
-            </div>
+            <div className="flex gap-2"></div>
             <Button onClick={() => onOpenChange(false)}>Đóng</Button>
           </div>
         </DialogFooter>

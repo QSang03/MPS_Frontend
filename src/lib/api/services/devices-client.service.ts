@@ -1,5 +1,6 @@
 import internalApiClient from '../internal-client'
 import type { Device, CreateDeviceDto, UpdateDeviceDto } from '@/types/models/device'
+import type { DeviceConsumable, UpdateDeviceConsumableDto } from '@/types/models/consumable'
 import type { ApiListResponse } from '@/types/api'
 
 export const devicesClientService = {
@@ -103,7 +104,7 @@ export const devicesClientService = {
     return response.data
   },
 
-  async getConsumables(id: string) {
+  async getConsumables(id: string): Promise<DeviceConsumable[]> {
     const response = await internalApiClient.get(`/api/devices/${id}/consumables`)
     // Defensive: backend may return { data: [...] } or the list directly
     const body = response.data
@@ -125,9 +126,12 @@ export const devicesClientService = {
   async installConsumableWithPayload(
     deviceId: string,
     consumableId: string,
-    payload?: Record<string, unknown>
+    payload?: Partial<UpdateDeviceConsumableDto>
   ) {
-    const body = Object.assign({ consumableId }, payload || {})
+    const body: Partial<UpdateDeviceConsumableDto & { consumableId: string }> = Object.assign(
+      { consumableId },
+      payload || {}
+    )
     const response = await internalApiClient.post(
       `/api/devices/${deviceId}/install-consumable`,
       body
@@ -141,7 +145,7 @@ export const devicesClientService = {
   async updateDeviceConsumable(
     deviceId: string,
     consumableId: string,
-    dto: Record<string, unknown>
+    dto: UpdateDeviceConsumableDto
   ) {
     const response = await internalApiClient.patch(
       `/api/devices/${deviceId}/consumables/${consumableId}`,

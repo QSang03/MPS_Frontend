@@ -1,8 +1,7 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   ArrowLeft,
   Edit,
@@ -25,6 +24,7 @@ import {
   FileText,
 } from 'lucide-react'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
+import { formatPageCount } from '@/lib/utils/formatters'
 import { DEVICE_STATUS, STATUS_DISPLAY } from '@/constants/status'
 import { Button } from '@/components/ui/button'
 import A4EquivalentModal from '@/app/(dashboard)/system/devices/_components/A4EquivalentModal'
@@ -36,7 +36,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Checkbox } from '@/components/ui/checkbox'
 import { devicesClientService } from '@/lib/api/services/devices-client.service'
 import { customersClientService } from '@/lib/api/services/customers-client.service'
-import type { Device } from '@/types/models/device'
+import type { Device, UpdateDeviceDto } from '@/types/models/device'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -55,7 +55,6 @@ import { useRouter } from 'next/navigation'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { consumablesClientService } from '@/lib/api/services/consumables-client.service'
 import type { CreateConsumableDto } from '@/lib/api/services/consumables-client.service'
-import { deviceModelsClientService } from '@/lib/api/services/device-models-client.service'
 import { ActionGuard } from '@/components/shared/ActionGuard'
 import { cn } from '@/lib/utils'
 import { Separator } from '@/components/ui/separator'
@@ -63,6 +62,14 @@ import { removeEmpty } from '@/lib/utils/clean'
 import DeviceHeader from '@/components/device/DeviceHeader'
 import InfoCard from '@/components/ui/InfoCard'
 import type { MonthlyUsagePagesItem, MonthlyUsagePagesResponse } from '@/types/api'
+import type {
+  DeviceConsumable,
+  Consumable,
+  CompatibleConsumable,
+  UpdateDeviceConsumableDto,
+  CreateDeviceConsumableDto,
+} from '@/types/models/consumable'
+import type { ConsumableType } from '@/types/models/consumable-type'
 import internalApiClient from '@/lib/api/internal-client'
 
 interface DeviceDetailClientProps {
@@ -101,8 +108,8 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
     queryFn: () => customersClientService.getAll({ page: 1, limit: 100 }).then((r) => r.data),
   })
   const customers = customersData ?? []
-  const [installedConsumables, setInstalledConsumables] = useState<any[]>([])
-  const [compatibleConsumables, setCompatibleConsumables] = useState<any[]>([])
+  const [installedConsumables, setInstalledConsumables] = useState<DeviceConsumable[]>([])
+  const [compatibleConsumables, setCompatibleConsumables] = useState<CompatibleConsumable[]>([])
   const [selectedConsumableId, setSelectedConsumableId] = useState<string | null>(null)
   const [showConsumableHistoryModal, setShowConsumableHistoryModal] = useState(false)
   // derive selected consumable info for display in modal header
@@ -113,9 +120,9 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
   const [showCreateConsumable, setShowCreateConsumable] = useState(false)
   const [showAttachFromOrphaned, setShowAttachFromOrphaned] = useState(false)
   const [creatingConsumable, setCreatingConsumable] = useState(false)
-  const [selectedConsumableType, setSelectedConsumableType] = useState<any | null>(null)
+  const [selectedConsumableType, setSelectedConsumableType] = useState<ConsumableType | null>(null)
   const [serialNumber, setSerialNumber] = useState('')
-  const [orphanedList, setOrphanedList] = useState<any[]>([])
+  const [orphanedList, setOrphanedList] = useState<Consumable[]>([])
   const [selectedOrphanedId, setSelectedOrphanedId] = useState<string>('')
   const [orphanedSerial, setOrphanedSerial] = useState('')
   const [orphanedExpiry, setOrphanedExpiry] = useState('')
@@ -133,6 +140,18 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
   const [createExchangeRate, setCreateExchangeRate] = useState<number | ''>('')
   const [activeTab, setActiveTab] = useState('overview')
   const router = useRouter()
+
+  // Type guards to access optional fields on union types safely without using `any`.
+  const hasStatus = (x: unknown): x is { status?: string } =>
+    typeof x === 'object' && x !== null && 'status' in (x as Record<string, unknown>)
+  const hasExpiryDate = (x: unknown): x is { expiryDate?: string } =>
+    typeof x === 'object' && x !== null && 'expiryDate' in (x as Record<string, unknown>)
+  const hasPrice = (x: unknown): x is { price?: number } =>
+    typeof x === 'object' && x !== null && 'price' in (x as Record<string, unknown>)
+  const hasCustomer = (
+    x: unknown
+  ): x is { customer?: { name?: string; id?: string; code?: string } } =>
+    typeof x === 'object' && x !== null && 'customer' in (x as Record<string, unknown>)
 
   // Monthly usage pages state
   // Helper function to get default date range (last 12 months)
@@ -195,11 +214,7 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
   const monthlyUsageItems: MonthlyUsagePagesItem[] = monthlyUsageData?.data?.items || []
 
   // Safe number formatters for monthly usage table (handles undefined/null)
-  const fmtNumber = (v?: number | null) => (typeof v === 'number' ? v.toLocaleString('vi-VN') : '0')
-  const fmtNumberA4 = (v?: number | null) =>
-    typeof v === 'number'
-      ? v.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-      : '0,00'
+  // Use centralized helper for page counts to show N/A vs 0 and optional tooltip
 
   // Helper: clamp month range to at most 12 months
   const clampMonthRange = (
@@ -239,7 +254,7 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
 
   // Edit consumable state
   const [showEditConsumable, setShowEditConsumable] = useState(false)
-  const [editingConsumable, setEditingConsumable] = useState<any | null>(null)
+  const [editingConsumable, setEditingConsumable] = useState<DeviceConsumable | null>(null)
   const [editSerialNumber, setEditSerialNumber] = useState('')
   const [editBatchNumber, setEditBatchNumber] = useState('')
   const [editCapacity, setEditCapacity] = useState<number | ''>('')
@@ -331,39 +346,38 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
         setDevice(data ?? null)
 
         if (data) {
-          // data is expected to be Device, but narrow via unknown to avoid `any` casts
-          const d = data as unknown as Record<string, unknown>
-          setLocationEdit((d['location'] as string) || '')
-          setIpEdit((d['ipAddress'] as string) || '')
-          setMacEdit((d['macAddress'] as string) || '')
-          setFirmwareEdit((d['firmware'] as string) || '')
+          // data is expected to be Device; use typed Device fields directly
+          const d = data as Device
+          setLocationEdit(d.location || '')
+          setIpEdit(d.ipAddress || '')
+          setMacEdit(d.macAddress || '')
+          setFirmwareEdit(d.firmware || '')
           setIsActiveEdit(
-            typeof d['isActive'] === 'boolean'
-              ? Boolean(d['isActive'])
-              : Boolean((data as any).isActive)
+            typeof d.isActive === 'boolean' ? Boolean(d.isActive) : Boolean(d.isActive)
           )
           setStatusEdit(
-            (String(d['status'] || (data as any).status || '') as string) ||
-              ((data as any).isActive ? DEVICE_STATUS.ACTIVE : DEVICE_STATUS.DECOMMISSIONED)
+            String(d.status ?? (d.isActive ? DEVICE_STATUS.ACTIVE : DEVICE_STATUS.DECOMMISSIONED))
           )
-          setInactiveReasonOptionEdit((d['inactiveReason'] as string) ?? '')
-          setInactiveReasonTextEdit((d['inactiveReason'] as string) ?? '')
-          setCustomerIdEdit(
-            (d['customerId'] as string) || ((d['customer'] as any)?.id as string) || ''
-          )
-          setLocationAddressEdit((d['location'] as string) || '')
+          setInactiveReasonOptionEdit(String(d.inactiveReason ?? '') as string)
+          setInactiveReasonTextEdit(String(d.inactiveReason ?? '') as string)
+          setCustomerIdEdit(d.customerId ?? '')
+          setLocationAddressEdit(d.location || '')
         }
 
         try {
           setConsumablesLoading(true)
-          const [installed, compatible] = await Promise.all([
+          const [installed, compatibleRaw] = await Promise.all([
             devicesClientService.getConsumables(deviceId).catch(() => []),
-            deviceModelsClientService
-              .getCompatibleConsumables(modelId ?? data?.deviceModel?.id ?? '')
+            // Use raw endpoint to include stockItem and customerStockQuantity in response
+            internalApiClient
+              .get(
+                `/api/device-models/${modelId ?? data?.deviceModel?.id ?? ''}/compatible-consumables`
+              )
+              .then((r) => r.data?.data ?? [])
               .catch(() => []),
           ])
           setInstalledConsumables(Array.isArray(installed) ? installed : [])
-          setCompatibleConsumables(Array.isArray(compatible) ? compatible : [])
+          setCompatibleConsumables(Array.isArray(compatibleRaw) ? compatibleRaw : [])
         } catch (e) {
           console.debug('[DeviceDetailClient] consumables fetch error', e)
         } finally {
@@ -386,7 +400,10 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
   useEffect(() => {
     // Get current customer from device or from edit selection
     const currentCustomerId =
-      customerIdEdit || (device as any)?.customerId || (device as any)?.customer?.id
+      customerIdEdit ||
+      device?.customerId ||
+      (hasCustomer(device) ? device.customer?.id : undefined) ||
+      ''
 
     if (!currentCustomerId || !showEdit) {
       setCustomerAddresses([])
@@ -750,7 +767,12 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                     Tổng số trang đã in
                   </p>
                   <p className="text-3xl font-bold text-cyan-700">
-                    {device.totalPagesUsed?.toLocaleString('vi-VN') || '0'}
+                    {
+                      formatPageCount(
+                        device.totalPagesUsed,
+                        typeof device?.totalPagesUsed !== 'undefined'
+                      ).display
+                    }
                   </p>
                   <p className="text-muted-foreground mt-1 text-xs">trang</p>
                 </div>
@@ -926,22 +948,163 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                                 </td>
                                 <td className="px-4 py-3 text-sm">{item.partNumber || '-'}</td>
                                 <td className="px-4 py-3 text-right text-sm">
-                                  {fmtNumber(item.bwPages)}
+                                  {(() => {
+                                    const hasUsageData =
+                                      item &&
+                                      ((item.bwPages !== null && item.bwPages !== undefined) ||
+                                        (item.colorPages !== null &&
+                                          item.colorPages !== undefined) ||
+                                        (item.totalPages !== null && item.totalPages !== undefined))
+                                    const formatted = formatPageCount(item.bwPages, hasUsageData)
+                                    return formatted.tooltip ? (
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <span>{formatted.display}</span>
+                                        </TooltipTrigger>
+                                        <TooltipContent sideOffset={4}>
+                                          {formatted.tooltip}
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    ) : (
+                                      <span>{formatted.display}</span>
+                                    )
+                                  })()}
                                 </td>
                                 <td className="px-4 py-3 text-right text-sm">
-                                  {fmtNumber(item.colorPages)}
+                                  {(() => {
+                                    const hasUsageData =
+                                      item &&
+                                      ((item.bwPages !== null && item.bwPages !== undefined) ||
+                                        (item.colorPages !== null &&
+                                          item.colorPages !== undefined) ||
+                                        (item.totalPages !== null && item.totalPages !== undefined))
+                                    const formatted = formatPageCount(item.colorPages, hasUsageData)
+                                    return formatted.tooltip ? (
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <span>{formatted.display}</span>
+                                        </TooltipTrigger>
+                                        <TooltipContent sideOffset={4}>
+                                          {formatted.tooltip}
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    ) : (
+                                      <span>{formatted.display}</span>
+                                    )
+                                  })()}
                                 </td>
                                 <td className="px-4 py-3 text-right text-sm font-semibold">
-                                  {fmtNumber(item.totalPages)}
+                                  {(() => {
+                                    const hasUsageData =
+                                      item &&
+                                      ((item.bwPages !== null && item.bwPages !== undefined) ||
+                                        (item.colorPages !== null &&
+                                          item.colorPages !== undefined) ||
+                                        (item.totalPages !== null && item.totalPages !== undefined))
+                                    const formatted = formatPageCount(item.totalPages, hasUsageData)
+                                    return formatted.tooltip ? (
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <span>{formatted.display}</span>
+                                        </TooltipTrigger>
+                                        <TooltipContent sideOffset={4}>
+                                          {formatted.tooltip}
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    ) : (
+                                      <span>{formatted.display}</span>
+                                    )
+                                  })()}
                                 </td>
                                 <td className="px-4 py-3 text-right text-sm text-blue-600">
-                                  {fmtNumberA4(item.bwPagesA4)}
+                                  {(() => {
+                                    const hasUsageData =
+                                      item &&
+                                      ((item.bwPagesA4 !== null && item.bwPagesA4 !== undefined) ||
+                                        (item.colorPagesA4 !== null &&
+                                          item.colorPagesA4 !== undefined) ||
+                                        (item.totalPagesA4 !== null &&
+                                          item.totalPagesA4 !== undefined) ||
+                                        (item.bwPages !== null && item.bwPages !== undefined) ||
+                                        (item.colorPages !== null &&
+                                          item.colorPages !== undefined) ||
+                                        (item.totalPages !== null && item.totalPages !== undefined))
+                                    const formatted = formatPageCount(item.bwPagesA4, hasUsageData)
+                                    return formatted.tooltip ? (
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <span>{formatted.display}</span>
+                                        </TooltipTrigger>
+                                        <TooltipContent sideOffset={4}>
+                                          {formatted.tooltip}
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    ) : (
+                                      <span>{formatted.display}</span>
+                                    )
+                                  })()}
                                 </td>
                                 <td className="px-4 py-3 text-right text-sm text-blue-600">
-                                  {fmtNumberA4(item.colorPagesA4)}
+                                  {(() => {
+                                    const hasUsageData =
+                                      item &&
+                                      ((item.bwPagesA4 !== null && item.bwPagesA4 !== undefined) ||
+                                        (item.colorPagesA4 !== null &&
+                                          item.colorPagesA4 !== undefined) ||
+                                        (item.totalPagesA4 !== null &&
+                                          item.totalPagesA4 !== undefined) ||
+                                        (item.bwPages !== null && item.bwPages !== undefined) ||
+                                        (item.colorPages !== null &&
+                                          item.colorPages !== undefined) ||
+                                        (item.totalPages !== null && item.totalPages !== undefined))
+                                    const formatted = formatPageCount(
+                                      item.colorPagesA4,
+                                      hasUsageData
+                                    )
+                                    return formatted.tooltip ? (
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <span>{formatted.display}</span>
+                                        </TooltipTrigger>
+                                        <TooltipContent sideOffset={4}>
+                                          {formatted.tooltip}
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    ) : (
+                                      <span>{formatted.display}</span>
+                                    )
+                                  })()}
                                 </td>
                                 <td className="px-4 py-3 text-right text-sm font-semibold text-blue-600">
-                                  {fmtNumberA4(item.totalPagesA4)}
+                                  {(() => {
+                                    const hasUsageData =
+                                      item &&
+                                      ((item.bwPagesA4 !== null && item.bwPagesA4 !== undefined) ||
+                                        (item.colorPagesA4 !== null &&
+                                          item.colorPagesA4 !== undefined) ||
+                                        (item.totalPagesA4 !== null &&
+                                          item.totalPagesA4 !== undefined) ||
+                                        (item.bwPages !== null && item.bwPages !== undefined) ||
+                                        (item.colorPages !== null &&
+                                          item.colorPages !== undefined) ||
+                                        (item.totalPages !== null && item.totalPages !== undefined))
+                                    const formatted = formatPageCount(
+                                      item.totalPagesA4,
+                                      hasUsageData
+                                    )
+                                    return formatted.tooltip ? (
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <span>{formatted.display}</span>
+                                        </TooltipTrigger>
+                                        <TooltipContent sideOffset={4}>
+                                          {formatted.tooltip}
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    ) : (
+                                      <span>{formatted.display}</span>
+                                    )
+                                  })()}
                                 </td>
                               </tr>
                             )
@@ -987,11 +1150,14 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                             customerId: cid,
                             isOrphaned: true,
                           })
-                          const items = Array.isArray((list as any)?.items)
-                            ? (list as any).items
-                            : Array.isArray(list)
-                              ? (list as any)
-                              : []
+                          let items: Consumable[] = []
+                          const rawList = list as unknown
+                          if (Array.isArray(rawList)) {
+                            items = rawList as Consumable[]
+                          } else if (typeof rawList === 'object' && rawList !== null) {
+                            const maybeItems = (rawList as Record<string, unknown>)['items']
+                            if (Array.isArray(maybeItems)) items = maybeItems as Consumable[]
+                          }
                           setOrphanedList(items)
                         } catch (e) {
                           console.error('Load orphaned consumables failed', e)
@@ -1032,16 +1198,16 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                       </tr>
                     </thead>
                     <tbody className="divide-y">
-                      {installedConsumables.map((c: any, idx: number) => {
-                        const cons = c?.consumable ?? c
+                      {installedConsumables.map((c: DeviceConsumable, idx: number) => {
+                        const cons = (c.consumable ?? c) as Consumable | DeviceConsumable
                         const usagePercent =
-                          cons?.capacity && cons?.remaining
-                            ? Math.round((cons.remaining / cons.capacity) * 100)
+                          typeof cons?.capacity === 'number' && typeof cons?.remaining === 'number'
+                            ? Math.round((cons.remaining! / cons.capacity!) * 100)
                             : null
 
                         return (
                           <tr
-                            key={c.id ?? cons?.id ?? idx}
+                            key={(c.id ?? cons?.id ?? idx) as string | number}
                             className="hover:bg-muted/30 transition-colors"
                           >
                             <td className="px-4 py-3 text-sm">{idx + 1}</td>
@@ -1058,8 +1224,9 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                             <td className="px-4 py-3">
                               <div className="space-y-1">
                                 {(() => {
-                                  const statusText =
-                                    cons?.status ?? (c.isActive ? 'ACTIVE' : 'EMPTY')
+                                  const statusText = hasStatus(cons)
+                                    ? (cons.status ?? 'EMPTY')
+                                    : 'EMPTY'
                                   const statusClass =
                                     statusText === 'ACTIVE'
                                       ? 'bg-green-500 hover:bg-green-600'
@@ -1112,12 +1279,14 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                               </div>
                             </td>
                             <td className="px-4 py-3 text-left text-sm">
-                              {(c as any)?.exchangeRate ? String((c as any).exchangeRate) : '-'}
+                              {c.exchangeRate != null ? String(c.exchangeRate) : '-'}
                             </td>
                             <td className="text-muted-foreground px-4 py-3 text-right text-sm">
-                              {c?.installedAt
+                              {typeof c?.installedAt === 'string' && c.installedAt
                                 ? new Date(c.installedAt).toLocaleString('vi-VN')
-                                : cons?.expiryDate
+                                : hasExpiryDate(cons) &&
+                                    typeof cons.expiryDate === 'string' &&
+                                    cons.expiryDate
                                   ? new Date(cons.expiryDate).toLocaleDateString('vi-VN')
                                   : '—'}
                             </td>
@@ -1147,18 +1316,23 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                                     variant="outline"
                                     onClick={() => {
                                       const consumableData = cons ?? c
-                                      setEditingConsumable(consumableData)
+                                      setEditingConsumable(consumableData as DeviceConsumable)
                                       setEditSerialNumber(consumableData?.serialNumber ?? '')
                                       setEditBatchNumber(consumableData?.batchNumber ?? '')
                                       setEditCapacity(consumableData?.capacity ?? '')
                                       setEditRemaining(consumableData?.remaining ?? '')
-                                      const expiryDateValue = consumableData?.expiryDate
-                                        ? new Date(consumableData.expiryDate)
-                                            .toISOString()
-                                            .split('T')[0]
-                                        : ''
+                                      const expiryDateValue =
+                                        hasExpiryDate(consumableData) && consumableData.expiryDate
+                                          ? new Date(consumableData.expiryDate)
+                                              .toISOString()
+                                              .split('T')[0]
+                                          : ''
                                       setEditExpiryDate(expiryDateValue ?? '')
-                                      setEditConsumableStatus(consumableData?.status ?? 'ACTIVE')
+                                      setEditConsumableStatus(
+                                        hasStatus(consumableData)
+                                          ? (consumableData.status ?? 'ACTIVE')
+                                          : 'ACTIVE'
+                                      )
                                       // device-level fields
                                       setEditInstalledAt(c?.installedAt ?? null)
                                       setEditRemovedAt(c?.removedAt ?? null)
@@ -1183,11 +1357,8 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                                       setEditShowRemovedAt(false)
 
                                       // Set price fields: if exchangeRate exists, show VND mode
-                                      const existingPrice = c?.price
-                                      const existingExchangeRate = Number(
-                                        (c as unknown as Record<string, unknown>)['exchangeRate'] ??
-                                          ''
-                                      )
+                                      const existingPrice = hasPrice(c) ? c.price : undefined
+                                      const existingExchangeRate = Number(c.exchangeRate ?? '')
 
                                       if (existingExchangeRate && existingPrice) {
                                         // VND mode: calculate VND from price * exchangeRate
@@ -1257,64 +1428,100 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                       <tr>
                         <th className="px-4 py-3 text-left text-sm font-semibold">#</th>
                         <th className="px-4 py-3 text-left text-sm font-semibold">Tên</th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold">Part</th>
                         <th className="px-4 py-3 text-left text-sm font-semibold">Mô tả</th>
                         <th className="px-4 py-3 text-left text-sm font-semibold">Đơn vị</th>
+                        <th className="px-4 py-3 text-right text-sm font-semibold">
+                          Kho khách hàng
+                        </th>
+                        <th className="px-4 py-3 text-right text-sm font-semibold">Kho hệ thống</th>
                         <th className="px-4 py-3 text-right text-sm font-semibold">Thao tác</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y">
-                      {compatibleConsumables.map((ct: any, idx: number) => (
-                        <tr key={ct.id} className="hover:bg-muted/30 transition-colors">
-                          <td className="px-4 py-3 text-sm">{idx + 1}</td>
-                          <td className="px-4 py-3 font-medium">{ct.name || '—'}</td>
-                          <td className="text-muted-foreground px-4 py-3 text-sm">
-                            {ct.description || '-'}
-                          </td>
-                          <td className="px-4 py-3">
-                            <Badge variant="outline">{ct.unit || '-'}</Badge>
-                          </td>
-                          <td className="px-4 py-3 text-right">
-                            {Boolean(device?.isActive) ? (
-                              <ActionGuard pageId="devices" actionId="create-consumable">
-                                <Button
-                                  size="sm"
-                                  onClick={() => {
-                                    setSelectedConsumableType(ct)
-                                    setSerialNumber('')
-                                    setBatchNumber('')
-                                    setCapacity('')
-                                    setRemaining('')
-                                    setCreateInstalledAt(null)
-                                    setCreateActualPagesPrinted('')
-                                    setCreatePriceVND('')
-                                    setCreatePriceUSD('')
-                                    setCreateExchangeRate('')
-                                    setShowCreateConsumable(true)
-                                  }}
-                                  className="gap-2"
-                                >
-                                  <Plus className="h-4 w-4" />
-                                  Thêm
-                                </Button>
-                              </ActionGuard>
-                            ) : (
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <div>
-                                    <Button size="sm" disabled className="gap-2">
-                                      <Plus className="h-4 w-4" />
-                                      Thêm
-                                    </Button>
-                                  </div>
-                                </TooltipTrigger>
-                                <TooltipContent sideOffset={4}>
-                                  {`Thiết bị không hoạt động. Lý do: ${(device as any)?.inactiveReason ?? 'Không rõ'}`}
-                                </TooltipContent>
-                              </Tooltip>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
+                      {compatibleConsumables.map((ct: CompatibleConsumable, idx: number) => {
+                        // ct can be either the raw wrapper { consumableType, stockItem, customerStockQuantity }
+                        // or a plain ConsumableType. Normalize to support both.
+                        const type =
+                          'consumableType' in ct && ct.consumableType
+                            ? ct.consumableType
+                            : (ct as ConsumableType)
+                        const partNumber = type?.partNumber ?? '-'
+                        const unit = type?.unit ?? '-'
+                        const description = type?.description ?? '-'
+                        const customerQty =
+                          'customerStockQuantity' in ct ? ct.customerStockQuantity : undefined
+                        const systemQty =
+                          'stockItem' in ct && ct.stockItem ? ct.stockItem.quantity : undefined
+
+                        return (
+                          <tr key={type?.id ?? idx} className="hover:bg-muted/30 transition-colors">
+                            <td className="px-4 py-3 text-sm">{idx + 1}</td>
+                            <td className="px-4 py-3 font-medium">{type?.name || '—'}</td>
+                            <td className="px-4 py-3">
+                              <code className="rounded bg-gray-100 px-2 py-1 text-sm">
+                                {partNumber}
+                              </code>
+                            </td>
+                            <td className="text-muted-foreground px-4 py-3 text-sm">
+                              {description}
+                            </td>
+                            <td className="px-4 py-3">
+                              <Badge variant="outline">{unit}</Badge>
+                            </td>
+                            <td className="px-4 py-3 text-right text-sm">
+                              {customerQty !== null && customerQty !== undefined
+                                ? String(customerQty)
+                                : '—'}
+                            </td>
+                            <td className="px-4 py-3 text-right text-sm">
+                              {systemQty !== null && systemQty !== undefined
+                                ? String(systemQty)
+                                : '—'}
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              {Boolean(device?.isActive) ? (
+                                <ActionGuard pageId="devices" actionId="create-consumable">
+                                  <Button
+                                    size="sm"
+                                    onClick={() => {
+                                      setSelectedConsumableType(type)
+                                      setSerialNumber('')
+                                      setBatchNumber('')
+                                      setCapacity('')
+                                      setRemaining('')
+                                      setCreateInstalledAt(null)
+                                      setCreateActualPagesPrinted('')
+                                      setCreatePriceVND('')
+                                      setCreatePriceUSD('')
+                                      setCreateExchangeRate('')
+                                      setShowCreateConsumable(true)
+                                    }}
+                                    className="gap-2"
+                                  >
+                                    <Plus className="h-4 w-4" />
+                                    Thêm
+                                  </Button>
+                                </ActionGuard>
+                              ) : (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <div>
+                                      <Button size="sm" disabled className="gap-2">
+                                        <Plus className="h-4 w-4" />
+                                        Thêm
+                                      </Button>
+                                    </div>
+                                  </TooltipTrigger>
+                                  <TooltipContent sideOffset={4}>
+                                    {`Thiết bị không hoạt động. Lý do: ${device?.inactiveReason ?? 'Không rõ'}`}
+                                  </TooltipContent>
+                                </Tooltip>
+                              )}
+                            </td>
+                          </tr>
+                        )
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -1421,7 +1628,7 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                       isActiveEdit === null ? Boolean(device?.isActive) : !!isActiveEdit
                     const finalStatus = String(
                       statusEdit ||
-                        (device as any)?.status ||
+                        (device?.status ?? '') ||
                         (finalIsActive ? DEVICE_STATUS.ACTIVE : DEVICE_STATUS.DECOMMISSIONED)
                     ).toUpperCase()
 
@@ -1452,7 +1659,7 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                       return
                     }
 
-                    let dto: Record<string, unknown> = {
+                    let dto: UpdateDeviceDto = {
                       location: locationAddressEdit || undefined,
                       ipAddress: ipEdit || undefined,
                       macAddress: macEdit || undefined,
@@ -1526,7 +1733,7 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
             </div>
 
             {/* Customer editing - Only show when customer is System */}
-            {(device as any)?.customer?.name === 'System' && (
+            {hasCustomer(device) && device.customer?.name === 'System' && (
               <div className="mt-4">
                 <Label className="text-base font-semibold">Khách hàng</Label>
                 <Select value={customerIdEdit} onValueChange={(v) => setCustomerIdEdit(v)}>
@@ -1563,7 +1770,10 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
             {(() => {
               // Get current customer from device or from edit selection
               const currentCustomerId =
-                customerIdEdit || (device as any)?.customerId || (device as any)?.customer?.id
+                customerIdEdit ||
+                device?.customerId ||
+                (hasCustomer(device) ? device.customer?.id : undefined) ||
+                ''
               const selectedCustomer = customers.find((c) => c.id === currentCustomerId)
               const isSystemWarehouse = selectedCustomer?.code === 'SYS'
               // Show address field if device has a customer (not System) and addresses are available
@@ -1626,7 +1836,7 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                 <div>
                   <Switch
                     checked={isActiveEdit === null ? Boolean(device?.isActive) : !!isActiveEdit}
-                    onCheckedChange={(v: any) => {
+                    onCheckedChange={(v: boolean) => {
                       const isActiveNew = !!v
                       // adjust status default when toggling
                       let newStatus = statusEdit
@@ -1761,7 +1971,7 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                     }
 
                     // Prepare install payload per API: installedAt, actualPagesPrinted, price, exchangeRate
-                    let installPayload: Record<string, unknown> = {}
+                    let installPayload: Partial<UpdateDeviceConsumableDto> = {}
                     if (createInstalledAt) installPayload.installedAt = createInstalledAt
                     if (typeof createActualPagesPrinted === 'number')
                       installPayload.actualPagesPrinted = createActualPagesPrinted
@@ -1812,14 +2022,17 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                     setShowCreateConsumable(false)
 
                     setConsumablesLoading(true)
-                    const [installed, compatible] = await Promise.all([
+                    const [installed, compatibleRaw] = await Promise.all([
                       devicesClientService.getConsumables(deviceId).catch(() => []),
-                      deviceModelsClientService
-                        .getCompatibleConsumables(modelId ?? device.deviceModel?.id ?? '')
+                      internalApiClient
+                        .get(
+                          `/api/device-models/${modelId ?? device.deviceModel?.id ?? ''}/compatible-consumables`
+                        )
+                        .then((r) => r.data?.data ?? [])
                         .catch(() => []),
                     ])
                     setInstalledConsumables(Array.isArray(installed) ? installed : [])
-                    setCompatibleConsumables(Array.isArray(compatible) ? compatible : [])
+                    setCompatibleConsumables(Array.isArray(compatibleRaw) ? compatibleRaw : [])
                   } catch (err) {
                     console.error('Create/install consumable failed', err)
                     toast.error('Không thể tạo hoặc lắp vật tư')
@@ -2008,7 +2221,7 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                       return
                     }
                     // Update serial/expiry then install
-                    const dto: Record<string, unknown> = {}
+                    const dto: Partial<CreateConsumableDto> = {}
                     if (orphanedSerial) dto.serialNumber = orphanedSerial
                     if (orphanedExpiry) dto.expiryDate = new Date(orphanedExpiry).toISOString()
                     await consumablesClientService.update(selectedOrphanedId, dto)
@@ -2049,7 +2262,7 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                 value={selectedOrphanedId}
                 onValueChange={(v) => {
                   setSelectedOrphanedId(v)
-                  const found = orphanedList.find((x: any) => String(x.id) === String(v))
+                  const found = orphanedList.find((x: Consumable) => String(x.id) === String(v))
                   setOrphanedSerial(found?.serialNumber ?? '')
                   setOrphanedExpiry(
                     String(
@@ -2077,10 +2290,10 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                       Không có vật tư trống
                     </SelectItem>
                   )}
-                  {orphanedList.map((c: any) => (
+                  {orphanedList.map((c: Consumable) => (
                     <SelectItem key={c.id} value={String(c.id)}>
                       {(c?.consumableType?.name || 'Vật tư') +
-                        (c?.serialNumber ? ` - ${c.serialNumber}` : '')}
+                        (c?.serialNumber ? ` - ${c?.serialNumber}` : '')}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -2203,7 +2416,7 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                       return
                     }
                     setUpdatingConsumable(true)
-                    let dto: any = {}
+                    let dto: Partial<CreateDeviceConsumableDto> = {}
                     if (editingConsumable.consumableType?.id) {
                       dto.consumableTypeId = editingConsumable.consumableType.id
                     }
@@ -2221,7 +2434,7 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
 
                     // Second: update device-consumable record (installedAt, removedAt, actualPagesPrinted, price, exchangeRate)
                     try {
-                      let deviceDto: Record<string, unknown> = {}
+                      let deviceDto: Partial<UpdateDeviceConsumableDto> = {}
                       if (editInstalledAt) deviceDto.installedAt = editInstalledAt
                       if (editRemovedAt) deviceDto.removedAt = editRemovedAt
                       if (typeof editActualPagesPrinted === 'number')
@@ -2239,7 +2452,6 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                             const priceErr = checkPricePrecision(formatted)
                             if (priceErr) {
                               setEditPriceError(priceErr)
-                              // clear any pages error so UI focuses on price error
                               setEditActualPagesPrintedError(null)
                               setUpdatingConsumable(false)
                               return
@@ -2414,7 +2626,6 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                       setEditActualPagesPrintedError(
                         `Số trang không được lớn hơn ${MAX_ACTUAL_PAGES.toLocaleString('en-US')}`
                       )
-                      // clear any edit price error so user sees pages error
                       setEditPriceError(null)
                     } else {
                       setEditActualPagesPrintedError(null)
@@ -2529,7 +2740,7 @@ export function ConsumableUsageHistory({
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
 
-  const load = async () => {
+  const load = useCallback(async () => {
     if (!deviceId) return
     setLoading(true)
     try {
@@ -2568,7 +2779,7 @@ export function ConsumableUsageHistory({
     } finally {
       setLoading(false)
     }
-  }
+  }, [deviceId, page, limit, search, startDate, endDate, consumableId])
 
   // helper: format numbers and IDs
   const fmt = (v: unknown) => (typeof v === 'number' ? v.toLocaleString('vi-VN') : String(v ?? '-'))
@@ -2577,8 +2788,7 @@ export function ConsumableUsageHistory({
   // load on page/limit changes; searches are triggered via button or Enter
   useEffect(() => {
     load()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [deviceId, page, limit, consumableId])
+  }, [load])
 
   const handleSearch = () => {
     setPage(1)
@@ -2670,7 +2880,7 @@ export function ConsumableUsageHistory({
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {items.map((r: any) => (
+                {items.map((r: HistoryRecord) => (
                   <tr key={r.id} className="hover:bg-muted/30 transition-colors">
                     <td className="text-muted-foreground px-4 py-3 font-mono text-sm" title={r.id}>
                       {shortId(r.id)}

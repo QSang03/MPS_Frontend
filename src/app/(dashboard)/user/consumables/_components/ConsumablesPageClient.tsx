@@ -37,6 +37,7 @@ import {
 import { consumablesClientService } from '@/lib/api/services/consumables-client.service'
 import ConsumableDetailModal from '@/components/consumable/ConsumableDetailModal'
 import { ActionGuard } from '@/components/shared/ActionGuard'
+import { useActionPermission } from '@/lib/hooks/useActionPermission'
 import BulkAssignModal from '@/app/(dashboard)/system/consumables/_components/BulkAssignModal'
 import { PageHeader } from '@/components/ui/PageHeader'
 import {
@@ -186,6 +187,8 @@ export default function ConsumablesPageClient() {
     active: consumables.filter((c) => String(c.status) === 'ACTIVE').length,
     inactive: consumables.filter((c) => String(c.status) !== 'ACTIVE').length,
   }
+
+  const { can } = useActionPermission('consumables')
 
   const handleRefresh = () => {
     void loadConsumables(page)
@@ -608,7 +611,7 @@ export default function ConsumablesPageClient() {
                           : 'Thêm vật tư mới để bắt đầu quản lý'
                       }
                       action={
-                        !(searchTerm || statusFilter !== 'ALL')
+                        !(searchTerm || statusFilter !== 'ALL') && can('create')
                           ? {
                               label: 'Tạo Vật Tư Mới',
                               onClick: () =>
@@ -780,41 +783,50 @@ export default function ConsumablesPageClient() {
 
         {/* Pagination */}
         {filteredConsumables.length > 0 && (
-          <div className="mt-4 flex items-center justify-between border-t border-gray-200 pt-4">
-            <div className={CONSUMABLE_STYLES.typography.helperText}>
-              Hiển thị {filteredConsumables.length} / {total} vật tư
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page <= 1 || loading}
-                className={CONSUMABLE_STYLES.button.borderRadius}
-              >
-                <ChevronLeft className="mr-1 h-4 w-4" />
-                Trước
-              </Button>
-
-              <div className="flex items-center gap-1 text-sm">
-                <span className="font-medium">{page}</span>
-                <span className="text-gray-500">/</span>
-                <span>{totalPages}</span>
+          <>
+            <div className="mt-4 flex items-center justify-between border-t border-gray-200 pt-4">
+              <div className={CONSUMABLE_STYLES.typography.helperText}>
+                Hiển thị {filteredConsumables.length} / {total} vật tư
               </div>
 
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page >= totalPages || loading}
-                className={CONSUMABLE_STYLES.button.borderRadius}
-              >
-                Sau
-                <ChevronRight className="ml-1 h-4 w-4" />
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page <= 1 || loading}
+                  className={CONSUMABLE_STYLES.button.borderRadius}
+                >
+                  <ChevronLeft className="mr-1 h-4 w-4" />
+                  Trước
+                </Button>
+
+                <div className="flex items-center gap-1 text-sm">
+                  <span className="font-medium">{page}</span>
+                  <span className="text-gray-500">/</span>
+                  <span>{totalPages}</span>
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page >= totalPages || loading}
+                  className={CONSUMABLE_STYLES.button.borderRadius}
+                >
+                  Sau
+                  <ChevronRight className="ml-1 h-4 w-4" />
+                </Button>
+              </div>
             </div>
-          </div>
+
+            {/* Hidden create trigger for empty-state to open the same BulkAssignModal */}
+            {can('create') && (
+              <div style={{ display: 'none' }}>
+                <BulkAssignModal trigger={<button id="create-consumable-trigger" />} />
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

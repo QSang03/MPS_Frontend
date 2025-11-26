@@ -205,8 +205,7 @@ export function ServiceRequestFormModal({
     if (mode === 'SERVICE') {
       const rest = data as unknown as AnyRecord
       const merged = { ...rest, customerId } as AnyRecord
-      // Do not send deviceId to the service request create API
-      if ('deviceId' in merged) delete merged.deviceId
+      // Keep deviceId when provided by the user; strip status only
       if ('status' in merged) delete merged['status']
       const payload = removeEmpty(merged) as ServiceRequestFormData
       // If there are images selected, send multipart/form-data

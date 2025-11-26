@@ -86,6 +86,11 @@ export const serviceRequestsClientService = {
     return response.data?.data ?? null
   },
 
+  async assign(id: string, payload: { assignedTo: string; actionNote?: string }) {
+    const response = await internalApiClient.patch(`/api/service-requests/${id}/assign`, payload)
+    return response.data?.data ?? null
+  },
+
   async delete(id: string): Promise<boolean> {
     const response = await internalApiClient.delete(`/api/service-requests/${id}`)
     return response.status === 200 || response.data?.success === true

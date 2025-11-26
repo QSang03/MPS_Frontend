@@ -132,7 +132,8 @@ export function ServiceRequestForm({ customerId, onSuccess }: ServiceRequestForm
                       <SelectContent>
                         {devicesData?.data?.map((device) => (
                           <SelectItem key={device.id} value={device.id}>
-                            {device.serialNumber} - {device.model} ({device.location})
+                            {device.serialNumber} - {device.deviceModel?.name ?? device.model} (
+                            {device.location})
                           </SelectItem>
                         ))}
                       </SelectContent>

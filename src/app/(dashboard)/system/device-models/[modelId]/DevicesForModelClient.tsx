@@ -39,6 +39,7 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
   const [devices, setDevices] = useState<Device[]>([])
   const [modelName, setModelName] = useState('')
   const [modelId, setModelId] = useState('')
+  const [modelUseA4, setModelUseA4] = useState<boolean | undefined>(undefined)
   const [notFound, setNotFound] = useState(false)
   const [showCreate, setShowCreate] = useState(false)
   const [creating, setCreating] = useState(false)
@@ -63,6 +64,7 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
 
         setModelName(model.name || '')
         setModelId(model.id)
+        setModelUseA4(model.useA4Counter)
 
         const devResp = await devicesClientService.getAll({
           page: 1,
@@ -167,6 +169,12 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
           <div className="rounded-lg border border-white/20 bg-white/10 p-3 backdrop-blur-sm">
             <p className="text-sm text-white/80">Hoạt động</p>
             <p className="mt-1 text-2xl font-bold">{devices.filter((d) => d.isActive).length}</p>
+          </div>
+          <div className="rounded-lg border border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-3">
+            <p className="text-sm text-white/80">Loại Counter</p>
+            <p className="mt-1 text-lg font-bold text-white/90">
+              {modelUseA4 === undefined ? 'N/A' : modelUseA4 ? 'A4 Counter' : 'Standard Counter'}
+            </p>
           </div>
           <div className="rounded-lg border border-white/20 bg-white/10 p-3 backdrop-blur-sm">
             <p className="text-sm text-white/80">Tạm dừng</p>

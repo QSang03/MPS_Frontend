@@ -47,6 +47,7 @@ import {
   Trash2,
   Loader2,
   Settings,
+  FileText,
 } from 'lucide-react'
 
 interface DeviceModelStats {
@@ -63,6 +64,7 @@ export default function DeviceModelList() {
   const [manufacturerFilter, setManufacturerFilter] = useState<string>('all')
   const [typeFilter, setTypeFilter] = useState<string>('all')
   const [isActiveFilter, setIsActiveFilter] = useState<string>('all') // 'all', 'true', 'false'
+  const [useA4Filter, setUseA4Filter] = useState<string>('all') // 'all', 'true', 'false'
   const [sorting, setSorting] = useState<{ sortBy?: string; sortOrder?: 'asc' | 'desc' }>({
     sortBy: 'createdAt',
     sortOrder: 'desc',
@@ -107,6 +109,13 @@ export default function DeviceModelList() {
         onRemove: () => setIsActiveFilter('all'),
       })
     }
+    if (useA4Filter && useA4Filter !== 'all') {
+      filters.push({
+        label: `Loại counter: ${useA4Filter === 'true' ? 'A4 Counter' : 'Standard Counter'}`,
+        value: useA4Filter,
+        onRemove: () => setUseA4Filter('all'),
+      })
+    }
     if (sorting.sortBy !== 'createdAt' || sorting.sortOrder !== 'desc') {
       filters.push({
         label: `Sắp xếp: ${sorting.sortBy} (${sorting.sortOrder === 'asc' ? 'Tăng dần' : 'Giảm dần'})`,
@@ -115,13 +124,14 @@ export default function DeviceModelList() {
       })
     }
     return filters
-  }, [searchInput, manufacturerFilter, typeFilter, isActiveFilter, sorting])
+  }, [searchInput, manufacturerFilter, typeFilter, isActiveFilter, useA4Filter, sorting])
 
   const handleResetFilters = () => {
     setSearchInput('')
     setManufacturerFilter('all')
     setTypeFilter('all')
     setIsActiveFilter('all')
+    setUseA4Filter('all')
     setSorting({ sortBy: 'createdAt', sortOrder: 'desc' })
   }
 
@@ -236,6 +246,20 @@ export default function DeviceModelList() {
               </SelectContent>
             </Select>
           </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-medium">Loại counter</label>
+            <Select value={useA4Filter} onValueChange={(value) => setUseA4Filter(value)}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả</SelectItem>
+                <SelectItem value="true">A4 Counter</SelectItem>
+                <SelectItem value="false">Standard Counter</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </FilterSection>
 
@@ -246,6 +270,7 @@ export default function DeviceModelList() {
           manufacturer={manufacturerFilter}
           type={typeFilter}
           isActive={isActiveFilter}
+          useA4Filter={useA4Filter}
           sorting={sorting}
           onSortingChange={setSorting}
           onStatsChange={setStats}
@@ -262,6 +287,7 @@ interface DeviceModelsTableContentProps {
   manufacturer: string
   type: string
   isActive: string
+  useA4Filter: string
   sorting: { sortBy?: string; sortOrder?: 'asc' | 'desc' }
   onSortingChange: (sorting: { sortBy?: string; sortOrder?: 'asc' | 'desc' }) => void
   onStatsChange: (stats: DeviceModelStats) => void
@@ -274,6 +300,7 @@ function DeviceModelsTableContent({
   manufacturer,
   type,
   isActive,
+  useA4Filter,
   sorting,
   onSortingChange,
   onStatsChange,
@@ -299,10 +326,12 @@ function DeviceModelsTableContent({
       manufacturer: manufacturer && manufacturer !== 'all' ? manufacturer : undefined,
       type: type && type !== 'all' ? type : undefined,
       isActive: isActive && isActive !== 'all' ? (isActive === 'true' ? true : false) : undefined,
+      useA4Counter:
+        useA4Filter && useA4Filter !== 'all' ? (useA4Filter === 'true' ? true : false) : undefined,
       sortBy: sorting.sortBy || 'createdAt',
       sortOrder: sorting.sortOrder || 'desc',
     }),
-    [search, manufacturer, type, isActive, sorting]
+    [search, manufacturer, type, isActive, sorting, useA4Filter]
   )
 
   const { data } = useDeviceModelsQuery(queryParams)
@@ -472,6 +501,32 @@ function DeviceModelsTableContent({
         ),
         enableSorting: true,
         cell: ({ row }) => <span className="text-sm">{row.original.manufacturer || '-'}</span>,
+      },
+      {
+        accessorKey: 'useA4Counter',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <FileText className="h-4 w-4 text-gray-600" />
+            Counter
+          </div>
+        ),
+        enableSorting: true,
+        cell: ({ row }) => {
+          const m = row.original
+          return (
+            <Badge
+              variant={m.useA4Counter ? 'default' : 'secondary'}
+              className={cn(
+                'flex w-fit items-center gap-1 px-2 py-0.5 text-xs',
+                m.useA4Counter
+                  ? 'bg-blue-500 text-white hover:bg-blue-600'
+                  : 'bg-gray-400 text-white hover:bg-gray-500'
+              )}
+            >
+              {m.useA4Counter ? 'A4' : 'Standard'}
+            </Badge>
+          )
+        },
       },
       {
         accessorKey: 'isActive',

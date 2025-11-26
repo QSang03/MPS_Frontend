@@ -1,5 +1,10 @@
 import internalApiClient, { getWithDedupe } from '../internal-client'
-import type { PurchaseRequest, UpdatePurchaseRequestDto } from '@/types/models'
+import type {
+  PurchaseRequest,
+  UpdatePurchaseRequestDto,
+  CreatePurchaseRequestMessageDto,
+  PurchaseRequestMessage,
+} from '@/types/models'
 import type { ApiListResponse, ListPagination } from '@/types/api'
 import { PurchaseRequestStatus } from '@/constants/status'
 
@@ -96,5 +101,32 @@ export const purchaseRequestsClientService = {
       `/api/purchase-requests/${requestId}/items/${itemId}`
     )
     return response.status === 200 || response.data?.success === true
+  },
+
+  async createMessage(
+    id: string,
+    payload: CreatePurchaseRequestMessageDto | { content?: string }
+  ): Promise<PurchaseRequestMessage | null> {
+    // Payload normalization - backend expects field 'message'
+    const body: { message?: string } =
+      'message' in payload && payload.message !== undefined
+        ? { message: payload.message }
+        : 'content' in payload && payload.content !== undefined
+          ? { message: payload.content }
+          : {}
+
+    const response = await internalApiClient.post(`/api/purchase-requests/${id}/messages`, body)
+    return response.data?.data ?? null
+  },
+
+  async getMessages(id: string): Promise<{
+    data: PurchaseRequestMessage[]
+    pagination?: ListPagination
+  }> {
+    const response = await internalApiClient.get<ApiListResponse<PurchaseRequestMessage>>(
+      `/api/purchase-requests/${id}/messages`
+    )
+    const { data, pagination } = response.data || { data: [], pagination: undefined }
+    return { data: Array.isArray(data) ? data : [], pagination }
   },
 }

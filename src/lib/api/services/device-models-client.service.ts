@@ -17,6 +17,7 @@ export const deviceModelsClientService = {
     type?: 'PRINTER' | 'SCANNER' | 'COPIER' | 'FAX' | 'MULTIFUNCTION' | string
     sortBy?: string
     sortOrder?: 'asc' | 'desc'
+    useA4Counter?: boolean
   }): Promise<{
     data: DeviceModel[]
     pagination?: ListPagination
@@ -38,6 +39,8 @@ export const deviceModelsClientService = {
           type: params?.type,
           sortBy: params?.sortBy,
           sortOrder: params?.sortOrder,
+          useA4Counter:
+            typeof params?.useA4Counter === 'boolean' ? params?.useA4Counter : undefined,
         },
       }
     )

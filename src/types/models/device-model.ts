@@ -9,6 +9,7 @@ export interface DeviceModel {
   type?: string
   description?: string
   isActive?: boolean
+  useA4Counter?: boolean
   deviceCount?: number
   createdAt?: string
   updatedAt?: string
@@ -21,6 +22,7 @@ export interface CreateDeviceModelDto {
   type?: string
   description?: string
   isActive?: boolean
+  useA4Counter?: boolean
 }
 
 export type UpdateDeviceModelDto = Partial<CreateDeviceModelDto>
