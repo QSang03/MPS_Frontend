@@ -667,10 +667,16 @@ export default function ConsumablesPageClient() {
                         </div>
                       </TableCell>
                       <TableCell className="px-6 py-5 text-sm text-amber-800">
-                        {((group.type?.compatibleDeviceModels as unknown[]) || [])
-                          .map((model) => (model as Record<string, unknown>)?.name)
-                          .filter(Boolean)
-                          .join(', ') || '—'}
+                        {(() => {
+                          const compatible = String(group.type?.compatibleMachineLine ?? '').trim()
+                          if (compatible) return compatible
+                          return (
+                            ((group.type?.compatibleDeviceModels as unknown[]) || [])
+                              .map((model) => (model as Record<string, unknown>)?.name)
+                              .filter(Boolean)
+                              .join(', ') || '—'
+                          )
+                        })()}
                       </TableCell>
                       <TableCell className="px-6 py-5 text-sm text-amber-800">
                         {group.type?.capacity
@@ -735,10 +741,18 @@ export default function ConsumablesPageClient() {
                               </p>
                             </TableCell>
                             <TableCell className="px-6 py-4 text-sm text-slate-600">
-                              {((group.type?.compatibleDeviceModels as unknown[]) || [])
-                                .map((model) => (model as Record<string, unknown>)?.name)
-                                .filter(Boolean)
-                                .join(', ') || '—'}
+                              {(() => {
+                                const compatible = String(
+                                  group.type?.compatibleMachineLine ?? ''
+                                ).trim()
+                                if (compatible) return compatible
+                                return (
+                                  ((group.type?.compatibleDeviceModels as unknown[]) || [])
+                                    .map((model) => (model as Record<string, unknown>)?.name)
+                                    .filter(Boolean)
+                                    .join(', ') || '—'
+                                )
+                              })()}
                             </TableCell>
                             <TableCell className="px-6 py-4 text-sm font-medium text-orange-600">
                               {group.type?.capacity
