@@ -400,6 +400,7 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
     },
     actions: [],
   },
+
   {
     id: 'devices',
     name: 'devices',
@@ -467,6 +468,15 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
         },
       },
       {
+        id: 'edit-consumable',
+        label: 'Chỉnh sửa vật tư',
+        icon: 'Edit',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'consumables', action: 'update' }],
+        },
+      },
+      {
         id: 'create-consumable',
         label: 'Thêm vật tư tương thích',
         icon: 'Plus',
@@ -530,6 +540,27 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
         requiredPermissions: {
           strategy: 'all',
           resources: [{ resource: 'device-models', action: 'read' }],
+        },
+      },
+    ],
+  },
+  {
+    id: 'warehouse-documents',
+    label: 'Chứng từ kho',
+    icon: 'Package',
+    route: '/system/warehouse-documents',
+    requiredPermissions: {
+      strategy: 'all',
+      resources: [{ resource: 'warehouse-documents', action: 'read' }],
+    },
+    actions: [
+      {
+        id: 'create',
+        label: 'Tạo chứng từ',
+        icon: 'Plus',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'warehouse-documents', action: 'create' }],
         },
       },
     ],

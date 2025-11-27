@@ -31,7 +31,9 @@ import type {
   DeviceProfitItem,
   DeviceProfitabilityItem,
   ConsumableLifecycleItem,
+  ProfitabilityTrendItem,
 } from '@/lib/api/services/reports-analytics.service'
+import TrendChart from '@/components/ui/TrendChart'
 import { toast } from 'sonner'
 import {
   ResponsiveContainer,
@@ -67,6 +69,9 @@ export default function AnalyticsPageClient() {
     devicesCount: number
     customersCount: number
   } | null>(null)
+  const [enterpriseProfitability, setEnterpriseProfitability] = useState<
+    ProfitabilityTrendItem[] | null
+  >(null)
 
   // Customers Profit State
   const [customersPeriod, setCustomersPeriod] = useState('')
@@ -76,6 +81,9 @@ export default function AnalyticsPageClient() {
   const [customersYear, setCustomersYear] = useState('')
   const [customersLoading, setCustomersLoading] = useState(false)
   const [customersData, setCustomersData] = useState<CustomerProfitItem[]>([])
+  const [customersProfitability, setCustomersProfitability] = useState<
+    ProfitabilityTrendItem[] | null
+  >(null)
   const [customersSearchTerm, setCustomersSearchTerm] = useState('')
   const [customersSearchId, setCustomersSearchId] = useState('')
 
@@ -167,6 +175,10 @@ export default function AnalyticsPageClient() {
         const res = await reportsAnalyticsService.getEnterpriseProfit(cleaned)
         if (res.success && res.data) {
           setEnterpriseData(res.data)
+          setEnterpriseProfitability(
+            (res.data as unknown as { profitability?: ProfitabilityTrendItem[] }).profitability ??
+              null
+          )
         } else {
           const msg = res.message || 'Không tải được dữ liệu doanh nghiệp'
           if (msg.toLowerCase().includes('no data')) {
@@ -227,6 +239,10 @@ export default function AnalyticsPageClient() {
         const res = await reportsAnalyticsService.getCustomersProfit(cleaned)
         if (res.success && res.data) {
           setCustomersData(res.data.customers)
+          setCustomersProfitability(
+            (res.data as unknown as { profitability?: ProfitabilityTrendItem[] }).profitability ??
+              null
+          )
         } else {
           const msg = res.message || 'Không tải được dữ liệu khách hàng'
           if (msg.toLowerCase().includes('no data')) {
@@ -668,6 +684,12 @@ export default function AnalyticsPageClient() {
               </Card>
             </div>
           )}
+
+          {enterpriseProfitability && (
+            <div className="mt-4">
+              <TrendChart data={enterpriseProfitability ?? []} height={300} showMargin />
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -762,6 +784,12 @@ export default function AnalyticsPageClient() {
               Tải dữ liệu
             </Button>
           </div>
+
+          {customersProfitability && (
+            <div className="mb-4">
+              <TrendChart data={customersProfitability ?? []} height={220} showMargin={false} />
+            </div>
+          )}
 
           <div className="overflow-x-auto rounded-lg border">
             <table className="min-w-full divide-y">

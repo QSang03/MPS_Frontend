@@ -44,6 +44,12 @@ export const UserList = lazy(() =>
   }))
 )
 
+export const WarehouseDocumentList = lazy(() =>
+  import('@/app/(dashboard)/system/warehouse-documents/_components/WarehouseDocumentList').then(
+    (m) => ({ default: m.WarehouseDocumentList })
+  )
+)
+
 // Report components
 export const ReportGenerator = lazy(() =>
   import('@/app/(dashboard)/system/reports/_components/ReportGenerator').then((m) => ({

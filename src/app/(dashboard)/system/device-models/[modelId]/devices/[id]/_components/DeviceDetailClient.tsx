@@ -144,6 +144,8 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
   const [activeTab, setActiveTab] = useState('overview')
   const router = useRouter()
 
+  // Note: Use ActionGuard component for permission checks in JSX to keep behavior consistent.
+
   // Type guards to access optional fields on union types safely without using `any`.
   const hasStatus = (x: unknown): x is { status?: string } =>
     typeof x === 'object' && x !== null && 'status' in (x as Record<string, unknown>)
@@ -1232,9 +1234,21 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                             <td className="px-4 py-3">
                               <div className="space-y-1">
                                 {(() => {
-                                  const statusText = hasStatus(cons)
-                                    ? (cons.status ?? 'EMPTY')
-                                    : 'EMPTY'
+                                  // Use the device-consumable record's `isActive` (outer) when
+                                  // available — this indicates whether the consumable is
+                                  // currently installed on the device. Fall back to the
+                                  // nested consumable `status` when `isActive` is not present.
+                                  const statusText =
+                                    typeof c?.isActive === 'boolean'
+                                      ? c.isActive
+                                        ? hasStatus(cons)
+                                          ? (cons.status ?? 'ACTIVE')
+                                          : 'ACTIVE'
+                                        : 'EMPTY'
+                                      : hasStatus(cons)
+                                        ? (cons.status ?? 'EMPTY')
+                                        : 'EMPTY'
+
                                   const statusClass =
                                     statusText === 'ACTIVE'
                                       ? 'bg-green-500 hover:bg-green-600'
@@ -1318,7 +1332,7 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                                   Lịch sử
                                 </Button>
 
-                                <ActionGuard pageId="consumables" actionId="update">
+                                <ActionGuard pageId="devices" actionId="edit-consumable">
                                   <Button
                                     size="sm"
                                     variant="outline"

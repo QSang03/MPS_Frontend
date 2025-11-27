@@ -17,6 +17,7 @@ export type ResourceType =
   | 'account'
   | 'report'
   | 'usageLog'
+  | 'warehouse-documents'
 
 /**
  * Resource with attributes for ABAC evaluation

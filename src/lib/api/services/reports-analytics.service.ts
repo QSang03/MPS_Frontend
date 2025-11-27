@@ -34,6 +34,20 @@ function extractErrorMessage(data: unknown): string | undefined {
 
 // ============ Types ============
 
+export type ProfitabilityTrendItem = {
+  month: string
+  revenueRental: number
+  revenueRepair: number
+  revenuePageBW: number
+  revenuePageColor: number
+  totalRevenue: number
+  cogsConsumable: number
+  cogsRepair: number
+  totalCogs: number
+  grossProfit: number
+  grossMargin?: number
+}
+
 export type EnterpriseProfitResponse = {
   success: boolean
   data?: {
@@ -44,6 +58,7 @@ export type EnterpriseProfitResponse = {
     grossMargin: number
     devicesCount: number
     customersCount: number
+    profitability?: ProfitabilityTrendItem[]
   }
   message?: string
 }
@@ -62,6 +77,7 @@ export type CustomersProfitResponse = {
   data?: {
     period: string
     customers: CustomerProfitItem[]
+    profitability?: ProfitabilityTrendItem[]
   }
   message?: string
 }
@@ -87,6 +103,7 @@ export type CustomerDetailProfitResponse = {
       grossProfit: number
     }
     devices: DeviceProfitItem[]
+    profitability?: ProfitabilityTrendItem[]
   }
   message?: string
 }
@@ -95,9 +112,9 @@ export type DeviceProfitabilityItem = {
   month: string
   revenueRental: number
   revenueRepair: number
-  revenuePages: number
   revenuePageBW: number
   revenuePageColor: number
+  revenuePages?: number
   totalRevenue: number
   cogsConsumable: number
   cogsRepair: number

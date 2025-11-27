@@ -24,6 +24,8 @@ export interface DeviceConsumable {
   id?: string
   consumableId?: string
   consumable?: Consumable | null
+  /** Whether this consumable record is currently active/installed on the device */
+  isActive?: boolean | null
   serialNumber?: string | null
   batchNumber?: string | null
   consumableType?: ConsumableType | null

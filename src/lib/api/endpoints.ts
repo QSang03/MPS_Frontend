@@ -71,6 +71,15 @@ export const API_ENDPOINTS = {
     MOVEMENTS: (id: string) => `/stock-items/${id}/movements`,
   },
 
+  // Warehouse Documents
+  WAREHOUSE_DOCUMENTS: {
+    LIST: '/warehouse-documents',
+    DETAIL: (id: string) => `/warehouse-documents/${id}`,
+    CREATE: '/warehouse-documents',
+    UPDATE_STATUS: (id: string) => `/warehouse-documents/${id}/status`,
+    CANCEL: (id: string) => `/warehouse-documents/${id}/cancel`,
+  },
+
   // Service Requests
   SERVICE_REQUESTS: {
     LIST: '/service-requests',
