@@ -18,6 +18,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import DateTimeLocalPicker from '@/components/ui/DateTimeLocalPicker'
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Separator } from '@/components/ui/separator'
@@ -257,14 +258,10 @@ export function CreateBillingModal({
                         <FormItem>
                           <FormLabel>Ngày bắt đầu kỳ (Override)</FormLabel>
                           <FormControl>
-                            <Input
-                              type="datetime-local"
-                              {...field}
+                            <DateTimeLocalPicker
                               value={field.value || ''}
-                              onChange={(e) => {
-                                const value = e.target.value
-                                field.onChange(value || undefined)
-                              }}
+                              onChange={(v) => field.onChange(v || undefined)}
+                              onISOChange={(iso) => field.onChange(iso ?? undefined)}
                             />
                           </FormControl>
                           <FormDescription>
@@ -282,14 +279,10 @@ export function CreateBillingModal({
                         <FormItem>
                           <FormLabel>Ngày kết thúc kỳ (Override)</FormLabel>
                           <FormControl>
-                            <Input
-                              type="datetime-local"
-                              {...field}
+                            <DateTimeLocalPicker
                               value={field.value || ''}
-                              onChange={(e) => {
-                                const value = e.target.value
-                                field.onChange(value || undefined)
-                              }}
+                              onChange={(v) => field.onChange(v || undefined)}
+                              onISOChange={(iso) => field.onChange(iso ?? undefined)}
                             />
                           </FormControl>
                           <FormDescription>

@@ -1,6 +1,13 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import CustomerSelect from '@/components/shared/CustomerSelect'
@@ -39,9 +46,17 @@ import {
   Bar,
 } from 'recharts'
 
+type TimeRangeMode = 'period' | 'range' | 'year'
+type TimeFilter = { period?: string; from?: string; to?: string; year?: string }
+type ConsumableParams = TimeFilter & { consumableTypeId?: string; customerId?: string }
+
 export default function AnalyticsPageClient() {
   // Enterprise Profit State
   const [enterprisePeriod, setEnterprisePeriod] = useState('')
+  const [enterpriseMode, setEnterpriseMode] = useState<TimeRangeMode>('period')
+  const [enterpriseFrom, setEnterpriseFrom] = useState('')
+  const [enterpriseTo, setEnterpriseTo] = useState('')
+  const [enterpriseYear, setEnterpriseYear] = useState('')
   const [enterpriseLoading, setEnterpriseLoading] = useState(false)
   const [enterpriseData, setEnterpriseData] = useState<{
     period: string
@@ -55,6 +70,10 @@ export default function AnalyticsPageClient() {
 
   // Customers Profit State
   const [customersPeriod, setCustomersPeriod] = useState('')
+  const [customersMode, setCustomersMode] = useState<TimeRangeMode>('period')
+  const [customersFrom, setCustomersFrom] = useState('')
+  const [customersTo, setCustomersTo] = useState('')
+  const [customersYear, setCustomersYear] = useState('')
   const [customersLoading, setCustomersLoading] = useState(false)
   const [customersData, setCustomersData] = useState<CustomerProfitItem[]>([])
   const [customersSearchTerm, setCustomersSearchTerm] = useState('')
@@ -77,8 +96,11 @@ export default function AnalyticsPageClient() {
 
   // Device Profitability State
   const [selectedDeviceId, setSelectedDeviceId] = useState('')
+  const [deviceMode, setDeviceMode] = useState<TimeRangeMode>('range')
+  const [devicePeriod, setDevicePeriod] = useState('')
   const [deviceFrom, setDeviceFrom] = useState('')
   const [deviceTo, setDeviceTo] = useState('')
+  const [deviceYear, setDeviceYear] = useState('')
   const [deviceLoading, setDeviceLoading] = useState(false)
   const [deviceData, setDeviceData] = useState<{
     device: {
@@ -90,8 +112,11 @@ export default function AnalyticsPageClient() {
   } | null>(null)
 
   // Consumable Lifecycle State
+  const [consumableMode, setConsumableMode] = useState<TimeRangeMode>('range')
   const [consumableFrom, setConsumableFrom] = useState('')
   const [consumableTo, setConsumableTo] = useState('')
+  const [consumablePeriod, setConsumablePeriod] = useState('')
+  const [consumableYear, setConsumableYear] = useState('')
   const [consumableTypeId, setConsumableTypeId] = useState('')
   const [consumableCustomerId, setConsumableCustomerId] = useState('')
   const [consumableLoading, setConsumableLoading] = useState(false)
@@ -99,19 +124,56 @@ export default function AnalyticsPageClient() {
 
   // Load Enterprise Profit
   const loadEnterpriseProfit = useCallback(
-    async (period?: string) => {
-      const periodToUse = period ?? enterprisePeriod
-      if (!periodToUse) {
+    async (time?: { period?: string; from?: string; to?: string; year?: string }) => {
+      const mode = enterpriseMode
+      const params: TimeFilter = {}
+      if (time) Object.assign(params, time)
+      else {
+        if (mode === 'period') {
+          params.period = enterprisePeriod
+        } else if (mode === 'range') {
+          params.from = enterpriseFrom
+          params.to = enterpriseTo
+        } else if (mode === 'year') {
+          params.year = enterpriseYear
+        }
+      }
+      // validate that one of the modes is used and params are provided
+      if (mode === 'period' && !params.period) {
         toast.warning('Vui lòng nhập kỳ (YYYY-MM)')
+        return
+      }
+      if (mode === 'range' && (!params.from || !params.to)) {
+        toast.warning('Vui lòng nhập both from và to (YYYY-MM)')
+        return
+      }
+      if (mode === 'year' && !params.year) {
+        toast.warning('Vui lòng nhập năm (YYYY)')
         return
       }
       setEnterpriseLoading(true)
       try {
-        const res = await reportsAnalyticsService.getEnterpriseProfit({ period: periodToUse })
+        const cleaned = cleanParams(params as Record<string, unknown>)
+        // Range validation: from <= to
+        if (mode === 'range' && cleaned.from && cleaned.to) {
+          const fromDate = new Date(String(cleaned.from) + '-01')
+          const toDate = new Date(String(cleaned.to) + '-01')
+          if (fromDate > toDate) {
+            toast.warning('From phải nhỏ hơn hoặc bằng To')
+            setEnterpriseLoading(false)
+            return
+          }
+        }
+        const res = await reportsAnalyticsService.getEnterpriseProfit(cleaned)
         if (res.success && res.data) {
           setEnterpriseData(res.data)
         } else {
-          toast.error(res.message || 'Không tải được dữ liệu doanh nghiệp')
+          const msg = res.message || 'Không tải được dữ liệu doanh nghiệp'
+          if (msg.toLowerCase().includes('no data')) {
+            toast.warning('Không có dữ liệu cho kỳ này')
+          } else {
+            toast.error(msg)
+          }
           setEnterpriseData(null)
         }
       } catch (e) {
@@ -122,24 +184,56 @@ export default function AnalyticsPageClient() {
         setEnterpriseLoading(false)
       }
     },
-    [enterprisePeriod]
+    [enterprisePeriod, enterpriseMode, enterpriseFrom, enterpriseTo, enterpriseYear]
   )
 
   // Load Customers Profit
   const loadCustomersProfit = useCallback(
-    async (period?: string) => {
-      const periodToUse = period ?? customersPeriod
-      if (!periodToUse) {
+    async (time?: { period?: string; from?: string; to?: string; year?: string }) => {
+      const mode = customersMode
+      const params: TimeFilter = {}
+      if (time) Object.assign(params, time)
+      else {
+        if (mode === 'period') params.period = customersPeriod
+        else if (mode === 'range') {
+          params.from = customersFrom
+          params.to = customersTo
+        } else if (mode === 'year') params.year = customersYear
+      }
+      if (mode === 'period' && !params.period) {
         toast.warning('Vui lòng nhập kỳ (YYYY-MM)')
+        return
+      }
+      if (mode === 'range' && (!params.from || !params.to)) {
+        toast.warning('Vui lòng nhập both from và to (YYYY-MM)')
+        return
+      }
+      if (mode === 'year' && !params.year) {
+        toast.warning('Vui lòng nhập năm (YYYY)')
         return
       }
       setCustomersLoading(true)
       try {
-        const res = await reportsAnalyticsService.getCustomersProfit({ period: periodToUse })
+        const cleaned = cleanParams(params as Record<string, unknown>)
+        if (mode === 'range' && cleaned.from && cleaned.to) {
+          const fromDate = new Date(String(cleaned.from) + '-01')
+          const toDate = new Date(String(cleaned.to) + '-01')
+          if (fromDate > toDate) {
+            toast.warning('From phải nhỏ hơn hoặc bằng To')
+            setCustomersLoading(false)
+            return
+          }
+        }
+        const res = await reportsAnalyticsService.getCustomersProfit(cleaned)
         if (res.success && res.data) {
           setCustomersData(res.data.customers)
         } else {
-          toast.error(res.message || 'Không tải được dữ liệu khách hàng')
+          const msg = res.message || 'Không tải được dữ liệu khách hàng'
+          if (msg.toLowerCase().includes('no data')) {
+            toast.warning('Không có dữ liệu cho kỳ này')
+          } else {
+            toast.error(msg)
+          }
           setCustomersData([])
         }
       } catch (e) {
@@ -150,7 +244,7 @@ export default function AnalyticsPageClient() {
         setCustomersLoading(false)
       }
     },
-    [customersPeriod]
+    [customersPeriod, customersMode, customersFrom, customersTo, customersYear]
   )
 
   // Prefill current month (run once on mount)
@@ -160,6 +254,8 @@ export default function AnalyticsPageClient() {
     setEnterprisePeriod(currentMonth)
     setCustomersPeriod(currentMonth)
     setCustomerDetailPeriod(currentMonth)
+    setDevicePeriod(currentMonth)
+    setConsumablePeriod(currentMonth)
 
     // For date ranges, set last 12 months
     const twelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1)
@@ -173,12 +269,12 @@ export default function AnalyticsPageClient() {
     // Auto-load enterprise and customers profit for the initial month so the page shows data by default
     void (async () => {
       try {
-        await loadEnterpriseProfit(currentMonth)
+        await loadEnterpriseProfit({ period: currentMonth })
       } catch {
         // ignore - loadEnterpriseProfit handles errors
       }
       try {
-        await loadCustomersProfit(currentMonth)
+        await loadCustomersProfit({ period: currentMonth })
       } catch {
         // ignore - loadCustomersProfit handles errors
       }
@@ -190,27 +286,76 @@ export default function AnalyticsPageClient() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Helpers to compute defaults
+  function getCurrentMonth(): string {
+    const now = new Date()
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+  }
+
+  function getTwelveMonthsAgo(): string {
+    const now = new Date()
+    const twelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1)
+    return `${twelveMonthsAgo.getFullYear()}-${String(twelveMonthsAgo.getMonth() + 1).padStart(2, '0')}`
+  }
+
+  function getCurrentYear(): string {
+    const now = new Date()
+    return String(now.getFullYear())
+  }
+
+  function cleanParams(obj: Record<string, unknown>) {
+    const out: Record<string, unknown> = {}
+    for (const [k, v] of Object.entries(obj)) {
+      if (v === undefined || v === null) continue
+      if (typeof v === 'string' && v.trim() === '') continue
+      out[k] = v
+    }
+    return out
+  }
+
   // Load Customer Detail
   const loadCustomerDetail = useCallback(
-    async (customerId?: string, period?: string) => {
+    async (
+      customerId?: string,
+      time?: { period?: string; from?: string; to?: string; year?: string }
+    ) => {
       const idToUse = customerId ?? selectedCustomerId
-      const periodToUse = period ?? customerDetailPeriod
-      if (!idToUse || !periodToUse) {
-        toast.warning('Vui lòng nhập Customer ID và kỳ (YYYY-MM)')
+      // Use customer-level mode as customersMode, unless a time override was provided
+      const params: TimeFilter = {}
+      if (time) Object.assign(params, time)
+      else {
+        if (customersMode === 'period') params.period = customerDetailPeriod
+        else if (customersMode === 'range') {
+          params.from = customersFrom
+          params.to = customersTo
+        } else if (customersMode === 'year') params.year = customersYear
+      }
+      if (!idToUse || (customersMode === 'period' && !params.period)) {
+        toast.warning('Vui lòng nhập Customer ID và kỳ')
         return
       }
+
       setCustomerDetailLoading(true)
       try {
-        const res = await reportsAnalyticsService.getCustomerDetailProfit(idToUse, {
-          period: periodToUse,
-        })
+        const res = await reportsAnalyticsService.getCustomerDetailProfit(idToUse, params)
         if (res.success && res.data) {
           setCustomerDetailData(res.data)
           // ensure selectedCustomerId and period reflect the loaded detail
           setSelectedCustomerId(idToUse)
-          setCustomerDetailPeriod(periodToUse)
+          if (params.period) setCustomerDetailPeriod(String(params.period))
+          else if (params.from && params.to)
+            setCustomerDetailPeriod(`${params.from} to ${params.to}`)
+          else if (params.year) setCustomerDetailPeriod(String(params.year))
         } else {
-          toast.error(res.message || 'Không tải được chi tiết khách hàng')
+          const msg = res.message || 'Không tải được chi tiết khách hàng'
+          // If backend indicates a "no data" condition, don't mark it as a
+          // fatal error in the UI; show a neutral warning and display an
+          // empty state instead.
+          if (msg.toLowerCase().includes('no data')) {
+            toast.warning('Không có dữ liệu cho kỳ này')
+          } else {
+            toast.error(msg)
+          }
           setCustomerDetailData(null)
         }
       } catch (e) {
@@ -221,25 +366,70 @@ export default function AnalyticsPageClient() {
         setCustomerDetailLoading(false)
       }
     },
-    [customerDetailPeriod, selectedCustomerId]
+    [
+      customerDetailPeriod,
+      selectedCustomerId,
+      customersMode,
+      customersFrom,
+      customersTo,
+      customersYear,
+    ]
   )
 
   // Load Device Profitability
-  const loadDeviceProfitability = async () => {
-    if (!selectedDeviceId || !deviceFrom || !deviceTo) {
-      toast.warning('Vui lòng nhập Device ID, from và to (YYYY-MM)')
+  const loadDeviceProfitability = async (time?: {
+    period?: string
+    from?: string
+    to?: string
+    year?: string
+  }) => {
+    const params: TimeFilter = {}
+    if (time) Object.assign(params, time)
+    else {
+      if (deviceMode === 'period') params.period = devicePeriod
+      else if (deviceMode === 'range') {
+        params.from = deviceFrom
+        params.to = deviceTo
+      } else if (deviceMode === 'year') params.year = deviceYear
+    }
+    if (!selectedDeviceId) {
+      toast.warning('Vui lòng nhập Device ID')
+      return
+    }
+    if (deviceMode === 'period' && !params.period) {
+      toast.warning('Vui lòng nhập kỳ (YYYY-MM)')
+      return
+    }
+    if (deviceMode === 'range' && (!params.from || !params.to)) {
+      toast.warning('Vui lòng nhập both from và to (YYYY-MM)')
+      return
+    }
+    if (deviceMode === 'year' && !params.year) {
+      toast.warning('Vui lòng nhập năm (YYYY)')
       return
     }
     setDeviceLoading(true)
     try {
-      const res = await reportsAnalyticsService.getDeviceProfitability(selectedDeviceId, {
-        from: deviceFrom,
-        to: deviceTo,
-      })
+      const cleaned = cleanParams(params as Record<string, unknown>)
+      if (deviceMode === 'range' && cleaned.from && cleaned.to) {
+        const fromDate = new Date(String(cleaned.from) + '-01')
+        const toDate = new Date(String(cleaned.to) + '-01')
+        if (fromDate > toDate) {
+          toast.warning('From phải nhỏ hơn hoặc bằng To')
+          setDeviceLoading(false)
+          return
+        }
+      }
+      const res = await reportsAnalyticsService.getDeviceProfitability(selectedDeviceId, cleaned)
       if (res.success && res.data) {
         setDeviceData(res.data)
       } else {
-        toast.error(res.message || 'Không tải được dữ liệu thiết bị')
+        const msg = res.message || 'Không tải được dữ liệu thiết bị'
+        if (msg.toLowerCase().includes('no data')) {
+          toast.warning('Không có dữ liệu cho kỳ này')
+        } else {
+          toast.error(msg)
+        }
         setDeviceData(null)
       }
     } catch (e) {
@@ -252,23 +442,57 @@ export default function AnalyticsPageClient() {
   }
 
   // Load Consumable Lifecycle
-  const loadConsumableLifecycle = async () => {
-    if (!consumableFrom || !consumableTo) {
-      toast.warning('Vui lòng nhập from và to (YYYY-MM)')
+  const loadConsumableLifecycle = async (time?: {
+    period?: string
+    from?: string
+    to?: string
+    year?: string
+  }) => {
+    const params: ConsumableParams = {
+      consumableTypeId: consumableTypeId || undefined,
+      customerId: consumableCustomerId || undefined,
+    }
+    if (time) Object.assign(params, time)
+    if (consumableMode === 'period') params.period = consumablePeriod
+    else if (consumableMode === 'range') {
+      params.from = consumableFrom
+      params.to = consumableTo
+    } else if (consumableMode === 'year') params.year = consumableYear
+    // basic validation
+    if (consumableMode === 'period' && !params.period) {
+      toast.warning('Vui lòng nhập kỳ (YYYY-MM)')
+      return
+    }
+    if (consumableMode === 'range' && (!params.from || !params.to)) {
+      toast.warning('Vui lòng nhập both from và to (YYYY-MM)')
+      return
+    }
+    if (consumableMode === 'year' && !params.year) {
+      toast.warning('Vui lòng nhập năm (YYYY)')
       return
     }
     setConsumableLoading(true)
     try {
-      const res = await reportsAnalyticsService.getConsumableLifecycle({
-        from: consumableFrom,
-        to: consumableTo,
-        consumableTypeId: consumableTypeId || undefined,
-        customerId: consumableCustomerId || undefined,
-      })
+      const cleaned = cleanParams(params as Record<string, unknown>)
+      if (consumableMode === 'range' && cleaned.from && cleaned.to) {
+        const fromDate = new Date(String(cleaned.from) + '-01')
+        const toDate = new Date(String(cleaned.to) + '-01')
+        if (fromDate > toDate) {
+          toast.warning('From phải nhỏ hơn hoặc bằng To')
+          setConsumableLoading(false)
+          return
+        }
+      }
+      const res = await reportsAnalyticsService.getConsumableLifecycle(cleaned)
       if (res.success && res.data) {
-        setConsumableData(res.data.items)
+        setConsumableData(res.data.items || [])
       } else {
-        toast.error(res.message || 'Không tải được dữ liệu vật tư')
+        const msg = res.message || 'Không tải được dữ liệu vật tư'
+        if (msg.toLowerCase().includes('no data')) {
+          toast.warning('Không có dữ liệu cho kỳ này')
+        } else {
+          toast.error(msg)
+        }
         setConsumableData([])
       }
     } catch (e) {
@@ -290,7 +514,7 @@ export default function AnalyticsPageClient() {
   useEffect(() => {
     if (!customersSearchId) return
     // Use the current customersPeriod as the detail period
-    void loadCustomerDetail(customersSearchId, customersPeriod)
+    void loadCustomerDetail(customersSearchId, { period: customersPeriod })
   }, [customersSearchId, customersPeriod, loadCustomerDetail])
 
   return (
@@ -312,16 +536,67 @@ export default function AnalyticsPageClient() {
           <div className="mb-4 flex gap-3">
             <div className="flex items-center gap-2">
               <Calendar className="text-muted-foreground h-4 w-4" />
-              <MonthPicker
-                placeholder="Kỳ (YYYY-MM)"
-                value={enterprisePeriod}
-                onChange={(v) => setEnterprisePeriod(v)}
-                onApply={(v) => {
-                  setEnterprisePeriod(v)
-                  void loadEnterpriseProfit(v)
-                }}
-                className="w-40"
-              />
+              <div className="flex items-center gap-2">
+                <Select
+                  value={enterpriseMode}
+                  onValueChange={(v) => {
+                    const mode = v as TimeRangeMode
+                    setEnterpriseMode(mode)
+                    // Auto-fill defaults when switching modes
+                    if (mode === 'period') setEnterprisePeriod(getCurrentMonth())
+                    else if (mode === 'range') {
+                      setEnterpriseFrom(getTwelveMonthsAgo())
+                      setEnterpriseTo(getCurrentMonth())
+                    } else if (mode === 'year') setEnterpriseYear(getCurrentYear())
+                  }}
+                >
+                  <SelectTrigger className="bg-background h-8 w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="period">Tháng</SelectItem>
+                    <SelectItem value="range">Khoảng</SelectItem>
+                    <SelectItem value="year">Năm</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {enterpriseMode === 'period' && (
+                <MonthPicker
+                  placeholder="Kỳ (YYYY-MM)"
+                  value={enterprisePeriod}
+                  onChange={(v) => setEnterprisePeriod(v)}
+                  onApply={(v) => {
+                    setEnterprisePeriod(v)
+                    void loadEnterpriseProfit({ period: v })
+                  }}
+                  className="w-40"
+                />
+              )}
+              {enterpriseMode === 'range' && (
+                <div className="flex gap-2">
+                  <MonthPicker
+                    placeholder="From (YYYY-MM)"
+                    value={enterpriseFrom}
+                    onChange={(v) => setEnterpriseFrom(v)}
+                    className="w-36"
+                  />
+                  <MonthPicker
+                    placeholder="To (YYYY-MM)"
+                    value={enterpriseTo}
+                    onChange={(v) => setEnterpriseTo(v)}
+                    className="w-36"
+                  />
+                </div>
+              )}
+              {enterpriseMode === 'year' && (
+                <input
+                  type="number"
+                  className="h-8 w-28 rounded border p-1"
+                  placeholder="YYYY"
+                  value={enterpriseYear}
+                  onChange={(e) => setEnterpriseYear(e.target.value)}
+                />
+              )}
             </div>
             <Button onClick={() => void loadEnterpriseProfit()} disabled={enterpriseLoading}>
               {enterpriseLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
@@ -409,16 +684,66 @@ export default function AnalyticsPageClient() {
           <div className="mb-4 flex flex-wrap gap-3">
             <div className="flex items-center gap-2">
               <Calendar className="text-muted-foreground h-4 w-4" />
-              <MonthPicker
-                placeholder="Kỳ (YYYY-MM)"
-                value={customersPeriod}
-                onChange={(v) => setCustomersPeriod(v)}
-                onApply={(v) => {
-                  setCustomersPeriod(v)
-                  void loadCustomersProfit(v)
-                }}
-                className="w-40"
-              />
+              <div className="flex items-center gap-2">
+                <Select
+                  value={customersMode}
+                  onValueChange={(v) => {
+                    const mode = v as TimeRangeMode
+                    setCustomersMode(mode)
+                    if (mode === 'period') setCustomersPeriod(getCurrentMonth())
+                    else if (mode === 'range') {
+                      setCustomersFrom(getTwelveMonthsAgo())
+                      setCustomersTo(getCurrentMonth())
+                    } else if (mode === 'year') setCustomersYear(getCurrentYear())
+                  }}
+                >
+                  <SelectTrigger className="bg-background h-8 w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="period">Tháng</SelectItem>
+                    <SelectItem value="range">Khoảng</SelectItem>
+                    <SelectItem value="year">Năm</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {customersMode === 'period' && (
+                <MonthPicker
+                  placeholder="Kỳ (YYYY-MM)"
+                  value={customersPeriod}
+                  onChange={(v) => setCustomersPeriod(v)}
+                  onApply={(v) => {
+                    setCustomersPeriod(v)
+                    void loadCustomersProfit({ period: v })
+                  }}
+                  className="w-40"
+                />
+              )}
+              {customersMode === 'range' && (
+                <div className="flex gap-2">
+                  <MonthPicker
+                    placeholder="From (YYYY-MM)"
+                    value={customersFrom}
+                    onChange={(v) => setCustomersFrom(v)}
+                    className="w-36"
+                  />
+                  <MonthPicker
+                    placeholder="To (YYYY-MM)"
+                    value={customersTo}
+                    onChange={(v) => setCustomersTo(v)}
+                    className="w-36"
+                  />
+                </div>
+              )}
+              {customersMode === 'year' && (
+                <input
+                  type="number"
+                  className="h-8 w-28 rounded border p-1"
+                  placeholder="YYYY"
+                  value={customersYear}
+                  onChange={(e) => setCustomersYear(e.target.value)}
+                />
+              )}
             </div>
             <div className="flex items-center gap-2">
               <Search className="text-muted-foreground h-4 w-4" />
@@ -485,7 +810,7 @@ export default function AnalyticsPageClient() {
                           size="sm"
                           onClick={() => {
                             // load detail immediately for this customer using current customersPeriod
-                            void loadCustomerDetail(c.customerId, customersPeriod)
+                            void loadCustomerDetail(c.customerId, { period: customersPeriod })
                           }}
                         >
                           Chi tiết
@@ -526,7 +851,7 @@ export default function AnalyticsPageClient() {
                   onChange={(v) => setCustomerDetailPeriod(v)}
                   onApply={(v) => {
                     setCustomerDetailPeriod(v)
-                    void loadCustomerDetail(undefined, v)
+                    void loadCustomerDetail(undefined, { period: v })
                   }}
                   className="w-40"
                 />
@@ -615,6 +940,11 @@ export default function AnalyticsPageClient() {
                 </div>
               </div>
             )}
+            {!customerDetailLoading && !customerDetailData && (
+              <div className="flex items-center justify-center p-6 text-sm text-gray-500">
+                Không có dữ liệu
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
@@ -637,19 +967,65 @@ export default function AnalyticsPageClient() {
                 onChange={(e) => setSelectedDeviceId(e.target.value)}
                 className="w-80"
               />
-              <MonthPicker
-                placeholder="From (YYYY-MM)"
-                value={deviceFrom}
-                onChange={(v) => setDeviceFrom(v)}
-                className="w-36"
-              />
-              <MonthPicker
-                placeholder="To (YYYY-MM)"
-                value={deviceTo}
-                onChange={(v) => setDeviceTo(v)}
-                className="w-36"
-              />
-              <Button onClick={loadDeviceProfitability} disabled={deviceLoading}>
+              <div className="flex items-center gap-2">
+                <Calendar className="text-muted-foreground h-4 w-4" />
+                <Select
+                  value={deviceMode}
+                  onValueChange={(v) => {
+                    const mode = v as TimeRangeMode
+                    setDeviceMode(mode)
+                    if (mode === 'period') setDevicePeriod(getCurrentMonth())
+                    else if (mode === 'range') {
+                      setDeviceFrom(getTwelveMonthsAgo())
+                      setDeviceTo(getCurrentMonth())
+                    } else if (mode === 'year') setDeviceYear(getCurrentYear())
+                  }}
+                >
+                  <SelectTrigger className="bg-background h-8 w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="period">Tháng</SelectItem>
+                    <SelectItem value="range">Khoảng</SelectItem>
+                    <SelectItem value="year">Năm</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {deviceMode === 'period' && (
+                <MonthPicker
+                  placeholder="Kỳ (YYYY-MM)"
+                  value={devicePeriod}
+                  onChange={(v) => setDevicePeriod(v)}
+                  onApply={(v) => void loadDeviceProfitability({ period: v })}
+                  className="w-36"
+                />
+              )}
+              {deviceMode === 'range' && (
+                <>
+                  <MonthPicker
+                    placeholder="From (YYYY-MM)"
+                    value={deviceFrom}
+                    onChange={(v) => setDeviceFrom(v)}
+                    className="w-36"
+                  />
+                  <MonthPicker
+                    placeholder="To (YYYY-MM)"
+                    value={deviceTo}
+                    onChange={(v) => setDeviceTo(v)}
+                    className="w-36"
+                  />
+                </>
+              )}
+              {deviceMode === 'year' && (
+                <input
+                  type="number"
+                  className="h-8 w-28 rounded border p-1"
+                  placeholder="YYYY"
+                  value={deviceYear}
+                  onChange={(e) => setDeviceYear(e.target.value)}
+                />
+              )}
+              <Button onClick={() => void loadDeviceProfitability()} disabled={deviceLoading}>
                 {deviceLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                 Tải dữ liệu
               </Button>
@@ -751,6 +1127,11 @@ export default function AnalyticsPageClient() {
                 </div>
               </div>
             )}
+            {!deviceLoading && !deviceData && (
+              <div className="flex items-center justify-center p-6 text-sm text-gray-500">
+                Không có dữ liệu
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
@@ -768,16 +1149,63 @@ export default function AnalyticsPageClient() {
         </CardHeader>
         <CardContent>
           <div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-5">
-            <MonthPicker
-              placeholder="From (YYYY-MM)"
-              value={consumableFrom}
-              onChange={(v) => setConsumableFrom(v)}
-            />
-            <MonthPicker
-              placeholder="To (YYYY-MM)"
-              value={consumableTo}
-              onChange={(v) => setConsumableTo(v)}
-            />
+            <div className="flex items-center gap-2">
+              <Calendar className="text-muted-foreground h-4 w-4" />
+              <div className="flex items-center gap-2">
+                <Select
+                  value={consumableMode}
+                  onValueChange={(v) => {
+                    const mode = v as TimeRangeMode
+                    setConsumableMode(mode)
+                    if (mode === 'period') setConsumablePeriod(getCurrentMonth())
+                    else if (mode === 'range') {
+                      setConsumableFrom(getTwelveMonthsAgo())
+                      setConsumableTo(getCurrentMonth())
+                    } else if (mode === 'year') setConsumableYear(getCurrentYear())
+                  }}
+                >
+                  <SelectTrigger className="bg-background h-8 w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="period">Tháng</SelectItem>
+                    <SelectItem value="range">Khoảng</SelectItem>
+                    <SelectItem value="year">Năm</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            {consumableMode === 'period' && (
+              <MonthPicker
+                placeholder="Kỳ (YYYY-MM)"
+                value={consumablePeriod}
+                onChange={(v) => setConsumablePeriod(v)}
+                onApply={(v) => void loadConsumableLifecycle({ period: v })}
+              />
+            )}
+            {consumableMode === 'range' && (
+              <>
+                <MonthPicker
+                  placeholder="From (YYYY-MM)"
+                  value={consumableFrom}
+                  onChange={(v) => setConsumableFrom(v)}
+                />
+                <MonthPicker
+                  placeholder="To (YYYY-MM)"
+                  value={consumableTo}
+                  onChange={(v) => setConsumableTo(v)}
+                />
+              </>
+            )}
+            {consumableMode === 'year' && (
+              <input
+                type="number"
+                className="h-8 w-28 rounded border p-1"
+                placeholder="YYYY"
+                value={consumableYear}
+                onChange={(e) => setConsumableYear(e.target.value)}
+              />
+            )}
             <ConsumableTypeSelect
               placeholder="Consumable Type (tùy chọn)"
               value={consumableTypeId}
@@ -788,7 +1216,7 @@ export default function AnalyticsPageClient() {
               value={consumableCustomerId}
               onChange={(id) => setConsumableCustomerId(id)}
             />
-            <Button onClick={loadConsumableLifecycle} disabled={consumableLoading}>
+            <Button onClick={() => void loadConsumableLifecycle()} disabled={consumableLoading}>
               {consumableLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Tải dữ liệu
             </Button>

@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react'
 import { Input } from '@/components/ui/input'
+import DateTimeLocalPicker from '@/components/ui/DateTimeLocalPicker'
 import { Switch } from '@/components/ui/switch'
 import {
   Select,
@@ -207,16 +208,16 @@ export function ValueInput({
   // DateTime input (ISO format)
   if (inputType === 'datetime') {
     const dateValue = typeof value === 'string' ? value : ''
+    const localVal = dateValue ? new Date(dateValue).toISOString().slice(0, 16) : ''
     return (
-      <Input
-        type="datetime-local"
-        value={dateValue ? new Date(dateValue).toISOString().slice(0, 16) : ''}
-        onChange={(e) => {
-          if (e.target.value) {
-            onChange(new Date(e.target.value).toISOString())
-          } else {
-            onChange(undefined)
-          }
+      <DateTimeLocalPicker
+        value={localVal}
+        onChange={() => {
+          /* no-op: local input is handled, ISO updates via onISOChange */
+        }}
+        onISOChange={(iso) => {
+          if (iso) onChange(iso)
+          else onChange(undefined)
         }}
         placeholder={placeholder || 'YYYY-MM-DDTHH:mm'}
         disabled={disabled}

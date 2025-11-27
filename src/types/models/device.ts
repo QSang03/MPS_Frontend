@@ -36,6 +36,7 @@ export interface Device {
     description?: string
     isActive?: boolean
     createdAt?: string
+    useA4Counter?: boolean
     updatedAt?: string
   }
   createdAt: string

@@ -1,4 +1,36 @@
 import internalApiClient from '../internal-client'
+import type { AxiosError } from 'axios'
+
+function extractErrorMessage(data: unknown): string | undefined {
+  // Recursively walk object/array to find a message-like field
+  function walk(obj: unknown): string | undefined {
+    if (obj == null) return undefined
+    if (typeof obj === 'string') return obj
+    if (typeof obj !== 'object') return undefined
+    const o = obj as Record<string, unknown>
+    const candidates = ['message', 'error', 'msg']
+    for (const c of candidates) {
+      const v = o[c]
+      if (typeof v === 'string' && v.trim().length > 0) return v
+    }
+    // Check for `details` array
+    if (Array.isArray(o.details) && o.details.length > 0) {
+      const vals = o.details.map((it) => (typeof it === 'string' ? it : walk(it))).filter(Boolean)
+      if (vals.length > 0) return (vals as string[]).join('; ')
+    }
+    // Recurse into nested objects: prefer `data`, then first-level children
+    if (o.data) {
+      const res = walk(o.data)
+      if (res) return res
+    }
+    for (const key of Object.keys(o)) {
+      const res = walk(o[key])
+      if (res) return res
+    }
+    return undefined
+  }
+  return walk(data)
+}
 
 // ============ Types ============
 
@@ -111,22 +143,76 @@ export const reportsAnalyticsService = {
    * Get enterprise-wide profit analytics for a period
    * GET /reports/analytics/profit/enterprise?period=2025-11
    */
-  async getEnterpriseProfit(params: { period: string }): Promise<EnterpriseProfitResponse> {
-    const resp = await internalApiClient.get('/api/reports/analytics/profit/enterprise', {
-      params,
-    })
-    return resp.data
+  async getEnterpriseProfit(params: {
+    period?: string
+    from?: string
+    to?: string
+    year?: string
+  }): Promise<EnterpriseProfitResponse> {
+    try {
+      const resp = await internalApiClient.get('/api/reports/analytics/profit/enterprise', {
+        params,
+        validateStatus: (status) => (status >= 200 && status < 300) || status === 404,
+      })
+      if (resp.status === 404) {
+        const data = resp.data as unknown
+        return {
+          success: false,
+          message: extractErrorMessage(data) || 'No data found for enterprise in this period',
+        }
+      }
+      return resp.data
+    } catch (err) {
+      const axiosErr = err as AxiosError | undefined
+      const message =
+        extractErrorMessage(axiosErr?.response?.data) ?? axiosErr?.message ?? 'No data found'
+      try {
+        const payload = axiosErr?.response?.data
+        const str = typeof payload === 'object' ? JSON.stringify(payload, null, 2) : String(payload)
+        console.error('[reportsAnalyticsService] getEnterpriseProfit error:', str)
+      } catch {
+        console.error(
+          '[reportsAnalyticsService] getEnterpriseProfit error (raw):',
+          axiosErr ?? 'unknown error'
+        )
+      }
+      return { success: false, message }
+    }
   },
 
   /**
    * Get profit analytics by customer for a period
    * GET /reports/analytics/profit/customers?period=2025-11
    */
-  async getCustomersProfit(params: { period: string }): Promise<CustomersProfitResponse> {
-    const resp = await internalApiClient.get('/api/reports/analytics/profit/customers', {
-      params,
-    })
-    return resp.data
+  async getCustomersProfit(params: {
+    period?: string
+    from?: string
+    to?: string
+    year?: string
+  }): Promise<CustomersProfitResponse> {
+    try {
+      const resp = await internalApiClient.get('/api/reports/analytics/profit/customers', {
+        params,
+        validateStatus: (status) => (status >= 200 && status < 300) || status === 404,
+      })
+      if (resp.status === 404) {
+        const data = resp.data as unknown
+        return {
+          success: false,
+          message: extractErrorMessage(data) || 'No data found for customers in this period',
+        }
+      }
+      return resp.data
+    } catch (err) {
+      const axiosErr = err as AxiosError | undefined
+      const message =
+        extractErrorMessage(axiosErr?.response?.data) ?? axiosErr?.message ?? 'No data found'
+
+      return {
+        success: false,
+        message,
+      }
+    }
   },
 
   /**
@@ -135,13 +221,49 @@ export const reportsAnalyticsService = {
    */
   async getCustomerDetailProfit(
     customerId: string,
-    params: { period: string }
+    params: { period?: string; from?: string; to?: string; year?: string }
   ): Promise<CustomerDetailProfitResponse> {
-    const resp = await internalApiClient.get(
-      `/api/reports/analytics/profit/customers/${customerId}`,
-      { params }
-    )
-    return resp.data
+    try {
+      // Allow 404 responses to be handled gracefully by the client instead of
+      // throwing an Axios error. For the backlog case of "no data for period"
+      // backend typically returns a 404/400 with a message. Treat 404 as a
+      // resolved response and map accordingly.
+      const resp = await internalApiClient.get(
+        `/api/reports/analytics/profit/customers/${customerId}`,
+        {
+          params,
+          validateStatus: (status) => (status >= 200 && status < 300) || status === 404,
+        }
+      )
+
+      // If backend explicitly indicates "no data" via 404 or message, return
+      // a structured failure (success: false) and let the UI decide how to
+      // render a user-friendly empty state instead of throwing network
+      // exception.
+      if (resp.status === 404) {
+        const data = resp.data as unknown
+        return {
+          success: false,
+          message: extractErrorMessage(data) || 'No data found for customer in this period',
+        }
+      }
+
+      return resp.data
+    } catch (err) {
+      // If backend returns an explicit "no data" error (often 404 or 400)
+      // do not let it throw as an unhandled network error. Convert it to a
+      // structured response so the UI can decide how to render (e.g., show "No
+      // data" message or an empty state) without showing a network error in
+      // the console.
+      const axiosErr = err as AxiosError | undefined
+      const message =
+        extractErrorMessage(axiosErr?.response?.data) ?? axiosErr?.message ?? 'No data found'
+
+      return {
+        success: false,
+        message,
+      }
+    }
   },
 
   /**
@@ -150,12 +272,34 @@ export const reportsAnalyticsService = {
    */
   async getDeviceProfitability(
     deviceId: string,
-    params: { from: string; to: string }
+    params: { period?: string; from?: string; to?: string; year?: string }
   ): Promise<DeviceProfitabilityResponse> {
-    const resp = await internalApiClient.get(`/api/reports/analytics/profit/devices/${deviceId}`, {
-      params,
-    })
-    return resp.data
+    try {
+      const resp = await internalApiClient.get(
+        `/api/reports/analytics/profit/devices/${deviceId}`,
+        {
+          params,
+          validateStatus: (status) => (status >= 200 && status < 300) || status === 404,
+        }
+      )
+      if (resp.status === 404) {
+        const data = resp.data as unknown
+        return {
+          success: false,
+          message: extractErrorMessage(data) || 'No data found for device in this period',
+        }
+      }
+      return resp.data
+    } catch (err) {
+      const axiosErr = err as AxiosError | undefined
+      const message =
+        extractErrorMessage(axiosErr?.response?.data) ?? axiosErr?.message ?? 'No data found'
+
+      return {
+        success: false,
+        message,
+      }
+    }
   },
 
   /**
@@ -163,14 +307,35 @@ export const reportsAnalyticsService = {
    * GET /reports/analytics/consumables/lifecycle?from=2025-10&to=2025-11&consumableTypeId=...&customerId=...
    */
   async getConsumableLifecycle(params: {
-    from: string
-    to: string
+    period?: string
+    from?: string
+    to?: string
     consumableTypeId?: string
     customerId?: string
   }): Promise<ConsumableLifecycleResponse> {
-    const resp = await internalApiClient.get('/api/reports/analytics/consumables/lifecycle', {
-      params,
-    })
-    return resp.data
+    try {
+      const resp = await internalApiClient.get('/api/reports/analytics/consumables/lifecycle', {
+        params,
+        validateStatus: (status) => (status >= 200 && status < 300) || status === 404,
+      })
+      if (resp.status === 404) {
+        const data = resp.data as unknown
+        return {
+          success: false,
+          message:
+            extractErrorMessage(data) || 'No data found for consumable lifecycle in this period',
+        }
+      }
+      return resp.data
+    } catch (err) {
+      const axiosErr = err as AxiosError | undefined
+      const message =
+        extractErrorMessage(axiosErr?.response?.data) ?? axiosErr?.message ?? 'No data found'
+
+      return {
+        success: false,
+        message,
+      }
+    }
   },
 }

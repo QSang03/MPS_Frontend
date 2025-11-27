@@ -5,9 +5,12 @@ import backendApiClient from '@/lib/api/backend-client'
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
-    const period = searchParams.get('period')
+    const params: Record<string, string> = {}
+    for (const [k, v] of searchParams.entries()) {
+      if (v !== null && String(v).trim() !== '') params[k] = v
+    }
 
-    console.log('[API] Enterprise profit request:', { period })
+    console.log('[API] Enterprise profit request:', params)
 
     // Get access token from cookies
     const cookieStore = await cookies()
@@ -21,7 +24,7 @@ export async function GET(request: NextRequest) {
     }
 
     const response = await backendApiClient.get('/reports/analytics/profit/enterprise', {
-      params: { period },
+      params,
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },

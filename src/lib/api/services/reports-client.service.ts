@@ -114,4 +114,12 @@ export const reportsClientService = {
       pagination?: { page: number; limit: number; total: number; totalPages: number }
     }
   },
+  async deleteA4Equivalent(snapshotId: string) {
+    const resp = await internalApiClient.delete(`/api/reports/usage/a4-equivalent/${snapshotId}`)
+    return resp.data as {
+      success: boolean
+      message?: string
+      error?: string
+    }
+  },
 }

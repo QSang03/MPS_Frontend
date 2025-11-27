@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
-import { Search, RefreshCw, Calendar as CalendarIcon, FileText } from 'lucide-react'
+import { Search, RefreshCw, Calendar as CalendarIcon, FileText, Trash2 } from 'lucide-react'
 import { SystemModalLayout } from '@/components/system/SystemModalLayout'
 import { Dialog } from '@/components/ui/dialog'
 import {
@@ -18,6 +18,7 @@ import { format } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import { toast } from 'sonner'
 import { reportsClientService } from '@/lib/api/services/reports-client.service'
+import { DeleteDialog } from '@/components/shared/DeleteDialog'
 import { TableWrapper } from '@/components/system/TableWrapper'
 import type { ColumnDef } from '@tanstack/react-table'
 
@@ -170,6 +171,45 @@ export function A4EquivalentUsageHistory({
           {ctx.getValue()
             ? format(new Date(String(ctx.getValue())), 'dd/MM/yyyy HH:mm', { locale: vi })
             : '-'}
+        </div>
+      ),
+    },
+    {
+      id: 'actions',
+      header: 'Hành động',
+      cell: ({ row }) => (
+        <div className="flex items-center justify-end gap-2">
+          <DeleteDialog
+            title="Xóa snapshot A4"
+            description={`Bạn có chắc chắn muốn xóa snapshot ${row.original.snapshotId ?? ''}? Hành động không thể hoàn tác.`}
+            onConfirm={async () => {
+              try {
+                const snapshotId = row.original.snapshotId
+                if (!snapshotId) {
+                  toast.error('Snapshot không hợp lệ')
+                  return
+                }
+                const res = await reportsClientService.deleteA4Equivalent(snapshotId)
+                if (res && res.success) {
+                  toast.success(res.message || 'Xóa snapshot thành công')
+                  await load()
+                } else {
+                  const msg = res?.message || res?.error || 'Không thể xóa snapshot'
+                  toast.error(msg)
+                }
+              } catch (err) {
+                console.error('Xóa snapshot thất bại', err)
+                const message = err instanceof Error ? err.message : 'Không thể xóa snapshot'
+                toast.error(message)
+              }
+            }}
+            trigger={
+              <Button size="sm" variant="ghost" title="Xóa">
+                {' '}
+                <Trash2 className="h-4 w-4 text-red-600" />{' '}
+              </Button>
+            }
+          />
         </div>
       ),
     },

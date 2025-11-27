@@ -11,8 +11,12 @@ export async function GET(request: NextRequest, ctx: unknown) {
 
   try {
     const searchParams = request.nextUrl.searchParams
-    const from = searchParams.get('from')
-    const to = searchParams.get('to')
+    const params: Record<string, string> = {}
+    for (const [k, v] of searchParams.entries()) {
+      if (v !== null && String(v).trim() !== '') params[k] = v
+    }
+    const from = params.from
+    const to = params.to
 
     console.log('[API] Device profitability request:', { deviceId, from, to })
 
@@ -32,7 +36,7 @@ export async function GET(request: NextRequest, ctx: unknown) {
     }
 
     const response = await backendApiClient.get(`/reports/analytics/profit/devices/${deviceId}`, {
-      params: { from, to },
+      params,
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },

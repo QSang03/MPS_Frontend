@@ -332,6 +332,7 @@ export default function CustomerAdminDashboard() {
           kpis={overviewData?.kpis}
           isLoading={isLoading}
           onViewAll={() => router.push('/system/notifications')}
+          recentNotifications={overviewData?.recentNotifications}
         />
       </div>
 
@@ -351,7 +352,10 @@ export default function CustomerAdminDashboard() {
           onViewAll={() => router.push('/system/customers')}
           onExport={handleExportTopCustomers}
         />
-        <RecentActivity onViewAll={() => router.push('/system/requests')} />
+        <RecentActivity
+          onViewAll={() => router.push('/system/requests')}
+          recentRequests={overviewData?.recentRequests}
+        />
       </div>
     </SystemPageLayout>
   )

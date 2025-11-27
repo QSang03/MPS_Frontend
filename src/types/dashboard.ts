@@ -103,6 +103,22 @@ export interface AdminOverviewData {
   costBreakdown: CostBreakdown
   topCustomers: TopCustomer[]
   monthlySeries: MonthlySeries
+  // Recent service requests and notifications for display on Recent Activity
+  recentRequests?: Array<{
+    id: string
+    title: string
+    status: string
+    priority?: string
+    type?: string
+    createdAt?: string
+    customer?: { id?: string; name?: string }
+  }>
+  recentNotifications?: Array<{
+    id: string
+    title: string
+    message?: string
+    createdAt?: string
+  }>
 }
 
 /**

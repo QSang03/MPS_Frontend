@@ -7,6 +7,7 @@ import { FileText } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
+import DateTimeLocalPicker from '@/components/ui/DateTimeLocalPicker'
 import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from 'sonner'
 import internalApiClient from '@/lib/api/internal-client'
@@ -31,39 +32,51 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
   const [totalPageCount, setTotalPageCount] = useState<string>('')
   const [totalColorPages, setTotalColorPages] = useState<string>('')
   const [totalBlackWhitePages, setTotalBlackWhitePages] = useState<string>('')
-  const [recordedAt, setRecordedAt] = useState<string>('')
+  const [recordedAt, setRecordedAt] = useState<string>('') // local value
+  const [recordedAtISO, setRecordedAtISO] = useState<string | null>(null) // ISO
   const [updateLatest, setUpdateLatest] = useState<boolean>(false)
+
+  const useA4 = Boolean((device as Device | null)?.deviceModel?.useA4Counter)
 
   useEffect(() => {
     if (!device) return
     // Reset form when device changes / modal toggled open
-    setTotalPageCount('')
-    setTotalColorPages('')
-    setTotalBlackWhitePages('')
-    setTotalPageCountA4('')
-    setTotalColorPagesA4('')
-    setTotalBlackWhitePagesA4('')
+    // If the device model uses A4 counters only, prefill standard counters with 0 to avoid confusion
+    if (useA4) {
+      setTotalPageCount('0')
+      setTotalColorPages('0')
+      setTotalBlackWhitePages('0')
+      setTotalPageCountA4('')
+      setTotalColorPagesA4('')
+      setTotalBlackWhitePagesA4('')
+    } else {
+      // If the device model uses standard counters (non-A4), prefill A4 counters with 0
+      setTotalPageCount('')
+      setTotalColorPages('')
+      setTotalBlackWhitePages('')
+      setTotalPageCountA4('0')
+      setTotalColorPagesA4('0')
+      setTotalBlackWhitePagesA4('0')
+    }
     setRecordedAt('')
     setUpdateLatest(false)
-  }, [device, open])
+  }, [device, open, useA4])
 
   if (!device) return null
 
   const handleSubmit = async () => {
     // basic validation: require at least one of the counts (either non-A4 or A4) and recordedAt
     if (
-      !totalPageCountA4.trim() &&
-      !totalColorPagesA4.trim() &&
-      !totalBlackWhitePagesA4.trim() &&
-      !totalPageCount.trim() &&
-      !totalColorPages.trim() &&
-      !totalBlackWhitePages.trim()
+      // If device uses A4, require A4 counts; otherwise require non-A4 counts. If model not specified, allow either.
+      useA4
+        ? !totalPageCountA4.trim() && !totalColorPagesA4.trim() && !totalBlackWhitePagesA4.trim()
+        : !totalPageCount.trim() && !totalColorPages.trim() && !totalBlackWhitePages.trim()
     ) {
       toast.error('Vui lòng nhập ít nhất một giá trị trang (A4 hoặc tổng trang)')
       return
     }
 
-    if (!recordedAt) {
+    if (!recordedAtISO) {
       toast.error('Vui lòng chọn thời gian ghi nhận')
       return
     }
@@ -169,7 +182,7 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
 
     const body: Record<string, unknown> = {
       deviceId: device.id,
-      recordedAt: new Date(recordedAt).toISOString(),
+      recordedAt: recordedAtISO,
       updateLatest,
     }
 
@@ -182,6 +195,20 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
     if (finalTotalA4 !== undefined) body.totalPageCountA4 = finalTotalA4
     if (finalColorA4 !== undefined) body.totalColorPagesA4 = finalColorA4
     if (finalBwA4 !== undefined) body.totalBlackWhitePagesA4 = finalBwA4
+
+    // If device uses A4 counters, ensure non-A4 fields are explicitly set to 0 in case backend expects them
+    if (useA4) {
+      if (body.totalPageCount === undefined) body.totalPageCount = 0
+      if (body.totalColorPages === undefined) body.totalColorPages = 0
+      if (body.totalBlackWhitePages === undefined) body.totalBlackWhitePages = 0
+    }
+
+    // If device uses standard counters, ensure A4 fields are set to 0
+    if (!useA4) {
+      if (body.totalPageCountA4 === undefined) body.totalPageCountA4 = 0
+      if (body.totalColorPagesA4 === undefined) body.totalColorPagesA4 = 0
+      if (body.totalBlackWhitePagesA4 === undefined) body.totalBlackWhitePagesA4 = 0
+    }
 
     setSubmitting(true)
     try {
@@ -324,86 +351,94 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
           className="space-y-4"
         >
           {/* non-A4 fields (regular counters) */}
-          <div>
-            <Label className="text-sm font-semibold">Tổng trang màu</Label>
-            <Input
-              value={totalColorPages}
-              onChange={(e) => handleColorChangeNonA4(e.target.value)}
-              placeholder="Ví dụ: 2000"
-              className="mt-2 h-11"
-              type="number"
-              min={0}
-            />
-          </div>
+          {!useA4 && (
+            <>
+              <div>
+                <Label className="text-sm font-semibold">Tổng trang màu</Label>
+                <Input
+                  value={totalColorPages}
+                  onChange={(e) => handleColorChangeNonA4(e.target.value)}
+                  placeholder="Ví dụ: 2000"
+                  className="mt-2 h-11"
+                  type="number"
+                  min={0}
+                />
+              </div>
 
-          <div>
-            <Label className="text-sm font-semibold">Tổng trang đen trắng</Label>
-            <Input
-              value={totalBlackWhitePages}
-              onChange={(e) => handleBwChangeNonA4(e.target.value)}
-              placeholder="Ví dụ: 8000"
-              className="mt-2 h-11"
-              type="number"
-              min={0}
-            />
-          </div>
+              <div>
+                <Label className="text-sm font-semibold">Tổng trang đen trắng</Label>
+                <Input
+                  value={totalBlackWhitePages}
+                  onChange={(e) => handleBwChangeNonA4(e.target.value)}
+                  placeholder="Ví dụ: 8000"
+                  className="mt-2 h-11"
+                  type="number"
+                  min={0}
+                />
+              </div>
 
-          <div>
-            <Label className="text-sm font-semibold">Tổng số trang</Label>
-            <Input
-              value={totalPageCount}
-              onChange={(e) => handleTotalChangeNonA4(e.target.value)}
-              placeholder="Ví dụ: 10000"
-              className="mt-2 h-11"
-              type="number"
-              min={0}
-            />
-          </div>
+              <div>
+                <Label className="text-sm font-semibold">Tổng số trang</Label>
+                <Input
+                  value={totalPageCount}
+                  onChange={(e) => handleTotalChangeNonA4(e.target.value)}
+                  placeholder="Ví dụ: 10000"
+                  className="mt-2 h-11"
+                  type="number"
+                  min={0}
+                />
+              </div>
+            </>
+          )}
 
           {/* A4 fields */}
-          <div>
-            <Label className="text-sm font-semibold">Tổng trang màu (A4)</Label>
-            <Input
-              value={totalColorPagesA4}
-              onChange={(e) => handleColorChange(e.target.value)}
-              placeholder="Ví dụ: 2000"
-              className="mt-2 h-11"
-              type="number"
-              min={0}
-            />
-          </div>
+          {useA4 && (
+            <>
+              <div>
+                <Label className="text-sm font-semibold">Tổng trang màu (A4)</Label>
+                <Input
+                  value={totalColorPagesA4}
+                  onChange={(e) => handleColorChange(e.target.value)}
+                  placeholder="Ví dụ: 2000"
+                  className="mt-2 h-11"
+                  type="number"
+                  min={0}
+                />
+              </div>
 
-          <div>
-            <Label className="text-sm font-semibold">Tổng trang đen trắng (A4)</Label>
-            <Input
-              value={totalBlackWhitePagesA4}
-              onChange={(e) => handleBwChange(e.target.value)}
-              placeholder="Ví dụ: 8000"
-              className="mt-2 h-11"
-              type="number"
-              min={0}
-            />
-          </div>
+              <div>
+                <Label className="text-sm font-semibold">Tổng trang đen trắng (A4)</Label>
+                <Input
+                  value={totalBlackWhitePagesA4}
+                  onChange={(e) => handleBwChange(e.target.value)}
+                  placeholder="Ví dụ: 8000"
+                  className="mt-2 h-11"
+                  type="number"
+                  min={0}
+                />
+              </div>
 
-          <div>
-            <Label className="text-sm font-semibold">Tổng số trang (A4)</Label>
-            <Input
-              value={totalPageCountA4}
-              onChange={(e) => handleTotalChange(e.target.value)}
-              placeholder="Ví dụ: 10000"
-              className="mt-2 h-11"
-              type="number"
-              min={0}
-            />
-          </div>
+              <div>
+                <Label className="text-sm font-semibold">Tổng số trang (A4)</Label>
+                <Input
+                  value={totalPageCountA4}
+                  onChange={(e) => handleTotalChange(e.target.value)}
+                  placeholder="Ví dụ: 10000"
+                  className="mt-2 h-11"
+                  type="number"
+                  min={0}
+                />
+              </div>
+            </>
+          )}
 
           <div>
             <Label className="text-sm font-semibold">Thời gian ghi nhận</Label>
-            <Input
+            <DateTimeLocalPicker
+              id="a4-recordedAt"
               value={recordedAt}
-              onChange={(e) => setRecordedAt(e.target.value)}
-              className="mt-2 h-11"
-              type="datetime-local"
+              onChange={(v) => setRecordedAt(v)}
+              onISOChange={(iso) => setRecordedAtISO(iso)}
             />
           </div>
 

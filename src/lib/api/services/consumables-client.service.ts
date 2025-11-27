@@ -7,6 +7,8 @@ export interface CreateConsumableDto {
   capacity?: number
   remaining?: number
   expiryDate?: string
+  // Optional: the customerId to which the consumable belongs or will be assigned
+  customerId?: string
 }
 
 class ConsumablesClientService {

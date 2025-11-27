@@ -12,54 +12,27 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { formatRelativeTime } from '@/lib/utils/formatters'
 import { ArrowRight, Printer, FileText, AlertCircle, History } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
+
+import type { AdminOverviewData } from '@/types/dashboard'
 
 interface RecentActivityProps {
   onViewAll?: () => void
+  recentRequests?: AdminOverviewData['recentRequests']
 }
 
-// Mock data - will be replaced with real API
-const recentActivities = [
-  {
-    id: '1',
-    type: 'device',
-    title: 'Thiết bị HP-LJ-001 chuyển sang trạng thái Lỗi',
-    description: 'Cần xử lý ngay',
-    time: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    severity: 'high',
-  },
-  {
-    id: '2',
-    type: 'service',
-    title: 'Yêu cầu bảo trì mới được gửi',
-    description: 'Mã #SR-2024-045',
-    time: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-    severity: 'normal',
-  },
-  {
-    id: '3',
-    type: 'device',
-    title: 'Cập nhật thành công 10 thiết bị',
-    description: 'Hoàn tất cập nhật firmware',
-    time: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-    severity: 'low',
-  },
-  {
-    id: '4',
-    type: 'service',
-    title: 'Yêu cầu #SR-2024-042 đã xử lý',
-    description: 'Hoàn thành bởi kỹ thuật viên',
-    time: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    severity: 'low',
-  },
-]
+// We'll construct recent activity from incoming props if provided
 
 const iconMap = {
   device: Printer,
   service: FileText,
+  request: FileText,
+  notification: AlertCircle,
 }
 
-export function RecentActivity({ onViewAll }: RecentActivityProps) {
+export function RecentActivity({ onViewAll, recentRequests }: RecentActivityProps) {
+  const router = useRouter()
   const [isClient, setIsClient] = useState(false)
 
   useEffect(() => {
@@ -68,6 +41,37 @@ export function RecentActivity({ onViewAll }: RecentActivityProps) {
     const t = setTimeout(() => setIsClient(true), 0)
     return () => clearTimeout(t)
   }, [])
+
+  // Build list from recentRequests only
+  const activities: Array<{
+    id: string
+    type: 'request' | 'notification' | 'device' | 'service' | string
+    title: string
+    description?: string
+    time?: string
+    severity?: 'low' | 'normal' | 'high' | string
+  }> = []
+
+  if (recentRequests && recentRequests.length > 0) {
+    recentRequests.forEach((r) =>
+      activities.push({
+        id: r.id,
+        type: r.type || 'request',
+        title: r.title,
+        description: r.customer?.name ?? r.status,
+        time: r.createdAt,
+        severity: String(r.priority ?? '').toLowerCase() as 'low' | 'normal' | 'high',
+      })
+    )
+  }
+
+  // If nothing from API, keep fallback empty array (no mock content)
+  // Sort by time desc
+  activities.sort((a, b) => {
+    const ta = a.time ? Date.parse(a.time) : 0
+    const tb = b.time ? Date.parse(b.time) : 0
+    return tb - ta
+  })
 
   return (
     <Card>
@@ -84,33 +88,69 @@ export function RecentActivity({ onViewAll }: RecentActivityProps) {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {recentActivities.map((activity) => {
-            const Icon = iconMap[activity.type as keyof typeof iconMap]
-            return (
-              <div key={activity.id} className="flex items-start gap-4 border-b pb-4 last:border-0">
-                <div className="bg-muted flex h-10 w-10 shrink-0 items-center justify-center rounded-lg">
-                  <Icon className="h-5 w-5" />
-                </div>
-                <div className="flex-1 space-y-1">
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="text-sm leading-none font-medium">{activity.title}</p>
-                    {activity.severity === 'high' && (
-                      <Badge variant="destructive" className="shrink-0">
-                        <AlertCircle className="mr-1 h-3 w-3" />
-                        Khẩn cấp
-                      </Badge>
-                    )}
+          {activities.length === 0 ? (
+            <div className="flex h-40 items-center justify-center text-gray-500">
+              <p className="text-center">Không có hoạt động gần đây</p>
+            </div>
+          ) : (
+            activities.slice(0, 6).map((activity) => {
+              const Icon = iconMap[activity.type as keyof typeof iconMap] ?? FileText
+              const routeForActivity = (() => {
+                if (!activity.id) return '/system/requests'
+                const t = (activity.type || '').toLowerCase()
+                if (t.includes('service')) return `/system/service-requests/${activity.id}`
+                if (t.includes('purchase')) return `/system/purchase-requests/${activity.id}`
+                // default to list page if specific detail page is not available
+                return `/system/requests`
+              })()
+
+              return (
+                <button
+                  key={activity.id}
+                  onClick={() => {
+                    if (!routeForActivity) return
+                    try {
+                      router.push(routeForActivity)
+                    } catch (err) {
+                      console.error('Navigation failed for request', activity.id, err)
+                    }
+                  }}
+                  className="flex w-full items-start gap-4 border-b pb-4 text-left last:border-0 hover:bg-gray-50"
+                >
+                  <div className="bg-muted flex h-10 w-10 shrink-0 items-center justify-center rounded-lg">
+                    <Icon className="h-5 w-5" />
                   </div>
-                  <p className="text-muted-foreground text-sm">{activity.description}</p>
-                  <p className="text-muted-foreground text-xs">
-                    {isClient
-                      ? formatRelativeTime(activity.time)
-                      : new Date(activity.time).toLocaleDateString('vi-VN')}
-                  </p>
-                </div>
-              </div>
-            )
-          })}
+                  <div className="flex-1 space-y-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-sm leading-none font-medium">{activity.title}</p>
+                      {/* If item's severity is high OR it is a request with OPEN status or similar, show badge */}
+                      {activity.severity === 'high' && (
+                        <Badge variant="destructive" className="shrink-0">
+                          <AlertCircle className="mr-1 h-3 w-3" />
+                          Khẩn cấp
+                        </Badge>
+                      )}
+                      {activity.type === 'request' && activity.description && (
+                        <Badge variant="secondary" className="shrink-0">
+                          {activity.description}
+                        </Badge>
+                      )}
+                    </div>
+                    {activity.description && (
+                      <p className="text-muted-foreground text-sm">{activity.description}</p>
+                    )}
+                    <p className="text-muted-foreground text-xs">
+                      {isClient && activity.time
+                        ? formatRelativeTime(activity.time ?? '')
+                        : activity.time
+                          ? new Date(activity.time).toLocaleDateString('vi-VN')
+                          : ''}
+                    </p>
+                  </div>
+                </button>
+              )
+            })
+          )}
         </div>
       </CardContent>
       <CardFooter className="flex justify-end border-t bg-gray-50/50 p-4">

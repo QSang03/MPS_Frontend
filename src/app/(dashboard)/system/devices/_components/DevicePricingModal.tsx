@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogTrigger } from '@/components/ui/dialog'
 import { SystemModalLayout } from '@/components/system/SystemModalLayout'
 import { Input } from '@/components/ui/input'
+import DateTimeLocalPicker from '@/components/ui/DateTimeLocalPicker'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { Loader2, Edit, Tag } from 'lucide-react'
@@ -46,6 +47,7 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
     pricePerBWPage: '',
     pricePerColorPage: '',
     effectiveFrom: '',
+    effectiveFromISO: undefined,
   })
   // Support VND/USD entry per-page + exchange rate similar to consumable edit modal
   const [pricePerBWPageVND, setPricePerBWPageVND] = useState<number | ''>('')
@@ -402,6 +404,11 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
       }
 
       // effectiveFrom validation: if backend had existing effectiveFrom, new one must be greater
+      // Validate effectiveFrom if user provided a value - require full datetime
+      if (form.effectiveFrom && !localInputToIso(form.effectiveFrom)) {
+        toast.error('Thời gian hiệu lực không hợp lệ hoặc thiếu giờ:phút')
+        return
+      }
       const ef = localInputToIso(form.effectiveFrom)
       if (ef) {
         if (currentEffectiveFromISO) {
@@ -697,10 +704,11 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
               <div className="grid grid-cols-2 gap-5">
                 <div className="space-y-2">
                   <Label>Hiệu lực từ</Label>
-                  <Input
-                    type="datetime-local"
+                  <DateTimeLocalPicker
+                    id="device-pricing-effectiveFrom"
                     value={form.effectiveFrom}
-                    onChange={(e) => setForm((s: any) => ({ ...s, effectiveFrom: e.target.value }))}
+                    onChange={(v) => setForm((s: any) => ({ ...s, effectiveFrom: v }))}
+                    onISOChange={(iso) => setForm((s: any) => ({ ...s, effectiveFromISO: iso }))}
                     className="h-11"
                   />
                 </div>

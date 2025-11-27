@@ -15,6 +15,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import DateTimeLocalPicker from '@/components/ui/DateTimeLocalPicker'
 import { Button } from '@/components/ui/button'
 import {
   Loader2,
@@ -869,7 +870,25 @@ export function PolicyFormModal({
         const entries = Object.entries(selectedConditions || {}) as Array<
           [string, { operator?: string; value?: string }]
         >
-
+        // Validate datetime condition values: when present they must be full datetime (YYYY-MM-DDTHH:mm or with :ss)
+        for (const [id, info] of entries) {
+          const cond = (conditionsResp || []).find(
+            (c: unknown) => (c as Record<string, unknown>)?.id === id
+          ) as Record<string, unknown> | undefined
+          if (!cond) continue
+          const dtype = String(cond.dataType || 'string')
+          const val = info?.value
+          if (dtype === 'datetime' && typeof val === 'string' && val.trim().length > 0) {
+            if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/.test(val)) {
+              setSubmitError(
+                'Một điều kiện datetime không hợp lệ hoặc thiếu giờ:phút: ' +
+                  String(cond.name ?? id)
+              )
+              setIsLoading(false)
+              return
+            }
+          }
+        }
         entries.forEach(([id, info]) => {
           if (!info || !info.operator) return
           const cond = (conditionsResp || []).find(
@@ -1932,12 +1951,12 @@ export function PolicyFormModal({
                             </select>
 
                             {dtype === 'datetime' ? (
-                              <input
-                                type="datetime-local"
+                              <DateTimeLocalPicker
                                 value={sel.value || ''}
-                                onChange={(e) => setConditionValue(cid, e.target.value)}
+                                onChange={(v) => setConditionValue(cid, v)}
+                                onISOChange={(iso) => setConditionValue(cid, iso ?? '')}
                                 placeholder="YYYY-MM-DDThh:mm"
-                                className="flex h-9 w-full rounded-md border border-gray-300 bg-white px-3 text-sm"
+                                className="h-9"
                               />
                             ) : dtype === 'number' ? (
                               <Input

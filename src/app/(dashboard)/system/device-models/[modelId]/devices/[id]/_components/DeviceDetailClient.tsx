@@ -38,6 +38,7 @@ import { devicesClientService } from '@/lib/api/services/devices-client.service'
 import { customersClientService } from '@/lib/api/services/customers-client.service'
 import type { Device, UpdateDeviceDto } from '@/types/models/device'
 import { Input } from '@/components/ui/input'
+import DateTimeLocalPicker from '@/components/ui/DateTimeLocalPicker'
 import { Label } from '@/components/ui/label'
 import {
   Select,
@@ -131,6 +132,8 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
   const [remaining, setRemaining] = useState<number | ''>('')
   // create-install specific fields
   const [createInstalledAt, setCreateInstalledAt] = useState<string | null>(null)
+  const [createInstalledAtInput, setCreateInstalledAtInput] = useState('')
+  // removed create-installedAt input error state; we will accept incomplete inputs
   const [createActualPagesPrinted, setCreateActualPagesPrinted] = useState<number | ''>('')
   const [createActualPagesPrintedError, setCreateActualPagesPrintedError] = useState<string | null>(
     null
@@ -262,6 +265,8 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
   const [editExpiryDate, setEditExpiryDate] = useState('')
   // new fields for device-consumable record
   const [editInstalledAt, setEditInstalledAt] = useState<string | null>(null)
+  const [editInstalledAtInput, setEditInstalledAtInput] = useState('')
+  // removed edit-installedAt input error state; we will accept incomplete inputs
   const [editRemovedAt, setEditRemovedAt] = useState<string | null>(null)
   const [editActualPagesPrinted, setEditActualPagesPrinted] = useState<number | ''>('')
 
@@ -326,7 +331,6 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
     const min = pad(d.getMinutes())
     return `${yyyy}-${mm}-${dd}T${hh}:${min}`
   }
-
   // Helper: limit a numeric value to at most `max` decimal places.
   const formatDecimal = (v: number | string | undefined | null, max = 8) => {
     if (v === undefined || v === null || v === '') return undefined
@@ -595,7 +599,11 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
             iconUrl: undefined,
             active: Boolean(device?.isActive),
           }}
-          onPrimaryAction={() => setShowCreateConsumable(true)}
+          onPrimaryAction={() => {
+            setCreateInstalledAt(null)
+            setCreateInstalledAtInput('')
+            setShowCreateConsumable(true)
+          }}
           rightContent={
             <>
               {getStatusBadge(device.isActive)}
@@ -1335,6 +1343,10 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                                       )
                                       // device-level fields
                                       setEditInstalledAt(c?.installedAt ?? null)
+                                      setEditInstalledAtInput(
+                                        formatISOToLocalDatetime(c?.installedAt ?? null)
+                                      )
+                                      // removed editInstalledAtError clearing
                                       setEditRemovedAt(c?.removedAt ?? null)
                                       const prefilledPages = c?.actualPagesPrinted ?? ''
                                       setEditActualPagesPrinted(prefilledPages)
@@ -1491,6 +1503,8 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                                       setCapacity('')
                                       setRemaining('')
                                       setCreateInstalledAt(null)
+                                      setCreateInstalledAtInput('')
+                                      // removed createInstalledAtError clearing
                                       setCreateActualPagesPrinted('')
                                       setCreatePriceVND('')
                                       setCreatePriceUSD('')
@@ -1955,6 +1969,7 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                       setCreatingConsumable(false)
                       return
                     }
+                    // Removed incomplete datetime validation: accept partial input
                     const dto: CreateConsumableDto = {
                       consumableTypeId: selectedConsumableType.id,
                       serialNumber: serialNumber || undefined,
@@ -1962,6 +1977,7 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                       capacity: capacity || undefined,
                       remaining: remaining || undefined,
                       // expiryDate removed per spec
+                      customerId: device?.customerId || undefined,
                     }
 
                     const created = await consumablesClientService.create(dto)
@@ -2041,7 +2057,7 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                     setConsumablesLoading(false)
                   }
                 }}
-                disabled={creatingConsumable}
+                disabled={creatingConsumable || Boolean(createActualPagesPrintedError)}
                 className="min-w-[120px] bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700"
               >
                 {creatingConsumable ? (
@@ -2091,16 +2107,22 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
 
               <div>
                 <Label className="text-base font-semibold">Thời gian lắp đặt</Label>
-                <Input
-                  type="datetime-local"
-                  value={formatISOToLocalDatetime(createInstalledAt)}
-                  onChange={(e) =>
-                    setCreateInstalledAt(
-                      e.target.value ? new Date(e.target.value).toISOString() : null
-                    )
-                  }
-                  className="mt-2 h-11"
+                <DateTimeLocalPicker
+                  id="create-installedAt"
+                  value={createInstalledAtInput}
+                  onChange={(value) => {
+                    setCreateInstalledAtInput(value)
+                    if (!value) {
+                      setCreateInstalledAt(null)
+                    }
+                  }}
+                  onISOChange={(iso) => {
+                    // Accept ISO value or clear it; do not block on incomplete input
+                    if (iso) setCreateInstalledAt(iso)
+                    else setCreateInstalledAt(null)
+                  }}
                 />
+                {/* removed incomplete-datetime error display */}
               </div>
               <div>
                 <Label className="text-base font-semibold">Số trang thực tế </Label>
@@ -2382,6 +2404,8 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
               <Button
                 onClick={async () => {
                   if (!editingConsumable?.id) return
+                  // If user inputted an installedAt but it isn't a valid/complete datetime, block and show error
+                  // Incomplete installedAt input no longer blocks saving; accept partial input
 
                   // Validation: installedAt must be strictly before removedAt and expiryDate
                   if (editInstalledAt && editRemovedAt) {
@@ -2566,16 +2590,18 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
               {/* device-consumable specific fields */}
               <div>
                 <Label className="text-base font-semibold">Ngày lắp đặt (installedAt)</Label>
-                <Input
-                  type="datetime-local"
-                  value={formatISOToLocalDatetime(editInstalledAt)}
-                  onChange={(e) =>
-                    setEditInstalledAt(
-                      e.target.value ? new Date(e.target.value).toISOString() : null
-                    )
-                  }
-                  className="mt-2 h-11"
+                <DateTimeLocalPicker
+                  id="edit-installedAt"
+                  value={editInstalledAtInput}
+                  onChange={(value) => {
+                    setEditInstalledAtInput(value)
+                  }}
+                  onISOChange={(iso) => {
+                    if (iso) setEditInstalledAt(iso)
+                    else setEditInstalledAt(null)
+                  }}
                 />
+                {/* removed edit-installedAt error messages */}
               </div>
 
               {/* Checkbox to show/hide removedAt */}
@@ -2601,15 +2627,15 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
               {editShowRemovedAt && (
                 <div>
                   <Label className="text-base font-semibold">Ngày gỡ (removedAt)</Label>
-                  <Input
-                    type="datetime-local"
+                  <DateTimeLocalPicker
+                    id="edit-removedAt"
                     value={formatISOToLocalDatetime(editRemovedAt)}
-                    onChange={(e) =>
-                      setEditRemovedAt(
-                        e.target.value ? new Date(e.target.value).toISOString() : null
-                      )
-                    }
-                    className="mt-2 h-11"
+                    onChange={(value) => {
+                      // if empty: clear
+                      if (!value) setEditRemovedAt(null)
+                      // else: onISOChange will set
+                    }}
+                    onISOChange={(iso) => setEditRemovedAt(iso)}
                   />
                 </div>
               )}

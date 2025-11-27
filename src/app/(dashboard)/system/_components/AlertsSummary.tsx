@@ -12,13 +12,18 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import type { AdminOverviewKPIs } from '@/types/dashboard'
-import { Bell, Package, AlertTriangle, Clock, ArrowRight } from 'lucide-react'
+import { Bell, Package, AlertTriangle, Clock, ArrowRight, ChevronRight } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { formatRelativeTime } from '@/lib/utils/formatters'
 import { cn } from '@/lib/utils/cn'
+
+import type { AdminOverviewData } from '@/types/dashboard'
 
 interface AlertsSummaryProps {
   kpis: AdminOverviewKPIs | undefined
   isLoading?: boolean
   onViewAll?: () => void
+  recentNotifications?: AdminOverviewData['recentNotifications']
 }
 
 interface AlertItem {
@@ -34,7 +39,13 @@ interface AlertItem {
   description: string
 }
 
-export function AlertsSummary({ kpis, isLoading, onViewAll }: AlertsSummaryProps) {
+export function AlertsSummary({
+  kpis,
+  isLoading,
+  onViewAll,
+  recentNotifications,
+}: AlertsSummaryProps) {
+  const router = useRouter()
   if (isLoading || !kpis) {
     return (
       <Card>
@@ -159,57 +170,94 @@ export function AlertsSummary({ kpis, isLoading, onViewAll }: AlertsSummaryProps
               </div>
             </div>
           ) : (
-            <div className="space-y-3">
-              {alerts.map((alert, index) => {
-                const Icon = alert.icon
-                return (
-                  <motion.div
-                    key={alert.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.1, duration: 0.3 }}
-                    className={cn(
-                      'group flex items-center gap-4 rounded-lg border p-3 transition-all',
-                      alert.count > 0 ? 'cursor-pointer hover:shadow-md' : 'opacity-60'
-                    )}
-                  >
-                    {/* Icon */}
-                    <div
+            <>
+              <div className="space-y-3">
+                {alerts.map((alert, index) => {
+                  const Icon = alert.icon
+                  return (
+                    <motion.div
+                      key={alert.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.1, duration: 0.3 }}
                       className={cn(
-                        'flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg',
-                        alert.bgColor
+                        'group flex items-center gap-4 rounded-lg border p-3 transition-all',
+                        alert.count > 0 ? 'cursor-pointer hover:shadow-md' : 'opacity-60'
                       )}
                     >
-                      <Icon className={cn('h-6 w-6', alert.iconColor)} />
-                    </div>
-
-                    {/* Alert Info */}
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="font-semibold text-gray-900">{alert.title}</p>
-                        {getSeverityBadge(alert.severity, alert.count)}
+                      {/* Icon */}
+                      <div
+                        className={cn(
+                          'flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg',
+                          alert.bgColor
+                        )}
+                      >
+                        <Icon className={cn('h-6 w-6', alert.iconColor)} />
                       </div>
-                      <p className="mt-1 text-xs text-gray-500">{alert.description}</p>
-                    </div>
 
-                    {/* Count */}
-                    <div className="text-right">
-                      <p className="text-2xl font-bold text-gray-900">{alert.count}</p>
-                      {alert.count > 0 && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="mt-1 h-auto p-0 text-xs hover:underline"
-                        >
-                          Xem chi tiết
-                          <ArrowRight className="ml-1 h-3 w-3" />
-                        </Button>
-                      )}
-                    </div>
-                  </motion.div>
-                )
-              })}
-            </div>
+                      {/* Alert Info */}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="font-semibold text-gray-900">{alert.title}</p>
+                          {getSeverityBadge(alert.severity, alert.count)}
+                        </div>
+                        <p className="mt-1 text-xs text-gray-500">{alert.description}</p>
+                      </div>
+
+                      {/* Count */}
+                      <div className="text-right">
+                        <p className="text-2xl font-bold text-gray-900">{alert.count}</p>
+                        {alert.count > 0 && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="mt-1 h-auto p-0 text-xs hover:underline"
+                          >
+                            Xem chi tiết
+                            <ArrowRight className="ml-1 h-3 w-3" />
+                          </Button>
+                        )}
+                      </div>
+                    </motion.div>
+                  )
+                })}
+              </div>
+
+              {/* Recent Notifications - show below the alert summary */}
+              {Array.isArray(recentNotifications) && recentNotifications.length > 0 && (
+                <div className="mt-4 space-y-3">
+                  <h4 className="text-sm font-semibold text-gray-700">Thông báo gần đây</h4>
+                  {recentNotifications.slice(0, 4).map((n) => (
+                    <button
+                      key={n.id}
+                      onClick={() => {
+                        try {
+                          router.push('/system/notifications')
+                        } catch (err) {
+                          console.error('Navigation failed for notifications list', err)
+                        }
+                      }}
+                      className="flex w-full items-start gap-3 rounded-lg p-2 text-left hover:bg-gray-50"
+                      aria-label={`Mở thông báo ${n.title}`}
+                    >
+                      <div className="flex h-9 w-9 items-center justify-center rounded bg-red-50">
+                        <Bell className="h-4 w-4 text-red-600" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-900">{n.title}</p>
+                        {n.message && <p className="text-xs text-gray-500">{n.message}</p>}
+                      </div>
+                      <div className="text-muted-foreground text-xs">
+                        {n.createdAt ? formatRelativeTime(n.createdAt) : ''}
+                      </div>
+                      <div className="flex items-center">
+                        <ChevronRight className="text-muted-foreground h-4 w-4" />
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </CardContent>
         {totalAlerts > 0 && (

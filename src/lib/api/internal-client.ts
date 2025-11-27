@@ -164,6 +164,22 @@ internalApiClient.interceptors.response.use(
       console.error('[Internal Client] Forbidden: Không có quyền truy cập')
     }
 
+    // Handle 404 (No data) - treat as a non-exception so callers can render a
+    // friendly empty state instead of failing with a network error. If the
+    // response body already contains a JSON message, keep it; otherwise, map
+    // to a standard message object.
+    if (error.response?.status === 404) {
+      const resp = error.response as AxiosResponse
+      // If the backend gave something other than JSON (HTML 404 page), attach
+      // a well-formed object so callers can read `data.message`
+      if (!resp.data || typeof resp.data !== 'object') {
+        // Mark as unknown instead of `any` to satisfy linter while keeping
+        // the runtime behavior: callers can read `resp.data.message`.
+        resp.data = { success: false, message: 'No data found' } as unknown
+      }
+      return Promise.resolve(resp)
+    }
+
     // Attach response data/message to the thrown error so callers can show
     // a more descriptive message to the user instead of the generic
     // "Request failed with status code X".

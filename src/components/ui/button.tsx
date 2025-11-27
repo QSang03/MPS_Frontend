@@ -9,26 +9,22 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default:
-          'bg-blue-600 text-white shadow-sm hover:bg-blue-700 transition-colors duration-200', // Primary standardized
-        destructive: 'bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90',
+        default: 'bg-primary text-primary-foreground hover:bg-primary/90',
+        destructive:
+          'bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60',
         outline:
-          'border border-blue-600 text-blue-600 bg-transparent shadow-sm hover:bg-blue-50 transition-colors duration-200', // Secondary standardized
-        secondary:
-          'bg-white text-blue-600 border border-blue-600 shadow-sm hover:bg-blue-50 transition-colors duration-200',
-        ghost: 'hover:bg-gray-50 text-gray-700 transition-colors duration-200',
-        link: 'text-blue-600 underline-offset-4 hover:underline',
-        success:
-          'bg-emerald-600 text-white shadow hover:bg-emerald-700 transition-colors duration-200',
-        warning: 'bg-amber-500 text-white shadow hover:bg-amber-600 transition-colors duration-200',
+          'border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50',
+        secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
+        ghost: 'hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50',
+        link: 'text-primary underline-offset-4 hover:underline',
       },
       size: {
-        default: 'h-10 px-5 py-2 text-sm font-semibold rounded-lg',
-        sm: 'h-8 rounded-md px-3 text-xs font-medium',
-        lg: 'h-12 rounded-lg px-6 text-base font-semibold',
-        icon: 'h-10 w-10 rounded-lg',
-        'icon-sm': 'h-8 w-8 rounded-md',
-        'icon-lg': 'h-12 w-12 rounded-lg',
+        default: 'h-9 px-4 py-2 has-[>svg]:px-3',
+        sm: 'h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5',
+        lg: 'h-10 rounded-md px-6 has-[>svg]:px-4',
+        icon: 'size-9',
+        'icon-sm': 'size-8',
+        'icon-lg': 'size-10',
       },
     },
     defaultVariants: {
@@ -53,7 +49,6 @@ function Button({
   return (
     <Comp
       data-slot="button"
-      suppressHydrationWarning={true}
       className={cn(buttonVariants({ variant, size, className }))}
       {...props}
     />

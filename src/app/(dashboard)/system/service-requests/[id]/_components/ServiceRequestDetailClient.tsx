@@ -55,6 +55,7 @@ import { serviceRequestsClientService } from '@/lib/api/services/service-request
 import { Priority, ServiceRequestStatus } from '@/constants/status'
 import { PermissionGuard } from '@/components/shared/PermissionGuard'
 import { SearchableSelect } from '@/app/(dashboard)/system/policies/_components/RuleBuilder/SearchableSelect'
+import { DeleteDialog } from '@/components/shared/DeleteDialog'
 import type { Session } from '@/lib/auth/session'
 import { cn } from '@/lib/utils/cn'
 
@@ -154,7 +155,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
       toast.error(msg)
     },
   })
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  // no custom showDeleteConfirm state — use shared DeleteDialog component
 
   const assignMutation = useMutation({
     mutationFn: (payload: { assignedTo: string; actionNote?: string }) =>
@@ -645,51 +646,25 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                   resource={{ type: 'serviceRequest', customerId: data.customerId }}
                   fallback={null}
                 >
-                  <Button
-                    variant="destructive"
-                    className="h-auto w-full justify-start px-2 py-2 text-white hover:bg-rose-50 hover:text-rose-700"
-                    onClick={() => setShowDeleteConfirm(true)}
-                    disabled={deleteMutation.isPending}
-                  >
-                    <XCircle className="mr-2 h-4 w-4" />
-                    Xóa yêu cầu này
-                  </Button>
+                  <DeleteDialog
+                    title="Xóa yêu cầu"
+                    description={`Bạn có chắc chắn muốn xóa yêu cầu ${data.title ?? ''}? Hành động không thể hoàn tác.`}
+                    onConfirm={async () => {
+                      await deleteMutation.mutateAsync()
+                    }}
+                    trigger={
+                      <Button
+                        variant="destructive"
+                        className="h-auto w-full justify-start px-2 py-2 text-white hover:bg-rose-50 hover:text-rose-700"
+                        disabled={deleteMutation.isPending}
+                      >
+                        <XCircle className="mr-2 h-4 w-4" />
+                        Xóa yêu cầu này
+                      </Button>
+                    }
+                  />
                 </PermissionGuard>
-                <Dialog
-                  open={showDeleteConfirm}
-                  onOpenChange={(open) => !open && setShowDeleteConfirm(false)}
-                >
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Xác nhận xóa</DialogTitle>
-                      <DialogDescription className="sr-only">
-                        Bạn có chắc chắn muốn xóa yêu cầu này không? Hành động không thể hoàn tác.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="mt-2">
-                      <p className="text-sm">
-                        Sau khi xóa, yêu cầu sẽ không thể khôi phục. Bạn vẫn muốn tiếp tục?
-                      </p>
-                    </div>
-                    <DialogFooter className="mt-4">
-                      <div className="flex w-full gap-2">
-                        <Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>
-                          Hủy
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          onClick={() => {
-                            setShowDeleteConfirm(false)
-                            deleteMutation.mutate()
-                          }}
-                          disabled={deleteMutation.isPending}
-                        >
-                          {deleteMutation.isPending ? 'Đang xóa...' : 'Xác nhận xóa'}
-                        </Button>
-                      </div>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
+                {/* DeleteDialog handles confirmation UI and action */}
               </div>
             </CardContent>
           </Card>
