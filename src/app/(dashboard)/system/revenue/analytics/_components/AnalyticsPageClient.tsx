@@ -316,7 +316,10 @@ export default function AnalyticsPageClient() {
                 placeholder="Kỳ (YYYY-MM)"
                 value={enterprisePeriod}
                 onChange={(v) => setEnterprisePeriod(v)}
-                onApply={(v) => void loadEnterpriseProfit(v)}
+                onApply={(v) => {
+                  setEnterprisePeriod(v)
+                  void loadEnterpriseProfit(v)
+                }}
                 className="w-40"
               />
             </div>
@@ -410,7 +413,10 @@ export default function AnalyticsPageClient() {
                 placeholder="Kỳ (YYYY-MM)"
                 value={customersPeriod}
                 onChange={(v) => setCustomersPeriod(v)}
-                onApply={(v) => void loadCustomersProfit(v)}
+                onApply={(v) => {
+                  setCustomersPeriod(v)
+                  void loadCustomersProfit(v)
+                }}
                 className="w-40"
               />
             </div>
@@ -518,7 +524,10 @@ export default function AnalyticsPageClient() {
                   placeholder="Kỳ (YYYY-MM)"
                   value={customerDetailPeriod}
                   onChange={(v) => setCustomerDetailPeriod(v)}
-                  onApply={(v) => void loadCustomerDetail(undefined, v)}
+                  onApply={(v) => {
+                    setCustomerDetailPeriod(v)
+                    void loadCustomerDetail(undefined, v)
+                  }}
                   className="w-40"
                 />
               </div>
