@@ -1382,10 +1382,24 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
 
                                 if (typeof preferredRemaining === 'number') {
                                   return (
-                                    <span className="text-sm">
-                                      {preferredRemaining}/{preferredCapacity ?? '-'}{' '}
-                                      {cons?.consumableType?.unit ?? ''}
-                                    </span>
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-sm">
+                                        {preferredRemaining}/{preferredCapacity ?? '-'}{' '}
+                                        {cons?.consumableType?.unit ?? ''}
+                                      </span>
+                                      {typeof usagePercent === 'number' && usagePercent < 1 ? (
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <span className="ml-1 cursor-help rounded-full bg-red-100 px-1.5 py-0.5 text-xs font-bold text-red-600">
+                                              !
+                                            </span>
+                                          </TooltipTrigger>
+                                          <TooltipContent sideOffset={4}>
+                                            {`Để tránh lãng phí, hãy tiếp tục sử dụng đến giọt mực cuối cùng.`}
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      ) : null}
+                                    </div>
                                   )
                                 }
 

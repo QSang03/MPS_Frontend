@@ -6,7 +6,7 @@ import { warehouseDocumentsClientService } from '@/lib/api/services/warehouse-do
 import type { WarehouseDocument } from '@/types/models/warehouse-document'
 import type { ListPagination } from '@/types/api'
 import { DataTable } from '@/components/shared/DataTable/DataTable'
-import { columns } from './columns'
+import getColumns from './columns'
 import type {
   WarehouseDocumentStatus,
   WarehouseDocumentType,
@@ -33,9 +33,11 @@ export function WarehouseDocumentList({ customerId, status, type }: WarehouseDoc
       }),
   })
 
+  const cols = getColumns(type)
+
   return (
     <DataTable
-      columns={columns}
+      columns={cols}
       data={data?.data || []}
       totalCount={data?.pagination?.total || 0}
       pageIndex={pagination.pageIndex}
