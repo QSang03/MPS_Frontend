@@ -92,6 +92,14 @@ export function TableWrapper<TData>({
   // Track if user is actively sorting (to prevent external sync from overwriting)
   const userSortingRef = useRef(false)
 
+  // IMPORTANT: If you use nested accessor keys (e.g., `customer.name`), set the
+  // `id` property on the ColumnDef explicitly to the same dotted string
+  // (e.g., `id: 'customer.name'`). TanStack may otherwise normalize the
+  // accessorKey to an id with underscores (e.g., 'customer_name'), which will
+  // be sent as `sortBy=customer_name` in API requests. By setting an explicit
+  // id containing dots, we preserve the dot notation so backend can sort by
+  // nested relationship fields (like `customer.name`).
+
   // Sync internal sorting with external sorting prop (only if different)
   // This ensures that when external state changes (e.g., from API response), internal state stays in sync
   useEffect(() => {

@@ -524,6 +524,7 @@ function DevicesTableContent({
         ),
       },
       {
+        id: 'deviceModel.name',
         accessorKey: 'deviceModel.name',
         header: () => (
           <div className="flex items-center gap-2">

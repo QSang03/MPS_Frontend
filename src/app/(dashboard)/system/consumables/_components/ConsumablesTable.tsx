@@ -120,6 +120,7 @@ export function ConsumablesTable({
         ),
       },
       {
+        id: 'consumableType.name',
         accessorKey: 'consumableType.name',
         header: 'Tên',
         enableSorting: true,
