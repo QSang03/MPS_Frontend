@@ -57,6 +57,39 @@ export default function NotificationsListClient() {
     void router.push('/system')
   }
 
+  const extractServiceRequestId = (text?: string): string | null => {
+    if (!text) return null
+    const uuidRegex = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i
+    const match = text.match(uuidRegex)
+    return match ? match[0] : null
+  }
+
+  const getNotificationTarget = (n: Notification) => {
+    const meta = n as unknown as { metadata?: { requestId?: string; type?: string } }
+    const metaType = meta.metadata?.type
+    if (metaType && typeof metaType === 'string' && metaType.toLowerCase() === 'service') {
+      const requestId =
+        meta.metadata?.requestId ??
+        n.alertId ??
+        extractServiceRequestId(`${n.title} ${n.message ?? ''}`)
+      if (requestId) return `/system/service-requests/${requestId}`
+    }
+    if (metaType && typeof metaType === 'string' && metaType.toLowerCase() === 'purchase') {
+      const requestId =
+        meta.metadata?.requestId ??
+        n.alertId ??
+        extractServiceRequestId(`${n.title} ${n.message ?? ''}`)
+      if (requestId) return `/system/purchase-requests/${requestId}`
+    }
+    // Fallback: detect keywords/content and check for a UUID
+    const id = extractServiceRequestId(`${n.title} ${n.message ?? ''}`)
+    if (!id) return null
+    const lower = `${n.title ?? ''} ${n.message ?? ''}`.toLowerCase()
+    if (lower.includes('service')) return `/system/service-requests/${id}`
+    if (lower.includes('purchase')) return `/system/purchase-requests/${id}`
+    return null
+  }
+
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
@@ -85,7 +118,15 @@ export default function NotificationsListClient() {
       ) : (
         <ul className="divide-y">
           {filtered.map((n) => (
-            <li key={n.id} className="flex items-start justify-between gap-4 py-3">
+            <li
+              key={n.id}
+              onClick={() => {
+                const target = getNotificationTarget(n)
+                if (target) router.push(target)
+                else router.push('/system/notifications')
+              }}
+              className="flex cursor-pointer items-start justify-between gap-4 py-3"
+            >
               <div className="flex-1">
                 <div className="flex items-center gap-2">
                   <strong>{n.title}</strong>
@@ -100,8 +141,28 @@ export default function NotificationsListClient() {
                 <div className="text-muted-foreground text-sm">{n.channel}</div>
                 <div className="flex gap-2">
                   {n.status !== 'READ' && (
-                    <Button size="sm" variant="ghost" onClick={() => handleMarkAsRead(n.id)}>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleMarkAsRead(n.id)
+                      }}
+                    >
                       Đánh dấu đã đọc
+                    </Button>
+                  )}
+                  {getNotificationTarget(n) && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        const target = getNotificationTarget(n)
+                        if (target) router.push(target)
+                      }}
+                    >
+                      Xem chi tiết
                     </Button>
                   )}
                 </div>

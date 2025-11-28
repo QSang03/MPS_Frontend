@@ -46,6 +46,22 @@ export function AlertsSummary({
   recentNotifications,
 }: AlertsSummaryProps) {
   const router = useRouter()
+  const extractServiceRequestId = (text?: string): string | null => {
+    if (!text) return null
+    const uuidRegex = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i
+    const match = text.match(uuidRegex)
+    return match ? match[0] : null
+  }
+
+  const getNotificationTarget = (n: { title?: string; message?: string }) => {
+    const text = `${n.title ?? ''} ${n.message ?? ''}`
+    const id = extractServiceRequestId(text)
+    if (!id) return null
+    const lower = text.toLowerCase()
+    if (lower.includes('service')) return `/system/service-requests/${id}`
+    if (lower.includes('purchase')) return `/system/purchase-requests/${id}`
+    return null
+  }
   if (isLoading || !kpis) {
     return (
       <Card>
@@ -250,7 +266,12 @@ export function AlertsSummary({
                       key={n.id}
                       onClick={() => {
                         try {
-                          router.push('/system/notifications')
+                          const target = getNotificationTarget(n)
+                          if (target) {
+                            router.push(target)
+                          } else {
+                            router.push('/system/notifications')
+                          }
                         } catch (err) {
                           console.error('Navigation failed for notifications list', err)
                         }

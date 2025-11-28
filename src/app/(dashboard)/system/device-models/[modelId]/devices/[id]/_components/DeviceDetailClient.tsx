@@ -30,6 +30,7 @@ import { Button } from '@/components/ui/button'
 import A4EquivalentModal from '@/app/(dashboard)/system/devices/_components/A4EquivalentModal'
 import A4EquivalentHistoryModal from '@/app/(dashboard)/system/devices/_components/A4EquivalentHistoryModal'
 import ConsumableHistoryModal from './ConsumableHistoryModal'
+import DeviceUsageHistory from '@/components/device/DeviceUsageHistory'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -728,7 +729,7 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="mb-6 grid w-full grid-cols-4">
+        <TabsList className="mb-6 grid w-full grid-cols-5">
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <Info className="h-4 w-4" />
             Tổng quan
@@ -744,6 +745,10 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
           <TabsTrigger value="history" className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4" />
             Lịch sử vật tư
+          </TabsTrigger>
+          <TabsTrigger value="usage-history" className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Lịch sử sử dụng
           </TabsTrigger>
         </TabsList>
 
@@ -1738,6 +1743,10 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
               />
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="usage-history" className="space-y-6">
+          <DeviceUsageHistory deviceId={deviceId} />
         </TabsContent>
       </Tabs>
 

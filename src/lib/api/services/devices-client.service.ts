@@ -114,6 +114,22 @@ export const devicesClientService = {
     return []
   },
 
+  /**
+   * Get daily usage history for device consumables within a date range (fromDate/toDate YYYY-MM-DD)
+   */
+  async getUsageHistory(id: string, params?: { fromDate?: string; toDate?: string }) {
+    const q: Record<string, unknown> = {}
+    if (params?.fromDate) q.fromDate = params.fromDate
+    if (params?.toDate) q.toDate = params.toDate
+    const response = await internalApiClient.get(`/api/devices/${id}/usage-history`, {
+      params: q,
+    })
+    const body = response.data
+    if (!body) return undefined
+    if (body.data) return body as { success: boolean; data: unknown }
+    return body
+  },
+
   async installConsumable(deviceId: string, consumableId: string) {
     const response = await internalApiClient.post(`/api/devices/${deviceId}/install-consumable`, {
       consumableId,

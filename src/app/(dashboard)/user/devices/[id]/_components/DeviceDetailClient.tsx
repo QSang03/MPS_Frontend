@@ -57,6 +57,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { ActionGuard } from '@/components/shared/ActionGuard'
 import { cn } from '@/lib/utils'
 import DeviceHeader from '@/components/device/DeviceHeader'
+import DeviceUsageHistory from '@/components/device/DeviceUsageHistory'
 import InfoCard from '@/components/ui/InfoCard'
 import type { MonthlyUsagePagesItem } from '@/types/api'
 
@@ -424,7 +425,7 @@ export default function DeviceDetailClient({ deviceId, backHref }: Props) {
 
       {/* Tabs - align with admin layout (4 tabs) */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="mb-6 grid w-full grid-cols-4">
+        <TabsList className="mb-6 grid w-full grid-cols-5">
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <Info className="h-4 w-4 text-black dark:text-white" />
             Tổng quan
@@ -440,6 +441,10 @@ export default function DeviceDetailClient({ deviceId, backHref }: Props) {
           <TabsTrigger value="history" className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4 text-black dark:text-white" />
             Lịch sử vật tư
+          </TabsTrigger>
+          <TabsTrigger value="usage-history" className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4 text-black dark:text-white" />
+            Lịch sử sử dụng
           </TabsTrigger>
         </TabsList>
 
@@ -821,6 +826,10 @@ export default function DeviceDetailClient({ deviceId, backHref }: Props) {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="usage-history" className="space-y-6">
+          <DeviceUsageHistory deviceId={deviceId} />
         </TabsContent>
 
         {/* Vật tư Tab */}

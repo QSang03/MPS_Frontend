@@ -186,6 +186,56 @@ export interface DeviceDashboardData {
   consumableHistory: ConsumableHistory[]
 }
 
+// ============================================================================
+// DEVICE USAGE HISTORY
+// ============================================================================
+
+export interface DeviceConsumableUsagePoint {
+  date: string // YYYY-MM-DD
+  recordedAt?: string
+  percentage?: number | null
+  remaining?: number | null
+  capacity?: number | null
+  status?: string
+  deviceConsumableId?: string
+  consumableId?: string
+  consumableSerialNumber?: string
+}
+
+export interface DeviceConsumableSeries {
+  deviceConsumableId?: string
+  consumableId?: string
+  consumableSerialNumber?: string
+  installedAt?: string
+  removedAt?: string | null
+  dataPoints?: DeviceConsumableUsagePoint[]
+}
+
+export interface DeviceConsumableTypeUsage {
+  consumableTypeId?: string
+  consumableTypeName?: string
+  unit?: string
+  description?: string
+  series?: DeviceConsumableSeries[]
+}
+
+export interface DeviceUsageHistoryData {
+  deviceId: string
+  deviceModelId?: string
+  fromDate: string
+  toDate: string
+  consumables: DeviceConsumableTypeUsage[]
+}
+
+export interface DeviceUsageHistoryResponse {
+  success: boolean
+  data: DeviceUsageHistoryData
+  message?: string
+  error?: string
+  code?: string
+  statusCode: number
+}
+
 /**
  * Device Dashboard Query Parameters
  */

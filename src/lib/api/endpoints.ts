@@ -37,6 +37,7 @@ export const API_ENDPOINTS = {
     STATS: (customerId: string) => `/devices/stats/${customerId}`,
     ASSIGN_TO_CUSTOMER: (id: string) => `/devices/${id}/assign-to-customer`,
     RETURN_TO_WAREHOUSE: (id: string) => `/devices/${id}/return-to-warehouse`,
+    USAGE_HISTORY: (id: string) => `/devices/${id}/usage-history`,
   },
 
   // Device Models
