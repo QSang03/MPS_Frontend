@@ -103,6 +103,7 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string) => `/purchase-requests/${id}`,
     DELETE: (id: string) => `/purchase-requests/${id}`,
     STATUS: (id: string) => `/purchase-requests/${id}/status`,
+    ASSIGN: (id: string) => `/purchase-requests/${id}/assign`,
     MESSAGES: (id: string) => `/purchase-requests/${id}/messages`,
   },
 

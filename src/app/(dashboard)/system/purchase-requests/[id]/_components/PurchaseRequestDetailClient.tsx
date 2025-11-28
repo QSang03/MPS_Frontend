@@ -28,6 +28,7 @@ import PurchaseRequestMessages from '@/components/purchase-request/purchasereque
 import { purchaseRequestsClientService } from '@/lib/api/services/purchase-requests-client.service'
 import { PurchaseRequestStatus, Priority } from '@/constants/status'
 import { PermissionGuard } from '@/components/shared/PermissionGuard'
+import { SearchableSelect } from '@/app/(dashboard)/system/policies/_components/RuleBuilder/SearchableSelect'
 import type { Session } from '@/lib/auth/session'
 import type { LucideIcon } from 'lucide-react'
 import {
@@ -105,6 +106,8 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
   const router = useRouter()
   const queryClient = useQueryClient()
   const [statusUpdating, setStatusUpdating] = useState(false)
+  const [assignNote, setAssignNote] = useState('')
+  const [selectedAssignee, setSelectedAssignee] = useState<string | undefined>(undefined)
 
   const { data, isLoading } = useQuery({
     queryKey: ['purchase-requests', 'detail', id],
@@ -142,6 +145,23 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
     },
   })
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const sysCustomerId = session?.isDefaultCustomer ? session.customerId : undefined
+
+  const assignMutation = useMutation({
+    mutationFn: (payload: { assignedTo: string; actionNote?: string }) =>
+      purchaseRequestsClientService.assign(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['purchase-requests'] })
+      queryClient.invalidateQueries({ queryKey: ['purchase-requests', 'detail', id] })
+      toast.success('Đã phân công nhân viên')
+      setAssignNote('')
+      setSelectedAssignee(undefined)
+    },
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : 'Không thể phân công'
+      toast.error(message)
+    },
+  })
 
   if (isLoading) {
     return (
@@ -300,6 +320,61 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
                   </p>
                   <p className="text-xl font-bold text-blue-600">{formatCurrency(totalAmount)}</p>
                 </div>
+              </div>
+
+              <div className="border-t pt-2">
+                <PermissionGuard
+                  session={session}
+                  action="update"
+                  resource={{ type: 'purchaseRequest', customerId: detail.customerId }}
+                  fallback={
+                    <div className="bg-muted rounded p-2 text-sm font-medium">
+                      {detail.assignedToName ?? detail.assignedTo ?? 'Chưa phân công'}
+                    </div>
+                  }
+                >
+                  <div className="space-y-2">
+                    <label className="text-sm leading-none font-medium">Người phụ trách</label>
+                    <div className="space-y-2">
+                      <SearchableSelect
+                        field="user.id"
+                        operator="$eq"
+                        value={selectedAssignee ?? detail.assignedTo}
+                        onChange={(v) => setSelectedAssignee(String(v))}
+                        placeholder={
+                          detail.assignedToName ?? detail.assignedTo ?? 'Chọn nhân viên...'
+                        }
+                        fetchParams={sysCustomerId ? { customerId: sysCustomerId } : undefined}
+                        disabled={assignMutation.isPending}
+                      />
+                      <textarea
+                        placeholder="Ghi chú phân công (tùy chọn)..."
+                        className="border-input placeholder:text-muted-foreground focus-visible:ring-ring flex min-h-[60px] w-full resize-y rounded-md border bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:ring-1 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                        value={assignNote}
+                        onChange={(e) => setAssignNote(e.target.value)}
+                      />
+                      <div className="flex gap-2">
+                        <Button
+                          variant="secondary"
+                          onClick={() =>
+                            assignMutation.mutate({
+                              assignedTo: selectedAssignee || detail.assignedTo || '',
+                              actionNote: assignNote,
+                            })
+                          }
+                          disabled={
+                            assignMutation.isPending || !(selectedAssignee || detail.assignedTo)
+                          }
+                        >
+                          {assignMutation.isPending ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          ) : null}
+                          Phân công
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </PermissionGuard>
               </div>
             </CardHeader>
             <CardContent className="space-y-4 pt-4">

@@ -82,4 +82,15 @@ export const purchaseRequestService = {
   async delete(id: string): Promise<void> {
     await apiClient.delete(API_ENDPOINTS.PURCHASE_REQUESTS.DELETE(id))
   },
+
+  async assign(
+    id: string,
+    payload: { assignedTo: string; actionNote?: string }
+  ): Promise<PurchaseRequest> {
+    const { data } = await apiClient.patch<PurchaseRequest>(
+      API_ENDPOINTS.PURCHASE_REQUESTS.ASSIGN(id),
+      payload
+    )
+    return data
+  },
 }

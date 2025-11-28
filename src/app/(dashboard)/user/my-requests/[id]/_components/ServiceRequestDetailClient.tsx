@@ -269,7 +269,7 @@ export function ServiceRequestDetailClient(props: Props) {
               {/* Created Date Card */}
 
               {/* Assigned To Card */}
-              {data.assignedTo && (
+              {(data.assignedTo || data.assignedToName) && (
                 <div className="group/card relative overflow-hidden rounded-2xl border border-white/40 bg-gradient-to-br from-white/80 to-white/60 p-6 shadow-lg backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 hover:shadow-xl dark:border-slate-600/40 dark:from-slate-700/80 dark:to-slate-700/60">
                   <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-emerald-500/5 opacity-0 transition-opacity duration-300 group-hover/card:opacity-100" />
                   <div className="relative">
@@ -280,7 +280,7 @@ export function ServiceRequestDetailClient(props: Props) {
                       </p>
                     </div>
                     <p className="inline-block rounded-lg bg-slate-100 px-3 py-1.5 font-mono text-lg font-bold text-slate-900 dark:bg-slate-600 dark:text-white">
-                      {data.assignedTo}
+                      {data.assignedToName ?? data.assignedTo}
                     </p>
                   </div>
                 </div>
@@ -506,7 +506,7 @@ export function ServiceRequestDetailClient(props: Props) {
                 </div>
 
                 {/* Assigned Person */}
-                {data.assignedTo && (
+                {(data.assignedTo || data.assignedToName) && (
                   <div className="rounded-xl bg-gradient-to-r from-green-50 to-emerald-100/50 p-4 dark:from-green-900/20 dark:to-emerald-900/20">
                     <div className="mb-3 flex items-center gap-2">
                       <User className="h-4 w-4 text-black dark:text-white" />
@@ -515,7 +515,7 @@ export function ServiceRequestDetailClient(props: Props) {
                       </span>
                     </div>
                     <p className="inline-block rounded bg-slate-100 px-2 py-1 font-mono text-sm font-bold text-slate-900 dark:bg-slate-700 dark:text-white">
-                      {data.assignedTo}
+                      {data.assignedToName ?? data.assignedTo}
                     </p>
                   </div>
                 )}

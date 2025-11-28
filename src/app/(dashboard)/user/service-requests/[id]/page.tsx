@@ -361,7 +361,8 @@ export default function UserServiceRequestDetail() {
                 </div>
                 <div className="border-t pt-2">
                   <div className="bg-muted rounded p-2 text-sm font-medium">
-                    Người phụ trách: {request.assignedTo || 'Chưa phân công'}
+                    Người phụ trách:{' '}
+                    {request.assignedToName ?? request.assignedTo ?? 'Chưa phân công'}
                   </div>
                 </div>
               </CardContent>

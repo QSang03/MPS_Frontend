@@ -16,6 +16,8 @@ export interface PurchaseRequest {
   priority: Priority
   status: PurchaseRequestStatus
   requestedBy: string
+  assignedTo?: string
+  assignedToName?: string
   approvedBy?: string
   approvedAt?: string
   orderedBy?: string

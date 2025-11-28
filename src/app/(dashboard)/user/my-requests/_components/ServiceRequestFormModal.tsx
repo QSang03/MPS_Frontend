@@ -203,6 +203,17 @@ export function ServiceRequestFormModal({
 
   const onSubmit = (data: ServiceRequestFormData) => {
     if (mode === 'SERVICE') {
+      // Guard: If creating a SERVICE request and there are no active SLAs available, block
+      if (!slasLoading && availableSlas.length === 0) {
+        toast.error('Không có SLA cho khách hàng này. Không thể tạo yêu cầu bảo trì')
+        return
+      }
+      // Guard: If the selected priority isn't mapped to an SLA, block
+      if (!availablePriorities.includes(data.priority)) {
+        toast.error('Độ ưu tiên đã chọn không có SLA, vui lòng chọn mức khác hoặc liên hệ quản trị')
+        return
+      }
+
       const rest = data as unknown as AnyRecord
       const merged = { ...rest, customerId } as AnyRecord
       // Keep deviceId when provided by the user; strip status only
@@ -283,6 +294,22 @@ export function ServiceRequestFormModal({
     queryFn: () => slasClientService.getAll({ page: 1, limit: 100, customerId }),
     enabled: !!customerId && mode === 'SERVICE',
   })
+
+  // Only use active SLAs and derive available priorities
+  const availableSlas = (slasData?.data || []).filter((s) => s.isActive)
+  const availablePriorities = availableSlas.map((s) => s.priority)
+
+  // Ensure form priority is set to a valid, available SLA priority when SLAs load
+  useEffect(() => {
+    if (mode !== 'SERVICE') return
+    if (slasLoading) return
+    if (!availablePriorities || availablePriorities.length === 0) return
+    const currentPriority = form.getValues().priority
+    if (!availablePriorities.includes(currentPriority)) {
+      form.setValue('priority', availablePriorities[0] as Priority)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slasLoading, slasData, mode])
 
   const filteredConsumables = (compatibleConsumables || []).filter((c) =>
     !consumableSearch ? true : (c.name || '').toLowerCase().includes(consumableSearch.toLowerCase())
@@ -604,97 +631,80 @@ export function ServiceRequestFormModal({
                   )}
 
                   {/* Priority only in SERVICE mode */}
-                  {mode === 'SERVICE' && (
-                    <motion.div
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.4 }}
-                    >
-                      <FormField
-                        control={form.control}
-                        name="priority"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-300">
-                              <Flag className="h-4 w-4 text-black dark:text-white" />
-                              Độ ưu tiên
-                            </FormLabel>
-                            <div className="space-y-2">
-                              {slasLoading ? (
-                                <div className="text-xs text-slate-500">Đang tải các SLA...</div>
-                              ) : slasData?.data && slasData.data.length > 0 ? (
-                                slasData.data.map((sla) => (
-                                  <label
-                                    key={sla.id}
-                                    className={`flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-indigo-50 dark:hover:bg-indigo-900/20 ${field.value === sla.priority ? 'ring-2 ring-indigo-200 dark:ring-indigo-500' : ''}`}
-                                  >
-                                    <input
-                                      type="radio"
-                                      name="priority"
-                                      value={sla.priority}
-                                      checked={field.value === sla.priority}
-                                      onChange={() => field.onChange(sla.priority)}
-                                      disabled={createServiceMutation.isPending}
-                                      className="h-4 w-4"
-                                    />
-                                    <div className="flex-1">
-                                      <div className="flex items-center justify-between">
-                                        <span
-                                          className={`font-semibold ${priorityConfig[sla.priority]?.color}`}
-                                        >
-                                          {sla.name}
-                                        </span>
-                                        <span className="text-[11px] text-slate-400">
-                                          {sla.priority}
-                                        </span>
+                  {mode === 'SERVICE' &&
+                    (!slasLoading && availableSlas.length === 0 ? (
+                      <motion.div
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.4 }}
+                      >
+                        <div className="rounded-xl border border-dashed border-slate-200/60 px-3 py-3 text-sm text-slate-600 dark:border-slate-600/50 dark:text-slate-400">
+                          Không có SLA cho khách hàng này. Không thể tạo yêu cầu bảo trì.
+                        </div>
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.4 }}
+                      >
+                        <FormField
+                          control={form.control}
+                          name="priority"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-300">
+                                <Flag className="h-4 w-4 text-black dark:text-white" />
+                                Độ ưu tiên
+                              </FormLabel>
+                              <div className="space-y-2">
+                                {slasLoading ? (
+                                  <div className="text-xs text-slate-500">Đang tải các SLA...</div>
+                                ) : (
+                                  availableSlas.map((sla) => (
+                                    <label
+                                      key={sla.id}
+                                      className={`flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-indigo-50 dark:hover:bg-indigo-900/20 ${field.value === sla.priority ? 'ring-2 ring-indigo-200 dark:ring-indigo-500' : ''}`}
+                                    >
+                                      <input
+                                        type="radio"
+                                        name="priority"
+                                        value={sla.priority}
+                                        checked={field.value === sla.priority}
+                                        onChange={() => field.onChange(sla.priority)}
+                                        disabled={createServiceMutation.isPending}
+                                        className="h-4 w-4"
+                                      />
+                                      <div className="flex-1">
+                                        <div className="flex items-center justify-between">
+                                          <span
+                                            className={`font-semibold ${priorityConfig[sla.priority]?.color}`}
+                                          >
+                                            {sla.name}
+                                          </span>
+                                          <span className="text-[11px] text-slate-400">
+                                            {sla.priority}
+                                          </span>
+                                        </div>
+                                        <div className="truncate text-xs text-slate-500">
+                                          {sla.description} • R: {sla.responseTimeHours}h • Res:{' '}
+                                          {sla.resolutionTimeHours}h
+                                        </div>
                                       </div>
-                                      <div className="truncate text-xs text-slate-500">
-                                        {sla.description} • R: {sla.responseTimeHours}h • Res:{' '}
-                                        {sla.resolutionTimeHours}h
-                                      </div>
-                                    </div>
-                                  </label>
-                                ))
-                              ) : (
-                                Object.entries(priorityConfig).map(([key, config]) => (
-                                  <label
-                                    key={key}
-                                    className={`flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-indigo-50 dark:hover:bg-indigo-900/20 ${field.value === key ? 'ring-2 ring-indigo-200 dark:ring-indigo-500' : ''}`}
-                                  >
-                                    <input
-                                      type="radio"
-                                      name="priority"
-                                      value={key}
-                                      checked={field.value === key}
-                                      onChange={() => field.onChange(key)}
-                                      disabled={createServiceMutation.isPending}
-                                      className="h-4 w-4"
-                                    />
-                                    <div className="flex-1">
-                                      <div className="flex items-center justify-between">
-                                        <span className={`font-semibold ${config.color}`}>
-                                          {config.label}
-                                        </span>
-                                        <span className="text-[11px] text-slate-400">{key}</span>
-                                      </div>
-                                      <div className="text-xs text-slate-500">
-                                        {config.description}
-                                      </div>
-                                    </div>
-                                  </label>
-                                ))
-                              )}
-                            </div>
-                            <FormDescription className="mt-1.5 flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
-                              <Sparkles className="h-3 w-3 text-black dark:text-white" />
-                              Đặt mức độ khẩn cấp của yêu cầu
-                            </FormDescription>
-                            <FormMessage className="mt-1 text-xs" />
-                          </FormItem>
-                        )}
-                      />
-                    </motion.div>
-                  )}
+                                    </label>
+                                  ))
+                                )}
+                              </div>
+                              <FormDescription className="mt-1.5 flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+                                <Sparkles className="h-3 w-3 text-black dark:text-white" />
+                                Đặt mức độ khẩn cấp của yêu cầu
+                              </FormDescription>
+                              <FormMessage className="mt-1 text-xs" />
+                            </FormItem>
+                          )}
+                        />
+                      </motion.div>
+                    ))}
 
                   {/* Purchase Items Section */}
                   {mode === 'PURCHASE' && (
@@ -803,7 +813,12 @@ export function ServiceRequestFormModal({
                   >
                     <Button
                       type="submit"
-                      disabled={createServiceMutation.isPending || createPurchaseMutation.isPending}
+                      disabled={
+                        createServiceMutation.isPending ||
+                        createPurchaseMutation.isPending ||
+                        // If creating SERVICE and SLAs are loaded but none are available, disable
+                        (mode === 'SERVICE' && !slasLoading && availableSlas.length === 0)
+                      }
                       className="h-12 flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 font-semibold text-white shadow-lg shadow-blue-500/30 transition-all duration-300 hover:scale-105 hover:from-blue-700 hover:to-indigo-700 hover:shadow-xl hover:shadow-blue-500/40"
                     >
                       {createServiceMutation.isPending || createPurchaseMutation.isPending ? (

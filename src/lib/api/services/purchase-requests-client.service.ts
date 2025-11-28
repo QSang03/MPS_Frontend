@@ -129,4 +129,9 @@ export const purchaseRequestsClientService = {
     const { data, pagination } = response.data || { data: [], pagination: undefined }
     return { data: Array.isArray(data) ? data : [], pagination }
   },
+
+  async assign(id: string, payload: { assignedTo: string; actionNote?: string }) {
+    const response = await internalApiClient.patch(`/api/purchase-requests/${id}/assign`, payload)
+    return response.data?.data ?? null
+  },
 }

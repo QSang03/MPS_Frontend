@@ -402,6 +402,22 @@ function PurchaseRequestsTableContent({
         ),
       },
       {
+        accessorKey: 'assignedTo',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <Tag className="h-4 w-4 text-gray-500" />
+            Người phụ trách
+          </div>
+        ),
+        cell: ({ row }) => (
+          <div className="text-sm">
+            <div className="font-medium">
+              {row.original.assignedToName ?? row.original.assignedTo ?? '—'}
+            </div>
+          </div>
+        ),
+      },
+      {
         accessorKey: 'priority',
         header: () => (
           <div className="flex items-center gap-2">

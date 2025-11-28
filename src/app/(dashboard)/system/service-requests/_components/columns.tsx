@@ -68,6 +68,15 @@ export const columns: ColumnDef<ServiceRequest>[] = [
     ),
   },
   {
+    accessorKey: 'assignedTo',
+    header: 'Người phụ trách',
+    cell: ({ row }) => (
+      <div className="truncate">
+        {row.original.assignedToName ?? row.original.assignedTo ?? '—'}
+      </div>
+    ),
+  },
+  {
     accessorKey: 'createdAt',
     header: 'Ngày tạo',
     cell: ({ row }) => formatRelativeTime(row.original.createdAt),
