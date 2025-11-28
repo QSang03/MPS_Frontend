@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
+import type { Session } from '@/lib/auth/session'
 import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -20,6 +21,7 @@ import { ArrowLeft } from 'lucide-react'
 
 interface Props {
   id: string
+  session?: Session | null
 }
 
 export default function WarehouseDocumentDetailClient({ id }: Props) {
