@@ -31,6 +31,13 @@ import { devicesClientService } from '@/lib/api/services/devices-client.service'
 import type { Device } from '@/types/models/device'
 import type { DeviceConsumable } from '@/types/models/consumable'
 import internalApiClient from '@/lib/api/internal-client'
+
+// Local helper type for optional API snapshot included on consumable/device-consumable
+type LatestUsageHistory = {
+  remaining?: number | null
+  capacity?: number | null
+  percentage?: number | null
+}
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -860,17 +867,81 @@ export default function DeviceDetailClient({ deviceId, backHref }: Props) {
                         <th className="px-4 py-3 text-left text-xs font-semibold">Tên</th>
                         <th className="px-4 py-3 text-left text-xs font-semibold">Mã / Model</th>
                         <th className="px-4 py-3 text-left text-xs font-semibold">Trạng thái</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold">Tỉ giá</th>
-                        <th className="px-4 py-3 text-right text-xs font-semibold">Thời gian</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold">%</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold">
+                          Số trang khả dụng
+                        </th>
+                        <th className="px-4 py-3 text-right text-xs font-semibold">Ngày lắp đặt</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y">
                       {installedConsumables.map((c: DeviceConsumable, idx: number) => {
                         const cons = c?.consumable ?? c
-                        const usagePercent =
-                          cons?.capacity && cons?.remaining
-                            ? Math.round((cons.remaining / cons.capacity) * 100)
-                            : null
+                        const _inkName = (cons?.consumableType?.name ??
+                          cons?.serialNumber ??
+                          '') as string
+                        const _inkMatch = _inkName.match(/\b(Cyan|Black|Yellow|Magenta)\b/i)
+                        const _inkKey = _inkMatch ? String(_inkMatch[1]).toLowerCase() : ''
+                        const _inkColorClass =
+                          _inkKey === 'cyan'
+                            ? 'bg-cyan-500'
+                            : _inkKey === 'black'
+                              ? 'bg-neutral-800'
+                              : _inkKey === 'yellow'
+                                ? 'bg-yellow-400'
+                                : _inkKey === 'magenta'
+                                  ? 'bg-pink-500'
+                                  : ''
+                        const latestHistory =
+                          (c as DeviceConsumable & { latestUsageHistory?: LatestUsageHistory })
+                            .latestUsageHistory ??
+                          (cons as DeviceConsumable & { latestUsageHistory?: LatestUsageHistory })
+                            .latestUsageHistory
+                        const latestRemaining =
+                          latestHistory && typeof latestHistory.remaining === 'number'
+                            ? latestHistory.remaining
+                            : undefined
+                        const latestCapacity =
+                          latestHistory && typeof latestHistory.capacity === 'number'
+                            ? latestHistory.capacity
+                            : undefined
+                        const latestPercentage =
+                          latestHistory && typeof latestHistory.percentage === 'number'
+                            ? latestHistory.percentage
+                            : undefined
+
+                        const explicitRemaining =
+                          typeof cons?.remaining === 'number' ? cons.remaining : undefined
+                        const actualPrinted =
+                          typeof (c as DeviceConsumable).actualPagesPrinted === 'number'
+                            ? ((c as DeviceConsumable).actualPagesPrinted as number)
+                            : undefined
+                        const capacityFromConsumable =
+                          typeof cons?.capacity === 'number' ? cons.capacity : undefined
+
+                        const capacityNum = latestCapacity ?? capacityFromConsumable
+
+                        const derivedRemaining =
+                          latestRemaining !== undefined
+                            ? latestRemaining
+                            : explicitRemaining !== undefined
+                              ? explicitRemaining
+                              : capacityNum !== undefined && actualPrinted !== undefined
+                                ? Math.max(0, capacityNum - actualPrinted)
+                                : undefined
+
+                        const usagePercent = (() => {
+                          if (typeof latestPercentage === 'number')
+                            return Math.round(latestPercentage)
+                          if (
+                            typeof derivedRemaining === 'number' &&
+                            typeof capacityNum === 'number' &&
+                            capacityNum > 0
+                          ) {
+                            return Math.round((derivedRemaining / capacityNum) * 100)
+                          }
+                          return null
+                        })()
 
                         return (
                           <tr
@@ -878,9 +949,30 @@ export default function DeviceDetailClient({ deviceId, backHref }: Props) {
                             className="hover:bg-muted/30 transition-colors"
                           >
                             <td className="px-4 py-3 text-sm">{idx + 1}</td>
-                            <td className="px-4 py-3">
-                              <div className="font-medium">
-                                {cons?.consumableType?.name ?? cons?.serialNumber ?? '—'}
+                            <td className="px-4 py-3 align-top">
+                              <div className="flex flex-col gap-1">
+                                <div className="flex items-center justify-between">
+                                  <div className="font-medium">
+                                    {cons?.consumableType?.name ?? cons?.serialNumber ?? '—'}
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    {usagePercent !== null ? (
+                                      <div className="text-sm font-semibold">{usagePercent}%</div>
+                                    ) : (
+                                      <div className="text-muted-foreground text-sm">--</div>
+                                    )}
+                                    {usagePercent !== null && usagePercent <= 10 ? (
+                                      <AlertCircle className="h-4 w-4 text-yellow-500" />
+                                    ) : null}
+                                  </div>
+                                </div>
+
+                                <div className="h-3 w-full overflow-hidden rounded bg-gray-100">
+                                  <div
+                                    className={cn('h-full rounded transition-all', _inkColorClass)}
+                                    style={{ width: `${usagePercent ?? 0}%` }}
+                                  />
+                                </div>
                               </div>
                             </td>
                             <td className="px-4 py-3">
@@ -915,40 +1007,46 @@ export default function DeviceDetailClient({ deviceId, backHref }: Props) {
                                     </Badge>
                                   )
                                 })()}
-                                {usagePercent !== null && (
-                                  <div className="flex items-center gap-2">
-                                    <div className="h-2 flex-1 overflow-hidden rounded-full bg-gray-200">
-                                      <div
-                                        className={cn(
-                                          'h-full rounded-full transition-all',
-                                          usagePercent > 50
-                                            ? 'bg-green-500'
-                                            : usagePercent > 20
-                                              ? 'bg-yellow-500'
-                                              : 'bg-red-500'
-                                        )}
-                                        style={{ width: `${usagePercent}%` }}
-                                      />
-                                    </div>
-                                    <span className="text-muted-foreground w-12 text-xs">
-                                      {usagePercent}%
-                                    </span>
-                                  </div>
-                                )}
-                                {typeof cons?.remaining === 'number' && (
-                                  <p className="text-muted-foreground text-xs">
-                                    {cons.remaining}/{cons.capacity ?? '-'}{' '}
-                                    {cons?.consumableType?.unit ?? ''}
-                                  </p>
-                                )}
                               </div>
                             </td>
-                            <td className="px-4 py-3 text-left text-sm">
-                              {c.exchangeRate != null ? String(c.exchangeRate) : '-'}
+
+                            <td className="px-4 py-3 text-sm">
+                              {usagePercent !== null ? (
+                                <div className="flex items-center gap-2">
+                                  <div className="h-2 w-20 overflow-hidden rounded-full bg-gray-200">
+                                    <div
+                                      className={cn(
+                                        'h-full rounded-full transition-all',
+                                        usagePercent > 50
+                                          ? 'bg-green-500'
+                                          : usagePercent > 20
+                                            ? 'bg-yellow-500'
+                                            : 'bg-red-500'
+                                      )}
+                                      style={{ width: `${usagePercent}%` }}
+                                    />
+                                  </div>
+                                  <span className="text-sm">{usagePercent}%</span>
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground">-</span>
+                              )}
                             </td>
+
+                            <td className="px-4 py-3 text-sm">
+                              {typeof derivedRemaining === 'number' ? (
+                                <span className="text-sm">
+                                  {derivedRemaining}/{capacityNum ?? '-'}{' '}
+                                  {cons?.consumableType?.unit ?? ''}
+                                </span>
+                              ) : (
+                                <span className="text-muted-foreground">-</span>
+                              )}
+                            </td>
+
                             <td className="text-muted-foreground px-4 py-3 text-right text-sm">
                               {c?.installedAt
-                                ? new Date(c.installedAt).toLocaleString('vi-VN')
+                                ? new Date(c.installedAt).toLocaleDateString('vi-VN')
                                 : cons?.expiryDate
                                   ? new Date(cons.expiryDate).toLocaleDateString('vi-VN')
                                   : '—'}

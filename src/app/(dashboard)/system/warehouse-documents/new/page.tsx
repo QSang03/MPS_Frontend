@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { getSession } from '@/lib/auth/session'
 import { DEV_BYPASS_AUTH, getDevSession } from '@/lib/auth/dev-session'
+import WarehouseDocumentForm from '.././_components/WarehouseDocumentForm'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,9 +21,7 @@ export default async function NewWarehouseDocumentPage() {
           <CardDescription>Form tạo chứng từ sẽ được xây dựng theo DTO chính thức</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="text-muted-foreground text-sm">
-            Tính năng tạo sẽ được thực hiện trong bước tiếp theo.
-          </div>
+          <WarehouseDocumentForm />
         </CardContent>
       </Card>
     </div>
