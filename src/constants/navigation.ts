@@ -256,6 +256,18 @@ export const USER_NAVIGATION_PAYLOAD: NavItemPayload[] = [
     ],
   },
   {
+    id: 'user-warehouse-documents',
+    name: 'warehouse-documents',
+    label: 'Chứng từ kho',
+    icon: 'Package',
+    route: '/user/warehouse-documents',
+    description: 'Quản lý chứng từ kho (user)',
+    requiredPermissions: {
+      strategy: 'all',
+      resources: [{ resource: 'warehouse-documents', action: 'read' }],
+    },
+  },
+  {
     id: 'user-my-requests',
     name: 'my-requests',
     label: 'Yêu cầu của tôi',

@@ -30,6 +30,16 @@ import {
   CheckCircle2,
 } from 'lucide-react'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+// removed Info import as it's unused
 import { toast } from 'sonner'
 import { devicesClientService } from '@/lib/api/services/devices-client.service'
 import deviceModelsClientService from '@/lib/api/services/device-models-client.service'
@@ -78,6 +88,7 @@ export default function DeviceFormModal({
 }: Props) {
   const [open, setOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [showSerialWarning, setShowSerialWarning] = useState(false)
   const [customerAddresses, setCustomerAddresses] = useState<string[]>([])
   const [loadingAddresses, setLoadingAddresses] = useState(false)
   const [form, setForm] = useState<any>(() => buildInitialForm())
@@ -232,8 +243,7 @@ export default function DeviceFormModal({
 
   // previous explicit loaders replaced by React Query above
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const performSave = async () => {
     setSubmitting(true)
     try {
       if (!form.serialNumber) {
@@ -377,6 +387,21 @@ export default function DeviceFormModal({
     } finally {
       setSubmitting(false)
     }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    // If creating and a serial is supplied, ask for confirmation because it cannot be edited later.
+    if (mode === 'create' && form.serialNumber) {
+      setShowSerialWarning(true)
+      return
+    }
+    // For edit mode, do not allow changing serial if original exists
+    if (mode === 'edit' && device?.serialNumber && form.serialNumber !== device.serialNumber) {
+      toast.error('Số Serial đã được thiết lập và không thể chỉnh sửa')
+      return
+    }
+    await performSave()
   }
 
   return (
@@ -642,7 +667,13 @@ export default function DeviceFormModal({
                 placeholder="SN123456789"
                 required
                 className="h-11"
+                disabled={mode === 'edit' && !!device?.serialNumber}
               />
+              {mode === 'edit' && device?.serialNumber ? (
+                <p className="text-muted-foreground mt-1 text-xs">
+                  Serial đã được lưu và không thể chỉnh sửa
+                </p>
+              ) : null}
             </div>
 
             <div className="grid gap-4 md:grid-cols-1">
@@ -886,6 +917,37 @@ export default function DeviceFormModal({
           </div>
         </form>
       </SystemModalLayout>
+      {/* Serial confirmation modal (controlled) */}
+      <AlertDialog open={showSerialWarning} onOpenChange={setShowSerialWarning}>
+        <AlertDialogContent className="max-w-lg overflow-hidden rounded-lg border p-0 shadow-lg">
+          <div className="px-6 py-5">
+            <AlertDialogHeader className="space-y-2 text-left">
+              <AlertDialogTitle className="text-lg font-bold">Xác nhận Serial</AlertDialogTitle>
+              <AlertDialogDescription className="text-muted-foreground text-sm">
+                Bạn đang đặt số Serial cho thiết bị. Sau khi thiết lập, Serial sẽ không thể chỉnh
+                sửa sau này. Bạn có chắc chắn muốn tiếp tục?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+          </div>
+          <AlertDialogFooter className="bg-muted/50 border-t px-6 py-4">
+            <AlertDialogCancel
+              onClick={() => setShowSerialWarning(false)}
+              className="min-w-[100px]"
+            >
+              Hủy
+            </AlertDialogCancel>
+            <Button
+              onClick={async () => {
+                setShowSerialWarning(false)
+                await performSave()
+              }}
+              className="min-w-[120px] bg-amber-600"
+            >
+              Xác nhận
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   )
 }

@@ -1,12 +1,21 @@
 'use client'
 
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, ShoppingCart, ArrowRight, Trash2, Loader2 } from 'lucide-react'
 import { Dialog } from '@/components/ui/dialog'
 import { SystemModalLayout } from '@/components/system/SystemModalLayout'
 import { Button } from '@/components/ui/button'
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import {
@@ -218,6 +227,8 @@ export default function BulkAssignModal({ trigger }: BulkAssignModalProps) {
   const [loadingTypes, setLoadingTypes] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [result, setResult] = useState<Record<string, unknown> | null>(null)
+  const [showSerialWarning, setShowSerialWarning] = useState(false)
+  const bulkCreateRef = useRef<(() => Promise<void>) | null>(null)
 
   const ensureTypes = async () => {
     if (types.length > 0 || loadingTypes) return
@@ -255,7 +266,7 @@ export default function BulkAssignModal({ trigger }: BulkAssignModalProps) {
     })
   }
 
-  const submit = async () => {
+  const doBulkCreate = async () => {
     if (!customerId || !consumableTypeId || rows.length === 0) {
       toast.error('Vui lòng chọn khách hàng, loại vật tư và số lượng')
       return
@@ -283,6 +294,25 @@ export default function BulkAssignModal({ trigger }: BulkAssignModalProps) {
     } finally {
       setSubmitting(false)
     }
+  }
+
+  const submit = async () => {
+    // If any rows contain a serial number, prompt confirmation
+    const items = rows.map((r) => ({
+      consumableTypeId,
+      serialNumber: r.serialNumber || undefined,
+      expiryDate: r.expiryDate ? new Date(r.expiryDate).toISOString() : undefined,
+    }))
+    const hasSerial = items.some((it) => !!it.serialNumber)
+    // assign the real fn to the ref so confirm can call it
+    bulkCreateRef.current = doBulkCreate
+
+    if (hasSerial) {
+      setShowSerialWarning(true)
+      return
+    }
+
+    await doBulkCreate()
   }
 
   return (
@@ -481,6 +511,31 @@ export default function BulkAssignModal({ trigger }: BulkAssignModalProps) {
           </SystemModalLayout>
         )}
       </AnimatePresence>
+      <AlertDialog open={showSerialWarning} onOpenChange={(open) => setShowSerialWarning(open)}>
+        <AlertDialogContent className="max-w-lg overflow-hidden rounded-lg border p-0 shadow-lg">
+          <div className="px-6 py-5">
+            <AlertDialogHeader className="space-y-2 text-left">
+              <AlertDialogTitle className="text-lg font-bold">Xác nhận Serial</AlertDialogTitle>
+              <AlertDialogDescription className="text-muted-foreground text-sm">
+                Một hoặc nhiều vật tư trong danh sách có Serial. Sau khi lưu, Serial sẽ không thể
+                chỉnh sửa. Bạn có chắc chắn muốn tiếp tục?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+          </div>
+          <AlertDialogFooter className="bg-muted/50 border-t px-6 py-4">
+            <AlertDialogCancel onClick={() => setShowSerialWarning(false)}>Hủy</AlertDialogCancel>
+            <Button
+              onClick={async () => {
+                setShowSerialWarning(false)
+                if (bulkCreateRef.current) await bulkCreateRef.current()
+              }}
+              className="min-w-[120px] bg-amber-600"
+            >
+              Xác nhận
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   )
 }

@@ -1,5 +1,5 @@
 'use client'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import {
@@ -49,6 +49,15 @@ import {
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { Dialog } from '@/components/ui/dialog'
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { SystemModalLayout } from '@/components/system/SystemModalLayout'
 import { DeleteDialog } from '@/components/shared/DeleteDialog'
 import { toast } from 'sonner'
@@ -127,6 +136,8 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
 
   const [consumablesLoading, setConsumablesLoading] = useState(false)
   const [showCreateConsumable, setShowCreateConsumable] = useState(false)
+  const [showConsumableSerialWarning, setShowConsumableSerialWarning] = useState(false)
+  const createAndInstallRef = useRef<(() => Promise<void>) | null>(null)
   const [showAttachFromOrphaned, setShowAttachFromOrphaned] = useState(false)
   const [creatingConsumable, setCreatingConsumable] = useState(false)
   const [selectedConsumableType, setSelectedConsumableType] = useState<ConsumableType | null>(null)
@@ -1560,7 +1571,6 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                         <th className="px-4 py-3 text-left text-sm font-semibold">Tên</th>
                         <th className="px-4 py-3 text-left text-sm font-semibold">Part</th>
                         <th className="px-4 py-3 text-left text-sm font-semibold">Dòng máy</th>
-                        <th className="px-4 py-3 text-left text-sm font-semibold">Đơn vị</th>
                         <th className="px-4 py-3 text-right text-sm font-semibold">
                           Kho khách hàng
                         </th>
@@ -1577,7 +1587,7 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                             ? ct.consumableType
                             : (ct as ConsumableType)
                         const partNumber = type?.partNumber ?? '-'
-                        const unit = type?.unit ?? '-'
+                        // unit is unused in this view; omit to avoid lint warning
                         const compatibleLine = type?.compatibleMachineLine ?? '-'
                         const customerQty =
                           'customerStockQuantity' in ct ? ct.customerStockQuantity : undefined
@@ -1596,9 +1606,7 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                             <td className="text-muted-foreground px-4 py-3 text-sm">
                               {compatibleLine}
                             </td>
-                            <td className="px-4 py-3">
-                              <Badge variant="outline">{unit}</Badge>
-                            </td>
+
                             <td className="px-4 py-3 text-right text-sm">
                               {customerQty !== null && customerQty !== undefined
                                 ? String(customerQty)
@@ -2052,6 +2060,41 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
         </SystemModalLayout>
       </Dialog>
 
+      {/* Confirm dialog for consumable serial warning */}
+      <AlertDialog
+        open={showConsumableSerialWarning}
+        onOpenChange={(open) => setShowConsumableSerialWarning(open)}
+      >
+        <AlertDialogContent className="max-w-lg overflow-hidden rounded-lg border p-0 shadow-lg">
+          <div className="px-6 py-5">
+            <AlertDialogHeader className="space-y-2 text-left">
+              <AlertDialogTitle className="text-lg font-bold">
+                Xác nhận Serial vật tư
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-muted-foreground text-sm">
+                Serial đã được điền và sẽ không thể sửa sau khi lưu. Bạn có chắc chắn muốn tiếp tục?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+          </div>
+          <AlertDialogFooter className="bg-muted/50 border-t px-6 py-4">
+            <AlertDialogCancel onClick={() => setShowConsumableSerialWarning(false)}>
+              Hủy
+            </AlertDialogCancel>
+            <Button
+              onClick={async () => {
+                setShowConsumableSerialWarning(false)
+                if (createAndInstallRef.current) {
+                  await createAndInstallRef.current()
+                }
+              }}
+              className="min-w-[120px] bg-amber-600"
+            >
+              Xác nhận
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Create Consumable Modal - Modern Design */}
       <Dialog open={showCreateConsumable} onOpenChange={setShowCreateConsumable}>
         <SystemModalLayout
@@ -2072,108 +2115,125 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
               <Button
                 onClick={async () => {
                   if (!selectedConsumableType) return
-                  try {
-                    setCreatingConsumable(true)
-                    // Validate actual pages before attempting to create & install
-                    if (
-                      typeof createActualPagesPrinted === 'number' &&
-                      createActualPagesPrinted > MAX_ACTUAL_PAGES
-                    ) {
-                      setCreateActualPagesPrintedError(
-                        `Số trang không được lớn hơn ${MAX_ACTUAL_PAGES.toLocaleString('en-US')}`
-                      )
-                      // clear any price error so the user sees the page error only
-                      setCreatePriceError(null)
-                      setCreatingConsumable(false)
-                      return
-                    }
-                    // Removed incomplete datetime validation: accept partial input
-                    const dto: CreateConsumableDto = {
-                      consumableTypeId: selectedConsumableType.id,
-                      serialNumber: serialNumber || undefined,
-                      batchNumber: batchNumber || undefined,
-                      capacity: capacity || undefined,
-                      remaining: remaining || undefined,
-                      // expiryDate removed per spec
-                      customerId: device?.customerId || undefined,
-                    }
-
-                    const created = await consumablesClientService.create(dto)
-                    if (!created || !created.id) {
-                      toast.error('Tạo vật tư thất bại')
-                      return
-                    }
-
-                    // Prepare install payload per API: installedAt, actualPagesPrinted, price, exchangeRate
-                    let installPayload: Partial<UpdateDeviceConsumableDto> = {}
-                    if (createInstalledAt) installPayload.installedAt = createInstalledAt
-                    if (typeof createActualPagesPrinted === 'number')
-                      installPayload.actualPagesPrinted = createActualPagesPrinted
-
-                    // Calculate price based on VND or USD input
-                    if (createPriceVND && createExchangeRate) {
-                      // VND mode: price = VND / exchangeRate (limit decimals)
-                      const raw = createPriceVND / createExchangeRate
-                      // When auto-converting from VND->USD, limit to 5 fractional digits
-                      const formatted = formatDecimal(raw, 5)
-                      if (formatted !== undefined) {
-                        const priceErr = checkPricePrecision(formatted)
-                        if (priceErr) {
-                          setCreatePriceError(priceErr)
-                          // clear any pages error so user sees price error under price input
-                          setCreateActualPagesPrintedError(null)
-                          setCreatingConsumable(false)
-                          return
-                        }
-                        installPayload.price = formatted
-                        setCreatePriceError(null)
-                      }
-                      installPayload.exchangeRate = formatDecimal(createExchangeRate, 8)
-                    } else if (createPriceUSD) {
-                      // USD mode: price = USD directly (limit decimals)
-                      const formatted = formatDecimal(createPriceUSD, 8)
-                      if (formatted !== undefined) {
-                        const priceErr = checkPricePrecision(formatted)
-                        if (priceErr) {
-                          setCreatePriceError(priceErr)
-                          setCreatingConsumable(false)
-                          return
-                        }
-                        installPayload.price = formatted
-                        setCreatePriceError(null)
-                      }
-                    }
-
-                    installPayload = removeEmpty(installPayload)
-
-                    await devicesClientService.installConsumableWithPayload(
-                      deviceId,
-                      created.id,
-                      installPayload
-                    )
-
-                    toast.success('Đã lắp vật tư vào thiết bị')
-                    setShowCreateConsumable(false)
-
-                    setConsumablesLoading(true)
-                    const [installed, compatibleRaw] = await Promise.all([
-                      devicesClientService.getConsumables(deviceId).catch(() => []),
-                      internalApiClient
-                        .get(
-                          `/api/device-models/${modelId ?? device.deviceModel?.id ?? ''}/compatible-consumables`
+                  // Wrap the create+install logic into a function so we can optionally
+                  // prompt the user for serial confirmation when a serial is provided.
+                  const runCreateAndInstall = async () => {
+                    try {
+                      setCreatingConsumable(true)
+                      // Validate actual pages before attempting to create & install
+                      if (
+                        typeof createActualPagesPrinted === 'number' &&
+                        createActualPagesPrinted > MAX_ACTUAL_PAGES
+                      ) {
+                        setCreateActualPagesPrintedError(
+                          `Số trang không được lớn hơn ${MAX_ACTUAL_PAGES.toLocaleString('en-US')}`
                         )
-                        .then((r) => r.data?.data ?? [])
-                        .catch(() => []),
-                    ])
-                    setInstalledConsumables(Array.isArray(installed) ? installed : [])
-                    setCompatibleConsumables(Array.isArray(compatibleRaw) ? compatibleRaw : [])
-                  } catch (err) {
-                    console.error('Create/install consumable failed', err)
-                    toast.error('Không thể tạo hoặc lắp vật tư')
-                  } finally {
-                    setCreatingConsumable(false)
-                    setConsumablesLoading(false)
+                        // clear any price error so the user sees the page error only
+                        setCreatePriceError(null)
+                        setCreatingConsumable(false)
+                        return
+                      }
+                      // Removed incomplete datetime validation: accept partial input
+                      const dto: CreateConsumableDto = {
+                        consumableTypeId: selectedConsumableType.id,
+                        serialNumber: serialNumber || undefined,
+                        batchNumber: batchNumber || undefined,
+                        capacity: capacity || undefined,
+                        remaining: remaining || undefined,
+                        // expiryDate removed per spec
+                        customerId: device?.customerId || undefined,
+                      }
+
+                      const created = await consumablesClientService.create(dto)
+                      if (!created || !created.id) {
+                        toast.error('Tạo vật tư thất bại')
+                        return
+                      }
+
+                      // Prepare install payload per API: installedAt, actualPagesPrinted, price, exchangeRate
+                      let installPayload: Partial<UpdateDeviceConsumableDto> = {}
+                      if (createInstalledAt) installPayload.installedAt = createInstalledAt
+                      if (typeof createActualPagesPrinted === 'number')
+                        installPayload.actualPagesPrinted = createActualPagesPrinted
+
+                      // Calculate price based on VND or USD input
+                      if (createPriceVND && createExchangeRate) {
+                        // VND mode: price = VND / exchangeRate (limit decimals)
+                        const raw = createPriceVND / createExchangeRate
+                        // When auto-converting from VND->USD, limit to 5 fractional digits
+                        const formatted = formatDecimal(raw, 5)
+                        if (formatted !== undefined) {
+                          const priceErr = checkPricePrecision(formatted)
+                          if (priceErr) {
+                            setCreatePriceError(priceErr)
+                            // clear any pages error so user sees price error under price input
+                            setCreateActualPagesPrintedError(null)
+                            setCreatingConsumable(false)
+                            return
+                          }
+                          installPayload.price = formatted
+                          setCreatePriceError(null)
+                        }
+                        installPayload.exchangeRate = formatDecimal(createExchangeRate, 8)
+                      } else if (createPriceUSD) {
+                        // USD mode: price = USD directly (limit decimals)
+                        const formatted = formatDecimal(createPriceUSD, 8)
+                        if (formatted !== undefined) {
+                          const priceErr = checkPricePrecision(formatted)
+                          if (priceErr) {
+                            setCreatePriceError(priceErr)
+                            setCreatingConsumable(false)
+                            return
+                          }
+                          installPayload.price = formatted
+                          setCreatePriceError(null)
+                        }
+                      }
+
+                      installPayload = removeEmpty(installPayload)
+
+                      await devicesClientService.installConsumableWithPayload(
+                        deviceId,
+                        created.id,
+                        installPayload
+                      )
+
+                      toast.success('Đã lắp vật tư vào thiết bị')
+                      setShowCreateConsumable(false)
+
+                      setConsumablesLoading(true)
+                      const [installed, compatibleRaw] = await Promise.all([
+                        devicesClientService.getConsumables(deviceId).catch(() => []),
+                        internalApiClient
+                          .get(
+                            `/api/device-models/${modelId ?? device.deviceModel?.id ?? ''}/compatible-consumables`
+                          )
+                          .then((r) => r.data?.data ?? [])
+                          .catch(() => []),
+                      ])
+                      setInstalledConsumables(Array.isArray(installed) ? installed : [])
+                      setCompatibleConsumables(Array.isArray(compatibleRaw) ? compatibleRaw : [])
+                    } catch (err) {
+                      console.error('Create/install consumable failed', err)
+                      toast.error('Không thể tạo hoặc lắp vật tư')
+                    } finally {
+                      setCreatingConsumable(false)
+                      setConsumablesLoading(false)
+                      createAndInstallRef.current = null
+                    }
                   }
+
+                  // Assign the fn to the ref so the confirm dialog can run it on confirm.
+                  createAndInstallRef.current = runCreateAndInstall
+
+                  // If serialNumber is present, prompt confirmation because it cannot be edited later.
+                  if (serialNumber) {
+                    setShowConsumableSerialWarning(true)
+                    return
+                  }
+
+                  // No serial: run immediately.
+                  await runCreateAndInstall()
                 }}
                 disabled={creatingConsumable || Boolean(createActualPagesPrintedError)}
                 className="min-w-[120px] bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700"
@@ -2522,6 +2582,148 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
               <Button
                 onClick={async () => {
                   if (!editingConsumable?.id) return
+                  const runEditConsumable = async () => {
+                    // If user inputted an installedAt but it isn't a valid/complete datetime, block and show error
+                    // Incomplete installedAt input no longer blocks saving; accept partial input
+
+                    // Validation: installedAt must be strictly before removedAt and expiryDate
+                    if (editInstalledAt && editRemovedAt) {
+                      const installedDate = new Date(editInstalledAt).getTime()
+                      const removedDate = new Date(editRemovedAt).getTime()
+                      if (installedDate >= removedDate) {
+                        toast.error('Ngày lắp đặt phải nhỏ hơn ngày gỡ (không được bằng)')
+                        return
+                      }
+                    }
+
+                    if (editInstalledAt && editExpiryDate) {
+                      const installedDate = new Date(editInstalledAt).getTime()
+                      const expiryDate = new Date(editExpiryDate + 'T23:59:59').getTime()
+                      if (installedDate >= expiryDate) {
+                        toast.error('Ngày lắp đặt phải nhỏ hơn ngày hết hạn (không được bằng)')
+                        return
+                      }
+                    }
+
+                    try {
+                      // Validate actual pages before attempting to update device-consumable
+                      if (
+                        typeof editActualPagesPrinted === 'number' &&
+                        editActualPagesPrinted > MAX_ACTUAL_PAGES
+                      ) {
+                        setEditActualPagesPrintedError(
+                          `Số trang không được lớn hơn ${MAX_ACTUAL_PAGES.toLocaleString('en-US')}`
+                        )
+                        // clear price error to keep focus on pages error
+                        setEditPriceError(null)
+                        return
+                      }
+                      setUpdatingConsumable(true)
+                      let dto: Partial<CreateDeviceConsumableDto> = {}
+                      if (editingConsumable.consumableType?.id) {
+                        dto.consumableTypeId = editingConsumable.consumableType.id
+                      }
+                      // Prevent changing serial if it was already set on the consumable
+                      if (
+                        editSerialNumber &&
+                        editingConsumable?.serialNumber &&
+                        editSerialNumber !== editingConsumable.serialNumber
+                      ) {
+                        toast.error('Serial đã được lưu trước đó và không thể chỉnh sửa')
+                        setUpdatingConsumable(false)
+                        return
+                      }
+                      if (editSerialNumber) dto.serialNumber = editSerialNumber
+                      if (editBatchNumber) dto.batchNumber = editBatchNumber
+                      if (editExpiryDate) dto.expiryDate = new Date(editExpiryDate).toISOString()
+                      dto = removeEmpty(dto)
+
+                      // First: update consumable entity
+                      const updated = await consumablesClientService.update(
+                        String(editingConsumable.id),
+                        dto
+                      )
+                      if (!updated) {
+                        toast.error('Cập nhật vật tư thất bại')
+                        return
+                      }
+
+                      // Second: update device-consumable record (installedAt, removedAt, actualPagesPrinted, price, exchangeRate)
+                      try {
+                        let deviceDto: Partial<UpdateDeviceConsumableDto> = {}
+                        if (editInstalledAt) deviceDto.installedAt = editInstalledAt
+                        if (editRemovedAt) deviceDto.removedAt = editRemovedAt
+                        if (typeof editActualPagesPrinted === 'number')
+                          deviceDto.actualPagesPrinted = editActualPagesPrinted
+
+                        // Only include price if removedAt is not being set (checkbox not checked)
+                        if (!editShowRemovedAt) {
+                          // Calculate price based on VND or USD input
+                          if (editPriceVND && editExchangeRate) {
+                            // VND mode: price = VND / exchangeRate
+                            const raw = editPriceVND / editExchangeRate
+                            // When auto-converting from VND->USD, limit to 5 fractional digits
+                            const formatted = formatDecimal(raw, 5)
+                            if (formatted !== undefined) {
+                              const priceErr = checkPricePrecision(formatted)
+                              if (priceErr) {
+                                setEditPriceError(priceErr)
+                                setEditActualPagesPrintedError(null)
+                                setUpdatingConsumable(false)
+                                return
+                              }
+                              deviceDto.price = formatted
+                              setEditPriceError(null)
+                            }
+                            deviceDto.exchangeRate = editExchangeRate
+                          } else if (editPriceUSD) {
+                            // USD mode: price = USD directly
+                            const formatted = formatDecimal(editPriceUSD, 8)
+                            if (formatted !== undefined) {
+                              const priceErr = checkPricePrecision(formatted)
+                              if (priceErr) {
+                                setEditPriceError(priceErr)
+                                setUpdatingConsumable(false)
+                                return
+                              }
+                              deviceDto.price = formatted
+                              setEditPriceError(null)
+                            }
+                          }
+                        }
+
+                        deviceDto = removeEmpty(deviceDto)
+
+                        await devicesClientService.updateDeviceConsumable(
+                          deviceId,
+                          String(editingConsumable.id),
+                          deviceDto
+                        )
+                      } catch (err) {
+                        console.error('Update device-consumable failed', err)
+                        // Non-fatal: show warning but continue
+                        toast(
+                          'Vật tư đã cập nhật (nhưng có lỗi khi cập nhật thông tin trên thiết bị)'
+                        )
+                      }
+
+                      toast.success('Cập nhật vật tư thành công')
+                      setShowEditConsumable(false)
+
+                      // Refresh installed consumables list
+                      setConsumablesLoading(true)
+                      const installed = await devicesClientService
+                        .getConsumables(deviceId)
+                        .catch(() => [])
+                      setInstalledConsumables(Array.isArray(installed) ? installed : [])
+                    } catch (err) {
+                      console.error('Update consumable failed', err)
+                      toast.error('Không thể cập nhật vật tư')
+                    } finally {
+                      setUpdatingConsumable(false)
+                      setConsumablesLoading(false)
+                    }
+                  }
                   // If user inputted an installedAt but it isn't a valid/complete datetime, block and show error
                   // Incomplete installedAt input no longer blocks saving; accept partial input
 
@@ -2562,86 +2764,32 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                     if (editingConsumable.consumableType?.id) {
                       dto.consumableTypeId = editingConsumable.consumableType.id
                     }
+                    // Prevent changing serial if it was already set on the consumable
+                    if (
+                      editSerialNumber &&
+                      editingConsumable?.serialNumber &&
+                      editSerialNumber !== editingConsumable.serialNumber
+                    ) {
+                      toast.error('Serial đã được lưu trước đó và không thể chỉnh sửa')
+                      setUpdatingConsumable(false)
+                      return
+                    }
                     if (editSerialNumber) dto.serialNumber = editSerialNumber
                     if (editBatchNumber) dto.batchNumber = editBatchNumber
                     if (editExpiryDate) dto.expiryDate = new Date(editExpiryDate).toISOString()
                     dto = removeEmpty(dto)
 
-                    // First: update consumable entity
-                    const updated = await consumablesClientService.update(editingConsumable.id, dto)
-                    if (!updated) {
-                      toast.error('Cập nhật vật tư thất bại')
+                    // Assign the function to the confirm-ref
+                    createAndInstallRef.current = runEditConsumable
+
+                    // If user is adding a serial to a previously serial-less consumable, prompt
+                    if (!editingConsumable?.serialNumber && editSerialNumber) {
+                      setShowConsumableSerialWarning(true)
                       return
                     }
 
-                    // Second: update device-consumable record (installedAt, removedAt, actualPagesPrinted, price, exchangeRate)
-                    try {
-                      let deviceDto: Partial<UpdateDeviceConsumableDto> = {}
-                      if (editInstalledAt) deviceDto.installedAt = editInstalledAt
-                      if (editRemovedAt) deviceDto.removedAt = editRemovedAt
-                      if (typeof editActualPagesPrinted === 'number')
-                        deviceDto.actualPagesPrinted = editActualPagesPrinted
-
-                      // Only include price if removedAt is not being set (checkbox not checked)
-                      if (!editShowRemovedAt) {
-                        // Calculate price based on VND or USD input
-                        if (editPriceVND && editExchangeRate) {
-                          // VND mode: price = VND / exchangeRate
-                          const raw = editPriceVND / editExchangeRate
-                          // When auto-converting from VND->USD, limit to 5 fractional digits
-                          const formatted = formatDecimal(raw, 5)
-                          if (formatted !== undefined) {
-                            const priceErr = checkPricePrecision(formatted)
-                            if (priceErr) {
-                              setEditPriceError(priceErr)
-                              setEditActualPagesPrintedError(null)
-                              setUpdatingConsumable(false)
-                              return
-                            }
-                            deviceDto.price = formatted
-                            setEditPriceError(null)
-                          }
-                          deviceDto.exchangeRate = editExchangeRate
-                        } else if (editPriceUSD) {
-                          // USD mode: price = USD directly
-                          const formatted = formatDecimal(editPriceUSD, 8)
-                          if (formatted !== undefined) {
-                            const priceErr = checkPricePrecision(formatted)
-                            if (priceErr) {
-                              setEditPriceError(priceErr)
-                              setUpdatingConsumable(false)
-                              return
-                            }
-                            deviceDto.price = formatted
-                            setEditPriceError(null)
-                          }
-                        }
-                      }
-
-                      deviceDto = removeEmpty(deviceDto)
-
-                      await devicesClientService.updateDeviceConsumable(
-                        deviceId,
-                        editingConsumable.id,
-                        deviceDto
-                      )
-                    } catch (err) {
-                      console.error('Update device-consumable failed', err)
-                      // Non-fatal: show warning but continue
-                      toast(
-                        'Vật tư đã cập nhật (nhưng có lỗi khi cập nhật thông tin trên thiết bị)'
-                      )
-                    }
-
-                    toast.success('Cập nhật vật tư thành công')
-                    setShowEditConsumable(false)
-
-                    // Refresh installed consumables list
-                    setConsumablesLoading(true)
-                    const installed = await devicesClientService
-                      .getConsumables(deviceId)
-                      .catch(() => [])
-                    setInstalledConsumables(Array.isArray(installed) ? installed : [])
+                    // otherwise, run immediately
+                    await runEditConsumable()
                   } catch (err) {
                     console.error('Update consumable failed', err)
                     toast.error('Không thể cập nhật vật tư')
@@ -2691,7 +2839,13 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                   onChange={(e) => setEditSerialNumber(e.target.value)}
                   placeholder="SN123456"
                   className="mt-2 h-11"
+                  disabled={Boolean(editingConsumable?.serialNumber)}
                 />
+                {editingConsumable?.serialNumber ? (
+                  <p className="text-muted-foreground mt-1 text-xs">
+                    Serial đã được lưu và không thể chỉnh sửa
+                  </p>
+                ) : null}
               </div>
               {/* Batch removed per spec */}
               {/* removed capacity/remaining fields from edit form per request */}

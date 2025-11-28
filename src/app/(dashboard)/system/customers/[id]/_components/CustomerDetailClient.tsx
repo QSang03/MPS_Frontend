@@ -598,23 +598,39 @@ export default function CustomerDetailClient({ customerId }: Props) {
             ${formatPrice(device.pricePerColorPage)}
           </span>
         </td>
-        <td className="px-4 py-4 text-right">
-          <span className="text-sm font-medium text-slate-700">
-            {device.totalPageCountA4 != null ? formatNumber(device.totalPageCountA4) : '—'}
-          </span>
-        </td>
-        <td className="px-4 py-4 text-right">
-          <span className="text-sm font-medium text-slate-700">
-            {device.totalColorPagesA4 != null ? formatNumber(device.totalColorPagesA4) : '—'}
-          </span>
-        </td>
-        <td className="px-4 py-4 text-right">
-          <span className="text-sm font-medium text-slate-700">
-            {device.totalBlackWhitePagesA4 != null
-              ? formatNumber(device.totalBlackWhitePagesA4)
-              : '—'}
-          </span>
-        </td>
+        {/* Page counts: prefer A4 values for A4 models, otherwise prefer non-A4 totals (fallbacks included) */}
+        {(() => {
+          const useA4 = Boolean(device.device?.deviceModel?.useA4Counter)
+          const total = useA4
+            ? (device.totalPageCountA4 ?? device.totalPageCount ?? device.device?.totalPagesUsed)
+            : (device.totalPageCount ?? device.totalPageCountA4 ?? device.device?.totalPagesUsed)
+          const color = useA4
+            ? (device.totalColorPagesA4 ?? device.totalColorPages)
+            : (device.totalColorPages ?? device.totalColorPagesA4)
+          const bw = useA4
+            ? (device.totalBlackWhitePagesA4 ?? device.totalBlackWhitePages)
+            : (device.totalBlackWhitePages ?? device.totalBlackWhitePagesA4)
+
+          return (
+            <>
+              <td className="px-4 py-4 text-right">
+                <span className="text-sm font-medium text-slate-700">
+                  {total != null ? formatNumber(total) : '—'}
+                </span>
+              </td>
+              <td className="px-4 py-4 text-right">
+                <span className="text-sm font-medium text-slate-700">
+                  {color != null ? formatNumber(color) : '—'}
+                </span>
+              </td>
+              <td className="px-4 py-4 text-right">
+                <span className="text-sm font-medium text-slate-700">
+                  {bw != null ? formatNumber(bw) : '—'}
+                </span>
+              </td>
+            </>
+          )
+        })()}
         <td className="line-clamp-2 px-4 py-4 text-sm text-slate-600">
           {device.device?.location ?? '—'}
         </td>
@@ -1207,13 +1223,13 @@ export default function CustomerDetailClient({ customerId }: Props) {
                             Giá Màu
                           </th>
                           <th className="w-28 px-4 py-4 text-right text-xs font-semibold tracking-wide text-slate-600 uppercase">
-                            Tổng A4
+                            Tổng
                           </th>
                           <th className="w-24 px-4 py-4 text-right text-xs font-semibold tracking-wide text-slate-600 uppercase">
-                            Màu A4
+                            Màu
                           </th>
                           <th className="w-24 px-4 py-4 text-right text-xs font-semibold tracking-wide text-slate-600 uppercase">
-                            B/W A4
+                            B/W
                           </th>
                           <th className="min-w-[150px] px-4 py-4 text-left text-xs font-semibold tracking-wide text-slate-600 uppercase">
                             Vị trí

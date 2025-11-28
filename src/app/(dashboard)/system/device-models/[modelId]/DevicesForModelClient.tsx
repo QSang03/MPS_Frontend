@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -28,6 +28,15 @@ import {
   Settings,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 
 interface Props {
   modelIdParam: string
@@ -44,6 +53,8 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
   const [showCreate, setShowCreate] = useState(false)
   const [creating, setCreating] = useState(false)
   const [serialNumber, setSerialNumber] = useState('')
+  const [showCreateSerialWarning, setShowCreateSerialWarning] = useState(false)
+  const createConfirmRef = useRef<null | (() => Promise<void>)>(null)
   const [locationValue, setLocationValue] = useState('')
   const [ipAddressValue, setIpAddressValue] = useState('')
   const [macAddressValue, setMacAddressValue] = useState('')
@@ -96,38 +107,51 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
       toast.error('Vui lòng nhập serial number')
       return
     }
-    try {
-      setCreating(true)
-      let dto = {
-        deviceModelId: modelId,
-        serialNumber,
-        location: locationValue || undefined,
-        ipAddress: ipAddressValue || undefined,
-        macAddress: macAddressValue || undefined,
-        firmware: firmwareValue || undefined,
+    // Wrap the create action so we can confirm when serial exists
+    const runCreate = async () => {
+      try {
+        setCreating(true)
+        let dto = {
+          deviceModelId: modelId,
+          serialNumber,
+          location: locationValue || undefined,
+          ipAddress: ipAddressValue || undefined,
+          macAddress: macAddressValue || undefined,
+          firmware: firmwareValue || undefined,
+        }
+        // remove empty fields
+        dto = (await import('@/lib/utils/clean')).removeEmpty(dto) as typeof dto
+        const created = await devicesClientService.create(dto as CreateDeviceDto)
+        if (created) {
+          setDevices((prev) => [created, ...prev])
+          toast.success('Tạo thiết bị thành công')
+          setSerialNumber('')
+          setLocationValue('')
+          setIpAddressValue('')
+          setMacAddressValue('')
+          setFirmwareValue('')
+          setShowCreate(false)
+        } else {
+          toast.error('Tạo thiết bị thất bại')
+        }
+      } catch (err: unknown) {
+        const e = err as Error
+        console.error('Create device failed', e)
+        toast.error(e?.message || 'Tạo thiết bị thất bại')
+      } finally {
+        setCreating(false)
+        createConfirmRef.current = null
       }
-      // remove empty fields
-      dto = (await import('@/lib/utils/clean')).removeEmpty(dto) as typeof dto
-      const created = await devicesClientService.create(dto as CreateDeviceDto)
-      if (created) {
-        setDevices((prev) => [created, ...prev])
-        toast.success('Tạo thiết bị thành công')
-        setSerialNumber('')
-        setLocationValue('')
-        setIpAddressValue('')
-        setMacAddressValue('')
-        setFirmwareValue('')
-        setShowCreate(false)
-      } else {
-        toast.error('Tạo thiết bị thất bại')
-      }
-    } catch (err: unknown) {
-      const e = err as Error
-      console.error('Create device failed', e)
-      toast.error(e?.message || 'Tạo thiết bị thất bại')
-    } finally {
-      setCreating(false)
     }
+
+    // If serialNumber is provided, show confirmation modal first
+    if (serialNumber) {
+      createConfirmRef.current = runCreate
+      setShowCreateSerialWarning(true)
+      return
+    }
+
+    await runCreate()
   }
 
   return (
@@ -401,6 +425,44 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
             </div>
           </div>
         </SystemModalLayout>
+        {/* Confirm dialog for serial warning */}
+        <AlertDialog
+          open={showCreateSerialWarning}
+          onOpenChange={(open) => setShowCreateSerialWarning(open)}
+        >
+          <AlertDialogContent className="max-w-lg overflow-hidden rounded-lg border p-0 shadow-lg">
+            <div className="px-6 py-5">
+              <AlertDialogHeader className="space-y-2 text-left">
+                <AlertDialogTitle className="text-lg font-bold">Xác nhận Serial</AlertDialogTitle>
+                <AlertDialogDescription className="text-muted-foreground text-sm">
+                  Bạn đang đặt số Serial cho thiết bị. Sau khi thiết lập, Serial sẽ không thể chỉnh
+                  sửa sau này. Bạn có chắc chắn muốn tiếp tục?
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+            </div>
+            <AlertDialogFooter className="bg-muted/50 border-t px-6 py-4">
+              <AlertDialogCancel onClick={() => setShowCreateSerialWarning(false)}>
+                Hủy
+              </AlertDialogCancel>
+              <Button
+                onClick={async () => {
+                  setShowCreateSerialWarning(false)
+                  if (createConfirmRef.current) {
+                    try {
+                      await createConfirmRef.current()
+                    } catch (e) {
+                      console.error('createConfirmRef failed', e)
+                      toast.error('Tạo thiết bị thất bại')
+                    }
+                  }
+                }}
+                className="min-w-[120px] bg-amber-600"
+              >
+                Xác nhận
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </Dialog>
     </div>
   )
