@@ -3,12 +3,7 @@ import { Bell } from 'lucide-react'
 import { SystemPageLayout } from '@/components/system/SystemPageLayout'
 import { SystemPageHeader } from '@/components/system/SystemPageHeader'
 // Client-side notifications list
-import dynamic from 'next/dynamic'
-
-const NotificationsListClient = dynamic(
-  () => import('./NotificationsListClient').then((mod) => mod.default),
-  { ssr: false }
-)
+import NotificationsListWrapper from './NotificationsListWrapper'
 
 export default function NotificationsPage() {
   return (
@@ -29,12 +24,8 @@ export default function NotificationsPage() {
         </CardHeader>
         <CardContent>
           {/* Client component handles fetching and interactions */}
-          {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
-          {/* @ts-ignore - dynamic client import handled at runtime */}
           <div>
-            {/* Lazy client component import to keep page server-renderable */}
-            {/* The client component is in the same folder */}
-            <NotificationsListClient />
+            <NotificationsListWrapper />
           </div>
         </CardContent>
       </Card>
