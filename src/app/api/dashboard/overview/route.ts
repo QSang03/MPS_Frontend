@@ -9,6 +9,9 @@ import backendApiClient from '@/lib/api/backend-client'
  * Backend extracts customerId from JWT token
  */
 export async function GET(request: NextRequest) {
+  // declare at outer scope so catch can reference them when logging
+  let params: Record<string, string> | undefined
+  let month: string | undefined
   try {
     const cookieStore = await cookies()
     const accessToken = cookieStore.get('access_token')?.value
@@ -18,7 +21,14 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url)
-    const month = searchParams.get('month')
+    params = {}
+    for (const [k, v] of searchParams.entries()) {
+      if (v === null) continue
+      const s = String(v).trim()
+      if (s === '' || s === 'null' || s === 'undefined') continue
+      params[k] = s
+    }
+    month = params.month
 
     if (!month) {
       return NextResponse.json({ error: 'month is required' }, { status: 400 })
@@ -29,26 +39,60 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid month format. Use YYYY-MM' }, { status: 400 })
     }
 
-    console.log('[api/dashboard/overview] Fetching for month:', month, '(customerId from session)')
+    console.log(
+      '[api/dashboard/overview] Fetching dashboard overview params:',
+      params,
+      `customerId from session${params.customerId ? ' (overridden by query param)' : ''}`
+    )
 
     // Call backend API (backend extracts customerId from JWT)
     const response = await backendApiClient.get('/dashboard/overview', {
-      params: { month },
+      params,
       headers: { Authorization: `Bearer ${accessToken}` },
     })
 
-    console.log('[api/dashboard/overview] Backend response status:', response.status)
+    const respData = response && (response.data as Record<string, unknown> | undefined)
+    const respSuccess =
+      typeof respData?.success === 'boolean' ? (respData.success as boolean) : undefined
+    const respItemsLength = Array.isArray(respData?.items)
+      ? (respData.items as Array<unknown>).length
+      : undefined
+    console.log(
+      '[api/dashboard/overview] Backend response status:',
+      response.status,
+      'data summary:',
+      {
+        success: respSuccess,
+        items: respItemsLength,
+      }
+    )
 
     return NextResponse.json(response.data)
   } catch (error: unknown) {
-    console.error('[api/dashboard/overview] Error:', error)
+    const e = error as Record<string, unknown>
+    const resp = (e['response'] as Record<string, unknown> | undefined) ?? undefined
+    const status =
+      resp && typeof resp['status'] === 'number' ? (resp['status'] as number) : undefined
+    const data = resp && (resp['data'] as Record<string, unknown> | undefined)
+    const message =
+      data && typeof data['message'] === 'string'
+        ? (data['message'] as string)
+        : typeof e['message'] === 'string'
+          ? (e['message'] as string)
+          : undefined
 
-    if (error && typeof error === 'object' && 'response' in error) {
-      const axiosError = error as { response?: { status: number; data?: unknown } }
-      return NextResponse.json(
-        axiosError.response?.data || { error: 'Failed to fetch customer overview' },
-        { status: axiosError.response?.status || 500 }
-      )
+    console.error('[api/dashboard/overview] Error fetching dashboard overview:', {
+      month,
+      status,
+      message,
+      data,
+      stack: typeof e['stack'] === 'string' ? (e['stack'] as string) : undefined,
+    })
+
+    if (status) {
+      return NextResponse.json(data || { error: message || 'Failed to fetch customer overview' }, {
+        status,
+      })
     }
 
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

@@ -5,12 +5,15 @@ import backendApiClient from '@/lib/api/backend-client'
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
-    const from = searchParams.get('from')
-    const to = searchParams.get('to')
-    const consumableTypeId = searchParams.get('consumableTypeId')
-    const customerId = searchParams.get('customerId')
+    const params: Record<string, string> = {}
+    for (const [k, v] of searchParams.entries()) {
+      if (v === null) continue
+      const s = String(v).trim()
+      if (s === '' || s === 'null' || s === 'undefined') continue
+      params[k] = s
+    }
 
-    console.log('[API] Consumable lifecycle request:', { from, to, consumableTypeId, customerId })
+    console.log('[API] Consumable lifecycle request:', params)
 
     // Get access token from cookies
     const cookieStore = await cookies()
@@ -23,13 +26,28 @@ export async function GET(request: NextRequest) {
       )
     }
 
+    // Build query params, only include values that are defined and non-null
+    // `params` is already built above; it contains only non-empty values
+
+    // Validate required params — backend requires from and to
+    // Validate time range: exactly one of period OR (from and to) OR year must be provided
+    const hasPeriod = typeof params.period === 'string' && String(params.period).trim() !== ''
+    const hasRange = typeof params.from === 'string' && typeof params.to === 'string'
+    const hasYear = typeof params.year === 'string' && String(params.year).trim() !== ''
+    const validTimeRange = [hasPeriod, hasRange, hasYear].filter(Boolean).length === 1
+    if (!validTimeRange) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            'Invalid time range: provide exactly one of period (YYYY-MM), from/to (YYYY-MM), or year (YYYY)',
+        },
+        { status: 400 }
+      )
+    }
+
     const response = await backendApiClient.get('/reports/analytics/consumables/lifecycle', {
-      params: {
-        from,
-        to,
-        consumableTypeId: consumableTypeId || undefined,
-        customerId: customerId || undefined,
-      },
+      params,
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },

@@ -323,7 +323,10 @@ export default function AnalyticsPageClient() {
     const out: Record<string, unknown> = {}
     for (const [k, v] of Object.entries(obj)) {
       if (v === undefined || v === null) continue
-      if (typeof v === 'string' && v.trim() === '') continue
+      if (typeof v === 'string') {
+        const s = v.trim()
+        if (s === '' || s === 'null' || s === 'undefined') continue
+      }
       out[k] = v
     }
     return out

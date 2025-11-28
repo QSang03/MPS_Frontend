@@ -13,7 +13,10 @@ export async function GET(request: NextRequest, ctx: unknown) {
     const searchParams = request.nextUrl.searchParams
     const params: Record<string, string> = {}
     for (const [k, v] of searchParams.entries()) {
-      if (v !== null && String(v).trim() !== '') params[k] = v
+      if (v === null) continue
+      const s = String(v).trim()
+      if (s === '' || s === 'null' || s === 'undefined') continue
+      params[k] = s
     }
     const from = params.from
     const to = params.to
