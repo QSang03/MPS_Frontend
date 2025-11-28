@@ -524,7 +524,7 @@ function DevicesTableContent({
         ),
       },
       {
-        accessorKey: 'deviceModel',
+        accessorKey: 'deviceModel.name',
         header: () => (
           <div className="flex items-center gap-2">
             <Package className="h-4 w-4 text-gray-600" />
@@ -536,10 +536,10 @@ function DevicesTableContent({
             {row.original.deviceModel?.name || row.original.deviceModelId || '—'}
           </span>
         ),
-        enableSorting: false,
+        enableSorting: true,
       },
       {
-        accessorKey: 'customer',
+        accessorKey: 'customer.name',
         header: () => (
           <div className="flex items-center gap-2">
             <Users className="h-4 w-4 text-gray-600" />
@@ -595,7 +595,7 @@ function DevicesTableContent({
             </div>
           )
         },
-        enableSorting: false,
+        enableSorting: true,
       },
       {
         accessorKey: 'location',

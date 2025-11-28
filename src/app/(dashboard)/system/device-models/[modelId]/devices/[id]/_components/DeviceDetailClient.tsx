@@ -3022,6 +3022,7 @@ export function ConsumableUsageHistory({
     id?: string
     consumableId?: string
     consumableTypeId?: string
+    consumableTypeName?: string
     percentage?: number
     remaining?: number
     capacity?: number
@@ -3168,8 +3169,7 @@ export function ConsumableUsageHistory({
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-4 py-3 text-left text-sm font-semibold">ID</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">Consumable</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">Type</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Tên vật tư</th>
                   <th className="px-4 py-3 text-right text-sm font-semibold">%</th>
                   <th className="px-4 py-3 text-right text-sm font-semibold">Remaining</th>
                   <th className="px-4 py-3 text-right text-sm font-semibold">Capacity</th>
@@ -3183,8 +3183,9 @@ export function ConsumableUsageHistory({
                     <td className="text-muted-foreground px-4 py-3 font-mono text-sm" title={r.id}>
                       {shortId(r.id)}
                     </td>
-                    <td className="px-4 py-3 text-sm">{shortId(r.consumableId)}</td>
-                    <td className="px-4 py-3 text-sm">{shortId(r.consumableTypeId)}</td>
+                    <td className="px-4 py-3 text-sm">
+                      {r.consumableTypeName ?? shortId(r.consumableTypeId)}
+                    </td>
                     <td className="px-4 py-3 text-right text-sm">{r.percentage ?? '-'}%</td>
                     <td className="px-4 py-3 text-right text-sm">{fmt(r.remaining)}</td>
                     <td className="px-4 py-3 text-right text-sm">{fmt(r.capacity)}</td>

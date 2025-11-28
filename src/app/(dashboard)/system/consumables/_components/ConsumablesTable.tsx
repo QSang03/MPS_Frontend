@@ -120,9 +120,9 @@ export function ConsumablesTable({
         ),
       },
       {
-        accessorKey: 'consumableType',
+        accessorKey: 'consumableType.name',
         header: 'Tên',
-        enableSorting: false,
+        enableSorting: true,
         cell: ({ row }) => (
           <span className="font-medium">
             {String((row.original.consumableType as Record<string, unknown>)?.name ?? '-')}

@@ -188,6 +188,7 @@ export function ConsumableTypeTable({
         cell: ({ row }) => <span className="text-sm">{row.original.capacity ?? '—'}</span>,
       },
       {
+        accessorKey: 'stockItem.quantity',
         id: 'stock',
         header: () => (
           <div className="flex items-center gap-2">
@@ -195,7 +196,7 @@ export function ConsumableTypeTable({
             Số lượng tồn
           </div>
         ),
-        enableSorting: false,
+        enableSorting: true,
         cell: ({ row }) => {
           const m = row.original
           return m.stockItem?.id && m.stockItem?.quantity !== undefined ? (

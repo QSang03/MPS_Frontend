@@ -54,9 +54,10 @@ export const getColumns = (type?: WarehouseDocumentType) => {
 
   if (!isImport) {
     cols.push({
-      accessorKey: 'customerId',
+      accessorKey: 'customer.name',
       header: 'Khách hàng',
       cell: ({ row }) => row.original.customer?.name ?? row.original.customerId ?? '-',
+      enableSorting: true,
     })
   }
   if (!isExportOrReturn) {

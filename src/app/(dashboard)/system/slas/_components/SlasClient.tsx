@@ -568,13 +568,14 @@ function SlasTableContent({
         ),
       },
       {
-        accessorKey: 'customer',
+        accessorKey: 'customer.name',
         header: () => (
           <div className="flex items-center gap-2">
             <Building2 className="h-4 w-4 text-gray-600" />
             Khách hàng
           </div>
         ),
+        enableSorting: true,
         cell: ({ row }) => (
           <div className="text-sm">
             <p className="font-medium">{row.original.customer?.name ?? '—'}</p>
