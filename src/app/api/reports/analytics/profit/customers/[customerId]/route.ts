@@ -13,13 +13,23 @@ export async function GET(request: NextRequest, ctx: unknown) {
 
   try {
     const searchParams = request.nextUrl.searchParams
-    const period = searchParams.get('period')
+    const paramsFromQuery: Record<string, string> = {}
+    for (const [k, v] of searchParams.entries()) {
+      if (v === null) continue
+      const s = String(v).trim()
+      if (s === '' || s === 'null' || s === 'undefined') continue
+      paramsFromQuery[k] = s
+    }
+    const period = paramsFromQuery.period
+    const year = paramsFromQuery.year
+    const from = paramsFromQuery.from
+    const to = paramsFromQuery.to
 
     if (!customerId) {
       return NextResponse.json({ success: false, message: 'Missing customerId' }, { status: 400 })
     }
 
-    console.log('[API] Customer detail profit request:', { customerId, period })
+    console.log('[API] Customer detail profit request:', { customerId, params: paramsFromQuery })
 
     // Get access token from cookies
     const cookieStore = await cookies()
@@ -32,10 +42,26 @@ export async function GET(request: NextRequest, ctx: unknown) {
       )
     }
 
+    // Validate time range: exactly one of period OR (from and to) OR year must be provided
+    const hasPeriod = typeof period === 'string' && period.trim() !== ''
+    const hasRange = typeof from === 'string' && typeof to === 'string'
+    const hasYear = typeof year === 'string' && year.trim() !== ''
+    const validTimeRange = [hasPeriod, hasRange, hasYear].filter(Boolean).length === 1
+    if (!validTimeRange) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            'Invalid time range: provide exactly one of period (YYYY-MM), from/to (YYYY-MM), or year (YYYY)',
+        },
+        { status: 400 }
+      )
+    }
+
     const response = await backendApiClient.get(
       `/reports/analytics/profit/customers/${customerId}`,
       {
-        params: { period },
+        params: paramsFromQuery,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
