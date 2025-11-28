@@ -78,6 +78,8 @@ type LatestUsageHistory = {
   remaining?: number | null
   capacity?: number | null
   percentage?: number | null
+  remainingA4?: number | null
+  capacityA4?: number | null
 }
 interface DeviceDetailClientProps {
   deviceId: string
@@ -1206,9 +1208,8 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                       <tr>
                         <th className="px-4 py-3 text-left text-xs font-semibold">#</th>
                         <th className="px-4 py-3 text-left text-xs font-semibold">Tên</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold">Mã / Model</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold">Serial</th>
                         <th className="px-4 py-3 text-left text-xs font-semibold">Trạng thái</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold">%</th>
                         <th className="px-4 py-3 text-left text-xs font-semibold">
                           Số trang khả dụng
                         </th>
@@ -1367,37 +1368,29 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                             </td>
 
                             <td className="px-4 py-3 text-sm">
-                              {usagePercent !== null ? (
-                                <div className="flex items-center gap-2">
-                                  <div className="h-2 w-20 overflow-hidden rounded-full bg-gray-200">
-                                    <div
-                                      className={cn(
-                                        'h-full rounded-full transition-all',
-                                        usagePercent > 50
-                                          ? 'bg-green-500'
-                                          : usagePercent > 20
-                                            ? 'bg-yellow-500'
-                                            : 'bg-red-500'
-                                      )}
-                                      style={{ width: `${usagePercent}%` }}
-                                    />
-                                  </div>
-                                  <span className="text-sm">{usagePercent}%</span>
-                                </div>
-                              ) : (
-                                <span className="text-muted-foreground">-</span>
-                              )}
-                            </td>
+                              {(() => {
+                                // prefer A4-normalized numbers from latestHistory when available
+                                const preferredRemaining =
+                                  latestHistory && typeof latestHistory.remainingA4 === 'number'
+                                    ? latestHistory.remainingA4
+                                    : (latestRemaining ?? derivedRemaining)
 
-                            <td className="px-4 py-3 text-sm">
-                              {typeof cons?.remaining === 'number' ? (
-                                <span className="text-sm">
-                                  {cons.remaining}/{cons.capacity ?? '-'}{' '}
-                                  {cons?.consumableType?.unit ?? ''}
-                                </span>
-                              ) : (
-                                <span className="text-muted-foreground">-</span>
-                              )}
+                                const preferredCapacity =
+                                  latestHistory && typeof latestHistory.capacityA4 === 'number'
+                                    ? latestHistory.capacityA4
+                                    : (latestCapacity ?? capacityNum)
+
+                                if (typeof preferredRemaining === 'number') {
+                                  return (
+                                    <span className="text-sm">
+                                      {preferredRemaining}/{preferredCapacity ?? '-'}{' '}
+                                      {cons?.consumableType?.unit ?? ''}
+                                    </span>
+                                  )
+                                }
+
+                                return <span className="text-muted-foreground">-</span>
+                              })()}
                             </td>
 
                             <td className="text-muted-foreground px-4 py-3 text-right text-sm">

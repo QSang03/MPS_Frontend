@@ -134,11 +134,11 @@ export function ConsumablesTable({
         header: 'Dòng tương thích',
         enableSorting: false,
         cell: ({ row }) => {
-          const compatibleModels = (
-            ((row.original.consumableType as Record<string, unknown>)?.compatibleDeviceModels as
-              | unknown[]
-              | undefined) || []
-          )
+          const ct = (row.original.consumableType as Record<string, unknown>) ?? {}
+          const machineLine = String(ct.compatibleMachineLine ?? '').trim()
+          if (machineLine)
+            return <span className="text-muted-foreground text-sm">{machineLine}</span>
+          const compatibleModels = ((ct.compatibleDeviceModels as unknown[] | undefined) || [])
             .map((dm) => String((dm as Record<string, unknown>).name ?? ''))
             .filter(Boolean)
             .join(', ')

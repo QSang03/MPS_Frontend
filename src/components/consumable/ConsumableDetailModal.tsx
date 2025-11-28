@@ -51,6 +51,8 @@ export default function ConsumableDetailModal({
       partNumber?: string
       capacity?: number | string
       description?: string
+      compatibleMachineLine?: string
+      compatibleDeviceModels?: Array<{ id?: string; name?: string }>
     }
     expiryDate?: string
     deviceCount?: number | string
@@ -226,6 +228,18 @@ export default function ConsumableDetailModal({
                       <span className="text-slate-500">Đơn vị tính</span>
                       <span className="font-medium text-slate-900">
                         {String(typedItem?.consumableType?.unit ?? '-')}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Dòng tương thích</span>
+                      <span className="font-medium text-slate-900">
+                        {typedItem?.consumableType?.compatibleMachineLine ||
+                          (typedItem?.consumableType?.compatibleDeviceModels
+                            ? typedItem?.consumableType?.compatibleDeviceModels
+                                .map((m) => m.name)
+                                .filter(Boolean)
+                                .join(', ')
+                            : '-')}
                       </span>
                     </div>
                     <div className="flex justify-between">

@@ -1635,10 +1635,18 @@ export default function CustomerDetailClient({ customerId }: Props) {
                                 </div>
                               </td>
                               <td className="px-6 py-5 text-sm text-amber-800">
-                                {group.type?.compatibleDeviceModels
-                                  ?.map((model) => model?.name)
-                                  .filter(Boolean)
-                                  .join(', ') || '—'}
+                                {(() => {
+                                  const machineLine = String(
+                                    group.type?.compatibleMachineLine ?? ''
+                                  ).trim()
+                                  if (machineLine) return machineLine
+                                  return (
+                                    group.type?.compatibleDeviceModels
+                                      ?.map((model) => model?.name)
+                                      .filter(Boolean)
+                                      .join(', ') || '—'
+                                  )
+                                })()}
                               </td>
                               <td className="px-6 py-5 text-sm text-amber-800">
                                 {group.type?.capacity
@@ -1703,10 +1711,18 @@ export default function CustomerDetailClient({ customerId }: Props) {
                                       </p>
                                     </td>
                                     <td className="px-6 py-4 text-sm text-slate-600">
-                                      {item.consumableType?.compatibleDeviceModels
-                                        ?.map((model) => model?.name)
-                                        .filter(Boolean)
-                                        .join(', ') || '—'}
+                                      {(() => {
+                                        const machineLine = String(
+                                          item.consumableType?.compatibleMachineLine ?? ''
+                                        ).trim()
+                                        if (machineLine) return machineLine
+                                        return (
+                                          item.consumableType?.compatibleDeviceModels
+                                            ?.map((model) => model?.name)
+                                            .filter(Boolean)
+                                            .join(', ') || '—'
+                                        )
+                                      })()}
                                     </td>
                                     <td className="px-6 py-4 text-sm text-slate-600">
                                       {item.consumableType?.capacity

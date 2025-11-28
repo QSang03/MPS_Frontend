@@ -37,6 +37,8 @@ type LatestUsageHistory = {
   remaining?: number | null
   capacity?: number | null
   percentage?: number | null
+  remainingA4?: number | null
+  capacityA4?: number | null
 }
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -1034,14 +1036,43 @@ export default function DeviceDetailClient({ deviceId, backHref }: Props) {
                             </td>
 
                             <td className="px-4 py-3 text-sm">
-                              {typeof derivedRemaining === 'number' ? (
-                                <span className="text-sm">
-                                  {derivedRemaining}/{capacityNum ?? '-'}{' '}
-                                  {cons?.consumableType?.unit ?? ''}
-                                </span>
-                              ) : (
-                                <span className="text-muted-foreground">-</span>
-                              )}
+                              {(() => {
+                                // prefer A4-normalized values from latestHistory when present
+                                const latestHistoryLocal =
+                                  (
+                                    c as DeviceConsumable & {
+                                      latestUsageHistory?: LatestUsageHistory
+                                    }
+                                  ).latestUsageHistory ??
+                                  (
+                                    cons as DeviceConsumable & {
+                                      latestUsageHistory?: LatestUsageHistory
+                                    }
+                                  ).latestUsageHistory
+
+                                const preferredRemaining =
+                                  latestHistoryLocal &&
+                                  typeof latestHistoryLocal.remainingA4 === 'number'
+                                    ? latestHistoryLocal.remainingA4
+                                    : (latestRemaining ?? derivedRemaining)
+
+                                const preferredCapacity =
+                                  latestHistoryLocal &&
+                                  typeof latestHistoryLocal.capacityA4 === 'number'
+                                    ? latestHistoryLocal.capacityA4
+                                    : (latestCapacity ?? capacityNum)
+
+                                if (typeof preferredRemaining === 'number') {
+                                  return (
+                                    <span className="text-sm">
+                                      {preferredRemaining}/{preferredCapacity ?? '-'}{' '}
+                                      {cons?.consumableType?.unit ?? ''}
+                                    </span>
+                                  )
+                                }
+
+                                return <span className="text-muted-foreground">-</span>
+                              })()}
                             </td>
 
                             <td className="text-muted-foreground px-4 py-3 text-right text-sm">
