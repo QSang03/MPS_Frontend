@@ -1395,7 +1395,7 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                                             </span>
                                           </TooltipTrigger>
                                           <TooltipContent sideOffset={4}>
-                                            {`Để tránh lãng phí, hãy tiếp tục sử dụng đến giọt mực cuối cùng.`}
+                                            {`“Vẫn dùng tốt – chỉ thay khi mờ.”`}
                                           </TooltipContent>
                                         </Tooltip>
                                       ) : null}
@@ -1559,7 +1559,7 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                         <th className="px-4 py-3 text-left text-sm font-semibold">#</th>
                         <th className="px-4 py-3 text-left text-sm font-semibold">Tên</th>
                         <th className="px-4 py-3 text-left text-sm font-semibold">Part</th>
-                        <th className="px-4 py-3 text-left text-sm font-semibold">Mô tả</th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold">Dòng máy</th>
                         <th className="px-4 py-3 text-left text-sm font-semibold">Đơn vị</th>
                         <th className="px-4 py-3 text-right text-sm font-semibold">
                           Kho khách hàng
@@ -1578,7 +1578,7 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                             : (ct as ConsumableType)
                         const partNumber = type?.partNumber ?? '-'
                         const unit = type?.unit ?? '-'
-                        const description = type?.description ?? '-'
+                        const compatibleLine = type?.compatibleMachineLine ?? '-'
                         const customerQty =
                           'customerStockQuantity' in ct ? ct.customerStockQuantity : undefined
                         const systemQty =
@@ -1594,7 +1594,7 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                               </code>
                             </td>
                             <td className="text-muted-foreground px-4 py-3 text-sm">
-                              {description}
+                              {compatibleLine}
                             </td>
                             <td className="px-4 py-3">
                               <Badge variant="outline">{unit}</Badge>
