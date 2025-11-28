@@ -184,6 +184,16 @@ export function AlertsSummary({
                         'group flex items-center gap-4 rounded-lg border p-3 transition-all',
                         alert.count > 0 ? 'cursor-pointer hover:shadow-md' : 'opacity-60'
                       )}
+                      // Make the whole row navigable when there are alerts
+                      onClick={() => {
+                        if (alert.count > 0) {
+                          try {
+                            router.push(`/system/notifications?type=${alert.type}`)
+                          } catch (err) {
+                            console.error('Navigation failed for alert type', alert.type, err)
+                          }
+                        }
+                      }}
                     >
                       {/* Icon */}
                       <div
@@ -212,6 +222,14 @@ export function AlertsSummary({
                             variant="ghost"
                             size="sm"
                             className="mt-1 h-auto p-0 text-xs hover:underline"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              try {
+                                router.push(`/system/notifications?type=${alert.type}`)
+                              } catch (err) {
+                                console.error('Navigation failed for alert type', alert.type, err)
+                              }
+                            }}
                           >
                             Xem chi tiết
                             <ArrowRight className="ml-1 h-3 w-3" />

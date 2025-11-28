@@ -488,9 +488,17 @@ export function PoliciesTable() {
                             <Button
                               size="sm"
                               variant="ghost"
-                              onClick={() => openEdit(p)}
+                              onClick={() => {
+                                const isProtectedPolicy = p.name === 'SystemAdminFullAccess'
+                                if (!isProtectedPolicy) openEdit(p)
+                              }}
                               className="transition-all hover:bg-blue-100 hover:text-blue-700"
-                              title="Chỉnh sửa"
+                              title={
+                                p.name === 'SystemAdminFullAccess'
+                                  ? 'Policy hệ thống không thể chỉnh sửa'
+                                  : 'Chỉnh sửa'
+                              }
+                              disabled={p.name === 'SystemAdminFullAccess'}
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
@@ -505,7 +513,12 @@ export function PoliciesTable() {
                                   size="sm"
                                   variant="ghost"
                                   className="transition-all hover:bg-red-100 hover:text-red-700"
-                                  title="Xóa"
+                                  title={
+                                    p.name === 'SystemAdminFullAccess'
+                                      ? 'Policy hệ thống không thể xóa'
+                                      : 'Xóa'
+                                  }
+                                  disabled={p.name === 'SystemAdminFullAccess'}
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>

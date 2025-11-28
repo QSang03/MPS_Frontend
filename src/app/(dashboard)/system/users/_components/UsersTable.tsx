@@ -566,9 +566,20 @@ function UsersTableContent({
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={() => onEditUser(row.original)}
+                onClick={() => {
+                  const isProtectedUser =
+                    String(row.original.email || '').toLowerCase() === 'duongnvq@nguyenkimvn.vn'
+                  if (!isProtectedUser) onEditUser(row.original)
+                }}
                 className="transition-all hover:bg-blue-100 hover:text-blue-700"
-                title="Chỉnh sửa"
+                title={
+                  String(row.original.email || '').toLowerCase() === 'duongnvq@nguyenkimvn.vn'
+                    ? 'Tài khoản hệ thống không thể chỉnh sửa'
+                    : 'Chỉnh sửa'
+                }
+                disabled={
+                  String(row.original.email || '').toLowerCase() === 'duongnvq@nguyenkimvn.vn'
+                }
               >
                 <Edit className="h-4 w-4" />
               </Button>
@@ -604,7 +615,14 @@ function UsersTableContent({
                     size="sm"
                     variant="ghost"
                     className="transition-all hover:bg-red-100 hover:text-red-700"
-                    title="Xóa"
+                    title={
+                      String(row.original.email || '').toLowerCase() === 'duongnvq@nguyenkimvn.vn'
+                        ? 'Tài khoản hệ thống không thể xóa'
+                        : 'Xóa'
+                    }
+                    disabled={
+                      String(row.original.email || '').toLowerCase() === 'duongnvq@nguyenkimvn.vn'
+                    }
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>

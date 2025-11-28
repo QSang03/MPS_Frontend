@@ -372,6 +372,7 @@ export function CustomerTable({
         enableSorting: false,
         cell: ({ row }) => {
           const customer = row.original
+          const isSysCustomer = (customer.code ?? '').toUpperCase() === 'SYS'
           return (
             <div className="flex items-center justify-end gap-2">
               <Button
@@ -419,8 +420,9 @@ export function CustomerTable({
                     <Button
                       variant="ghost"
                       size="sm"
-                      disabled={deletingId === customer.id}
+                      disabled={deletingId === customer.id || isSysCustomer}
                       className="transition-all hover:bg-red-100 hover:text-red-700"
+                      title={isSysCustomer ? 'Khách hàng hệ thống không thể xóa' : 'Xóa'}
                     >
                       {deletingId === customer.id ? (
                         <Loader2 className="h-4 w-4 animate-spin" />

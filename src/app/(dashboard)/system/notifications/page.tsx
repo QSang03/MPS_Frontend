@@ -2,6 +2,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Bell } from 'lucide-react'
 import { SystemPageLayout } from '@/components/system/SystemPageLayout'
 import { SystemPageHeader } from '@/components/system/SystemPageHeader'
+// Client-side notifications list
+import dynamic from 'next/dynamic'
+
+const NotificationsListClient = dynamic(
+  () => import('./NotificationsListClient').then((mod) => mod.default),
+  { ssr: false }
+)
 
 export default function NotificationsPage() {
   return (
@@ -21,8 +28,13 @@ export default function NotificationsPage() {
           <CardDescription>Danh sách đầy đủ các cảnh báo</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex h-40 items-center justify-center text-gray-500">
-            <p>Chức năng đang được phát triển...</p>
+          {/* Client component handles fetching and interactions */}
+          {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
+          {/* @ts-ignore - dynamic client import handled at runtime */}
+          <div>
+            {/* Lazy client component import to keep page server-renderable */}
+            {/* The client component is in the same folder */}
+            <NotificationsListClient />
           </div>
         </CardContent>
       </Card>

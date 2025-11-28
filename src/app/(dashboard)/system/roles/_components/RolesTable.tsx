@@ -461,40 +461,50 @@ function RolesTableContent({
           </div>
         ),
         enableSorting: false,
-        cell: ({ row }) => (
-          <div className="flex items-center justify-end gap-1.5">
-            {canUpdate && (
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => onEditRole(row.original)}
-                className="transition-all hover:bg-blue-100 hover:text-blue-700"
-                title="Chỉnh sửa"
-              >
-                <Edit className="h-4 w-4" />
-              </Button>
-            )}
-            {canDelete && (
-              <DeleteDialog
-                title="Xóa vai trò"
-                description={`Bạn có chắc chắn muốn xóa vai trò "${row.original.name}" không?\n\nHành động này không thể hoàn tác.`}
-                onConfirm={async () => {
-                  await Promise.resolve(onDeleteRole(row.original.id))
-                }}
-                trigger={
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="transition-all hover:bg-red-100 hover:text-red-700"
-                    title="Xóa"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                }
-              />
-            )}
-          </div>
-        ),
+        cell: ({ row }) => {
+          const isProtectedRole = new Set([
+            'system-admin',
+            'customer-manager',
+            'user',
+            'manager',
+          ]).has(String(row.original.name))
+          return (
+            <div className="flex items-center justify-end gap-1.5">
+              {canUpdate && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => !isProtectedRole && onEditRole(row.original)}
+                  className="transition-all hover:bg-blue-100 hover:text-blue-700"
+                  title={isProtectedRole ? 'Vai trò hệ thống không thể chỉnh sửa' : 'Chỉnh sửa'}
+                  disabled={isProtectedRole}
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+              )}
+              {canDelete && (
+                <DeleteDialog
+                  title="Xóa vai trò"
+                  description={`Bạn có chắc chắn muốn xóa vai trò "${row.original.name}" không?\n\nHành động này không thể hoàn tác.`}
+                  onConfirm={async () => {
+                    await Promise.resolve(onDeleteRole(row.original.id))
+                  }}
+                  trigger={
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="transition-all hover:bg-red-100 hover:text-red-700"
+                      title={isProtectedRole ? 'Vai trò hệ thống không thể xóa' : 'Xóa'}
+                      disabled={isProtectedRole}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  }
+                />
+              )}
+            </div>
+          )
+        },
       },
     ]
   }, [pagination, canUpdate, canDelete, onEditRole, onDeleteRole])

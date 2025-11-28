@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
 import { useEffect, useState, useRef } from 'react'
@@ -20,6 +19,12 @@ import { toast } from 'sonner'
 import { customersClientService } from '@/lib/api/services/customers-client.service'
 import removeEmpty from '@/lib/utils/clean'
 import type { Customer } from '@/types/models/customer'
+
+// Axios-like error structure used for parsing error responses from server.
+type AxiosLikeError = {
+  response?: { data?: unknown; status?: number }
+  message?: string
+}
 
 type LocalCustomerForm = Partial<Customer> & {
   code?: string
@@ -138,29 +143,29 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
     const t = setTimeout(() => {
       setForm({
         name: customer.name,
-        code: (customer as any).code,
+        code: customer.code ?? '',
         // Normalize address to array
-        address: Array.isArray((customer as any).address)
-          ? (customer as any).address
-          : typeof (customer as any).address === 'string' && (customer as any).address
-            ? [(customer as any).address]
+        address: Array.isArray(customer.address)
+          ? customer.address
+          : typeof customer.address === 'string' && customer.address
+            ? [customer.address]
             : [],
-        description: (customer as any).description,
-        contactEmail: (customer as any).contactEmail,
-        contactPhone: (customer as any).contactPhone,
-        contactPerson: (customer as any).contactPerson,
-        tier: (customer as any).tier || 'BASIC',
-        isActive: (customer as any).isActive ?? true,
-        billingDay: (customer as any).billingDay,
-        invoiceInfo: (customer as any).invoiceInfo
+        description: customer.description,
+        contactEmail: customer.contactEmail,
+        contactPhone: customer.contactPhone,
+        contactPerson: customer.contactPerson,
+        tier: customer.tier || 'BASIC',
+        isActive: customer.isActive ?? true,
+        billingDay: customer.billingDay,
+        invoiceInfo: customer.invoiceInfo
           ? {
-              billTo: (customer as any).invoiceInfo?.billTo || '',
-              address: (customer as any).invoiceInfo?.address || '',
-              att: (customer as any).invoiceInfo?.att || '',
-              hpPoRef: (customer as any).invoiceInfo?.hpPoRef || '',
-              erpId: (customer as any).invoiceInfo?.erpId || '',
-              emails: Array.isArray((customer as any).invoiceInfo?.emails)
-                ? (customer as any).invoiceInfo.emails
+              billTo: customer.invoiceInfo?.billTo || '',
+              address: customer.invoiceInfo?.address || '',
+              att: customer.invoiceInfo?.att || '',
+              hpPoRef: customer.invoiceInfo?.hpPoRef || '',
+              erpId: customer.invoiceInfo?.erpId || '',
+              emails: Array.isArray(customer.invoiceInfo?.emails)
+                ? customer.invoiceInfo.emails
                 : [],
             }
           : { billTo: '', address: '', att: '', hpPoRef: '', erpId: '', emails: [] },
@@ -247,19 +252,28 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
       console.error('Customer save error', err)
       let userMessage = 'Có lỗi khi lưu khách hàng'
       try {
-        const anyErr = err as any
+        type AxiosLikeError = {
+          response?: { data?: unknown; status?: number }
+          message?: string
+        }
+        const anyErr = err as AxiosLikeError
         // Axios error shape: anyErr.response?.data
         if (anyErr?.response?.data) {
-          const data = anyErr.response.data
-          const status = anyErr.response.status
+          const data = anyErr.response?.data as unknown
+          const status = anyErr.response?.status
+          const dd =
+            data && typeof data === 'object' ? (data as Record<string, unknown>) : undefined
           // Prefer structured fields and show the backend message directly in the toast
           const bodyMsg =
             typeof data === 'string'
               ? data
-              : data?.message ||
-                data?.error ||
-                (data?.data && (data.data.message || data.data.error)) ||
-                undefined
+              : dd
+                ? (dd['message'] as string) ||
+                  (dd['error'] as string) ||
+                  ((dd['data'] as Record<string, unknown> | undefined) &&
+                    (((dd['data'] as Record<string, unknown>)['message'] as string) ||
+                      ((dd['data'] as Record<string, unknown>)['error'] as string)))
+                : undefined
 
           if (bodyMsg) {
             // Show the backend message (e.g. "Customer with this name already exists")
@@ -278,49 +292,72 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
       }
       // Try to extract field-level validation errors and show them inline
       try {
-        const anyErr2 = err as any
-        const data = anyErr2?.response?.data
+        const anyErr2 = err as AxiosLikeError
+        const data = anyErr2?.response?.data as unknown
+        const dd = data && typeof data === 'object' ? (data as Record<string, unknown>) : undefined
+        const ddData =
+          dd && dd['data'] && typeof dd['data'] === 'object'
+            ? (dd['data'] as Record<string, unknown>)
+            : undefined
         const maybeErrors =
-          data?.errors || data?.validation || data?.fieldErrors || data?.data?.errors
-        const details = data?.details || data?.data?.details
+          dd && (dd['errors'] || dd['validation'] || dd['fieldErrors'] || ddData?.['errors'])
+        const details = dd && (dd['details'] || ddData?.['details'])
         const newFieldErrors: Record<string, string> = {}
 
         if (maybeErrors && typeof maybeErrors === 'object') {
           // If it's an array of { field, message }
           if (Array.isArray(maybeErrors)) {
-            for (const it of maybeErrors) {
-              if (it?.field && it?.message) newFieldErrors[it.field] = String(it.message)
+            for (const it of maybeErrors as Array<Record<string, unknown>>) {
+              if (it && typeof it === 'object' && 'field' in it && 'message' in it) {
+                const fld = (it as Record<string, unknown>)['field']
+                const msg = (it as Record<string, unknown>)['message']
+                if (typeof fld === 'string' && msg) newFieldErrors[fld] = String(msg)
+              }
             }
           } else {
             // assume object map { field: message }
-            for (const k of Object.keys(maybeErrors)) {
-              const v = (maybeErrors as Record<string, any>)[k]
+            for (const k of Object.keys(maybeErrors as Record<string, unknown>)) {
+              const v = (maybeErrors as Record<string, unknown>)[k]
               if (typeof v === 'string') newFieldErrors[k] = v
-              else if (Array.isArray(v) && v.length) newFieldErrors[k] = String(v[0])
-              else if (v?.message) newFieldErrors[k] = String(v.message)
+              else if (Array.isArray(v) && v.length) newFieldErrors[k] = String((v as unknown[])[0])
+              else if (
+                typeof v === 'object' &&
+                v !== null &&
+                'message' in (v as Record<string, unknown>)
+              )
+                newFieldErrors[k] = String((v as Record<string, unknown>)['message'])
             }
           }
         }
 
         // Some backends include a `details` object with field/target info
         if (!Object.keys(newFieldErrors).length && details && typeof details === 'object') {
-          const fld = details.field || (Array.isArray(details.target) && details.target[0])
+          const fld =
+            (details as Record<string, unknown>)['field'] ||
+            (Array.isArray((details as Record<string, unknown>)['target']) &&
+              ((details as Record<string, unknown>)['target'] as unknown[])[0])
           if (fld) {
-            newFieldErrors[fld] = String(data?.message || data?.error || userMessage)
+            newFieldErrors[String(fld)] = String(
+              (dd && (dd['message'] as string)) || (dd && (dd['error'] as string)) || userMessage
+            )
           }
-        } else if (data?.field && data?.message) {
-          newFieldErrors[data.field] = String(data.message)
+        } else if (dd && dd['field'] && ((dd['message'] as string) || (dd['error'] as string))) {
+          newFieldErrors[String(dd['field'])] = String(
+            (dd['message'] as string) || (dd['error'] as string)
+          )
         } else if (userMessage && anyErr2?.response?.status === 409) {
           // Common case: conflict on a specific field like name — attempt heuristic
           if (/name/i.test(userMessage)) newFieldErrors['name'] = userMessage
         }
 
         // Heuristic: if API message mentions field names (e.g. 'name' or 'code'), map them to field errors as well
-        const msgLower = String(data?.message || data?.error || userMessage || '').toLowerCase()
+        const msgLower = String(
+          (dd && ((dd['message'] as string) || (dd['error'] as string))) || userMessage || ''
+        ).toLowerCase()
         if (/\bname\b/.test(msgLower) && !newFieldErrors['name'])
-          newFieldErrors['name'] = String(data?.message || userMessage)
+          newFieldErrors['name'] = String((dd && (dd['message'] as string)) || userMessage)
         if (/\bcode\b/.test(msgLower) && !newFieldErrors['code'])
-          newFieldErrors['code'] = String(data?.message || userMessage)
+          newFieldErrors['code'] = String((dd && (dd['message'] as string)) || userMessage)
 
         if (Object.keys(newFieldErrors).length) setFieldErrors(newFieldErrors)
       } catch (innerErr) {
@@ -434,6 +471,7 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
                     setForm((s) => ({ ...s, code: e.target.value }))
                     clearFieldError('code')
                   }}
+                  disabled={mode === 'edit' && (customer?.code ?? '').toUpperCase() === 'SYS'}
                   placeholder="Mã khách hàng (ví dụ ABC_CORP)"
                   className={`h-11 ${fieldErrors.code ? 'border-destructive focus-visible:ring-destructive/50' : ''}`}
                 />
