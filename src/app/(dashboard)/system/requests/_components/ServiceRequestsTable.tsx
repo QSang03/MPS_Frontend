@@ -458,6 +458,7 @@ function ServiceRequestsTableContent({
         ),
       },
       {
+        id: 'customer.name',
         accessorKey: 'customer.name',
         header: () => (
           <div className="flex items-center gap-2">
