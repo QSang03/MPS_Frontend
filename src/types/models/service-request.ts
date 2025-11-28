@@ -111,6 +111,10 @@ export interface UpdateServiceRequestStatusDto {
   customerCloseReason?: string
   /** Optional admin action note to explain the change */
   actionNote?: string
+  /** Optional timestamp overriding resolvedAt (ISO string) */
+  resolvedAt?: string
+  /** Optional timestamp overriding closedAt (ISO string) */
+  closedAt?: string
 }
 
 /**

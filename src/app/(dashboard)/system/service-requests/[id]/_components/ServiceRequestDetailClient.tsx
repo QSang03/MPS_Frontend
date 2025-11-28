@@ -57,6 +57,7 @@ import { PermissionGuard } from '@/components/shared/PermissionGuard'
 import { SearchableSelect } from '@/app/(dashboard)/system/policies/_components/RuleBuilder/SearchableSelect'
 import { DeleteDialog } from '@/components/shared/DeleteDialog'
 import type { Session } from '@/lib/auth/session'
+import type { UpdateServiceRequestStatusDto } from '@/types/models/service-request'
 import { cn } from '@/lib/utils/cn'
 
 interface Props {
@@ -100,6 +101,8 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
   const queryClient = useQueryClient()
   const [updating, setUpdating] = useState(false)
   const [statusNote, setStatusNote] = useState('')
+  const [isPastTime, setIsPastTime] = useState(false)
+  const [pastTime, setPastTime] = useState('')
   const [assignNote, setAssignNote] = useState('')
   const [selectedAttachment, setSelectedAttachment] = useState<string | null>(null)
 
@@ -128,8 +131,23 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
   const sysCustomerId = session?.isDefaultCustomer ? session.customerId : undefined
 
   const updateMutation = useMutation({
-    mutationFn: ({ status, actionNote }: { status: ServiceRequestStatus; actionNote?: string }) =>
-      serviceRequestsClientService.updateStatus(id, { status, actionNote }),
+    mutationFn: ({
+      status,
+      actionNote,
+      resolvedAt,
+      closedAt,
+    }: {
+      status: ServiceRequestStatus
+      actionNote?: string
+      resolvedAt?: string
+      closedAt?: string
+    }) =>
+      serviceRequestsClientService.updateStatus(id, {
+        status,
+        actionNote,
+        resolvedAt,
+        closedAt,
+      }),
     onMutate: () => setUpdating(true),
     onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ['service-requests'] })
@@ -544,7 +562,14 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                 </PermissionGuard>
                 <Dialog
                   open={Boolean(pendingStatusChange)}
-                  onOpenChange={(open) => !open && setPendingStatusChange(null)}
+                  onOpenChange={(open) => {
+                    if (!open) {
+                      setPendingStatusChange(null)
+                      setIsPastTime(false)
+                      setPastTime('')
+                      setStatusNote('')
+                    }
+                  }}
                 >
                   <DialogContent>
                     <DialogHeader>
@@ -561,6 +586,30 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                         placeholder="Nhập ghi chú để lưu cùng cập nhật trạng thái"
                         className="mt-2 w-full rounded-md border px-3 py-2 text-sm"
                       />
+                      {pendingStatusChange === ServiceRequestStatus.RESOLVED ||
+                      pendingStatusChange === ServiceRequestStatus.CLOSED ? (
+                        <div className="mt-3 space-y-2">
+                          <label className="flex items-center gap-2 text-sm">
+                            <input
+                              type="checkbox"
+                              checked={isPastTime}
+                              onChange={(e) => setIsPastTime(e.target.checked)}
+                            />
+                            <span>Ghi nhận thời điểm trong quá khứ</span>
+                          </label>
+                          {isPastTime && (
+                            <div>
+                              <label className="text-muted-foreground text-sm">Thời gian</label>
+                              <input
+                                type="datetime-local"
+                                value={pastTime}
+                                onChange={(e) => setPastTime(e.target.value)}
+                                className="mt-1 w-full rounded-md border px-2 py-1 text-sm"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      ) : null}
                     </div>
                     <DialogFooter className="mt-4">
                       <div className="flex w-full gap-2">
@@ -572,13 +621,25 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                             if (!pendingStatusChange) return
                             const status = pendingStatusChange
                             setPendingStatusChange(null)
-                            updateMutation.mutate({
+                            const dto: UpdateServiceRequestStatusDto = {
                               status,
                               actionNote: statusNote?.trim() || undefined,
-                            })
+                            }
+                            if (isPastTime && pastTime) {
+                              try {
+                                const iso = new Date(pastTime).toISOString()
+                                if (status === ServiceRequestStatus.RESOLVED) dto.resolvedAt = iso
+                                if (status === ServiceRequestStatus.CLOSED) dto.closedAt = iso
+                              } catch {
+                                // ignore invalid date
+                              }
+                            }
+                            updateMutation.mutate(dto)
                             setStatusNote('')
+                            setIsPastTime(false)
+                            setPastTime('')
                           }}
-                          disabled={updating}
+                          disabled={updating || (isPastTime && !pastTime)}
                         >
                           Xác nhận
                         </Button>

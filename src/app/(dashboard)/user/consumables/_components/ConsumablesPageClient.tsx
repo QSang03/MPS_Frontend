@@ -292,6 +292,15 @@ export default function ConsumablesPageClient() {
     return Math.abs(value).toLocaleString('en-US')
   }
 
+  const formatDate = (v?: string | null) => {
+    if (!v) return '—'
+    try {
+      return new Date(String(v)).toLocaleDateString('vi-VN')
+    } catch {
+      return String(v)
+    }
+  }
+
   const renderUsageBadge = (item: Record<string, unknown>) => {
     const used =
       Number(item.deviceCount ?? 0) > 0 ||
@@ -759,7 +768,38 @@ export default function ConsumablesPageClient() {
                                 ? `${formatInteger(Number(group.type.capacity))} trang`
                                 : '—'}
                             </TableCell>
-                            <TableCell className="px-6 py-4">{renderUsageBadge(item)}</TableCell>
+                            <TableCell className="px-6 py-4">
+                              <div className="flex flex-col gap-1">
+                                {renderUsageBadge(item)}
+                                {(() => {
+                                  const used =
+                                    Number(item.deviceCount ?? 0) > 0 ||
+                                    (Array.isArray(item.activeDeviceIds) &&
+                                      item.activeDeviceIds.length > 0)
+
+                                  if (!used) return null
+
+                                  // Try to read installedAt from multiple possible locations
+                                  const typedItem = item as Record<string, unknown>
+                                  const maybeInstalledAt =
+                                    (typedItem.installedAt as string | undefined) ??
+                                    (Array.isArray(typedItem.deviceConsumables)
+                                      ? (
+                                          (typedItem.deviceConsumables as unknown[])[0] as Record<
+                                            string,
+                                            unknown
+                                          >
+                                        )?.installedAt
+                                      : undefined)
+                                  if (!maybeInstalledAt) return null
+                                  return (
+                                    <span className="text-xs text-slate-500">
+                                      Lắp: {formatDate(String(maybeInstalledAt))}
+                                    </span>
+                                  )
+                                })()}
+                              </div>
+                            </TableCell>
                             <TableCell className="px-6 py-4 text-sm text-slate-600">
                               <div className="flex items-center justify-between">
                                 <span>{String(item.status ?? '—')}</span>

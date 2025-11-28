@@ -46,12 +46,19 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { ServiceRequestStatus, Priority } from '@/constants/status'
-import type { ServiceRequest } from '@/types/models/service-request'
+import type { ServiceRequest, UpdateServiceRequestStatusDto } from '@/types/models/service-request'
 import { useServiceRequestsQuery } from '@/lib/hooks/queries/useServiceRequestsQuery'
 import { TableSkeleton } from '@/components/system/TableSkeleton'
 import { cn } from '@/lib/utils'
 
 type ServiceRequestRow = ServiceRequest
+type UpdateStatusPayload = {
+  id: string
+  status: ServiceRequestStatus
+  actionNote?: string
+  resolvedAt?: string
+  closedAt?: string
+}
 
 const statusOptions = [
   { label: 'Mở', value: ServiceRequestStatus.OPEN },
@@ -316,6 +323,8 @@ function ServiceRequestsTableContent({
     status: ServiceRequestStatus
   } | null>(null)
   const [actionNoteForPending, setActionNoteForPending] = useState<string>('')
+  const [isPastTimeForPending, setIsPastTimeForPending] = useState(false)
+  const [pastTimeForPending, setPastTimeForPending] = useState('')
   const [isPending, startTransition] = useTransition()
 
   const queryParams = useMemo(
@@ -355,12 +364,23 @@ function ServiceRequestsTableContent({
       id,
       status,
       actionNote,
+      resolvedAt,
+      closedAt,
     }: {
       id: string
       status: ServiceRequestStatus
       actionNote?: string
-    }) =>
-      serviceRequestsClientService.updateStatus(id, actionNote ? { status, actionNote } : status),
+      resolvedAt?: string
+      closedAt?: string
+    }) => {
+      const dto: UpdateServiceRequestStatusDto = {
+        status,
+        actionNote,
+        resolvedAt,
+        closedAt,
+      }
+      return serviceRequestsClientService.updateStatus(id, dto)
+    },
     onSuccess: async () => {
       toast.success('Cập nhật trạng thái thành công')
       queryClient.invalidateQueries({ queryKey: ['service-requests', queryParams] })
@@ -672,7 +692,14 @@ function ServiceRequestsTableContent({
 
       <Dialog
         open={Boolean(pendingStatusChange)}
-        onOpenChange={(open) => !open && setPendingStatusChange(null)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPendingStatusChange(null)
+            setIsPastTimeForPending(false)
+            setPastTimeForPending('')
+            setActionNoteForPending('')
+          }
+        }}
       >
         <DialogContent>
           <DialogHeader>
@@ -690,6 +717,30 @@ function ServiceRequestsTableContent({
               placeholder="Nhập ghi chú để lưu cùng cập nhật trạng thái (ví dụ: đã kiểm tra onsite, chờ vật tư...)"
               className="mt-2 w-full rounded-md border px-3 py-2 text-sm"
             />
+            {pendingStatusChange?.status === ServiceRequestStatus.RESOLVED ||
+            pendingStatusChange?.status === ServiceRequestStatus.CLOSED ? (
+              <div className="mt-3 space-y-2">
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={isPastTimeForPending}
+                    onChange={(e) => setIsPastTimeForPending(e.target.checked)}
+                  />
+                  <span>Ghi nhận thời điểm trong quá khứ</span>
+                </label>
+                {isPastTimeForPending && (
+                  <div>
+                    <label className="text-muted-foreground text-sm">Thời gian</label>
+                    <input
+                      type="datetime-local"
+                      value={pastTimeForPending}
+                      onChange={(e) => setPastTimeForPending(e.target.value)}
+                      className="mt-1 w-full rounded-md border px-2 py-1 text-sm"
+                    />
+                  </div>
+                )}
+              </div>
+            ) : null}
           </div>
 
           <DialogFooter className="mt-4">
@@ -702,15 +753,25 @@ function ServiceRequestsTableContent({
                   if (!pendingStatusChange) return
                   const { id, status } = pendingStatusChange
                   setStatusUpdatingId(id)
-                  mutation.mutate({
+                  const payload: Record<string, unknown> = {
                     id,
                     status,
                     actionNote: actionNoteForPending?.trim() || undefined,
-                  })
+                  }
+                  if (isPastTimeForPending && pastTimeForPending) {
+                    try {
+                      const iso = new Date(pastTimeForPending).toISOString()
+                      if (status === ServiceRequestStatus.RESOLVED) payload.resolvedAt = iso
+                      if (status === ServiceRequestStatus.CLOSED) payload.closedAt = iso
+                    } catch {
+                      // ignore invalid date
+                    }
+                  }
+                  mutation.mutate(payload as UpdateStatusPayload)
                   setPendingStatusChange(null)
                   setActionNoteForPending('')
                 }}
-                disabled={mutation.isPending}
+                disabled={mutation.isPending || (isPastTimeForPending && !pastTimeForPending)}
               >
                 Xác nhận
               </Button>

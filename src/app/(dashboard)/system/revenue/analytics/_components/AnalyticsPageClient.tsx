@@ -53,6 +53,14 @@ type TimeFilter = { period?: string; from?: string; to?: string; year?: string }
 type ConsumableParams = TimeFilter & { consumableTypeId?: string; customerId?: string }
 
 export default function AnalyticsPageClient() {
+  const formatCurrencyUSD = (n?: number | null) => {
+    if (n === undefined || n === null || Number.isNaN(Number(n))) return '-'
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      maximumFractionDigits: 2,
+    }).format(Number(n))
+  }
   // Enterprise Profit State
   const [enterprisePeriod, setEnterprisePeriod] = useState('')
   const [enterpriseMode, setEnterpriseMode] = useState<TimeRangeMode>('period')
@@ -633,7 +641,7 @@ export default function AnalyticsPageClient() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-blue-900">
-                    {enterpriseData.totalRevenue.toLocaleString()} đ
+                    {formatCurrencyUSD(enterpriseData.totalRevenue)}
                   </div>
                   <p className="text-muted-foreground mt-1 text-xs">
                     {enterpriseData.devicesCount} thiết bị • {enterpriseData.customersCount} khách
@@ -650,7 +658,7 @@ export default function AnalyticsPageClient() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-orange-900">
-                    {enterpriseData.totalCogs.toLocaleString()} đ
+                    {formatCurrencyUSD(enterpriseData.totalCogs)}
                   </div>
                 </CardContent>
               </Card>
@@ -678,7 +686,7 @@ export default function AnalyticsPageClient() {
                     ) : (
                       <TrendingDown className="h-5 w-5" />
                     )}
-                    {enterpriseData.grossProfit.toLocaleString()} đ
+                    {formatCurrencyUSD(enterpriseData.grossProfit)}
                   </div>
                   <p className="text-muted-foreground mt-1 text-xs">
                     Biên lợi nhuận: {enterpriseData.grossMargin.toFixed(1)}%
@@ -825,15 +833,15 @@ export default function AnalyticsPageClient() {
                       <td className="px-4 py-3 text-sm font-medium">{c.name}</td>
                       <td className="px-4 py-3 text-center text-sm">{c.devicesCount}</td>
                       <td className="px-4 py-3 text-right text-sm">
-                        {c.totalRevenue.toLocaleString()}
+                        {formatCurrencyUSD(c.totalRevenue)}
                       </td>
                       <td className="px-4 py-3 text-right text-sm">
-                        {c.totalCogs.toLocaleString()}
+                        {formatCurrencyUSD(c.totalCogs)}
                       </td>
                       <td
                         className={`px-4 py-3 text-right text-sm font-semibold ${c.grossProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}
                       >
-                        {c.grossProfit.toLocaleString()}
+                        {formatCurrencyUSD(c.grossProfit)}
                       </td>
                       <td className="px-4 py-3 text-center">
                         <Button
@@ -904,13 +912,13 @@ export default function AnalyticsPageClient() {
                       <div>
                         <span className="text-muted-foreground">Doanh thu:</span>
                         <p className="font-semibold">
-                          {customerDetailData.customer.totalRevenue.toLocaleString()} đ
+                          {formatCurrencyUSD(customerDetailData.customer.totalRevenue)}
                         </p>
                       </div>
                       <div>
                         <span className="text-muted-foreground">Chi phí:</span>
                         <p className="font-semibold">
-                          {customerDetailData.customer.totalCogs.toLocaleString()} đ
+                          {formatCurrencyUSD(customerDetailData.customer.totalCogs)}
                         </p>
                       </div>
                       <div>
@@ -918,7 +926,7 @@ export default function AnalyticsPageClient() {
                         <p
                           className={`font-semibold ${customerDetailData.customer.grossProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}
                         >
-                          {customerDetailData.customer.grossProfit.toLocaleString()} đ
+                          {formatCurrencyUSD(customerDetailData.customer.grossProfit)}
                         </p>
                       </div>
                     </div>
@@ -943,15 +951,15 @@ export default function AnalyticsPageClient() {
                           <td className="px-4 py-3 text-sm">{d.model}</td>
                           <td className="px-4 py-3 text-sm">{d.serialNumber}</td>
                           <td className="px-4 py-3 text-right text-sm">
-                            {d.revenue.toLocaleString()}
+                            {formatCurrencyUSD(d.revenue)}
                           </td>
                           <td className="px-4 py-3 text-right text-sm">
-                            {d.cogs.toLocaleString()}
+                            {formatCurrencyUSD(d.cogs)}
                           </td>
                           <td
                             className={`px-4 py-3 text-right text-sm font-semibold ${d.profit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}
                           >
-                            {d.profit.toLocaleString()}
+                            {formatCurrencyUSD(d.profit)}
                           </td>
                           <td className="px-4 py-3 text-center">
                             <Button
@@ -1128,28 +1136,30 @@ export default function AnalyticsPageClient() {
                         <tr key={p.month}>
                           <td className="px-3 py-2">{p.month}</td>
                           <td className="px-3 py-2 text-right">
-                            {p.revenueRental.toLocaleString()}
+                            {formatCurrencyUSD(p.revenueRental)}
                           </td>
                           <td className="px-3 py-2 text-right">
-                            {p.revenueRepair.toLocaleString()}
+                            {formatCurrencyUSD(p.revenueRepair)}
                           </td>
                           <td className="px-3 py-2 text-right">
-                            {p.revenuePageBW.toLocaleString()}
+                            {formatCurrencyUSD(p.revenuePageBW)}
                           </td>
                           <td className="px-3 py-2 text-right">
-                            {p.revenuePageColor.toLocaleString()}
+                            {formatCurrencyUSD(p.revenuePageColor)}
                           </td>
                           <td className="px-3 py-2 text-right font-semibold">
-                            {p.totalRevenue.toLocaleString()}
+                            {formatCurrencyUSD(p.totalRevenue)}
                           </td>
                           <td className="px-3 py-2 text-right">
-                            {p.cogsConsumable.toLocaleString()}
+                            {formatCurrencyUSD(p.cogsConsumable)}
                           </td>
-                          <td className="px-3 py-2 text-right">{p.cogsRepair.toLocaleString()}</td>
+                          <td className="px-3 py-2 text-right">
+                            {formatCurrencyUSD(p.cogsRepair)}
+                          </td>
                           <td
                             className={`px-3 py-2 text-right font-semibold ${p.grossProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}
                           >
-                            {p.grossProfit.toLocaleString()}
+                            {formatCurrencyUSD(p.grossProfit)}
                           </td>
                         </tr>
                       ))}
