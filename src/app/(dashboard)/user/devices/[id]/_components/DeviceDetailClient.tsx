@@ -876,7 +876,7 @@ export default function DeviceDetailClient({ deviceId, backHref }: Props) {
                       <tr>
                         <th className="px-4 py-3 text-left text-xs font-semibold">#</th>
                         <th className="px-4 py-3 text-left text-xs font-semibold">Tên</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold">Mã / Model</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold">Serial</th>
                         <th className="px-4 py-3 text-left text-xs font-semibold">Trạng thái</th>
                         <th className="px-4 py-3 text-left text-xs font-semibold">%</th>
                         <th className="px-4 py-3 text-left text-xs font-semibold">
