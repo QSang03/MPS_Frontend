@@ -190,7 +190,9 @@ export function ModernSidebar({ session }: SidebarProps) {
                 key: 'consumables',
                 title: 'Vật tư',
                 matcher: (h) =>
-                  h.startsWith('/system/consumables') || h.startsWith('/system/consumable-types'),
+                  h.startsWith('/system/consumables') ||
+                  h.startsWith('/system/consumable-types') ||
+                  h.startsWith('/system/warehouse-documents'),
               },
               {
                 key: 'customers',
@@ -221,7 +223,8 @@ export function ModernSidebar({ session }: SidebarProps) {
               {
                 key: 'consumables',
                 title: 'Vật tư tiêu hao',
-                matcher: (h) => h.startsWith('/user/consumables'),
+                matcher: (h) =>
+                  h.startsWith('/user/consumables') || h.startsWith('/user/warehouse-documents'),
               },
               {
                 key: 'contracts',

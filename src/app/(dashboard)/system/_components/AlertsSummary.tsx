@@ -398,7 +398,9 @@ export function AlertsSummary({
                               alerts.consumableWarnings.items.slice(0, 2).map((item, idx) => (
                                 <button
                                   key={`low-${idx}`}
+                                  type="button"
                                   onClick={(e) => {
+                                    e.preventDefault()
                                     e.stopPropagation()
                                     try {
                                       if (item.deviceId)
@@ -422,7 +424,9 @@ export function AlertsSummary({
                               alerts.deviceErrors.items.slice(0, 2).map((item, idx) => (
                                 <button
                                   key={`err-${idx}`}
+                                  type="button"
                                   onClick={(e) => {
+                                    e.preventDefault()
                                     e.stopPropagation()
                                     try {
                                       if (item.deviceId)
@@ -443,7 +447,9 @@ export function AlertsSummary({
                               alerts.slaViolations.items.slice(0, 2).map((item, idx) => (
                                 <button
                                   key={`sla-${idx}`}
+                                  type="button"
                                   onClick={(e) => {
+                                    e.preventDefault()
                                     e.stopPropagation()
                                     try {
                                       if (item.id)
@@ -467,13 +473,16 @@ export function AlertsSummary({
                         <p className="text-2xl font-bold text-gray-900">{alert.count}</p>
                         {alert.count > 0 && (
                           <Button
+                            type="button"
                             variant="ghost"
                             size="sm"
                             className="mt-1 h-auto p-0 text-xs hover:underline"
                             onClick={(e) => {
                               e.stopPropagation()
+                              e.preventDefault()
                               setSelectedType(alert.type)
                               setOpen(true)
+                              console.debug('AlertsSummary: Xem chi tiết clicked', alert.type)
                             }}
                           >
                             Xem chi tiết

@@ -557,27 +557,6 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
     ],
   },
   {
-    id: 'warehouse-documents',
-    label: 'Chứng từ kho',
-    icon: 'Package',
-    route: '/system/warehouse-documents',
-    requiredPermissions: {
-      strategy: 'all',
-      resources: [{ resource: 'warehouse-documents', action: 'read' }],
-    },
-    actions: [
-      {
-        id: 'create',
-        label: 'Tạo chứng từ',
-        icon: 'Plus',
-        requiredPermissions: {
-          strategy: 'all',
-          resources: [{ resource: 'warehouse-documents', action: 'create' }],
-        },
-      },
-    ],
-  },
-  {
     id: 'consumable-types',
     label: 'Loại vật tư tiêu hao',
     icon: 'ShoppingCart',
@@ -630,6 +609,28 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
         requiredPermissions: {
           strategy: 'all',
           resources: [{ resource: 'consumable-types', action: 'read' }],
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'warehouse-documents',
+    label: 'Chứng từ kho',
+    icon: 'Package',
+    route: '/system/warehouse-documents',
+    requiredPermissions: {
+      strategy: 'all',
+      resources: [{ resource: 'warehouse-documents', action: 'read' }],
+    },
+    actions: [
+      {
+        id: 'create',
+        label: 'Tạo chứng từ',
+        icon: 'Plus',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'warehouse-documents', action: 'create' }],
         },
       },
     ],
