@@ -64,11 +64,7 @@ import { STATUS_DISPLAY } from '@/constants/status'
 import type { DeviceStatusValue } from '@/constants/status'
 // removed unused `cn` import
 
-interface DeviceStats {
-  total: number
-  active: number
-  inactive: number
-}
+type DeviceStats = { total: number; active: number; inactive: number }
 
 export default function DevicesPageClient() {
   const { can } = useActionPermission('devices')

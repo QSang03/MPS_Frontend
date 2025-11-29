@@ -189,7 +189,7 @@ export function ConsumableTypeTable({
       },
       {
         accessorKey: 'stockItem.quantity',
-        id: 'stock',
+        id: 'stockItem.quantity',
         header: () => (
           <div className="flex items-center gap-2">
             <Box className="h-4 w-4 text-gray-600" />

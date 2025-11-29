@@ -31,11 +31,11 @@ export function ConsumablesTable({
   onStatsChange,
   renderColumnVisibilityMenu,
 }: ConsumablesTableProps) {
+  const [isPending, startTransition] = useTransition()
   const [sorting, setSorting] = useState<{ sortBy?: string; sortOrder?: 'asc' | 'desc' }>({
     sortBy: 'createdAt',
     sortOrder: 'desc',
   })
-  const [isPending, startTransition] = useTransition()
 
   const queryParams = useMemo(
     () => ({
@@ -158,6 +158,7 @@ export function ConsumablesTable({
       },
       {
         id: 'remaining',
+        accessorKey: 'remaining',
         header: 'Tồn kho',
         enableSorting: true,
         cell: ({ row }) => {
