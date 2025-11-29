@@ -48,27 +48,6 @@ export const USER_NAVIGATION_PAYLOAD: NavItemPayload[] = [
     actions: [],
   },
   {
-    id: 'warehouse-documents',
-    label: 'Chứng từ kho',
-    icon: 'Package',
-    route: '/system/warehouse-documents',
-    requiredPermissions: {
-      strategy: 'all',
-      resources: [{ resource: 'warehouse-documents', action: 'read' }],
-    },
-    actions: [
-      {
-        id: 'create',
-        label: 'Tạo chứng từ',
-        icon: 'Plus',
-        requiredPermissions: {
-          strategy: 'all',
-          resources: [{ resource: 'warehouse-documents', action: 'create' }],
-        },
-      },
-    ],
-  },
-  {
     id: 'user-devices',
     name: 'devices',
     label: 'Thiết bị',
@@ -573,6 +552,27 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
         requiredPermissions: {
           strategy: 'all',
           resources: [{ resource: 'device-models', action: 'read' }],
+        },
+      },
+    ],
+  },
+  {
+    id: 'warehouse-documents',
+    label: 'Chứng từ kho',
+    icon: 'Package',
+    route: '/system/warehouse-documents',
+    requiredPermissions: {
+      strategy: 'all',
+      resources: [{ resource: 'warehouse-documents', action: 'read' }],
+    },
+    actions: [
+      {
+        id: 'create',
+        label: 'Tạo chứng từ',
+        icon: 'Plus',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'warehouse-documents', action: 'create' }],
         },
       },
     ],
