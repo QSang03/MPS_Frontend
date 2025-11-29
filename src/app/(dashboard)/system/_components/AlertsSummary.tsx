@@ -15,23 +15,12 @@ import type { AdminOverviewKPIs } from '@/types/dashboard'
 import { Bell, Package, AlertTriangle, Clock, ArrowRight, ChevronRight } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/components/ui/dialog'
 import { formatRelativeTime } from '@/lib/utils/formatters'
 import { cn } from '@/lib/utils/cn'
 
-import type {
-  AdminOverviewData,
-  ConsumableWarningItem,
-  DeviceErrorItem,
-  SlaViolationItem,
-} from '@/types/dashboard'
+import type { AdminOverviewData } from '@/types/dashboard'
+import { Dialog } from '@/components/ui/dialog'
+import { SystemModalLayout } from '@/components/system/SystemModalLayout'
 
 interface AlertsSummaryProps {
   kpis: AdminOverviewKPIs | undefined
@@ -62,8 +51,10 @@ export function AlertsSummary({
   alerts,
 }: AlertsSummaryProps) {
   const router = useRouter()
-  const [open, setOpen] = useState(false)
-  const [selectedType, setSelectedType] = useState<AlertItem['type'] | null>(null)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [selectedAlertType, setSelectedAlertType] = useState<
+    null | 'low_consumable' | 'device_error' | 'sla_breach'
+  >(null)
   const extractServiceRequestId = (text?: string): string | null => {
     if (!text) return null
     const uuidRegex = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i
@@ -79,34 +70,6 @@ export function AlertsSummary({
     if (lower.includes('service')) return `/system/service-requests/${id}`
     if (lower.includes('purchase')) return `/system/purchase-requests/${id}`
     return null
-  }
-
-  const getSelectedItems = (): ConsumableWarningItem[] | DeviceErrorItem[] | SlaViolationItem[] => {
-    if (!selectedType || !alerts) return []
-    switch (selectedType) {
-      case 'low_consumable':
-        return alerts?.consumableWarnings?.items ?? []
-      case 'device_error':
-        // Backend might call this `deviceErrors` or `deviceErrorAlerts` in KPIs
-        return alerts?.deviceErrors?.items ?? []
-      case 'sla_breach':
-        return alerts?.slaViolations?.items ?? alerts?.urgentServiceRequests?.items ?? []
-      default:
-        return []
-    }
-  }
-
-  const getSelectedTitle = () => {
-    switch (selectedType) {
-      case 'low_consumable':
-        return 'Vật tư tiêu hao sắp hết'
-      case 'device_error':
-        return 'Lỗi thiết bị'
-      case 'sla_breach':
-        return 'Vi phạm SLA'
-      default:
-        return ''
-    }
   }
   if (isLoading || !kpis) {
     return (
@@ -134,112 +97,6 @@ export function AlertsSummary({
       </Card>
     )
   }
-
-  {
-    /* Details modal for selected alert type */
-  }
-  ;<Dialog open={open} onOpenChange={setOpen}>
-    <DialogContent className="max-w-2xl">
-      <DialogHeader>
-        <DialogTitle>{getSelectedTitle()}</DialogTitle>
-        <DialogDescription>
-          {selectedType && `Danh sách ${getSelectedItems().length} mục`}
-        </DialogDescription>
-      </DialogHeader>
-
-      <div className="mt-4 space-y-2">
-        {getSelectedItems().length === 0 ? (
-          <div className="text-sm text-gray-500">Không có mục nào để hiển thị</div>
-        ) : (
-          getSelectedItems().map((item, idx: number) => {
-            if (selectedType === 'low_consumable') {
-              const cItem = item as ConsumableWarningItem
-              return (
-                <div
-                  key={idx}
-                  className="flex items-center justify-between gap-4 rounded-lg border p-3"
-                >
-                  <div className="flex-1">
-                    <div className="font-medium">{cItem.deviceName ?? cItem.deviceId}</div>
-                    <div className="text-xs text-gray-500">
-                      {cItem.consumableTypeName ? `${cItem.consumableTypeName} • ` : ''}
-                      {cItem.remainingPercentage !== undefined
-                        ? `${Math.round(cItem.remainingPercentage)}% còn lại`
-                        : ''}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => router.push(`/system/devices/${cItem.deviceId}`)}
-                    >
-                      Chi tiết thiết bị
-                    </Button>
-                  </div>
-                </div>
-              )
-            }
-            if (selectedType === 'device_error') {
-              const dItem = item as DeviceErrorItem
-              return (
-                <div
-                  key={idx}
-                  className="flex items-center justify-between gap-4 rounded-lg border p-3"
-                >
-                  <div className="flex-1">
-                    <div className="font-medium">{dItem.deviceName ?? dItem.deviceId}</div>
-                    <div className="text-xs text-gray-500">{dItem.errorMessage ?? ''}</div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => router.push(`/system/devices/${dItem.deviceId}`)}
-                    >
-                      Chi tiết thiết bị
-                    </Button>
-                  </div>
-                </div>
-              )
-            }
-            // SLA breach items (service requests)
-            const sItem = item as SlaViolationItem
-            return (
-              <div
-                key={idx}
-                className="flex items-center justify-between gap-4 rounded-lg border p-3"
-              >
-                <div className="flex-1">
-                  <div className="font-medium">{sItem.title}</div>
-                  <div className="text-xs text-gray-500">
-                    {sItem.customerName ? `${sItem.customerName} • ` : ''}
-                    {sItem.status ?? ''}
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => router.push(`/system/service-requests/${sItem.id}`)}
-                  >
-                    Mở yêu cầu
-                  </Button>
-                </div>
-              </div>
-            )
-          })
-        )}
-      </div>
-
-      <DialogFooter>
-        <Button variant="outline" onClick={() => router.push('/system/notifications')}>
-          Xem tất cả cảnh báo
-        </Button>
-        <Button onClick={() => setOpen(false)}>Đóng</Button>
-      </DialogFooter>
-    </DialogContent>
-  </Dialog>
 
   const alertItems: AlertItem[] = [
     {
@@ -364,11 +221,11 @@ export function AlertsSummary({
                         'group flex items-center gap-4 rounded-lg border p-3 transition-all',
                         alert.count > 0 ? 'cursor-pointer hover:shadow-md' : 'opacity-60'
                       )}
-                      // Make the whole row navigable when there are alerts
+                      // Open details modal when there are alerts
                       onClick={() => {
                         if (alert.count > 0) {
-                          setSelectedType(alert.type)
-                          setOpen(true)
+                          setSelectedAlertType(alert.type)
+                          setModalOpen(true)
                         }
                       }}
                     >
@@ -398,9 +255,7 @@ export function AlertsSummary({
                               alerts.consumableWarnings.items.slice(0, 2).map((item, idx) => (
                                 <button
                                   key={`low-${idx}`}
-                                  type="button"
                                   onClick={(e) => {
-                                    e.preventDefault()
                                     e.stopPropagation()
                                     try {
                                       if (item.deviceId)
@@ -424,9 +279,7 @@ export function AlertsSummary({
                               alerts.deviceErrors.items.slice(0, 2).map((item, idx) => (
                                 <button
                                   key={`err-${idx}`}
-                                  type="button"
                                   onClick={(e) => {
-                                    e.preventDefault()
                                     e.stopPropagation()
                                     try {
                                       if (item.deviceId)
@@ -447,9 +300,7 @@ export function AlertsSummary({
                               alerts.slaViolations.items.slice(0, 2).map((item, idx) => (
                                 <button
                                   key={`sla-${idx}`}
-                                  type="button"
                                   onClick={(e) => {
-                                    e.preventDefault()
                                     e.stopPropagation()
                                     try {
                                       if (item.id)
@@ -473,16 +324,13 @@ export function AlertsSummary({
                         <p className="text-2xl font-bold text-gray-900">{alert.count}</p>
                         {alert.count > 0 && (
                           <Button
-                            type="button"
                             variant="ghost"
                             size="sm"
                             className="mt-1 h-auto p-0 text-xs hover:underline"
                             onClick={(e) => {
                               e.stopPropagation()
-                              e.preventDefault()
-                              setSelectedType(alert.type)
-                              setOpen(true)
-                              console.debug('AlertsSummary: Xem chi tiết clicked', alert.type)
+                              setSelectedAlertType(alert.type)
+                              setModalOpen(true)
                             }}
                           >
                             Xem chi tiết
@@ -550,6 +398,94 @@ export function AlertsSummary({
           </CardFooter>
         )}
       </Card>
+      {/* Details Modal */}
+      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+        {modalOpen && (
+          <SystemModalLayout
+            title={
+              selectedAlertType === 'low_consumable'
+                ? 'Vật tư tiêu hao sắp hết'
+                : selectedAlertType === 'device_error'
+                  ? 'Lỗi thiết bị'
+                  : 'Vi phạm SLA'
+            }
+            description="Chi tiết các mục cảnh báo"
+            icon={Bell}
+            variant="view"
+          >
+            <div className="space-y-3">
+              {selectedAlertType === 'low_consumable' && (
+                <div>
+                  {(alerts?.consumableWarnings?.items ?? []).length === 0 ? (
+                    <p className="text-sm text-gray-500">Không có mục nào.</p>
+                  ) : (
+                    <ul className="space-y-2">
+                      {alerts!.consumableWarnings!.items!.map((it, i) => (
+                        <li key={i} className="flex items-start justify-between gap-4">
+                          <div>
+                            <div className="text-sm font-medium">
+                              {it.deviceName ?? it.deviceId}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {it.consumableTypeName ? `${it.consumableTypeName} • ` : ''}
+                              {it.remainingPercentage !== undefined
+                                ? `${Math.round(it.remainingPercentage)}% còn lại`
+                                : ''}
+                            </div>
+                          </div>
+                          <div className="text-xs text-gray-500">{it.lastUpdatedAt}</div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+
+              {selectedAlertType === 'device_error' && (
+                <div>
+                  {(alerts?.deviceErrors?.items ?? []).length === 0 ? (
+                    <p className="text-sm text-gray-500">Không có mục nào.</p>
+                  ) : (
+                    <ul className="space-y-2">
+                      {alerts!.deviceErrors!.items!.map((it, i) => (
+                        <li key={i} className="flex items-start justify-between gap-4">
+                          <div>
+                            <div className="text-sm font-medium">
+                              {it.deviceName ?? it.deviceId}
+                            </div>
+                            <div className="text-xs text-gray-500">{it.errorMessage}</div>
+                          </div>
+                          <div className="text-xs text-gray-500">{it.occurredAt}</div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+
+              {selectedAlertType === 'sla_breach' && (
+                <div>
+                  {(alerts?.slaViolations?.items ?? []).length === 0 ? (
+                    <p className="text-sm text-gray-500">Không có mục nào.</p>
+                  ) : (
+                    <ul className="space-y-2">
+                      {alerts!.slaViolations!.items!.map((it, i) => (
+                        <li key={i} className="flex items-start justify-between gap-4">
+                          <div>
+                            <div className="text-sm font-medium">{it.title}</div>
+                            <div className="text-xs text-gray-500">{it.customerName}</div>
+                          </div>
+                          <div className="text-xs text-gray-500">{it.createdAt}</div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+            </div>
+          </SystemModalLayout>
+        )}
+      </Dialog>
     </motion.div>
   )
 }

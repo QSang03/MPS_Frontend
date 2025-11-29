@@ -230,7 +230,10 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
     return () => {
       cancelled = true
     }
-  }, [open, device, canEditMonthlyRent, exchangeRate])
+    // Only re-run effect when modal is opened or the device changes. We intentionally
+    // exclude `exchangeRate` and `canEditMonthlyRent` from dependencies so that
+    // local edits to exchange rate do not cause a refetch and overwrite user's input.
+  }, [open, device])
 
   const parseNum = (v: string) => {
     if (typeof v !== 'string') return NaN

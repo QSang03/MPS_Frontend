@@ -63,61 +63,7 @@ export interface CostBreakdown {
   pageBWPercent: number
   pageColorPercent: number
 }
-// CostBreakdown end
 
-/**
- * Detailed Admin Overview Alerts
- */
-export interface ConsumableWarningItem {
-  deviceId?: string
-  deviceName?: string
-  serialNumber?: string
-  consumableTypeName?: string
-  remainingPercentage?: number
-  warningThresholdPercentage?: number
-  lastUpdatedAt?: string
-}
-
-export interface DeviceErrorItem {
-  deviceId?: string
-  deviceName?: string
-  serialNumber?: string
-  errorMessage?: string
-  occurredAt?: string
-}
-
-export interface SlaViolationItem {
-  id?: string
-  title?: string
-  status?: string
-  priority?: string
-  customerName?: string
-  createdAt?: string
-}
-
-export interface AdminOverviewAlerts {
-  consumableWarnings?: {
-    total: number
-    severity?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
-    items?: ConsumableWarningItem[]
-  }
-  deviceErrors?: {
-    total: number
-    severity?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
-    items?: DeviceErrorItem[]
-  }
-  slaViolations?: {
-    total: number
-    severity?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
-    items?: SlaViolationItem[]
-  }
-  // Back-compat: server may return urgentServiceRequests as a top-level alerts subset
-  urgentServiceRequests?: {
-    total: number
-    severity?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
-    items?: SlaViolationItem[]
-  }
-}
 /**
  * Top Customer by Revenue
  */
@@ -127,7 +73,6 @@ export interface TopCustomer {
   totalRevenue: number // doanh thu
   totalCogs: number // chi phí
   grossProfit: number // lợi nhuận gộp
-  grossMargin?: number
 }
 
 /**
@@ -148,13 +93,55 @@ export interface MonthlySeries {
     grossProfit: number // lợi nhuận gộp
   }>
 }
+
+/**
+ * Complete Admin Overview Dashboard Data
+ */
 export interface AdminOverviewData {
   month: string // Format: YYYY-MM
   kpis: AdminOverviewKPIs
   costBreakdown: CostBreakdown
   topCustomers: TopCustomer[]
   monthlySeries: MonthlySeries
-  alerts?: AdminOverviewAlerts
+  // Optional detailed alerts structure (for Admin Overview API)
+  alerts?: {
+    consumableWarnings?: {
+      total: number
+      severity?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
+      items?: Array<{
+        deviceId?: string
+        deviceName?: string
+        serialNumber?: string
+        consumableTypeName?: string
+        remainingPercentage?: number
+        warningThresholdPercentage?: number
+        lastUpdatedAt?: string
+      }>
+    }
+    deviceErrors?: {
+      total: number
+      severity?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
+      items?: Array<{
+        deviceId?: string
+        deviceName?: string
+        serialNumber?: string
+        errorMessage?: string
+        occurredAt?: string
+      }>
+    }
+    slaViolations?: {
+      total: number
+      severity?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
+      items?: Array<{
+        id?: string
+        title?: string
+        status?: string
+        priority?: string
+        customerName?: string
+        createdAt?: string
+      }>
+    }
+  }
   // Recent service requests and notifications for display on Recent Activity
   recentRequests?: Array<{
     id: string
