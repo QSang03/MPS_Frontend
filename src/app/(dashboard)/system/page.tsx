@@ -333,6 +333,7 @@ export default function CustomerAdminDashboard() {
           isLoading={isLoading}
           onViewAll={() => router.push('/system/notifications')}
           recentNotifications={overviewData?.recentNotifications}
+          alerts={overviewData?.alerts}
         />
       </div>
 

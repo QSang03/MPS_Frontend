@@ -103,6 +103,45 @@ export interface AdminOverviewData {
   costBreakdown: CostBreakdown
   topCustomers: TopCustomer[]
   monthlySeries: MonthlySeries
+  // Optional detailed alerts structure (for Admin Overview API)
+  alerts?: {
+    consumableWarnings?: {
+      total: number
+      severity?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
+      items?: Array<{
+        deviceId?: string
+        deviceName?: string
+        serialNumber?: string
+        consumableTypeName?: string
+        remainingPercentage?: number
+        warningThresholdPercentage?: number
+        lastUpdatedAt?: string
+      }>
+    }
+    deviceErrors?: {
+      total: number
+      severity?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
+      items?: Array<{
+        deviceId?: string
+        deviceName?: string
+        serialNumber?: string
+        errorMessage?: string
+        occurredAt?: string
+      }>
+    }
+    slaViolations?: {
+      total: number
+      severity?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
+      items?: Array<{
+        id?: string
+        title?: string
+        status?: string
+        priority?: string
+        customerName?: string
+        createdAt?: string
+      }>
+    }
+  }
   // Recent service requests and notifications for display on Recent Activity
   recentRequests?: Array<{
     id: string

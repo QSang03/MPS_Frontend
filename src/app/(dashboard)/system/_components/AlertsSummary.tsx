@@ -24,6 +24,7 @@ interface AlertsSummaryProps {
   isLoading?: boolean
   onViewAll?: () => void
   recentNotifications?: AdminOverviewData['recentNotifications']
+  alerts?: AdminOverviewData['alerts']
 }
 
 interface AlertItem {
@@ -44,6 +45,7 @@ export function AlertsSummary({
   isLoading,
   onViewAll,
   recentNotifications,
+  alerts,
 }: AlertsSummaryProps) {
   const router = useRouter()
   const extractServiceRequestId = (text?: string): string | null => {
@@ -89,13 +91,17 @@ export function AlertsSummary({
     )
   }
 
-  const alerts: AlertItem[] = [
+  const alertItems: AlertItem[] = [
     {
       id: 'low_consumable',
       type: 'low_consumable',
       title: 'Vật tư tiêu hao sắp hết',
       count: kpis.lowConsumableAlerts,
-      severity: 'medium',
+      severity: (alerts?.consumableWarnings?.severity ?? 'MEDIUM').toLowerCase() as
+        | 'low'
+        | 'medium'
+        | 'high'
+        | 'critical',
       icon: Package,
       color: 'from-orange-500 to-orange-600',
       bgColor: 'bg-orange-50',
@@ -107,7 +113,11 @@ export function AlertsSummary({
       type: 'device_error',
       title: 'Lỗi thiết bị',
       count: kpis.deviceErrorAlerts,
-      severity: 'high',
+      severity: (alerts?.deviceErrors?.severity ?? 'HIGH').toLowerCase() as
+        | 'low'
+        | 'medium'
+        | 'high'
+        | 'critical',
       icon: AlertTriangle,
       color: 'from-red-500 to-red-600',
       bgColor: 'bg-red-50',
@@ -119,7 +129,11 @@ export function AlertsSummary({
       type: 'sla_breach',
       title: 'Vi phạm SLA',
       count: kpis.slaBreachAlerts,
-      severity: 'critical',
+      severity: (alerts?.slaViolations?.severity ?? 'CRITICAL').toLowerCase() as
+        | 'low'
+        | 'medium'
+        | 'high'
+        | 'critical',
       icon: Clock,
       color: 'from-purple-500 to-purple-600',
       bgColor: 'bg-purple-50',
@@ -188,7 +202,7 @@ export function AlertsSummary({
           ) : (
             <>
               <div className="space-y-3">
-                {alerts.map((alert, index) => {
+                {alertItems.map((alert, index) => {
                   const Icon = alert.icon
                   return (
                     <motion.div
@@ -228,6 +242,77 @@ export function AlertsSummary({
                           {getSeverityBadge(alert.severity, alert.count)}
                         </div>
                         <p className="mt-1 text-xs text-gray-500">{alert.description}</p>
+
+                        {/* Render nested alert items from API if present */}
+                        {alerts && (
+                          <div className="mt-2 space-y-1">
+                            {alert.type === 'low_consumable' &&
+                              alerts?.consumableWarnings?.items &&
+                              alerts.consumableWarnings.items.slice(0, 2).map((item, idx) => (
+                                <button
+                                  key={`low-${idx}`}
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    try {
+                                      if (item.deviceId)
+                                        router.push(`/system/devices/${item.deviceId}`)
+                                    } catch (err) {
+                                      console.error('Navigation failed for consumable item', err)
+                                    }
+                                  }}
+                                  className="text-xs text-gray-500 hover:underline"
+                                >
+                                  {item.deviceName ?? item.deviceId}
+                                  {item.consumableTypeName ? ` - ${item.consumableTypeName}` : ''}
+                                  {item.remainingPercentage !== undefined
+                                    ? ` • ${Math.round(item.remainingPercentage)}% còn lại`
+                                    : ''}
+                                </button>
+                              ))}
+
+                            {alert.type === 'device_error' &&
+                              alerts?.deviceErrors?.items &&
+                              alerts.deviceErrors.items.slice(0, 2).map((item, idx) => (
+                                <button
+                                  key={`err-${idx}`}
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    try {
+                                      if (item.deviceId)
+                                        router.push(`/system/devices/${item.deviceId}`)
+                                    } catch (err) {
+                                      console.error('Navigation failed for device error item', err)
+                                    }
+                                  }}
+                                  className="text-xs text-gray-500 hover:underline"
+                                >
+                                  {item.deviceName ?? item.deviceId}
+                                  {item.errorMessage ? ` • ${item.errorMessage}` : ''}
+                                </button>
+                              ))}
+
+                            {alert.type === 'sla_breach' &&
+                              alerts?.slaViolations?.items &&
+                              alerts.slaViolations.items.slice(0, 2).map((item, idx) => (
+                                <button
+                                  key={`sla-${idx}`}
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    try {
+                                      if (item.id)
+                                        router.push(`/system/service-requests/${item.id}`)
+                                    } catch (err) {
+                                      console.error('Navigation failed for SLA item', err)
+                                    }
+                                  }}
+                                  className="text-xs text-gray-500 hover:underline"
+                                >
+                                  {item.title}
+                                  {item.customerName ? ` • ${item.customerName}` : ''}
+                                </button>
+                              ))}
+                          </div>
+                        )}
                       </div>
 
                       {/* Count */}
