@@ -14,10 +14,24 @@ import { Button } from '@/components/ui/button'
 import type { AdminOverviewKPIs } from '@/types/dashboard'
 import { Bell, Package, AlertTriangle, Clock, ArrowRight, ChevronRight } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { useState } from 'react'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog'
 import { formatRelativeTime } from '@/lib/utils/formatters'
 import { cn } from '@/lib/utils/cn'
 
-import type { AdminOverviewData } from '@/types/dashboard'
+import type {
+  AdminOverviewData,
+  ConsumableWarningItem,
+  DeviceErrorItem,
+  SlaViolationItem,
+} from '@/types/dashboard'
 
 interface AlertsSummaryProps {
   kpis: AdminOverviewKPIs | undefined
@@ -48,6 +62,8 @@ export function AlertsSummary({
   alerts,
 }: AlertsSummaryProps) {
   const router = useRouter()
+  const [open, setOpen] = useState(false)
+  const [selectedType, setSelectedType] = useState<AlertItem['type'] | null>(null)
   const extractServiceRequestId = (text?: string): string | null => {
     if (!text) return null
     const uuidRegex = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i
@@ -63,6 +79,34 @@ export function AlertsSummary({
     if (lower.includes('service')) return `/system/service-requests/${id}`
     if (lower.includes('purchase')) return `/system/purchase-requests/${id}`
     return null
+  }
+
+  const getSelectedItems = (): ConsumableWarningItem[] | DeviceErrorItem[] | SlaViolationItem[] => {
+    if (!selectedType || !alerts) return []
+    switch (selectedType) {
+      case 'low_consumable':
+        return alerts?.consumableWarnings?.items ?? []
+      case 'device_error':
+        // Backend might call this `deviceErrors` or `deviceErrorAlerts` in KPIs
+        return alerts?.deviceErrors?.items ?? []
+      case 'sla_breach':
+        return alerts?.slaViolations?.items ?? alerts?.urgentServiceRequests?.items ?? []
+      default:
+        return []
+    }
+  }
+
+  const getSelectedTitle = () => {
+    switch (selectedType) {
+      case 'low_consumable':
+        return 'Vật tư tiêu hao sắp hết'
+      case 'device_error':
+        return 'Lỗi thiết bị'
+      case 'sla_breach':
+        return 'Vi phạm SLA'
+      default:
+        return ''
+    }
   }
   if (isLoading || !kpis) {
     return (
@@ -90,6 +134,112 @@ export function AlertsSummary({
       </Card>
     )
   }
+
+  {
+    /* Details modal for selected alert type */
+  }
+  ;<Dialog open={open} onOpenChange={setOpen}>
+    <DialogContent className="max-w-2xl">
+      <DialogHeader>
+        <DialogTitle>{getSelectedTitle()}</DialogTitle>
+        <DialogDescription>
+          {selectedType && `Danh sách ${getSelectedItems().length} mục`}
+        </DialogDescription>
+      </DialogHeader>
+
+      <div className="mt-4 space-y-2">
+        {getSelectedItems().length === 0 ? (
+          <div className="text-sm text-gray-500">Không có mục nào để hiển thị</div>
+        ) : (
+          getSelectedItems().map((item, idx: number) => {
+            if (selectedType === 'low_consumable') {
+              const cItem = item as ConsumableWarningItem
+              return (
+                <div
+                  key={idx}
+                  className="flex items-center justify-between gap-4 rounded-lg border p-3"
+                >
+                  <div className="flex-1">
+                    <div className="font-medium">{cItem.deviceName ?? cItem.deviceId}</div>
+                    <div className="text-xs text-gray-500">
+                      {cItem.consumableTypeName ? `${cItem.consumableTypeName} • ` : ''}
+                      {cItem.remainingPercentage !== undefined
+                        ? `${Math.round(cItem.remainingPercentage)}% còn lại`
+                        : ''}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => router.push(`/system/devices/${cItem.deviceId}`)}
+                    >
+                      Chi tiết thiết bị
+                    </Button>
+                  </div>
+                </div>
+              )
+            }
+            if (selectedType === 'device_error') {
+              const dItem = item as DeviceErrorItem
+              return (
+                <div
+                  key={idx}
+                  className="flex items-center justify-between gap-4 rounded-lg border p-3"
+                >
+                  <div className="flex-1">
+                    <div className="font-medium">{dItem.deviceName ?? dItem.deviceId}</div>
+                    <div className="text-xs text-gray-500">{dItem.errorMessage ?? ''}</div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => router.push(`/system/devices/${dItem.deviceId}`)}
+                    >
+                      Chi tiết thiết bị
+                    </Button>
+                  </div>
+                </div>
+              )
+            }
+            // SLA breach items (service requests)
+            const sItem = item as SlaViolationItem
+            return (
+              <div
+                key={idx}
+                className="flex items-center justify-between gap-4 rounded-lg border p-3"
+              >
+                <div className="flex-1">
+                  <div className="font-medium">{sItem.title}</div>
+                  <div className="text-xs text-gray-500">
+                    {sItem.customerName ? `${sItem.customerName} • ` : ''}
+                    {sItem.status ?? ''}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => router.push(`/system/service-requests/${sItem.id}`)}
+                  >
+                    Mở yêu cầu
+                  </Button>
+                </div>
+              </div>
+            )
+          })
+        )}
+      </div>
+
+      <DialogFooter>
+        <Button variant="outline" onClick={() => router.push('/system/notifications')}>
+          Xem tất cả cảnh báo
+        </Button>
+        <Button onClick={() => setOpen(false)}>Đóng</Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
 
   const alertItems: AlertItem[] = [
     {
@@ -217,11 +367,8 @@ export function AlertsSummary({
                       // Make the whole row navigable when there are alerts
                       onClick={() => {
                         if (alert.count > 0) {
-                          try {
-                            router.push(`/system/notifications?type=${alert.type}`)
-                          } catch (err) {
-                            console.error('Navigation failed for alert type', alert.type, err)
-                          }
+                          setSelectedType(alert.type)
+                          setOpen(true)
                         }
                       }}
                     >
@@ -325,11 +472,8 @@ export function AlertsSummary({
                             className="mt-1 h-auto p-0 text-xs hover:underline"
                             onClick={(e) => {
                               e.stopPropagation()
-                              try {
-                                router.push(`/system/notifications?type=${alert.type}`)
-                              } catch (err) {
-                                console.error('Navigation failed for alert type', alert.type, err)
-                              }
+                              setSelectedType(alert.type)
+                              setOpen(true)
                             }}
                           >
                             Xem chi tiết

@@ -116,6 +116,16 @@ export const API_ENDPOINTS = {
     DELETE: (id: string) => `/slas/${id}`,
   },
 
+  // SLA Templates
+  SLA_TEMPLATES: {
+    LIST: '/sla-templates',
+    DETAIL: (id: string) => `/sla-templates/${id}`,
+    CREATE: '/sla-templates',
+    UPDATE: (id: string) => `/sla-templates/${id}`,
+    DELETE: (id: string) => `/sla-templates/${id}`,
+    APPLY: (id: string) => `/sla-templates/${id}/apply`,
+  },
+
   // Usage Logs
   USAGE_LOGS: {
     LIST: '/usage-logs',

@@ -173,6 +173,31 @@ export const devicesClientService = {
     return body
   },
 
+  // Update the warning threshold percentage for a consumable type installed on a device
+  async updateDeviceConsumableWarning(
+    deviceId: string,
+    consumableTypeId: string,
+    warningPercentage: number
+  ) {
+    try {
+      const response = await internalApiClient.patch(
+        `/api/devices/${deviceId}/consumables/${consumableTypeId}/warning`,
+        {
+          deviceId,
+          consumableTypeId,
+          warningPercentage,
+        }
+      )
+      const body = response.data
+      if (!body) return null
+      if (body.data) return body.data
+      return body
+    } catch (err: unknown) {
+      console.error('[devicesClientService.updateDeviceConsumableWarning] error:', err)
+      throw err
+    }
+  },
+
   // Assign device to customer
   async assignToCustomer(deviceId: string, customerId: string) {
     try {

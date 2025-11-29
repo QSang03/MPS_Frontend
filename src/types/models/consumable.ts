@@ -43,6 +43,8 @@ export interface DeviceConsumable {
   exchangeRate?: number | null
   createdAt?: string | null
   updatedAt?: string | null
+  /** Warning threshold percentage for this consumable installed on the device (0-100) */
+  warningPercentage?: number | null
 }
 
 // Compatible consumable responses: either bare ConsumableType or a wrapper that also includes stock info

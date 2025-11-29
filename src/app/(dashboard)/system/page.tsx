@@ -4,6 +4,11 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { usePageTitle } from '@/lib/hooks/usePageTitle'
 import { useAdminOverview, useCurrentMonth } from '@/lib/hooks/useDashboardData'
+import type {
+  AdminOverviewAlerts,
+  ConsumableWarningItem,
+  SlaViolationItem,
+} from '@/types/dashboard'
 import { KPICards } from './_components/KPICards'
 import { CostBreakdownChart } from './_components/CostBreakdownChart'
 import { MonthlySeriesChart } from './_components/MonthlySeriesChart'
@@ -328,12 +333,63 @@ export default function CustomerAdminDashboard() {
           onViewDetails={() => router.push('/system/reports')}
           onExport={handleExportCostBreakdown}
         />
+        {/* Normalize alerts incoming from backend (support both new `alerts` object and legacy fields)
+            - prefer overviewData.alerts if present
+            - fallback: create consumableWarnings from overviewData.consumableAlerts (if present)
+            - fallback: derive urgent service requests (SLA / urgent) from recentRequests by priority
+        */}
         <AlertsSummary
           kpis={overviewData?.kpis}
           isLoading={isLoading}
           onViewAll={() => router.push('/system/notifications')}
           recentNotifications={overviewData?.recentNotifications}
-          alerts={overviewData?.alerts}
+          alerts={(() => {
+            if (!overviewData) return undefined
+            // Start with server-provided object if available
+            const fromApiAlerts = overviewData.alerts
+            if (fromApiAlerts) return fromApiAlerts
+
+            // Legacy mapping
+            const result: Partial<AdminOverviewAlerts> = {}
+            // Extract potential `consumableAlerts` array if present on the response (legacy)
+            const maybeConsumableAlerts = (
+              overviewData as unknown as { consumableAlerts?: unknown }
+            ).consumableAlerts
+            if (Array.isArray(maybeConsumableAlerts)) {
+              result.consumableWarnings = {
+                total: (maybeConsumableAlerts as unknown[]).length,
+                severity: 'MEDIUM',
+                items: maybeConsumableAlerts as ConsumableWarningItem[],
+              }
+            }
+
+            // Use recentRequests to find urgent service requests (SLA breach/urgent)
+            if (overviewData.recentRequests && overviewData.recentRequests.length > 0) {
+              const urgent = overviewData.recentRequests.filter((r) =>
+                ['URGENT', 'HIGH'].includes((r.priority ?? '').toUpperCase())
+              )
+              if (urgent.length > 0) {
+                result.slaViolations = {
+                  total: urgent.length,
+                  severity: 'HIGH',
+                  items: urgent.map(
+                    (r): SlaViolationItem => ({
+                      id: r.id,
+                      title: r.title,
+                      status: r.status,
+                      priority: r.priority,
+                      customerName: r.customer?.name,
+                      createdAt: r.createdAt,
+                    })
+                  ),
+                }
+              }
+            }
+
+            // If server returns device error alerts in a legacy field, map it here (best-effort)
+            // Not present in types as legacy; leave undefined otherwise
+            return result
+          })()}
         />
       </div>
 

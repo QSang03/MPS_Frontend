@@ -22,6 +22,7 @@ import {
   RefreshCw,
   BarChart3,
   FileText,
+  Bell,
 } from 'lucide-react'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { formatPageCount } from '@/lib/utils/formatters'
@@ -333,6 +334,11 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
   const [updatingConsumable, setUpdatingConsumable] = useState(false)
   const [a4ModalOpen, setA4ModalOpen] = useState(false)
   const [a4HistoryOpen, setA4HistoryOpen] = useState(false)
+  // Warning edit modal state
+  const [showWarningDialog, setShowWarningDialog] = useState(false)
+  const [warningTarget, setWarningTarget] = useState<DeviceConsumable | null>(null)
+  const [warningPercentageEdit, setWarningPercentageEdit] = useState<number | ''>('')
+  const [updatingWarning, setUpdatingWarning] = useState(false)
 
   const editRemainingInvalid =
     typeof editRemaining === 'number' &&
@@ -1327,6 +1333,14 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                                     {usagePercent !== null && usagePercent <= 10 ? (
                                       <AlertCircle className="h-4 w-4 text-yellow-500" />
                                     ) : null}
+                                    {typeof c?.warningPercentage === 'number' ? (
+                                      <Badge
+                                        variant="outline"
+                                        className="ml-2 bg-yellow-50 text-yellow-700"
+                                      >
+                                        Cảnh báo {c.warningPercentage}%
+                                      </Badge>
+                                    ) : null}
                                   </div>
                                 </div>
 
@@ -1529,6 +1543,25 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                                   >
                                     <Edit className="h-4 w-4" />
                                     Sửa
+                                  </Button>
+                                </ActionGuard>
+                                <ActionGuard pageId="devices" actionId="set-consumable-warning">
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => {
+                                      setWarningTarget(c)
+                                      setWarningPercentageEdit(
+                                        typeof c?.warningPercentage === 'number'
+                                          ? c!.warningPercentage!
+                                          : ''
+                                      )
+                                      setShowWarningDialog(true)
+                                    }}
+                                    className="gap-2"
+                                  >
+                                    <Bell className="h-4 w-4" />
+                                    Cảnh báo
                                   </Button>
                                 </ActionGuard>
                               </div>
@@ -2549,6 +2582,105 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
           }
         }}
       />
+
+      {/* Warning modal: edit warning percentage for consumable type on device */}
+      <Dialog open={showWarningDialog} onOpenChange={setShowWarningDialog}>
+        <SystemModalLayout
+          title="Cập nhật ngưỡng cảnh báo"
+          description={`Cập nhật ngưỡng cảnh báo cho vật tư ${warningTarget?.consumableType?.name ?? warningTarget?.serialNumber ?? ''}`}
+          icon={Bell}
+          variant="edit"
+          maxWidth="!max-w-[32rem]"
+          footer={
+            <>
+              <Button variant="outline" onClick={() => setShowWarningDialog(false)}>
+                Hủy
+              </Button>
+              <Button
+                onClick={async () => {
+                  if (!warningTarget) return
+                  const ctId =
+                    warningTarget.consumableTypeId ??
+                    warningTarget.consumable?.consumableTypeId ??
+                    warningTarget.consumableType?.id
+                  if (!ctId) {
+                    toast.error('Không thể xác định loại vật tư')
+                    return
+                  }
+                  const v =
+                    typeof warningPercentageEdit === 'number'
+                      ? warningPercentageEdit
+                      : Number(warningPercentageEdit)
+                  if (Number.isNaN(v) || v < 0 || v > 100) {
+                    toast.error('Vui lòng nhập số phần trăm hợp lệ (0 - 100)')
+                    return
+                  }
+                  try {
+                    setUpdatingWarning(true)
+                    await devicesClientService.updateDeviceConsumableWarning(
+                      deviceId,
+                      String(ctId),
+                      v
+                    )
+                    toast.success('Cập nhật ngưỡng cảnh báo thành công')
+                    setInstalledConsumables((prev) =>
+                      prev.map((it) => {
+                        // match by consumableTypeId or nested consumableType.id
+                        const match =
+                          String(
+                            it.consumableTypeId ??
+                              it.consumable?.consumableTypeId ??
+                              it.consumableType?.id
+                          ) === String(ctId)
+                        if (match) return { ...it, warningPercentage: v }
+                        return it
+                      })
+                    )
+                    setShowWarningDialog(false)
+                  } catch (err) {
+                    console.error('Update warning failed', err)
+                    toast.error('Cập nhật ngưỡng cảnh báo thất bại')
+                  } finally {
+                    setUpdatingWarning(false)
+                  }
+                }}
+                disabled={updatingWarning}
+                className="min-w-[120px] bg-gradient-to-r from-amber-600 to-teal-600 hover:from-amber-700 hover:to-teal-700"
+              >
+                {updatingWarning ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Đang lưu...
+                  </>
+                ) : (
+                  'Lưu thay đổi'
+                )}
+              </Button>
+            </>
+          }
+        >
+          <div className="space-y-4">
+            <div>
+              <Label className="text-sm font-medium">Ngưỡng cảnh báo (%)</Label>
+              <Input
+                type="number"
+                min={0}
+                max={100}
+                value={warningPercentageEdit === '' ? '' : String(warningPercentageEdit)}
+                onChange={(e) => {
+                  const v = e.target.value ? Number(e.target.value) : ''
+                  setWarningPercentageEdit(v)
+                }}
+                placeholder="15"
+                className="mt-2 h-11"
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                Nhập giá trị phần trăm cảnh báo (0 - 100)
+              </p>
+            </div>
+          </div>
+        </SystemModalLayout>
+      </Dialog>
 
       {/* A4 history modal */}
       <A4EquivalentHistoryModal

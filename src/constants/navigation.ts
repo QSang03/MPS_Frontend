@@ -746,6 +746,55 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
     ],
   },
   {
+    id: 'sla-templates',
+    label: 'Mẫu SLA',
+    icon: 'Zap',
+    route: '/system/sla-templates',
+    description: 'Quản lý mẫu SLA để áp dụng cho khách hàng',
+    requiredPermissions: {
+      strategy: 'all',
+      resources: [{ resource: 'sla-templates', action: 'read' }],
+    },
+    actions: [
+      {
+        id: 'create',
+        label: 'Tạo Mẫu SLA',
+        icon: 'Plus',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'sla-templates', action: 'create' }],
+        },
+      },
+      {
+        id: 'update',
+        label: 'Cập nhật Mẫu SLA',
+        icon: 'Edit',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'sla-templates', action: 'update' }],
+        },
+      },
+      {
+        id: 'delete',
+        label: 'Xóa Mẫu SLA',
+        icon: 'Trash2',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'sla-templates', action: 'delete' }],
+        },
+      },
+      {
+        id: 'apply',
+        label: 'Áp dụng Mẫu',
+        icon: 'FileText',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'sla-templates', action: 'apply' }],
+        },
+      },
+    ],
+  },
+  {
     id: 'users',
     label: 'Quản lý người dùng',
     icon: 'Users',
