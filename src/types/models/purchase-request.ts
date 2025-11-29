@@ -6,6 +6,8 @@ import type { Customer } from './customer'
  */
 export interface PurchaseRequest {
   id: string
+  /** Human-readable request number, eg 'PR-20241215-001' */
+  requestNumber?: string
   deviceId: string
   customerId: string
   title?: string

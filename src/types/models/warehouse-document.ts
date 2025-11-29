@@ -27,7 +27,7 @@ export interface WarehouseDocument {
   customerId?: string
   customer?: { id: string; name: string }
   purchaseRequestId?: string
-  purchaseRequest?: { id: string; title: string; status?: string }
+  purchaseRequest?: { id: string; title: string; status?: string; requestNumber?: string }
   supplierName?: string
   notes?: string
   items?: WarehouseDocumentItem[]

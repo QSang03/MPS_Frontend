@@ -226,7 +226,9 @@ export function WarehouseDocumentDetailClient({ id, session }: Props) {
                 <div className="font-medium">{detail.purchaseRequest?.title ?? '-'}</div>
                 {detail.purchaseRequest && (
                   <div className="text-muted-foreground text-xs">
-                    ID: {detail.purchaseRequest.id}
+                    ID:{' '}
+                    {detail.purchaseRequest.requestNumber ??
+                      `#${detail.purchaseRequest.id.slice(0, 8)}`}
                   </div>
                 )}
               </div>

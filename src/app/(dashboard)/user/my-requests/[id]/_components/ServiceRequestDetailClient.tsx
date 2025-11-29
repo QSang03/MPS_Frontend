@@ -257,7 +257,7 @@ export function ServiceRequestDetailClient(props: Props) {
               <div className="flex items-center gap-2 text-sm">
                 <span className="font-medium text-slate-600 dark:text-slate-400">ID:</span>
                 <code className="rounded-lg border border-slate-300/50 bg-gradient-to-r from-slate-100 to-slate-200 px-3 py-1.5 font-mono text-xs text-slate-800 dark:border-slate-600/50 dark:from-slate-700 dark:to-slate-600 dark:text-slate-200">
-                  {data.id.slice(0, 8)}
+                  {data.requestNumber ?? `#${data.id.slice(0, 8)}`}
                 </code>
               </div>
             </div>

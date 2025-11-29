@@ -41,6 +41,7 @@ export interface Notification {
  */
 export interface NotificationMetadata {
   requestId?: string // Service Request ID hoặc Purchase Request ID
+  requestNumber?: string // Optional human readable number: SR-/PR-...
   type?: 'SERVICE' | 'PURCHASE' // Loại request
   status?: string // Trạng thái request
   priority?: string // Độ ưu tiên

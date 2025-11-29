@@ -8,6 +8,8 @@ import type { SLA } from './sla'
  */
 export interface ServiceRequest {
   id: string
+  /** Human-readable request number, eg 'SR-20241215-001' */
+  requestNumber?: string
   customerId: string
   /** User ID who created the request (provided by backend) */
   createdBy?: string

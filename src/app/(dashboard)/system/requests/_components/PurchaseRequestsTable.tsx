@@ -360,7 +360,7 @@ function PurchaseRequestsTableContent({
             href={`/system/purchase-requests/${row.original.id}`}
             className="text-primary font-mono text-sm font-semibold hover:underline"
           >
-            #{row.original.id.slice(0, 8)}
+            {row.original.requestNumber ?? `#${row.original.id.slice(0, 8)}`}
           </Link>
         ),
       },

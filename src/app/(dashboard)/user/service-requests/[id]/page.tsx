@@ -137,7 +137,7 @@ export default function UserServiceRequestDetail() {
           <h1 className="text-2xl font-bold tracking-tight md:text-3xl">{request.title}</h1>
           <div className="text-muted-foreground flex flex-wrap items-center gap-3 text-sm">
             <span className="bg-muted rounded px-1.5 py-0.5 font-mono text-xs">
-              #{request.id.slice(0, 8)}
+              {request.requestNumber ?? `#${request.id.slice(0, 8)}`}
             </span>
             <span>•</span>
             <span className="flex items-center gap-1">{formatDateTime(request.createdAt)}</span>

@@ -1,16 +1,7 @@
 'use client'
 
-import React, { useEffect, useMemo, useState } from 'react'
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-} from 'recharts'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -26,6 +17,14 @@ import { toast } from 'sonner'
 import { devicesClientService } from '@/lib/api/services/devices-client.service'
 import { Loader2, RefreshCw } from 'lucide-react'
 import type { DeviceConsumableTypeUsage, DeviceUsageHistoryResponse } from '@/types/dashboard'
+import {
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+} from '@/components/ui/chart'
+import type { ChartConfig } from '@/components/ui/chart'
 
 // Use shared types from dashboard.ts
 type ConsumableTypeWithSeries = DeviceConsumableTypeUsage
@@ -143,8 +142,35 @@ export default function DeviceUsageHistory({ deviceId }: { deviceId: string }) {
       })
       return next
     })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasDataPerType.join(',')])
+  }, [hasDataPerType])
+
+  const chartConfig = useMemo<ChartConfig>(() => {
+    const palette = [
+      'hsl(var(--chart-1))',
+      'hsl(var(--chart-2))',
+      'hsl(var(--chart-3))',
+      'hsl(var(--chart-4))',
+      'hsl(var(--chart-5))',
+    ]
+
+    return consumables.reduce<ChartConfig>((acc, c, idx) => {
+      acc[`c${idx}`] = {
+        label: c.consumableTypeName ?? `Vật tư ${idx + 1}`,
+        color: palette[idx % palette.length],
+      }
+      return acc
+    }, {})
+  }, [consumables])
+
+  const formatValue = useCallback(
+    (value: number | string | undefined | null) => {
+      if (value === null || value === undefined) return '-'
+      if (yMode === 'percentage')
+        return `${Number(value).toLocaleString('vi-VN', { maximumFractionDigits: 2 })}%`
+      return Intl.NumberFormat('vi-VN').format(Number(value))
+    },
+    [yMode]
+  )
 
   return (
     <div className="space-y-4">
@@ -231,7 +257,6 @@ export default function DeviceUsageHistory({ deviceId }: { deviceId: string }) {
                     <div className="p-6 text-sm text-slate-500">Chưa có dữ liệu</div>
                   ) : (
                     (() => {
-                      // determine if any visible type has values
                       const anyVisible = chartData.some((row) =>
                         consumables.some((c, i) => visibleTypes[i] && row[`c${i}`] != null)
                       )
@@ -243,38 +268,28 @@ export default function DeviceUsageHistory({ deviceId }: { deviceId: string }) {
                         )
                       }
 
-                      const COLORS = [
-                        '#16a34a',
-                        '#3b82f6',
-                        '#f59e0b',
-                        '#ef4444',
-                        '#8b5cf6',
-                        '#06b6d4',
-                        '#f97316',
-                        '#06b6a4',
-                      ]
-
                       return (
-                        <ResponsiveContainer width="100%" height="100%">
+                        <ChartContainer config={chartConfig} className="h-full w-full">
                           <LineChart
                             data={chartData}
                             margin={{ top: 8, right: 24, left: 0, bottom: 10 }}
                           >
                             <CartesianGrid strokeDasharray="4 4" />
                             <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                            <YAxis
-                              tickFormatter={(v) => {
-                                if (yMode === 'percentage') return `${v}%`
-                                return Intl.NumberFormat('vi-VN').format(Number(v))
-                              }}
+                            <YAxis tickFormatter={(v) => formatValue(Number(v))} />
+                            <ChartTooltip
+                              content={
+                                <ChartTooltipContent
+                                  indicator="line"
+                                  formatter={(value: string | number | null | undefined) => (
+                                    <span className="text-foreground font-mono font-medium">
+                                      {formatValue(value as number)}
+                                    </span>
+                                  )}
+                                />
+                              }
                             />
-                            <Tooltip
-                              formatter={(value: unknown) => {
-                                if (yMode === 'percentage') return `${value}%`
-                                return Intl.NumberFormat('vi-VN').format(Number(value))
-                              }}
-                            />
-                            <Legend verticalAlign="top" height={44} />
+                            <ChartLegend verticalAlign="top" content={<ChartLegendContent />} />
 
                             {consumables.map((c, i) =>
                               hasDataPerType[i] && visibleTypes[i] ? (
@@ -282,7 +297,7 @@ export default function DeviceUsageHistory({ deviceId }: { deviceId: string }) {
                                   key={c.consumableTypeId ?? i}
                                   type="monotone"
                                   dataKey={`c${i}`}
-                                  stroke={COLORS[i % COLORS.length]}
+                                  stroke={`var(--color-c${i})`}
                                   strokeWidth={2}
                                   dot={false}
                                   name={c.consumableTypeName ?? `Item ${i + 1}`}
@@ -290,7 +305,7 @@ export default function DeviceUsageHistory({ deviceId }: { deviceId: string }) {
                               ) : null
                             )}
                           </LineChart>
-                        </ResponsiveContainer>
+                        </ChartContainer>
                       )
                     })()
                   )}

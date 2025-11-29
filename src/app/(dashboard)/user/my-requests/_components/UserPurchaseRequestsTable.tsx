@@ -333,7 +333,9 @@ function UserPurchaseRequestsTableContent({
           </div>
         ),
         cell: ({ row }) => (
-          <span className="font-mono text-sm font-semibold">#{row.original.id.slice(0, 8)}</span>
+          <span className="font-mono text-sm font-semibold">
+            {row.original.requestNumber ?? `#${row.original.id.slice(0, 8)}`}
+          </span>
         ),
       },
       {

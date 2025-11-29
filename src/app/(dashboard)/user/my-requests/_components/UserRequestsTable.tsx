@@ -574,7 +574,7 @@ function UserRequestsTableContent({
             onClick={() => handleViewDetail(row.original.id)}
             className="font-mono text-sm text-blue-600 hover:underline"
           >
-            #{row.original.id.slice(0, 8)}
+            {row.original.requestNumber ?? `#${row.original.id.slice(0, 8)}`}
           </button>
         ),
       },

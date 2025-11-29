@@ -199,6 +199,9 @@ export function useNotifications() {
         requestId = extractServiceRequestId(payload.message || payload.title)
       }
 
+      // Prefer readable requestNumber in UI if provided by metadata
+      const requestNumber = payload.metadata?.requestNumber
+
       // Get isDefaultCustomer to determine navigation path
       const isDefaultCustomer = getIsDefaultCustomer()
 
@@ -238,7 +241,7 @@ export function useNotifications() {
 
       // Show toast notification with action button
       const toastId = toast.info(payload.title, {
-        description: cleanedMessage || undefined,
+        description: requestNumber ?? (cleanedMessage || undefined),
         duration: Infinity, // Toast không tự đóng
         action: shouldShowAction
           ? {

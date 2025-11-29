@@ -437,7 +437,7 @@ function ServiceRequestsTableContent({
             href={`/system/service-requests/${row.original.id}`}
             className="text-primary font-mono text-sm hover:underline"
           >
-            #{row.original.id.slice(0, 8)}
+            {row.original.requestNumber ?? `#${row.original.id.slice(0, 8)}`}
           </Link>
         ),
       },

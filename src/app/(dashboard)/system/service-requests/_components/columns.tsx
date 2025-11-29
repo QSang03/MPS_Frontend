@@ -27,13 +27,13 @@ const priorityColorMap: Record<Priority, string> = {
 export const columns: ColumnDef<ServiceRequest>[] = [
   {
     accessorKey: 'id',
-    header: 'Request ID',
+    header: 'Số yêu cầu',
     cell: ({ row }) => (
       <Link
         href={`/system/service-requests/${row.original.id}`}
         className="font-mono font-medium hover:underline"
       >
-        #{row.original.id.slice(0, 8)}
+        {row.original.requestNumber ?? `#${row.original.id.slice(0, 8)}`}
       </Link>
     ),
   },
