@@ -40,9 +40,8 @@ export default function DeviceUsageHistory({ deviceId }: { deviceId: string }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [consumables, setConsumables] = useState<ConsumableTypeWithSeries[]>([])
-  const [selectedTypeIndex, setSelectedTypeIndex] = useState(0)
-  const [selectedSeriesIndex, setSelectedSeriesIndex] = useState(0)
   const [valueMode, setValueMode] = useState<'percentage' | 'remaining'>('percentage')
+  const [visibleTypes, setVisibleTypes] = useState<boolean[]>([])
 
   const load = async () => {
     if (!deviceId) return
@@ -66,11 +65,11 @@ export default function DeviceUsageHistory({ deviceId }: { deviceId: string }) {
       const maybeConsumables = maybeData?.consumables
       if (!Array.isArray(maybeConsumables)) {
         setConsumables([])
+        setVisibleTypes([])
         return
       }
       setConsumables(maybeConsumables)
-      setSelectedTypeIndex(0)
-      setSelectedSeriesIndex(0)
+      setVisibleTypes(maybeConsumables.map(() => true))
     } catch (err: unknown) {
       console.error('Failed to load device usage history', err)
       const msg = err instanceof Error ? err.message : 'Lỗi tải dữ liệu'
@@ -86,23 +85,66 @@ export default function DeviceUsageHistory({ deviceId }: { deviceId: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deviceId, fromDate, toDate])
 
-  const selectedType = consumables[selectedTypeIndex]
-  const selectedSeries = selectedType?.series?.[selectedSeriesIndex]
-
+  // Build aggregated data: one line per consumable type across all series
+  const yMode = valueMode // 'percentage' | 'remaining'
   const chartData = useMemo(() => {
-    if (!selectedSeries) return []
-    // Build points for the chart sorted by date
-    const mapped = selectedSeries.dataPoints?.map((p) => ({
-      date: p.date,
-      recordedAt: p.recordedAt,
-      percentage: p.percentage,
-      remaining: p.remaining,
-    }))
-    const sorted = (mapped ?? []).sort((a, b) => (a.date > b.date ? 1 : -1))
-    return sorted
-  }, [selectedSeries])
+    if (!consumables || consumables.length === 0) return []
 
-  const yKey = valueMode === 'percentage' ? 'percentage' : 'remaining'
+    // gather all unique dates from all dataPoints
+    const dateSet = new Set<string>()
+    consumables.forEach((c) => {
+      c.series?.forEach((s) => s.dataPoints?.forEach((p) => dateSet.add(p.date)))
+    })
+
+    const dates = Array.from(dateSet).sort()
+
+    // For each date, produce an object { date, c0: value, c1: value, ... }
+    const data = dates.map((date) => {
+      const row: Record<string, unknown> = { date }
+      consumables.forEach((c, idx) => {
+        const key = `c${idx}`
+        // collect all datapoints across all series of this consumable at this date
+        const points =
+          c.series?.flatMap((s) => (s.dataPoints ?? []).filter((p) => p.date === date)) ?? []
+        if (!points || points.length === 0) {
+          row[key] = null
+        } else {
+          if (yMode === 'percentage') {
+            // average percentage across series for that date
+            const sum = points.reduce((acc, p) => acc + (p.percentage ?? 0), 0)
+            row[key] = sum / points.length
+          } else {
+            // sum remaining across series for that date
+            const sum = points.reduce((acc, p) => acc + Number(p.remaining ?? 0), 0)
+            row[key] = sum
+          }
+        }
+      })
+      return row
+    })
+
+    return data
+  }, [consumables, yMode])
+
+  // For each consumable type determine whether it has any data in the current date range
+  const hasDataPerType = useMemo(() => {
+    if (!consumables || consumables.length === 0) return [] as boolean[]
+    return consumables.map((_, i) => chartData.some((row) => row[`c${i}`] != null))
+  }, [consumables, chartData])
+
+  // When the available data changes, automatically hide types that have no data
+  useEffect(() => {
+    if (!hasDataPerType) return
+    setVisibleTypes((prev) => {
+      const next = hasDataPerType.map((has, i) => {
+        if (!has) return false // hide types with no data
+        // if previously had a value, keep it; otherwise default to true
+        return prev && typeof prev[i] === 'boolean' ? prev[i] : true
+      })
+      return next
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasDataPerType.join(',')])
 
   return (
     <div className="space-y-4">
@@ -161,52 +203,58 @@ export default function DeviceUsageHistory({ deviceId }: { deviceId: string }) {
             ) : (
               <div className="space-y-4">
                 <div className="flex gap-2 overflow-x-auto">
-                  {consumables.map((c, i) => (
-                    <button
-                      key={c.consumableTypeId ?? i}
-                      className={`rounded-md border px-3 py-1 text-sm shadow-sm ${
-                        i === selectedTypeIndex ? 'border-blue-300 bg-blue-50' : 'bg-white'
-                      }`}
-                      onClick={() => {
-                        setSelectedTypeIndex(i)
-                        setSelectedSeriesIndex(0)
-                      }}
-                    >
-                      {c.consumableTypeName ?? 'Không tên'}
-                    </button>
-                  ))}
+                  {consumables.map((c, i) => {
+                    // only show toggles for types that actually have data in the selected range
+                    if (!hasDataPerType[i]) return null
+                    return (
+                      <button
+                        key={c.consumableTypeId ?? i}
+                        className={`rounded-md border px-3 py-1 text-sm shadow-sm ${
+                          visibleTypes[i] ? 'border-blue-300 bg-blue-50' : 'bg-white'
+                        }`}
+                        onClick={() =>
+                          setVisibleTypes((prev) => {
+                            const copy = [...prev]
+                            copy[i] = !copy[i]
+                            return copy
+                          })
+                        }
+                      >
+                        {c.consumableTypeName ?? 'Không tên'}
+                      </button>
+                    )
+                  })}
                 </div>
 
-                {selectedType && (
-                  <div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="font-semibold">{selectedType.consumableTypeName}</div>
-                        <div className="text-sm text-slate-500">{selectedType.description}</div>
-                      </div>
-                    </div>
-                    <div className="mt-2 flex gap-2 overflow-x-auto">
-                      {selectedType.series?.map((s, idx) => (
-                        <button
-                          key={s.deviceConsumableId ?? idx}
-                          className={`rounded-md border px-3 py-1 text-sm shadow-sm ${
-                            idx === selectedSeriesIndex
-                              ? 'border-slate-300 bg-slate-50'
-                              : 'bg-white'
-                          }`}
-                          onClick={() => setSelectedSeriesIndex(idx)}
-                          title={`SN: ${s.consumableSerialNumber ?? '-'} Installed: ${s.installedAt ?? '-'} removed: ${s.removedAt ?? '-'}`}
-                        >
-                          <div className="text-sm font-medium">
-                            {s.consumableSerialNumber ?? '-'}{' '}
+                <div className="mt-4 h-[320px] rounded-md border bg-white p-2">
+                  {chartData.length === 0 ? (
+                    <div className="p-6 text-sm text-slate-500">Chưa có dữ liệu</div>
+                  ) : (
+                    (() => {
+                      // determine if any visible type has values
+                      const anyVisible = chartData.some((row) =>
+                        consumables.some((c, i) => visibleTypes[i] && row[`c${i}`] != null)
+                      )
+                      if (!anyVisible) {
+                        return (
+                          <div className="p-6 text-sm text-slate-500">
+                            Không có dữ liệu hiển thị
                           </div>
-                          <div className="text-xs text-slate-500">{s.installedAt ?? '-'}</div>
-                        </button>
-                      ))}
-                    </div>
+                        )
+                      }
 
-                    <div className="mt-4 h-[320px] rounded-md border bg-white p-2">
-                      {selectedSeries?.dataPoints?.length ? (
+                      const COLORS = [
+                        '#16a34a',
+                        '#3b82f6',
+                        '#f59e0b',
+                        '#ef4444',
+                        '#8b5cf6',
+                        '#06b6d4',
+                        '#f97316',
+                        '#06b6a4',
+                      ]
+
+                      return (
                         <ResponsiveContainer width="100%" height="100%">
                           <LineChart
                             data={chartData}
@@ -216,36 +264,37 @@ export default function DeviceUsageHistory({ deviceId }: { deviceId: string }) {
                             <XAxis dataKey="date" tick={{ fontSize: 12 }} />
                             <YAxis
                               tickFormatter={(v) => {
-                                if (yKey === 'percentage') return v + '%'
+                                if (yMode === 'percentage') return `${v}%`
                                 return Intl.NumberFormat('vi-VN').format(Number(v))
                               }}
                             />
                             <Tooltip
                               formatter={(value: unknown) => {
-                                if (yKey === 'percentage') return `${value}%`
+                                if (yMode === 'percentage') return `${value}%`
                                 return Intl.NumberFormat('vi-VN').format(Number(value))
                               }}
                             />
                             <Legend verticalAlign="top" height={44} />
 
-                            <Line
-                              type="monotone"
-                              dataKey={yKey}
-                              stroke="#3b82f6"
-                              strokeWidth={2}
-                              dot={false}
-                              name={yKey === 'percentage' ? 'Phần trăm' : 'Remaining'}
-                            />
+                            {consumables.map((c, i) =>
+                              hasDataPerType[i] && visibleTypes[i] ? (
+                                <Line
+                                  key={c.consumableTypeId ?? i}
+                                  type="monotone"
+                                  dataKey={`c${i}`}
+                                  stroke={COLORS[i % COLORS.length]}
+                                  strokeWidth={2}
+                                  dot={false}
+                                  name={c.consumableTypeName ?? `Item ${i + 1}`}
+                                />
+                              ) : null
+                            )}
                           </LineChart>
                         </ResponsiveContainer>
-                      ) : (
-                        <div className="p-6 text-sm text-slate-500">
-                          Chưa có dữ liệu cho series này
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
+                      )
+                    })()
+                  )}
+                </div>
               </div>
             )}
           </div>

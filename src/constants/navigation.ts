@@ -120,6 +120,15 @@ export const USER_NAVIGATION_PAYLOAD: NavItemPayload[] = [
         },
       },
       {
+        id: 'set-consumable-warning',
+        label: 'Cập nhật ngưỡng cảnh báo',
+        icon: 'Bell',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'consumables', action: 'update' }],
+        },
+      },
+      {
         id: 'set-a4-pricing',
         label: 'Gán giá A4',
         icon: 'BarChart3',

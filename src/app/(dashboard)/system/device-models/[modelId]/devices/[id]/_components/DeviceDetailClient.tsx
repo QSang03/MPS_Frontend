@@ -68,6 +68,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { consumablesClientService } from '@/lib/api/services/consumables-client.service'
 import type { CreateConsumableDto } from '@/lib/api/services/consumables-client.service'
 import { ActionGuard } from '@/components/shared/ActionGuard'
+import { useActionPermission } from '@/lib/hooks/useActionPermission'
 import { cn } from '@/lib/utils'
 import { Separator } from '@/components/ui/separator'
 import { removeEmpty } from '@/lib/utils/clean'
@@ -164,6 +165,9 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
   const [createExchangeRate, setCreateExchangeRate] = useState<number | ''>('')
   const [activeTab, setActiveTab] = useState('overview')
   const router = useRouter()
+  // NOTE: debugNav removed — temporary debug code cleaned up
+  const { can } = useActionPermission('devices')
+  const canShowWarningButton = can('set-consumable-warning') || can('edit-consumable')
 
   // Note: Use ActionGuard component for permission checks in JSX to keep behavior consistent.
 
@@ -1545,7 +1549,7 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                                     Sửa
                                   </Button>
                                 </ActionGuard>
-                                <ActionGuard pageId="devices" actionId="set-consumable-warning">
+                                {canShowWarningButton ? (
                                   <Button
                                     size="sm"
                                     variant="ghost"
@@ -1563,7 +1567,7 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                                     <Bell className="h-4 w-4" />
                                     Cảnh báo
                                   </Button>
-                                </ActionGuard>
+                                ) : null}
                               </div>
                             </td>
                           </tr>
@@ -2681,6 +2685,8 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
           </div>
         </SystemModalLayout>
       </Dialog>
+
+      {/* Debug panel removed */}
 
       {/* A4 history modal */}
       <A4EquivalentHistoryModal
