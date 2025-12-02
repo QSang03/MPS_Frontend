@@ -51,6 +51,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { DeleteDialog } from '@/components/shared/DeleteDialog'
 import { ActionGuard } from '@/components/shared/ActionGuard'
+import { useNavigation } from '@/contexts/NavigationContext'
 import DeviceFormModal from './deviceformmodal'
 import DevicePricingModal from './DevicePricingModal'
 import ToggleActiveModal from './ToggleActiveModal'
@@ -68,6 +69,9 @@ type DeviceStats = { total: number; active: number; inactive: number }
 
 export default function DevicesPageClient() {
   const { can } = useActionPermission('devices')
+
+  // NOTE: This component uses a per-row check for session role via IIFE calls with useNavigation.
+  // Be careful folding hooks into loops; keep useNavigation at top-level if refactoring later.
 
   const [searchInput, setSearchInput] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
@@ -326,6 +330,24 @@ export default function DevicesPageClient() {
         />
       </Suspense>
     </div>
+  )
+}
+
+// Small helper component to handle assign-pricing action. This keeps the hook usage inside a normal component
+function AssignPricingButton({
+  device,
+  onSaved,
+}: {
+  device: Device
+  onSaved: () => void | Promise<void>
+}) {
+  const { sessionRole } = useNavigation()
+  const isCustomerManager = String(sessionRole ?? '').toLowerCase() === 'customer-manager'
+
+  return (
+    <ActionGuard pageId="devices" actionId="assign-pricing">
+      {!isCustomerManager ? <DevicePricingModal device={device} compact onSaved={onSaved} /> : null}
+    </ActionGuard>
   )
 }
 
@@ -722,7 +744,7 @@ function DevicesTableContent({
                   }}
                 />
               </ActionGuard>
-              <DevicePricingModal device={device} compact onSaved={invalidateDevices} />
+              <AssignPricingButton device={device} onSaved={invalidateDevices} />
               <ActionGuard pageId="devices" actionId="set-a4-pricing">
                 <Button
                   variant="outline"

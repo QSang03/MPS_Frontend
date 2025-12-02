@@ -205,7 +205,7 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
       {
         label: 'Đã duyệt',
         time: detail.approvedAt,
-        by: detail.approvedBy,
+        by: detail.approvedByName ?? detail.approvedBy,
         icon: CheckCircle2,
         color: 'text-emerald-600',
       },
@@ -323,6 +323,19 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
               </div>
 
               <div className="border-t pt-2">
+                {detail.approvedAt && (
+                  <div className="mb-2 flex items-center gap-3">
+                    <CalendarCheck className="h-4 w-4 text-emerald-500" />
+                    <div className="text-sm">
+                      <div className="font-medium">
+                        {detail.approvedByName ?? detail.approvedBy ?? '—'}
+                      </div>
+                      <div className="text-muted-foreground text-xs">
+                        {formatDateTime(detail.approvedAt)}
+                      </div>
+                    </div>
+                  </div>
+                )}
                 <PermissionGuard
                   session={session}
                   action="update"

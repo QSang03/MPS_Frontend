@@ -43,6 +43,8 @@ import type { CustomerOverviewDevice } from '@/types/models/customer-overview/cu
 import type { CustomerOverviewConsumable } from '@/types/models/customer-overview/customer-overview-consumable'
 import type { Customer } from '@/types/models/customer'
 import DevicePricingModal from '@/app/(dashboard)/system/devices/_components/DevicePricingModal'
+import { ActionGuard } from '@/components/shared/ActionGuard'
+import { useNavigation } from '@/contexts/NavigationContext'
 import A4EquivalentModal from '@/app/(dashboard)/system/devices/_components/A4EquivalentModal'
 import A4EquivalentHistoryModal from '@/app/(dashboard)/system/devices/_components/A4EquivalentHistoryModal'
 import DeviceFormModal from '@/app/(dashboard)/system/devices/_components/deviceformmodal'
@@ -185,6 +187,11 @@ export default function CustomerDetailClient({ customerId }: Props) {
     if (!start && !end) return 'Không rõ thời hạn'
     return `${formatDate(start)} — ${formatDate(end)}`
   }
+
+  // Session role used to hide certain UI elements for customer-manager and gating admin features
+  const { sessionRole } = useNavigation()
+  const isCustomerManager = String(sessionRole ?? '').toLowerCase() === 'customer-manager'
+  const isSystemAdmin = String(sessionRole ?? '').toLowerCase() === 'system-admin'
 
   const isAllExpanded = useMemo(() => {
     if (contracts.length === 0) return false
@@ -646,13 +653,17 @@ export default function CustomerDetailClient({ customerId }: Props) {
                   loadOverview()
                 }}
               />
-              <DevicePricingModal
-                device={device.device}
-                compact
-                onSaved={() => {
-                  loadOverview()
-                }}
-              />
+              <ActionGuard pageId="devices" actionId="assign-pricing">
+                {!isCustomerManager ? (
+                  <DevicePricingModal
+                    device={device.device}
+                    compact
+                    onSaved={() => {
+                      loadOverview()
+                    }}
+                  />
+                ) : null}
+              </ActionGuard>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -1278,27 +1289,29 @@ export default function CustomerDetailClient({ customerId }: Props) {
                                       {getStatusLabel(contract.status)}
                                     </Badge>
                                     <div className="ml-auto flex items-center gap-1.5">
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            className="h-8 w-8 p-0 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
-                                            onClick={() =>
-                                              setCreateBillingContract({
-                                                id: contract.id,
-                                                number: contract.contractNumber,
-                                              })
-                                            }
-                                            aria-label="Tạo billing"
-                                          >
-                                            <Receipt className="h-4 w-4" />
-                                          </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent sideOffset={4}>
-                                          Tạo hóa đơn billing
-                                        </TooltipContent>
-                                      </Tooltip>
+                                      {isSystemAdmin && (
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <Button
+                                              variant="ghost"
+                                              size="sm"
+                                              className="h-8 w-8 p-0 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
+                                              onClick={() =>
+                                                setCreateBillingContract({
+                                                  id: contract.id,
+                                                  number: contract.contractNumber,
+                                                })
+                                              }
+                                              aria-label="Tạo billing"
+                                            >
+                                              <Receipt className="h-4 w-4" />
+                                            </Button>
+                                          </TooltipTrigger>
+                                          <TooltipContent sideOffset={4}>
+                                            Tạo hóa đơn billing
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      )}
                                       {canUpdateContract && (
                                         <Tooltip>
                                           <TooltipTrigger asChild>
@@ -1815,7 +1828,7 @@ export default function CustomerDetailClient({ customerId }: Props) {
       </motion.div>
 
       {/* Create Billing Dialog */}
-      {createBillingContract && (
+      {createBillingContract && isSystemAdmin && (
         <CreateBillingModal
           open={!!createBillingContract}
           onOpenChange={(open) => {

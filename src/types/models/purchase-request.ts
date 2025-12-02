@@ -21,6 +21,7 @@ export interface PurchaseRequest {
   assignedTo?: string
   assignedToName?: string
   approvedBy?: string
+  approvedByName?: string
   approvedAt?: string
   orderedBy?: string
   orderedAt?: string
@@ -94,6 +95,7 @@ export interface CreatePurchaseRequestDto {
 export interface UpdatePurchaseRequestDto {
   status?: PurchaseRequestStatus
   approvedBy?: string
+  approvedByName?: string
   notes?: string
 }
 

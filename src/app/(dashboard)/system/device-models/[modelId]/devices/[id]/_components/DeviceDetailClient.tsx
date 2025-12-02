@@ -15,7 +15,6 @@ import {
   AlertCircle,
   Wifi,
   MapPin,
-  Calendar,
   Wrench,
   Sparkles,
   Search,
@@ -32,6 +31,7 @@ import A4EquivalentModal from '@/app/(dashboard)/system/devices/_components/A4Eq
 import A4EquivalentHistoryModal from '@/app/(dashboard)/system/devices/_components/A4EquivalentHistoryModal'
 import ConsumableHistoryModal from './ConsumableHistoryModal'
 import DeviceUsageHistory from '@/components/device/DeviceUsageHistory'
+import { DeviceMaintenanceTab } from '@/components/device/DeviceMaintenanceTab'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -1714,53 +1714,11 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
 
         {/* Maintenance Tab */}
         <TabsContent value="maintenance" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Wrench className="h-5 w-5 text-rose-600" />
-                Lịch sử bảo trì
-              </CardTitle>
-              <CardDescription>Thông tin bảo trì và bảo dưỡng thiết bị</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {!device.lastMaintenanceDate && !device.nextMaintenanceDate ? (
-                <div className="text-muted-foreground p-8 text-center">
-                  <Calendar className="mx-auto mb-3 h-12 w-12 opacity-20" />
-                  <p>Chưa có lịch bảo trì</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                  <div className="rounded-xl border border-rose-200 bg-gradient-to-br from-rose-50 to-pink-50 p-6">
-                    <div className="mb-3 flex items-center gap-3">
-                      <div className="rounded-lg bg-rose-100 p-2">
-                        <Calendar className="h-5 w-5 text-rose-600" />
-                      </div>
-                      <h4 className="font-semibold text-rose-900">Bảo trì lần cuối</h4>
-                    </div>
-                    <p className="text-2xl font-bold text-rose-700">
-                      {device.lastMaintenanceDate
-                        ? new Date(device.lastMaintenanceDate).toLocaleDateString('vi-VN')
-                        : 'Chưa có dữ liệu'}
-                    </p>
-                  </div>
-
-                  <div className="rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50 to-cyan-50 p-6">
-                    <div className="mb-3 flex items-center gap-3">
-                      <div className="rounded-lg bg-blue-100 p-2">
-                        <Calendar className="h-5 w-5 text-blue-600" />
-                      </div>
-                      <h4 className="font-semibold text-blue-900">Bảo trì lần tiếp theo</h4>
-                    </div>
-                    <p className="text-2xl font-bold text-blue-700">
-                      {device.nextMaintenanceDate
-                        ? new Date(device.nextMaintenanceDate).toLocaleDateString('vi-VN')
-                        : 'Chưa lên lịch'}
-                    </p>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <DeviceMaintenanceTab
+            deviceId={deviceId}
+            lastMaintenanceDate={device.lastMaintenanceDate}
+            nextMaintenanceDate={device.nextMaintenanceDate}
+          />
         </TabsContent>
 
         {/* History Tab - Consumable Usage History */}

@@ -16,6 +16,7 @@ import {
   Tag,
   CheckCircle2,
   Calendar,
+  CalendarCheck,
   Package,
 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -81,7 +82,11 @@ const buildTimelineSteps = (request: PurchaseRequestRow): TimelineStep[] =>
   (
     [
       { label: 'Tạo yêu cầu', time: request.createdAt, by: request.requestedBy },
-      { label: 'Đã duyệt', time: request.approvedAt, by: request.approvedBy },
+      {
+        label: 'Đã duyệt',
+        time: request.approvedAt,
+        by: request.approvedByName ?? request.approvedBy,
+      },
       { label: 'Đặt hàng', time: request.orderedAt, by: request.orderedBy },
       { label: 'Đã nhận', time: request.receivedAt, by: request.receivedBy },
       { label: 'Hủy', time: request.cancelledAt, by: request.cancelledBy },
@@ -530,6 +535,25 @@ function PurchaseRequestsTableContent({
             </Popover>
           )
         },
+      },
+      {
+        accessorKey: 'approvedAt',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <CalendarCheck className="h-4 w-4 text-gray-500" />
+            Đã duyệt
+          </div>
+        ),
+        cell: ({ row }) => (
+          <div className="text-sm">
+            <div className="font-medium">
+              {row.original.approvedByName ?? row.original.approvedBy ?? '—'}
+            </div>
+            <div className="text-muted-foreground text-xs">
+              {row.original.approvedAt ? formatDateTime(row.original.approvedAt) : '—'}
+            </div>
+          </div>
+        ),
       },
       {
         accessorKey: 'status',

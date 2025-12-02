@@ -20,14 +20,17 @@ import { toast } from 'sonner'
 import { reportsClientService } from '@/lib/api/services/reports-client.service'
 import { DeleteDialog } from '@/components/shared/DeleteDialog'
 import { TableWrapper } from '@/components/system/TableWrapper'
-import type { ColumnDef } from '@tanstack/react-table'
+import type { ColumnDef, CellContext } from '@tanstack/react-table'
 
 export function A4EquivalentUsageHistory({
   deviceId,
   customerId,
+  showA4,
 }: {
   deviceId?: string
   customerId?: string
+  // optional hint to decide which columns to show. If omitted, auto-detect based on device model or item content
+  showA4?: boolean | 'auto'
 }) {
   type Row = {
     snapshotId?: string
@@ -106,6 +109,62 @@ export function A4EquivalentUsageHistory({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deviceId, customerId, page, limit, sorting])
 
+  // Decide whether to show only A4, only non-A4, or both. Priority:
+  // 1) Explicit `showA4` prop (true -> A4 only, false -> standard only)
+  // 2) If deviceId provided, fetch device to read deviceModel.useA4Counter
+  // 3) Auto-detect based on items (if all rows only have A4 or non-A4 values -> show accordingly)
+  const [showMode, setShowMode] = useState<'both' | 'standard' | 'a4'>('both')
+
+  useEffect(() => {
+    let isMounted = true
+    ;(async () => {
+      if (showA4 === true) {
+        if (isMounted) setShowMode('a4')
+        return
+      }
+      if (showA4 === false) {
+        if (isMounted) setShowMode('standard')
+        return
+      }
+
+      // If we have a deviceId, try to fetch device to know counter type
+      if (deviceId) {
+        try {
+          const { devicesClientService } = await import('@/lib/api/services/devices-client.service')
+          const device = await devicesClientService.getById(deviceId)
+          if (!isMounted) return
+          const modelUseA4 = Boolean(device?.deviceModel?.useA4Counter)
+          setShowMode(modelUseA4 ? 'a4' : 'standard')
+          return
+        } catch (err) {
+          console.debug('Unable to fetch device to determine counter type', err)
+        }
+      }
+
+      // fallback: auto-detect from items
+      const hasStandard = items.some(
+        (r) =>
+          r.totalPageCount != null || r.totalColorPages != null || r.totalBlackWhitePages != null
+      )
+      const hasA4 = items.some(
+        (r) =>
+          r.totalPageCountA4 != null ||
+          r.totalColorPagesA4 != null ||
+          r.totalBlackWhitePagesA4 != null
+      )
+      if (hasA4 && !hasStandard) {
+        setShowMode('a4')
+      } else if (!hasA4 && hasStandard) {
+        setShowMode('standard')
+      } else {
+        setShowMode('both')
+      }
+    })()
+    return () => {
+      isMounted = false
+    }
+  }, [deviceId, customerId, showA4, items])
+
   // Table columns
   const columns: ColumnDef<Row>[] = [
     {
@@ -122,36 +181,58 @@ export function A4EquivalentUsageHistory({
       header: 'Device',
       cell: (ctx) => <span className="font-mono text-xs">{shortId(ctx.getValue() as string)}</span>,
     },
-    {
-      accessorKey: 'totalPageCount',
-      header: 'Total',
-      cell: (ctx) => <div className="text-right font-medium">{fmt(ctx.getValue())}</div>,
-    },
-    {
-      accessorKey: 'totalColorPages',
-      header: 'Color',
-      cell: (ctx) => <div className="text-right font-medium">{fmt(ctx.getValue())}</div>,
-    },
-    {
-      accessorKey: 'totalBlackWhitePages',
-      header: 'BW',
-      cell: (ctx) => <div className="text-right font-medium">{fmt(ctx.getValue())}</div>,
-    },
-    {
-      accessorKey: 'totalPageCountA4',
-      header: 'Total (A4)',
-      cell: (ctx) => <div className="text-right font-medium">{fmt(ctx.getValue())}</div>,
-    },
-    {
-      accessorKey: 'totalColorPagesA4',
-      header: 'Color (A4)',
-      cell: (ctx) => <div className="text-right font-medium">{fmt(ctx.getValue())}</div>,
-    },
-    {
-      accessorKey: 'totalBlackWhitePagesA4',
-      header: 'BW (A4)',
-      cell: (ctx) => <div className="text-right font-medium">{fmt(ctx.getValue())}</div>,
-    },
+    // Standard counters (non-A4)
+    ...(showMode === 'a4'
+      ? []
+      : [
+          {
+            accessorKey: 'totalPageCount',
+            header: 'Total',
+            cell: ({ getValue }: CellContext<Row, unknown>) => (
+              <div className="text-right font-medium">{fmt(getValue())}</div>
+            ),
+          },
+          {
+            accessorKey: 'totalColorPages',
+            header: 'Color',
+            cell: ({ getValue }: CellContext<Row, unknown>) => (
+              <div className="text-right font-medium">{fmt(getValue())}</div>
+            ),
+          },
+          {
+            accessorKey: 'totalBlackWhitePages',
+            header: 'BW',
+            cell: ({ getValue }: CellContext<Row, unknown>) => (
+              <div className="text-right font-medium">{fmt(getValue())}</div>
+            ),
+          },
+        ]),
+    // A4 equivalent counters
+    ...(showMode === 'standard'
+      ? []
+      : [
+          {
+            accessorKey: 'totalPageCountA4',
+            header: 'Total (A4)',
+            cell: ({ getValue }: CellContext<Row, unknown>) => (
+              <div className="text-right font-medium">{fmt(getValue())}</div>
+            ),
+          },
+          {
+            accessorKey: 'totalColorPagesA4',
+            header: 'Color (A4)',
+            cell: ({ getValue }: CellContext<Row, unknown>) => (
+              <div className="text-right font-medium">{fmt(getValue())}</div>
+            ),
+          },
+          {
+            accessorKey: 'totalBlackWhitePagesA4',
+            header: 'BW (A4)',
+            cell: ({ getValue }: CellContext<Row, unknown>) => (
+              <div className="text-right font-medium">{fmt(getValue())}</div>
+            ),
+          },
+        ]),
     {
       accessorKey: 'recordedAt',
       header: 'Recorded At',

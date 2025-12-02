@@ -24,6 +24,7 @@ export const serviceRequestsClientService = {
     sortBy?: string
     sortOrder?: 'asc' | 'desc'
     customerId?: string
+    deviceId?: string
     priority?: Priority
     status?: ServiceRequestStatus
     assignedTo?: string
@@ -39,6 +40,7 @@ export const serviceRequestsClientService = {
         ...(params?.sortBy ? { sortBy: params.sortBy } : {}),
         ...(params?.sortOrder ? { sortOrder: params.sortOrder } : {}),
         ...(params?.customerId ? { customerId: params.customerId } : {}),
+        ...(params?.deviceId ? { deviceId: params.deviceId } : {}),
         ...(params?.priority ? { priority: params.priority } : {}),
         ...(params?.status ? { status: params.status } : {}),
         ...(params?.assignedTo ? { assignedTo: params.assignedTo } : {}),

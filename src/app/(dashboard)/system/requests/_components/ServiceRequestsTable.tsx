@@ -17,6 +17,7 @@ import {
   Monitor,
   CheckCircle2,
   Calendar,
+  CalendarCheck,
   Settings,
   FileText,
 } from 'lucide-react'
@@ -35,6 +36,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { CustomerSelect } from '@/components/shared/CustomerSelect'
+import { SearchableSelect } from '@/app/(dashboard)/system/policies/_components/RuleBuilder/SearchableSelect'
 import { formatDateTime } from '@/lib/utils/formatters'
 import { serviceRequestsClientService } from '@/lib/api/services/service-requests-client.service'
 import {
@@ -63,6 +65,7 @@ type UpdateStatusPayload = {
 const statusOptions = [
   { label: 'Mở', value: ServiceRequestStatus.OPEN },
   { label: 'Đang xử lý', value: ServiceRequestStatus.IN_PROGRESS },
+  { label: 'Đã duyệt', value: ServiceRequestStatus.APPROVED },
   { label: 'Đã xử lý', value: ServiceRequestStatus.RESOLVED },
   { label: 'Đóng', value: ServiceRequestStatus.CLOSED },
 ]
@@ -97,6 +100,8 @@ export function ServiceRequestsTable() {
   const [statusFilter, setStatusFilter] = useState<ServiceRequestStatus | 'all'>('all')
   const [priorityFilter, setPriorityFilter] = useState<Priority | 'all'>('all')
   const [customerFilter, setCustomerFilter] = useState<string>('')
+  const [deviceFilter, setDeviceFilter] = useState<string>('')
+  const [assignedToFilter, setAssignedToFilter] = useState<string>('')
   const [sorting, setSorting] = useState<{ sortBy?: string; sortOrder?: 'asc' | 'desc' }>({
     sortBy: 'createdAt',
     sortOrder: 'desc',
@@ -117,6 +122,8 @@ export function ServiceRequestsTable() {
     setStatusFilter('all')
     setPriorityFilter('all')
     setCustomerFilter('')
+    setDeviceFilter('')
+    setAssignedToFilter('')
   }
 
   const activeFilters: Array<{ label: string; value: string; onRemove: () => void }> = []
@@ -150,6 +157,20 @@ export function ServiceRequestsTable() {
       label: `Khách hàng: ${customerFilter}`,
       value: customerFilter,
       onRemove: () => setCustomerFilter(''),
+    })
+  }
+  if (deviceFilter) {
+    activeFilters.push({
+      label: `Thiết bị: ${deviceFilter}`,
+      value: deviceFilter,
+      onRemove: () => setDeviceFilter(''),
+    })
+  }
+  if (assignedToFilter) {
+    activeFilters.push({
+      label: `Người phụ trách: ${assignedToFilter}`,
+      value: assignedToFilter,
+      onRemove: () => setAssignedToFilter(''),
     })
   }
 
@@ -199,7 +220,7 @@ export function ServiceRequestsTable() {
         activeFilters={activeFilters}
         columnVisibilityMenu={columnVisibilityMenu}
       >
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
           <div className="space-y-2">
             <label className="text-sm font-medium">Tìm kiếm</label>
             <Input
@@ -261,6 +282,25 @@ export function ServiceRequestsTable() {
               placeholder="Lọc theo khách hàng"
             />
           </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Thiết bị</label>
+            <Input
+              value={deviceFilter}
+              onChange={(e) => setDeviceFilter(e.target.value)}
+              placeholder="deviceId (tùy chọn)"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Người phụ trách</label>
+            <SearchableSelect
+              field="user.id"
+              operator="$eq"
+              value={assignedToFilter}
+              onChange={(v) => setAssignedToFilter(String(v ?? ''))}
+              placeholder="Lọc theo người phụ trách"
+              fetchParams={customerFilter ? { customerId: customerFilter } : undefined}
+            />
+          </div>
         </div>
       </FilterSection>
 
@@ -272,6 +312,8 @@ export function ServiceRequestsTable() {
           statusFilter={statusFilter}
           priorityFilter={priorityFilter}
           customerFilter={customerFilter}
+          deviceFilter={deviceFilter}
+          assignedToFilter={assignedToFilter}
           sorting={sorting}
           onPaginationChange={setPagination}
           onSortingChange={setSorting}
@@ -290,6 +332,8 @@ interface ServiceRequestsTableContentProps {
   statusFilter: ServiceRequestStatus | 'all'
   priorityFilter: Priority | 'all'
   customerFilter: string
+  deviceFilter: string
+  assignedToFilter: string
   sorting: { sortBy?: string; sortOrder?: 'asc' | 'desc' }
   onPaginationChange: (pagination: { pageIndex: number; pageSize: number }) => void
   onSortingChange: (sorting: { sortBy?: string; sortOrder?: 'asc' | 'desc' }) => void
@@ -310,6 +354,8 @@ function ServiceRequestsTableContent({
   statusFilter,
   priorityFilter,
   customerFilter,
+  deviceFilter,
+  assignedToFilter,
   sorting,
   onPaginationChange,
   onSortingChange,
@@ -335,10 +381,21 @@ function ServiceRequestsTableContent({
       status: statusFilter === 'all' ? undefined : statusFilter,
       priority: priorityFilter === 'all' ? undefined : priorityFilter,
       customerId: customerFilter || undefined,
+      deviceId: deviceFilter || undefined,
+      assignedTo: assignedToFilter || undefined,
       sortBy: sorting.sortBy || 'createdAt',
       sortOrder: sorting.sortOrder || 'desc',
     }),
-    [pagination, search, statusFilter, priorityFilter, customerFilter, sorting]
+    [
+      pagination,
+      search,
+      statusFilter,
+      priorityFilter,
+      customerFilter,
+      deviceFilter,
+      assignedToFilter,
+      sorting,
+    ]
   )
 
   const { data } = useServiceRequestsQuery(queryParams)
@@ -540,6 +597,25 @@ function ServiceRequestsTableContent({
           </div>
         ),
         cell: ({ row }) => renderTimestamp(row.original.respondedAt ?? undefined),
+      },
+      {
+        accessorKey: 'approvedAt',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <CalendarCheck className="h-4 w-4 text-gray-500" />
+            <span>Đã duyệt</span>
+          </div>
+        ),
+        cell: ({ row }) => (
+          <div className="text-sm">
+            <div className="font-medium">
+              {row.original.approvedByName ?? row.original.approvedBy ?? '—'}
+            </div>
+            <div className="text-muted-foreground text-xs">
+              {row.original.approvedAt ? formatDateTime(row.original.approvedAt) : '—'}
+            </div>
+          </div>
+        ),
       },
       {
         accessorKey: 'resolvedAt',

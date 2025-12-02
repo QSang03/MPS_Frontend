@@ -15,6 +15,7 @@ import {
   Monitor,
   CheckCircle2,
   Calendar,
+  CalendarCheck,
   Settings,
   Eye,
 } from 'lucide-react'
@@ -57,6 +58,7 @@ type ServiceRequestRow = ServiceRequest
 const statusOptions = [
   { label: 'Mở', value: ServiceRequestStatus.OPEN },
   { label: 'Đang xử lý', value: ServiceRequestStatus.IN_PROGRESS },
+  { label: 'Đã duyệt', value: ServiceRequestStatus.APPROVED },
   { label: 'Đã xử lý', value: ServiceRequestStatus.RESOLVED },
   { label: 'Đóng', value: ServiceRequestStatus.CLOSED },
 ]
@@ -640,6 +642,25 @@ function UserRequestsTableContent({
           </div>
         ),
         cell: ({ row }) => renderTimestamp(row.original.respondedAt ?? undefined),
+      },
+      {
+        accessorKey: 'approvedAt',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <CalendarCheck className="h-4 w-4 text-gray-600" />
+            <span>Đã duyệt</span>
+          </div>
+        ),
+        cell: ({ row }) => (
+          <div className="text-sm">
+            <div className="font-medium">
+              {row.original.approvedByName ?? row.original.approvedBy ?? '—'}
+            </div>
+            <div className="text-muted-foreground text-xs">
+              {row.original.approvedAt ? formatDateTime(row.original.approvedAt) : '—'}
+            </div>
+          </div>
+        ),
       },
       {
         accessorKey: 'resolvedAt',

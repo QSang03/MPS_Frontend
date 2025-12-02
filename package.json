@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack ",
+    "dev": "next dev --turbopack",
     "build": "next build",
-    "start": "next start ",
+    "start": "next start",
     "lint": "eslint .",
     "type-check": "tsc --noEmit",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css,md}\"",

@@ -27,6 +27,7 @@ import {
   Smartphone,
   Activity,
   CalendarDays,
+  CalendarCheck,
   Plus,
   Trash2,
   Image as ImageIcon,
@@ -78,6 +79,7 @@ type TimelineEntry = TimelineEvent & { time: string }
 const statusOptions = [
   { label: 'Mới mở', value: ServiceRequestStatus.OPEN },
   { label: 'Đang xử lý', value: ServiceRequestStatus.IN_PROGRESS },
+  { label: 'Đã duyệt', value: ServiceRequestStatus.APPROVED },
   { label: 'Đã xử lý', value: ServiceRequestStatus.RESOLVED },
   { label: 'Đã đóng', value: ServiceRequestStatus.CLOSED },
 ]
@@ -92,6 +94,7 @@ const priorityBadgeMap: Record<Priority, string> = {
 const statusBadgeMap: Record<ServiceRequestStatus, string> = {
   [ServiceRequestStatus.OPEN]: 'bg-blue-50 text-blue-700 border-blue-200',
   [ServiceRequestStatus.IN_PROGRESS]: 'bg-amber-50 text-amber-700 border-amber-200',
+  [ServiceRequestStatus.APPROVED]: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   [ServiceRequestStatus.RESOLVED]: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   [ServiceRequestStatus.CLOSED]: 'bg-slate-100 text-slate-600 border-slate-200',
 }
@@ -293,6 +296,13 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
         icon: XCircle,
         color: 'text-rose-500',
       },
+      {
+        label: 'Đã duyệt',
+        time: data.approvedAt,
+        by: data.approvedByName ?? data.approvedBy,
+        icon: CheckCircle2,
+        color: 'text-emerald-600',
+      },
     ] as TimelineEvent[]
   ).filter((event): event is TimelineEntry => Boolean(event.time))
 
@@ -329,6 +339,18 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
               <User className="h-3.5 w-3.5" />
               {data.createdByName ?? data.createdBy ?? data.customerId ?? 'Khách vãng lai'}
             </span>
+            {data.approvedAt && (
+              <>
+                <span>•</span>
+                <span className="flex items-center gap-1">
+                  <CalendarCheck className="h-3.5 w-3.5 text-emerald-600" />
+                  <span className="text-sm">
+                    {data.approvedByName ?? data.approvedBy ?? '—'} •{' '}
+                    {formatDateTime(data.approvedAt)}
+                  </span>
+                </span>
+              </>
+            )}
           </div>
         </div>
 
@@ -586,6 +608,33 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                         placeholder="Nhập ghi chú để lưu cùng cập nhật trạng thái"
                         className="mt-2 w-full rounded-md border px-3 py-2 text-sm"
                       />
+
+                      {/* Default reasons quick-picks for close/resolved actions */}
+                      {(pendingStatusChange === ServiceRequestStatus.RESOLVED ||
+                        pendingStatusChange === ServiceRequestStatus.CLOSED) && (
+                        <div className="mt-3 flex flex-wrap items-center gap-2">
+                          <span className="text-muted-foreground mr-2 text-sm">
+                            Lý do mặc định:
+                          </span>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setStatusNote('Bảo trì định kỳ')}
+                          >
+                            Bảo trì định kỳ
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setStatusNote('Bảo trì theo yêu cầu')}
+                          >
+                            Bảo trì theo yêu cầu
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => setStatusNote('')}>
+                            Xóa
+                          </Button>
+                        </div>
+                      )}
                       {pendingStatusChange === ServiceRequestStatus.RESOLVED ||
                       pendingStatusChange === ServiceRequestStatus.CLOSED ? (
                         <div className="mt-3 space-y-2">

@@ -286,11 +286,7 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
                       <td className="px-4 py-3 text-right">
                         <Button
                           size="sm"
-                          onClick={() =>
-                            router.push(
-                              `/system/device-models/${encodeURIComponent(modelId)}/devices/${d.id}`
-                            )
-                          }
+                          onClick={() => router.push(`/system/devices/${d.id}`)}
                           className="gap-2"
                           data-device-id={d.id}
                         >

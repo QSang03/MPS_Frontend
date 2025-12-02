@@ -52,6 +52,7 @@ export const STATUS_DISPLAY: Record<
 export enum ServiceRequestStatus {
   OPEN = 'OPEN',
   IN_PROGRESS = 'IN_PROGRESS',
+  APPROVED = 'APPROVED',
   RESOLVED = 'RESOLVED',
   CLOSED = 'CLOSED',
 }
@@ -84,6 +85,7 @@ export const SERVICE_REQUEST_STATUS_DISPLAY: Record<
 > = {
   [ServiceRequestStatus.OPEN]: { label: 'Mở', color: 'gray' },
   [ServiceRequestStatus.IN_PROGRESS]: { label: 'Đang xử lý', color: 'gray' },
+  [ServiceRequestStatus.APPROVED]: { label: 'Đã duyệt', color: 'green' },
   [ServiceRequestStatus.RESOLVED]: { label: 'Đã xử lý', color: 'green' },
   [ServiceRequestStatus.CLOSED]: { label: 'Đóng', color: 'gray' },
 }

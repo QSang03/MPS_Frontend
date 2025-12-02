@@ -622,20 +622,44 @@ export default function DeviceDetailClient({ deviceId, backHref }: Props) {
                           <th className="px-4 py-3 text-left text-xs font-semibold">Tên model</th>
                           <th className="px-4 py-3 text-left text-xs font-semibold">Số serial</th>
                           <th className="px-4 py-3 text-left text-xs font-semibold">Mã phần</th>
-                          <th className="px-4 py-3 text-right text-xs font-semibold">
-                            Trang đen trắng
-                          </th>
-                          <th className="px-4 py-3 text-right text-xs font-semibold">Trang màu</th>
-                          <th className="px-4 py-3 text-right text-xs font-semibold">Tổng trang</th>
-                          <th className="px-4 py-3 text-right text-xs font-semibold">
-                            Trang đen trắng A4
-                          </th>
-                          <th className="px-4 py-3 text-right text-xs font-semibold">
-                            Trang màu A4
-                          </th>
-                          <th className="px-4 py-3 text-right text-xs font-semibold">
-                            Tổng trang A4
-                          </th>
+                          {(() => {
+                            const showMode =
+                              typeof device?.deviceModel?.useA4Counter === 'boolean'
+                                ? device.deviceModel.useA4Counter
+                                  ? 'a4'
+                                  : 'standard'
+                                : 'both'
+                            return (
+                              <>
+                                {showMode !== 'a4' && (
+                                  <>
+                                    <th className="px-4 py-3 text-right text-xs font-semibold">
+                                      Trang đen trắng
+                                    </th>
+                                    <th className="px-4 py-3 text-right text-xs font-semibold">
+                                      Trang màu
+                                    </th>
+                                    <th className="px-4 py-3 text-right text-xs font-semibold">
+                                      Tổng trang
+                                    </th>
+                                  </>
+                                )}
+                                {showMode !== 'standard' && (
+                                  <>
+                                    <th className="px-4 py-3 text-right text-xs font-semibold">
+                                      Trang đen trắng A4
+                                    </th>
+                                    <th className="px-4 py-3 text-right text-xs font-semibold">
+                                      Trang màu A4
+                                    </th>
+                                    <th className="px-4 py-3 text-right text-xs font-semibold">
+                                      Tổng trang A4
+                                    </th>
+                                  </>
+                                )}
+                              </>
+                            )
+                          })()}
                         </tr>
                       </thead>
                       <tbody className="divide-y">
@@ -645,6 +669,179 @@ export default function DeviceDetailClient({ deviceId, backHref }: Props) {
                           .map((item, idx) => {
                             const [year, month] = item.month.split('-')
                             const monthDisplay = `Tháng ${month}/${year}`
+
+                            const showMode =
+                              typeof device?.deviceModel?.useA4Counter === 'boolean'
+                                ? device.deviceModel.useA4Counter
+                                  ? 'a4'
+                                  : 'standard'
+                                : 'both'
+
+                            const stdCells: React.ReactNode[] = [
+                              <td key="bw" className="px-4 py-3 text-right text-sm">
+                                {(() => {
+                                  const hasUsageData =
+                                    item &&
+                                    ((item.bwPages !== null && item.bwPages !== undefined) ||
+                                      (item.colorPages !== null && item.colorPages !== undefined) ||
+                                      (item.totalPages !== null && item.totalPages !== undefined))
+                                  const formatted = formatPageCount(item.bwPages, hasUsageData)
+                                  return formatted.tooltip ? (
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <span>{formatted.display}</span>
+                                      </TooltipTrigger>
+                                      <TooltipContent sideOffset={4}>
+                                        {formatted.tooltip}
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  ) : (
+                                    <span>{formatted.display}</span>
+                                  )
+                                })()}
+                              </td>,
+                              <td key="color" className="px-4 py-3 text-right text-sm">
+                                {(() => {
+                                  const hasUsageData =
+                                    item &&
+                                    ((item.bwPages !== null && item.bwPages !== undefined) ||
+                                      (item.colorPages !== null && item.colorPages !== undefined) ||
+                                      (item.totalPages !== null && item.totalPages !== undefined))
+                                  const formatted = formatPageCount(item.colorPages, hasUsageData)
+                                  return formatted.tooltip ? (
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <span>{formatted.display}</span>
+                                      </TooltipTrigger>
+                                      <TooltipContent sideOffset={4}>
+                                        {formatted.tooltip}
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  ) : (
+                                    <span>{formatted.display}</span>
+                                  )
+                                })()}
+                              </td>,
+                              <td
+                                key="total"
+                                className="px-4 py-3 text-right text-sm font-semibold"
+                              >
+                                {(() => {
+                                  const hasUsageData =
+                                    item &&
+                                    ((item.bwPages !== null && item.bwPages !== undefined) ||
+                                      (item.colorPages !== null && item.colorPages !== undefined) ||
+                                      (item.totalPages !== null && item.totalPages !== undefined))
+                                  const formatted = formatPageCount(item.totalPages, hasUsageData)
+                                  return formatted.tooltip ? (
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <span>{formatted.display}</span>
+                                      </TooltipTrigger>
+                                      <TooltipContent sideOffset={4}>
+                                        {formatted.tooltip}
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  ) : (
+                                    <span>{formatted.display}</span>
+                                  )
+                                })()}
+                              </td>,
+                            ]
+
+                            const a4Cells: React.ReactNode[] = [
+                              <td key="bwA4" className="px-4 py-3 text-right text-sm text-blue-600">
+                                {(() => {
+                                  const hasUsageData =
+                                    item &&
+                                    ((item.bwPagesA4 !== null && item.bwPagesA4 !== undefined) ||
+                                      (item.colorPagesA4 !== null &&
+                                        item.colorPagesA4 !== undefined) ||
+                                      (item.totalPagesA4 !== null &&
+                                        item.totalPagesA4 !== undefined) ||
+                                      (item.bwPages !== null && item.bwPages !== undefined) ||
+                                      (item.colorPages !== null && item.colorPages !== undefined) ||
+                                      (item.totalPages !== null && item.totalPages !== undefined))
+                                  const formatted = formatPageCount(item.bwPagesA4, hasUsageData)
+                                  return formatted.tooltip ? (
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <span>{formatted.display}</span>
+                                      </TooltipTrigger>
+                                      <TooltipContent sideOffset={4}>
+                                        {formatted.tooltip}
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  ) : (
+                                    <span>{formatted.display}</span>
+                                  )
+                                })()}
+                              </td>,
+                              <td
+                                key="colorA4"
+                                className="px-4 py-3 text-right text-sm text-blue-600"
+                              >
+                                {(() => {
+                                  const hasUsageData =
+                                    item &&
+                                    ((item.bwPagesA4 !== null && item.bwPagesA4 !== undefined) ||
+                                      (item.colorPagesA4 !== null &&
+                                        item.colorPagesA4 !== undefined) ||
+                                      (item.totalPagesA4 !== null &&
+                                        item.totalPagesA4 !== undefined) ||
+                                      (item.bwPages !== null && item.bwPages !== undefined) ||
+                                      (item.colorPages !== null && item.colorPages !== undefined) ||
+                                      (item.totalPages !== null && item.totalPages !== undefined))
+                                  const formatted = formatPageCount(item.colorPagesA4, hasUsageData)
+                                  return formatted.tooltip ? (
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <span>{formatted.display}</span>
+                                      </TooltipTrigger>
+                                      <TooltipContent sideOffset={4}>
+                                        {formatted.tooltip}
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  ) : (
+                                    <span>{formatted.display}</span>
+                                  )
+                                })()}
+                              </td>,
+                              <td
+                                key="totalA4"
+                                className="px-4 py-3 text-right text-sm font-semibold text-blue-600"
+                              >
+                                {(() => {
+                                  const hasUsageData =
+                                    item &&
+                                    ((item.bwPagesA4 !== null && item.bwPagesA4 !== undefined) ||
+                                      (item.colorPagesA4 !== null &&
+                                        item.colorPagesA4 !== undefined) ||
+                                      (item.totalPagesA4 !== null &&
+                                        item.totalPagesA4 !== undefined) ||
+                                      (item.bwPages !== null && item.bwPages !== undefined) ||
+                                      (item.colorPages !== null && item.colorPages !== undefined) ||
+                                      (item.totalPages !== null && item.totalPages !== undefined))
+                                  const formatted = formatPageCount(item.totalPagesA4, hasUsageData)
+                                  return formatted.tooltip ? (
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <span>{formatted.display}</span>
+                                      </TooltipTrigger>
+                                      <TooltipContent sideOffset={4}>
+                                        {formatted.tooltip}
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  ) : (
+                                    <span>{formatted.display}</span>
+                                  )
+                                })()}
+                              </td>,
+                            ]
+
+                            const cells: React.ReactNode[] = []
+                            if (showMode !== 'a4') cells.push(...stdCells)
+                            if (showMode !== 'standard') cells.push(...a4Cells)
 
                             return (
                               <tr
@@ -657,165 +854,7 @@ export default function DeviceDetailClient({ deviceId, backHref }: Props) {
                                   {item.serialNumber || '-'}
                                 </td>
                                 <td className="px-4 py-3 text-sm">{item.partNumber || '-'}</td>
-                                <td className="px-4 py-3 text-right text-sm">
-                                  {(() => {
-                                    const hasUsageData =
-                                      item &&
-                                      ((item.bwPages !== null && item.bwPages !== undefined) ||
-                                        (item.colorPages !== null &&
-                                          item.colorPages !== undefined) ||
-                                        (item.totalPages !== null && item.totalPages !== undefined))
-                                    const formatted = formatPageCount(item.bwPages, hasUsageData)
-                                    return formatted.tooltip ? (
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <span>{formatted.display}</span>
-                                        </TooltipTrigger>
-                                        <TooltipContent sideOffset={4}>
-                                          {formatted.tooltip}
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    ) : (
-                                      <span>{formatted.display}</span>
-                                    )
-                                  })()}
-                                </td>
-                                <td className="px-4 py-3 text-right text-sm">
-                                  {(() => {
-                                    const hasUsageData =
-                                      item &&
-                                      ((item.bwPages !== null && item.bwPages !== undefined) ||
-                                        (item.colorPages !== null &&
-                                          item.colorPages !== undefined) ||
-                                        (item.totalPages !== null && item.totalPages !== undefined))
-                                    const formatted = formatPageCount(item.colorPages, hasUsageData)
-                                    return formatted.tooltip ? (
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <span>{formatted.display}</span>
-                                        </TooltipTrigger>
-                                        <TooltipContent sideOffset={4}>
-                                          {formatted.tooltip}
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    ) : (
-                                      <span>{formatted.display}</span>
-                                    )
-                                  })()}
-                                </td>
-                                <td className="px-4 py-3 text-right text-sm font-semibold">
-                                  {(() => {
-                                    const hasUsageData =
-                                      item &&
-                                      ((item.bwPages !== null && item.bwPages !== undefined) ||
-                                        (item.colorPages !== null &&
-                                          item.colorPages !== undefined) ||
-                                        (item.totalPages !== null && item.totalPages !== undefined))
-                                    const formatted = formatPageCount(item.totalPages, hasUsageData)
-                                    return formatted.tooltip ? (
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <span>{formatted.display}</span>
-                                        </TooltipTrigger>
-                                        <TooltipContent sideOffset={4}>
-                                          {formatted.tooltip}
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    ) : (
-                                      <span>{formatted.display}</span>
-                                    )
-                                  })()}
-                                </td>
-                                <td className="px-4 py-3 text-right text-sm text-blue-600">
-                                  {(() => {
-                                    const hasUsageData =
-                                      item &&
-                                      ((item.bwPagesA4 !== null && item.bwPagesA4 !== undefined) ||
-                                        (item.colorPagesA4 !== null &&
-                                          item.colorPagesA4 !== undefined) ||
-                                        (item.totalPagesA4 !== null &&
-                                          item.totalPagesA4 !== undefined) ||
-                                        (item.bwPages !== null && item.bwPages !== undefined) ||
-                                        (item.colorPages !== null &&
-                                          item.colorPages !== undefined) ||
-                                        (item.totalPages !== null && item.totalPages !== undefined))
-                                    const formatted = formatPageCount(item.bwPagesA4, hasUsageData)
-                                    return formatted.tooltip ? (
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <span>{formatted.display}</span>
-                                        </TooltipTrigger>
-                                        <TooltipContent sideOffset={4}>
-                                          {formatted.tooltip}
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    ) : (
-                                      <span>{formatted.display}</span>
-                                    )
-                                  })()}
-                                </td>
-                                <td className="px-4 py-3 text-right text-sm text-blue-600">
-                                  {(() => {
-                                    const hasUsageData =
-                                      item &&
-                                      ((item.bwPagesA4 !== null && item.bwPagesA4 !== undefined) ||
-                                        (item.colorPagesA4 !== null &&
-                                          item.colorPagesA4 !== undefined) ||
-                                        (item.totalPagesA4 !== null &&
-                                          item.totalPagesA4 !== undefined) ||
-                                        (item.bwPages !== null && item.bwPages !== undefined) ||
-                                        (item.colorPages !== null &&
-                                          item.colorPages !== undefined) ||
-                                        (item.totalPages !== null && item.totalPages !== undefined))
-                                    const formatted = formatPageCount(
-                                      item.colorPagesA4,
-                                      hasUsageData
-                                    )
-                                    return formatted.tooltip ? (
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <span>{formatted.display}</span>
-                                        </TooltipTrigger>
-                                        <TooltipContent sideOffset={4}>
-                                          {formatted.tooltip}
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    ) : (
-                                      <span>{formatted.display}</span>
-                                    )
-                                  })()}
-                                </td>
-                                <td className="px-4 py-3 text-right text-sm font-semibold text-blue-600">
-                                  {(() => {
-                                    const hasUsageData =
-                                      item &&
-                                      ((item.bwPagesA4 !== null && item.bwPagesA4 !== undefined) ||
-                                        (item.colorPagesA4 !== null &&
-                                          item.colorPagesA4 !== undefined) ||
-                                        (item.totalPagesA4 !== null &&
-                                          item.totalPagesA4 !== undefined) ||
-                                        (item.bwPages !== null && item.bwPages !== undefined) ||
-                                        (item.colorPages !== null &&
-                                          item.colorPages !== undefined) ||
-                                        (item.totalPages !== null && item.totalPages !== undefined))
-                                    const formatted = formatPageCount(
-                                      item.totalPagesA4,
-                                      hasUsageData
-                                    )
-                                    return formatted.tooltip ? (
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <span>{formatted.display}</span>
-                                        </TooltipTrigger>
-                                        <TooltipContent sideOffset={4}>
-                                          {formatted.tooltip}
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    ) : (
-                                      <span>{formatted.display}</span>
-                                    )
-                                  })()}
-                                </td>
+                                {cells}
                               </tr>
                             )
                           })}

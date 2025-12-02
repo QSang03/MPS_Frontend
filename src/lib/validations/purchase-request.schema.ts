@@ -28,6 +28,7 @@ export type PurchaseRequestFormData = z.infer<typeof purchaseRequestSchema>
 export const updatePurchaseRequestSchema = z.object({
   status: z.nativeEnum(PurchaseRequestStatus),
   approvedBy: z.string().optional(),
+  approvedByName: z.string().optional(),
   approvedAt: z.string().optional(),
   notes: z.string().max(1000, 'Ghi chú không được quá 1000 ký tự').optional(),
 })

@@ -6,18 +6,40 @@ import { API_ENDPOINTS } from '@/lib/api/endpoints'
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
+    if (!id) {
+      return NextResponse.json(
+        { statusCode: 400, message: 'template id is required', error: 'BAD_REQUEST' },
+        { status: 400 }
+      )
+    }
     const cookieStore = await cookies()
     const accessToken = cookieStore.get('access_token')?.value
 
     if (!accessToken) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const response = await backendApiClient.post(
-      API_ENDPOINTS.SLA_TEMPLATES.APPLY(id),
-      {},
-      {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      }
-    )
+    // Forward POST body to backend. Expecting { customerId: string, skipExisting?: boolean }
+    let body: unknown = {}
+    try {
+      body = await request.json()
+    } catch {
+      body = {}
+    }
+
+    // Validate required field before contacting backend to avoid server-side errors
+    if (!body || typeof body !== 'object' || !(body as Record<string, unknown>)['customerId']) {
+      return NextResponse.json(
+        {
+          statusCode: 400,
+          message: 'customerId is required in request body',
+          error: 'BAD_REQUEST',
+        },
+        { status: 400 }
+      )
+    }
+
+    const response = await backendApiClient.post(API_ENDPOINTS.SLA_TEMPLATES.APPLY(id), body, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
 
     return NextResponse.json(response.data)
   } catch (error: unknown) {

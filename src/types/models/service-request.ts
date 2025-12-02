@@ -26,6 +26,9 @@ export interface ServiceRequest {
   respondedAt?: string
   respondedBy?: string
   respondedByName?: string
+  approvedAt?: string
+  approvedBy?: string
+  approvedByName?: string
   resolvedAt?: string
   resolvedBy?: string
   resolvedByName?: string

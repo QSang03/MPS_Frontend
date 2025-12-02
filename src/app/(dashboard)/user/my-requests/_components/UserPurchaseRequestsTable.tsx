@@ -77,7 +77,11 @@ const buildTimelineSteps = (request: PurchaseRequestRow): TimelineStep[] =>
   (
     [
       { label: 'Tạo yêu cầu', time: request.createdAt, by: request.requestedBy },
-      { label: 'Đã duyệt', time: request.approvedAt, by: request.approvedBy },
+      {
+        label: 'Đã duyệt',
+        time: request.approvedAt,
+        by: request.approvedByName ?? request.approvedBy,
+      },
       { label: 'Đặt hàng', time: request.orderedAt, by: request.orderedBy },
       { label: 'Đã nhận', time: request.receivedAt, by: request.receivedBy },
       { label: 'Hủy', time: request.cancelledAt, by: request.cancelledBy },
