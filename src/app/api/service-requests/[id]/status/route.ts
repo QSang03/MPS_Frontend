@@ -15,11 +15,34 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     const body = await request.json()
 
-    const response = await backendApiClient.patch(API_ENDPOINTS.SERVICE_REQUESTS.STATUS(id), body, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    })
+    // Defensive: some UI flows open a modal after selecting a new status
+    // and (by mistake) may send a payload without the `status` field.
+    // Infer status from other fields when possible so backend receives
+    // a canonical update payload.
+    const normalizedBody = { ...(body ?? {}) } as Record<string, unknown>
+    if (!('status' in normalizedBody) || normalizedBody.status == null) {
+      // If the client indicates a customer-initiated close or provides a close reason/closedAt,
+      // treat it as CLOSED. If resolvedAt is present, treat it as RESOLVED.
+      if (
+        normalizedBody.customerInitiatedClose === true ||
+        typeof normalizedBody.customerCloseReason === 'string' ||
+        typeof normalizedBody.closedAt === 'string'
+      ) {
+        normalizedBody.status = 'CLOSED'
+      } else if (typeof normalizedBody.resolvedAt === 'string') {
+        normalizedBody.status = 'RESOLVED'
+      }
+    }
+
+    const response = await backendApiClient.patch(
+      API_ENDPOINTS.SERVICE_REQUESTS.STATUS(id),
+      normalizedBody,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    )
 
     return NextResponse.json(response.data)
   } catch (error: unknown) {

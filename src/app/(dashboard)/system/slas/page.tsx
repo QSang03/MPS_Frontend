@@ -18,7 +18,7 @@ export default async function SlasPage() {
   }
 
   return (
-    <SystemPageLayout>
+    <SystemPageLayout fullWidth>
       <Suspense>
         <SlasClient session={session} />
       </Suspense>

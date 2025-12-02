@@ -12,7 +12,7 @@ import ConsumableTypeFormModal from './_components/ConsumableTypeFormModal'
 
 export default function ConsumableTypesPage() {
   return (
-    <SystemPageLayout>
+    <SystemPageLayout fullWidth>
       <SystemPageHeader
         title="Loại Vật Tư Tiêu Hao"
         subtitle="Quản lý các loại vật tư tiêu hao cho thiết bị"

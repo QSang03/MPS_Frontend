@@ -18,6 +18,8 @@ export async function GET(request: NextRequest) {
     const limit = searchParams.get('limit')
     const search = searchParams.get('search')
     const isActiveParam = searchParams.get('isActive')
+    const sortBy = searchParams.get('sortBy')
+    const sortOrder = searchParams.get('sortOrder')
 
     const params: any = {}
     if (page) params.page = page
@@ -27,6 +29,8 @@ export async function GET(request: NextRequest) {
       // Convert string 'true'/'false' to boolean
       params.isActive = isActiveParam === 'true'
     }
+    if (sortBy) params.sortBy = sortBy
+    if (sortOrder) params.sortOrder = sortOrder
 
     const response = await backendApiClient.get(API_ENDPOINTS.CONSUMABLE_TYPES.LIST, {
       headers: {
@@ -63,6 +67,8 @@ export async function GET(request: NextRequest) {
             const limit = searchParams.get('limit')
             const search = searchParams.get('search')
             const isActiveParam = searchParams.get('isActive')
+            const sortBy = searchParams.get('sortBy')
+            const sortOrder = searchParams.get('sortOrder')
 
             const params: any = {}
             if (page) params.page = page
@@ -72,6 +78,8 @@ export async function GET(request: NextRequest) {
               // Convert string 'true'/'false' to boolean
               params.isActive = isActiveParam === 'true'
             }
+            if (sortBy) params.sortBy = sortBy
+            if (sortOrder) params.sortOrder = sortOrder
 
             const retryResponse = await backendApiClient.get(API_ENDPOINTS.CONSUMABLE_TYPES.LIST, {
               headers: {

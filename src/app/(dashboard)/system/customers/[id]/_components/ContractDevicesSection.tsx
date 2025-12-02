@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { contractsClientService } from '@/lib/api/services/contracts-client.service'
@@ -42,6 +43,7 @@ export default function ContractDevicesSection({
 
   const devices: ContractDevice[] = attachedDevices ?? listResp?.data ?? []
 
+  // Declare mutation hooks unconditionally (hooks must run in same order)
   const detachMutation = useMutation({
     mutationFn: (deviceIds: string[]) =>
       contractsClientService.detachDevices(contractId as string, { deviceIds }),
@@ -55,6 +57,24 @@ export default function ContractDevicesSection({
       toast.error('Gỡ thiết bị thất bại')
     },
   })
+
+  if (!canManage) {
+    return (
+      <div className="rounded-xl border-2 border-dashed border-indigo-200 bg-gradient-to-br from-indigo-50/60 via-blue-50/40 to-white p-8 shadow-sm">
+        <div className="flex flex-col items-center gap-3 text-center">
+          <div className="rounded-full bg-indigo-100 p-3">
+            <Plug2 className="h-6 w-6 text-indigo-600" />
+          </div>
+          <p className="text-base font-medium text-indigo-700">
+            Lưu hợp đồng trước khi quản lý thiết bị
+          </p>
+          <p className="text-sm text-indigo-500">
+            Bạn cần lưu thông tin hợp đồng trước để có thể thêm và quản lý thiết bị
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => (prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]))
@@ -81,25 +101,7 @@ export default function ContractDevicesSection({
     if (typeof onRequestOpenAttach === 'function') onRequestOpenAttach()
   }
 
-  if (!canManage) {
-    return (
-      <div className="rounded-xl border-2 border-dashed border-indigo-200 bg-gradient-to-br from-indigo-50/60 via-blue-50/40 to-white p-8 shadow-sm">
-        <div className="flex flex-col items-center gap-3 text-center">
-          <div className="rounded-full bg-indigo-100 p-3">
-            <Plug2 className="h-6 w-6 text-indigo-600" />
-          </div>
-          <p className="text-base font-medium text-indigo-700">
-            Lưu hợp đồng trước khi quản lý thiết bị
-          </p>
-          <p className="text-sm text-indigo-500">
-            Bạn cần lưu thông tin hợp đồng trước để có thể thêm và quản lý thiết bị
-          </p>
-        </div>
-      </div>
-    )
-  }
-
-  const formatPrice = (value?: number | null) => {
+  const formatPrice = (value?: number | string | null) => {
     if (value === undefined || value === null) return '—'
     if (typeof value === 'number') {
       return new Intl.NumberFormat('vi-VN').format(value)
@@ -249,7 +251,16 @@ export default function ContractDevicesSection({
                     </td>
                     <td className="px-4 py-3">
                       <span className="text-sm font-medium text-gray-900">
-                        {d.device?.deviceModel?.name ?? d.device?.model ?? '—'}
+                        {d.device?.id ? (
+                          <Link
+                            href={`/system/devices/${d.device.id}`}
+                            className="text-sky-600 hover:underline"
+                          >
+                            {d.device?.deviceModel?.name ?? d.device?.model ?? '—'}
+                          </Link>
+                        ) : (
+                          (d.device?.deviceModel?.name ?? d.device?.model ?? '—')
+                        )}
                       </span>
                     </td>
                     <td className="px-4 py-3">

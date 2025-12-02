@@ -1,4 +1,5 @@
 import DashboardPageClient from './_components/DashboardPageClient'
+import { UserPageLayout } from '@/components/user/UserPageLayout'
 
 export const metadata = {
   title: 'Tổng quan',
@@ -6,8 +7,8 @@ export const metadata = {
 
 export default function UserDashboardPage() {
   return (
-    <div className="p-4">
+    <UserPageLayout>
       <DashboardPageClient />
-    </div>
+    </UserPageLayout>
   )
 }

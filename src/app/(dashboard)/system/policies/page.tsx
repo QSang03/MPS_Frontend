@@ -30,7 +30,7 @@ export default function PoliciesPage() {
   }
 
   return (
-    <SystemPageLayout>
+    <SystemPageLayout fullWidth>
       <SystemPageHeader
         title="Quản lý Policy"
         subtitle="Tạo và quản lý các policy hệ thống"

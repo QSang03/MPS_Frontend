@@ -897,6 +897,11 @@ function DevicesTableContent({
 
       <A4EquivalentHistoryModal
         deviceId={a4HistoryDevice?.id}
+        showA4={(() => {
+          const raw = a4HistoryDevice?.deviceModel?.useA4Counter as unknown
+          if (typeof raw === 'undefined') return 'auto'
+          return raw === true || raw === 'true' || raw === 1 || raw === '1'
+        })()}
         open={a4HistoryOpen}
         onOpenChange={(v) => {
           setA4HistoryOpen(v)

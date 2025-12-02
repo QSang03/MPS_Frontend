@@ -31,6 +31,10 @@ export default function SlaTemplatesClient({ session }: { session?: Session | nu
   const queryClient = useQueryClient()
 
   const [search, setSearch] = useState('')
+  const [sorting, setSorting] = useState<{ sortBy?: string; sortOrder?: 'asc' | 'desc' }>({
+    sortBy: 'createdAt',
+    sortOrder: 'desc',
+  })
   const [page, setPage] = useState(1)
   const [limit, setLimit] = useState(20)
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -44,9 +48,18 @@ export default function SlaTemplatesClient({ session }: { session?: Session | nu
   const { canCreate, canUpdate, canDelete, can: canAction } = useActionPermission('sla-templates')
 
   const { data, isLoading } = useQuery({
-    queryKey: ['sla-templates', { page, limit, search }],
+    queryKey: [
+      'sla-templates',
+      { page, limit, search, sortBy: sorting.sortBy, sortOrder: sorting.sortOrder },
+    ],
     queryFn: async () => {
-      const res = await slaTemplatesClientService.getAll({ page, limit, search })
+      const res = await slaTemplatesClientService.getAll({
+        page,
+        limit,
+        search,
+        sortBy: sorting.sortBy,
+        sortOrder: sorting.sortOrder,
+      })
       return res
     },
   })
@@ -282,6 +295,8 @@ export default function SlaTemplatesClient({ session }: { session?: Session | nu
               pageIndex={page - 1}
               pageSize={limit}
               totalCount={data?.pagination?.total}
+              sorting={sorting}
+              onSortingChange={(next) => setSorting(next)}
               onPaginationChange={({ pageIndex, pageSize }) => {
                 setPage(pageIndex + 1)
                 setLimit(pageSize)

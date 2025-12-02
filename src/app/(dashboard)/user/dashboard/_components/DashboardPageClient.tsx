@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { SystemPageHeader } from '@/components/system/SystemPageHeader'
-import { SystemPageLayout } from '@/components/system/SystemPageLayout'
+import { UserPageLayout } from '@/components/user/UserPageLayout'
 import { LoadingState } from '@/components/ui/LoadingState'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -222,7 +222,7 @@ export default function DashboardPageClient({ month }: { month?: string }) {
   const subtitleText = `${displayName ?? ''}${roleName ? ` • ${roleName}` : ''}`.trim()
 
   return (
-    <SystemPageLayout>
+    <UserPageLayout>
       {/* Hero Section */}
       <SystemPageHeader
         title="Tổng quan"
@@ -667,6 +667,6 @@ export default function DashboardPageClient({ month }: { month?: string }) {
           )}
         </CardContent>
       </Card>
-    </SystemPageLayout>
+    </UserPageLayout>
   )
 }

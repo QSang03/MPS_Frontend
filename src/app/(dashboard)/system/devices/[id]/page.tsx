@@ -1,4 +1,5 @@
 import { DeviceDetailClient } from '@/app/(dashboard)/system/device-models/[modelId]/devices/[id]/_components/DeviceDetailClient'
+import { QueryProvider } from '@/components/providers/QueryProvider'
 import { devicesClientService } from '@/lib/api/services/devices-client.service'
 
 interface Props {
@@ -34,5 +35,28 @@ export default async function DevicePage({ params }: Props) {
     modelId = undefined
   }
 
-  return <DeviceDetailClient deviceId={id} modelId={modelId} backHref="/system/devices" />
+  // Determine showA4 server-side based on device model flag if possible, otherwise default to 'auto'
+  let showA4: boolean | 'auto' = 'auto'
+  try {
+    const device = await devicesClientService.getById(id)
+    const raw = device?.deviceModel?.useA4Counter
+    if (typeof raw === 'boolean') {
+      showA4 = raw
+    } else if (typeof raw === 'string') {
+      showA4 = raw === 'true' || raw === '1'
+    }
+  } catch {
+    // ignore; fallback to auto
+  }
+
+  return (
+    <QueryProvider>
+      <DeviceDetailClient
+        deviceId={id}
+        modelId={modelId}
+        backHref="/system/devices"
+        showA4={showA4}
+      />
+    </QueryProvider>
+  )
 }

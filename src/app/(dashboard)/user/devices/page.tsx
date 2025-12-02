@@ -1,4 +1,5 @@
 import DevicesPageClient from './_components/DevicesPageClient'
+import { UserPageLayout } from '@/components/user/UserPageLayout'
 
 export const metadata = {
   title: 'Thiết bị của tôi',
@@ -6,8 +7,10 @@ export const metadata = {
 
 export default function DevicesPage() {
   return (
-    <div className="p-4">
-      <DevicesPageClient />
-    </div>
+    <UserPageLayout>
+      <div className="p-4">
+        <DevicesPageClient />
+      </div>
+    </UserPageLayout>
   )
 }

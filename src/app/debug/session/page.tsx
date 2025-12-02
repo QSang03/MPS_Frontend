@@ -27,7 +27,7 @@ export default function DebugSessionPage() {
   }, [])
 
   return (
-    <div className="container mx-auto p-8">
+    <div className="w-full p-8">
       <Card>
         <CardHeader>
           <CardTitle>Session Debug</CardTitle>

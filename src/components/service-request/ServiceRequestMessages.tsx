@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
-import { formatRelativeTime } from '@/lib/utils/formatters'
+import { formatDateTime } from '@/lib/utils/formatters'
 import { serviceRequestsClientService } from '@/lib/api/services/service-requests-client.service'
 import type { ServiceRequestMessage } from '@/types/models'
 import { toast } from 'sonner'
@@ -70,7 +70,11 @@ export default function ServiceRequestMessages({ serviceRequestId, currentUserId
     }
   }
 
-  const messages = data?.data || []
+  const messages = (data?.data || []).slice().sort((a, b) => {
+    const ta = a?.createdAt ? new Date(a.createdAt).getTime() : 0
+    const tb = b?.createdAt ? new Date(b.createdAt).getTime() : 0
+    return ta - tb
+  })
 
   return (
     <div className="relative flex h-full flex-col bg-slate-50/30 dark:bg-slate-900/10">
@@ -119,7 +123,7 @@ export default function ServiceRequestMessages({ serviceRequestId, currentUserId
                       {isMe ? 'Bạn' : m.authorName}
                     </span>
                     <span className="text-muted-foreground text-[10px]">
-                      {formatRelativeTime(m.createdAt)}
+                      {formatDateTime(m.createdAt)}
                     </span>
                   </div>
 

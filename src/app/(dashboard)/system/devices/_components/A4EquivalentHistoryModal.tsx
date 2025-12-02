@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { format } from 'date-fns'
+import getShowModeFromDeviceAndItems from '@/lib/utils/detect-a4'
 import { vi } from 'date-fns/locale'
 import { toast } from 'sonner'
 import { reportsClientService } from '@/lib/api/services/reports-client.service'
@@ -109,55 +110,31 @@ export function A4EquivalentUsageHistory({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deviceId, customerId, page, limit, sorting])
 
-  // Decide whether to show only A4, only non-A4, or both. Priority:
-  // 1) Explicit `showA4` prop (true -> A4 only, false -> standard only)
-  // 2) If deviceId provided, fetch device to read deviceModel.useA4Counter
-  // 3) Auto-detect based on items (if all rows only have A4 or non-A4 values -> show accordingly)
-  const [showMode, setShowMode] = useState<'both' | 'standard' | 'a4'>('both')
+  // Decide whether to show only A4, only non-A4, or both.
+  // We centralize logic by fetching device model flag (if needed) and then running
+  // `getShowModeFromDeviceAndItems` to compute the mode.
+  const [deviceModelFlag, setDeviceModelFlag] = useState<unknown | undefined>(undefined)
 
   useEffect(() => {
     let isMounted = true
     ;(async () => {
-      if (showA4 === true) {
-        if (isMounted) setShowMode('a4')
-        return
-      }
-      if (showA4 === false) {
-        if (isMounted) setShowMode('standard')
-        return
-      }
-
-      // If we have a deviceId, try to fetch device to know counter type
-      if (deviceId) {
-        try {
-          const { devicesClientService } = await import('@/lib/api/services/devices-client.service')
-          const device = await devicesClientService.getById(deviceId)
-          if (!isMounted) return
-          const modelUseA4 = Boolean(device?.deviceModel?.useA4Counter)
-          setShowMode(modelUseA4 ? 'a4' : 'standard')
-          return
-        } catch (err) {
-          console.debug('Unable to fetch device to determine counter type', err)
+      if (showA4 === 'auto' || typeof showA4 === 'undefined') {
+        if (deviceId) {
+          try {
+            const { devicesClientService } = await import(
+              '@/lib/api/services/devices-client.service'
+            )
+            const device = await devicesClientService.getById(deviceId)
+            if (!isMounted) return
+            const raw = device?.deviceModel?.useA4Counter as unknown
+            if (typeof raw !== 'undefined') setDeviceModelFlag(raw)
+          } catch (err) {
+            console.debug('Unable to fetch device to determine counter type', err)
+          }
         }
-      }
-
-      // fallback: auto-detect from items
-      const hasStandard = items.some(
-        (r) =>
-          r.totalPageCount != null || r.totalColorPages != null || r.totalBlackWhitePages != null
-      )
-      const hasA4 = items.some(
-        (r) =>
-          r.totalPageCountA4 != null ||
-          r.totalColorPagesA4 != null ||
-          r.totalBlackWhitePagesA4 != null
-      )
-      if (hasA4 && !hasStandard) {
-        setShowMode('a4')
-      } else if (!hasA4 && hasStandard) {
-        setShowMode('standard')
       } else {
-        setShowMode('both')
+        // showA4 explicitly true/false, treat it as model flag for downstream logic
+        setDeviceModelFlag(showA4 === true)
       }
     })()
     return () => {
@@ -166,6 +143,8 @@ export function A4EquivalentUsageHistory({
   }, [deviceId, customerId, showA4, items])
 
   // Table columns
+  const computedShowMode = getShowModeFromDeviceAndItems(showA4, deviceModelFlag, items)
+
   const columns: ColumnDef<Row>[] = [
     {
       accessorKey: 'snapshotId',
@@ -182,7 +161,7 @@ export function A4EquivalentUsageHistory({
       cell: (ctx) => <span className="font-mono text-xs">{shortId(ctx.getValue() as string)}</span>,
     },
     // Standard counters (non-A4)
-    ...(showMode === 'a4'
+    ...(computedShowMode === 'a4'
       ? []
       : [
           {
@@ -208,7 +187,7 @@ export function A4EquivalentUsageHistory({
           },
         ]),
     // A4 equivalent counters
-    ...(showMode === 'standard'
+    ...(computedShowMode === 'standard'
       ? []
       : [
           {
@@ -398,12 +377,14 @@ export default function A4EquivalentHistoryModal({
   deviceId,
   customerId,
   title,
+  showA4,
 }: {
   open: boolean
   onOpenChange: (v: boolean) => void
   deviceId?: string
   customerId?: string
   title?: string
+  showA4?: boolean | 'auto'
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -421,7 +402,7 @@ export default function A4EquivalentHistoryModal({
         }
         maxWidth="!max-w-[80vw]"
       >
-        <A4EquivalentUsageHistory deviceId={deviceId} customerId={customerId} />
+        <A4EquivalentUsageHistory deviceId={deviceId} customerId={customerId} showA4={showA4} />
       </SystemModalLayout>
     </Dialog>
   )

@@ -11,7 +11,7 @@ import { DeviceModelFormModal } from './_components/DeviceModelFormModal'
 
 export default function Page() {
   return (
-    <SystemPageLayout>
+    <SystemPageLayout fullWidth>
       <SystemPageHeader
         title="Quản lý Model Thiết bị"
         subtitle="Quản lý các model thiết bị và tương thích vật tư"

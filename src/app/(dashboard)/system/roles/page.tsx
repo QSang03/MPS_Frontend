@@ -12,7 +12,7 @@ export default function RolesPage() {
   const [showCreateModal, setShowCreateModal] = useState(false)
 
   return (
-    <SystemPageLayout>
+    <SystemPageLayout fullWidth>
       <SystemPageHeader
         title="Quản lý vai trò"
         subtitle="Quản lý các vai trò và quyền hạn trong hệ thống"

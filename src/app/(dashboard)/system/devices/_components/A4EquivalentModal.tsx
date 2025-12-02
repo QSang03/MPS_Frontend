@@ -36,7 +36,8 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
   const [recordedAtISO, setRecordedAtISO] = useState<string | null>(null) // ISO
   const [updateLatest, setUpdateLatest] = useState<boolean>(false)
 
-  const useA4 = Boolean((device as Device | null)?.deviceModel?.useA4Counter)
+  const rawA4 = (device as Device | null)?.deviceModel?.useA4Counter as unknown
+  const useA4 = rawA4 === true || rawA4 === 'true' || rawA4 === 1 || rawA4 === '1'
 
   useEffect(() => {
     if (!device) return

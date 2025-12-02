@@ -28,10 +28,14 @@ export async function GET(request: NextRequest) {
     const limit = url.searchParams.get('limit')
     const search = url.searchParams.get('search')
     const isActive = url.searchParams.get('isActive')
+    const sortBy = url.searchParams.get('sortBy')
+    const sortOrder = url.searchParams.get('sortOrder')
     if (page) params.page = Number(page)
     if (limit) params.limit = Number(limit)
     if (search) params.search = search
     if (typeof isActive === 'string') params.isActive = isActive === 'true'
+    if (sortBy) params.sortBy = sortBy
+    if (sortOrder) params.sortOrder = sortOrder
 
     // Try the backend call and handle 401 (token) specifically so we can refresh and retry
     try {

@@ -18,7 +18,7 @@ export default async function SlaTemplatesPage() {
   }
 
   return (
-    <SystemPageLayout>
+    <SystemPageLayout fullWidth>
       <Suspense>
         <SlaTemplatesClient session={session} />
       </Suspense>

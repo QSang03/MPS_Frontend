@@ -78,6 +78,16 @@ type Props = {
   customerId: string
 }
 
+// Local type for device-consumable entries used in UI rendering
+type DeviceConsumableLocal = {
+  deviceId?: string | null
+  isActive?: boolean | null
+  installedAt?: string | null
+  createdAt?: string | null
+  actualPagesPrinted?: number | null
+  warningPercentage?: number | null
+}
+
 export default function CustomerDetailClient({ customerId }: Props) {
   const { can: canContractAction } = useActionPermission('customers')
   const canDeleteContract = canContractAction('contract-delete')
@@ -442,6 +452,18 @@ export default function CustomerDetailClient({ customerId }: Props) {
       .filter((group): group is NonNullable<typeof group> => group !== null)
   }, [consumablesData])
 
+  // Helper: find device object by id from overview (search in contracts and unassignedDevices)
+  const findDeviceById = (id?: string | null) => {
+    if (!id) return undefined
+    for (const c of contracts) {
+      const found = c.contractDevices?.find((cd) => cd.deviceId === id)?.device
+      if (found) return found as unknown as { id: string; serialNumber?: string }
+    }
+    return unassignedDevices?.find((d) => d.id === id) as unknown as
+      | { id: string; serialNumber?: string }
+      | undefined
+  }
+
   const renderDeviceStatus = (status?: string) => {
     if (!status) {
       return (
@@ -584,10 +606,28 @@ export default function CustomerDetailClient({ customerId }: Props) {
         <td className="px-4 py-4 text-center text-xs text-slate-300">│</td>
         <td className="py-4 pr-4 pl-6">
           <div className="font-mono text-sm font-semibold text-slate-800">
-            {device.device?.serialNumber ?? '—'}
+            {device.device?.id ? (
+              <Link
+                href={`/system/devices/${device.device.id}`}
+                className="text-sky-600 hover:underline"
+              >
+                {device.device?.serialNumber ?? '—'}
+              </Link>
+            ) : (
+              (device.device?.serialNumber ?? '—')
+            )}
           </div>
           <div className="line-clamp-1 text-xs text-slate-500">
-            {device.device?.deviceModel?.name ?? device.device?.model ?? 'Không rõ model'}
+            {device.device?.id ? (
+              <Link
+                href={`/system/devices/${device.device.id}`}
+                className="text-sky-600 hover:underline"
+              >
+                {device.device?.deviceModel?.name ?? device.device?.model ?? 'Không rõ model'}
+              </Link>
+            ) : (
+              (device.device?.deviceModel?.name ?? device.device?.model ?? 'Không rõ model')
+            )}
           </div>
         </td>
         <td className="py-4 pr-4 pl-4 text-right">
@@ -607,7 +647,8 @@ export default function CustomerDetailClient({ customerId }: Props) {
         </td>
         {/* Page counts: prefer A4 values for A4 models, otherwise prefer non-A4 totals (fallbacks included) */}
         {(() => {
-          const useA4 = Boolean(device.device?.deviceModel?.useA4Counter)
+          const raw = device.device?.deviceModel?.useA4Counter as unknown
+          const useA4 = raw === true || raw === 'true' || raw === 1 || raw === '1'
           const total = useA4
             ? (device.totalPageCountA4 ?? device.totalPageCount ?? device.device?.totalPagesUsed)
             : (device.totalPageCount ?? device.totalPageCountA4 ?? device.device?.totalPagesUsed)
@@ -772,10 +813,28 @@ export default function CustomerDetailClient({ customerId }: Props) {
             <td className="px-4 py-4 text-center text-xs text-slate-300">│</td>
             <td className="py-4 pr-4 pl-6">
               <div className="font-mono text-sm font-semibold text-slate-800">
-                {device.serialNumber}
+                {device.id ? (
+                  <Link
+                    href={`/system/devices/${device.id}`}
+                    className="text-sky-600 hover:underline"
+                  >
+                    {device.serialNumber}
+                  </Link>
+                ) : (
+                  device.serialNumber
+                )}
               </div>
               <div className="line-clamp-1 text-xs text-slate-500">
-                {device.deviceModel?.name ?? device.model ?? 'Không rõ model'}
+                {device.id ? (
+                  <Link
+                    href={`/system/devices/${device.id}`}
+                    className="text-sky-600 hover:underline"
+                  >
+                    {device.deviceModel?.name ?? device.model ?? 'Không rõ model'}
+                  </Link>
+                ) : (
+                  (device.deviceModel?.name ?? device.model ?? 'Không rõ model')
+                )}
               </div>
             </td>
             <td className="py-4 pr-4 pl-4 text-center text-sm text-slate-400" colSpan={6}>
@@ -1738,6 +1797,52 @@ export default function CustomerDetailClient({ customerId }: Props) {
                                       <p className="mt-0.5 text-xs text-slate-500">
                                         SN: {item.serialNumber ?? '—'}
                                       </p>
+                                      {/* If this consumable is installed on a device, show extra info */}
+                                      {(() => {
+                                        const deviceConsumables = (
+                                          item as unknown as {
+                                            deviceConsumables?: DeviceConsumableLocal[]
+                                          }
+                                        ).deviceConsumables
+                                        const activeDc =
+                                          deviceConsumables?.find((d) => d?.isActive) ??
+                                          deviceConsumables?.[0]
+                                        if (!activeDc) return null
+                                        const installedDevice = findDeviceById(activeDc.deviceId)
+                                        return (
+                                          <p className="mt-1 text-xs text-slate-500">
+                                            Lắp tại:{' '}
+                                            {installedDevice ? (
+                                              <Link
+                                                href={`/system/devices/${installedDevice.id}`}
+                                                className="text-sky-600 hover:underline"
+                                              >
+                                                {installedDevice?.serialNumber ??
+                                                  installedDevice?.id}
+                                              </Link>
+                                            ) : activeDc.deviceId ? (
+                                              <Link
+                                                href={`/system/devices/${activeDc.deviceId}`}
+                                                className="text-sky-600 hover:underline"
+                                              >
+                                                {activeDc.deviceId}
+                                              </Link>
+                                            ) : (
+                                              '—'
+                                            )}{' '}
+                                            •{' '}
+                                            {formatDate(activeDc.installedAt ?? activeDc.createdAt)}{' '}
+                                            • In:{' '}
+                                            {formatInteger(
+                                              activeDc.actualPagesPrinted ?? undefined
+                                            )}{' '}
+                                            trang • Cảnh báo:{' '}
+                                            {activeDc.warningPercentage != null
+                                              ? `${activeDc.warningPercentage}%`
+                                              : '—'}
+                                          </p>
+                                        )
+                                      })()}
                                     </td>
                                     <td className="px-6 py-4 text-sm text-slate-600">
                                       {(() => {
@@ -1931,6 +2036,11 @@ export default function CustomerDetailClient({ customerId }: Props) {
       {a4HistoryDevice?.device && (
         <A4EquivalentHistoryModal
           deviceId={a4HistoryDevice.device.id}
+          showA4={(() => {
+            const raw = a4HistoryDevice?.device?.deviceModel?.useA4Counter as unknown
+            if (typeof raw === 'undefined') return 'auto'
+            return raw === true || raw === 'true' || raw === 1 || raw === '1'
+          })()}
           open={a4HistoryOpen}
           onOpenChange={(v) => {
             setA4HistoryOpen(v)

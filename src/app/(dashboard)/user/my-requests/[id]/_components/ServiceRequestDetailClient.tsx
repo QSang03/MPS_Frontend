@@ -129,7 +129,7 @@ export function ServiceRequestDetailClient(props: Props) {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 p-6 dark:from-slate-950 dark:via-indigo-950 dark:to-purple-950">
-        <div className="mx-auto max-w-[1600px]">
+        <div className="w-full">
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
             <div className="space-y-6 lg:col-span-8">
               <div className="h-32 animate-pulse rounded-2xl bg-gradient-to-r from-white/50 to-white/30 backdrop-blur-xl dark:from-slate-800/50 dark:to-slate-800/30" />
@@ -185,7 +185,7 @@ export function ServiceRequestDetailClient(props: Props) {
         <div className="absolute top-1/2 left-1/2 h-96 w-96 animate-pulse rounded-full bg-gradient-to-r from-indigo-400/20 to-violet-400/20 blur-3xl delay-500" />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-full px-4 py-8 sm:px-6 lg:px-8">
+      <div className="relative z-10 w-full px-4 py-8 sm:px-6 lg:px-8">
         {/* Header Section */}
         <div className="mb-6">
           <button

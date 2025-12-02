@@ -14,7 +14,7 @@ export default async function UsersPage() {
   }
 
   return (
-    <SystemPageLayout>
+    <SystemPageLayout fullWidth>
       <SystemPageHeader
         title="Quản lý người dùng"
         subtitle="Quản lý tài khoản người dùng và phân quyền"

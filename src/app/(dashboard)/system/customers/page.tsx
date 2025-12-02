@@ -7,7 +7,7 @@ import CustomerFormModal from './_components/CustomerFormModal'
 
 export default function CustomersPage() {
   return (
-    <SystemPageLayout>
+    <SystemPageLayout fullWidth>
       <SystemPageHeader
         title="Quản lý Khách hàng"
         subtitle="Tạo, chỉnh sửa và quản lý các khách hàng"

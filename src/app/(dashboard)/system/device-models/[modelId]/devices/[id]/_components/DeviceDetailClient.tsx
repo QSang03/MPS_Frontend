@@ -1,6 +1,7 @@
 'use client'
 import { useCallback, useEffect, useState, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { QueryProvider } from '@/components/providers/QueryProvider'
 import Link from 'next/link'
 import {
   ArrowLeft,
@@ -102,9 +103,10 @@ interface DeviceDetailClientProps {
    * component for both model-scoped pages and the global devices page.
    */
   backHref?: string
+  showA4?: boolean | 'auto'
 }
 
-export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetailClientProps) {
+function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: DeviceDetailClientProps) {
   const [device, setDevice] = useState<Device | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -205,6 +207,8 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
 
   // Get customerId from device (safe access)
   const customerId = device ? device.customerId || '' : ''
+  // Determine whether to render A4-specific columns in the monthly usage table
+  const rawModelUseA4 = (device as Device | null)?.deviceModel?.useA4Counter as unknown
 
   // Fetch monthly usage pages data
   const {
@@ -242,6 +246,15 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
   })
 
   const monthlyUsageItems: MonthlyUsagePagesItem[] = monthlyUsageData?.data?.items || []
+  const hasA4InItems = monthlyUsageItems.some(
+    (it) => it.bwPagesA4 != null || it.colorPagesA4 != null || it.totalPagesA4 != null
+  )
+  const hasStdInItems = monthlyUsageItems.some(
+    (it) => it.bwPages != null || it.colorPages != null || it.totalPages != null
+  )
+  const showA4Columns = typeof rawModelUseA4 === 'boolean' ? Boolean(rawModelUseA4) : hasA4InItems
+  const showStandardColumns =
+    typeof rawModelUseA4 === 'boolean' ? !Boolean(rawModelUseA4) : hasStdInItems
 
   // Safe number formatters for monthly usage table (handles undefined/null)
   // Use centralized helper for page counts to show N/A vs 0 and optional tooltip
@@ -605,7 +618,7 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
     )
   }
 
-  return (
+  const content = (
     <div className="space-y-6">
       {/* Neutral Header */}
       <div>
@@ -956,20 +969,32 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                           <th className="px-4 py-3 text-left text-xs font-semibold">Tên model</th>
                           <th className="px-4 py-3 text-left text-xs font-semibold">Số serial</th>
                           <th className="px-4 py-3 text-left text-xs font-semibold">Mã phần</th>
-                          <th className="px-4 py-3 text-right text-xs font-semibold">
-                            Trang đen trắng
-                          </th>
-                          <th className="px-4 py-3 text-right text-xs font-semibold">Trang màu</th>
-                          <th className="px-4 py-3 text-right text-xs font-semibold">Tổng trang</th>
-                          <th className="px-4 py-3 text-right text-xs font-semibold">
-                            Trang đen trắng A4
-                          </th>
-                          <th className="px-4 py-3 text-right text-xs font-semibold">
-                            Trang màu A4
-                          </th>
-                          <th className="px-4 py-3 text-right text-xs font-semibold">
-                            Tổng trang A4
-                          </th>
+                          {showStandardColumns && (
+                            <>
+                              <th className="px-4 py-3 text-right text-xs font-semibold">
+                                Trang đen trắng
+                              </th>
+                              <th className="px-4 py-3 text-right text-xs font-semibold">
+                                Trang màu
+                              </th>
+                              <th className="px-4 py-3 text-right text-xs font-semibold">
+                                Tổng trang
+                              </th>
+                            </>
+                          )}
+                          {showA4Columns && (
+                            <>
+                              <th className="px-4 py-3 text-right text-xs font-semibold">
+                                Trang đen trắng A4
+                              </th>
+                              <th className="px-4 py-3 text-right text-xs font-semibold">
+                                Trang màu A4
+                              </th>
+                              <th className="px-4 py-3 text-right text-xs font-semibold">
+                                Tổng trang A4
+                              </th>
+                            </>
+                          )}
                         </tr>
                       </thead>
                       <tbody className="divide-y">
@@ -991,165 +1016,204 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
                                   {item.serialNumber || '-'}
                                 </td>
                                 <td className="px-4 py-3 text-sm">{item.partNumber || '-'}</td>
-                                <td className="px-4 py-3 text-right text-sm">
-                                  {(() => {
-                                    const hasUsageData =
-                                      item &&
-                                      ((item.bwPages !== null && item.bwPages !== undefined) ||
-                                        (item.colorPages !== null &&
-                                          item.colorPages !== undefined) ||
-                                        (item.totalPages !== null && item.totalPages !== undefined))
-                                    const formatted = formatPageCount(item.bwPages, hasUsageData)
-                                    return formatted.tooltip ? (
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
+                                {showStandardColumns && (
+                                  <td className="px-4 py-3 text-right text-sm">
+                                    {(() => {
+                                      const hasUsageData =
+                                        item &&
+                                        ((item.bwPages !== null && item.bwPages !== undefined) ||
+                                          (item.colorPages !== null &&
+                                            item.colorPages !== undefined) ||
+                                          (item.totalPages !== null &&
+                                            item.totalPages !== undefined))
+                                      const formatted = formatPageCount(item.bwPages, hasUsageData)
+                                      return formatted.tooltip ? (
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <span>{formatted.display}</span>
+                                          </TooltipTrigger>
+                                          <TooltipContent sideOffset={4}>
+                                            {formatted.tooltip}
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      ) : (
+                                        <span>{formatted.display}</span>
+                                      )
+                                    })()}
+                                  </td>
+                                )}
+                                {showStandardColumns && (
+                                  <td className="px-4 py-3 text-right text-sm">
+                                    {(() => {
+                                      const hasUsageData =
+                                        item &&
+                                        ((item.bwPages !== null && item.bwPages !== undefined) ||
+                                          (item.colorPages !== null &&
+                                            item.colorPages !== undefined) ||
+                                          (item.totalPages !== null &&
+                                            item.totalPages !== undefined))
+                                      const formatted = formatPageCount(
+                                        item.colorPages,
+                                        hasUsageData
+                                      )
+                                      return formatted.tooltip ? (
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <span>{formatted.display}</span>
+                                          </TooltipTrigger>
+                                          <TooltipContent sideOffset={4}>
+                                            {formatted.tooltip}
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      ) : (
+                                        <span>{formatted.display}</span>
+                                      )
+                                    })()}
+                                  </td>
+                                )}
+                                {showStandardColumns && (
+                                  <td className="px-4 py-3 text-right text-sm font-semibold">
+                                    {(() => {
+                                      const hasUsageData =
+                                        item &&
+                                        ((item.bwPages !== null && item.bwPages !== undefined) ||
+                                          (item.colorPages !== null &&
+                                            item.colorPages !== undefined) ||
+                                          (item.totalPages !== null &&
+                                            item.totalPages !== undefined))
+                                      const formatted = formatPageCount(
+                                        item.totalPages,
+                                        hasUsageData
+                                      )
+                                      return formatted.tooltip ? (
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <span>{formatted.display}</span>
+                                          </TooltipTrigger>
+                                          <TooltipContent sideOffset={4}>
+                                            {formatted.tooltip}
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      ) : (
+                                        <span>{formatted.display}</span>
+                                      )
+                                    })()}
+                                  </td>
+                                )}
+                                {(() => {
+                                  if (!showA4Columns) return null
+                                  return (
+                                    <td className="px-4 py-3 text-right text-sm text-blue-600">
+                                      {(() => {
+                                        const hasUsageData =
+                                          item &&
+                                          ((item.bwPagesA4 !== null &&
+                                            item.bwPagesA4 !== undefined) ||
+                                            (item.colorPagesA4 !== null &&
+                                              item.colorPagesA4 !== undefined) ||
+                                            (item.totalPagesA4 !== null &&
+                                              item.totalPagesA4 !== undefined) ||
+                                            (item.bwPages !== null && item.bwPages !== undefined) ||
+                                            (item.colorPages !== null &&
+                                              item.colorPages !== undefined) ||
+                                            (item.totalPages !== null &&
+                                              item.totalPages !== undefined))
+                                        const formatted = formatPageCount(
+                                          item.bwPagesA4,
+                                          hasUsageData
+                                        )
+                                        return formatted.tooltip ? (
+                                          <Tooltip>
+                                            <TooltipTrigger asChild>
+                                              <span>{formatted.display}</span>
+                                            </TooltipTrigger>
+                                            <TooltipContent sideOffset={4}>
+                                              {formatted.tooltip}
+                                            </TooltipContent>
+                                          </Tooltip>
+                                        ) : (
                                           <span>{formatted.display}</span>
-                                        </TooltipTrigger>
-                                        <TooltipContent sideOffset={4}>
-                                          {formatted.tooltip}
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    ) : (
-                                      <span>{formatted.display}</span>
-                                    )
-                                  })()}
-                                </td>
-                                <td className="px-4 py-3 text-right text-sm">
-                                  {(() => {
-                                    const hasUsageData =
-                                      item &&
-                                      ((item.bwPages !== null && item.bwPages !== undefined) ||
-                                        (item.colorPages !== null &&
-                                          item.colorPages !== undefined) ||
-                                        (item.totalPages !== null && item.totalPages !== undefined))
-                                    const formatted = formatPageCount(item.colorPages, hasUsageData)
-                                    return formatted.tooltip ? (
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
+                                        )
+                                      })()}
+                                    </td>
+                                  )
+                                })()}
+                                {(() => {
+                                  if (!showA4Columns) return null
+                                  return (
+                                    <td className="px-4 py-3 text-right text-sm text-blue-600">
+                                      {(() => {
+                                        const hasUsageData =
+                                          item &&
+                                          ((item.bwPagesA4 !== null &&
+                                            item.bwPagesA4 !== undefined) ||
+                                            (item.colorPagesA4 !== null &&
+                                              item.colorPagesA4 !== undefined) ||
+                                            (item.totalPagesA4 !== null &&
+                                              item.totalPagesA4 !== undefined) ||
+                                            (item.bwPages !== null && item.bwPages !== undefined) ||
+                                            (item.colorPages !== null &&
+                                              item.colorPages !== undefined) ||
+                                            (item.totalPages !== null &&
+                                              item.totalPages !== undefined))
+                                        const formatted = formatPageCount(
+                                          item.colorPagesA4,
+                                          hasUsageData
+                                        )
+                                        return formatted.tooltip ? (
+                                          <Tooltip>
+                                            <TooltipTrigger asChild>
+                                              <span>{formatted.display}</span>
+                                            </TooltipTrigger>
+                                            <TooltipContent sideOffset={4}>
+                                              {formatted.tooltip}
+                                            </TooltipContent>
+                                          </Tooltip>
+                                        ) : (
                                           <span>{formatted.display}</span>
-                                        </TooltipTrigger>
-                                        <TooltipContent sideOffset={4}>
-                                          {formatted.tooltip}
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    ) : (
-                                      <span>{formatted.display}</span>
-                                    )
-                                  })()}
-                                </td>
-                                <td className="px-4 py-3 text-right text-sm font-semibold">
-                                  {(() => {
-                                    const hasUsageData =
-                                      item &&
-                                      ((item.bwPages !== null && item.bwPages !== undefined) ||
-                                        (item.colorPages !== null &&
-                                          item.colorPages !== undefined) ||
-                                        (item.totalPages !== null && item.totalPages !== undefined))
-                                    const formatted = formatPageCount(item.totalPages, hasUsageData)
-                                    return formatted.tooltip ? (
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
+                                        )
+                                      })()}
+                                    </td>
+                                  )
+                                })()}
+                                {(() => {
+                                  if (!showA4Columns) return null
+                                  return (
+                                    <td className="px-4 py-3 text-right text-sm font-semibold text-blue-600">
+                                      {(() => {
+                                        const hasUsageData =
+                                          item &&
+                                          ((item.bwPagesA4 !== null &&
+                                            item.bwPagesA4 !== undefined) ||
+                                            (item.colorPagesA4 !== null &&
+                                              item.colorPagesA4 !== undefined) ||
+                                            (item.totalPagesA4 !== null &&
+                                              item.totalPagesA4 !== undefined) ||
+                                            (item.bwPages !== null && item.bwPages !== undefined) ||
+                                            (item.colorPages !== null &&
+                                              item.colorPages !== undefined) ||
+                                            (item.totalPages !== null &&
+                                              item.totalPages !== undefined))
+                                        const formatted = formatPageCount(
+                                          item.totalPagesA4,
+                                          hasUsageData
+                                        )
+                                        return formatted.tooltip ? (
+                                          <Tooltip>
+                                            <TooltipTrigger asChild>
+                                              <span>{formatted.display}</span>
+                                            </TooltipTrigger>
+                                            <TooltipContent sideOffset={4}>
+                                              {formatted.tooltip}
+                                            </TooltipContent>
+                                          </Tooltip>
+                                        ) : (
                                           <span>{formatted.display}</span>
-                                        </TooltipTrigger>
-                                        <TooltipContent sideOffset={4}>
-                                          {formatted.tooltip}
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    ) : (
-                                      <span>{formatted.display}</span>
-                                    )
-                                  })()}
-                                </td>
-                                <td className="px-4 py-3 text-right text-sm text-blue-600">
-                                  {(() => {
-                                    const hasUsageData =
-                                      item &&
-                                      ((item.bwPagesA4 !== null && item.bwPagesA4 !== undefined) ||
-                                        (item.colorPagesA4 !== null &&
-                                          item.colorPagesA4 !== undefined) ||
-                                        (item.totalPagesA4 !== null &&
-                                          item.totalPagesA4 !== undefined) ||
-                                        (item.bwPages !== null && item.bwPages !== undefined) ||
-                                        (item.colorPages !== null &&
-                                          item.colorPages !== undefined) ||
-                                        (item.totalPages !== null && item.totalPages !== undefined))
-                                    const formatted = formatPageCount(item.bwPagesA4, hasUsageData)
-                                    return formatted.tooltip ? (
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <span>{formatted.display}</span>
-                                        </TooltipTrigger>
-                                        <TooltipContent sideOffset={4}>
-                                          {formatted.tooltip}
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    ) : (
-                                      <span>{formatted.display}</span>
-                                    )
-                                  })()}
-                                </td>
-                                <td className="px-4 py-3 text-right text-sm text-blue-600">
-                                  {(() => {
-                                    const hasUsageData =
-                                      item &&
-                                      ((item.bwPagesA4 !== null && item.bwPagesA4 !== undefined) ||
-                                        (item.colorPagesA4 !== null &&
-                                          item.colorPagesA4 !== undefined) ||
-                                        (item.totalPagesA4 !== null &&
-                                          item.totalPagesA4 !== undefined) ||
-                                        (item.bwPages !== null && item.bwPages !== undefined) ||
-                                        (item.colorPages !== null &&
-                                          item.colorPages !== undefined) ||
-                                        (item.totalPages !== null && item.totalPages !== undefined))
-                                    const formatted = formatPageCount(
-                                      item.colorPagesA4,
-                                      hasUsageData
-                                    )
-                                    return formatted.tooltip ? (
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <span>{formatted.display}</span>
-                                        </TooltipTrigger>
-                                        <TooltipContent sideOffset={4}>
-                                          {formatted.tooltip}
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    ) : (
-                                      <span>{formatted.display}</span>
-                                    )
-                                  })()}
-                                </td>
-                                <td className="px-4 py-3 text-right text-sm font-semibold text-blue-600">
-                                  {(() => {
-                                    const hasUsageData =
-                                      item &&
-                                      ((item.bwPagesA4 !== null && item.bwPagesA4 !== undefined) ||
-                                        (item.colorPagesA4 !== null &&
-                                          item.colorPagesA4 !== undefined) ||
-                                        (item.totalPagesA4 !== null &&
-                                          item.totalPagesA4 !== undefined) ||
-                                        (item.bwPages !== null && item.bwPages !== undefined) ||
-                                        (item.colorPages !== null &&
-                                          item.colorPages !== undefined) ||
-                                        (item.totalPages !== null && item.totalPages !== undefined))
-                                    const formatted = formatPageCount(
-                                      item.totalPagesA4,
-                                      hasUsageData
-                                    )
-                                    return formatted.tooltip ? (
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <span>{formatted.display}</span>
-                                        </TooltipTrigger>
-                                        <TooltipContent sideOffset={4}>
-                                          {formatted.tooltip}
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    ) : (
-                                      <span>{formatted.display}</span>
-                                    )
-                                  })()}
-                                </td>
+                                        )
+                                      })()}
+                                    </td>
+                                  )
+                                })()}
                               </tr>
                             )
                           })}
@@ -2649,6 +2713,7 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
       {/* A4 history modal */}
       <A4EquivalentHistoryModal
         deviceId={device?.id}
+        showA4={showA4}
         open={a4HistoryOpen}
         onOpenChange={(v) => {
           setA4HistoryOpen(v)
@@ -3113,7 +3178,27 @@ export function DeviceDetailClient({ deviceId, modelId, backHref }: DeviceDetail
       </Dialog>
     </div>
   )
+
+  return content
 }
+
+// Wrapper that ensures a QueryClient exists for hooks that rely on react-query.
+// If no QueryClient is present in the React Context, we fall back to our app
+// level `QueryProvider` to ensure `useQuery` doesn't throw. This keeps the
+// inner component unchanged and avoids adding a provider when one already
+// exists (the root layout provides one normally).
+export function DeviceDetailClient(props: DeviceDetailClientProps) {
+  // Always provide a QueryProvider to avoid runtime errors when this
+  // component is used outside the normal app layout. Using a nested
+  // provider is safe and avoids hook-time detection edge cases.
+  return (
+    <QueryProvider>
+      <DeviceDetailClientInner {...props} />
+    </QueryProvider>
+  )
+}
+
+// Removed DeviceDetailClientInner function wrapper — keep exports at module scope
 
 // Consumable usage history panel (client-side)
 export function ConsumableUsageHistory({

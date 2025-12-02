@@ -19,7 +19,7 @@ export default async function ReportsPage() {
   }
 
   return (
-    <SystemPageLayout>
+    <SystemPageLayout fullWidth>
       <SystemPageHeader
         title="Báo cáo"
         subtitle="Tạo và tải xuống báo cáo dịch vụ in ấn"

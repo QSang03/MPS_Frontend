@@ -51,7 +51,7 @@ export default function WarehouseDocumentDetailClient({ id }: Props) {
   }
 
   return (
-    <div className="mx-auto max-w-screen-2xl space-y-6 p-4 pb-20 md:p-6">
+    <div className="w-full space-y-6 p-4 pb-20 md:p-6">
       <div className="flex items-center justify-between border-b pb-6">
         <div className="space-y-2">
           <div className="flex items-center gap-2">

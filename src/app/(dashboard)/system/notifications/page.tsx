@@ -7,7 +7,7 @@ import NotificationsListWrapper from './NotificationsListWrapper'
 
 export default function NotificationsPage() {
   return (
-    <SystemPageLayout>
+    <SystemPageLayout fullWidth>
       <SystemPageHeader
         title="Thông báo hệ thống"
         subtitle="Xem lại tất cả các cảnh báo và thông báo từ hệ thống"

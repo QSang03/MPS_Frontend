@@ -10,7 +10,7 @@ export const metadata = {
 
 export default async function RevenuePage() {
   return (
-    <SystemPageLayout>
+    <SystemPageLayout fullWidth>
       <SystemPageHeader
         title="Phân tích lợi nhuận"
         subtitle="Theo dõi và phân tích doanh thu, chi phí và lợi nhuận"

@@ -8,6 +8,8 @@ import { toast } from 'sonner'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import StatusStepper from '@/components/system/StatusStepper'
+import StatusButtonGrid from '@/components/system/StatusButtonGrid'
 import {
   Select,
   SelectContent,
@@ -76,13 +78,7 @@ type TimelineEvent = {
 
 type TimelineEntry = TimelineEvent & { time: string }
 
-const statusOptions = [
-  { label: 'Mới mở', value: ServiceRequestStatus.OPEN },
-  { label: 'Đang xử lý', value: ServiceRequestStatus.IN_PROGRESS },
-  { label: 'Đã duyệt', value: ServiceRequestStatus.APPROVED },
-  { label: 'Đã xử lý', value: ServiceRequestStatus.RESOLVED },
-  { label: 'Đã đóng', value: ServiceRequestStatus.CLOSED },
-]
+// statusOptions removed — use getAllowedTransitions(status) instead when needed
 
 const priorityBadgeMap: Record<Priority, string> = {
   [Priority.LOW]: 'bg-slate-100 text-slate-700 border-slate-200',
@@ -560,26 +556,17 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                     </div>
                   }
                 >
-                  <div className="space-y-2">
-                    <Select
-                      value={data.status}
-                      onValueChange={(value) =>
-                        setPendingStatusChange(value as ServiceRequestStatus)
-                      }
-                      disabled={updating}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Chọn trạng thái" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {statusOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {/* Use dialog to capture status-specific note; external field removed to avoid duplication */}
+                  <div className="space-y-3">
+                    <StatusStepper current={data.status} />
+                    <div>
+                      <div className="text-muted-foreground mb-1 text-sm">Chuyển trạng thái</div>
+                      <StatusButtonGrid
+                        current={data.status}
+                        assignedTo={data.assignedTo ?? selectedAssignee}
+                        hasPermission={true}
+                        onSelect={(s) => setPendingStatusChange(s)}
+                      />
+                    </div>
                   </div>
                 </PermissionGuard>
                 <Dialog

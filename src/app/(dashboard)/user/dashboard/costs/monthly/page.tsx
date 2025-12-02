@@ -220,7 +220,7 @@ export default function MonthlyCostsPage() {
 
   return (
     <div className="min-h-screen from-slate-50 via-blue-50 to-indigo-50 px-4 py-8 sm:px-6 lg:px-8 dark:from-slate-950 dark:via-blue-950 dark:to-indigo-950">
-      <div className="mx-auto max-w-7xl">
+      <div className="w-full">
         {/* Header Section */}
         <div className="mb-8">
           <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

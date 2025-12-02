@@ -89,7 +89,7 @@ export default function MyRequestsPageClient() {
 
   return (
     <div className="min-h-screen w-full bg-slate-50/50 p-4 sm:p-6 lg:p-8 dark:bg-slate-950">
-      <div className="mx-auto max-w-7xl space-y-6">
+      <div className="w-full space-y-6">
         {/* Header */}
         <PageHeader
           title="Yêu Cầu Của Tôi"

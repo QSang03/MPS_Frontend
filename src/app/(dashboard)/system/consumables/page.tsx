@@ -7,7 +7,7 @@ import ConsumablesList from './_components/ConsumablesList'
 
 export default function ConsumablesPage() {
   return (
-    <SystemPageLayout>
+    <SystemPageLayout fullWidth>
       <SystemPageHeader
         title="Vật tư tiêu hao"
         subtitle="Quản lý vật tư tiêu hao trong kho"

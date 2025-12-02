@@ -128,7 +128,7 @@ export default function SystemSettingsPage() {
   const readOnlySettings = totalSettings - editableSettings
 
   return (
-    <SystemPageLayout>
+    <SystemPageLayout fullWidth>
       <SystemPageHeader
         title="Cấu hình hệ thống"
         subtitle="Quản lý các cấu hình và thiết lập hệ thống"

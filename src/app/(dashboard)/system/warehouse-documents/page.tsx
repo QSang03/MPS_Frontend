@@ -14,7 +14,7 @@ export default async function WarehouseDocumentsPage() {
   if (!session && DEV_BYPASS_AUTH) session = getDevSession('sys-admin')
 
   return (
-    <SystemPageLayout>
+    <SystemPageLayout fullWidth>
       <SystemPageHeader
         title="Chứng từ kho"
         subtitle="Danh sách các chứng từ nhập/xuất/trả"

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { QueryProvider } from '@/components/providers/QueryProvider'
 import Link from 'next/link'
 import {
   ArrowLeft,
@@ -66,7 +67,7 @@ interface Props {
   backHref?: string
 }
 
-export default function DeviceDetailClient({ deviceId, backHref }: Props) {
+function DeviceDetailClientInner({ deviceId, backHref }: Props) {
   const router = useRouter()
 
   const [device, setDevice] = useState<Device | null>(null)
@@ -297,6 +298,7 @@ export default function DeviceDetailClient({ deviceId, backHref }: Props) {
   return (
     <div className="space-y-6">
       {/* Header: use new DeviceHeader component and keep back button above it */}
+      const content = (
       <div>
         <div className="mb-2">
           <Link href={backHref ?? '/user/devices'}>
@@ -422,7 +424,6 @@ export default function DeviceDetailClient({ deviceId, backHref }: Props) {
           )
         })()}
       </div>
-
       {/* Tabs - align with admin layout (4 tabs) */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="mb-6 grid w-full grid-cols-5">
@@ -1240,7 +1241,6 @@ export default function DeviceDetailClient({ deviceId, backHref }: Props) {
           </Card>
         </TabsContent>
       </Tabs>
-
       {/* Edit Modal (basic subset of system) */}
       <Dialog open={showEdit} onOpenChange={setShowEdit}>
         <DialogContent className="max-w-[640px] overflow-hidden rounded-2xl border-0 p-0 shadow-2xl">
@@ -1345,5 +1345,20 @@ export default function DeviceDetailClient({ deviceId, backHref }: Props) {
         </DialogContent>
       </Dialog>
     </div>
+  )
+}
+
+// Exported wrapper: verify a QueryClient is present and provide a fallback if
+// not. This avoids runtime errors when `useQuery` is used in any nested
+// component and a provider isn't present (rare but possible in testing or
+// other embedding scenarios).
+export default function DeviceDetailClient(props: Props) {
+  // Always provide a QueryProvider to avoid runtime errors when this
+  // component is used outside the normal app layout. Using a nested
+  // provider is safe and avoids hook-time detection edge cases.
+  return (
+    <QueryProvider>
+      <DeviceDetailClientInner {...props} />
+    </QueryProvider>
   )
 }

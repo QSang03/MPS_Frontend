@@ -36,7 +36,7 @@ export default function RequestsPage() {
   const slaCount = 0 // Mock SLA
 
   return (
-    <SystemPageLayout>
+    <SystemPageLayout fullWidth>
       <SystemPageHeader
         title="Quản trị yêu cầu khách hàng"
         subtitle="Theo dõi và xử lý nhanh các yêu cầu bảo trì & mua vật tư"

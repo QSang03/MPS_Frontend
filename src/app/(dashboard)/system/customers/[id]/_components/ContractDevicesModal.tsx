@@ -2,6 +2,7 @@
 
 import ContractDevicesSection from './ContractDevicesSection'
 import { motion, AnimatePresence } from 'framer-motion'
+import Link from 'next/link'
 import { Dialog } from '@/components/ui/dialog'
 import { SystemModalLayout } from '@/components/system/SystemModalLayout'
 import { Button } from '@/components/ui/button'
@@ -561,7 +562,16 @@ export default function ContractDevicesModal({
                                 </div>
                               </td>
                               <td className="px-4 py-3 text-sm text-slate-700">
-                                {device.deviceModel?.name ?? device.model ?? '—'}
+                                {device.id ? (
+                                  <Link
+                                    href={`/system/devices/${device.id}`}
+                                    className="text-sky-600 hover:underline"
+                                  >
+                                    {device.deviceModel?.name ?? device.model ?? '—'}
+                                  </Link>
+                                ) : (
+                                  (device.deviceModel?.name ?? device.model ?? '—')
+                                )}
                               </td>
                               <td className="px-4 py-3">
                                 {isAttached ? (

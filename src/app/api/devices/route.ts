@@ -17,6 +17,8 @@ export async function GET(request: NextRequest) {
     const customerId = searchParams.get('customerId')
     const status = searchParams.get('status')
     const search = searchParams.get('search')
+    const sortBy = searchParams.get('sortBy')
+    const sortOrder = searchParams.get('sortOrder')
     const includeHidden = searchParams.get('includeHidden')
     const isActive = searchParams.get('isActive')
 
@@ -38,6 +40,8 @@ export async function GET(request: NextRequest) {
     if (customerId) params.customerId = customerId
     if (status) params.status = status
     if (search) params.search = search
+    if (sortBy) params.sortBy = sortBy
+    if (sortOrder) params.sortOrder = sortOrder
     if (typeof includeHidden === 'string') {
       // accept 'true'|'false'|'1'|'0'
       const v = includeHidden.toLowerCase()

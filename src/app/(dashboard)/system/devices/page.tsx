@@ -11,7 +11,7 @@ import { toast } from 'sonner'
 
 export default function DevicesPage() {
   return (
-    <SystemPageLayout>
+    <SystemPageLayout fullWidth>
       <SystemPageHeader
         title="Danh sách thiết bị"
         subtitle="Quản lý tất cả thiết bị trong hệ thống"

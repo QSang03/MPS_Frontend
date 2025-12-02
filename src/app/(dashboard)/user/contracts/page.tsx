@@ -1,4 +1,5 @@
 import ContractsPageClient from './_components/ContractsPageClient'
+import { UserPageLayout } from '@/components/user/UserPageLayout'
 
 export const metadata = {
   title: 'Hợp đồng của tôi',
@@ -6,8 +7,10 @@ export const metadata = {
 
 export default function ContractsPage() {
   return (
-    <div className="p-4">
-      <ContractsPageClient />
-    </div>
+    <UserPageLayout>
+      <div className="p-4">
+        <ContractsPageClient />
+      </div>
+    </UserPageLayout>
   )
 }

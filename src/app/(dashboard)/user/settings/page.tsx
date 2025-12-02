@@ -2,6 +2,7 @@ import { getSession } from '@/lib/auth/session'
 import { redirect } from 'next/navigation'
 import { ROUTES } from '@/constants/routes'
 import { SettingsClient } from './_components/SettingsClient'
+import { UserPageLayout } from '@/components/user/UserPageLayout'
 
 export default async function SettingsPage() {
   // Check authentication
@@ -19,13 +20,15 @@ export default async function SettingsPage() {
   // accepts an initialTab prop, but to keep server-side rendering simple we render the
   // client component and let it read the search params if present. For now pass profile only.
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Cài đặt</h1>
-        <p className="text-muted-foreground">Quản lý cài đặt tài khoản và thông báo</p>
-      </div>
+    <UserPageLayout>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Cài đặt</h1>
+          <p className="text-muted-foreground">Quản lý cài đặt tài khoản và thông báo</p>
+        </div>
 
-      <SettingsClient initialProfile={profile} />
-    </div>
+        <SettingsClient initialProfile={profile} />
+      </div>
+    </UserPageLayout>
   )
 }
