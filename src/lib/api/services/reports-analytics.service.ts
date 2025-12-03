@@ -1,4 +1,4 @@
-import internalApiClient from '../internal-client'
+import { getWithDedupe } from '../internal-client'
 import type { AxiosError } from 'axios'
 
 function extractErrorMessage(data: unknown): string | undefined {
@@ -167,10 +167,13 @@ export const reportsAnalyticsService = {
     year?: string
   }): Promise<EnterpriseProfitResponse> {
     try {
-      const resp = await internalApiClient.get('/api/reports/analytics/profit/enterprise', {
-        params,
-        validateStatus: (status) => (status >= 200 && status < 300) || status === 404,
-      })
+      const resp = await getWithDedupe<EnterpriseProfitResponse>(
+        '/api/reports/analytics/profit/enterprise',
+        {
+          params,
+          validateStatus: (status: number) => (status >= 200 && status < 300) || status === 404,
+        }
+      )
       if (resp.status === 404) {
         const data = resp.data as unknown
         return {
@@ -208,10 +211,13 @@ export const reportsAnalyticsService = {
     year?: string
   }): Promise<CustomersProfitResponse> {
     try {
-      const resp = await internalApiClient.get('/api/reports/analytics/profit/customers', {
-        params,
-        validateStatus: (status) => (status >= 200 && status < 300) || status === 404,
-      })
+      const resp = await getWithDedupe<CustomersProfitResponse>(
+        '/api/reports/analytics/profit/customers',
+        {
+          params,
+          validateStatus: (status: number) => (status >= 200 && status < 300) || status === 404,
+        }
+      )
       if (resp.status === 404) {
         const data = resp.data as unknown
         return {
@@ -245,11 +251,11 @@ export const reportsAnalyticsService = {
       // throwing an Axios error. For the backlog case of "no data for period"
       // backend typically returns a 404/400 with a message. Treat 404 as a
       // resolved response and map accordingly.
-      const resp = await internalApiClient.get(
+      const resp = await getWithDedupe<CustomerDetailProfitResponse>(
         `/api/reports/analytics/profit/customers/${customerId}`,
         {
           params,
-          validateStatus: (status) => (status >= 200 && status < 300) || status === 404,
+          validateStatus: (status: number) => (status >= 200 && status < 300) || status === 404,
         }
       )
 
@@ -292,11 +298,11 @@ export const reportsAnalyticsService = {
     params: { period?: string; from?: string; to?: string; year?: string }
   ): Promise<DeviceProfitabilityResponse> {
     try {
-      const resp = await internalApiClient.get(
+      const resp = await getWithDedupe<DeviceProfitabilityResponse>(
         `/api/reports/analytics/profit/devices/${deviceId}`,
         {
           params,
-          validateStatus: (status) => (status >= 200 && status < 300) || status === 404,
+          validateStatus: (status: number) => (status >= 200 && status < 300) || status === 404,
         }
       )
       if (resp.status === 404) {
@@ -331,10 +337,13 @@ export const reportsAnalyticsService = {
     customerId?: string
   }): Promise<ConsumableLifecycleResponse> {
     try {
-      const resp = await internalApiClient.get('/api/reports/analytics/consumables/lifecycle', {
-        params,
-        validateStatus: (status) => (status >= 200 && status < 300) || status === 404,
-      })
+      const resp = await getWithDedupe<ConsumableLifecycleResponse>(
+        '/api/reports/analytics/consumables/lifecycle',
+        {
+          params,
+          validateStatus: (status: number) => (status >= 200 && status < 300) || status === 404,
+        }
+      )
       if (resp.status === 404) {
         const data = resp.data as unknown
         return {
