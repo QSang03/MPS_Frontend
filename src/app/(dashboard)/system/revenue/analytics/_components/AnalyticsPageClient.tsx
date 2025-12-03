@@ -335,6 +335,15 @@ export default function AnalyticsPageClient() {
     return out
   }
 
+  function isValidTimeArg(time: TimeFilter): boolean {
+    if (!time) return false
+    const hasPeriod = Boolean(time.period)
+    const hasYear = Boolean(time.year)
+    const hasRange = Boolean(time.from && time.to)
+    const count = (hasPeriod ? 1 : 0) + (hasRange ? 1 : 0) + (hasYear ? 1 : 0)
+    return count === 1
+  }
+
   // Load Customer Detail
   const loadCustomerDetail = useCallback(
     async (
@@ -600,9 +609,27 @@ export default function AnalyticsPageClient() {
   // Auto-load customer detail when a customer is selected from the CustomerSelect control
   useEffect(() => {
     if (!customersSearchId) return
-    // Use the current customersPeriod as the detail period
-    void loadCustomerDetail(customersSearchId, { period: customersPeriod })
-  }, [customersSearchId, customersPeriod, loadCustomerDetail])
+    const timeArg = buildTimeForMode(
+      customersMode,
+      customersPeriod,
+      customersFrom,
+      customersTo,
+      customersYear
+    )
+    if (!isValidTimeArg(timeArg)) {
+      // If the current per-section time isn't valid yet, skip auto-load
+      return
+    }
+    void loadCustomerDetail(customersSearchId, timeArg)
+  }, [
+    customersSearchId,
+    customersPeriod,
+    customersFrom,
+    customersTo,
+    customersYear,
+    customersMode,
+    loadCustomerDetail,
+  ])
 
   return (
     <div className="space-y-6">
@@ -628,12 +655,23 @@ export default function AnalyticsPageClient() {
                   onValueChange={(v) => {
                     const mode = v as TimeRangeMode
                     setGlobalMode(mode)
-                    // Auto-fill defaults when switching modes
-                    if (mode === 'period') setGlobalPeriod(getCurrentMonth())
-                    else if (mode === 'range') {
+                    // Auto-fill defaults and clear irrelevant fields when switching modes
+                    if (mode === 'period') {
+                      setGlobalPeriod(getCurrentMonth())
+                      setGlobalFrom('')
+                      setGlobalTo('')
+                      setGlobalYear('')
+                    } else if (mode === 'range') {
                       setGlobalFrom(getTwelveMonthsAgo())
                       setGlobalTo(getCurrentMonth())
-                    } else if (mode === 'year') setGlobalYear(getCurrentYear())
+                      setGlobalPeriod('')
+                      setGlobalYear('')
+                    } else if (mode === 'year') {
+                      setGlobalYear(getCurrentYear())
+                      setGlobalPeriod('')
+                      setGlobalFrom('')
+                      setGlobalTo('')
+                    }
                   }}
                 >
                   <SelectTrigger className="bg-background h-8 w-32">
@@ -681,28 +719,76 @@ export default function AnalyticsPageClient() {
               onClick={() => {
                 // Synchronize per-section states with global values
                 setEnterpriseMode(globalMode)
-                setEnterprisePeriod(globalPeriod)
-                setEnterpriseFrom(globalFrom)
-                setEnterpriseTo(globalTo)
-                setEnterpriseYear(globalYear)
+                if (globalMode === 'period') {
+                  setEnterprisePeriod(globalPeriod)
+                  setEnterpriseFrom('')
+                  setEnterpriseTo('')
+                  setEnterpriseYear('')
+                } else if (globalMode === 'range') {
+                  setEnterpriseFrom(globalFrom)
+                  setEnterpriseTo(globalTo)
+                  setEnterprisePeriod('')
+                  setEnterpriseYear('')
+                } else {
+                  setEnterpriseYear(globalYear)
+                  setEnterprisePeriod('')
+                  setEnterpriseFrom('')
+                  setEnterpriseTo('')
+                }
 
                 setCustomersMode(globalMode)
-                setCustomersPeriod(globalPeriod)
-                setCustomersFrom(globalFrom)
-                setCustomersTo(globalTo)
-                setCustomersYear(globalYear)
+                if (globalMode === 'period') {
+                  setCustomersPeriod(globalPeriod)
+                  setCustomersFrom('')
+                  setCustomersTo('')
+                  setCustomersYear('')
+                } else if (globalMode === 'range') {
+                  setCustomersFrom(globalFrom)
+                  setCustomersTo(globalTo)
+                  setCustomersPeriod('')
+                  setCustomersYear('')
+                } else {
+                  setCustomersYear(globalYear)
+                  setCustomersPeriod('')
+                  setCustomersFrom('')
+                  setCustomersTo('')
+                }
 
                 setDeviceMode(globalMode)
-                setDevicePeriod(globalPeriod)
-                setDeviceFrom(globalFrom)
-                setDeviceTo(globalTo)
-                setDeviceYear(globalYear)
+                if (globalMode === 'period') {
+                  setDevicePeriod(globalPeriod)
+                  setDeviceFrom('')
+                  setDeviceTo('')
+                  setDeviceYear('')
+                } else if (globalMode === 'range') {
+                  setDeviceFrom(globalFrom)
+                  setDeviceTo(globalTo)
+                  setDevicePeriod('')
+                  setDeviceYear('')
+                } else {
+                  setDeviceYear(globalYear)
+                  setDevicePeriod('')
+                  setDeviceFrom('')
+                  setDeviceTo('')
+                }
 
                 setConsumableMode(globalMode)
-                setConsumablePeriod(globalPeriod)
-                setConsumableFrom(globalFrom)
-                setConsumableTo(globalTo)
-                setConsumableYear(globalYear)
+                if (globalMode === 'period') {
+                  setConsumablePeriod(globalPeriod)
+                  setConsumableFrom('')
+                  setConsumableTo('')
+                  setConsumableYear('')
+                } else if (globalMode === 'range') {
+                  setConsumableFrom(globalFrom)
+                  setConsumableTo(globalTo)
+                  setConsumablePeriod('')
+                  setConsumableYear('')
+                } else {
+                  setConsumableYear(globalYear)
+                  setConsumablePeriod('')
+                  setConsumableFrom('')
+                  setConsumableTo('')
+                }
 
                 // run concurrent loads
                 void loadAllConcurrent({
