@@ -21,7 +21,6 @@ export function NotificationPanel({ children }: NotificationPanelProps) {
     setIsPanelOpen,
     handleMarkAsRead,
     handleMarkAllAsRead,
-    isMarkingAsRead,
     isMarkingAllAsRead,
   } = useNotifications()
 
@@ -75,7 +74,6 @@ export function NotificationPanel({ children }: NotificationPanelProps) {
                   key={notification.id}
                   notification={notification}
                   onMarkAsRead={handleMarkAsRead}
-                  isMarkingAsRead={isMarkingAsRead}
                 />
               ))}
             </div>

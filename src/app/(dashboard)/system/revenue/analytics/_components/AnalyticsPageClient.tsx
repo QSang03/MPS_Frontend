@@ -153,7 +153,8 @@ export default function AnalyticsPageClient() {
   // Load Enterprise Profit
   const loadEnterpriseProfit = useCallback(
     async (time?: { period?: string; from?: string; to?: string; year?: string }) => {
-      const mode = enterpriseMode
+      const deduced = detectModeFromTime(time)
+      const mode = deduced ?? enterpriseMode
       const params: TimeFilter = {}
       if (time) Object.assign(params, time)
       else {
@@ -225,7 +226,8 @@ export default function AnalyticsPageClient() {
   // Load Customers Profit
   const loadCustomersProfit = useCallback(
     async (time?: { period?: string; from?: string; to?: string; year?: string }) => {
-      const mode = customersMode
+      const deduced = detectModeFromTime(time)
+      const mode = deduced ?? customersMode
       const params: TimeFilter = {}
       if (time) Object.assign(params, time)
       else {
@@ -344,12 +346,22 @@ export default function AnalyticsPageClient() {
     return count === 1
   }
 
+  function detectModeFromTime(time?: TimeFilter): TimeRangeMode | null {
+    if (!time) return null
+    if (time.period) return 'period'
+    if (time.from && time.to) return 'range'
+    if (time.year) return 'year'
+    return null
+  }
+
   // Load Customer Detail
   const loadCustomerDetail = useCallback(
     async (
       customerId?: string,
       time?: { period?: string; from?: string; to?: string; year?: string }
     ) => {
+      const deduced = detectModeFromTime(time)
+      const mode = deduced ?? customersMode
       const idToUse = customerId ?? selectedCustomerId
       // Use customer-level mode as customersMode, unless a time override was provided
       const params: TimeFilter = {}
@@ -361,7 +373,7 @@ export default function AnalyticsPageClient() {
           params.to = customersTo
         } else if (customersMode === 'year') params.year = customersYear
       }
-      if (!idToUse || (customersMode === 'period' && !params.period)) {
+      if (!idToUse || (mode === 'period' && !params.period)) {
         toast.warning('Vui lòng nhập Customer ID và kỳ')
         return
       }
@@ -414,6 +426,8 @@ export default function AnalyticsPageClient() {
     to?: string
     year?: string
   }) => {
+    const deduced = detectModeFromTime(time)
+    const mode = deduced ?? deviceMode
     const params: TimeFilter = {}
     if (time) Object.assign(params, time)
     else {
@@ -427,15 +441,15 @@ export default function AnalyticsPageClient() {
       toast.warning('Vui lòng nhập Device ID')
       return
     }
-    if (deviceMode === 'period' && !params.period) {
+    if (mode === 'period' && !params.period) {
       toast.warning('Vui lòng nhập kỳ (YYYY-MM)')
       return
     }
-    if (deviceMode === 'range' && (!params.from || !params.to)) {
+    if (mode === 'range' && (!params.from || !params.to)) {
       toast.warning('Vui lòng nhập both from và to (YYYY-MM)')
       return
     }
-    if (deviceMode === 'year' && !params.year) {
+    if (mode === 'year' && !params.year) {
       toast.warning('Vui lòng nhập năm (YYYY)')
       return
     }
@@ -479,6 +493,8 @@ export default function AnalyticsPageClient() {
     to?: string
     year?: string
   }) => {
+    const deduced = detectModeFromTime(time)
+    const mode = deduced ?? consumableMode
     const params: ConsumableParams = {
       consumableTypeId: consumableTypeId || undefined,
       customerId: consumableCustomerId || undefined,
@@ -492,15 +508,15 @@ export default function AnalyticsPageClient() {
       } else if (consumableMode === 'year') params.year = consumableYear
     }
     // basic validation
-    if (consumableMode === 'period' && !params.period) {
+    if (mode === 'period' && !params.period) {
       toast.warning('Vui lòng nhập kỳ (YYYY-MM)')
       return
     }
-    if (consumableMode === 'range' && (!params.from || !params.to)) {
+    if (mode === 'range' && (!params.from || !params.to)) {
       toast.warning('Vui lòng nhập both from và to (YYYY-MM)')
       return
     }
-    if (consumableMode === 'year' && !params.year) {
+    if (mode === 'year' && !params.year) {
       toast.warning('Vui lòng nhập năm (YYYY)')
       return
     }
