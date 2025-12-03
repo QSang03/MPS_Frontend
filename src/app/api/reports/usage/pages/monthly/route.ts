@@ -36,6 +36,24 @@ export async function GET(request: NextRequest) {
 
     // customerId is optional — backend may derive customer from deviceId
     if (customerId) params.customerId = customerId
+    // If the backend requires a customerId but the client didn't provide one,
+    // try to derive customerId from deviceId so callers (FE) don't need to set it.
+    else if (deviceId) {
+      try {
+        const devRes = await backendApiClient.get(`/devices/${deviceId}`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        })
+        const derivedCustomerId = devRes?.data?.customer?.id
+        if (derivedCustomerId) params.customerId = derivedCustomerId
+      } catch (err) {
+        // If deriving fails, continue without customerId — backend will respond
+        // with a helpful error and we will proxy it back to the client.
+        console.warn(
+          '[api/reports/usage/pages/monthly] Failed to derive customerId from deviceId',
+          err
+        )
+      }
+    }
     if (deviceId) params.deviceId = deviceId
 
     const response = await backendApiClient.get('/reports/usage/pages/monthly', {
