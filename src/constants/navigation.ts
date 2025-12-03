@@ -793,15 +793,7 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
           resources: [{ resource: 'sla-templates', action: 'delete' }],
         },
       },
-      {
-        id: 'apply',
-        label: 'Áp dụng Mẫu',
-        icon: 'FileText',
-        requiredPermissions: {
-          strategy: 'all',
-          resources: [{ resource: 'sla-templates', action: 'apply' }],
-        },
-      },
+      // 'apply' action removed because backend doesn't support this action.
     ],
   },
   {

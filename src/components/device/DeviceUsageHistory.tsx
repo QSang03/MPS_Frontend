@@ -300,6 +300,7 @@ export default function DeviceUsageHistory({ deviceId }: { deviceId: string }) {
                                   stroke={`var(--color-c${i})`}
                                   strokeWidth={2}
                                   dot={false}
+                                  connectNulls={true}
                                   name={c.consumableTypeName ?? `Item ${i + 1}`}
                                 />
                               ) : null
