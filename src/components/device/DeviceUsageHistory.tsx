@@ -110,9 +110,9 @@ export default function DeviceUsageHistory({ deviceId }: { deviceId: string }) {
         if (points && points.length > 0) {
           if (yMode === 'percentage') {
             const sum = points.reduce((acc, p) => acc + (p.percentage ?? 0), 0)
-            row[key] = sum / points.length
+            row[key] = Number(sum / points.length)
           } else {
-            row[key] = points.reduce((acc, p) => acc + Number(p.remaining ?? 0), 0)
+            row[key] = Number(points.reduce((acc, p) => acc + Number(p.remaining ?? 0), 0))
           }
         } else {
           row[key] = null
@@ -123,6 +123,11 @@ export default function DeviceUsageHistory({ deviceId }: { deviceId: string }) {
 
     return data
   }, [consumables, yMode, fromDate, toDate])
+
+  // Debug: log chartData to help inspect why lines aren't rendering
+  useEffect(() => {
+    console.debug('[DeviceUsageHistory] chartData', chartData)
+  }, [chartData])
 
   // For each consumable type determine whether it has any data in the current date range
   const hasDataPerType = useMemo(() => {
@@ -290,20 +295,26 @@ export default function DeviceUsageHistory({ deviceId }: { deviceId: string }) {
                             />
                             <ChartLegend verticalAlign="top" content={<ChartLegendContent />} />
 
-                            {consumables.map((c, i) =>
-                              hasDataPerType[i] && visibleTypes[i] ? (
+                            {consumables.map((c, i) => {
+                              if (!hasDataPerType[i] || !visibleTypes[i]) return null
+                              // resolve color from chartConfig safely
+                              const cfg = chartConfig[`c${i}` as keyof typeof chartConfig] as
+                                | { label?: string; color?: string }
+                                | undefined
+                              const strokeColor = cfg?.color ?? `hsl(var(--chart-${(i % 5) + 1}))`
+                              return (
                                 <Line
                                   key={c.consumableTypeId ?? i}
                                   type="monotone"
                                   dataKey={`c${i}`}
-                                  stroke={`var(--color-c${i})`}
+                                  stroke={strokeColor}
                                   strokeWidth={2}
-                                  dot={false}
+                                  dot={{ r: 3 }}
                                   connectNulls={true}
                                   name={c.consumableTypeName ?? `Item ${i + 1}`}
                                 />
-                              ) : null
-                            )}
+                              )
+                            })}
                           </LineChart>
                         </ChartContainer>
                       )
