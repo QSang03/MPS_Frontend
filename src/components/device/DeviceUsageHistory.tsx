@@ -89,27 +89,16 @@ export default function DeviceUsageHistory({ deviceId }: { deviceId: string }) {
   const chartData = useMemo(() => {
     if (!consumables || consumables.length === 0) return []
 
-    // Build a contiguous list of dates between fromDate and toDate (inclusive)
-    // so the chart X axis contains every day and series can be connected across
-    // missing dates using `connectNulls`.
-    const parseISODate = (s: string) => {
-      // Ensure time zone neutrality by parsing as local midnight
-      return new Date(`${s}T00:00:00`)
-    }
+    // gather all unique dates from all dataPoints
+    const dateSet = new Set<string>()
+    consumables.forEach((c) => {
+      c.series?.forEach((s) => s.dataPoints?.forEach((p) => dateSet.add(p.date)))
+    })
 
-    const start = parseISODate(fromDate)
-    const end = parseISODate(toDate)
-    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || start > end) {
-      return []
-    }
+    const dates = Array.from(dateSet).sort()
 
-    const dates: string[] = []
-    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-      const yyyy = d.getFullYear()
-      const mm = String(d.getMonth() + 1).padStart(2, '0')
-      const dd = String(d.getDate()).padStart(2, '0')
-      dates.push(`${yyyy}-${mm}-${dd}`)
-    }
+    // We'll carry-forward the last seen value per consumable so lines are connected
+    const lastSeen: (number | undefined)[] = consumables.map(() => undefined)
 
     // For each date, produce an object { date, c0: value, c1: value, ... }
     const data = dates.map((date) => {
@@ -119,44 +108,29 @@ export default function DeviceUsageHistory({ deviceId }: { deviceId: string }) {
         // collect all datapoints across all series of this consumable at this date
         const points =
           c.series?.flatMap((s) => (s.dataPoints ?? []).filter((p) => p.date === date)) ?? []
-        if (!points || points.length === 0) {
-          row[key] = null
-        } else {
+
+        if (points && points.length > 0) {
+          let value: number
           if (yMode === 'percentage') {
             // average percentage across series for that date
             const sum = points.reduce((acc, p) => acc + (p.percentage ?? 0), 0)
-            row[key] = sum / points.length
+            value = sum / points.length
           } else {
             // sum remaining across series for that date
-            const sum = points.reduce((acc, p) => acc + Number(p.remaining ?? 0), 0)
-            row[key] = sum
+            value = points.reduce((acc, p) => acc + Number(p.remaining ?? 0), 0)
           }
+          lastSeen[idx] = value
+          row[key] = value
+        } else {
+          // carry-forward previous value if present, otherwise leave null
+          row[key] = typeof lastSeen[idx] === 'number' ? lastSeen[idx] : null
         }
       })
       return row
     })
 
-    // Forward-fill (carry last known value forward) so lines connect across
-    // days that have no datapoints. We only fill after the first observed
-    // value for a series to avoid creating artificial leading values.
-    const filled = data.map((r) => ({ ...r }))
-    consumables.forEach((_, idx) => {
-      const key = `c${idx}`
-      let seen = false
-      let last: unknown = null
-      for (const row of filled) {
-        const v = row[key]
-        if (v !== null && v !== undefined) {
-          last = v
-          seen = true
-        } else if (seen) {
-          row[key] = last
-        }
-      }
-    })
-
-    return filled
-  }, [consumables, yMode, fromDate, toDate])
+    return data
+  }, [consumables, yMode])
 
   // For each consumable type determine whether it has any data in the current date range
   const hasDataPerType = useMemo(() => {
@@ -333,7 +307,6 @@ export default function DeviceUsageHistory({ deviceId }: { deviceId: string }) {
                                   stroke={`var(--color-c${i})`}
                                   strokeWidth={2}
                                   dot={false}
-                                  connectNulls={true}
                                   name={c.consumableTypeName ?? `Item ${i + 1}`}
                                 />
                               ) : null
