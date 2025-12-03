@@ -169,6 +169,19 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
     }
   }
 
+  // Auto-fetch monthly usage when the overview tab is active or when the
+  // date range / device changes. This mirrors the admin behavior so users
+  // see the monthly table immediately without clicking "Làm mới".
+  useEffect(() => {
+    if (activeTab !== 'overview') return
+    if (!deviceId) return
+    if (!usageFromMonth || !usageToMonth) return
+
+    // fire-and-forget: refetchMonthlyUsage handles loading state and errors
+    void refetchMonthlyUsage()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, deviceId, usageFromMonth, usageToMonth])
+
   useEffect(() => {
     let mounted = true
     const loadConsumables = async () => {

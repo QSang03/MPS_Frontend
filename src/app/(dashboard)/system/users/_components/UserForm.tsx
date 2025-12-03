@@ -31,6 +31,7 @@ import removeEmpty from '@/lib/utils/clean'
 import { getRolesForClient } from '@/lib/auth/data-actions'
 import { usersClientService } from '@/lib/api/services/users-client.service'
 import { useRoleAttributeSchema } from '@/lib/hooks/useRoleAttributeSchema'
+import { customersClientService } from '@/lib/api/services/customers-client.service'
 import type { User } from '@/types/users'
 
 type BackendDetails = {
@@ -84,6 +85,65 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
     () => roles.find((r) => r.id === selectedRoleId),
     [roles, selectedRoleId]
   )
+
+  // Watch selected customer and fetch its code to apply the role rules
+  const watchedCustomerId = useWatch({ control: form.control, name: 'customerId' })
+  const [watchedCustomerCode, setWatchedCustomerCode] = useState<string | null>(
+    initialData?.customer?.code ?? null
+  )
+
+  useEffect(() => {
+    let active = true
+    if (!watchedCustomerId) {
+      setTimeout(() => setWatchedCustomerCode(null), 0)
+      return
+    }
+    ;(async () => {
+      try {
+        const c = await customersClientService.getById(watchedCustomerId)
+        if (active) setWatchedCustomerCode(c?.code ?? null)
+      } catch {
+        if (active) setWatchedCustomerCode(null)
+      }
+    })()
+    return () => {
+      active = false
+    }
+  }, [watchedCustomerId])
+
+  // If the customer becomes non-SYS, ensure the selected role is within allowed set
+  useEffect(() => {
+    if (!watchedCustomerCode) return
+    const nonSys = watchedCustomerCode !== 'SYS'
+    if (!nonSys) {
+      // remove role field error if any
+      try {
+        form.clearErrors('roleId')
+      } catch {}
+      return
+    }
+    const allowedNonSys = new Set(['manager', 'user'])
+    const currentRole = form.getValues('roleId') || initialData?.roleId || ''
+    const roleObj = roles.find((r) => r.id === currentRole)
+    const allowed = roleObj
+      ? allowedNonSys.has(roleObj.id.toLowerCase()) || allowedNonSys.has(roleObj.name.toLowerCase())
+      : false
+    if (!allowed) {
+      // For create: clear the select and show a toast
+      if (mode === 'create') {
+        form.setValue('roleId', '')
+        toast.warning('Khách hàng không phải SYS, vui lòng chọn vai trò Manager hoặc User')
+      } else {
+        // For edit: set a validation error but keep the value for admins to correct
+        try {
+          form.setError('roleId', {
+            type: 'manual',
+            message: 'Vai trò không hợp lệ cho khách hàng hiện tại',
+          })
+        } catch {}
+      }
+    }
+  }, [watchedCustomerCode, roles, form, initialData?.roleId, mode])
 
   // Parse role attribute schema
   const { schema: attributeSchema, validate: validateAttributes } = useRoleAttributeSchema(
@@ -299,17 +359,57 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
     if (mode === 'create') {
       createMutation.mutate(payload as UserFormData)
     } else {
+      // Prevent saving if role is not allowed after switching customer from SYS to non-SYS
+      if (
+        mode === 'edit' &&
+        initialData?.customer?.code === 'SYS' &&
+        watchedCustomerCode &&
+        watchedCustomerCode !== 'SYS'
+      ) {
+        const currentRole = (payload as UserFormData).roleId || initialData?.roleId
+        const allowedNonSys = new Set(['manager', 'user'])
+        const allowed = roles.some(
+          (r) =>
+            r.id === currentRole &&
+            (allowedNonSys.has(r.id.toLowerCase()) || allowedNonSys.has(r.name.toLowerCase()))
+        )
+        if (!allowed) {
+          toast.error(
+            'Vai trò hiện tại không hợp lệ khi chuyển từ SYS sang khách hàng khác. Vui lòng chọn Manager hoặc User.'
+          )
+          return
+        }
+      }
       updateMutation.mutate(payload as UserFormData)
     }
   }
 
   const isPending = createMutation.isPending || updateMutation.isPending
 
+  // Determine if role editing/saving should be blocked when switching from SYS to non-SYS
+  const initialCustomerCode = initialData?.customer?.code ?? null
+  const switchedFromSysToNonSys =
+    mode === 'edit' &&
+    initialCustomerCode === 'SYS' &&
+    watchedCustomerCode &&
+    watchedCustomerCode !== 'SYS'
+  const allowedNonSys = new Set(['manager', 'user'])
+  // current role id (from form or initial data)
+  const currentRoleId = selectedRoleId || initialData?.roleId || ''
+  const currentRoleObj = roles.find((r) => r.id === currentRoleId)
+  const currentRoleAllowedForNonSys = currentRoleObj
+    ? allowedNonSys.has(currentRoleObj.id.toLowerCase()) ||
+      allowedNonSys.has(currentRoleObj.name.toLowerCase())
+    : false
+  const blockSaveDueToRoleMismatch = switchedFromSysToNonSys && !currentRoleAllowedForNonSys
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         {/* Top-level error summary (show server/general + field errors) */}
-        {serverError || Object.keys(form.formState.errors).length > 0 ? (
+        {serverError ||
+        Object.keys(form.formState.errors).length > 0 ||
+        blockSaveDueToRoleMismatch ? (
           <div className="border-destructive/60 bg-destructive/10 text-destructive rounded border-2 p-3 text-sm">
             {serverError && <div className="mb-1 font-medium">{serverError}</div>}
             <ul className="list-disc pl-5">
@@ -317,6 +417,12 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
                 <li key={k}>{String(v?.message ?? k)}</li>
               ))}
             </ul>
+            {blockSaveDueToRoleMismatch ? (
+              <div className="mt-2 text-sm">
+                <strong>Cảnh báo:</strong> Vai trò hiện tại không hợp lệ khi chuyển từ khách hàng
+                SYS sang khách hàng khác. Vui lòng chọn vai trò Manager hoặc User để lưu.
+              </div>
+            ) : null}
           </div>
         ) : null}
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -377,40 +483,62 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
           <FormField
             control={form.control}
             name="roleId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Vai trò</FormLabel>
-                <Select
-                  onValueChange={(v) => field.onChange(v === '__empty' ? '' : v)}
-                  defaultValue={field.value}
-                  disabled={isPending}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Chọn vai trò" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {isLoadingRoles ? (
-                      <SelectItem value="loading" disabled>
-                        Đang tải vai trò...
-                      </SelectItem>
-                    ) : roles.length > 0 ? (
-                      roles.map((role) => (
-                        <SelectItem key={role.id} value={role.id}>
-                          {role.name}
+            render={({ field }) => {
+              const isCreateWithoutCustomer = mode === 'create' && !watchedCustomerId
+              const nonSysOnly = watchedCustomerCode && watchedCustomerCode !== 'SYS'
+              const allowedNonSys = new Set(['manager', 'user'])
+              const isRoleAllowed = (r: { id: string; name: string }) =>
+                allowedNonSys.has(r.id.toLowerCase()) || allowedNonSys.has(r.name.toLowerCase())
+
+              // Build allowed options
+              const roleOptions = roles.filter((r) => {
+                if (nonSysOnly) return isRoleAllowed(r)
+                return true
+              })
+
+              return (
+                <FormItem>
+                  <FormLabel>Vai trò</FormLabel>
+                  <Select
+                    onValueChange={(v) => field.onChange(v === '__empty' ? '' : v)}
+                    defaultValue={field.value}
+                    disabled={isPending || isCreateWithoutCustomer}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Chọn vai trò" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {isLoadingRoles ? (
+                        <SelectItem value="loading" disabled>
+                          Đang tải vai trò...
                         </SelectItem>
-                      ))
-                    ) : (
-                      <>
-                        <SelectItem value="__empty">Không có vai trò</SelectItem>
-                      </>
-                    )}
-                  </SelectContent>
-                </Select>
-                <FormDescription>Vai trò của người dùng trong hệ thống</FormDescription>
-              </FormItem>
-            )}
+                      ) : roleOptions.length > 0 ? (
+                        roleOptions.map((role) => (
+                          <SelectItem key={role.id} value={role.id}>
+                            {role.name}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <>
+                          <SelectItem value="__empty">Không có vai trò</SelectItem>
+                        </>
+                      )}
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>
+                    Vai trò của người dùng trong hệ thống
+                    {mode === 'create' && !watchedCustomerId ? (
+                      <span className="text-destructive">
+                        {' '}
+                        - Vui lòng chọn Mã khách hàng trước khi chọn vai trò
+                      </span>
+                    ) : null}
+                  </FormDescription>
+                </FormItem>
+              )
+            }}
           />
 
           {/* Department selection removed from system user form per request */}
@@ -428,7 +556,7 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
         )}
 
         <div className="flex gap-4">
-          <Button type="submit" disabled={isPending}>
+          <Button type="submit" disabled={Boolean(isPending || blockSaveDueToRoleMismatch)}>
             {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {mode === 'create' ? 'Tạo người dùng' : 'Cập nhật người dùng'}
           </Button>
