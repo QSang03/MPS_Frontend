@@ -151,16 +151,18 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
     setMonthlyUsageLoading(true)
     setMonthlyUsageError(null)
     try {
-      const res = await internalApiClient.get<{
-        items: MonthlyUsagePagesItem[]
-      }>(
-        `/api/reports/usage/pages?deviceId=${encodeURIComponent(
-          deviceId
-        )}&fromMonth=${encodeURIComponent(usageFromMonth)}&toMonth=${encodeURIComponent(
-          usageToMonth
-        )}`
+      const params = new URLSearchParams({
+        from: usageFromMonth,
+        to: usageToMonth,
+        deviceId,
+      })
+
+      // Do NOT include customerId — backend derives customer from deviceId
+      const res = await internalApiClient.get(
+        `/api/reports/usage/pages/monthly?${params.toString()}`
       )
-      setMonthlyUsageItems(res?.data?.items ?? [])
+      // system API returns { data: { items: [...] } } inside the response data
+      setMonthlyUsageItems(res?.data?.data?.items ?? [])
     } catch (err) {
       console.error('Failed to load monthly usage (user view)', err)
       setMonthlyUsageError('Đã xảy ra lỗi khi tải dữ liệu')
@@ -507,9 +509,7 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
             <CardContent>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <div className="rounded-xl border border-cyan-200 bg-gradient-to-br from-cyan-50 to-blue-50 p-4">
-                  <p className="text-muted-foreground mb-2 text-sm font-medium">
-                    Tổng số trang đã in
-                  </p>
+                  <p className="text-muted-foreground mb-2 text-sm font-medium">Tổng trang đã in</p>
                   <p className="text-3xl font-bold text-cyan-700">
                     {
                       formatPageCount(

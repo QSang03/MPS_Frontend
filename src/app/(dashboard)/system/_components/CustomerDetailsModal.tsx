@@ -275,7 +275,7 @@ export function CustomerDetailsModal({ open, onOpenChange, month }: CustomerDeta
                       <CardHeader className="pb-3">
                         <CardTitle className="flex items-center gap-2 text-sm">
                           <FileText className="h-4 w-4" />
-                          Tổng số trang in
+                          Tổng trang in
                         </CardTitle>
                       </CardHeader>
                       <CardContent>

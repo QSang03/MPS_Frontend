@@ -73,6 +73,35 @@ export function EditUserModal({
     },
   })
 
+  // Watch selected customerId and determine its code via passed mapping
+  const watchedCustomerId = useWatch({ control: form.control, name: 'customerId' })
+  const watchedCustomerCode = useMemo(() => {
+    if (!watchedCustomerId) return null
+    const found = Object.entries(customerCodeToId).find(([, id]) => id === watchedCustomerId)
+    return found ? found[0] : null
+  }, [watchedCustomerId, customerCodeToId])
+
+  // compute whether we switched from SYS to non-SYS and whether current role is allowed
+  const initialCustomerCode = user?.customer?.code ?? null
+  const switchedFromSysToNonSys =
+    initialCustomerCode === 'SYS' && watchedCustomerCode && watchedCustomerCode !== 'SYS'
+  const allowedNonSys = useMemo(() => new Set(['manager', 'user']), [])
+  const nonSysOnly = watchedCustomerCode && watchedCustomerCode !== 'SYS'
+  const roleOptions = useMemo(() => {
+    if (!nonSysOnly) return roles
+    return roles.filter(
+      (r) => allowedNonSys.has(r.id.toLowerCase()) || allowedNonSys.has(r.name.toLowerCase())
+    )
+  }, [roles, nonSysOnly, allowedNonSys])
+  const currentRoleId = () => form.getValues('roleId') || user?.roleId || ''
+  const currentRoleObj = () => roles.find((r) => r.id === currentRoleId())
+  const currentRoleAllowedForNonSys = () => {
+    const r = currentRoleObj()
+    if (!r) return false
+    return allowedNonSys.has(r.id.toLowerCase()) || allowedNonSys.has(r.name.toLowerCase())
+  }
+  const blockSaveDueToRoleMismatch = switchedFromSysToNonSys && !currentRoleAllowedForNonSys()
+
   // Watch roleId so we can parse attribute schema
   const selectedRoleId = useWatch({ control: form.control, name: 'roleId' })
   const selectedRole = useMemo(
@@ -90,6 +119,37 @@ export function EditUserModal({
       loadRoles()
     }
   }, [isOpen])
+
+  // When watchedCustomerCode changes, enforce role restrictions by clearing or setting errors
+  useEffect(() => {
+    if (!watchedCustomerCode) return
+    const nonSys = watchedCustomerCode !== 'SYS'
+    if (!nonSys) {
+      // clear any role errors
+      try {
+        form.clearErrors('roleId')
+      } catch {}
+      return
+    }
+    // if the current role is not allowed, in edit mode set an error and block save, in create we could clear
+    const r = roles.find((ro) => ro.id === (form.getValues('roleId') || user?.roleId || ''))
+    const allowed = r
+      ? allowedNonSys.has(r.id.toLowerCase()) || allowedNonSys.has(r.name.toLowerCase())
+      : false
+    if (!allowed) {
+      // Set a form error so the user sees what's wrong (don't auto-clear on edit)
+      try {
+        form.setError('roleId', {
+          type: 'manual',
+          message: 'Vai trò không hợp lệ cho khách hàng hiện tại',
+        })
+      } catch {}
+    } else {
+      try {
+        form.clearErrors('roleId')
+      } catch {}
+    }
+  }, [watchedCustomerCode, roles, allowedNonSys, form, user?.roleId])
 
   // Update form when user changes
   useEffect(() => {
@@ -145,6 +205,15 @@ export function EditUserModal({
         // only include attributes when the role defines a schema
         attributes: attributeSchema ? attributes : undefined,
       })
+
+      // Validate role restriction when switching from SYS to non-SYS
+      if (switchedFromSysToNonSys && !currentRoleAllowedForNonSys()) {
+        toast.error(
+          'Vai trò hiện tại không hợp lệ khi chuyển từ SYS sang khách hàng khác. Vui lòng chuyển vai trò về Manager hoặc User.'
+        )
+        setIsLoading(false)
+        return
+      }
 
       // Update user
       const result = await updateUserForClient(user.id, payload)
@@ -214,7 +283,7 @@ export function EditUserModal({
             <Button
               type="submit"
               form="edit-user-form"
-              disabled={isLoading}
+              disabled={Boolean(isLoading || blockSaveDueToRoleMismatch)}
               className="min-w-[120px] bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
             >
               {isLoading ? (
@@ -230,6 +299,18 @@ export function EditUserModal({
         }
       >
         <Form {...form}>
+          {blockSaveDueToRoleMismatch ? (
+            <div className="border-destructive/60 bg-destructive/10 text-destructive rounded border-2 p-3 text-sm">
+              <div className="mb-1 font-medium">
+                Cảnh báo: Vai trò hiện tại không hợp lệ khi chuyển từ khách hàng{' '}
+                <strong>SYS</strong> sang khách hàng khác.
+              </div>
+              <div className="text-sm">
+                Vui lòng chọn vai trò <strong>Manager</strong> hoặc <strong>User</strong> để tiếp
+                tục.
+              </div>
+            </div>
+          ) : null}
           <form id="edit-user-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
             {/* Email Field */}
             <FormField
@@ -266,14 +347,18 @@ export function EditUserModal({
                       <Shield className="h-4 w-4 text-pink-600" />
                       Vai trò *
                     </FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      disabled={!watchedCustomerId}
+                    >
                       <FormControl>
                         <SelectTrigger className="h-10 rounded-lg border-2 border-gray-200 transition-all focus:border-pink-500 focus:ring-2 focus:ring-pink-200">
                           <SelectValue placeholder="Chọn vai trò" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {roles.map((role) => (
+                        {roleOptions.map((role) => (
                           <SelectItem key={role.id} value={role.id}>
                             <div className="flex items-center gap-2">
                               <span className="font-semibold">{role.name}</span>

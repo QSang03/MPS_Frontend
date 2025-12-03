@@ -123,7 +123,7 @@ export function KPICards({ kpis, isLoading, onRevenueClick, onContractsClick }: 
   const secondaryMetrics = [
     {
       id: 'pages',
-      title: 'TỔNG SỐ TRANG IN',
+      title: 'TỔNG TRANG IN',
       value: (kpis.totalBWPages ?? 0) + (kpis.totalColorPages ?? 0),
       displayValue: formatNumber((kpis.totalBWPages ?? 0) + (kpis.totalColorPages ?? 0)),
       subtitle: `${formatNumber(kpis.totalBWPages ?? 0)} BW, ${formatNumber(kpis.totalColorPages ?? 0)} màu`,

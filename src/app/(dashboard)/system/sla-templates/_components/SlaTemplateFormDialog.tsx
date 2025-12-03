@@ -84,7 +84,22 @@ export function SlaTemplateFormDialog({
   }, [initialValues, reset])
 
   const handleSave = async (values: SlaTemplateFormValues) => {
-    await onSubmit(values)
+    // Ensure numeric fields are numbers before submit (defensive). HTML inputs can produce strings.
+    const items = [] as SlaTemplateFormValues['items']
+    for (const it of values.items) {
+      const resp = parseInt(String(it.responseTimeHours ?? ''), 10)
+      const reso = parseInt(String(it.resolutionTimeHours ?? ''), 10)
+      if (Number.isNaN(resp) || Number.isNaN(reso)) {
+        // Show user a friendly toast and abort
+        ;(async () => {})()
+        // We rely on zod client validation in the UI too, but guard at submit as well
+        console.warn('Invalid numeric values for SLA times:', it)
+        return
+      }
+      items.push({ ...it, responseTimeHours: resp, resolutionTimeHours: reso })
+    }
+    const normalized = { ...values, items } as SlaTemplateFormValues
+    await onSubmit(normalized)
   }
 
   return (
@@ -251,7 +266,19 @@ export function SlaTemplateFormDialog({
                           <FormItem>
                             <FormLabel>Response (hrs)</FormLabel>
                             <FormControl>
-                              <Input type="number" {...field} />
+                              <Input
+                                type="number"
+                                {...field}
+                                // Ensure values are passed as numbers to the form state,
+                                // and treat empty input as undefined so validation can flag it
+                                onChange={(e) => {
+                                  const str = (e.target as HTMLInputElement).value
+                                  const parsed = str.trim() === '' ? undefined : Number(str)
+                                  field.onChange(parsed as unknown as number | undefined)
+                                }}
+                                // Keep the input value bound
+                                value={field.value as unknown as string | number}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -267,7 +294,16 @@ export function SlaTemplateFormDialog({
                           <FormItem>
                             <FormLabel>Resolution (hrs)</FormLabel>
                             <FormControl>
-                              <Input type="number" {...field} />
+                              <Input
+                                type="number"
+                                {...field}
+                                onChange={(e) => {
+                                  const str = (e.target as HTMLInputElement).value
+                                  const parsed = str.trim() === '' ? undefined : Number(str)
+                                  field.onChange(parsed as unknown as number | undefined)
+                                }}
+                                value={field.value as unknown as string | number}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>

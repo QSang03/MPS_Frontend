@@ -73,7 +73,7 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
         ? !totalPageCountA4.trim() && !totalColorPagesA4.trim() && !totalBlackWhitePagesA4.trim()
         : !totalPageCount.trim() && !totalColorPages.trim() && !totalBlackWhitePages.trim()
     ) {
-      toast.error('Vui lòng nhập ít nhất một giá trị trang (A4 hoặc tổng trang)')
+      toast.error('Vui lòng nhập ít nhất một giá trị counter (A4 hoặc tổng counter)')
       return
     }
 
@@ -97,7 +97,7 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
       (v) => v !== undefined && (Number.isNaN(v) || v < 0)
     )
     if (invalidNumber) {
-      toast.error('Các giá trị trang phải là số nguyên không âm')
+      toast.error('Các giá trị counter phải là số nguyên không âm')
       return
     }
 
@@ -117,27 +117,27 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
       if (finalColor !== undefined && finalBw !== undefined) {
         if (finalColor + finalBw !== finalTotal) {
           toast.error(
-            `Tổng trang màu (${finalColor}) + đen trắng (${finalBw}) phải bằng tổng (${finalTotal})`
+            `Tổng counter màu (${finalColor}) + đen trắng (${finalBw}) phải bằng tổng (${finalTotal})`
           )
           return
         }
       } else if (finalColor !== undefined && finalBw === undefined) {
         const computedBw = finalTotal - finalColor
         if (computedBw < 0) {
-          toast.error('Giá trị trang không hợp lệ: trang màu lớn hơn tổng trang')
+          toast.error('Giá trị counter không hợp lệ: counter màu lớn hơn tổng counter')
           return
         }
         finalBw = computedBw
         // show a gentle info so user knows we computed it
-        toast('Tự động điền Tổng trang đen trắng = ' + computedBw)
+        toast('Tự động điền Tổng counter đen trắng = ' + computedBw)
       } else if (finalBw !== undefined && finalColor === undefined) {
         const computedColor = finalTotal - finalBw
         if (computedColor < 0) {
-          toast.error('Giá trị trang không hợp lệ: trang đen trắng lớn hơn tổng trang')
+          toast.error('Giá trị counter không hợp lệ: counter đen trắng lớn hơn tổng counter')
           return
         }
         finalColor = computedColor
-        toast('Tự động điền Tổng trang màu = ' + computedColor)
+        toast('Tự động điền Tổng counter màu = ' + computedColor)
       }
     }
 
@@ -146,26 +146,26 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
       if (finalColorA4 !== undefined && finalBwA4 !== undefined) {
         if (finalColorA4 + finalBwA4 !== finalTotalA4) {
           toast.error(
-            `Tổng trang màu (A4) (${finalColorA4}) + đen trắng (A4) (${finalBwA4}) phải bằng tổng (A4) (${finalTotalA4})`
+            `Tổng counter màu (A4) (${finalColorA4}) + đen trắng (A4) (${finalBwA4}) phải bằng tổng (A4) (${finalTotalA4})`
           )
           return
         }
       } else if (finalColorA4 !== undefined && finalBwA4 === undefined) {
         const computedBw = finalTotalA4 - finalColorA4
         if (computedBw < 0) {
-          toast.error('Giá trị trang (A4) không hợp lệ: trang màu lớn hơn tổng trang')
+          toast.error('Giá trị counter (A4) không hợp lệ: counter màu lớn hơn tổng counter')
           return
         }
         finalBwA4 = computedBw
-        toast('Tự động điền Tổng trang đen trắng (A4) = ' + computedBw)
+        toast('Tự động điền Tổng counter đen trắng (A4) = ' + computedBw)
       } else if (finalBwA4 !== undefined && finalColorA4 === undefined) {
         const computedColor = finalTotalA4 - finalBwA4
         if (computedColor < 0) {
-          toast.error('Giá trị trang (A4) không hợp lệ: trang đen trắng lớn hơn tổng trang')
+          toast.error('Giá trị counter (A4) không hợp lệ: counter đen trắng lớn hơn tổng counter')
           return
         }
         finalColorA4 = computedColor
-        toast('Tự động điền Tổng trang màu (A4) = ' + computedColor)
+        toast('Tự động điền Tổng counter màu (A4) = ' + computedColor)
       }
     } else {
       // A4 total not provided. If color and bw provided, set total to sum so backend gets full info.
@@ -355,7 +355,7 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
           {!useA4 && (
             <>
               <div>
-                <Label className="text-sm font-semibold">Tổng trang màu</Label>
+                <Label className="text-sm font-semibold">Tổng counter màu</Label>
                 <Input
                   value={totalColorPages}
                   onChange={(e) => handleColorChangeNonA4(e.target.value)}
@@ -367,7 +367,7 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
               </div>
 
               <div>
-                <Label className="text-sm font-semibold">Tổng trang đen trắng</Label>
+                <Label className="text-sm font-semibold">Tổng counter đen trắng</Label>
                 <Input
                   value={totalBlackWhitePages}
                   onChange={(e) => handleBwChangeNonA4(e.target.value)}
@@ -379,7 +379,7 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
               </div>
 
               <div>
-                <Label className="text-sm font-semibold">Tổng số trang</Label>
+                <Label className="text-sm font-semibold">Tổng counter</Label>
                 <Input
                   value={totalPageCount}
                   onChange={(e) => handleTotalChangeNonA4(e.target.value)}
@@ -396,7 +396,7 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
           {useA4 && (
             <>
               <div>
-                <Label className="text-sm font-semibold">Tổng trang màu (A4)</Label>
+                <Label className="text-sm font-semibold">Tổng counter màu (A4)</Label>
                 <Input
                   value={totalColorPagesA4}
                   onChange={(e) => handleColorChange(e.target.value)}
@@ -408,7 +408,7 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
               </div>
 
               <div>
-                <Label className="text-sm font-semibold">Tổng trang đen trắng (A4)</Label>
+                <Label className="text-sm font-semibold">Tổng counter đen trắng (A4)</Label>
                 <Input
                   value={totalBlackWhitePagesA4}
                   onChange={(e) => handleBwChange(e.target.value)}
@@ -420,7 +420,7 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
               </div>
 
               <div>
-                <Label className="text-sm font-semibold">Tổng số trang (A4)</Label>
+                <Label className="text-sm font-semibold">Tổng counter (A4)</Label>
                 <Input
                   value={totalPageCountA4}
                   onChange={(e) => handleTotalChange(e.target.value)}

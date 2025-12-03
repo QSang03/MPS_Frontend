@@ -166,21 +166,21 @@ export function A4EquivalentUsageHistory({
       : [
           {
             accessorKey: 'totalPageCount',
-            header: 'Total',
+            header: 'Tổng trang',
             cell: ({ getValue }: CellContext<Row, unknown>) => (
               <div className="text-right font-medium">{fmt(getValue())}</div>
             ),
           },
           {
             accessorKey: 'totalColorPages',
-            header: 'Color',
+            header: 'Trang màu',
             cell: ({ getValue }: CellContext<Row, unknown>) => (
               <div className="text-right font-medium">{fmt(getValue())}</div>
             ),
           },
           {
             accessorKey: 'totalBlackWhitePages',
-            header: 'BW',
+            header: 'Trang đen trắng',
             cell: ({ getValue }: CellContext<Row, unknown>) => (
               <div className="text-right font-medium">{fmt(getValue())}</div>
             ),
@@ -192,21 +192,21 @@ export function A4EquivalentUsageHistory({
       : [
           {
             accessorKey: 'totalPageCountA4',
-            header: 'Total (A4)',
+            header: 'Tổng trang (A4)',
             cell: ({ getValue }: CellContext<Row, unknown>) => (
               <div className="text-right font-medium">{fmt(getValue())}</div>
             ),
           },
           {
             accessorKey: 'totalColorPagesA4',
-            header: 'Color (A4)',
+            header: 'Trang màu (A4)',
             cell: ({ getValue }: CellContext<Row, unknown>) => (
               <div className="text-right font-medium">{fmt(getValue())}</div>
             ),
           },
           {
             accessorKey: 'totalBlackWhitePagesA4',
-            header: 'BW (A4)',
+            header: 'Trang đen trắng (A4)',
             cell: ({ getValue }: CellContext<Row, unknown>) => (
               <div className="text-right font-medium">{fmt(getValue())}</div>
             ),
@@ -214,7 +214,7 @@ export function A4EquivalentUsageHistory({
         ]),
     {
       accessorKey: 'recordedAt',
-      header: 'Recorded At',
+      header: 'Thời gian ghi nhận',
       cell: (ctx) => (
         <div className="text-right text-slate-500">
           {ctx.getValue()
@@ -225,7 +225,7 @@ export function A4EquivalentUsageHistory({
     },
     {
       accessorKey: 'createdAt',
-      header: 'Created',
+      header: 'Tạo tại',
       cell: (ctx) => (
         <div className="text-right text-slate-500">
           {ctx.getValue()
