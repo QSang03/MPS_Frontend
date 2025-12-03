@@ -439,9 +439,21 @@ export function AlertsSummary({
                       {alerts!.consumableWarnings!.items!.map((it, i) => (
                         <li key={i} className="flex items-start justify-between gap-4">
                           <div>
-                            <div className="text-sm font-medium">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                try {
+                                  if (it.deviceId) router.push(`/system/devices/${it.deviceId}`)
+                                } catch (err) {
+                                  console.error('Navigation failed for consumable modal item', err)
+                                }
+                              }}
+                              className="text-left text-sm font-medium hover:underline"
+                              aria-label={it.deviceName ?? it.deviceId}
+                            >
                               {it.deviceName ?? it.deviceId}
-                            </div>
+                            </button>
                             <div className="text-xs text-gray-500">
                               {it.consumableTypeName ? `${it.consumableTypeName} • ` : ''}
                               {it.remainingPercentage !== undefined

@@ -316,6 +316,25 @@ export default function AnalyticsPageClient() {
     return out
   }
 
+  // Build a time argument object that only includes the appropriate keys
+  // based on the selected mode. The backend expects exactly one of period, from/to, or year.
+  function buildTimeForMode(
+    mode: TimeRangeMode,
+    period?: string,
+    from?: string,
+    to?: string,
+    year?: string
+  ): TimeFilter {
+    const out: TimeFilter = {}
+    if (mode === 'period' && period) out.period = period
+    if (mode === 'range' && from && to) {
+      out.from = from
+      out.to = to
+    }
+    if (mode === 'year' && year) out.year = year
+    return out
+  }
+
   // Load Customer Detail
   const loadCustomerDetail = useCallback(
     async (
@@ -510,23 +529,25 @@ export default function AnalyticsPageClient() {
 
   // Load multiple sections concurrently; report all settled (top-level helper)
   const loadAllConcurrent = async (time?: {
+    mode?: TimeRangeMode
     period?: string
     from?: string
     to?: string
     year?: string
   }) => {
+    const mode = time?.mode ?? globalMode
     const period = time?.period ?? globalPeriod
     const from = time?.from ?? globalFrom
     const to = time?.to ?? globalTo
     const year = time?.year ?? globalYear
+    const timeArg = buildTimeForMode(mode, period, from, to, year)
     const promises: Promise<unknown>[] = []
-    promises.push(loadEnterpriseProfit({ period, from, to, year }))
-    promises.push(loadCustomersProfit({ period, from, to, year }))
-    promises.push(loadConsumableLifecycle({ period, from, to, year }))
+    promises.push(loadEnterpriseProfit(timeArg))
+    promises.push(loadCustomersProfit(timeArg))
+    promises.push(loadConsumableLifecycle(timeArg))
     // only load details or device profitability if selected
-    if (selectedCustomerId)
-      promises.push(loadCustomerDetail(selectedCustomerId, { period, from, to, year }))
-    if (selectedDeviceId) promises.push(loadDeviceProfitability({ period, from, to, year }))
+    if (selectedCustomerId) promises.push(loadCustomerDetail(selectedCustomerId, timeArg))
+    if (selectedDeviceId) promises.push(loadDeviceProfitability(timeArg))
     const results = await Promise.allSettled(promises)
     return results
   }
@@ -560,7 +581,7 @@ export default function AnalyticsPageClient() {
 
     void (async () => {
       try {
-        await loadAllConcurrent({ period: currentMonth })
+        await loadAllConcurrent({ mode: 'period', period: currentMonth })
       } catch {
         // ignore - load functions handle errors
       }
@@ -683,6 +704,7 @@ export default function AnalyticsPageClient() {
 
                 // run concurrent loads
                 void loadAllConcurrent({
+                  mode: globalMode,
                   period: globalPeriod,
                   from: globalFrom,
                   to: globalTo,
@@ -722,12 +744,9 @@ export default function AnalyticsPageClient() {
             </div>
             <Button
               onClick={() =>
-                void loadEnterpriseProfit({
-                  period: globalPeriod,
-                  from: globalFrom,
-                  to: globalTo,
-                  year: globalYear,
-                })
+                void loadEnterpriseProfit(
+                  buildTimeForMode(globalMode, globalPeriod, globalFrom, globalTo, globalYear)
+                )
               }
               disabled={enterpriseLoading}
             >
@@ -853,12 +872,9 @@ export default function AnalyticsPageClient() {
             </div>
             <Button
               onClick={() =>
-                void loadCustomersProfit({
-                  period: globalPeriod,
-                  from: globalFrom,
-                  to: globalTo,
-                  year: globalYear,
-                })
+                void loadCustomersProfit(
+                  buildTimeForMode(globalMode, globalPeriod, globalFrom, globalTo, globalYear)
+                )
               }
               disabled={customersLoading}
             >
@@ -926,12 +942,16 @@ export default function AnalyticsPageClient() {
                           size="sm"
                           onClick={() => {
                             // load detail immediately for this customer using the global filter
-                            void loadCustomerDetail(c.customerId, {
-                              period: globalPeriod,
-                              from: globalFrom,
-                              to: globalTo,
-                              year: globalYear,
-                            })
+                            void loadCustomerDetail(
+                              c.customerId,
+                              buildTimeForMode(
+                                globalMode,
+                                globalPeriod,
+                                globalFrom,
+                                globalTo,
+                                globalYear
+                              )
+                            )
                           }}
                         >
                           Chi tiết
@@ -977,12 +997,10 @@ export default function AnalyticsPageClient() {
               </div>
               <Button
                 onClick={() =>
-                  void loadCustomerDetail(undefined, {
-                    period: globalPeriod,
-                    from: globalFrom,
-                    to: globalTo,
-                    year: globalYear,
-                  })
+                  void loadCustomerDetail(
+                    undefined,
+                    buildTimeForMode(globalMode, globalPeriod, globalFrom, globalTo, globalYear)
+                  )
                 }
                 disabled={customerDetailLoading}
               >
@@ -1110,12 +1128,9 @@ export default function AnalyticsPageClient() {
 
               <Button
                 onClick={() =>
-                  void loadDeviceProfitability({
-                    period: globalPeriod,
-                    from: globalFrom,
-                    to: globalTo,
-                    year: globalYear,
-                  })
+                  void loadDeviceProfitability(
+                    buildTimeForMode(globalMode, globalPeriod, globalFrom, globalTo, globalYear)
+                  )
                 }
                 disabled={deviceLoading}
               >
@@ -1271,12 +1286,9 @@ export default function AnalyticsPageClient() {
             />
             <Button
               onClick={() =>
-                void loadConsumableLifecycle({
-                  period: globalPeriod,
-                  from: globalFrom,
-                  to: globalTo,
-                  year: globalYear,
-                })
+                void loadConsumableLifecycle(
+                  buildTimeForMode(globalMode, globalPeriod, globalFrom, globalTo, globalYear)
+                )
               }
               disabled={consumableLoading}
             >
