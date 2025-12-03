@@ -7,6 +7,7 @@ import { NotificationStatus } from '@/types/models/notification'
 import { cn } from '@/lib/utils'
 import { CheckCircle2, Circle, Check } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import Cookies from 'js-cookie'
 import { Button } from '@/components/ui/button'
 
 interface NotificationItemProps {
@@ -27,20 +28,43 @@ export function NotificationItem({ notification, onMarkAsRead }: NotificationIte
     return match ? match[0] : null
   }
 
+  const getIsDefaultCustomer = (): boolean => {
+    try {
+      const cookieFlag = Cookies.get('mps_is_default_customer')
+      if (typeof cookieFlag !== 'undefined') return cookieFlag === 'true'
+      if (typeof window !== 'undefined') {
+        try {
+          const stored = localStorage.getItem('mps_is_default_customer')
+          if (stored !== null) return stored === 'true'
+        } catch {
+          // ignore
+        }
+      }
+    } catch (err) {
+      console.error('Failed to read isDefaultCustomer flag:', err)
+    }
+    return false
+  }
+
   const getTarget = (): string => {
     // Some API payloads include `metadata` on notifications. The static `Notification` type doesn't declare it,
     // so create a local typed view that may include metadata to avoid `any`.
     const n = notification as Notification & { metadata?: NotificationMetadata }
     const id = n.metadata?.requestId ?? n.alertId ?? extractServiceRequestId(n.message ?? n.title)
     const type = n.metadata?.type
-    if (!id) return '/system/notifications'
-    if (type === 'SERVICE') return `/system/service-requests/${id}`
-    if (type === 'PURCHASE') return `/system/purchase-requests/${id}`
+    const isDefaultCustomer = getIsDefaultCustomer()
+    if (!id) return isDefaultCustomer ? '/system/notifications' : '/user/my-requests'
+    if (type === 'SERVICE')
+      return isDefaultCustomer ? `/system/service-requests/${id}` : `/user/my-requests/${id}`
+    if (type === 'PURCHASE')
+      return isDefaultCustomer ? `/system/purchase-requests/${id}` : `/user/my-requests/${id}`
     const lower =
       (notification.title ?? '').toLowerCase() + ' ' + (notification.message ?? '').toLowerCase()
-    if (lower.includes('service')) return `/system/service-requests/${id}`
-    if (lower.includes('purchase')) return `/system/purchase-requests/${id}`
-    return '/system/notifications'
+    if (lower.includes('service'))
+      return isDefaultCustomer ? `/system/service-requests/${id}` : `/user/my-requests/${id}`
+    if (lower.includes('purchase'))
+      return isDefaultCustomer ? `/system/purchase-requests/${id}` : `/user/my-requests/${id}`
+    return isDefaultCustomer ? '/system/notifications' : '/user/my-requests'
   }
 
   const handleClick = async () => {
