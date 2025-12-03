@@ -93,6 +93,7 @@ const statusBadgeMap: Record<ServiceRequestStatus, string> = {
   [ServiceRequestStatus.APPROVED]: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   [ServiceRequestStatus.RESOLVED]: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   [ServiceRequestStatus.CLOSED]: 'bg-slate-100 text-slate-600 border-slate-200',
+  [ServiceRequestStatus.CANCELLED]: 'bg-rose-50 text-rose-700 border-rose-200',
 }
 
 export function ServiceRequestDetailClient({ id, session }: Props) {

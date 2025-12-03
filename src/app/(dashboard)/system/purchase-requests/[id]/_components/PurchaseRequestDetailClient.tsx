@@ -29,6 +29,7 @@ import { purchaseRequestsClientService } from '@/lib/api/services/purchase-reque
 import { PurchaseRequestStatus, Priority } from '@/constants/status'
 import { PermissionGuard } from '@/components/shared/PermissionGuard'
 import { SearchableSelect } from '@/app/(dashboard)/system/policies/_components/RuleBuilder/SearchableSelect'
+import { getAllowedPurchaseTransitions } from '@/lib/utils/status-flow'
 import type { Session } from '@/lib/auth/session'
 import type { LucideIcon } from 'lucide-react'
 import {
@@ -45,6 +46,7 @@ import {
   CalendarDays,
   Activity,
   FileText,
+  Truck,
 } from 'lucide-react'
 import type { PurchaseRequest } from '@/types/models/purchase-request'
 import { cn } from '@/lib/utils/cn'
@@ -73,10 +75,11 @@ type TimelineEvent = {
 
 type TimelineEntry = TimelineEvent & { time: string }
 
-const statusOptions: { label: string; value: PurchaseRequestStatus }[] = [
+const allStatusOptions: { label: string; value: PurchaseRequestStatus }[] = [
   { label: 'Chờ duyệt', value: PurchaseRequestStatus.PENDING },
   { label: 'Đã duyệt', value: PurchaseRequestStatus.APPROVED },
   { label: 'Đã đặt hàng', value: PurchaseRequestStatus.ORDERED },
+  { label: 'Đang vận chuyển', value: PurchaseRequestStatus.IN_TRANSIT },
   { label: 'Đã nhận hàng', value: PurchaseRequestStatus.RECEIVED },
   { label: 'Đã hủy', value: PurchaseRequestStatus.CANCELLED },
 ]
@@ -85,6 +88,7 @@ const statusBadgeMap: Record<PurchaseRequestStatus, string> = {
   [PurchaseRequestStatus.PENDING]: 'bg-amber-50 text-amber-700 border-amber-200',
   [PurchaseRequestStatus.APPROVED]: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   [PurchaseRequestStatus.ORDERED]: 'bg-blue-50 text-blue-700 border-blue-200',
+  [PurchaseRequestStatus.IN_TRANSIT]: 'bg-purple-50 text-purple-700 border-purple-200',
   [PurchaseRequestStatus.RECEIVED]: 'bg-green-50 text-green-700 border-green-200',
   [PurchaseRequestStatus.CANCELLED]: 'bg-rose-50 text-rose-700 border-rose-200',
 }
@@ -163,6 +167,12 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
     },
   })
 
+  const availableStatusOptions = useMemo(() => {
+    if (!detail) return []
+    const allowed = getAllowedPurchaseTransitions(detail.status)
+    return allStatusOptions.filter((opt) => allowed.includes(opt.value))
+  }, [detail])
+
   if (isLoading) {
     return (
       <div className="space-y-4 p-6">
@@ -215,6 +225,13 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
         by: detail.orderedBy,
         icon: CalendarCheck,
         color: 'text-blue-600',
+      },
+      {
+        label: 'Đang vận chuyển',
+        time: detail.inTransitAt,
+        by: detail.inTransitBy,
+        icon: Truck,
+        color: 'text-purple-600',
       },
       {
         label: 'Đã nhận',
@@ -517,7 +534,7 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
                       {statusUpdating && <Loader2 className="ml-2 h-3 w-3 animate-spin" />}
                     </SelectTrigger>
                     <SelectContent>
-                      {statusOptions.map((option) => (
+                      {availableStatusOptions.map((option) => (
                         <SelectItem key={option.value} value={option.value}>
                           {option.label}
                         </SelectItem>

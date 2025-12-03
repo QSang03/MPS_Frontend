@@ -9,8 +9,32 @@ interface Props {
 }
 
 export function StatusStepper({ current }: Props) {
-  const steps = Object.values(SRS) as ServiceRequestStatus[]
+  // Define the success path explicitly
+  const steps = [SRS.OPEN, SRS.APPROVED, SRS.IN_PROGRESS, SRS.RESOLVED, SRS.CLOSED]
+
+  // If cancelled, we might want to show it, but for now let's just handle the success path.
+  // If current is CANCELLED, currentIndex will be -1.
   const currentIndex = steps.indexOf(current)
+
+  if (current === SRS.CANCELLED) {
+    return (
+      <div className="space-y-2">
+        <div className="text-sm font-semibold">Quy trình xử lý</div>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
+            <div className="flex flex-col items-center">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-rose-600 text-xs font-medium text-white">
+                ✕
+              </div>
+              <div className="text-muted-foreground mt-1 max-w-[70px] truncate text-center text-[10px]">
+                Đã hủy
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-2">

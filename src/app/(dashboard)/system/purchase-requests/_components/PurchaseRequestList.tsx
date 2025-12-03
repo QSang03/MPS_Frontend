@@ -81,6 +81,11 @@ const statusConfig = {
     icon: Truck,
     label: 'Đã đặt hàng',
   },
+  [PurchaseRequestStatus.IN_TRANSIT]: {
+    color: 'text-purple-600 bg-purple-50 border-purple-200',
+    icon: Truck,
+    label: 'Đang vận chuyển',
+  },
   [PurchaseRequestStatus.RECEIVED]: {
     color: 'text-slate-600 bg-slate-50 border-slate-200',
     icon: PackageCheck,

@@ -25,6 +25,8 @@ export interface PurchaseRequest {
   approvedAt?: string
   orderedBy?: string
   orderedAt?: string
+  inTransitBy?: string
+  inTransitAt?: string
   receivedBy?: string
   receivedAt?: string
   cancelledBy?: string

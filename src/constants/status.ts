@@ -55,6 +55,7 @@ export enum ServiceRequestStatus {
   APPROVED = 'APPROVED',
   RESOLVED = 'RESOLVED',
   CLOSED = 'CLOSED',
+  CANCELLED = 'CANCELLED',
 }
 
 /**
@@ -64,6 +65,7 @@ export enum PurchaseRequestStatus {
   PENDING = 'PENDING',
   APPROVED = 'APPROVED',
   ORDERED = 'ORDERED',
+  IN_TRANSIT = 'IN_TRANSIT',
   RECEIVED = 'RECEIVED',
   CANCELLED = 'CANCELLED',
 }
@@ -88,6 +90,7 @@ export const SERVICE_REQUEST_STATUS_DISPLAY: Record<
   [ServiceRequestStatus.APPROVED]: { label: 'Đã duyệt', color: 'green' },
   [ServiceRequestStatus.RESOLVED]: { label: 'Đã xử lý', color: 'green' },
   [ServiceRequestStatus.CLOSED]: { label: 'Đóng', color: 'gray' },
+  [ServiceRequestStatus.CANCELLED]: { label: 'Đã hủy', color: 'red' },
 }
 
 // Unified Vietnamese display labels & color tokens for priorities (Phase 1 standardization)

@@ -17,6 +17,7 @@ const statusColorMap: Record<ServiceRequestStatus, string> = {
   [ServiceRequestStatus.RESOLVED]:
     'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
   [ServiceRequestStatus.CLOSED]: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300',
+  [ServiceRequestStatus.CANCELLED]: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
 }
 
 const priorityColorMap: Record<Priority, string> = {

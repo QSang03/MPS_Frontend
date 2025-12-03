@@ -48,6 +48,7 @@ const statusOptions = [
   { label: 'Chờ duyệt', value: PurchaseRequestStatus.PENDING },
   { label: 'Đã duyệt', value: PurchaseRequestStatus.APPROVED },
   { label: 'Đã đặt hàng', value: PurchaseRequestStatus.ORDERED },
+  { label: 'Đang vận chuyển', value: PurchaseRequestStatus.IN_TRANSIT },
   { label: 'Đã nhận', value: PurchaseRequestStatus.RECEIVED },
   { label: 'Đã hủy', value: PurchaseRequestStatus.CANCELLED },
 ]
@@ -56,6 +57,7 @@ const statusBadgeMap: Record<PurchaseRequestStatus, string> = {
   [PurchaseRequestStatus.PENDING]: 'bg-amber-100 text-amber-700',
   [PurchaseRequestStatus.APPROVED]: 'bg-emerald-100 text-emerald-700',
   [PurchaseRequestStatus.ORDERED]: 'bg-blue-100 text-blue-700',
+  [PurchaseRequestStatus.IN_TRANSIT]: 'bg-purple-100 text-purple-700',
   [PurchaseRequestStatus.RECEIVED]: 'bg-green-100 text-green-700',
   [PurchaseRequestStatus.CANCELLED]: 'bg-rose-100 text-rose-700',
 }
