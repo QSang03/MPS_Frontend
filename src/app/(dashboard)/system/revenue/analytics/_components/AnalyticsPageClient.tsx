@@ -475,11 +475,13 @@ export default function AnalyticsPageClient() {
       customerId: consumableCustomerId || undefined,
     }
     if (time) Object.assign(params, time)
-    if (consumableMode === 'period') params.period = consumablePeriod
-    else if (consumableMode === 'range') {
-      params.from = consumableFrom
-      params.to = consumableTo
-    } else if (consumableMode === 'year') params.year = consumableYear
+    else {
+      if (consumableMode === 'period') params.period = consumablePeriod
+      else if (consumableMode === 'range') {
+        params.from = consumableFrom
+        params.to = consumableTo
+      } else if (consumableMode === 'year') params.year = consumableYear
+    }
     // basic validation
     if (consumableMode === 'period' && !params.period) {
       toast.warning('Vui lòng nhập kỳ (YYYY-MM)')

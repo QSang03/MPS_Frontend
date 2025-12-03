@@ -12,15 +12,15 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import type { AdminOverviewKPIs } from '@/types/dashboard'
-import { Bell, Package, AlertTriangle, Clock, ArrowRight, ChevronRight } from 'lucide-react'
+import { Bell, Package, AlertTriangle, Clock, ArrowRight } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { formatRelativeTime } from '@/lib/utils/formatters'
 import { cn } from '@/lib/utils/cn'
 
 import type { AdminOverviewData } from '@/types/dashboard'
 import { Dialog } from '@/components/ui/dialog'
 import { SystemModalLayout } from '@/components/system/SystemModalLayout'
+import NotificationCard from '@/components/notifications/NotificationCard'
 
 interface AlertsSummaryProps {
   kpis: AdminOverviewKPIs | undefined
@@ -55,22 +55,7 @@ export function AlertsSummary({
   const [selectedAlertType, setSelectedAlertType] = useState<
     null | 'low_consumable' | 'device_error' | 'sla_breach'
   >(null)
-  const extractServiceRequestId = (text?: string): string | null => {
-    if (!text) return null
-    const uuidRegex = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i
-    const match = text.match(uuidRegex)
-    return match ? match[0] : null
-  }
-
-  const getNotificationTarget = (n: { title?: string; message?: string }) => {
-    const text = `${n.title ?? ''} ${n.message ?? ''}`
-    const id = extractServiceRequestId(text)
-    if (!id) return null
-    const lower = text.toLowerCase()
-    if (lower.includes('service')) return `/system/service-requests/${id}`
-    if (lower.includes('purchase')) return `/system/purchase-requests/${id}`
-    return null
-  }
+  // helper functions for notification navigation were replaced by NotificationCard
   if (isLoading || !kpis) {
     return (
       <Card>
@@ -364,37 +349,9 @@ export function AlertsSummary({
                 <div className="mt-4 space-y-3">
                   <h4 className="text-sm font-semibold text-gray-700">Thông báo gần đây</h4>
                   {recentNotifications.slice(0, 4).map((n) => (
-                    <button
-                      key={n.id}
-                      onClick={() => {
-                        try {
-                          const target = getNotificationTarget(n)
-                          if (target) {
-                            router.push(target)
-                          } else {
-                            router.push('/system/notifications')
-                          }
-                        } catch (err) {
-                          console.error('Navigation failed for notifications list', err)
-                        }
-                      }}
-                      className="flex w-full items-start gap-3 rounded-lg p-2 text-left hover:bg-gray-50"
-                      aria-label={`Mở thông báo ${n.title}`}
-                    >
-                      <div className="flex h-9 w-9 items-center justify-center rounded bg-red-50">
-                        <Bell className="h-4 w-4 text-red-600" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900">{n.title}</p>
-                        {n.message && <p className="text-xs text-gray-500">{n.message}</p>}
-                      </div>
-                      <div className="text-muted-foreground text-xs">
-                        {n.createdAt ? formatRelativeTime(n.createdAt) : ''}
-                      </div>
-                      <div className="flex items-center">
-                        <ChevronRight className="text-muted-foreground h-4 w-4" />
-                      </div>
-                    </button>
+                    <div key={n.id}>
+                      <NotificationCard notification={n} />
+                    </div>
                   ))}
                 </div>
               )}
