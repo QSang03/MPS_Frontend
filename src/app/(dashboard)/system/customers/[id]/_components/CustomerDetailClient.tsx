@@ -44,7 +44,6 @@ import type { CustomerOverviewConsumable } from '@/types/models/customer-overvie
 import type { Customer } from '@/types/models/customer'
 import DevicePricingModal from '@/app/(dashboard)/system/devices/_components/DevicePricingModal'
 import { ActionGuard } from '@/components/shared/ActionGuard'
-import { useNavigation } from '@/contexts/NavigationContext'
 import A4EquivalentModal from '@/app/(dashboard)/system/devices/_components/A4EquivalentModal'
 import A4EquivalentHistoryModal from '@/app/(dashboard)/system/devices/_components/A4EquivalentHistoryModal'
 import DeviceFormModal from '@/app/(dashboard)/system/devices/_components/deviceformmodal'
@@ -66,12 +65,13 @@ import ContractForm from './ContractForm'
 import { contractsClientService } from '@/lib/api/services/contracts-client.service'
 import { toast } from 'sonner'
 import { DeleteDialog } from '@/components/shared/DeleteDialog'
-import Cookies from 'js-cookie'
+// Cookies is no longer required in this file; role is read from localStorage.
 import { useActionPermission } from '@/lib/hooks/useActionPermission'
 import { VN } from '@/constants/vietnamese'
 import { cn } from '@/lib/utils'
 import { DetailInfoCard } from '@/components/system/DetailInfoCard'
 import { CreateBillingModal } from './CreateBillingModal'
+// Using `mps_user_role` localStorage for UI gating simplifies client-side role logic
 import { InvoicesList } from './InvoicesList'
 // removed unused Invoice type import (was causing lint error)
 
@@ -199,27 +199,51 @@ export default function CustomerDetailClient({ customerId }: Props) {
     return `${formatDate(start)} — ${formatDate(end)}`
   }
 
-  // Session role used to hide certain UI elements for customer-manager and gating admin features
-  const { sessionRole } = useNavigation()
-  // sessionRole comes from NavigationContext via cookie parse in NavigationProvider.
-  // However, sometimes the context may not be initialized yet; fallback to reading cookie directly.
-  const cookieRole = (() => {
-    try {
-      const sessionCookie = Cookies.get('mps_session')
-      if (!sessionCookie) return null
-      const parts = sessionCookie.split('.')
-      if (!parts[1]) return null
-      const payload = JSON.parse(atob(parts[1]))
-      return payload?.role ?? null
-    } catch {
-      // If anything fails, return null and rely on sessionRole
-      return null
+  // We rely on `mps_user_role` stored in localStorage for client UI role gating.
+
+  // NOTE: mps_is_default_customer indicates default customer selection but does NOT imply system-admin
+  // Do not use it to determine admin; backend handles permission.
+
+  // We don't need a profileRole fallback anymore - we rely on localStorage `mps_user_role` for UI gating.
+
+  // Use cookieRole when sessionRole is falsy (empty string can occur before context initializes)
+  // Read role from localStorage if present (login flow stores it). Use state so UI updates when other tabs change localStorage.
+  const [localStorageRoleState, setLocalStorageRoleState] = useState<string | null>(
+    typeof window !== 'undefined' ? localStorage.getItem('mps_user_role') : null
+  )
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const handler = (e: StorageEvent) => {
+      if (e.key === 'mps_user_role') {
+        setLocalStorageRoleState(e.newValue)
+      }
     }
+    window.addEventListener('storage', handler)
+    return () => window.removeEventListener('storage', handler)
+  }, [])
+
+  // Compute effective role from the single source of truth: localStorageRoleState
+  const effectiveRole = localStorageRoleState as string | null
+  const normalizeRole = (r?: string | null) => (r ? String(r).toLowerCase().trim() : '')
+  const isCustomerManager = normalizeRole(effectiveRole) === 'customer-manager'
+  const isSystemAdmin = (() => {
+    const role = normalizeRole(effectiveRole)
+    if (!role) return false
+    // Accept variants like 'system-admin', 'system_admin', 'systemadmin', 'admin'
+    if (role.includes('system') && role.includes('admin')) return true
+    if (role === 'admin') return true
+    return role === 'system-admin' || role === 'system_admin' || role === 'systemadmin'
   })()
 
-  const effectiveRole = sessionRole ?? cookieRole
-  const isCustomerManager = String(effectiveRole ?? '').toLowerCase() === 'customer-manager'
-  const isSystemAdmin = String(effectiveRole ?? '').toLowerCase() === 'system-admin'
+  // Admin UI gating must only rely on isSystemAdmin (role from session/cookie/profile)
+  const isAdminForUI = isSystemAdmin
+
+  // Debug logs: print role detection values so we can inspect at runtime. Local storage is the canonical source.
+  // Remove these logs after debugging.
+  // We intentionally don't log role detection values in production; remove previous debug logging.
+
+  // No fallback: we rely on localStorage value set during login for UI role gating.
 
   const isAllExpanded = useMemo(() => {
     if (contracts.length === 0) return false
@@ -1366,7 +1390,8 @@ export default function CustomerDetailClient({ customerId }: Props) {
                                       {getStatusLabel(contract.status)}
                                     </Badge>
                                     <div className="ml-auto flex items-center gap-1.5">
-                                      {isSystemAdmin && (
+                                      {/* Only show Create billing button to system admin on FE */}
+                                      {isAdminForUI && (
                                         <Tooltip>
                                           <TooltipTrigger asChild>
                                             <Button
@@ -1951,7 +1976,7 @@ export default function CustomerDetailClient({ customerId }: Props) {
       </motion.div>
 
       {/* Create Billing Dialog */}
-      {createBillingContract && isSystemAdmin && (
+      {createBillingContract && isAdminForUI && (
         <CreateBillingModal
           open={!!createBillingContract}
           onOpenChange={(open) => {

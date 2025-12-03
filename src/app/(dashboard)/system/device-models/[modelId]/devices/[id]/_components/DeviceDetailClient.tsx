@@ -389,9 +389,9 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
       try {
         setLoading(true)
         setError(null)
-        console.debug('[DeviceDetailClient] fetching deviceId=', deviceId)
+        // Device fetch initiated for deviceId
         const data = await devicesClientService.getById(deviceId)
-        console.debug('[DeviceDetailClient] Device data received for', deviceId, data)
+        // Device data received for deviceId (logging removed in production)
         setDevice(data ?? null)
 
         if (data) {
@@ -427,8 +427,8 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
           ])
           setInstalledConsumables(Array.isArray(installed) ? installed : [])
           setCompatibleConsumables(Array.isArray(compatibleRaw) ? compatibleRaw : [])
-        } catch (e) {
-          console.debug('[DeviceDetailClient] consumables fetch error', e)
+        } catch {
+          // Consumables fetch error (logging removed in production)
         } finally {
           setConsumablesLoading(false)
         }

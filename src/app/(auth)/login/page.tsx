@@ -44,6 +44,14 @@ export default function LoginPage() {
             // ignore
           }
         }
+        // Persist normalized role (lowercased) for UI to localStorage if provided
+        if (typeof window !== 'undefined' && state.success.roleName) {
+          try {
+            localStorage.setItem('mps_user_role', String(state.success.roleName).toLowerCase())
+          } catch {
+            // ignore
+          }
+        }
       } catch {
         // ignore
       }

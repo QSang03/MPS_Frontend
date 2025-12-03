@@ -1,6 +1,6 @@
 import { getSession } from '@/lib/auth/session'
 import { getDevSession, DEV_BYPASS_AUTH } from '@/lib/auth/dev-session'
-import { ServiceRequestDetailClient } from './_components/ServiceRequestDetailClient'
+import MyRequestDetailClient from './_components/MyRequestDetailClient'
 
 interface Props {
   params?: Promise<{ id: string }>
@@ -21,5 +21,5 @@ export default async function MyRequestDetailPage({ params }: Props) {
     session = getDevSession('client')
   }
 
-  return <ServiceRequestDetailClient id={id} />
+  return <MyRequestDetailClient id={id} session={session ?? null} />
 }

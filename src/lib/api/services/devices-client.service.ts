@@ -38,11 +38,7 @@ export const devicesClientService = {
     const response = await internalApiClient.get(`/api/devices/${id}`)
     // Defensive: backend /api route may return { success: true, data: Device } or Device directly.
     // Log raw response for debugging in browser console when needed.
-    try {
-      console.debug('[devicesClientService.getById] raw response:', response?.data)
-    } catch {
-      // ignore logging errors in some environments
-    }
+    // Raw response available in `response?.data` — logging removed for production
 
     const body = response.data
     if (!body) return undefined

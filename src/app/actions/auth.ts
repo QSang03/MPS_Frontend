@@ -62,6 +62,7 @@ export type LoginActionState = {
     isDefaultPassword?: boolean
     isDefaultCustomer?: boolean
     customerName?: string
+    roleName?: string
   }
 } | null
 
@@ -152,6 +153,8 @@ export async function login(
         // include customer name so client can persist it when server action
         // runs on the server and cannot access window.localStorage.
         customerName: resolveCustomerName(data),
+        // Include role name for client-side UI persistence
+        roleName: String(roleName).toLowerCase(),
       },
     }
   } catch (error: unknown) {

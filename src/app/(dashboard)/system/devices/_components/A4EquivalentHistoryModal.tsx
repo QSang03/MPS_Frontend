@@ -128,8 +128,8 @@ export function A4EquivalentUsageHistory({
             if (!isMounted) return
             const raw = device?.deviceModel?.useA4Counter as unknown
             if (typeof raw !== 'undefined') setDeviceModelFlag(raw)
-          } catch (err) {
-            console.debug('Unable to fetch device to determine counter type', err)
+          } catch {
+            // Unable to fetch device model; removed console.debug to reduce log noise
           }
         }
       } else {

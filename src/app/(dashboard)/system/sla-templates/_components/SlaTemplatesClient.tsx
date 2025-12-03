@@ -140,7 +140,7 @@ export default function SlaTemplatesClient({ session }: { session?: Session | nu
       const totalCreated = resp?.totalCreated ?? 0
       const totalSkipped = resp?.totalSkipped ?? 0
       toast.success(`Đã áp dụng template: tạo mới ${totalCreated} - bỏ qua ${totalSkipped}`)
-      console.debug('Apply resp', resp)
+      // Apply response received; logging removed in production
       setApplyDialogOpen(false)
       setApplyingId(null)
       queryClient.invalidateQueries({ queryKey: ['slas'] })
