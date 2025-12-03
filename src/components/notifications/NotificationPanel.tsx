@@ -4,6 +4,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { NotificationItem } from './NotificationItem'
+import { NotificationStatus } from '@/types/models/notification'
 import { useNotifications } from '@/lib/hooks/useNotifications'
 import { Bell, CheckCheck, Loader2 } from 'lucide-react'
 
@@ -69,13 +70,15 @@ export function NotificationPanel({ children }: NotificationPanelProps) {
             </div>
           ) : (
             <div className="divide-y">
-              {notifications.map((notification) => (
-                <NotificationItem
-                  key={notification.id}
-                  notification={notification}
-                  onMarkAsRead={handleMarkAsRead}
-                />
-              ))}
+              {notifications
+                .filter((n) => n.status !== NotificationStatus.READ && !n.readAt)
+                .map((notification) => (
+                  <NotificationItem
+                    key={notification.id}
+                    notification={notification}
+                    onMarkAsRead={handleMarkAsRead}
+                  />
+                ))}
             </div>
           )}
         </div>
