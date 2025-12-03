@@ -25,6 +25,10 @@ export function NotificationPanel({ children }: NotificationPanelProps) {
     isMarkingAllAsRead,
   } = useNotifications()
 
+  const unreadNotifications = notifications.filter(
+    (n) => n.status !== NotificationStatus.READ && !n.readAt
+  )
+
   return (
     <Popover open={isPanelOpen} onOpenChange={setIsPanelOpen}>
       <PopoverTrigger asChild>{children}</PopoverTrigger>
@@ -63,22 +67,20 @@ export function NotificationPanel({ children }: NotificationPanelProps) {
             <div className="flex items-center justify-center p-8">
               <Loader2 className="text-muted-foreground h-5 w-5 animate-spin" />
             </div>
-          ) : notifications.length === 0 ? (
+          ) : unreadNotifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center p-8 text-center">
               <Bell className="text-muted-foreground mb-2 h-8 w-8" />
-              <p className="text-muted-foreground text-sm">Không có thông báo</p>
+              <p className="text-muted-foreground text-sm">Không có thông báo mới</p>
             </div>
           ) : (
             <div className="divide-y">
-              {notifications
-                .filter((n) => n.status !== NotificationStatus.READ && !n.readAt)
-                .map((notification) => (
-                  <NotificationItem
-                    key={notification.id}
-                    notification={notification}
-                    onMarkAsRead={handleMarkAsRead}
-                  />
-                ))}
+              {unreadNotifications.map((notification) => (
+                <NotificationItem
+                  key={notification.id}
+                  notification={notification}
+                  onMarkAsRead={handleMarkAsRead}
+                />
+              ))}
             </div>
           )}
         </div>
