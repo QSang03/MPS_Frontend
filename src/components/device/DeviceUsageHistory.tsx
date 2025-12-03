@@ -149,13 +149,10 @@ export default function DeviceUsageHistory({ deviceId }: { deviceId: string }) {
   }, [hasDataPerType])
 
   const chartConfig = useMemo<ChartConfig>(() => {
-    const palette = [
-      'hsl(var(--chart-1))',
-      'hsl(var(--chart-2))',
-      'hsl(var(--chart-3))',
-      'hsl(var(--chart-4))',
-      'hsl(var(--chart-5))',
-    ]
+    // Use explicit hex palette as a reliable fallback for SVG stroke colors.
+    // CSS variable values may not always resolve correctly for SVG stroke in some
+    // embedding contexts, so prefer hex literals here for visibility.
+    const palette = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
 
     return consumables.reduce<ChartConfig>((acc, c, idx) => {
       acc[`c${idx}`] = {
