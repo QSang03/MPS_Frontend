@@ -93,8 +93,6 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
   const [monthlyUsageLoading, setMonthlyUsageLoading] = useState(false)
   const [monthlyUsageError, setMonthlyUsageError] = useState<string | null>(null)
 
-  const customerId = device?.customerId ?? ''
-
   const getDefaultDateRange = () => {
     const now = new Date()
     const to = new Date(now.getFullYear(), now.getMonth(), 1)
@@ -615,11 +613,6 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
                   >
                     Thử lại
                   </Button>
-                </div>
-              ) : !customerId ? (
-                <div className="text-muted-foreground p-8 text-center">
-                  <AlertCircle className="mx-auto mb-3 h-12 w-12 opacity-20" />
-                  <p>Thiết bị chưa có khách hàng</p>
                 </div>
               ) : monthlyUsageItems.length === 0 ? (
                 <div className="text-muted-foreground p-8 text-center">
