@@ -136,7 +136,26 @@ export default function DeviceUsageHistory({ deviceId }: { deviceId: string }) {
       return row
     })
 
-    return data
+    // Forward-fill (carry last known value forward) so lines connect across
+    // days that have no datapoints. We only fill after the first observed
+    // value for a series to avoid creating artificial leading values.
+    const filled = data.map((r) => ({ ...r }))
+    consumables.forEach((_, idx) => {
+      const key = `c${idx}`
+      let seen = false
+      let last: unknown = null
+      for (const row of filled) {
+        const v = row[key]
+        if (v !== null && v !== undefined) {
+          last = v
+          seen = true
+        } else if (seen) {
+          row[key] = last
+        }
+      }
+    })
+
+    return filled
   }, [consumables, yMode, fromDate, toDate])
 
   // For each consumable type determine whether it has any data in the current date range
