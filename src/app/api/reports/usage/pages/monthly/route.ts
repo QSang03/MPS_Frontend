@@ -21,10 +21,6 @@ export async function GET(request: NextRequest) {
     const to = searchParams.get('to') ?? undefined
     const deviceId = searchParams.get('deviceId') ?? undefined
 
-    if (!customerId) {
-      return NextResponse.json({ error: 'customerId is required' }, { status: 400 })
-    }
-
     if (!from) {
       return NextResponse.json({ error: 'from is required' }, { status: 400 })
     }
@@ -34,10 +30,12 @@ export async function GET(request: NextRequest) {
     }
 
     const params: Record<string, unknown> = {
-      customerId,
       from,
       to,
     }
+
+    // customerId is optional — backend may derive customer from deviceId
+    if (customerId) params.customerId = customerId
     if (deviceId) params.deviceId = deviceId
 
     const response = await backendApiClient.get('/reports/usage/pages/monthly', {
