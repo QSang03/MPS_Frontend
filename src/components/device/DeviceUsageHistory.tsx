@@ -89,48 +89,40 @@ export default function DeviceUsageHistory({ deviceId }: { deviceId: string }) {
   const chartData = useMemo(() => {
     if (!consumables || consumables.length === 0) return []
 
-    // gather all unique dates from all dataPoints
+    // Build observed dates only (don't expand to full range). For each observed date
+    // we set the value for types that have datapoints on that date and leave null
+    // for types that don't. `connectNulls` is enabled on the Line so the renderer
+    // will draw a straight connection across missing values.
     const dateSet = new Set<string>()
     consumables.forEach((c) => {
       c.series?.forEach((s) => s.dataPoints?.forEach((p) => dateSet.add(p.date)))
     })
 
     const dates = Array.from(dateSet).sort()
+    if (dates.length === 0) return []
 
-    // We'll carry-forward the last seen value per consumable so lines are connected
-    const lastSeen: (number | undefined)[] = consumables.map(() => undefined)
-
-    // For each date, produce an object { date, c0: value, c1: value, ... }
     const data = dates.map((date) => {
       const row: Record<string, unknown> = { date }
       consumables.forEach((c, idx) => {
         const key = `c${idx}`
-        // collect all datapoints across all series of this consumable at this date
         const points =
           c.series?.flatMap((s) => (s.dataPoints ?? []).filter((p) => p.date === date)) ?? []
-
         if (points && points.length > 0) {
-          let value: number
           if (yMode === 'percentage') {
-            // average percentage across series for that date
             const sum = points.reduce((acc, p) => acc + (p.percentage ?? 0), 0)
-            value = sum / points.length
+            row[key] = sum / points.length
           } else {
-            // sum remaining across series for that date
-            value = points.reduce((acc, p) => acc + Number(p.remaining ?? 0), 0)
+            row[key] = points.reduce((acc, p) => acc + Number(p.remaining ?? 0), 0)
           }
-          lastSeen[idx] = value
-          row[key] = value
         } else {
-          // carry-forward previous value if present, otherwise leave null
-          row[key] = typeof lastSeen[idx] === 'number' ? lastSeen[idx] : null
+          row[key] = null
         }
       })
       return row
     })
 
     return data
-  }, [consumables, yMode])
+  }, [consumables, yMode, fromDate, toDate])
 
   // For each consumable type determine whether it has any data in the current date range
   const hasDataPerType = useMemo(() => {
@@ -307,6 +299,7 @@ export default function DeviceUsageHistory({ deviceId }: { deviceId: string }) {
                                   stroke={`var(--color-c${i})`}
                                   strokeWidth={2}
                                   dot={false}
+                                  connectNulls={true}
                                   name={c.consumableTypeName ?? `Item ${i + 1}`}
                                 />
                               ) : null
