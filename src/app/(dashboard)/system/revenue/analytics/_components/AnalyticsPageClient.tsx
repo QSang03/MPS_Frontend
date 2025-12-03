@@ -101,9 +101,6 @@ export default function AnalyticsPageClient() {
   const [customersYear, setCustomersYear] = useState('')
   const [customersLoading, setCustomersLoading] = useState(false)
   const [customersData, setCustomersData] = useState<CustomerProfitItem[]>([])
-  const [customersProfitability, setCustomersProfitability] = useState<
-    ProfitabilityTrendItem[] | null
-  >(null)
   const [customersSearchTerm, setCustomersSearchTerm] = useState('')
   const [customersSearchId, setCustomersSearchId] = useState('')
 
@@ -265,10 +262,6 @@ export default function AnalyticsPageClient() {
         const res = await reportsAnalyticsService.getCustomersProfit(cleaned)
         if (res.success && res.data) {
           setCustomersData(res.data.customers)
-          setCustomersProfitability(
-            (res.data as unknown as { profitability?: ProfitabilityTrendItem[] }).profitability ??
-              null
-          )
         } else {
           const msg = res.message || 'Không tải được dữ liệu khách hàng'
           if (msg.toLowerCase().includes('no data')) {
@@ -1025,12 +1018,6 @@ export default function AnalyticsPageClient() {
           {customersLoading ? (
             <div className="mb-4">
               <Skeleton className="h-56 w-full rounded-lg" />
-            </div>
-          ) : customersProfitability ? (
-            <div className="mb-4">
-              <Suspense fallback={<Skeleton className="h-56 w-full rounded-lg" />}>
-                <TrendChart data={customersProfitability ?? []} height={220} showMargin={false} />
-              </Suspense>
             </div>
           ) : null}
 
