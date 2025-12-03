@@ -345,16 +345,21 @@ export function AlertsSummary({
               </div>
 
               {/* Recent Notifications - show below the alert summary */}
-              {Array.isArray(recentNotifications) && recentNotifications.length > 0 && (
-                <div className="mt-4 space-y-3">
-                  <h4 className="text-sm font-semibold text-gray-700">Thông báo gần đây</h4>
-                  {recentNotifications.slice(0, 4).map((n) => (
+              <div className="mt-4 space-y-3">
+                <h4 className="text-sm font-semibold text-gray-700">Thông báo gần đây</h4>
+                {Array.isArray(recentNotifications) && recentNotifications.length > 0 ? (
+                  recentNotifications.slice(0, 4).map((n) => (
                     <div key={n.id}>
                       <NotificationCard notification={n} />
                     </div>
-                  ))}
-                </div>
-              )}
+                  ))
+                ) : (
+                  <div className="flex items-center gap-3 text-sm text-gray-500">
+                    <Bell className="text-muted-foreground h-5 w-5" />
+                    <span>Không có thông báo mới</span>
+                  </div>
+                )}
+              </div>
             </>
           )}
         </CardContent>

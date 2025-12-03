@@ -120,6 +120,7 @@ export default function AnalyticsPageClient() {
       grossProfit: number
     }
     devices: DeviceProfitItem[]
+    profitability?: ProfitabilityTrendItem[]
   } | null>(null)
 
   // Device Profitability State
@@ -420,71 +421,69 @@ export default function AnalyticsPageClient() {
   )
 
   // Load Device Profitability
-  const loadDeviceProfitability = async (time?: {
-    period?: string
-    from?: string
-    to?: string
-    year?: string
-  }) => {
-    const deduced = detectModeFromTime(time)
-    const mode = deduced ?? deviceMode
-    const params: TimeFilter = {}
-    if (time) Object.assign(params, time)
-    else {
-      if (deviceMode === 'period') params.period = devicePeriod
-      else if (deviceMode === 'range') {
-        params.from = deviceFrom
-        params.to = deviceTo
-      } else if (deviceMode === 'year') params.year = deviceYear
-    }
-    if (!selectedDeviceId) {
-      toast.warning('Vui lòng nhập Device ID')
-      return
-    }
-    if (mode === 'period' && !params.period) {
-      toast.warning('Vui lòng nhập kỳ (YYYY-MM)')
-      return
-    }
-    if (mode === 'range' && (!params.from || !params.to)) {
-      toast.warning('Vui lòng nhập both from và to (YYYY-MM)')
-      return
-    }
-    if (mode === 'year' && !params.year) {
-      toast.warning('Vui lòng nhập năm (YYYY)')
-      return
-    }
-    setDeviceLoading(true)
-    try {
-      const cleaned = cleanParams(params as Record<string, unknown>)
-      if (deviceMode === 'range' && cleaned.from && cleaned.to) {
-        const fromDate = new Date(String(cleaned.from) + '-01')
-        const toDate = new Date(String(cleaned.to) + '-01')
-        if (fromDate > toDate) {
-          toast.warning('From phải nhỏ hơn hoặc bằng To')
-          setDeviceLoading(false)
-          return
-        }
+  const loadDeviceProfitability = useCallback(
+    async (time?: { period?: string; from?: string; to?: string; year?: string }) => {
+      const deduced = detectModeFromTime(time)
+      const mode = deduced ?? deviceMode
+      const params: TimeFilter = {}
+      if (time) Object.assign(params, time)
+      else {
+        if (deviceMode === 'period') params.period = devicePeriod
+        else if (deviceMode === 'range') {
+          params.from = deviceFrom
+          params.to = deviceTo
+        } else if (deviceMode === 'year') params.year = deviceYear
       }
-      const res = await reportsAnalyticsService.getDeviceProfitability(selectedDeviceId, cleaned)
-      if (res.success && res.data) {
-        setDeviceData(res.data)
-      } else {
-        const msg = res.message || 'Không tải được dữ liệu thiết bị'
-        if (msg.toLowerCase().includes('no data')) {
-          toast.warning('Không có dữ liệu cho kỳ này')
+      if (!selectedDeviceId) {
+        toast.warning('Vui lòng nhập Device ID')
+        return
+      }
+      if (mode === 'period' && !params.period) {
+        toast.warning('Vui lòng nhập kỳ (YYYY-MM)')
+        return
+      }
+      if (mode === 'range' && (!params.from || !params.to)) {
+        toast.warning('Vui lòng nhập both from và to (YYYY-MM)')
+        return
+      }
+      if (mode === 'year' && !params.year) {
+        toast.warning('Vui lòng nhập năm (YYYY)')
+        return
+      }
+      setDeviceLoading(true)
+      try {
+        const cleaned = cleanParams(params as Record<string, unknown>)
+        if (deviceMode === 'range' && cleaned.from && cleaned.to) {
+          const fromDate = new Date(String(cleaned.from) + '-01')
+          const toDate = new Date(String(cleaned.to) + '-01')
+          if (fromDate > toDate) {
+            toast.warning('From phải nhỏ hơn hoặc bằng To')
+            setDeviceLoading(false)
+            return
+          }
+        }
+        const res = await reportsAnalyticsService.getDeviceProfitability(selectedDeviceId, cleaned)
+        if (res.success && res.data) {
+          setDeviceData(res.data)
         } else {
-          toast.error(msg)
+          const msg = res.message || 'Không tải được dữ liệu thiết bị'
+          if (msg.toLowerCase().includes('no data')) {
+            toast.warning('Không có dữ liệu cho kỳ này')
+          } else {
+            toast.error(msg)
+          }
+          setDeviceData(null)
         }
+      } catch (e) {
+        console.error(e)
+        toast.error('Lỗi khi tải dữ liệu thiết bị')
         setDeviceData(null)
+      } finally {
+        setDeviceLoading(false)
       }
-    } catch (e) {
-      console.error(e)
-      toast.error('Lỗi khi tải dữ liệu thiết bị')
-      setDeviceData(null)
-    } finally {
-      setDeviceLoading(false)
-    }
-  }
+    },
+    [selectedDeviceId, deviceMode, devicePeriod, deviceFrom, deviceTo, deviceYear]
+  )
 
   // Load Consumable Lifecycle
   const loadConsumableLifecycle = async (time?: {
@@ -625,6 +624,7 @@ export default function AnalyticsPageClient() {
   // Auto-load customer detail when a customer is selected from the CustomerSelect control
   useEffect(() => {
     if (!customersSearchId) return
+    if (customersSearchId === selectedCustomerId) return
     const timeArg = buildTimeForMode(
       customersMode,
       customersPeriod,
@@ -644,7 +644,40 @@ export default function AnalyticsPageClient() {
     customersTo,
     customersYear,
     customersMode,
+    selectedCustomerId,
     loadCustomerDetail,
+  ])
+
+  // Auto-load customer detail when selectedCustomerId changes (row selection)
+  useEffect(() => {
+    if (!selectedCustomerId) return
+    const timeArg = buildTimeForMode(globalMode, globalPeriod, globalFrom, globalTo, globalYear)
+    if (!isValidTimeArg(timeArg)) return
+    void loadCustomerDetail(selectedCustomerId, timeArg)
+  }, [
+    selectedCustomerId,
+    globalMode,
+    globalPeriod,
+    globalFrom,
+    globalTo,
+    globalYear,
+    loadCustomerDetail,
+  ])
+
+  // Auto-load device profitability when a device is selected (row click or other control)
+  useEffect(() => {
+    if (!selectedDeviceId) return
+    const timeArg = buildTimeForMode(globalMode, globalPeriod, globalFrom, globalTo, globalYear)
+    if (!isValidTimeArg(timeArg)) return
+    void loadDeviceProfitability(timeArg)
+  }, [
+    selectedDeviceId,
+    globalMode,
+    globalPeriod,
+    globalFrom,
+    globalTo,
+    globalYear,
+    loadDeviceProfitability,
   ])
 
   return (
@@ -969,6 +1002,8 @@ export default function AnalyticsPageClient() {
                 value={customersSearchId}
                 onChange={(id) => {
                   setCustomersSearchId(id)
+                  // Consider this customer selected for detail view
+                  setSelectedCustomerId(id)
                   // clear text search when a selection is made
                   setCustomersSearchTerm('')
                 }}
@@ -1045,17 +1080,8 @@ export default function AnalyticsPageClient() {
                           variant="outline"
                           size="sm"
                           onClick={() => {
-                            // load detail immediately for this customer using the global filter
-                            void loadCustomerDetail(
-                              c.customerId,
-                              buildTimeForMode(
-                                globalMode,
-                                globalPeriod,
-                                globalFrom,
-                                globalTo,
-                                globalYear
-                              )
-                            )
+                            // select the customer to auto-load detail
+                            setSelectedCustomerId(c.customerId)
                           }}
                         >
                           Chi tiết
@@ -1099,18 +1125,32 @@ export default function AnalyticsPageClient() {
                       : globalYear}
                 </div>
               </div>
-              <Button
-                onClick={() =>
-                  void loadCustomerDetail(
-                    undefined,
-                    buildTimeForMode(globalMode, globalPeriod, globalFrom, globalTo, globalYear)
-                  )
-                }
-                disabled={customerDetailLoading}
-              >
-                {customerDetailLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                Tải dữ liệu
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={() =>
+                    void loadCustomerDetail(
+                      // prefer explicit selectedCustomerId, fallback to the search id
+                      selectedCustomerId ?? customersSearchId,
+                      buildTimeForMode(globalMode, globalPeriod, globalFrom, globalTo, globalYear)
+                    )
+                  }
+                  disabled={!selectedCustomerId || customerDetailLoading}
+                >
+                  {customerDetailLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  Tải dữ liệu
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    // Clear selected customer
+                    setSelectedCustomerId('')
+                    setCustomersSearchId('')
+                  }}
+                >
+                  Xóa
+                </Button>
+              </div>
             </div>
 
             {customerDetailData && (
@@ -1144,6 +1184,18 @@ export default function AnalyticsPageClient() {
                     </div>
                   </CardContent>
                 </Card>
+
+                {customerDetailData.profitability && customerDetailData.profitability.length > 0 ? (
+                  <div className="mt-4">
+                    <Suspense fallback={<Skeleton className="h-64 w-full rounded-lg" />}>
+                      <TrendChart
+                        data={customerDetailData.profitability ?? []}
+                        height={300}
+                        showMargin
+                      />
+                    </Suspense>
+                  </div>
+                ) : null}
 
                 <div className="overflow-x-auto rounded-lg border">
                   <table className="min-w-full divide-y">
@@ -1236,7 +1288,7 @@ export default function AnalyticsPageClient() {
                     buildTimeForMode(globalMode, globalPeriod, globalFrom, globalTo, globalYear)
                   )
                 }
-                disabled={deviceLoading}
+                disabled={!selectedDeviceId || deviceLoading}
               >
                 {deviceLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                 Tải dữ liệu
