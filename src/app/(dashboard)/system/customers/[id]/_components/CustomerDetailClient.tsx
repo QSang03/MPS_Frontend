@@ -66,6 +66,7 @@ import ContractForm from './ContractForm'
 import { contractsClientService } from '@/lib/api/services/contracts-client.service'
 import { toast } from 'sonner'
 import { DeleteDialog } from '@/components/shared/DeleteDialog'
+import Cookies from 'js-cookie'
 import { useActionPermission } from '@/lib/hooks/useActionPermission'
 import { VN } from '@/constants/vietnamese'
 import { cn } from '@/lib/utils'
@@ -200,8 +201,25 @@ export default function CustomerDetailClient({ customerId }: Props) {
 
   // Session role used to hide certain UI elements for customer-manager and gating admin features
   const { sessionRole } = useNavigation()
-  const isCustomerManager = String(sessionRole ?? '').toLowerCase() === 'customer-manager'
-  const isSystemAdmin = String(sessionRole ?? '').toLowerCase() === 'system-admin'
+  // sessionRole comes from NavigationContext via cookie parse in NavigationProvider.
+  // However, sometimes the context may not be initialized yet; fallback to reading cookie directly.
+  const cookieRole = (() => {
+    try {
+      const sessionCookie = Cookies.get('mps_session')
+      if (!sessionCookie) return null
+      const parts = sessionCookie.split('.')
+      if (!parts[1]) return null
+      const payload = JSON.parse(atob(parts[1]))
+      return payload?.role ?? null
+    } catch {
+      // If anything fails, return null and rely on sessionRole
+      return null
+    }
+  })()
+
+  const effectiveRole = sessionRole ?? cookieRole
+  const isCustomerManager = String(effectiveRole ?? '').toLowerCase() === 'customer-manager'
+  const isSystemAdmin = String(effectiveRole ?? '').toLowerCase() === 'system-admin'
 
   const isAllExpanded = useMemo(() => {
     if (contracts.length === 0) return false
