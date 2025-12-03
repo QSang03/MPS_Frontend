@@ -89,13 +89,27 @@ export default function DeviceUsageHistory({ deviceId }: { deviceId: string }) {
   const chartData = useMemo(() => {
     if (!consumables || consumables.length === 0) return []
 
-    // gather all unique dates from all dataPoints
-    const dateSet = new Set<string>()
-    consumables.forEach((c) => {
-      c.series?.forEach((s) => s.dataPoints?.forEach((p) => dateSet.add(p.date)))
-    })
+    // Build a contiguous list of dates between fromDate and toDate (inclusive)
+    // so the chart X axis contains every day and series can be connected across
+    // missing dates using `connectNulls`.
+    const parseISODate = (s: string) => {
+      // Ensure time zone neutrality by parsing as local midnight
+      return new Date(`${s}T00:00:00`)
+    }
 
-    const dates = Array.from(dateSet).sort()
+    const start = parseISODate(fromDate)
+    const end = parseISODate(toDate)
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || start > end) {
+      return []
+    }
+
+    const dates: string[] = []
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const yyyy = d.getFullYear()
+      const mm = String(d.getMonth() + 1).padStart(2, '0')
+      const dd = String(d.getDate()).padStart(2, '0')
+      dates.push(`${yyyy}-${mm}-${dd}`)
+    }
 
     // For each date, produce an object { date, c0: value, c1: value, ... }
     const data = dates.map((date) => {
@@ -123,7 +137,7 @@ export default function DeviceUsageHistory({ deviceId }: { deviceId: string }) {
     })
 
     return data
-  }, [consumables, yMode])
+  }, [consumables, yMode, fromDate, toDate])
 
   // For each consumable type determine whether it has any data in the current date range
   const hasDataPerType = useMemo(() => {
