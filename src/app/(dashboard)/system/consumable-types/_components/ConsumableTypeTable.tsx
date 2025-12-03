@@ -65,6 +65,7 @@ export function ConsumableTypeTable({
     sortBy: 'createdAt',
     sortOrder: 'desc',
   })
+  const [sortVersion, setSortVersion] = useState(0)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
@@ -79,7 +80,7 @@ export function ConsumableTypeTable({
     [page, pageSize, search, sorting.sortBy, sorting.sortOrder]
   )
 
-  const { data } = useConsumableTypesQuery(queryParams)
+  const { data } = useConsumableTypesQuery(queryParams, { version: sortVersion })
 
   const models = useMemo(() => data?.data ?? [], [data?.data])
   const total = useMemo(
@@ -316,6 +317,7 @@ export function ConsumableTypeTable({
       onSortingChange={(nextSorting) => {
         startTransition(() => {
           setSorting(nextSorting)
+          setSortVersion((v) => v + 1)
         })
       }}
       sorting={sorting}

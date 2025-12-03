@@ -6,6 +6,14 @@ import { Input } from '@/components/ui/input'
 import { StatsCards } from '@/components/system/StatsCard'
 import { Package, CheckCircle2, AlertCircle, Search } from 'lucide-react'
 import { FilterSection } from '@/components/system/FilterSection'
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select'
+import { useConsumableTypesQuery } from '@/lib/hooks/queries/useConsumableTypesQuery'
 import { TableSkeleton } from '@/components/system/TableSkeleton'
 import { ConsumablesTable } from './ConsumablesTable'
 
@@ -20,6 +28,11 @@ export default function ConsumablesList() {
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [page, setPage] = useState(1)
   const [limit, setLimit] = useState(20)
+  const [consumableTypeFilter, setConsumableTypeFilter] = useState<string>('all')
+  const [sorting, setSorting] = useState<{ sortBy?: string; sortOrder?: 'asc' | 'desc' }>({
+    sortBy: 'createdAt',
+    sortOrder: 'desc',
+  })
   const [stats, setStats] = useState<ConsumableStats>({ total: 0, active: 0, inactive: 0 })
   const [columnVisibilityMenu, setColumnVisibilityMenu] = useState<ReactNode | null>(null)
 
@@ -31,28 +44,49 @@ export default function ConsumablesList() {
     return () => clearTimeout(t)
   }, [searchTerm])
 
-  const activeFilters = useMemo(
-    () =>
-      searchTerm
-        ? [
-            {
-              label: `Tìm kiếm: "${searchTerm}"`,
-              value: searchTerm,
-              onRemove: () => {
-                setSearchTerm('')
-                setDebouncedSearch('')
-                setPage(1)
-              },
-            },
-          ]
-        : [],
-    [searchTerm]
-  )
+  const { data: consumableTypes } = useConsumableTypesQuery({ page: 1, limit: 100 })
+
+  const activeFilters = useMemo(() => {
+    const filters: Array<{ label: string; value: string; onRemove: () => void }> = []
+    if (searchTerm) {
+      filters.push({
+        label: `Tìm kiếm: "${searchTerm}"`,
+        value: searchTerm,
+        onRemove: () => {
+          setSearchTerm('')
+          setDebouncedSearch('')
+          setPage(1)
+        },
+      })
+    }
+
+    if (consumableTypeFilter && consumableTypeFilter !== 'all') {
+      const ct = Array.isArray(consumableTypes?.data)
+        ? consumableTypes?.data.find((c) => c.id === consumableTypeFilter)
+        : undefined
+      filters.push({
+        label: `Loại: ${ct?.name ?? consumableTypeFilter}`,
+        value: consumableTypeFilter,
+        onRemove: () => setConsumableTypeFilter('all'),
+      })
+    }
+
+    if (sorting.sortBy !== 'createdAt' || sorting.sortOrder !== 'desc') {
+      filters.push({
+        label: `Sắp xếp: ${sorting.sortBy} (${sorting.sortOrder === 'asc' ? 'Tăng dần' : 'Giảm dần'})`,
+        value: `${sorting.sortBy}-${sorting.sortOrder}`,
+        onRemove: () => setSorting({ sortBy: 'createdAt', sortOrder: 'desc' }),
+      })
+    }
+
+    return filters
+  }, [searchTerm, sorting, consumableTypeFilter, consumableTypes])
 
   const handleResetFilters = () => {
     setSearchTerm('')
     setDebouncedSearch('')
     setPage(1)
+    setConsumableTypeFilter('all')
   }
 
   return (
@@ -87,7 +121,7 @@ export default function ConsumablesList() {
         activeFilters={activeFilters}
         columnVisibilityMenu={columnVisibilityMenu}
       >
-        <div className="grid gap-4 md:grid-cols-1">
+        <div className="grid gap-4 md:grid-cols-2">
           <div>
             <label className="mb-2 block text-sm font-medium">Tìm kiếm</label>
             <div className="relative">
@@ -106,6 +140,23 @@ export default function ConsumablesList() {
               />
             </div>
           </div>
+          <div>
+            <label className="mb-2 block text-sm font-medium">Loại vật tư</label>
+            <Select value={consumableTypeFilter} onValueChange={(v) => setConsumableTypeFilter(v)}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả loại</SelectItem>
+                {Array.isArray(consumableTypes?.data) &&
+                  consumableTypes?.data.map((ct) => (
+                    <SelectItem key={ct.id} value={ct.id}>
+                      {ct.name}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </FilterSection>
 
@@ -115,6 +166,9 @@ export default function ConsumablesList() {
           pageSize={limit}
           search={debouncedSearch}
           searchInput={searchTerm}
+          sorting={sorting}
+          onSortingChange={setSorting}
+          consumableTypeFilter={consumableTypeFilter}
           onPageChange={setPage}
           onPageSizeChange={setLimit}
           onStatsChange={setStats}

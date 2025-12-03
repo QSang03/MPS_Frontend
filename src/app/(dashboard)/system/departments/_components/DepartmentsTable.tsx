@@ -74,6 +74,7 @@ export function DepartmentsTable({
     sortBy: 'createdAt',
     sortOrder: 'desc',
   })
+  const [sortVersion, setSortVersion] = useState(0)
   const [columnVisibilityMenu, setColumnVisibilityMenu] = useState<ReactNode | null>(null)
   const [stats, setStats] = useState<DepartmentStats>({ total: 0, active: 0, inactive: 0 })
 
@@ -277,7 +278,10 @@ export function DepartmentsTable({
             setPage(nextPage)
             setLimit(nextLimit)
           }}
-          onSortingChange={setSorting}
+          onSortingChange={(next) => {
+            setSorting(next)
+            setSortVersion((v) => v + 1)
+          }}
           onStatsChange={handleStatsChange}
           renderColumnVisibilityMenu={setColumnVisibilityMenu}
           onEditDepartment={handleEdit}
@@ -286,6 +290,7 @@ export function DepartmentsTable({
           canUpdate={canUpdate}
           canDelete={canDelete}
           searchValue={search}
+          sortVersion={sortVersion}
         />
       </Suspense>
 
@@ -315,6 +320,7 @@ interface DepartmentsTableContentProps {
   canUpdate: boolean
   canDelete: boolean
   searchValue: string
+  sortVersion: number
 }
 
 function DepartmentsTableContent({
@@ -333,6 +339,7 @@ function DepartmentsTableContent({
   canUpdate,
   canDelete,
   searchValue,
+  sortVersion,
 }: DepartmentsTableContentProps) {
   const [isPending, startTransition] = useTransition()
 
@@ -348,7 +355,7 @@ function DepartmentsTableContent({
     [page, limit, search, statusFilter, sorting]
   )
 
-  const { data } = useDepartmentsQuery(queryParams)
+  const { data } = useDepartmentsQuery(queryParams, { version: sortVersion })
   const departments = useMemo(() => data?.data ?? [], [data?.data])
   const pagination = useMemo(
     () =>

@@ -307,6 +307,7 @@ function DeviceModelsTableContent({
   renderColumnVisibilityMenu,
 }: DeviceModelsTableContentProps) {
   const [isPending, startTransition] = useTransition()
+  const [sortVersion, setSortVersion] = useState(0)
   const [compatibilityModal, setCompatibilityModal] = useState<{
     open: boolean
     deviceModelId: string
@@ -334,7 +335,7 @@ function DeviceModelsTableContent({
     [search, manufacturer, type, isActive, sorting, useA4Filter]
   )
 
-  const { data } = useDeviceModelsQuery(queryParams)
+  const { data } = useDeviceModelsQuery(queryParams, { version: sortVersion })
   const models = useMemo(() => data?.data ?? [], [data?.data])
   const totalCount = useMemo(
     () => data?.pagination?.total ?? models.length,
@@ -656,7 +657,10 @@ function DeviceModelsTableContent({
         pageIndex={0}
         pageSize={models.length || 10}
         onSortingChange={(nextSorting) => {
-          startTransition(() => onSortingChange(nextSorting))
+          startTransition(() => {
+            onSortingChange(nextSorting)
+            setSortVersion((v) => v + 1)
+          })
         }}
         sorting={sorting}
         defaultSorting={{ sortBy: 'createdAt', sortOrder: 'desc' }}

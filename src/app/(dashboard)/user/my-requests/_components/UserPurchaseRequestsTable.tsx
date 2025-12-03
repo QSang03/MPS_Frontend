@@ -283,6 +283,7 @@ function UserPurchaseRequestsTableContent({
   renderColumnVisibilityMenu,
 }: UserPurchaseRequestsTableContentProps) {
   const [isPending, startTransition] = useTransition()
+  const [sortVersion, setSortVersion] = useState(0)
 
   const queryParams = useMemo(
     () => ({
@@ -297,7 +298,7 @@ function UserPurchaseRequestsTableContent({
     [pagination, search, statusFilter, customerFilter, sorting]
   )
 
-  const { data } = usePurchaseRequestsQuery(queryParams)
+  const { data } = usePurchaseRequestsQuery(queryParams, { version: sortVersion })
   const requests = useMemo(() => (data?.data ?? []) as PurchaseRequestRow[], [data?.data])
   const totalCount = data?.pagination?.total ?? requests.length
 
@@ -558,6 +559,7 @@ function UserPurchaseRequestsTableContent({
       onSortingChange={(nextSorting) => {
         startTransition(() => {
           onSortingChange(nextSorting)
+          setSortVersion((v) => v + 1)
         })
       }}
       sorting={sorting}

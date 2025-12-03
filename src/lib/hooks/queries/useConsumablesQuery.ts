@@ -5,11 +5,12 @@ import { consumablesClientService } from '@/lib/api/services/consumables-client.
 
 export type ConsumablesQueryParams = Record<string, unknown> | undefined
 
-export function useConsumablesQuery(params?: ConsumablesQueryParams) {
+export function useConsumablesQuery(params?: ConsumablesQueryParams, opts?: { version?: number }) {
   const queryParams = params ?? {}
+  const version = opts?.version ?? 0
 
   return useSuspenseQuery({
-    queryKey: ['consumables', queryParams],
+    queryKey: ['consumables', queryParams, version],
     queryFn: () => consumablesClientService.list(queryParams),
   })
 }

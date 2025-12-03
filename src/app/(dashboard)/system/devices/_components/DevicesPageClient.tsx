@@ -98,6 +98,7 @@ export default function DevicesPageClient() {
     sortBy: 'createdAt',
     sortOrder: 'desc',
   })
+  const [sortVersion, setSortVersion] = useState(0)
   const [columnVisibilityMenu, setColumnVisibilityMenu] = useState<ReactNode | null>(null)
   const [stats, setStats] = useState<DeviceStats>({ total: 0, active: 0, inactive: 0 })
 
@@ -166,8 +167,23 @@ export default function DevicesPageClient() {
         onRemove: () => setShowInactiveStatuses(false),
       })
     }
+    if (sorting.sortBy !== 'createdAt' || sorting.sortOrder !== 'desc') {
+      filters.push({
+        label: `Sắp xếp: ${sorting.sortBy} (${sorting.sortOrder === 'asc' ? 'Tăng dần' : 'Giảm dần'})`,
+        value: `${sorting.sortBy}-${sorting.sortOrder}`,
+        onRemove: () => setSorting({ sortBy: 'createdAt', sortOrder: 'desc' }),
+      })
+    }
     return filters
-  }, [searchInput, customerFilter, statusFilter, showInactiveStatuses, customerOptions])
+  }, [
+    searchInput,
+    customerFilter,
+    statusFilter,
+    showInactiveStatuses,
+    customerOptions,
+    sorting.sortBy,
+    sorting.sortOrder,
+  ])
 
   const handleResetFilters = () => {
     setSearchInput('')
@@ -324,9 +340,13 @@ export default function DevicesPageClient() {
           pagination={pagination}
           sorting={sorting}
           onPaginationChange={(page, limit) => setPagination({ page, limit })}
-          onSortingChange={setSorting}
+          onSortingChange={(next) => {
+            setSorting(next)
+            setSortVersion((v) => v + 1)
+          }}
           onStatsChange={setStats}
           renderColumnVisibilityMenu={setColumnVisibilityMenu}
+          sortVersion={sortVersion}
         />
       </Suspense>
     </div>
@@ -363,6 +383,7 @@ interface DevicesTableContentProps {
   onSortingChange: (sorting: { sortBy?: string; sortOrder?: 'asc' | 'desc' }) => void
   onStatsChange: (stats: DeviceStats) => void
   renderColumnVisibilityMenu: (menu: ReactNode | null) => void
+  sortVersion?: number
 }
 
 function DevicesTableContent({
@@ -377,6 +398,7 @@ function DevicesTableContent({
   onSortingChange,
   onStatsChange,
   renderColumnVisibilityMenu,
+  sortVersion,
 }: DevicesTableContentProps) {
   const [isPending, startTransition] = useTransition()
   const [showCustomerSelect, setShowCustomerSelect] = useState(false)
@@ -407,7 +429,7 @@ function DevicesTableContent({
     [pagination, search, statusFilter, customerFilter, showInactive, sorting]
   )
 
-  const { data } = useDevicesQuery(queryParams)
+  const { data } = useDevicesQuery(queryParams, { version: sortVersion })
   const devices = useMemo(() => data?.data ?? [], [data?.data])
   const paginationMeta = useMemo(
     () =>

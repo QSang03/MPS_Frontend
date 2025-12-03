@@ -483,6 +483,7 @@ function SlasTableContent({
   onDelete,
 }: SlasTableContentProps) {
   const [isPending, startTransition] = useTransition()
+  const [sortVersion, setSortVersion] = useState(0)
 
   const queryParams = useMemo(
     () => ({
@@ -498,7 +499,7 @@ function SlasTableContent({
     [pagination, search, priorityFilter, statusFilter, customerFilter, sorting]
   )
 
-  const { data } = useSlasQuery(queryParams)
+  const { data } = useSlasQuery(queryParams, { version: sortVersion })
   const rows = useMemo(() => (data?.data ?? []) as SlaRow[], [data?.data])
   const totalCount = data?.pagination?.total ?? rows.length
 
@@ -717,6 +718,7 @@ function SlasTableContent({
       onSortingChange={(nextSorting) => {
         startTransition(() => {
           onSortingChange(nextSorting)
+          setSortVersion((v) => v + 1)
         })
       }}
       sorting={sorting}

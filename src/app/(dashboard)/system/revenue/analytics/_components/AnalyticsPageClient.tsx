@@ -33,7 +33,10 @@ import type {
   ConsumableLifecycleItem,
   ProfitabilityTrendItem,
 } from '@/lib/api/services/reports-analytics.service'
-import TrendChart from '@/components/ui/TrendChart'
+import dynamic from 'next/dynamic'
+import { Suspense } from 'react'
+import { Skeleton } from '@/components/ui/skeleton'
+const TrendChart = dynamic(() => import('@/components/ui/TrendChart'), { ssr: false })
 import { toast } from 'sonner'
 import {
   ResponsiveContainer,
@@ -61,6 +64,15 @@ export default function AnalyticsPageClient() {
       maximumFractionDigits: 2,
     }).format(Number(n))
   }
+  // Global time filter (single control used by all sections)
+  const [globalMode, setGlobalMode] = useState<TimeRangeMode>('period')
+  const [globalPeriod, setGlobalPeriod] = useState('')
+  const [globalFrom, setGlobalFrom] = useState('')
+  const [globalTo, setGlobalTo] = useState('')
+  const [globalYear, setGlobalYear] = useState('')
+
+  // Helper to apply global filter to all sections (declared later after load functions)
+
   // Enterprise Profit State
   const [enterprisePeriod, setEnterprisePeriod] = useState('')
   const [enterpriseMode, setEnterpriseMode] = useState<TimeRangeMode>('period')
@@ -154,6 +166,9 @@ export default function AnalyticsPageClient() {
           params.year = enterpriseYear
         }
       }
+
+      // Helper to apply global filter to all sections
+
       // validate that one of the modes is used and params are provided
       if (mode === 'period' && !params.period) {
         toast.warning('Vui lòng nhập kỳ (YYYY-MM)')
@@ -270,45 +285,6 @@ export default function AnalyticsPageClient() {
     },
     [customersPeriod, customersMode, customersFrom, customersTo, customersYear]
   )
-
-  // Prefill current month (run once on mount)
-  useEffect(() => {
-    const now = new Date()
-    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-    setEnterprisePeriod(currentMonth)
-    setCustomersPeriod(currentMonth)
-    setCustomerDetailPeriod(currentMonth)
-    setDevicePeriod(currentMonth)
-    setConsumablePeriod(currentMonth)
-
-    // For date ranges, set last 12 months
-    const twelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1)
-    const fromMonth = `${twelveMonthsAgo.getFullYear()}-${String(
-      twelveMonthsAgo.getMonth() + 1
-    ).padStart(2, '0')}`
-    setDeviceFrom(fromMonth)
-    setDeviceTo(currentMonth)
-    setConsumableFrom(fromMonth)
-    setConsumableTo(currentMonth)
-    // Auto-load enterprise and customers profit for the initial month so the page shows data by default
-    void (async () => {
-      try {
-        await loadEnterpriseProfit({ period: currentMonth })
-      } catch {
-        // ignore - loadEnterpriseProfit handles errors
-      }
-      try {
-        await loadCustomersProfit({ period: currentMonth })
-      } catch {
-        // ignore - loadCustomersProfit handles errors
-      }
-    })()
-    // We explicitly only want this to run once on mount. loadEnterpriseProfit and
-    // loadCustomersProfit are stable enough for our initial load — avoid rerunning
-    // this effect when parent state changes (which caused the bug of reloading
-    // the current month after user applied a new month).
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
   // Helpers to compute defaults
   function getCurrentMonth(): string {
@@ -510,6 +486,7 @@ export default function AnalyticsPageClient() {
           return
         }
       }
+
       const res = await reportsAnalyticsService.getConsumableLifecycle(cleaned)
       if (res.success && res.data) {
         setConsumableData(res.data.items || [])
@@ -531,6 +508,66 @@ export default function AnalyticsPageClient() {
     }
   }
 
+  // Load multiple sections concurrently; report all settled (top-level helper)
+  const loadAllConcurrent = async (time?: {
+    period?: string
+    from?: string
+    to?: string
+    year?: string
+  }) => {
+    const period = time?.period ?? globalPeriod
+    const from = time?.from ?? globalFrom
+    const to = time?.to ?? globalTo
+    const year = time?.year ?? globalYear
+    const promises: Promise<unknown>[] = []
+    promises.push(loadEnterpriseProfit({ period, from, to, year }))
+    promises.push(loadCustomersProfit({ period, from, to, year }))
+    promises.push(loadConsumableLifecycle({ period, from, to, year }))
+    // only load details or device profitability if selected
+    if (selectedCustomerId)
+      promises.push(loadCustomerDetail(selectedCustomerId, { period, from, to, year }))
+    if (selectedDeviceId) promises.push(loadDeviceProfitability({ period, from, to, year }))
+    const results = await Promise.allSettled(promises)
+    return results
+  }
+
+  // Prefill current month and run initial concurrent load (once on mount)
+  useEffect(() => {
+    const now = new Date()
+    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+    setEnterprisePeriod(currentMonth)
+    setCustomersPeriod(currentMonth)
+    setCustomerDetailPeriod(currentMonth)
+    setDevicePeriod(currentMonth)
+    setConsumablePeriod(currentMonth)
+
+    // Keep the global filter in sync for initial default
+    setGlobalPeriod(currentMonth)
+    setGlobalMode('period')
+    setEnterpriseMode('period')
+    setCustomersMode('period')
+    setDeviceMode('period')
+    setConsumableMode('period')
+
+    const twelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1)
+    const fromMonth = `${twelveMonthsAgo.getFullYear()}-${String(twelveMonthsAgo.getMonth() + 1).padStart(2, '0')}`
+    setDeviceFrom(fromMonth)
+    setDeviceTo(currentMonth)
+    setConsumableFrom(fromMonth)
+    setConsumableTo(currentMonth)
+    setGlobalFrom(fromMonth)
+    setGlobalTo(currentMonth)
+
+    void (async () => {
+      try {
+        await loadAllConcurrent({ period: currentMonth })
+      } catch {
+        // ignore - load functions handle errors
+      }
+    })()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // Filter customers by search term or selected customer id
   const filteredCustomers = customersData.filter((c) => {
     if (customersSearchId) return c.customerId === customersSearchId
@@ -550,6 +587,115 @@ export default function AnalyticsPageClient() {
         <h2 className="text-2xl font-bold">Phân tích lợi nhuận & Vật tư</h2>
       </div>
 
+      {/* Global time filter card: single control for the entire analytics page */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            Bộ lọc thời gian (Toàn bộ trang)
+          </CardTitle>
+          <CardDescription>Chọn kỳ áp dụng cho tất cả báo cáo trong trang</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <Calendar className="text-muted-foreground h-4 w-4" />
+              <div className="flex items-center gap-2">
+                <Select
+                  value={globalMode}
+                  onValueChange={(v) => {
+                    const mode = v as TimeRangeMode
+                    setGlobalMode(mode)
+                    // Auto-fill defaults when switching modes
+                    if (mode === 'period') setGlobalPeriod(getCurrentMonth())
+                    else if (mode === 'range') {
+                      setGlobalFrom(getTwelveMonthsAgo())
+                      setGlobalTo(getCurrentMonth())
+                    } else if (mode === 'year') setGlobalYear(getCurrentYear())
+                  }}
+                >
+                  <SelectTrigger className="bg-background h-8 w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="period">Tháng</SelectItem>
+                    <SelectItem value="range">Khoảng</SelectItem>
+                    <SelectItem value="year">Năm</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            {globalMode === 'period' && (
+              <MonthPicker
+                placeholder="Kỳ (YYYY-MM)"
+                value={globalPeriod}
+                onChange={(v) => setGlobalPeriod(v)}
+              />
+            )}
+            {globalMode === 'range' && (
+              <>
+                <MonthPicker
+                  placeholder="From (YYYY-MM)"
+                  value={globalFrom}
+                  onChange={(v) => setGlobalFrom(v)}
+                />
+                <MonthPicker
+                  placeholder="To (YYYY-MM)"
+                  value={globalTo}
+                  onChange={(v) => setGlobalTo(v)}
+                />
+              </>
+            )}
+            {globalMode === 'year' && (
+              <input
+                type="number"
+                className="h-8 w-28 rounded border p-1"
+                placeholder="YYYY"
+                value={globalYear}
+                onChange={(e) => setGlobalYear(e.target.value)}
+              />
+            )}
+            <Button
+              onClick={() => {
+                // Synchronize per-section states with global values
+                setEnterpriseMode(globalMode)
+                setEnterprisePeriod(globalPeriod)
+                setEnterpriseFrom(globalFrom)
+                setEnterpriseTo(globalTo)
+                setEnterpriseYear(globalYear)
+
+                setCustomersMode(globalMode)
+                setCustomersPeriod(globalPeriod)
+                setCustomersFrom(globalFrom)
+                setCustomersTo(globalTo)
+                setCustomersYear(globalYear)
+
+                setDeviceMode(globalMode)
+                setDevicePeriod(globalPeriod)
+                setDeviceFrom(globalFrom)
+                setDeviceTo(globalTo)
+                setDeviceYear(globalYear)
+
+                setConsumableMode(globalMode)
+                setConsumablePeriod(globalPeriod)
+                setConsumableFrom(globalFrom)
+                setConsumableTo(globalTo)
+                setConsumableYear(globalYear)
+
+                // run concurrent loads
+                void loadAllConcurrent({
+                  period: globalPeriod,
+                  from: globalFrom,
+                  to: globalTo,
+                  year: globalYear,
+                })
+              }}
+            >
+              Áp dụng cho tất cả
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* 1. Enterprise Profit Overview */}
       <Card>
         <CardHeader>
@@ -564,68 +710,27 @@ export default function AnalyticsPageClient() {
             <div className="flex items-center gap-2">
               <Calendar className="text-muted-foreground h-4 w-4" />
               <div className="flex items-center gap-2">
-                <Select
-                  value={enterpriseMode}
-                  onValueChange={(v) => {
-                    const mode = v as TimeRangeMode
-                    setEnterpriseMode(mode)
-                    // Auto-fill defaults when switching modes
-                    if (mode === 'period') setEnterprisePeriod(getCurrentMonth())
-                    else if (mode === 'range') {
-                      setEnterpriseFrom(getTwelveMonthsAgo())
-                      setEnterpriseTo(getCurrentMonth())
-                    } else if (mode === 'year') setEnterpriseYear(getCurrentYear())
-                  }}
-                >
-                  <SelectTrigger className="bg-background h-8 w-32">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="period">Tháng</SelectItem>
-                    <SelectItem value="range">Khoảng</SelectItem>
-                    <SelectItem value="year">Năm</SelectItem>
-                  </SelectContent>
-                </Select>
+                <span className="text-sm">
+                  Kỳ:{' '}
+                  {globalMode === 'period'
+                    ? globalPeriod
+                    : globalMode === 'range'
+                      ? `${globalFrom} to ${globalTo}`
+                      : globalYear}
+                </span>
               </div>
-              {enterpriseMode === 'period' && (
-                <MonthPicker
-                  placeholder="Kỳ (YYYY-MM)"
-                  value={enterprisePeriod}
-                  onChange={(v) => setEnterprisePeriod(v)}
-                  onApply={(v) => {
-                    setEnterprisePeriod(v)
-                    void loadEnterpriseProfit({ period: v })
-                  }}
-                  className="w-40"
-                />
-              )}
-              {enterpriseMode === 'range' && (
-                <div className="flex gap-2">
-                  <MonthPicker
-                    placeholder="From (YYYY-MM)"
-                    value={enterpriseFrom}
-                    onChange={(v) => setEnterpriseFrom(v)}
-                    className="w-36"
-                  />
-                  <MonthPicker
-                    placeholder="To (YYYY-MM)"
-                    value={enterpriseTo}
-                    onChange={(v) => setEnterpriseTo(v)}
-                    className="w-36"
-                  />
-                </div>
-              )}
-              {enterpriseMode === 'year' && (
-                <input
-                  type="number"
-                  className="h-8 w-28 rounded border p-1"
-                  placeholder="YYYY"
-                  value={enterpriseYear}
-                  onChange={(e) => setEnterpriseYear(e.target.value)}
-                />
-              )}
             </div>
-            <Button onClick={() => void loadEnterpriseProfit()} disabled={enterpriseLoading}>
+            <Button
+              onClick={() =>
+                void loadEnterpriseProfit({
+                  period: globalPeriod,
+                  from: globalFrom,
+                  to: globalTo,
+                  year: globalYear,
+                })
+              }
+              disabled={enterpriseLoading}
+            >
               {enterpriseLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Tải dữ liệu
             </Button>
@@ -696,11 +801,17 @@ export default function AnalyticsPageClient() {
             </div>
           )}
 
-          {enterpriseProfitability && (
+          {enterpriseLoading ? (
             <div className="mt-4">
-              <TrendChart data={enterpriseProfitability ?? []} height={300} showMargin />
+              <Skeleton className="h-64 w-full rounded-lg" />
             </div>
-          )}
+          ) : enterpriseProfitability ? (
+            <div className="mt-4">
+              <Suspense fallback={<Skeleton className="h-64 w-full rounded-lg" />}>
+                <TrendChart data={enterpriseProfitability ?? []} height={300} showMargin />
+              </Suspense>
+            </div>
+          ) : null}
         </CardContent>
       </Card>
 
@@ -718,65 +829,15 @@ export default function AnalyticsPageClient() {
             <div className="flex items-center gap-2">
               <Calendar className="text-muted-foreground h-4 w-4" />
               <div className="flex items-center gap-2">
-                <Select
-                  value={customersMode}
-                  onValueChange={(v) => {
-                    const mode = v as TimeRangeMode
-                    setCustomersMode(mode)
-                    if (mode === 'period') setCustomersPeriod(getCurrentMonth())
-                    else if (mode === 'range') {
-                      setCustomersFrom(getTwelveMonthsAgo())
-                      setCustomersTo(getCurrentMonth())
-                    } else if (mode === 'year') setCustomersYear(getCurrentYear())
-                  }}
-                >
-                  <SelectTrigger className="bg-background h-8 w-32">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="period">Tháng</SelectItem>
-                    <SelectItem value="range">Khoảng</SelectItem>
-                    <SelectItem value="year">Năm</SelectItem>
-                  </SelectContent>
-                </Select>
+                <span className="text-sm">
+                  Kỳ:{' '}
+                  {globalMode === 'period'
+                    ? globalPeriod
+                    : globalMode === 'range'
+                      ? `${globalFrom} to ${globalTo}`
+                      : globalYear}
+                </span>
               </div>
-              {customersMode === 'period' && (
-                <MonthPicker
-                  placeholder="Kỳ (YYYY-MM)"
-                  value={customersPeriod}
-                  onChange={(v) => setCustomersPeriod(v)}
-                  onApply={(v) => {
-                    setCustomersPeriod(v)
-                    void loadCustomersProfit({ period: v })
-                  }}
-                  className="w-40"
-                />
-              )}
-              {customersMode === 'range' && (
-                <div className="flex gap-2">
-                  <MonthPicker
-                    placeholder="From (YYYY-MM)"
-                    value={customersFrom}
-                    onChange={(v) => setCustomersFrom(v)}
-                    className="w-36"
-                  />
-                  <MonthPicker
-                    placeholder="To (YYYY-MM)"
-                    value={customersTo}
-                    onChange={(v) => setCustomersTo(v)}
-                    className="w-36"
-                  />
-                </div>
-              )}
-              {customersMode === 'year' && (
-                <input
-                  type="number"
-                  className="h-8 w-28 rounded border p-1"
-                  placeholder="YYYY"
-                  value={customersYear}
-                  onChange={(e) => setCustomersYear(e.target.value)}
-                />
-              )}
             </div>
             <div className="flex items-center gap-2">
               <Search className="text-muted-foreground h-4 w-4" />
@@ -790,17 +851,33 @@ export default function AnalyticsPageClient() {
                 }}
               />
             </div>
-            <Button onClick={() => void loadCustomersProfit()} disabled={customersLoading}>
+            <Button
+              onClick={() =>
+                void loadCustomersProfit({
+                  period: globalPeriod,
+                  from: globalFrom,
+                  to: globalTo,
+                  year: globalYear,
+                })
+              }
+              disabled={customersLoading}
+            >
               {customersLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Tải dữ liệu
             </Button>
           </div>
 
-          {customersProfitability && (
+          {customersLoading ? (
             <div className="mb-4">
-              <TrendChart data={customersProfitability ?? []} height={220} showMargin={false} />
+              <Skeleton className="h-56 w-full rounded-lg" />
             </div>
-          )}
+          ) : customersProfitability ? (
+            <div className="mb-4">
+              <Suspense fallback={<Skeleton className="h-56 w-full rounded-lg" />}>
+                <TrendChart data={customersProfitability ?? []} height={220} showMargin={false} />
+              </Suspense>
+            </div>
+          ) : null}
 
           <div className="overflow-x-auto rounded-lg border">
             <table className="min-w-full divide-y">
@@ -848,8 +925,13 @@ export default function AnalyticsPageClient() {
                           variant="outline"
                           size="sm"
                           onClick={() => {
-                            // load detail immediately for this customer using current customersPeriod
-                            void loadCustomerDetail(c.customerId, { period: customersPeriod })
+                            // load detail immediately for this customer using the global filter
+                            void loadCustomerDetail(c.customerId, {
+                              period: globalPeriod,
+                              from: globalFrom,
+                              to: globalTo,
+                              year: globalYear,
+                            })
                           }}
                         >
                           Chi tiết
@@ -884,18 +966,26 @@ export default function AnalyticsPageClient() {
               />
               <div className="flex items-center gap-2">
                 <Calendar className="text-muted-foreground h-4 w-4" />
-                <MonthPicker
-                  placeholder="Kỳ (YYYY-MM)"
-                  value={customerDetailPeriod}
-                  onChange={(v) => setCustomerDetailPeriod(v)}
-                  onApply={(v) => {
-                    setCustomerDetailPeriod(v)
-                    void loadCustomerDetail(undefined, { period: v })
-                  }}
-                  className="w-40"
-                />
+                <div className="text-sm">
+                  Kỳ:{' '}
+                  {globalMode === 'period'
+                    ? globalPeriod
+                    : globalMode === 'range'
+                      ? `${globalFrom} to ${globalTo}`
+                      : globalYear}
+                </div>
               </div>
-              <Button onClick={() => void loadCustomerDetail()} disabled={customerDetailLoading}>
+              <Button
+                onClick={() =>
+                  void loadCustomerDetail(undefined, {
+                    period: globalPeriod,
+                    from: globalFrom,
+                    to: globalTo,
+                    year: globalYear,
+                  })
+                }
+                disabled={customerDetailLoading}
+              >
                 {customerDetailLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                 Tải dữ liệu
               </Button>
@@ -1008,63 +1098,27 @@ export default function AnalyticsPageClient() {
               />
               <div className="flex items-center gap-2">
                 <Calendar className="text-muted-foreground h-4 w-4" />
-                <Select
-                  value={deviceMode}
-                  onValueChange={(v) => {
-                    const mode = v as TimeRangeMode
-                    setDeviceMode(mode)
-                    if (mode === 'period') setDevicePeriod(getCurrentMonth())
-                    else if (mode === 'range') {
-                      setDeviceFrom(getTwelveMonthsAgo())
-                      setDeviceTo(getCurrentMonth())
-                    } else if (mode === 'year') setDeviceYear(getCurrentYear())
-                  }}
-                >
-                  <SelectTrigger className="bg-background h-8 w-32">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="period">Tháng</SelectItem>
-                    <SelectItem value="range">Khoảng</SelectItem>
-                    <SelectItem value="year">Năm</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="text-sm">
+                  Kỳ:{' '}
+                  {globalMode === 'period'
+                    ? globalPeriod
+                    : globalMode === 'range'
+                      ? `${globalFrom} to ${globalTo}`
+                      : globalYear}
+                </div>
               </div>
-              {deviceMode === 'period' && (
-                <MonthPicker
-                  placeholder="Kỳ (YYYY-MM)"
-                  value={devicePeriod}
-                  onChange={(v) => setDevicePeriod(v)}
-                  onApply={(v) => void loadDeviceProfitability({ period: v })}
-                  className="w-36"
-                />
-              )}
-              {deviceMode === 'range' && (
-                <>
-                  <MonthPicker
-                    placeholder="From (YYYY-MM)"
-                    value={deviceFrom}
-                    onChange={(v) => setDeviceFrom(v)}
-                    className="w-36"
-                  />
-                  <MonthPicker
-                    placeholder="To (YYYY-MM)"
-                    value={deviceTo}
-                    onChange={(v) => setDeviceTo(v)}
-                    className="w-36"
-                  />
-                </>
-              )}
-              {deviceMode === 'year' && (
-                <input
-                  type="number"
-                  className="h-8 w-28 rounded border p-1"
-                  placeholder="YYYY"
-                  value={deviceYear}
-                  onChange={(e) => setDeviceYear(e.target.value)}
-                />
-              )}
-              <Button onClick={() => void loadDeviceProfitability()} disabled={deviceLoading}>
+
+              <Button
+                onClick={() =>
+                  void loadDeviceProfitability({
+                    period: globalPeriod,
+                    from: globalFrom,
+                    to: globalTo,
+                    year: globalYear,
+                  })
+                }
+                disabled={deviceLoading}
+              >
                 {deviceLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                 Tải dữ liệu
               </Button>
@@ -1083,36 +1137,38 @@ export default function AnalyticsPageClient() {
                       Không có dữ liệu
                     </div>
                   ) : (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={deviceData.profitability}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="month" />
-                        <YAxis />
-                        <Tooltip />
-                        <Legend />
-                        <Line
-                          type="monotone"
-                          dataKey="totalRevenue"
-                          stroke="#3b82f6"
-                          name="Tổng doanh thu"
-                          strokeWidth={2}
-                        />
-                        <Line
-                          type="monotone"
-                          dataKey="totalCogs"
-                          stroke="#f59e0b"
-                          name="Tổng chi phí"
-                          strokeWidth={2}
-                        />
-                        <Line
-                          type="monotone"
-                          dataKey="grossProfit"
-                          stroke="#10b981"
-                          name="Lợi nhuận gộp"
-                          strokeWidth={2}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
+                    <Suspense fallback={<Skeleton className="h-[360px] w-full rounded-lg" />}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={deviceData.profitability}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="month" />
+                          <YAxis />
+                          <Tooltip />
+                          <Legend />
+                          <Line
+                            type="monotone"
+                            dataKey="totalRevenue"
+                            stroke="#3b82f6"
+                            name="Tổng doanh thu"
+                            strokeWidth={2}
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="totalCogs"
+                            stroke="#f59e0b"
+                            name="Tổng chi phí"
+                            strokeWidth={2}
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="grossProfit"
+                            stroke="#10b981"
+                            name="Lợi nhuận gộp"
+                            strokeWidth={2}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </Suspense>
                   )}
                 </div>
 
@@ -1193,60 +1249,16 @@ export default function AnalyticsPageClient() {
             <div className="flex items-center gap-2">
               <Calendar className="text-muted-foreground h-4 w-4" />
               <div className="flex items-center gap-2">
-                <Select
-                  value={consumableMode}
-                  onValueChange={(v) => {
-                    const mode = v as TimeRangeMode
-                    setConsumableMode(mode)
-                    if (mode === 'period') setConsumablePeriod(getCurrentMonth())
-                    else if (mode === 'range') {
-                      setConsumableFrom(getTwelveMonthsAgo())
-                      setConsumableTo(getCurrentMonth())
-                    } else if (mode === 'year') setConsumableYear(getCurrentYear())
-                  }}
-                >
-                  <SelectTrigger className="bg-background h-8 w-32">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="period">Tháng</SelectItem>
-                    <SelectItem value="range">Khoảng</SelectItem>
-                    <SelectItem value="year">Năm</SelectItem>
-                  </SelectContent>
-                </Select>
+                <span className="text-sm">
+                  Kỳ:{' '}
+                  {globalMode === 'period'
+                    ? globalPeriod
+                    : globalMode === 'range'
+                      ? `${globalFrom} to ${globalTo}`
+                      : globalYear}
+                </span>
               </div>
             </div>
-            {consumableMode === 'period' && (
-              <MonthPicker
-                placeholder="Kỳ (YYYY-MM)"
-                value={consumablePeriod}
-                onChange={(v) => setConsumablePeriod(v)}
-                onApply={(v) => void loadConsumableLifecycle({ period: v })}
-              />
-            )}
-            {consumableMode === 'range' && (
-              <>
-                <MonthPicker
-                  placeholder="From (YYYY-MM)"
-                  value={consumableFrom}
-                  onChange={(v) => setConsumableFrom(v)}
-                />
-                <MonthPicker
-                  placeholder="To (YYYY-MM)"
-                  value={consumableTo}
-                  onChange={(v) => setConsumableTo(v)}
-                />
-              </>
-            )}
-            {consumableMode === 'year' && (
-              <input
-                type="number"
-                className="h-8 w-28 rounded border p-1"
-                placeholder="YYYY"
-                value={consumableYear}
-                onChange={(e) => setConsumableYear(e.target.value)}
-              />
-            )}
             <ConsumableTypeSelect
               placeholder="Consumable Type (tùy chọn)"
               value={consumableTypeId}
@@ -1257,14 +1269,26 @@ export default function AnalyticsPageClient() {
               value={consumableCustomerId}
               onChange={(id) => setConsumableCustomerId(id)}
             />
-            <Button onClick={() => void loadConsumableLifecycle()} disabled={consumableLoading}>
+            <Button
+              onClick={() =>
+                void loadConsumableLifecycle({
+                  period: globalPeriod,
+                  from: globalFrom,
+                  to: globalTo,
+                  year: globalYear,
+                })
+              }
+              disabled={consumableLoading}
+            >
               {consumableLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Tải dữ liệu
             </Button>
           </div>
 
           <div className="mb-4 h-[300px] w-full">
-            {consumableData.length === 0 && !consumableLoading ? (
+            {consumableLoading ? (
+              <Skeleton className="h-[300px] w-full rounded-lg" />
+            ) : consumableData.length === 0 ? (
               <div className="flex h-full items-center justify-center text-sm text-gray-500">
                 Không có dữ liệu
               </div>

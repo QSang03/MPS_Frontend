@@ -5,11 +5,12 @@ import { customersClientService } from '@/lib/api/services/customers-client.serv
 
 export type CustomersQueryParams = Parameters<typeof customersClientService.getAll>[0]
 
-export function useCustomersQuery(params?: CustomersQueryParams) {
+export function useCustomersQuery(params?: CustomersQueryParams, opts?: { version?: number }) {
   const queryParams = params ?? {}
+  const version = opts?.version ?? 0
 
   return useSuspenseQuery({
-    queryKey: ['customers', queryParams],
+    queryKey: ['customers', queryParams, version],
     queryFn: () => customersClientService.getAll(queryParams),
   })
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { toast } from 'sonner'
 import { Plus, Edit3, Trash2, FileText, Zap } from 'lucide-react'
 import type { ColumnDef } from '@tanstack/react-table'
@@ -186,6 +186,25 @@ export default function SlaTemplatesClient({ session }: { session?: Session | nu
     }
   }
 
+  const activeFilters = useMemo(() => {
+    const filters: Array<{ label: string; value: string; onRemove: () => void }> = []
+    if (search) {
+      filters.push({
+        label: `Tìm kiếm: "${search}"`,
+        value: search,
+        onRemove: () => setSearch(''),
+      })
+    }
+    if (sorting.sortBy !== 'createdAt' || sorting.sortOrder !== 'desc') {
+      filters.push({
+        label: `Sắp xếp: ${sorting.sortBy} (${sorting.sortOrder === 'asc' ? 'Tăng dần' : 'Giảm dần'})`,
+        value: `${sorting.sortBy}-${sorting.sortOrder}`,
+        onRemove: () => setSorting({ sortBy: 'createdAt', sortOrder: 'desc' }),
+      })
+    }
+    return filters
+  }, [search, sorting])
+
   return (
     <div className="space-y-6">
       <SystemPageHeader
@@ -208,7 +227,11 @@ export default function SlaTemplatesClient({ session }: { session?: Session | nu
           <CardDescription>Danh sách mẫu SLA cho hệ thống</CardDescription>
         </CardHeader>
         <CardContent>
-          <FilterSection title="Bộ lọc & Tìm kiếm" onReset={() => setSearch('')} activeFilters={[]}>
+          <FilterSection
+            title="Bộ lọc & Tìm kiếm"
+            onReset={() => setSearch('')}
+            activeFilters={activeFilters}
+          >
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Tìm kiếm</label>

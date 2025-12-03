@@ -27,10 +27,12 @@ import { logout } from '@/app/actions/auth'
 import type { Session } from '@/types/auth'
 import { useUIStore } from '@/lib/store/uiStore'
 import { useRouter } from 'next/navigation'
+import { useQueryClient } from '@tanstack/react-query'
 import { ROUTES } from '@/constants/routes'
 import { NotificationPanel } from '@/components/notifications/NotificationPanel'
 import { useNotifications } from '@/lib/hooks/useNotifications'
 import { useState, useEffect } from 'react'
+import { clearAuthCookies } from '@/lib/auth/client-auth'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -50,6 +52,7 @@ interface NavbarProps {
 export function Navbar({ session }: NavbarProps) {
   const { toggleSidebar } = useUIStore()
   const router = useRouter()
+  const queryClient = useQueryClient()
   const pageTitle = useUIStore((s) => s.pageTitle)
   const pathname = usePathname()
   const { unreadCount, isUnreadCountLoading } = useNotifications()
@@ -104,7 +107,24 @@ export function Navbar({ session }: NavbarProps) {
     } catch {
       // ignore
     }
-    await logout()
+    try {
+      // Clear react-query cache to avoid leaking previous user's data
+      try {
+        queryClient.clear()
+      } catch {
+        // ignore
+      }
+
+      // Clear any non-httpOnly cookies if present
+      try {
+        clearAuthCookies()
+      } catch {
+        // ignore
+      }
+    } finally {
+      // Call server-side logout which destroys session and redirects
+      await logout()
+    }
   }
 
   const handleProfile = () => {

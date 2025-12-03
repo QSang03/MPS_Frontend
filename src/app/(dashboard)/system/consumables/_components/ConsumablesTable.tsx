@@ -19,6 +19,9 @@ interface ConsumablesTableProps {
   onPageSizeChange: (size: number) => void
   onStatsChange: (stats: { total: number; active: number; inactive: number }) => void
   renderColumnVisibilityMenu: (menu: ReactNode | null) => void
+  sorting?: { sortBy?: string; sortOrder?: 'asc' | 'desc' }
+  onSortingChange?: (next: { sortBy?: string; sortOrder?: 'asc' | 'desc' }) => void
+  consumableTypeFilter?: string
 }
 
 export function ConsumablesTable({
@@ -30,25 +33,34 @@ export function ConsumablesTable({
   onPageSizeChange,
   onStatsChange,
   renderColumnVisibilityMenu,
+  sorting: sortingProp,
+  onSortingChange,
+  consumableTypeFilter,
 }: ConsumablesTableProps) {
   const [isPending, startTransition] = useTransition()
-  const [sorting, setSorting] = useState<{ sortBy?: string; sortOrder?: 'asc' | 'desc' }>({
-    sortBy: 'createdAt',
-    sortOrder: 'desc',
-  })
+  // queryClient is not used in this component; omit to avoid lint errors
+  const [sorting, setSortingState] = useState<{ sortBy?: string; sortOrder?: 'asc' | 'desc' }>(
+    sortingProp ?? { sortBy: 'createdAt', sortOrder: 'desc' }
+  )
+  const [sortVersion, setSortVersion] = useState(0)
+  const setSorting = onSortingChange ?? setSortingState
 
+  const currentSortBy = (sortingProp && sortingProp.sortBy) ?? sorting.sortBy ?? 'createdAt'
+  const currentSortOrder = (sortingProp && sortingProp.sortOrder) ?? sorting.sortOrder ?? 'desc'
   const queryParams = useMemo(
     () => ({
       page,
       limit: pageSize,
       search: search || undefined,
-      sortBy: sorting.sortBy || 'createdAt',
-      sortOrder: sorting.sortOrder || 'desc',
+      sortBy: currentSortBy,
+      sortOrder: currentSortOrder,
+      consumableTypeId:
+        consumableTypeFilter && consumableTypeFilter !== 'all' ? consumableTypeFilter : undefined,
     }),
-    [page, pageSize, search, sorting.sortBy, sorting.sortOrder]
+    [page, pageSize, search, currentSortBy, currentSortOrder, consumableTypeFilter]
   )
 
-  const { data } = useConsumablesQuery(queryParams)
+  const { data } = useConsumablesQuery(queryParams, { version: sortVersion })
 
   const { items, total } = useMemo(() => {
     const payload = data as unknown
@@ -235,6 +247,7 @@ export function ConsumablesTable({
       onSortingChange={(nextSorting) => {
         startTransition(() => {
           setSorting(nextSorting)
+          setSortVersion((v) => v + 1)
         })
       }}
       sorting={sorting}

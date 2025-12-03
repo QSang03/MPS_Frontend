@@ -5,6 +5,7 @@ import Cookies from 'js-cookie'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { login, type LoginActionState } from '@/app/actions/auth'
+import { useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -16,10 +17,17 @@ import { ROUTES } from '@/constants/routes'
 export default function LoginPage() {
   const [state, formAction, isPending] = useActionState<LoginActionState, FormData>(login, null)
   const router = useRouter()
+  const queryClient = useQueryClient()
 
   // Redirect on successful login
   useEffect(() => {
     if (state?.success?.message && !isPending) {
+      // Clear react-query cache now that user credentials/session changed
+      try {
+        queryClient.clear()
+      } catch {
+        // ignore
+      }
       // Persist isDefaultCustomer flag to client-side cookie so client code can read it
       try {
         if (typeof state.success.isDefaultCustomer !== 'undefined') {
@@ -61,7 +69,7 @@ export default function LoginPage() {
       return () => clearTimeout(timer)
     }
     return undefined
-  }, [state, isPending, router])
+  }, [state, isPending, router, queryClient])
 
   return (
     <motion.div

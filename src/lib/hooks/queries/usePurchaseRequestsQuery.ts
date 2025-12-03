@@ -5,11 +5,15 @@ import { purchaseRequestsClientService } from '@/lib/api/services/purchase-reque
 
 export type PurchaseRequestsQueryParams = Parameters<typeof purchaseRequestsClientService.getAll>[0]
 
-export function usePurchaseRequestsQuery(params?: PurchaseRequestsQueryParams) {
+export function usePurchaseRequestsQuery(
+  params?: PurchaseRequestsQueryParams,
+  opts?: { version?: number }
+) {
   const queryParams = params ?? {}
+  const version = opts?.version ?? 0
 
   return useSuspenseQuery({
-    queryKey: ['purchase-requests', queryParams],
+    queryKey: ['purchase-requests', queryParams, version],
     queryFn: () => purchaseRequestsClientService.getAll(queryParams),
   })
 }

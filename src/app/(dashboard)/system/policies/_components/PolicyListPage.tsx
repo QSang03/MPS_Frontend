@@ -288,6 +288,7 @@ function PolicyTable({
   onCreate,
 }: PolicyTableProps) {
   const [isPending, startTransition] = useTransition()
+  const [sortVersion, setSortVersion] = useState(0)
 
   const queryParams = useMemo(
     () => ({
@@ -302,7 +303,7 @@ function PolicyTable({
     [page, pageSize, search, effectFilter, actionFilter, sorting]
   )
 
-  const { data } = usePoliciesQuery(queryParams)
+  const { data } = usePoliciesQuery(queryParams, { version: sortVersion })
   const policies = useMemo(() => data?.data ?? [], [data?.data])
   const pagination = useMemo(
     () =>
@@ -499,6 +500,7 @@ function PolicyTable({
       onSortingChange={(nextSorting) => {
         startTransition(() => {
           onSortingChange(nextSorting)
+          setSortVersion((v) => v + 1)
         })
       }}
       sorting={sorting}

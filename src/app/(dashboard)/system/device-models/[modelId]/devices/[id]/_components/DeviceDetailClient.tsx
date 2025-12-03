@@ -809,50 +809,6 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
           </div>
 
           {/* Usage Statistics */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="h-5 w-5 text-cyan-600" />
-                Thống kê sử dụng
-              </CardTitle>
-              <CardDescription>Số liệu hoạt động của thiết bị</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                <div className="rounded-xl border border-cyan-200 bg-gradient-to-br from-cyan-50 to-blue-50 p-4">
-                  <p className="text-muted-foreground mb-2 text-sm font-medium">
-                    Tổng số trang đã in
-                  </p>
-                  <p className="text-3xl font-bold text-cyan-700">
-                    {
-                      formatPageCount(
-                        device.totalPagesUsed,
-                        typeof device?.totalPagesUsed !== 'undefined'
-                      ).display
-                    }
-                  </p>
-                  <p className="text-muted-foreground mt-1 text-xs">trang</p>
-                </div>
-
-                <div className="rounded-xl border border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 p-4">
-                  <p className="text-muted-foreground mb-2 text-sm font-medium">Trạng thái</p>
-                  <p className="text-2xl font-bold text-green-700">
-                    {Boolean(device?.isActive) ? 'Hoạt động' : 'Tạm dừng'}
-                  </p>
-                  <p className="text-muted-foreground mt-1 text-xs">hiện tại</p>
-                </div>
-
-                <div className="rounded-xl border border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50 p-4">
-                  <p className="text-muted-foreground mb-2 text-sm font-medium">Model</p>
-                  <p className="text-lg font-bold text-purple-700">
-                    {device.deviceModel?.name || 'N/A'}
-                  </p>
-                  <p className="text-muted-foreground mt-1 text-xs">thiết bị</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
           {/* Monthly Usage Pages */}
           <Card>
             <CardHeader>

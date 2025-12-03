@@ -65,6 +65,7 @@ export function CustomerTable({
     sortBy: 'createdAt',
     sortOrder: 'desc',
   })
+  const [sortVersion, setSortVersion] = useState(0)
   const [editingAddressFor, setEditingAddressFor] = useState<string | null>(null)
   const [editingAddressValue, setEditingAddressValue] = useState('')
   const [savingAddressId, setSavingAddressId] = useState<string | null>(null)
@@ -90,7 +91,7 @@ export function CustomerTable({
     [page, pageSize, search, sorting]
   )
 
-  const { data } = useCustomersQuery(queryParams)
+  const { data } = useCustomersQuery(queryParams, { version: sortVersion })
 
   const queryCustomers = useMemo(() => data?.data ?? [], [data?.data])
   const totalCount = useMemo(
@@ -471,6 +472,7 @@ export function CustomerTable({
           onSortingChange={(nextSorting) => {
             startTransition(() => {
               setSorting(nextSorting)
+              setSortVersion((v) => v + 1)
             })
           }}
           sorting={sorting}

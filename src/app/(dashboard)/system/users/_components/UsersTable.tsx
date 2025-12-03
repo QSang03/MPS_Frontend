@@ -61,6 +61,7 @@ export function UsersTable() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
+  const [sortVersion, setSortVersion] = useState(0) // version counter to force refetch when user explicitly changes sorting
   const queryClient = useQueryClient()
 
   const [filters, setFilters] = useState<UserFilters>(() => ({
@@ -221,8 +222,15 @@ export function UsersTable() {
         onRemove: () => setFilters((prev) => ({ ...prev, customerId: 'all' })),
       })
     }
+    if (sorting.sortBy !== 'createdAt' || sorting.sortOrder !== 'desc') {
+      items.push({
+        label: `Sắp xếp: ${sorting.sortBy} (${sorting.sortOrder === 'asc' ? 'Tăng dần' : 'Giảm dần'})`,
+        value: `${sorting.sortBy}-${sorting.sortOrder}`,
+        onRemove: () => setSorting({ sortBy: 'createdAt', sortOrder: 'desc' }),
+      })
+    }
     return items
-  }, [filters, roles, availableCustomerCodes, customerCodeToId])
+  }, [filters, roles, availableCustomerCodes, customerCodeToId, sorting.sortBy, sorting.sortOrder])
 
   const handleResetFilters = () => {
     setFilters({
@@ -347,7 +355,11 @@ export function UsersTable() {
           sorting={sorting}
           onPaginationChange={handlePaginationChange}
           onPaginationMetaChange={handlePaginationMetaChange}
-          onSortingChange={setSorting}
+          onSortingChange={(next) => {
+            // increment version to force refetch even if params equal previous
+            setSorting(next)
+            setSortVersion((v) => v + 1)
+          }}
           onStatsChange={handleStatsChange}
           onEditUser={handleEditUser}
           onResetPassword={handleResetPassword}
@@ -357,6 +369,7 @@ export function UsersTable() {
           canDelete={canDelete}
           searchInput={searchInput}
           filtersState={filters}
+          sortVersion={sortVersion}
         />
       </Suspense>
 
@@ -388,6 +401,7 @@ interface UsersTableContentProps {
   canDelete: boolean
   searchInput: string
   filtersState: UserFilters
+  sortVersion?: number
 }
 
 function UsersTableContent({
@@ -406,6 +420,7 @@ function UsersTableContent({
   canDelete,
   searchInput,
   filtersState,
+  sortVersion,
 }: UsersTableContentProps) {
   const [isPending, startTransition] = useTransition()
 
@@ -423,8 +438,7 @@ function UsersTableContent({
     [filters, pagination.page, pagination.limit, sorting]
   )
 
-  const { data } = useUsersQuery(queryParams)
-
+  const { data } = useUsersQuery(queryParams, { version: sortVersion })
   const users = useMemo(() => data?.data ?? [], [data])
 
   const paginationMeta = useMemo(() => {

@@ -282,6 +282,7 @@ function PurchaseRequestsTableContent({
   renderColumnVisibilityMenu,
 }: PurchaseRequestsTableContentProps) {
   const queryClient = useQueryClient()
+  const [sortVersion, setSortVersion] = useState(0)
   const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
@@ -298,7 +299,7 @@ function PurchaseRequestsTableContent({
     [pagination, search, statusFilter, customerFilter, sorting]
   )
 
-  const { data } = usePurchaseRequestsQuery(queryParams)
+  const { data } = usePurchaseRequestsQuery(queryParams, { version: sortVersion })
   const requests = useMemo(() => (data?.data ?? []) as PurchaseRequestRow[], [data?.data])
   const totalCount = data?.pagination?.total ?? requests.length
 
@@ -634,6 +635,7 @@ function PurchaseRequestsTableContent({
       onSortingChange={(nextSorting) => {
         startTransition(() => {
           onSortingChange(nextSorting)
+          setSortVersion((v) => v + 1)
         })
       }}
       sorting={sorting}

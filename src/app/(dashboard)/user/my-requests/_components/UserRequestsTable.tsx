@@ -325,6 +325,7 @@ function UserRequestsTableContent({
   renderColumnVisibilityMenu,
 }: UserRequestsTableContentProps) {
   const [isPending, startTransition] = useTransition()
+  const [sortVersion, setSortVersion] = useState(0)
   const router = useRouter()
   const [closeReason, setCloseReason] = useState('')
   const [isCloseDialogOpen, setIsCloseDialogOpen] = useState(false)
@@ -350,7 +351,7 @@ function UserRequestsTableContent({
     [pagination, search, statusFilter, priorityFilter, customerFilter, sorting]
   )
 
-  const { data, refetch } = useServiceRequestsQuery(queryParams)
+  const { data, refetch } = useServiceRequestsQuery(queryParams, { version: sortVersion })
 
   const requests = useMemo(() => (data?.data ?? []) as ServiceRequestRow[], [data?.data])
   const totalCount = data?.pagination?.total ?? requests.length
@@ -773,6 +774,7 @@ function UserRequestsTableContent({
         onSortingChange={(nextSorting) => {
           startTransition(() => {
             onSortingChange(nextSorting)
+            setSortVersion((v) => v + 1)
           })
         }}
         sorting={sorting}

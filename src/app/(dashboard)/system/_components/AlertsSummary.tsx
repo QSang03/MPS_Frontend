@@ -98,12 +98,17 @@ export function AlertsSummary({
     )
   }
 
+  // Prefer counts from the `alerts` payload when present, otherwise fall back to KPIs
+  const lowConsumableCount = alerts?.consumableWarnings?.total ?? kpis.lowConsumableAlerts ?? 0
+  const deviceErrorCount = alerts?.deviceErrors?.total ?? kpis.deviceErrorAlerts ?? 0
+  const slaCount = alerts?.slaViolations?.total ?? kpis.slaBreachAlerts ?? 0
+
   const alertItems: AlertItem[] = [
     {
       id: 'low_consumable',
       type: 'low_consumable',
       title: 'Vật tư tiêu hao sắp hết',
-      count: kpis.lowConsumableAlerts,
+      count: lowConsumableCount,
       severity: (alerts?.consumableWarnings?.severity ?? 'MEDIUM').toLowerCase() as
         | 'low'
         | 'medium'
@@ -119,7 +124,7 @@ export function AlertsSummary({
       id: 'device_error',
       type: 'device_error',
       title: 'Lỗi thiết bị',
-      count: kpis.deviceErrorAlerts,
+      count: deviceErrorCount,
       severity: (alerts?.deviceErrors?.severity ?? 'HIGH').toLowerCase() as
         | 'low'
         | 'medium'
@@ -135,7 +140,7 @@ export function AlertsSummary({
       id: 'sla_breach',
       type: 'sla_breach',
       title: 'Vi phạm SLA',
-      count: kpis.slaBreachAlerts,
+      count: slaCount,
       severity: (alerts?.slaViolations?.severity ?? 'CRITICAL').toLowerCase() as
         | 'low'
         | 'medium'
@@ -149,7 +154,18 @@ export function AlertsSummary({
     },
   ]
 
-  const totalAlerts = kpis.totalAlerts
+  // Compute total: if alerts object provides per-category totals, sum those;
+  // otherwise fall back to KPI total.
+  const alertTotalsFromAlerts = [
+    alerts?.consumableWarnings?.total,
+    alerts?.deviceErrors?.total,
+    alerts?.slaViolations?.total,
+  ].filter((v) => typeof v === 'number') as number[]
+
+  const totalAlerts =
+    alertTotalsFromAlerts.length > 0
+      ? alertTotalsFromAlerts.reduce((a, b) => a + b, 0)
+      : (kpis.totalAlerts ?? 0)
 
   const getSeverityBadge = (severity: string, count: number) => {
     if (count === 0) {

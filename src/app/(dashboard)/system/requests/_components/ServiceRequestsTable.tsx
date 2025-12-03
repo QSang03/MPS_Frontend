@@ -106,6 +106,7 @@ export function ServiceRequestsTable() {
     sortBy: 'createdAt',
     sortOrder: 'desc',
   })
+  const [sortVersion, setSortVersion] = useState(0)
   const [columnVisibilityMenu, setColumnVisibilityMenu] = useState<ReactNode | null>(null)
   const [summary, setSummary] = useState({
     total: 0,
@@ -171,6 +172,13 @@ export function ServiceRequestsTable() {
       label: `Người phụ trách: ${assignedToFilter}`,
       value: assignedToFilter,
       onRemove: () => setAssignedToFilter(''),
+    })
+  }
+  if (sorting.sortBy !== 'createdAt' || sorting.sortOrder !== 'desc') {
+    activeFilters.push({
+      label: `Sắp xếp: ${sorting.sortBy} (${sorting.sortOrder === 'asc' ? 'Tăng dần' : 'Giảm dần'})`,
+      value: `${sorting.sortBy}-${sorting.sortOrder}`,
+      onRemove: () => setSorting({ sortBy: 'createdAt', sortOrder: 'desc' }),
     })
   }
 
@@ -316,9 +324,14 @@ export function ServiceRequestsTable() {
           assignedToFilter={assignedToFilter}
           sorting={sorting}
           onPaginationChange={setPagination}
-          onSortingChange={setSorting}
+          onSortingChange={(next) => {
+            // update sorting and force refetch once per user action
+            setSorting(next)
+            setSortVersion((v) => v + 1)
+          }}
           onStatsChange={setSummary}
           renderColumnVisibilityMenu={setColumnVisibilityMenu}
+          sortVersion={sortVersion}
         />
       </Suspense>
     </div>
@@ -345,6 +358,7 @@ interface ServiceRequestsTableContentProps {
     urgent: number
   }) => void
   renderColumnVisibilityMenu: (menu: ReactNode | null) => void
+  sortVersion?: number
 }
 
 function ServiceRequestsTableContent({
@@ -361,6 +375,7 @@ function ServiceRequestsTableContent({
   onSortingChange,
   onStatsChange,
   renderColumnVisibilityMenu,
+  sortVersion,
 }: ServiceRequestsTableContentProps) {
   const queryClient = useQueryClient()
   const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null)
@@ -398,7 +413,7 @@ function ServiceRequestsTableContent({
     ]
   )
 
-  const { data } = useServiceRequestsQuery(queryParams)
+  const { data } = useServiceRequestsQuery(queryParams, { version: sortVersion })
   const requests = useMemo(() => (data?.data ?? []) as ServiceRequestRow[], [data?.data])
   const totalCount = data?.pagination?.total ?? requests.length
 
@@ -746,7 +761,11 @@ function ServiceRequestsTableContent({
         pageIndex={pagination.pageIndex}
         pageSize={pagination.pageSize}
         onPaginationChange={(next) => startTransition(() => onPaginationChange(next))}
-        onSortingChange={(nextSorting) => startTransition(() => onSortingChange(nextSorting))}
+        onSortingChange={(nextSorting) =>
+          startTransition(() => {
+            onSortingChange(nextSorting)
+          })
+        }
         sorting={sorting}
         defaultSorting={{ sortBy: 'createdAt', sortOrder: 'desc' }}
         enableColumnVisibility

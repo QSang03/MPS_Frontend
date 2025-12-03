@@ -113,8 +113,15 @@ export function RolesTable({ onCreateTrigger, onCreateTriggerReset }: RolesTable
         onRemove: () => setIsActive('all'),
       })
     }
+    if (sorting.sortBy !== 'createdAt' || sorting.sortOrder !== 'desc') {
+      filters.push({
+        label: `Sắp xếp: ${sorting.sortBy} (${sorting.sortOrder === 'asc' ? 'Tăng dần' : 'Giảm dần'})`,
+        value: `${sorting.sortBy}-${sorting.sortOrder}`,
+        onRemove: () => setSorting({ sortBy: 'createdAt', sortOrder: 'desc' }),
+      })
+    }
     return filters
-  }, [search, isActive])
+  }, [search, isActive, sorting.sortBy, sorting.sortOrder])
 
   const handleResetFilters = () => {
     setSearch('')
@@ -317,6 +324,7 @@ function RolesTableContent({
   searchValue,
 }: RolesTableContentProps) {
   const [isPending, startTransition] = useTransition()
+  const [sortVersion, setSortVersion] = useState(0)
 
   const queryParams = useMemo(
     () => ({
@@ -330,7 +338,7 @@ function RolesTableContent({
     [page, limit, search, statusFilter, sorting]
   )
 
-  const { data } = useRolesQuery(queryParams)
+  const { data } = useRolesQuery(queryParams, { version: sortVersion })
   const roles = useMemo(() => data?.data ?? [], [data?.data])
   const pagination = useMemo(
     () =>
@@ -523,7 +531,10 @@ function RolesTableContent({
         startTransition(() => onPageChange(nextPage, nextLimit))
       }}
       onSortingChange={(nextSorting) => {
-        startTransition(() => onSortingChange(nextSorting))
+        startTransition(() => {
+          onSortingChange(nextSorting)
+          setSortVersion((v) => v + 1)
+        })
       }}
       sorting={sorting}
       defaultSorting={{ sortBy: 'createdAt', sortOrder: 'desc' }}

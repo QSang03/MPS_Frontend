@@ -39,22 +39,49 @@ export async function middleware(request: NextRequest) {
       // Only perform redirects for browser navigations (GET).
       // For non-GET requests (POST, PUT, PATCH) we should allow the
       // request to continue so Server Actions / API handlers can run.
-      if (request.method !== 'GET') return NextResponse.next()
+      if (request.method !== 'GET') {
+        const r = NextResponse.next()
+        r.headers.set(
+          'cache-control',
+          'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
+        )
+        return r
+      }
       // If user has default password, force to change-password page
       if (session.isDefaultPassword && pathname !== '/change-password') {
-        return NextResponse.redirect(new URL('/change-password?required=true', request.url))
+        const r = NextResponse.redirect(new URL('/change-password?required=true', request.url))
+        r.headers.set(
+          'cache-control',
+          'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
+        )
+        return r
       }
       // If already changed password, redirect to dashboard
       if (!session.isDefaultPassword && pathname === '/change-password') {
-        return NextResponse.redirect(new URL(getDashboardPath(session), request.url))
+        const r = NextResponse.redirect(new URL(getDashboardPath(session), request.url))
+        r.headers.set(
+          'cache-control',
+          'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
+        )
+        return r
       }
       // If on change-password with default password, allow access
       if (pathname === '/change-password') {
-        return NextResponse.next()
+        const r = NextResponse.next()
+        r.headers.set(
+          'cache-control',
+          'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
+        )
+        return r
       }
       return NextResponse.redirect(new URL(getDashboardPath(session), request.url))
     }
-    return NextResponse.next()
+    const r = NextResponse.next()
+    r.headers.set(
+      'cache-control',
+      'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
+    )
+    return r
   }
 
   // Protected routes - require authentication
@@ -70,28 +97,45 @@ export async function middleware(request: NextRequest) {
       response.cookies.delete('mps_session')
       response.cookies.delete('access_token')
       response.cookies.delete('refresh_token')
+      response.headers.set(
+        'cache-control',
+        'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
+      )
       return response
     }
 
-    return new NextResponse(JSON.stringify({ error: 'Unauthorized' }), {
+    const unauth = new NextResponse(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
       headers: { 'content-type': 'application/json' },
     })
+    unauth.headers.set(
+      'cache-control',
+      'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
+    )
+    return unauth
   }
 
   // Check if user must change default password before accessing any protected route
   if (session.isDefaultPassword && pathname !== '/change-password') {
     // Browser navigations should be redirected to change-password.
     if (request.method === 'GET') {
-      return NextResponse.redirect(new URL('/change-password?required=true', request.url))
+      const r = NextResponse.redirect(new URL('/change-password?required=true', request.url))
+      r.headers.set(
+        'cache-control',
+        'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
+      )
+      return r
     }
 
-    // For non-GET (API/server actions) return 403 so calling code receives a
-    // clear forbidden status rather than being redirected.
-    return new NextResponse(JSON.stringify({ error: 'Password change required' }), {
+    const pw = new NextResponse(JSON.stringify({ error: 'Password change required' }), {
       status: 403,
       headers: { 'content-type': 'application/json' },
     })
+    pw.headers.set(
+      'cache-control',
+      'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
+    )
+    return pw
   }
 
   // Access control based on isDefaultCustomer
@@ -100,13 +144,23 @@ export async function middleware(request: NextRequest) {
   if (pathname.startsWith('/system')) {
     if (!session.isDefaultCustomer) {
       if (request.method === 'GET') {
-        return NextResponse.redirect(new URL(ROUTES.FORBIDDEN, request.url))
+        const r = NextResponse.redirect(new URL(ROUTES.FORBIDDEN, request.url))
+        r.headers.set(
+          'cache-control',
+          'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
+        )
+        return r
       }
 
-      return new NextResponse(JSON.stringify({ error: 'Forbidden' }), {
+      const f = new NextResponse(JSON.stringify({ error: 'Forbidden' }), {
         status: 403,
         headers: { 'content-type': 'application/json' },
       })
+      f.headers.set(
+        'cache-control',
+        'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
+      )
+      return f
     }
   }
 
@@ -121,11 +175,16 @@ export async function middleware(request: NextRequest) {
   requestHeaders.set('x-customer-id', session.customerId)
   requestHeaders.set('x-user-role', session.role)
 
-  return NextResponse.next({
+  const resp = NextResponse.next({
     request: {
       headers: requestHeaders,
     },
   })
+  resp.headers.set(
+    'cache-control',
+    'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
+  )
+  return resp
 }
 
 /**
