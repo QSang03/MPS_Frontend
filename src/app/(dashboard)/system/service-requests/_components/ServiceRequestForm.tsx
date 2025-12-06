@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import {
   Form,
   FormControl,
@@ -42,6 +43,7 @@ interface ServiceRequestFormProps {
 export function ServiceRequestForm({ customerId, onSuccess }: ServiceRequestFormProps) {
   const router = useRouter()
   const queryClient = useQueryClient()
+  const { t } = useLocale()
 
   // Fetch devices for dropdown
   const { data: devicesData } = useQuery({
@@ -64,7 +66,7 @@ export function ServiceRequestForm({ customerId, onSuccess }: ServiceRequestForm
     mutationFn: serviceRequestsClientService.create,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['service-requests'] })
-      toast.success('Tạo yêu cầu bảo trì thành công!')
+      toast.success(t('user_service_request.create.success'))
       form.reset()
       if (onSuccess) {
         onSuccess()
@@ -73,7 +75,8 @@ export function ServiceRequestForm({ customerId, onSuccess }: ServiceRequestForm
       }
     },
     onError: (error: unknown) => {
-      const message = error instanceof Error ? error.message : 'Tạo yêu cầu bảo trì thất bại'
+      const message =
+        error instanceof Error ? error.message : t('user_service_request.create.error')
       toast.error(message)
     },
   })

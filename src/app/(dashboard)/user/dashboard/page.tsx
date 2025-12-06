@@ -5,10 +5,15 @@ export const metadata = {
   title: 'Tổng quan',
 }
 
-export default function UserDashboardPage() {
+export default async function UserDashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ month?: string }>
+}) {
+  const params = await searchParams
   return (
     <UserPageLayout>
-      <DashboardPageClient />
+      <DashboardPageClient month={params.month} />
     </UserPageLayout>
   )
 }

@@ -21,6 +21,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { VN } from '@/constants/vietnamese'
 import Link from 'next/link'
 
@@ -48,6 +49,7 @@ export default function CustomerContractsModal({
   customerId,
   customerName,
 }: Props) {
+  const { t } = useLocale()
   const [contracts, setContracts] = useState<Contract[]>([])
   const [loading, setLoading] = useState(false)
   const [page] = useState(1)
@@ -91,14 +93,14 @@ export default function CustomerContractsModal({
         setContracts(list)
       } catch (err) {
         console.error('Failed to fetch customer contracts', err)
-        toast.error('Không thể tải danh sách hợp đồng của khách hàng')
+        toast.error(t('contract.fetch_error_customer'))
       } finally {
         setLoading(false)
       }
     }
 
     fetchCustomerContracts()
-  }, [open, customerId, page, limit])
+  }, [open, customerId, page, limit, t])
 
   // Reset filters when modal closes
   useEffect(() => {
@@ -186,7 +188,7 @@ export default function CustomerContractsModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <SystemModalLayout
-        title="Hợp đồng của khách hàng"
+        title={t('page.contracts.customer_title')}
         description={customerName}
         icon={Building2}
         variant="view"
@@ -202,7 +204,7 @@ export default function CustomerContractsModal({
               <Loader2 className="h-14 w-14 animate-spin text-sky-500" />
               <div className="absolute inset-0 h-14 w-14 animate-ping rounded-full bg-sky-400 opacity-20" />
             </div>
-            <p className="text-sm font-medium text-slate-600">Đang tải danh sách hợp đồng...</p>
+            <p className="text-sm font-medium text-slate-600">{t('loading.default')}</p>
           </motion.div>
         ) : contracts.length === 0 ? (
           <motion.div
@@ -214,10 +216,8 @@ export default function CustomerContractsModal({
               <FileText className="h-12 w-12 text-slate-400" />
             </div>
             <div className="text-center">
-              <p className="text-lg font-semibold text-slate-700">Chưa có hợp đồng nào</p>
-              <p className="mt-1 text-sm text-slate-500">
-                Khách hàng này chưa có hợp đồng nào trong hệ thống
-              </p>
+              <p className="text-lg font-semibold text-slate-700">{t('empty.contracts.empty')}</p>
+              <p className="mt-1 text-sm text-slate-500">{t('empty.contracts.customer_desc')}</p>
             </div>
           </motion.div>
         ) : (

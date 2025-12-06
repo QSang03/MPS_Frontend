@@ -29,6 +29,7 @@ import {
   Trash2,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import Link from 'next/link'
 import type { Session } from '@/lib/auth/session'
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -73,18 +74,18 @@ interface SlaStats {
   avgResolution: number
 }
 
-const priorityOptions = [
-  { label: 'Tất cả ưu tiên', value: 'all' },
-  { label: 'Thấp', value: Priority.LOW },
-  { label: 'Bình thường', value: Priority.NORMAL },
-  { label: 'Cao', value: Priority.HIGH },
-  { label: 'Khẩn cấp', value: Priority.URGENT },
+const getPriorityOptions = (t: (key: string) => string) => [
+  { label: t('sla.filter.priority.all'), value: 'all' },
+  { label: t('sla.table.priority.low'), value: Priority.LOW },
+  { label: t('sla.table.priority.normal'), value: Priority.NORMAL },
+  { label: t('sla.table.priority.high'), value: Priority.HIGH },
+  { label: t('sla.table.priority.urgent'), value: Priority.URGENT },
 ]
 
-const statusOptions = [
-  { label: 'Tất cả trạng thái', value: 'all' },
-  { label: 'Đang bật', value: 'active' },
-  { label: 'Tạm dừng', value: 'inactive' },
+const getStatusOptions = (t: (key: string) => string) => [
+  { label: t('sla.filter.status.all'), value: 'all' },
+  { label: t('sla.filter.status.active'), value: 'active' },
+  { label: t('sla.filter.status.inactive'), value: 'inactive' },
 ]
 
 const priorityBadgeMap: Record<Priority, string> = {
@@ -113,6 +114,7 @@ function useDebouncedValue<T>(value: T, delay = 400) {
 export default function SlasClient({ session }: SlasClientProps) {
   void session
   const queryClient = useQueryClient()
+  const { t } = useLocale()
   const { canCreate, canUpdate, canDelete } = useActionPermission('slas')
 
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 })
@@ -129,6 +131,8 @@ export default function SlasClient({ session }: SlasClientProps) {
   const [columnVisibilityMenu, setColumnVisibilityMenu] = useState<ReactNode | null>(null)
 
   const debouncedSearch = useDebouncedValue(searchTerm, 500)
+  const priorityOptions = useMemo(() => getPriorityOptions(t), [t])
+  const statusOptions = useMemo(() => getStatusOptions(t), [t])
   const [stats, setStats] = useState<SlaStats>({
     total: 0,
     active: 0,
@@ -141,12 +145,12 @@ export default function SlasClient({ session }: SlasClientProps) {
   const createMutation = useMutation({
     mutationFn: (payload: SlaFormValues) => slasClientService.create(payload),
     onSuccess: () => {
-      toast.success('Tạo SLA thành công')
+      toast.success(t('sla.create_success'))
       queryClient.invalidateQueries({ queryKey: ['slas'] })
       queryClient.invalidateQueries({ queryKey: ['system-slas'] })
     },
     onError: (error: unknown) => {
-      const message = error instanceof Error ? error.message : 'Không thể tạo SLA'
+      const message = error instanceof Error ? error.message : t('sla.create_error')
       toast.error(message)
     },
   })
@@ -155,12 +159,12 @@ export default function SlasClient({ session }: SlasClientProps) {
     mutationFn: ({ id, payload }: { id: string; payload: SlaFormValues }) =>
       slasClientService.update(id, payload),
     onSuccess: () => {
-      toast.success('Cập nhật SLA thành công')
+      toast.success(t('sla.update_success'))
       queryClient.invalidateQueries({ queryKey: ['slas'] })
       queryClient.invalidateQueries({ queryKey: ['system-slas'] })
     },
     onError: (error: unknown) => {
-      const message = error instanceof Error ? error.message : 'Không thể cập nhật SLA'
+      const message = error instanceof Error ? error.message : t('sla.update_error')
       toast.error(message)
     },
   })
@@ -168,12 +172,12 @@ export default function SlasClient({ session }: SlasClientProps) {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => slasClientService.delete(id),
     onSuccess: () => {
-      toast.success('Đã xóa SLA')
+      toast.success(t('sla.delete_success'))
       queryClient.invalidateQueries({ queryKey: ['slas'] })
       queryClient.invalidateQueries({ queryKey: ['system-slas'] })
     },
     onError: (error: unknown) => {
-      const message = error instanceof Error ? error.message : 'Không thể xóa SLA'
+      const message = error instanceof Error ? error.message : t('sla.delete_error')
       toast.error(message)
     },
   })
@@ -301,7 +305,7 @@ export default function SlasClient({ session }: SlasClientProps) {
                 className="min-w-[120px] bg-gradient-to-r from-blue-600 to-cyan-600 text-white hover:from-blue-700 hover:to-cyan-700"
               >
                 <Plus className="mr-2 h-4 w-4" />
-                Tạo SLA mới
+                {t('sla.create_new')}
               </Button>
             )}
           </>
@@ -311,25 +315,25 @@ export default function SlasClient({ session }: SlasClientProps) {
       <StatsCards
         cards={[
           {
-            label: 'SLA đang bật',
+            label: t('sla.stats.active'),
             value: `${stats.active} / ${stats.total}`,
             icon: <ShieldCheck className="h-6 w-6" />,
             borderColor: 'emerald',
           },
           {
-            label: 'Ưu tiên cao / khẩn',
+            label: t('sla.stats.critical'),
             value: stats.critical,
             icon: <Zap className="h-6 w-6" />,
             borderColor: 'orange',
           },
           {
-            label: 'TB phản hồi',
+            label: t('sla.stats.avg_response'),
             value: stats.avgResponse ? `${stats.avgResponse}h` : '--',
             icon: <Clock4 className="h-6 w-6" />,
             borderColor: 'blue',
           },
           {
-            label: 'TB xử lý',
+            label: t('sla.stats.avg_resolution'),
             value: stats.avgResolution ? `${stats.avgResolution}h` : '--',
             icon: <CheckCircle2 className="h-6 w-6" />,
             borderColor: 'purple',
@@ -338,16 +342,16 @@ export default function SlasClient({ session }: SlasClientProps) {
       />
 
       <FilterSection
-        title="Bộ lọc & Tìm kiếm"
+        title={t('sla.filter.title')}
         onReset={handleResetFilters}
         activeFilters={activeFilters}
         columnVisibilityMenu={columnVisibilityMenu}
       >
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Tìm kiếm</label>
+            <label className="text-sm font-medium">{t('sla.filter.search')}</label>
             <Input
-              placeholder="Tìm theo tên SLA..."
+              placeholder={t('sla.filter.search_placeholder')}
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value)
@@ -356,18 +360,18 @@ export default function SlasClient({ session }: SlasClientProps) {
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium">Khách hàng</label>
+            <label className="text-sm font-medium">{t('sla.filter.customer')}</label>
             <CustomerSelect
               value={customerFilter}
               onChange={(value) => {
                 setCustomerFilter(value)
                 setPagination((prev) => ({ ...prev, pageIndex: 0 }))
               }}
-              placeholder="Chọn khách hàng"
+              placeholder={t('sla.filter.customer_placeholder')}
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium">Ưu tiên</label>
+            <label className="text-sm font-medium">{t('sla.filter.priority')}</label>
             <Select
               value={priorityFilter}
               onValueChange={(value) => {
@@ -376,10 +380,10 @@ export default function SlasClient({ session }: SlasClientProps) {
               }}
             >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Ưu tiên" />
+                <SelectValue placeholder={t('sla.filter.priority_placeholder')} />
               </SelectTrigger>
               <SelectContent>
-                {priorityOptions.map((option) => (
+                {getPriorityOptions(t).map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
                   </SelectItem>
@@ -388,7 +392,7 @@ export default function SlasClient({ session }: SlasClientProps) {
             </Select>
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium">Trạng thái</label>
+            <label className="text-sm font-medium">{t('sla.filter.status')}</label>
             <Select
               value={statusFilter}
               onValueChange={(value) => {
@@ -397,10 +401,10 @@ export default function SlasClient({ session }: SlasClientProps) {
               }}
             >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Trạng thái" />
+                <SelectValue placeholder={t('sla.filter.status_placeholder')} />
               </SelectTrigger>
               <SelectContent>
-                {statusOptions.map((option) => (
+                {getStatusOptions(t).map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
                   </SelectItem>
@@ -482,6 +486,7 @@ function SlasTableContent({
   onEdit,
   onDelete,
 }: SlasTableContentProps) {
+  const { t } = useLocale()
   const [isPending, startTransition] = useTransition()
   const [sortVersion, setSortVersion] = useState(0)
 
@@ -540,7 +545,7 @@ function SlasTableContent({
     () => [
       {
         id: 'index',
-        header: 'STT',
+        header: t('sla.table.index'),
         cell: ({ row, table }) => {
           const index = table.getSortedRowModel().rows.findIndex((r) => r.id === row.id)
           return (
@@ -556,7 +561,7 @@ function SlasTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <FileText className="h-4 w-4 text-gray-600" />
-            SLA
+            {t('sla.table.name')}
           </div>
         ),
         cell: ({ row }) => (
@@ -574,7 +579,7 @@ function SlasTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <Building2 className="h-4 w-4 text-gray-600" />
-            Khách hàng
+            {t('sla.table.customer')}
           </div>
         ),
         enableSorting: true,
@@ -590,18 +595,18 @@ function SlasTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <Tag className="h-4 w-4 text-gray-600" />
-            Ưu tiên
+            {t('sla.table.priority')}
           </div>
         ),
         cell: ({ row }) => (
           <Badge className={priorityBadgeMap[row.original.priority]}>
             {row.original.priority === Priority.URGENT
-              ? 'Khẩn cấp'
+              ? t('sla.table.priority.urgent')
               : row.original.priority === Priority.HIGH
-                ? 'Cao'
+                ? t('sla.table.priority.high')
                 : row.original.priority === Priority.NORMAL
-                  ? 'Bình thường'
-                  : 'Thấp'}
+                  ? t('sla.table.priority.normal')
+                  : t('sla.table.priority.low')}
           </Badge>
         ),
       },
@@ -610,14 +615,18 @@ function SlasTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <Clock className="h-4 w-4 text-gray-600" />
-            Thời hạn (giờ)
+            {t('sla.table.timing')}
           </div>
         ),
         cell: ({ row }) => (
           <div className="text-sm">
-            <p className="font-semibold">{row.original.responseTimeHours}h phản hồi</p>
+            <p className="font-semibold">
+              {row.original.responseTimeHours}
+              {t('sla.table.timing.response')}
+            </p>
             <p className="text-muted-foreground text-xs">
-              {row.original.resolutionTimeHours}h xử lý
+              {row.original.resolutionTimeHours}
+              {t('sla.table.timing.resolution')}
             </p>
           </div>
         ),
@@ -627,14 +636,14 @@ function SlasTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <CheckCircle2 className="h-4 w-4 text-gray-600" />
-            Trạng thái
+            {t('sla.table.status')}
           </div>
         ),
         cell: ({ row }) => (
           <Badge
             className={row.original.isActive ? statusBadgeMap.active : statusBadgeMap.inactive}
           >
-            {row.original.isActive ? 'Đang bật' : 'Tạm dừng'}
+            {row.original.isActive ? t('sla.table.status.active') : t('sla.table.status.inactive')}
           </Badge>
         ),
       },
@@ -643,7 +652,7 @@ function SlasTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-gray-600" />
-            Cập nhật
+            {t('sla.table.updated')}
           </div>
         ),
         cell: ({ row }) => (
@@ -660,7 +669,7 @@ function SlasTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <Settings className="h-4 w-4 text-gray-600" />
-            Thao tác
+            {t('sla.table.actions')}
           </div>
         ),
         cell: ({ row }) => (
@@ -671,15 +680,15 @@ function SlasTableContent({
                 size="sm"
                 onClick={() => onEdit(row.original)}
                 className="transition-all hover:bg-blue-100 hover:text-blue-700"
-                title="Chỉnh sửa"
+                title={t('sla.table.action.edit')}
               >
                 <Edit3 className="h-4 w-4" />
               </Button>
             )}
             {canDelete && (
               <DeleteDialog
-                title={`Xóa SLA ${row.original.name}`}
-                description="Bạn chắc chắn muốn xóa SLA này? Hành động không thể hoàn tác."
+                title={t('sla.delete.title', { name: row.original.name })}
+                description={t('sla.delete.description')}
                 onConfirm={async () => {
                   await onDelete(row.original.id)
                 }}
@@ -688,7 +697,7 @@ function SlasTableContent({
                     variant="ghost"
                     size="sm"
                     className="transition-all hover:bg-red-100 hover:text-red-700"
-                    title="Xóa"
+                    title={t('sla.table.action.delete')}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -699,7 +708,7 @@ function SlasTableContent({
         ),
       },
     ],
-    [canDelete, canUpdate, onDelete, onEdit, pagination.pageIndex, pagination.pageSize]
+    [canDelete, canUpdate, onDelete, onEdit, pagination.pageIndex, pagination.pageSize, t]
   )
 
   return (
@@ -732,9 +741,9 @@ function SlasTableContent({
             <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200">
               <ShieldCheck className="h-12 w-12 opacity-20" />
             </div>
-            <h3 className="mb-2 text-xl font-bold text-gray-700">Không có SLA nào</h3>
+            <h3 className="mb-2 text-xl font-bold text-gray-700">{t('sla.empty.title')}</h3>
             <p className="mb-6 text-gray-500">
-              {searchInput ? 'Không tìm thấy SLA phù hợp' : 'Hãy tạo SLA đầu tiên'}
+              {searchInput ? t('sla.empty.search') : t('sla.empty.create_first')}
             </p>
           </div>
         ) : undefined
@@ -771,7 +780,7 @@ class SlasTableErrorBoundary extends Component<{ children: ReactNode }, { error:
         return (
           <Card>
             <CardHeader>
-              <CardTitle>Không có quyền truy cập SLA</CardTitle>
+              <CardTitle>{'Không có quyền truy cập SLA'}</CardTitle>
               <CardDescription>{message}</CardDescription>
             </CardHeader>
           </Card>
@@ -781,7 +790,7 @@ class SlasTableErrorBoundary extends Component<{ children: ReactNode }, { error:
       return (
         <Card>
           <CardHeader>
-            <CardTitle>Lỗi tải SLA</CardTitle>
+            <CardTitle>{'Lỗi tải SLA'}</CardTitle>
             <CardDescription>{message}</CardDescription>
           </CardHeader>
         </Card>

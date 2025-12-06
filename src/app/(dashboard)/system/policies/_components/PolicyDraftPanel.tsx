@@ -28,6 +28,7 @@ import type { RuleBuilderValue, RuleGroup } from '../_types/rule-builder'
 import { validatePolicyGuardrails } from '../_utils/guardrails'
 import { InlineGuardrailWarning } from './Guardrails/InlineGuardrailWarning'
 import { usePolicyCatalogsCache } from '../_hooks/usePolicyCatalogsCache'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 interface PolicyDraftPanelProps {
   draft: PolicyDraftInput
@@ -57,6 +58,7 @@ export function PolicyDraftPanel({
   selectedRole,
   onRefreshBlueprint,
 }: PolicyDraftPanelProps) {
+  const { t } = useLocale()
   const [actionInput, setActionInput] = useState('')
 
   // Use ref to always have the latest draft value
@@ -355,24 +357,22 @@ export function PolicyDraftPanel({
   const handleCopyPreview = useCallback(async () => {
     try {
       await navigator.clipboard.writeText(policyPreviewString)
-      toast.success('Đã copy preview vào clipboard')
+      toast.success(t('policies.draft.preview.copy_success'))
     } catch (error) {
       console.error('[PolicyDraftPanel] copy preview error', error)
-      toast.error('Không thể copy JSON')
+      toast.error(t('policies.draft.preview.copy_error'))
     }
-  }, [policyPreviewString])
+  }, [policyPreviewString, t])
 
   return (
     <Card className="rounded-2xl border-2 border-slate-100 p-6 shadow-xl">
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div>
           <p className="text-xs font-semibold tracking-widest text-slate-500 uppercase">
-            Draft Builder
+            {t('policies.draft.title')}
           </p>
-          <h2 className="text-2xl font-bold text-slate-900">Định nghĩa policy</h2>
-          <p className="text-sm text-slate-500">
-            Hoàn thiện metadata, subject, resource và environment conditions trước khi analyze.
-          </p>
+          <h2 className="text-2xl font-bold text-slate-900">{t('policies.draft.subtitle')}</h2>
+          <p className="text-sm text-slate-500">{t('policies.draft.description')}</p>
         </div>
       </div>
 
@@ -384,25 +384,27 @@ export function PolicyDraftPanel({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-semibold tracking-widest text-blue-500 uppercase">
-                  Thông tin chính
+                  {t('policies.draft.metadata.title')}
                 </p>
-                <h3 className="text-lg font-semibold text-slate-900">Metadata</h3>
+                <h3 className="text-lg font-semibold text-slate-900">
+                  {t('policies.draft.metadata.label')}
+                </h3>
               </div>
             </div>
 
             <div className="mt-4 grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="policy-name">Tên policy</Label>
+                <Label htmlFor="policy-name">{t('policies.draft.metadata.name')}</Label>
                 <Input
                   id="policy-name"
                   value={draft.name}
                   onChange={(e) => updateDraft({ name: e.target.value })}
-                  placeholder="VD: DenyCrossCustomerAccess"
+                  placeholder={t('policies.draft.metadata.name_placeholder')}
                   className="rounded-xl"
                 />
               </div>
               <div className="space-y-2">
-                <Label>Effect</Label>
+                <Label>{t('policies.draft.metadata.effect')}</Label>
                 <Select
                   value={draft.effect}
                   onValueChange={(value) =>
@@ -410,7 +412,7 @@ export function PolicyDraftPanel({
                   }
                 >
                   <SelectTrigger className="rounded-xl">
-                    <SelectValue placeholder="Chọn effect" />
+                    <SelectValue placeholder={t('policies.draft.metadata.effect_placeholder')} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="ALLOW">ALLOW</SelectItem>
@@ -422,15 +424,18 @@ export function PolicyDraftPanel({
 
             <div className="mt-4 space-y-3">
               <div className="flex items-center justify-between">
-                <Label>Actions</Label>
+                <Label>{t('policies.draft.metadata.actions')}</Label>
                 <p className="text-xs text-slate-500">
-                  Đề xuất: {ACTION_SUGGESTIONS.slice(0, 4).join(', ')}{' '}
+                  {t('policies.draft.metadata.actions_suggestions')}:{' '}
+                  {ACTION_SUGGESTIONS.slice(0, 4).join(', ')}{' '}
                   <span className="text-slate-400">(+ custom)</span>
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
                 {draft.actions.length === 0 ? (
-                  <p className="text-sm text-slate-500">Chưa có action nào.</p>
+                  <p className="text-sm text-slate-500">
+                    {t('policies.draft.metadata.actions_empty')}
+                  </p>
                 ) : (
                   draft.actions.map((action) => (
                     <Badge
@@ -460,11 +465,11 @@ export function PolicyDraftPanel({
                       handleAddAction()
                     }
                   }}
-                  placeholder="Nhập action (vd: read)"
+                  placeholder={t('policies.draft.metadata.action_input_placeholder')}
                   className="rounded-xl"
                 />
                 <Button type="button" onClick={handleAddAction} className="rounded-xl">
-                  Thêm action
+                  {t('policies.draft.metadata.add_action')}
                 </Button>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -497,11 +502,28 @@ export function PolicyDraftPanel({
 
           <section className="rounded-2xl border border-slate-100 bg-white/80 p-5 shadow-sm">
             <Tabs defaultValue="subject" className="space-y-4">
-              <TabsList className="grid grid-cols-3 rounded-2xl bg-slate-100 p-1 text-xs font-semibold">
-                <TabsTrigger value="subject">Subject</TabsTrigger>
-                <TabsTrigger value="resource">Resource</TabsTrigger>
-                <TabsTrigger value="conditions">Conditions</TabsTrigger>
-              </TabsList>
+              <div>
+                <TabsList className="bg-muted inline-flex h-9 items-center justify-start rounded-lg p-1">
+                  <TabsTrigger
+                    value="subject"
+                    className="ring-offset-background focus-visible:ring-ring data-[state=active]:bg-background data-[state=active]:text-foreground inline-flex items-center justify-center rounded-md px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm"
+                  >
+                    {t('policies.draft.tabs.subject')}
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="resource"
+                    className="ring-offset-background focus-visible:ring-ring data-[state=active]:bg-background data-[state=active]:text-foreground inline-flex items-center justify-center rounded-md px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm"
+                  >
+                    {t('policies.draft.tabs.resource')}
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="conditions"
+                    className="ring-offset-background focus-visible:ring-ring data-[state=active]:bg-background data-[state=active]:text-foreground inline-flex items-center justify-center rounded-md px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm"
+                  >
+                    {t('policies.draft.tabs.conditions')}
+                  </TabsTrigger>
+                </TabsList>
+              </div>
 
               <TabsContent value="subject" className="pointer-events-auto space-y-5">
                 <div className="space-y-4">
@@ -545,12 +567,15 @@ export function PolicyDraftPanel({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-semibold tracking-widest text-slate-500 uppercase">
-                  Checklist
+                  {t('policies.draft.checklist.title')}
                 </p>
-                <h3 className="text-lg font-semibold text-slate-900">Guardrail validation</h3>
+                <h3 className="text-lg font-semibold text-slate-900">
+                  {t('policies.draft.checklist.label')}
+                </h3>
               </div>
               <Badge variant="outline" className="rounded-full text-xs">
-                {checklist.filter((item) => item.passed).length}/{checklist.length} done
+                {checklist.filter((item) => item.passed).length}/{checklist.length}{' '}
+                {t('policies.draft.checklist.done')}
               </Badge>
             </div>
             <div className="mt-4 space-y-3">
@@ -581,9 +606,11 @@ export function PolicyDraftPanel({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-semibold tracking-widest text-slate-400 uppercase">
-                  Preview
+                  {t('policies.draft.preview.title')}
                 </p>
-                <h3 className="text-lg font-semibold text-white">Policy JSON</h3>
+                <h3 className="text-lg font-semibold text-white">
+                  {t('policies.draft.preview.label')}
+                </h3>
               </div>
               <Button
                 variant="secondary"
@@ -603,9 +630,11 @@ export function PolicyDraftPanel({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-semibold tracking-widest text-indigo-500 uppercase">
-                  Blueprint
+                  {t('policies.draft.blueprint.title')}
                 </p>
-                <h3 className="text-lg font-semibold text-slate-900">Gợi ý cho vai trò</h3>
+                <h3 className="text-lg font-semibold text-slate-900">
+                  {t('policies.draft.blueprint.label')}
+                </h3>
               </div>
               {selectedRole && onRefreshBlueprint && (
                 <Button
@@ -618,21 +647,20 @@ export function PolicyDraftPanel({
                   <RefreshCw
                     className={`mr-1 h-4 w-4 ${isBlueprintLoading ? 'animate-spin' : ''}`}
                   />
-                  Làm mới
+                  {t('policies.draft.blueprint.refresh')}
                 </Button>
               )}
             </div>
             {!selectedRole && (
-              <p className="mt-4 text-sm text-slate-500">
-                Chọn <span className="font-semibold">role.name</span> trong Subject builder để xem
-                blueprint và guardrail khuyến nghị.
-              </p>
+              <p className="mt-4 text-sm text-slate-500">{t('policies.draft.blueprint.no_role')}</p>
             )}
             {selectedRole && (
               <div className="mt-4 space-y-4">
                 <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
                   <div>
-                    <p className="text-xs tracking-wide text-slate-500 uppercase">Role hiện tại</p>
+                    <p className="text-xs tracking-wide text-slate-500 uppercase">
+                      {t('policies.draft.blueprint.current_role')}
+                    </p>
                     <p className="text-base font-semibold text-slate-900">{selectedRole}</p>
                   </div>
                   {isBlueprintLoading && (
@@ -648,7 +676,7 @@ export function PolicyDraftPanel({
                       blueprint.recommendedGuardrails.length > 0 && (
                         <div>
                           <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
-                            Guardrails đề xuất
+                            {t('policies.draft.blueprint.recommended_guardrails')}
                           </p>
                           <ul className="mt-2 list-disc space-y-1 pl-4 text-sm text-slate-600">
                             {blueprint.recommendedGuardrails.map((item) => (
@@ -660,7 +688,7 @@ export function PolicyDraftPanel({
                     {blueprint.samplePolicies && blueprint.samplePolicies.length > 0 && (
                       <div>
                         <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
-                          Policies mẫu
+                          {t('policies.draft.blueprint.sample_policies')}
                         </p>
                         <div className="mt-2 space-y-2">
                           {blueprint.samplePolicies.map((policy) => (
@@ -678,7 +706,8 @@ export function PolicyDraftPanel({
                               </div>
                               {policy.actions?.length ? (
                                 <p className="mt-1 text-xs text-slate-500">
-                                  Actions: {policy.actions.join(', ')}
+                                  {t('policies.draft.blueprint.actions')}:{' '}
+                                  {policy.actions.join(', ')}
                                 </p>
                               ) : null}
                             </div>
@@ -689,7 +718,7 @@ export function PolicyDraftPanel({
                     {blueprint.missingPatterns && blueprint.missingPatterns.length > 0 && (
                       <div>
                         <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
-                          Missing patterns
+                          {t('policies.draft.blueprint.missing_patterns')}
                         </p>
                         <ul className="mt-2 list-disc space-y-1 pl-4 text-sm text-slate-600">
                           {blueprint.missingPatterns.map((item) => (
@@ -702,7 +731,7 @@ export function PolicyDraftPanel({
                 )}
                 {!isBlueprintLoading && selectedRole && !blueprint && (
                   <p className="text-sm text-slate-500">
-                    Không tìm thấy blueprint cho role này. Bạn có thể làm mới để thử lại.
+                    {t('policies.draft.blueprint.not_found')}
                   </p>
                 )}
               </div>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { QueryProvider } from '@/components/providers/QueryProvider'
 import Link from 'next/link'
 import {
@@ -53,6 +53,7 @@ import {
 } from '@/components/ui/dialog'
 import { DeleteDialog } from '@/components/shared/DeleteDialog'
 import { toast } from 'sonner'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { useRouter } from 'next/navigation'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { ActionGuard } from '@/components/shared/ActionGuard'
@@ -60,6 +61,9 @@ import { cn } from '@/lib/utils'
 import DeviceHeader from '@/components/device/DeviceHeader'
 import DeviceUsageHistory from '@/components/device/DeviceUsageHistory'
 import InfoCard from '@/components/ui/InfoCard'
+import { OwnershipBadge } from '@/components/shared/OwnershipBadge'
+import { OwnershipPeriodDisplay } from '@/components/shared/OwnershipPeriodDisplay'
+import { isHistoricalDevice } from '@/lib/utils/device-ownership.utils'
 import type { MonthlyUsagePagesItem } from '@/types/api'
 
 interface Props {
@@ -77,6 +81,7 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
   // editing states (basic subset of system UI)
   const [showEdit, setShowEdit] = useState(false)
   const [editing, setEditing] = useState(false)
+  const { t } = useLocale()
   const [locationEdit, setLocationEdit] = useState('')
   const [ipEdit, setIpEdit] = useState('')
   const [macEdit, setMacEdit] = useState('')
@@ -144,7 +149,7 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
     setUsageToMonth(range.toMonth)
   }, [])
 
-  const refetchMonthlyUsage = async () => {
+  const refetchMonthlyUsage = useCallback(async () => {
     if (!deviceId) return
     setMonthlyUsageLoading(true)
     setMonthlyUsageError(null)
@@ -163,11 +168,11 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
       setMonthlyUsageItems(res?.data?.data?.items ?? [])
     } catch (err) {
       console.error('Failed to load monthly usage (user view)', err)
-      setMonthlyUsageError('Đã xảy ra lỗi khi tải dữ liệu')
+      setMonthlyUsageError(t('user_device_detail.error.load_data'))
     } finally {
       setMonthlyUsageLoading(false)
     }
-  }
+  }, [deviceId, usageFromMonth, usageToMonth, t])
 
   // Auto-fetch monthly usage when the overview tab is active or when the
   // date range / device changes. This mirrors the admin behavior so users
@@ -179,8 +184,7 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
 
     // fire-and-forget: refetchMonthlyUsage handles loading state and errors
     void refetchMonthlyUsage()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, deviceId, usageFromMonth, usageToMonth])
+  }, [activeTab, refetchMonthlyUsage, deviceId, usageFromMonth, usageToMonth])
 
   useEffect(() => {
     let mounted = true
@@ -253,7 +257,7 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
         <Card>
           <CardContent className="pt-6">
             <div className="text-muted-foreground text-center">
-              <p>Không tìm thấy thiết bị</p>
+              <p>{t('user_device_detail.not_found')}</p>
             </div>
           </CardContent>
         </Card>
@@ -303,162 +307,192 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
         )}
       >
         {isActive ? <svg className="h-3.5 w-3.5" /> : <AlertCircle className="h-3.5 w-3.5" />}
-        {isActive ? 'Hoạt động' : 'Không hoạt động'}
+        {isActive ? t('status.active') : t('status.inactive')}
       </Badge>
     )
   }
 
+  const isHistorical = isHistoricalDevice(device)
+
   return (
     <div className="space-y-6">
       {/* Header: use new DeviceHeader component and keep back button above it */}
-      const content = (
       <div>
         <div className="mb-2">
           <Link href={backHref ?? '/user/devices'}>
             <Button variant="ghost" className="gap-2">
-              <ArrowLeft className="h-4 w-4" /> Quay lại
+              <ArrowLeft className="h-4 w-4" /> {t('common.back')}
             </Button>
           </Link>
         </div>
 
         {/* prepare right-side actions to pass into DeviceHeader */}
         {/** preserve previous status badges and action buttons by passing as rightContent */}
-        {(() => {
-          const headerRight = (
+
+        <ServiceRequestFormModal
+          customerId={(device as unknown as { customer?: { id?: string } })?.customer?.id ?? ''}
+          preselectedDeviceId={deviceId}
+          onSuccess={() => {
+            toast.success(t('user_device_detail.request_sent'))
+          }}
+        >
+          <Button variant="secondary" size="sm" className="gap-2">
+            <FileText className="h-4 w-4 text-black dark:text-white" />
+            {t('user_device_detail.create_request')}
+          </Button>
+        </ServiceRequestFormModal>
+
+        {isHistorical ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div>
+                <Button variant="secondary" size="sm" disabled className="gap-2">
+                  <Edit className="h-4 w-4" />
+                  {t('common.edit')}
+                </Button>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent sideOffset={4}>{t('device.historical_cannot_edit')}</TooltipContent>
+          </Tooltip>
+        ) : Boolean(device?.isActive) ? (
+          <ActionGuard pageId="devices" actionId="update">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setShowEdit(true)}
+              className="gap-2"
+            >
+              <Edit className="h-4 w-4 text-black dark:text-white" />
+              Chỉnh sửa
+            </Button>
+          </ActionGuard>
+        ) : (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div>
+                <Button variant="secondary" size="sm" disabled className="gap-2">
+                  <Edit className="h-4 w-4" />
+                  {t('common.edit')}
+                </Button>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent sideOffset={4}>
+              {t('user_device_detail.device_inactive')}
+            </TooltipContent>
+          </Tooltip>
+        )}
+
+        {isHistorical ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div>
+                <Button variant="destructive" size="sm" disabled className="gap-2">
+                  <Trash2 className="h-4 w-4" />
+                  {t('common.delete')}
+                </Button>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent sideOffset={4}>
+              {t('user_device_detail.historical_cannot_delete')}
+            </TooltipContent>
+          </Tooltip>
+        ) : Boolean(device?.isActive) ? (
+          <ActionGuard pageId="devices" actionId="delete">
+            <DeleteDialog
+              title={t('user_device_detail.delete.title')}
+              description={t('user_device_detail.delete.description')}
+              onConfirm={async () => {
+                try {
+                  await devicesClientService.delete(deviceId)
+                  toast.success(t('user_device_detail.delete.success'))
+                  if (backHref) router.push(backHref)
+                  else router.push('/user/devices')
+                } catch (err) {
+                  console.error('Delete device failed', err)
+                  toast.error(t('user_device_detail.delete.error'))
+                }
+              }}
+              trigger={
+                <Button variant="destructive" size="sm" className="gap-2">
+                  <Trash2 className="h-4 w-4 text-black dark:text-white" />
+                  {t('common.delete')}
+                </Button>
+              }
+            />
+          </ActionGuard>
+        ) : (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div>
+                <Button variant="destructive" size="sm" disabled className="gap-2">
+                  <Trash2 className="h-4 w-4" />
+                  {t('common.delete')}
+                </Button>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent sideOffset={4}>
+              {t('user_device_detail.device_inactive')}
+            </TooltipContent>
+          </Tooltip>
+        )}
+      </div>
+
+      {(() => {
+        const headerRight = (
+          <div className="flex flex-col items-end gap-2">
             <div className="flex items-center gap-3">
               {getStatusBadge(device.isActive)}
               {renderStatusChip()}
-
-              <ActionGuard pageId="devices" actionId="set-a4-pricing">
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => toast('A4 snapshot (user view)')}
-                  className="gap-2 bg-white text-black"
-                  title="Ghi/Chỉnh sửa snapshot A4"
-                >
-                  <BarChart3 className="h-4 w-4 text-black dark:text-white" />
-                  A4
-                </Button>
-              </ActionGuard>
-
-              <ServiceRequestFormModal
-                customerId={
-                  (device as unknown as { customer?: { id?: string } })?.customer?.id ?? ''
-                }
-                preselectedDeviceId={deviceId}
-                onSuccess={() => {
-                  toast.success('Yêu cầu đã được gửi')
-                }}
-              >
-                <Button variant="secondary" size="sm" className="gap-2">
-                  <FileText className="h-4 w-4 text-black dark:text-white" />
-                  Tạo yêu cầu
-                </Button>
-              </ServiceRequestFormModal>
-
-              {Boolean(device?.isActive) ? (
-                <ActionGuard pageId="devices" actionId="update">
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => setShowEdit(true)}
-                    className="gap-2"
-                  >
-                    <Edit className="h-4 w-4 text-black dark:text-white" />
-                    Chỉnh sửa
-                  </Button>
-                </ActionGuard>
-              ) : (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div>
-                      <Button variant="secondary" size="sm" disabled className="gap-2">
-                        <Edit className="h-4 w-4" />
-                        Chỉnh sửa
-                      </Button>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent sideOffset={4}>{`Thiết bị không hoạt động.`}</TooltipContent>
-                </Tooltip>
-              )}
-
-              {Boolean(device?.isActive) ? (
-                <ActionGuard pageId="devices" actionId="delete">
-                  <DeleteDialog
-                    title="Xóa thiết bị"
-                    description="Bạn có chắc muốn xóa thiết bị này? Hành động không thể hoàn tác."
-                    onConfirm={async () => {
-                      try {
-                        await devicesClientService.delete(deviceId)
-                        toast.success('Xóa thiết bị thành công')
-                        if (backHref) router.push(backHref)
-                        else router.push('/user/devices')
-                      } catch (err) {
-                        console.error('Delete device failed', err)
-                        toast.error('Xóa thiết bị thất bại')
-                      }
-                    }}
-                    trigger={
-                      <Button variant="destructive" size="sm" className="gap-2">
-                        <Trash2 className="h-4 w-4 text-black dark:text-white" />
-                        Xóa
-                      </Button>
-                    }
-                  />
-                </ActionGuard>
-              ) : (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div>
-                      <Button variant="destructive" size="sm" disabled className="gap-2">
-                        <Trash2 className="h-4 w-4" />
-                        Xóa
-                      </Button>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent sideOffset={4}>{`Thiết bị không hoạt động.`}</TooltipContent>
-                </Tooltip>
-              )}
+              <OwnershipBadge device={device} />
             </div>
-          )
+            {device.ownershipPeriod && (
+              <OwnershipPeriodDisplay device={device} className="text-xs" />
+            )}
+            {isHistorical && (
+              <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                <strong>{t('user_device_detail.historical_note.label')}:</strong>{' '}
+                {t('user_device_detail.historical_note.description')}
+              </div>
+            )}
+          </div>
+        )
 
-          return (
-            <DeviceHeader
-              device={{
-                // Match admin: show serial only without prefix
-                name: device.serialNumber ?? '---',
-                model: device.deviceModel?.name || device.model,
-                iconUrl: undefined,
-                active: Boolean(device.isActive),
-              }}
-              rightContent={headerRight}
-            />
-          )
-        })()}
-      </div>
+        return (
+          <DeviceHeader
+            device={{
+              // Match admin: show serial only without prefix
+              name: device.serialNumber ?? '---',
+              model: device.deviceModel?.name || device.model,
+              iconUrl: undefined,
+              active: Boolean(device.isActive),
+            }}
+            rightContent={headerRight}
+          />
+        )
+      })()}
+
       {/* Tabs - align with admin layout (4 tabs) */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="mb-6 grid w-full grid-cols-5">
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <Info className="h-4 w-4 text-black dark:text-white" />
-            Tổng quan
+            {t('user_device_detail.tab.overview')}
           </TabsTrigger>
           <TabsTrigger value="consumables" className="flex items-center gap-2">
             <Package className="h-4 w-4 text-black dark:text-white" />
-            Vật tư
+            {t('user_device_detail.tab.consumables')}
           </TabsTrigger>
           <TabsTrigger value="maintenance" className="flex items-center gap-2">
             <Wrench className="h-4 w-4 text-black dark:text-white" />
-            Bảo trì
+            {t('user_device_detail.tab.maintenance')}
           </TabsTrigger>
           <TabsTrigger value="history" className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4 text-black dark:text-white" />
-            Lịch sử vật tư
+            {t('user_device_detail.tab.consumable_history')}
           </TabsTrigger>
           <TabsTrigger value="usage-history" className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4 text-black dark:text-white" />
-            Lịch sử sử dụng
+            {t('user_device_detail.tab.usage_history')}
           </TabsTrigger>
         </TabsList>
 
@@ -466,30 +500,41 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
         <TabsContent value="overview" className="space-y-6">
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <InfoCard
-              title="Thông tin mạng"
+              title={t('user_device_detail.info.network')}
               titleIcon={<Wifi className="h-4 w-4 text-blue-600" />}
               items={[
-                { label: 'Địa chỉ IP', value: device.ipAddress || 'Chưa cấu hình', mono: true },
                 {
-                  label: 'Địa chỉ MAC',
-                  value: device.macAddress || 'Chưa có thông tin',
+                  label: t('user_device_detail.info.ip'),
+                  value: device.ipAddress || t('user_device_detail.info.not_configured'),
                   mono: true,
                 },
-                { label: 'Firmware', value: device.firmware || 'N/A' },
+                {
+                  label: t('user_device_detail.info.mac'),
+                  value: device.macAddress || t('user_device_detail.info.no_info'),
+                  mono: true,
+                },
+                { label: t('user_device_detail.info.firmware'), value: device.firmware || 'N/A' },
               ]}
             />
 
             <InfoCard
-              title="Thông tin thiết bị"
+              title={t('user_device_detail.info.device')}
               titleIcon={<Monitor className="h-4 w-4 text-teal-600" />}
               items={[
-                { label: 'Số Serial', value: device.serialNumber || '-', mono: true },
-                { label: 'Vị trí', value: device.location || 'Chưa xác định' },
                 {
-                  label: 'Lần truy cập cuối',
+                  label: t('user_device_detail.info.serial'),
+                  value: device.serialNumber || '-',
+                  mono: true,
+                },
+                {
+                  label: t('table.location'),
+                  value: device.location || t('user_device_detail.info.location_unknown'),
+                },
+                {
+                  label: t('user_device_detail.info.last_seen'),
                   value: device.lastSeen
                     ? new Date(device.lastSeen).toLocaleString('vi-VN')
-                    : 'Chưa có dữ liệu',
+                    : t('user_device_detail.info.no_data'),
                 },
               ]}
             />
@@ -500,14 +545,16 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <BarChart3 className="h-5 w-5 text-cyan-600" />
-                Thống kê sử dụng
+                {t('user_device_detail.usage_stats.title')}
               </CardTitle>
-              <CardDescription>Số liệu hoạt động của thiết bị</CardDescription>
+              <CardDescription>{t('user_device_detail.usage_stats.description')}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <div className="rounded-xl border border-cyan-200 bg-gradient-to-br from-cyan-50 to-blue-50 p-4">
-                  <p className="text-muted-foreground mb-2 text-sm font-medium">Tổng trang đã in</p>
+                  <p className="text-muted-foreground mb-2 text-sm font-medium">
+                    {t('user_device_detail.usage_stats.total_pages')}
+                  </p>
                   <p className="text-3xl font-bold text-cyan-700">
                     {
                       formatPageCount(
@@ -516,23 +563,33 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
                       ).display
                     }
                   </p>
-                  <p className="text-muted-foreground mt-1 text-xs">trang</p>
+                  <p className="text-muted-foreground mt-1 text-xs">
+                    {t('user_device_detail.usage_stats.pages')}
+                  </p>
                 </div>
 
                 <div className="rounded-xl border border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 p-4">
-                  <p className="text-muted-foreground mb-2 text-sm font-medium">Trạng thái</p>
-                  <p className="text-2xl font-bold text-green-700">
-                    {Boolean(device?.isActive) ? 'Hoạt động' : 'Tạm dừng'}
+                  <p className="text-muted-foreground mb-2 text-sm font-medium">
+                    {t('filters.status_label')}
                   </p>
-                  <p className="text-muted-foreground mt-1 text-xs">hiện tại</p>
+                  <p className="text-2xl font-bold text-green-700">
+                    {Boolean(device?.isActive) ? t('status.active') : t('status.inactive')}
+                  </p>
+                  <p className="text-muted-foreground mt-1 text-xs">
+                    {t('user_device_detail.usage_stats.current')}
+                  </p>
                 </div>
 
                 <div className="rounded-xl border border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50 p-4">
-                  <p className="text-muted-foreground mb-2 text-sm font-medium">Model</p>
+                  <p className="text-muted-foreground mb-2 text-sm font-medium">
+                    {t('table.model')}
+                  </p>
                   <p className="text-lg font-bold text-purple-700">
                     {device.deviceModel?.name || 'N/A'}
                   </p>
-                  <p className="text-muted-foreground mt-1 text-xs">thiết bị</p>
+                  <p className="text-muted-foreground mt-1 text-xs">
+                    {t('user_device_detail.usage_stats.device')}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -545,9 +602,11 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
                 <div>
                   <CardTitle className="flex items-center gap-2">
                     <BarChart3 className="h-5 w-5 text-indigo-600" />
-                    Sử dụng trang theo tháng
+                    {t('user_device_detail.monthly_usage.title')}
                   </CardTitle>
-                  <CardDescription>Thống kê số trang in theo tháng</CardDescription>
+                  <CardDescription>
+                    {t('user_device_detail.monthly_usage.description')}
+                  </CardDescription>
                 </div>
                 <Button
                   variant="outline"
@@ -557,7 +616,7 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
                   disabled={monthlyUsageLoading}
                 >
                   <RefreshCw className={cn('h-4 w-4', monthlyUsageLoading && 'animate-spin')} />
-                  Làm mới
+                  {t('button.refresh')}
                 </Button>
               </div>
             </CardHeader>
@@ -565,7 +624,9 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
               {/* Bộ lọc khoảng tháng */}
               <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
                 <div className="flex-1">
-                  <Label className="text-sm font-medium">Từ tháng</Label>
+                  <Label className="text-sm font-medium">
+                    {t('user_device_detail.monthly_usage.from_month')}
+                  </Label>
                   <Input
                     type="month"
                     value={usageFromMonth}
@@ -574,7 +635,9 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
                   />
                 </div>
                 <div className="flex-1">
-                  <Label className="text-sm font-medium">Đến tháng</Label>
+                  <Label className="text-sm font-medium">
+                    {t('user_device_detail.monthly_usage.to_month')}
+                  </Label>
                   <Input
                     type="month"
                     value={usageToMonth}
@@ -592,7 +655,7 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
                   size="sm"
                   className="gap-2"
                 >
-                  Mặc định (12 tháng)
+                  {t('user_device_detail.monthly_usage.default')}
                 </Button>
               </div>
 
@@ -611,13 +674,13 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
                     onClick={() => refetchMonthlyUsage()}
                     className="mt-4"
                   >
-                    Thử lại
+                    {t('button.retry')}
                   </Button>
                 </div>
               ) : monthlyUsageItems.length === 0 ? (
                 <div className="text-muted-foreground p-8 text-center">
                   <BarChart3 className="mx-auto mb-3 h-12 w-12 opacity-20" />
-                  <p>Chưa có dữ liệu sử dụng trong khoảng thời gian này</p>
+                  <p>{t('user_device_detail.monthly_usage.empty')}</p>
                 </div>
               ) : (
                 <div className="overflow-hidden rounded-lg border">
@@ -625,10 +688,18 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
                     <table className="w-full min-w-[900px]">
                       <thead className="bg-gray-100">
                         <tr>
-                          <th className="px-4 py-3 text-left text-xs font-semibold">Tháng</th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold">Tên model</th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold">Số serial</th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold">Mã phần</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold">
+                            {t('user_device_detail.table.month')}
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold">
+                            {t('user_device_detail.table.model_name')}
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold">
+                            {t('user_device_detail.table.serial')}
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold">
+                            {t('user_device_detail.table.part_number')}
+                          </th>
                           {(() => {
                             const showMode =
                               typeof device?.deviceModel?.useA4Counter === 'boolean'
@@ -641,26 +712,26 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
                                 {showMode !== 'a4' && (
                                   <>
                                     <th className="px-4 py-3 text-right text-xs font-semibold">
-                                      Trang đen trắng
+                                      {t('user_device_detail.table.bw_pages')}
                                     </th>
                                     <th className="px-4 py-3 text-right text-xs font-semibold">
-                                      Trang màu
+                                      {t('user_device_detail.table.color_pages')}
                                     </th>
                                     <th className="px-4 py-3 text-right text-xs font-semibold">
-                                      Tổng trang
+                                      {t('user_device_detail.table.total_pages')}
                                     </th>
                                   </>
                                 )}
                                 {showMode !== 'standard' && (
                                   <>
                                     <th className="px-4 py-3 text-right text-xs font-semibold">
-                                      Trang đen trắng A4
+                                      {t('user_device_detail.table.bw_pages_a4')}
                                     </th>
                                     <th className="px-4 py-3 text-right text-xs font-semibold">
-                                      Trang màu A4
+                                      {t('user_device_detail.table.color_pages_a4')}
                                     </th>
                                     <th className="px-4 py-3 text-right text-xs font-semibold">
-                                      Tổng trang A4
+                                      {t('user_device_detail.table.total_pages_a4')}
                                     </th>
                                   </>
                                 )}
@@ -675,7 +746,10 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
                           .sort((a, b) => b.month.localeCompare(a.month))
                           .map((item, idx) => {
                             const [year, month] = item.month.split('-')
-                            const monthDisplay = `Tháng ${month}/${year}`
+                            const monthDisplay = t('user_device_detail.table.month_display', {
+                              month: month ?? '',
+                              year: year ?? '',
+                            })
 
                             const showMode =
                               typeof device?.deviceModel?.useA4Counter === 'boolean'
@@ -875,7 +949,7 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
         </TabsContent>
 
         <TabsContent value="usage-history" className="space-y-6">
-          <DeviceUsageHistory deviceId={deviceId} />
+          <DeviceUsageHistory deviceId={deviceId} device={device} />
         </TabsContent>
 
         {/* Vật tư Tab */}
@@ -886,10 +960,10 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
                 <div>
                   <CardTitle className="flex items-center gap-2">
                     <Package className="h-5 w-5 text-emerald-600" />
-                    Vật tư đã lắp
+                    {t('user_device_detail.consumables.installed.title')}
                   </CardTitle>
                   <CardDescription className="mt-1">
-                    Danh sách vật tư hiện đang sử dụng
+                    {t('user_device_detail.consumables.installed.description')}
                   </CardDescription>
                 </div>
                 <div className="flex items-center gap-2">
@@ -897,9 +971,11 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => toast('Chức năng thêm (user)')}
+                      onClick={() =>
+                        toast(t('user_device_detail.consumables.select_from_exported'))
+                      }
                     >
-                      Chọn từ vật tư đã xuất sẵn
+                      {t('user_device_detail.consumables.select_from_exported')}
                     </Button>
                   </ActionGuard>
                 </div>
@@ -913,7 +989,7 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
               ) : installedConsumables.length === 0 ? (
                 <div className="text-muted-foreground p-8 text-center">
                   <Package className="mx-auto mb-3 h-12 w-12 text-black opacity-20 dark:text-white" />
-                  <p>Chưa có vật tư nào được lắp đặt</p>
+                  <p>{t('user_device_detail.consumables.empty')}</p>
                 </div>
               ) : (
                 <div className="overflow-hidden rounded-lg border">
@@ -921,14 +997,22 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
                     <thead className="bg-gray-100">
                       <tr>
                         <th className="px-4 py-3 text-left text-xs font-semibold">#</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold">Tên</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold">Serial</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold">Trạng thái</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold">
+                          {t('user_device_detail.consumables.table.name')}
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold">
+                          {t('table.serial')}
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold">
+                          {t('filters.status_label')}
+                        </th>
                         <th className="px-4 py-3 text-left text-xs font-semibold">%</th>
                         <th className="px-4 py-3 text-left text-xs font-semibold">
-                          Số trang khả dụng
+                          {t('user_device_detail.consumables.table.available_pages')}
                         </th>
-                        <th className="px-4 py-3 text-right text-xs font-semibold">Ngày lắp đặt</th>
+                        <th className="px-4 py-3 text-right text-xs font-semibold">
+                          {t('user_device_detail.consumables.table.installed_date')}
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y">
@@ -1132,7 +1216,7 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
                                             </span>
                                           </TooltipTrigger>
                                           <TooltipContent sideOffset={4}>
-                                            {`Để tránh lãng phí, hãy tiếp tục sử dụng đến giọt mực cuối cùng.`}
+                                            {t('user_device_detail.consumables.low_ink_warning')}
                                           </TooltipContent>
                                         </Tooltip>
                                       ) : null}
@@ -1165,14 +1249,16 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Box className="h-5 w-5 text-indigo-600" />
-                Vật tư tương thích
+                {t('user_device_detail.consumables.compatible.title')}
               </CardTitle>
-              <CardDescription>Danh sách vật tư tương thích với thiết bị</CardDescription>
+              <CardDescription>
+                {t('user_device_detail.consumables.compatible.description')}
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="text-muted-foreground p-8 text-center">
                 <Package className="mx-auto mb-3 h-12 w-12 opacity-20" />
-                <p>Chức năng đang được triển khai cho phiên bản người dùng.</p>
+                <p>{t('user_device_detail.consumables.compatible.coming_soon')}</p>
               </div>
             </CardContent>
           </Card>
@@ -1183,15 +1269,16 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Wrench className="h-5 w-5 text-black dark:text-white" /> Lịch sử bảo trì
+                <Wrench className="h-5 w-5 text-black dark:text-white" />{' '}
+                {t('user_device_detail.maintenance.title')}
               </CardTitle>
-              <CardDescription>Thông tin bảo trì và bảo dưỡng thiết bị</CardDescription>
+              <CardDescription>{t('user_device_detail.maintenance.description')}</CardDescription>
             </CardHeader>
             <CardContent>
               {!device.lastMaintenanceDate && !device.nextMaintenanceDate ? (
                 <div className="text-muted-foreground p-8 text-center">
                   <Calendar className="mx-auto mb-3 h-12 w-12 opacity-20" />
-                  <p>Chưa có lịch bảo trì</p>
+                  <p>{t('user_device_detail.maintenance.empty')}</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -1200,12 +1287,14 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
                       <div className="rounded-lg bg-rose-100 p-2">
                         <Calendar className="h-5 w-5 text-black dark:text-white" />
                       </div>
-                      <h4 className="font-semibold text-rose-900">Bảo trì lần cuối</h4>
+                      <h4 className="font-semibold text-rose-900">
+                        {t('device.last_maintenance')}
+                      </h4>
                     </div>
                     <p className="text-2xl font-bold text-rose-700">
                       {device.lastMaintenanceDate
                         ? new Date(device.lastMaintenanceDate).toLocaleDateString('vi-VN')
-                        : 'Chưa có dữ liệu'}
+                        : t('empty.no_data')}
                     </p>
                   </div>
 
@@ -1214,12 +1303,14 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
                       <div className="rounded-lg bg-blue-100 p-2">
                         <Calendar className="h-5 w-5 text-black dark:text-white" />
                       </div>
-                      <h4 className="font-semibold text-blue-900">Bảo trì lần tiếp theo</h4>
+                      <h4 className="font-semibold text-blue-900">
+                        {t('device.next_maintenance')}
+                      </h4>
                     </div>
                     <p className="text-2xl font-bold text-blue-700">
                       {device.nextMaintenanceDate
                         ? new Date(device.nextMaintenanceDate).toLocaleDateString('vi-VN')
-                        : 'Chưa lên lịch'}
+                        : t('device.no_schedule')}
                     </p>
                   </div>
                 </div>
@@ -1234,14 +1325,14 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <BarChart3 className="h-5 w-5 text-emerald-600" />
-                Lịch sử sử dụng vật tư
+                {t('consumable.history.title')}
               </CardTitle>
-              <CardDescription>Lịch sử thay thế/tiêu hao vật tư theo thiết bị</CardDescription>
+              <CardDescription>{t('consumable.history.description')}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="text-muted-foreground p-8 text-center">
                 <Package className="mx-auto mb-3 h-12 w-12 opacity-20" />
-                <p>Chức năng xem lịch sử vật tư cho người dùng sẽ sớm được cập nhật.</p>
+                <p>{t('consumable.user_history_coming_soon')}</p>
               </div>
             </CardContent>
           </Card>
@@ -1256,11 +1347,11 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
               <div className="flex items-center gap-3">
                 <Edit className="h-6 w-6 text-white" />
                 <DialogTitle className="text-2xl font-bold text-white">
-                  Chỉnh sửa thiết bị
+                  {t('device.edit_title')}
                 </DialogTitle>
               </div>
               <DialogDescription className="mt-2 text-white/90">
-                Cập nhật thông tin thiết bị {device.serialNumber}
+                {t('device.edit_description').replace('{serial}', device.serialNumber)}
               </DialogDescription>
             </div>
           </DialogHeader>
@@ -1268,16 +1359,16 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
           <div className="space-y-4 bg-white px-6 py-6">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
-                <Label className="text-base font-semibold">Vị trí</Label>
+                <Label className="text-base font-semibold">{t('device.location')}</Label>
                 <Input
                   value={locationEdit}
                   onChange={(e) => setLocationEdit(e.target.value)}
-                  placeholder="Nhập vị trí..."
+                  placeholder={t('placeholder.customer_installation_location')}
                   className="mt-2 h-11"
                 />
               </div>
               <div>
-                <Label className="text-base font-semibold">Địa chỉ IP</Label>
+                <Label className="text-base font-semibold">{t('device.ip')}</Label>
                 <Input
                   value={ipEdit}
                   onChange={(e) => setIpEdit(e.target.value)}
@@ -1286,7 +1377,7 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
                 />
               </div>
               <div>
-                <Label className="text-base font-semibold">Địa chỉ MAC</Label>
+                <Label className="text-base font-semibold">{t('device.mac')}</Label>
                 <Input
                   value={macEdit}
                   onChange={(e) => setMacEdit(e.target.value)}
@@ -1295,7 +1386,7 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
                 />
               </div>
               <div>
-                <Label className="text-base font-semibold">Firmware</Label>
+                <Label className="text-base font-semibold">{t('device.firmware')}</Label>
                 <Input
                   value={firmwareEdit}
                   onChange={(e) => setFirmwareEdit(e.target.value)}
@@ -1308,7 +1399,7 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
 
           <DialogFooter className="border-t bg-gray-50 px-6 py-4">
             <Button variant="outline" onClick={() => setShowEdit(false)} className="min-w-[100px]">
-              Hủy
+              {t('button.cancel')}
             </Button>
             <Button
               onClick={async () => {
@@ -1323,14 +1414,14 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
                   const updated = await devicesClientService.update(deviceId, dto)
                   if (updated) {
                     setDevice(updated)
-                    toast.success('Cập nhật thiết bị thành công')
+                    toast.success(t('device.update_success'))
                     setShowEdit(false)
                   } else {
-                    toast.error('Cập nhật thất bại')
+                    toast.error(t('device.update_error'))
                   }
                 } catch (err) {
                   console.error('Update device failed', err)
-                  toast.error('Cập nhật thiết bị thất bại')
+                  toast.error(t('device.update_error'))
                 } finally {
                   setEditing(false)
                 }
@@ -1341,10 +1432,10 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
               {editing ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Đang lưu...
+                  {t('button.saving')}
                 </>
               ) : (
-                'Lưu thay đổi'
+                t('device.save_changes')
               )}
             </Button>
           </DialogFooter>

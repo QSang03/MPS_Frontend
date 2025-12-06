@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState, useCallback } from 'react'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -66,41 +66,42 @@ export function CustomerMultiSelect({
     }
   }, [value])
 
-  const fetchPage = async (p = 1, q = query, append = false) => {
-    setLoading(true)
-    try {
-      const res = await customersClientService.getAll({ page: p, limit, search: q })
-      if (append) {
-        setItems((prev) => [...prev, ...(res.data || [])])
-      } else {
-        setItems(res.data || [])
+  const fetchPage = useCallback(
+    async (p = 1, q = query, append = false) => {
+      setLoading(true)
+      try {
+        const res = await customersClientService.getAll({ page: p, limit, search: q })
+        if (append) {
+          setItems((prev) => [...prev, ...(res.data || [])])
+        } else {
+          setItems(res.data || [])
+        }
+        setPagination(res.pagination ?? null)
+      } finally {
+        setLoading(false)
       }
-      setPagination(res.pagination ?? null)
-    } finally {
-      setLoading(false)
-    }
-  }
+    },
+    [limit, query]
+  )
 
   useEffect(() => {
     // debounce search
     if (debounceRef.current) window.clearTimeout(debounceRef.current)
     debounceRef.current = window.setTimeout(() => {
       setPage(1)
-      fetchPage(1, query, false)
+      void fetchPage(1, query, false)
     }, 300)
     return () => {
       if (debounceRef.current) window.clearTimeout(debounceRef.current)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query])
+  }, [query, fetchPage])
 
   useEffect(() => {
     // initial load
     if (open) {
-      fetchPage(1, '')
+      void fetchPage(1, '')
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open])
+  }, [open, fetchPage])
 
   const onSelect = (c: Customer) => {
     const isSelected = value.includes(c.id)
@@ -124,13 +125,13 @@ export function CustomerMultiSelect({
     }
   }
 
-  const loadMore = async () => {
+  const loadMore = useCallback(async () => {
     if (!pagination) return
     const next = (page ?? 1) + 1
     if (next > (pagination.totalPages ?? 1)) return
     await fetchPage(next, query, true)
     setPage(next)
-  }
+  }, [pagination, page, query, fetchPage])
 
   // IntersectionObserver to lazy-load
   useEffect(() => {
@@ -144,7 +145,7 @@ export function CustomerMultiSelect({
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             if (!loading && pagination && (page ?? 1) < (pagination.totalPages ?? 1)) {
-              loadMore()
+              void loadMore()
             }
           }
         })
@@ -154,8 +155,7 @@ export function CustomerMultiSelect({
 
     observer.observe(sentinel)
     return () => observer.disconnect()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, pagination, loading, page])
+  }, [open, pagination, loading, page, loadMore])
 
   // Close list when clicking outside
   useEffect(() => {

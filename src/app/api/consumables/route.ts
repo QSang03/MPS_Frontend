@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import backendApiClient from '@/lib/api/backend-client'
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 export async function GET(request: NextRequest) {
   try {
@@ -251,7 +250,9 @@ export async function POST(request: NextRequest) {
     }
 
     if (err?.response?.data && typeof err.response.data === 'object') {
-      return NextResponse.json(err.response.data as any, { status: err.response?.status || 500 })
+      return NextResponse.json(err.response.data as unknown, {
+        status: err.response?.status || 500,
+      })
     }
 
     return NextResponse.json(

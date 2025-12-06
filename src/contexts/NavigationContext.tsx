@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState, ReactNode, useEffect } from 'react'
+import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react'
 import navigationClientService from '@/lib/api/services/navigation-client.service'
 import {
   NAVIGATION_PAYLOAD,
@@ -45,6 +45,16 @@ export function NavigationProvider({ children }: { children: ReactNode }) {
   // Helper to get current role from session cookie
   const getCurrentRole = (): string | null => {
     try {
+      // Prefer client-side localStorage `mps_user_role` which is set on login
+      if (typeof window !== 'undefined') {
+        try {
+          const stored = localStorage.getItem('mps_user_role')
+          if (stored) return stored
+        } catch {
+          // ignore localStorage error
+        }
+      }
+      // Fallback to parsing session cookie if localStorage not available
       const sessionCookie = Cookies.get('mps_session')
       if (sessionCookie) {
         const parts = sessionCookie.split('.')
@@ -63,6 +73,15 @@ export function NavigationProvider({ children }: { children: ReactNode }) {
   // Prefer client-side flag `mps_is_default_customer` (set after login). Fallback to parsing session JWT if needed.
   const isAdminUser = (): boolean => {
     try {
+      // Prefer client-side localStorage `mps_is_default_customer` (set after login). Fallback to cookie/session.
+      if (typeof window !== 'undefined') {
+        try {
+          const stored = localStorage.getItem('mps_is_default_customer')
+          if (stored !== null) return stored === 'true'
+        } catch {
+          // ignore localStorage errors
+        }
+      }
       const clientFlag = Cookies.get('mps_is_default_customer')
       if (typeof clientFlag !== 'undefined') {
         return clientFlag === 'true'
@@ -78,6 +97,7 @@ export function NavigationProvider({ children }: { children: ReactNode }) {
           // undefined -> default to admin
           return payload.isDefaultCustomer !== false
         }
+        return true // Default to admin if session exists but no payload
       }
     } catch (err) {
       console.error('Failed to parse session cookie or client flag', err)
@@ -88,9 +108,19 @@ export function NavigationProvider({ children }: { children: ReactNode }) {
   // Extract role from session cookie (client-side)
   useEffect(() => {
     setSessionRole(getCurrentRole())
+    if (typeof window !== 'undefined') {
+      const handler = (e: StorageEvent) => {
+        if (e.key === 'mps_user_role') {
+          setSessionRole(e.newValue)
+        }
+      }
+      window.addEventListener('storage', handler)
+      return () => window.removeEventListener('storage', handler)
+    }
+    return undefined
   }, [])
 
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true)
     try {
       // Check isDefaultCustomer to determine which payload to send
@@ -181,7 +211,7 @@ export function NavigationProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
     // Try to read cached navigation first (persist between login and logout)
@@ -203,8 +233,7 @@ export function NavigationProvider({ children }: { children: ReactNode }) {
 
     // Load once on mount. This will call /api/navigation and store items in context.
     void load()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [load])
 
   // Helper function to check if user has access to a page
   const hasPageAccess = (pageId: string): boolean => {

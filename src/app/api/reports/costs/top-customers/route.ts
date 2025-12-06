@@ -22,6 +22,7 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search') ?? undefined
     const sortBy = searchParams.get('sortBy') ?? undefined
     const sortOrder = searchParams.get('sortOrder') ?? undefined
+    const baseCurrencyId = searchParams.get('baseCurrencyId') ?? undefined // ⭐ MỚI
 
     const params: Record<string, unknown> = {
       page: Number(page),
@@ -31,6 +32,7 @@ export async function GET(request: NextRequest) {
     if (search) params.search = search
     if (sortBy) params.sortBy = sortBy
     if (sortOrder) params.sortOrder = sortOrder
+    if (baseCurrencyId) params.baseCurrencyId = baseCurrencyId // ⭐ MỚI
 
     const response = await backendApiClient.get('/reports/costs/top-customers', {
       params,

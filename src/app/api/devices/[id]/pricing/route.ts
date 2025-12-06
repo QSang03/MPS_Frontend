@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import backendApiClient from '@/lib/api/backend-client'
 import { removeEmpty } from '@/lib/utils/clean'
+import type { AxiosError } from 'axios'
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -28,8 +29,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     return NextResponse.json(response.data)
   } catch (error: unknown) {
     // Try to extract Axios response body/status for better debugging and forward it
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const e = error as any
+    const e = error as AxiosError<unknown>
     try {
       if (e?.response) {
         // Log detailed backend response body and status
@@ -49,7 +49,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     console.error('API Route /api/devices/[id]/pricing PATCH unexpected error:', error)
     const status = (e?.response?.status as number) || 500
-    const message = (e?.message as string) || 'Internal Server Error'
+    const message = e?.message || 'Internal Server Error'
     return NextResponse.json({ error: message }, { status })
   }
 }

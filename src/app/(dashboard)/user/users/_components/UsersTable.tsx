@@ -55,11 +55,13 @@ import { toast } from 'sonner'
 import { DeleteDialog } from '@/components/shared/DeleteDialog'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { PageHeader } from '@/components/ui/PageHeader'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { LoadingState } from '@/components/ui/LoadingState'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 
 export function UsersTable() {
+  const { t } = useLocale()
   const { can } = useActionPermission('users')
   const canUpdate = can('update')
   const canDelete = can('delete')
@@ -113,7 +115,6 @@ export function UsersTable() {
       }),
   })
 
-  // Only fetch auxiliary lists if the user has permission to read them
   const rolesPerm = useActionPermission('roles')
   const customersPerm = useActionPermission('customers')
 
@@ -245,14 +246,14 @@ export function UsersTable() {
   const isLoading = isLoadingUsers || isLoadingRoles || isLoadingCustomers
 
   if (isLoading) {
-    return <LoadingState text="Đang tải danh sách người dùng..." />
+    return <LoadingState text={t('loading.users')} />
   }
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Danh sách Người dùng"
-        subtitle="Quản lý tài khoản và phân quyền người dùng"
+        title={t('page.users.title')}
+        subtitle={t('page.users.subtitle')}
         icon={<Users className="h-6 w-6 text-black dark:text-white" />}
         actions={
           <div className="flex gap-2">
@@ -261,7 +262,7 @@ export function UsersTable() {
               size="icon"
               onClick={() => refetchUsers()}
               className="border-white/20 bg-white/10 text-black hover:bg-white/20 dark:text-white"
-              title="Làm mới dữ liệu"
+              title={t('button.refresh')}
             >
               <RefreshCw className={`${isFetchingUsers ? 'animate-spin' : ''} h-5 w-5`} />
             </Button>
@@ -281,21 +282,21 @@ export function UsersTable() {
         <CardHeader className="pb-3">
           <div className="flex items-center gap-2">
             <Filter className="h-5 w-5 text-black dark:text-white" />
-            <CardTitle className="text-lg">Bộ lọc & Tìm kiếm</CardTitle>
+            <CardTitle className="text-lg">{t('filters.general')}</CardTitle>
           </div>
-          <CardDescription>Tìm kiếm và lọc danh sách người dùng</CardDescription>
+          <CardDescription>{t('filters.user_description')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid items-end gap-4 md:grid-cols-5">
             {/* Search */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                Tìm kiếm
+                {t('filters.search_label')}
               </label>
               <div className="relative">
                 <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
                 <Input
-                  placeholder="Tìm theo email..."
+                  placeholder={t('filters.search_placeholder_users')}
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
                   className="pl-9"
@@ -307,7 +308,7 @@ export function UsersTable() {
             {canReadRoles ? (
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                  Vai trò
+                  {t('filters.role_label')}
                 </label>
                 {isMounted ? (
                   <Select
@@ -315,10 +316,10 @@ export function UsersTable() {
                     onValueChange={(v) => setFilters((p) => ({ ...p, roleId: v }))}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Chọn vai trò" />
+                      <SelectValue placeholder={t('filters.select_role_placeholder')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">Tất cả vai trò</SelectItem>
+                      <SelectItem value="all">{t('filters.all_roles')}</SelectItem>
                       {roles.map((role: UserRole) => (
                         <SelectItem key={role.id} value={role.id}>
                           {role.name}
@@ -336,7 +337,7 @@ export function UsersTable() {
             {canReadCustomers ? (
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                  Khách hàng
+                  {t('filters.customer_label')}
                 </label>
                 {isMounted ? (
                   <Select
@@ -344,10 +345,10 @@ export function UsersTable() {
                     onValueChange={(v) => setFilters((p) => ({ ...p, customerId: v }))}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Chọn mã KH" />
+                      <SelectValue placeholder={t('filters.select_customer_placeholder')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">Tất cả KH</SelectItem>
+                      <SelectItem value="all">{t('filters.all_customers')}</SelectItem>
                       {availableCustomerCodes.map((code) => (
                         <SelectItem key={code} value={customerCodeToId[code] || code}>
                           {code}
@@ -378,7 +379,7 @@ export function UsersTable() {
                 }}
                 className="w-full"
               >
-                <RotateCcw className="mr-2 h-4 w-4" /> Reset
+                <RotateCcw className="mr-2 h-4 w-4" /> {t('button.reset')}
               </Button>
             </div>
           </div>
@@ -392,10 +393,12 @@ export function UsersTable() {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <UserCog className="h-5 w-5 text-black dark:text-white" />
-                Danh sách Người dùng
+                {t('page.users.title')}
               </CardTitle>
               <CardDescription className="mt-1">
-                {paginationInfo.total} người dùng đang hoạt động
+                {t('pagination.showing_of')
+                  .replace('{current}', String(users.length))
+                  .replace('{total}', String(paginationInfo.total))}
               </CardDescription>
             </div>
           </div>
@@ -409,28 +412,28 @@ export function UsersTable() {
                   <TableHead>
                     <div className="flex items-center gap-2">
                       <Mail className="h-4 w-4 text-black dark:text-white" />
-                      Người dùng
+                      {t('user')}
                     </div>
                   </TableHead>
                   <TableHead>
                     <div className="flex items-center gap-2">
                       <Users className="h-4 w-4 text-black dark:text-white" />
-                      Khách hàng
+                      {t('nav.customers')}
                     </div>
                   </TableHead>
                   <TableHead>
                     <div className="flex items-center gap-2">
                       <UserCog className="h-4 w-4 text-black dark:text-white" />
-                      Vai trò
+                      {t('nav.roles')}
                     </div>
                   </TableHead>
                   <TableHead>
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4 text-black dark:text-white" />
-                      Ngày tạo
+                      {t('table.created_at')}
                     </div>
                   </TableHead>
-                  <TableHead className="w-[80px] text-right">Thao tác</TableHead>
+                  <TableHead className="w-[80px] text-right">{t('table.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -438,10 +441,10 @@ export function UsersTable() {
                   <TableRow>
                     <TableCell colSpan={6} className="h-64 text-center">
                       <EmptyState
-                        title="Không có người dùng nào"
-                        description="Hãy tạo người dùng đầu tiên hoặc thử thay đổi bộ lọc"
+                        title={t('empty.users.title')}
+                        description={t('empty.users.description')}
                         action={{
-                          label: 'Tạo người dùng',
+                          label: t('page.users.create'),
                           onClick: () => document.getElementById('create-user-trigger')?.click(),
                         }}
                         className="border-none bg-transparent py-0"
@@ -501,22 +504,25 @@ export function UsersTable() {
                                 className="cursor-pointer"
                               >
                                 <Edit className="mr-2 h-4 w-4" />
-                                Chỉnh sửa
+                                {t('button.edit')}
                               </DropdownMenuItem>
                             )}
                             <ConfirmDialog
-                              title="Đặt lại mật khẩu"
-                              description={`Bạn có chắc muốn đặt lại mật khẩu người dùng "${user.email}" về mật khẩu mặc định không?`}
-                              confirmLabel="Đặt lại"
-                              cancelLabel="Hủy"
+                              title={t('user.reset_password')}
+                              description={t('user.reset_password_confirmation').replace(
+                                '{email}',
+                                user.email
+                              )}
+                              confirmLabel={t('confirm.reset')}
+                              cancelLabel={t('cancel')}
                               onConfirm={async () => {
                                 try {
                                   await usersClientService.resetPassword(user.id)
                                   await queryClient.invalidateQueries({ queryKey: ['users'] })
-                                  toast.success('Đặt lại mật khẩu thành công')
+                                  toast.success(t('user.reset_password_success'))
                                 } catch (err) {
                                   console.error('Reset user password error', err)
-                                  toast.error('Có lỗi khi đặt lại mật khẩu')
+                                  toast.error(t('user.reset_password_error'))
                                 }
                               }}
                               trigger={
@@ -525,23 +531,26 @@ export function UsersTable() {
                                   onSelect={(e) => e.preventDefault()}
                                 >
                                   <RotateCcw className="mr-2 h-4 w-4" />
-                                  Đặt lại mật khẩu
+                                  {t('user.reset_password')}
                                 </DropdownMenuItem>
                               }
                             />
 
                             {canDelete && (
                               <DeleteDialog
-                                title="Xóa người dùng"
-                                description={`Bạn có chắc chắn muốn xóa người dùng "${user.email}" không?\n\nHành động này không thể hoàn tác.`}
+                                title={t('user.delete')}
+                                description={t('user.delete_confirmation').replace(
+                                  '{email}',
+                                  user.email
+                                )}
                                 onConfirm={async () => {
                                   try {
                                     await usersClientService.deleteUser(user.id)
                                     await queryClient.invalidateQueries({ queryKey: ['users'] })
-                                    toast.success('Xóa người dùng thành công')
+                                    toast.success(t('user.delete_success'))
                                   } catch (err) {
                                     console.error('Delete user error', err)
-                                    toast.error('Có lỗi khi xóa người dùng')
+                                    toast.error(t('user.delete_error'))
                                   }
                                 }}
                                 trigger={
@@ -550,7 +559,7 @@ export function UsersTable() {
                                     onSelect={(e) => e.preventDefault()}
                                   >
                                     <Trash2 className="mr-2 h-4 w-4" />
-                                    Xóa
+                                    {t('button.delete')}
                                   </DropdownMenuItem>
                                 }
                               />
@@ -569,9 +578,10 @@ export function UsersTable() {
           {users.length > 0 && (
             <div className="mt-4 flex items-center justify-between">
               <div className="text-muted-foreground text-sm">
-                Hiển thị <span className="text-foreground font-medium">{users.length}</span> /{' '}
-                <span className="text-foreground font-medium">{paginationInfo.total}</span> người
-                dùng
+                {t('pagination.showing')}{' '}
+                <span className="text-foreground font-medium">{users.length}</span> /{' '}
+                <span className="text-foreground font-medium">{paginationInfo.total}</span>{' '}
+                {t('page.users.title')}
               </div>
 
               <div className="flex items-center gap-2">
@@ -581,7 +591,7 @@ export function UsersTable() {
                   onClick={() => handlePageChange(pagination.page - 1)}
                   disabled={pagination.page <= 1}
                 >
-                  Trước
+                  {t('pagination.previous')}
                 </Button>
 
                 <div className="flex items-center gap-1 text-sm">
@@ -596,7 +606,7 @@ export function UsersTable() {
                   onClick={() => handlePageChange(pagination.page + 1)}
                   disabled={pagination.page >= paginationInfo.totalPages}
                 >
-                  Sau
+                  {t('pagination.next')}
                 </Button>
               </div>
             </div>

@@ -1,5 +1,6 @@
 import { PurchaseRequestStatus, Priority } from '@/constants/status'
 import type { Customer } from './customer'
+import type { CurrencyDataDto } from './currency'
 
 /**
  * Purchase request model
@@ -15,6 +16,8 @@ export interface PurchaseRequest {
   itemName: string
   quantity: number
   estimatedCost: number
+  currencyId?: string | null
+  currency?: CurrencyDataDto | null
   priority: Priority
   status: PurchaseRequestStatus
   requestedBy: string
@@ -83,12 +86,25 @@ type CustomerSummary = Pick<
  */
 export interface CreatePurchaseRequestDto {
   customerId: string
-  itemName: string
-  quantity: number
-  estimatedCost: number
-  priority: Priority
-  requestedBy: string
+  itemName?: string
+  quantity?: number
+  estimatedCost?: number
+  priority?: Priority
+  requestedBy?: string
   notes?: string
+  title?: string
+  description?: string
+  deviceId?: string
+  assignedTo?: string
+  status?: string
+  currencyId?: string
+  currencyCode?: string
+  items?: Array<{
+    consumableTypeId: string
+    quantity: number
+    unitPrice?: number
+    notes?: string
+  }>
 }
 
 /**

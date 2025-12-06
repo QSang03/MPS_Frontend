@@ -259,6 +259,7 @@ export const devicesClientService = {
       pricePerBWPage?: number
       pricePerColorPage?: number
       monthlyRent?: number
+      currencyId?: string
       effectiveFrom?: string
     }
   ) {
@@ -308,7 +309,10 @@ export const devicesClientService = {
   },
 
   // Update monthly rent in active contract
-  async updateContractMonthlyRent(id: string, dto: { monthlyRent: number }) {
+  async updateContractMonthlyRent(
+    id: string,
+    dto: { monthlyRent: number; currencyId?: string; currencyCode?: string }
+  ) {
     try {
       const response = await internalApiClient.patch(
         `/api/devices/${id}/contract-monthly-rent`,

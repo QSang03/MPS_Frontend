@@ -1,11 +1,8 @@
 import { ServiceRequestStatus, PurchaseRequestStatus } from '@/constants/status'
 
 export const statusFlow: Record<ServiceRequestStatus, ServiceRequestStatus[]> = {
-  [ServiceRequestStatus.OPEN]: [ServiceRequestStatus.APPROVED, ServiceRequestStatus.CANCELLED],
-  [ServiceRequestStatus.APPROVED]: [
-    ServiceRequestStatus.IN_PROGRESS,
-    ServiceRequestStatus.CANCELLED,
-  ],
+  [ServiceRequestStatus.OPEN]: [ServiceRequestStatus.APPROVED],
+  [ServiceRequestStatus.APPROVED]: [ServiceRequestStatus.IN_PROGRESS],
   [ServiceRequestStatus.IN_PROGRESS]: [ServiceRequestStatus.RESOLVED],
   [ServiceRequestStatus.RESOLVED]: [ServiceRequestStatus.CLOSED],
   [ServiceRequestStatus.CLOSED]: [],
@@ -21,8 +18,15 @@ export const purchaseRequestStatusFlow: Record<PurchaseRequestStatus, PurchaseRe
     PurchaseRequestStatus.ORDERED,
     PurchaseRequestStatus.CANCELLED,
   ],
-  [PurchaseRequestStatus.ORDERED]: [PurchaseRequestStatus.IN_TRANSIT],
-  [PurchaseRequestStatus.IN_TRANSIT]: [PurchaseRequestStatus.RECEIVED],
+  [PurchaseRequestStatus.ORDERED]: [
+    PurchaseRequestStatus.IN_TRANSIT,
+    PurchaseRequestStatus.RECEIVED,
+    PurchaseRequestStatus.CANCELLED,
+  ],
+  [PurchaseRequestStatus.IN_TRANSIT]: [
+    PurchaseRequestStatus.RECEIVED,
+    PurchaseRequestStatus.CANCELLED,
+  ],
   [PurchaseRequestStatus.RECEIVED]: [],
   [PurchaseRequestStatus.CANCELLED]: [],
 }

@@ -183,7 +183,14 @@ export function PurchaseRequestList({ status: initialStatus }: PurchaseRequestLi
                           <span className="text-muted-foreground/40">•</span>
                           <span className="flex items-center gap-1">
                             <DollarSign className="h-3.5 w-3.5" />
-                            {formatCurrency(request.estimatedCost)}
+                            {formatCurrency(
+                              request.estimatedCost,
+                              (request as { currency?: { code?: string }; currencyId?: string })
+                                .currency?.code ||
+                                (request as { currency?: { code?: string }; currencyId?: string })
+                                  .currencyId ||
+                                undefined
+                            )}
                           </span>
                           <span className="text-muted-foreground/40">•</span>
                           <span

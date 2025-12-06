@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { useSocket } from '@/components/providers/SocketProvider'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
@@ -11,6 +12,7 @@ import { toast } from 'sonner'
 export function useRealtimeNotifications() {
   const socket = useSocket()
   const queryClient = useQueryClient()
+  const { t } = useLocale()
 
   useEffect(() => {
     if (!socket) return
@@ -19,9 +21,14 @@ export function useRealtimeNotifications() {
     socket.on(
       'device:status-changed',
       (data: { serialNumber: string; status: string; message?: string }) => {
-        toast(`Device ${data.serialNumber} status: ${data.status}`, {
-          description: data.message,
-        })
+        toast(
+          t('notifications.device_status')
+            .replace('{serial}', data.serialNumber)
+            .replace('{status}', data.status),
+          {
+            description: data.message,
+          }
+        )
         queryClient.invalidateQueries({ queryKey: ['devices'] })
         queryClient.invalidateQueries({ queryKey: ['device-stats'] })
       }
@@ -29,7 +36,7 @@ export function useRealtimeNotifications() {
 
     // New service request created
     socket.on('service-request:created', (data: { id: string; requestNumber?: string }) => {
-      toast('New service request received', {
+      toast(t('notifications.new_service_request'), {
         description: data.requestNumber ?? `Request #${data.id.slice(0, 8)}`,
       })
       queryClient.invalidateQueries({ queryKey: ['service-requests'] })
@@ -40,7 +47,7 @@ export function useRealtimeNotifications() {
     socket.on(
       'service-request:updated',
       (data: { id: string; status: string; requestNumber?: string }) => {
-        toast(`Service request ${data.status}`, {
+        toast(t('notifications.service_request_status').replace('{status}', data.status), {
           description: data.requestNumber ?? `Request #${data.id.slice(0, 8)}`,
         })
         queryClient.invalidateQueries({ queryKey: ['service-requests'] })
@@ -49,7 +56,7 @@ export function useRealtimeNotifications() {
 
     // New purchase request created
     socket.on('purchase-request:created', (data: { id: string; requestNumber?: string }) => {
-      toast('New purchase request received', {
+      toast(t('notifications.new_purchase_request'), {
         description: data.requestNumber ?? `Request #${data.id.slice(0, 8)}`,
       })
       queryClient.invalidateQueries({ queryKey: ['purchase-requests'] })
@@ -60,7 +67,7 @@ export function useRealtimeNotifications() {
     socket.on(
       'purchase-request:updated',
       (data: { id: string; status: string; requestNumber?: string }) => {
-        toast(`Purchase request ${data.status}`, {
+        toast(t('notifications.purchase_request_status').replace('{status}', data.status), {
           description: data.requestNumber ?? `Request #${data.id.slice(0, 8)}`,
         })
         queryClient.invalidateQueries({ queryKey: ['purchase-requests'] })
@@ -70,7 +77,7 @@ export function useRealtimeNotifications() {
     // New message added to service request
     socket.on('service-request:message.created', (data: { id: string; requestNumber?: string }) => {
       // id = serviceRequestId
-      toast('Có tin nhắn mới trên yêu cầu', {
+      toast(t('notifications.new_message'), {
         description: data.requestNumber ?? `Request #${data.id.slice(0, 8)}`,
       })
       queryClient.invalidateQueries({ queryKey: ['service-requests'] })
@@ -83,7 +90,7 @@ export function useRealtimeNotifications() {
       'purchase-request:message.created',
       (data: { id: string; requestNumber?: string }) => {
         // id = purchaseRequestId
-        toast('Có tin nhắn mới trên yêu cầu mua hàng', {
+        toast(t('notifications.new_message_purchase'), {
           description: data.requestNumber ?? `Request #${data.id.slice(0, 8)}`,
         })
         queryClient.invalidateQueries({ queryKey: ['purchase-requests'] })
@@ -94,7 +101,7 @@ export function useRealtimeNotifications() {
 
     // New cost added to service request
     socket.on('service-request:cost.created', (data: { id: string; requestNumber?: string }) => {
-      toast('Có chi phí mới được thêm vào yêu cầu', {
+      toast(t('notifications.new_cost_added'), {
         description: data.requestNumber ?? `Request #${data.id.slice(0, 8)}`,
       })
       queryClient.invalidateQueries({ queryKey: ['service-requests'] })
@@ -104,7 +111,7 @@ export function useRealtimeNotifications() {
 
     // Low consumable alert
     socket.on('consumable:low', (data: { deviceName: string; consumable: string }) => {
-      toast.error('Low consumable alert', {
+      toast.error(t('notifications.low_consumable'), {
         description: `${data.deviceName} - ${data.consumable}`,
       })
       queryClient.invalidateQueries({ queryKey: ['devices'] })
@@ -112,7 +119,7 @@ export function useRealtimeNotifications() {
 
     // Maintenance reminder
     socket.on('maintenance:reminder', (data: { deviceName: string }) => {
-      toast.warning('Maintenance due', {
+      toast.warning(t('notifications.maintenance_due'), {
         description: `${data.deviceName} - Maintenance scheduled`,
       })
     })
@@ -135,5 +142,5 @@ export function useRealtimeNotifications() {
       socket.off('maintenance:reminder')
       socket.offAny(onAny)
     }
-  }, [socket, queryClient])
+  }, [socket, queryClient, t])
 }

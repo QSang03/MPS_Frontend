@@ -70,6 +70,7 @@ import { useActionPermission } from '@/lib/hooks/useActionPermission'
 import { VN } from '@/constants/vietnamese'
 import { cn } from '@/lib/utils'
 import { DetailInfoCard } from '@/components/system/DetailInfoCard'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { CreateBillingModal } from './CreateBillingModal'
 // Using `mps_user_role` localStorage for UI gating simplifies client-side role logic
 import { InvoicesList } from './InvoicesList'
@@ -90,6 +91,7 @@ type DeviceConsumableLocal = {
 }
 
 export default function CustomerDetailClient({ customerId }: Props) {
+  const { t } = useLocale()
   const { can: canContractAction } = useActionPermission('customers')
   const canDeleteContract = canContractAction('contract-delete')
   const canUpdateContract = canContractAction('contract-update')
@@ -154,19 +156,29 @@ export default function CustomerDetailClient({ customerId }: Props) {
     number?: string
   } | null>(null)
 
-  const formatPrice = (value?: number | null) => {
+  const formatPrice = (
+    value?: number | null,
+    currency?: { symbol?: string; code?: string } | null
+  ) => {
     if (value === undefined || value === null) return '—'
     const parts = value.toString().split('.')
     const integerPart = Math.abs(parseInt(parts[0] ?? '0', 10))
     const decimalPart = parts[1]
     const formattedInteger = integerPart.toLocaleString('en-US')
+    const currencySymbol = currency?.symbol || (currency?.code ? currency.code : '$')
+    let formattedValue = ''
     if (decimalPart) {
       const trimmedDecimal = decimalPart.replace(/0+$/, '')
       if (trimmedDecimal) {
-        return `${value < 0 ? '-' : ''}${formattedInteger}.${trimmedDecimal}`
+        formattedValue = `${value < 0 ? '-' : ''}${formattedInteger}.${trimmedDecimal}`
+      } else {
+        formattedValue = `${value < 0 ? '-' : ''}${formattedInteger}`
       }
+    } else {
+      formattedValue = `${value < 0 ? '-' : ''}${formattedInteger}`
     }
-    return `${value < 0 ? '-' : ''}${formattedInteger}`
+    // Use non-breaking space to prevent line break between currency symbol and value
+    return `${currencySymbol}\u00A0${formattedValue}`
   }
 
   const formatNumber = (value?: number | null) => {
@@ -571,7 +583,7 @@ export default function CustomerDetailClient({ customerId }: Props) {
       await contractsClientService.detachDevices(pendingDetach.contractId, {
         deviceIds: [pendingDetach.deviceId],
       })
-      toast.success('Gỡ thiết bị thành công')
+      toast.success(t('customer.detail.detach_device.success'))
       setDetachConfirmOpen(false)
       setPendingDetach(null)
       loadOverview()
@@ -583,7 +595,7 @@ export default function CustomerDetailClient({ customerId }: Props) {
         (err as { response?: { data?: { error?: string; message?: string } }; message?: string })
           ?.response?.data?.message ||
         (err as { message?: string })?.message ||
-        'Gỡ thiết bị thất bại'
+        t('customer.detail.detach_device.error')
       toast.error(apiMessage)
     }
   }
@@ -592,7 +604,7 @@ export default function CustomerDetailClient({ customerId }: Props) {
     try {
       const contract = contracts.find((c) => c.id === contractId)
       if (!contract) {
-        toast.error('Không tìm thấy hợp đồng')
+        toast.error(t('customer.detail.contract_not_found'))
         return
       }
 
@@ -605,7 +617,7 @@ export default function CustomerDetailClient({ customerId }: Props) {
           },
         ],
       })
-      toast.success('Gán thiết bị vào hợp đồng thành công')
+      toast.success(t('customer.detail.assign_device.success'))
       setAssignDeviceModalOpen(false)
       setSelectedDeviceForAssign(null)
       loadOverview()
@@ -617,7 +629,7 @@ export default function CustomerDetailClient({ customerId }: Props) {
         (err as { response?: { data?: { error?: string; message?: string } }; message?: string })
           ?.response?.data?.message ||
         (err as { message?: string })?.message ||
-        'Gán thiết bị thất bại'
+        t('customer.detail.assign_device.error')
       toast.error(apiMessage)
     }
   }
@@ -629,7 +641,7 @@ export default function CustomerDetailClient({ customerId }: Props) {
         <tr className="border-b border-slate-100 last:border-b-0">
           <td className="px-4 py-6" />
           <td colSpan={8} className="py-6 pr-4 pl-6 text-center text-sm text-slate-400">
-            Chưa có thiết bị nào trong hợp đồng này
+            {t('customer.detail.contract.no_devices')}
           </td>
           <td className="px-4 py-6" />
           <td className="px-4 py-6" />
@@ -665,7 +677,9 @@ export default function CustomerDetailClient({ customerId }: Props) {
                 href={`/system/devices/${device.device.id}`}
                 className="text-sky-600 hover:underline"
               >
-                {device.device?.deviceModel?.name ?? device.device?.model ?? 'Không rõ model'}
+                {device.device?.deviceModel?.name ??
+                  device.device?.model ??
+                  t('customer.detail.device.unknown_model')}
               </Link>
             ) : (
               (device.device?.deviceModel?.name ?? device.device?.model ?? 'Không rõ model')
@@ -673,18 +687,18 @@ export default function CustomerDetailClient({ customerId }: Props) {
           </div>
         </td>
         <td className="py-4 pr-4 pl-4 text-right">
-          <span className="text-sm font-semibold text-slate-700">
-            ${formatPrice(device.monthlyRent)}
+          <span className="text-sm font-semibold whitespace-nowrap text-slate-700">
+            {formatPrice(device.monthlyRent, device.currency)}
           </span>
         </td>
         <td className="px-4 py-4 text-right">
-          <span className="text-sm font-medium text-slate-600">
-            ${formatPrice(device.pricePerBWPage)}
+          <span className="text-sm font-medium whitespace-nowrap text-slate-600">
+            {formatPrice(device.pricePerBWPage, device.currency)}
           </span>
         </td>
         <td className="px-4 py-4 text-right">
-          <span className="text-sm font-medium text-slate-600">
-            ${formatPrice(device.pricePerColorPage)}
+          <span className="text-sm font-medium whitespace-nowrap text-slate-600">
+            {formatPrice(device.pricePerColorPage, device.currency)}
           </span>
         </td>
         {/* Page counts: prefer A4 values for A4 models, otherwise prefer non-A4 totals (fallbacks included) */}
@@ -727,7 +741,7 @@ export default function CustomerDetailClient({ customerId }: Props) {
         <td className="px-4 py-4">{renderDeviceStatus(device.device?.status)}</td>
         <td className="px-4 py-4">
           {device.device?.id && (
-            <div className="flex items-center justify-end gap-1.5 opacity-0 transition-opacity group-hover:opacity-100">
+            <div className="flex items-center justify-end gap-1.5">
               <DeviceFormModal
                 mode="edit"
                 device={device.device}
@@ -736,8 +750,9 @@ export default function CustomerDetailClient({ customerId }: Props) {
                   loadOverview()
                 }}
               />
-              <ActionGuard pageId="devices" actionId="assign-pricing">
-                {!isCustomerManager ? (
+              {/* Allow system admin to see assign-pricing even if backend nav doesn't include the action */}
+              {isAdminForUI ? (
+                !isCustomerManager ? (
                   <DevicePricingModal
                     device={device.device}
                     compact
@@ -745,8 +760,20 @@ export default function CustomerDetailClient({ customerId }: Props) {
                       loadOverview()
                     }}
                   />
-                ) : null}
-              </ActionGuard>
+                ) : null
+              ) : (
+                <ActionGuard pageId="devices" actionId="assign-pricing">
+                  {!isCustomerManager ? (
+                    <DevicePricingModal
+                      device={device.device}
+                      compact
+                      onSaved={() => {
+                        loadOverview()
+                      }}
+                    />
+                  ) : null}
+                </ActionGuard>
+              )}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -757,12 +784,14 @@ export default function CustomerDetailClient({ customerId }: Props) {
                       setA4ModalDevice(device)
                       setA4ModalOpen(true)
                     }}
-                    title="Ghi/Chỉnh sửa snapshot A4"
+                    title={t('customer.detail.device.a4_snapshot.title')}
                   >
                     <BarChart3 className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent sideOffset={4}>Gán số trang A4</TooltipContent>
+                <TooltipContent sideOffset={4}>
+                  {t('customer.detail.device.a4_snapshot.tooltip')}
+                </TooltipContent>
               </Tooltip>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -774,12 +803,14 @@ export default function CustomerDetailClient({ customerId }: Props) {
                       setA4HistoryDevice(device)
                       setA4HistoryOpen(true)
                     }}
-                    title="Xem lịch sử snapshot A4"
+                    title={t('customer.detail.device.a4_history.title')}
                   >
                     <RefreshCw className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent sideOffset={4}>Lịch sử snapshot A4</TooltipContent>
+                <TooltipContent sideOffset={4}>
+                  {t('customer.detail.device.a4_history.tooltip')}
+                </TooltipContent>
               </Tooltip>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -788,13 +819,13 @@ export default function CustomerDetailClient({ customerId }: Props) {
                       variant="ghost"
                       size="sm"
                       className="h-8 w-8 p-0 text-sky-600 hover:bg-sky-50 hover:text-sky-700"
-                      aria-label="Xem thiết bị"
+                      aria-label={t('customer.detail.device.view')}
                     >
                       <Eye className="h-4 w-4" />
                     </Button>
                   </Link>
                 </TooltipTrigger>
-                <TooltipContent sideOffset={4}>Xem thiết bị</TooltipContent>
+                <TooltipContent sideOffset={4}>{t('customer.detail.device.view')}</TooltipContent>
               </Tooltip>
               {canDetachDevices && (
                 <Tooltip>
@@ -808,12 +839,14 @@ export default function CustomerDetailClient({ customerId }: Props) {
                           handleDetachDevice(contract.id, device.deviceId)
                         }
                       }}
-                      aria-label="Gỡ thiết bị"
+                      aria-label={t('customer.detail.device.detach')}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent sideOffset={4}>Gỡ thiết bị</TooltipContent>
+                  <TooltipContent sideOffset={4}>
+                    {t('customer.detail.device.detach')}
+                  </TooltipContent>
                 </Tooltip>
               )}
             </div>
@@ -829,17 +862,17 @@ export default function CustomerDetailClient({ customerId }: Props) {
       <Fragment>
         <tr className="bg-gradient-to-r from-amber-50 to-orange-50 text-amber-900">
           <td className="px-4 py-4">
-            <Checkbox aria-label="Thiết bị chưa có hợp đồng" disabled checked />
+            <Checkbox aria-label={t('customer.detail.unassigned_devices.label')} disabled checked />
           </td>
           <td colSpan={8} className="py-4 pr-4 pl-6 text-sm font-semibold">
             <div className="flex items-center gap-2">
               <AlertCircle className="h-4 w-4" />
-              Thiết bị chưa có hợp đồng
+              {t('customer.detail.unassigned_devices.label')}
             </div>
           </td>
           <td className="px-4 py-4">
             <Badge variant="outline" className="border-amber-300 bg-amber-100 text-amber-800">
-              {devices.length} thiết bị
+              {t('customer.detail.unassigned_devices.count', { count: devices.length })}
             </Badge>
           </td>
           <td className="px-4 py-4" />
@@ -872,7 +905,9 @@ export default function CustomerDetailClient({ customerId }: Props) {
                     href={`/system/devices/${device.id}`}
                     className="text-sky-600 hover:underline"
                   >
-                    {device.deviceModel?.name ?? device.model ?? 'Không rõ model'}
+                    {device.deviceModel?.name ??
+                      device.model ??
+                      t('customer.detail.device.unknown_model')}
                   </Link>
                 ) : (
                   (device.deviceModel?.name ?? device.model ?? 'Không rõ model')
@@ -880,14 +915,14 @@ export default function CustomerDetailClient({ customerId }: Props) {
               </div>
             </td>
             <td className="py-4 pr-4 pl-4 text-center text-sm text-slate-400" colSpan={6}>
-              Chưa có bảng giá
+              {t('customer.detail.device.no_pricing')}
             </td>
             <td className="line-clamp-2 px-4 py-4 text-sm text-slate-600">
               {device.location ?? '—'}
             </td>
             <td className="px-4 py-4">{renderDeviceStatus(device.status as string)}</td>
             <td className="px-4 py-4">
-              <div className="flex items-center justify-end gap-1.5 opacity-0 transition-opacity group-hover:opacity-100">
+              <div className="flex items-center justify-end gap-1.5">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
@@ -898,12 +933,14 @@ export default function CustomerDetailClient({ customerId }: Props) {
                         setSelectedDeviceForAssign(device)
                         setAssignDeviceModalOpen(true)
                       }}
-                      aria-label="Gán thiết bị"
+                      aria-label={t('customer.detail.device.assign')}
                     >
                       <Plus className="h-4 w-4" />
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent sideOffset={4}>Gán thiết bị</TooltipContent>
+                  <TooltipContent sideOffset={4}>
+                    {t('customer.detail.device.assign')}
+                  </TooltipContent>
                 </Tooltip>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -912,13 +949,13 @@ export default function CustomerDetailClient({ customerId }: Props) {
                         variant="ghost"
                         size="sm"
                         className="h-8 w-8 p-0 text-sky-600 hover:bg-sky-50 hover:text-sky-700"
-                        aria-label="Xem thiết bị"
+                        aria-label={t('customer.detail.device.view')}
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
                     </Link>
                   </TooltipTrigger>
-                  <TooltipContent sideOffset={4}>Xem thiết bị</TooltipContent>
+                  <TooltipContent sideOffset={4}>{t('customer.detail.device.view')}</TooltipContent>
                 </Tooltip>
               </div>
             </td>
@@ -932,11 +969,11 @@ export default function CustomerDetailClient({ customerId }: Props) {
     if (!customerInfo) {
       return (
         <DetailInfoCard
-          title="Không tìm thấy thông tin"
+          title={t('customer.detail.not_found.title')}
           loading={loadingCustomerInfo}
           error={
             customerInfoError ||
-            (!loadingCustomerInfo ? 'Không tìm thấy thông tin khách hàng.' : undefined)
+            (!loadingCustomerInfo ? t('customer.detail.not_found.message') : undefined)
           }
         />
       )
@@ -945,42 +982,52 @@ export default function CustomerDetailClient({ customerId }: Props) {
     const address = customerInfo.address?.filter((line) => Boolean(line?.trim())).join(', ') || '—'
 
     const infoItems = [
-      { label: 'Mã khách', value: customerInfo.code || '—' },
-      { label: 'Liên hệ', value: customerInfo.contactPerson || '—' },
-      { label: 'Email', value: customerInfo.contactEmail || '—' },
-      { label: 'Điện thoại', value: customerInfo.contactPhone || '—' },
-      { label: 'Phân hạng', value: customerInfo.tier || '—' },
+      { label: t('customer.detail.info.code'), value: customerInfo.code || '—' },
+      { label: t('customer.detail.info.contact_person'), value: customerInfo.contactPerson || '—' },
+      { label: t('customer.detail.info.email'), value: customerInfo.contactEmail || '—' },
+      { label: t('customer.detail.info.phone'), value: customerInfo.contactPhone || '—' },
+      { label: t('customer.detail.info.tier'), value: customerInfo.tier || '—' },
       {
-        label: 'Ngày tạo',
+        label: t('customer.detail.info.created_at'),
         value: customerInfo.createdAt ? formatDate(customerInfo.createdAt) : '—',
       },
       {
-        label: 'Ngày cập nhật',
+        label: t('customer.detail.info.updated_at'),
         value: customerInfo.updatedAt ? formatDate(customerInfo.updatedAt) : '—',
       },
       {
-        label: 'Ngày lấy số liệu',
+        label: t('customer.detail.info.billing_day'),
         value: typeof customerInfo.billingDay === 'number' ? customerInfo.billingDay : '—',
+      },
+      {
+        label: t('currency.default'),
+        value: customerInfo.defaultCurrency
+          ? `${customerInfo.defaultCurrency.code} - ${customerInfo.defaultCurrency.name} (${customerInfo.defaultCurrency.symbol})`
+          : customerInfo.defaultCurrencyId
+            ? customerInfo.defaultCurrencyId
+            : '—',
       },
     ]
 
     // Include invoiceInfo fields if present
     if (customerInfo.invoiceInfo) {
       const inv = customerInfo.invoiceInfo
-      infoItems.push({ label: 'Invoice - Bill To', value: inv.billTo || '—' })
-      infoItems.push({ label: 'Invoice - Address', value: inv.address || '—' })
-      infoItems.push({ label: 'Invoice - ATT', value: inv.att || '—' })
-      infoItems.push({ label: 'Invoice - HP/PO Ref', value: inv.hpPoRef || '—' })
-      infoItems.push({ label: 'Invoice - ERP ID', value: inv.erpId || '—' })
+      infoItems.push({ label: t('customer.detail.invoice.bill_to'), value: inv.billTo || '—' })
+      infoItems.push({ label: t('customer.detail.invoice.address'), value: inv.address || '—' })
+      infoItems.push({ label: t('customer.detail.invoice.att'), value: inv.att || '—' })
+      infoItems.push({ label: t('customer.detail.invoice.hp_po_ref'), value: inv.hpPoRef || '—' })
+      infoItems.push({ label: t('customer.detail.invoice.erp_id'), value: inv.erpId || '—' })
       infoItems.push({
-        label: 'Invoice - Emails',
+        label: t('customer.detail.invoice.emails'),
         value: Array.isArray(inv.emails) && inv.emails.length ? inv.emails.join(', ') : '—',
       })
     }
 
     const badges = [
       {
-        label: customerInfo.isActive ? 'Đang hoạt động' : 'Tạm dừng',
+        label: customerInfo.isActive
+          ? t('customer.detail.status.active')
+          : t('customer.detail.status.inactive'),
         variant: 'outline' as const,
         className: customerInfo.isActive
           ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
@@ -999,19 +1046,19 @@ export default function CustomerDetailClient({ customerId }: Props) {
 
     const statsCards = [
       {
-        label: 'Tổng hợp đồng',
+        label: t('customer.detail.stats.total_contracts'),
         value: formatInteger(customerInfo.contractCount ?? 0),
         icon: <FileText className="h-6 w-6" />,
         borderColor: 'blue',
       },
       {
-        label: 'Thiết bị',
+        label: t('customer.detail.stats.devices'),
         value: formatInteger(customerInfo.deviceCount ?? 0),
         icon: <MonitorSmartphone className="h-6 w-6" />,
         borderColor: 'green',
       },
       {
-        label: 'Người dùng',
+        label: t('customer.detail.stats.users'),
         value: formatInteger(customerInfo.userCount ?? 0),
         icon: <User className="h-6 w-6" />,
         borderColor: 'purple',
@@ -1019,13 +1066,13 @@ export default function CustomerDetailClient({ customerId }: Props) {
       ...(contracts.length > 0
         ? [
             {
-              label: 'Đang hoạt động',
+              label: t('customer.detail.stats.active_contracts'),
               value: contracts.filter((c) => c.status === 'ACTIVE').length,
               icon: <CheckCircle2 className="h-6 w-6" />,
               borderColor: 'green' as const,
             },
             {
-              label: 'Chờ xử lý',
+              label: t('customer.detail.stats.pending_contracts'),
               value: contracts.filter((c) => c.status === 'PENDING').length,
               icon: <AlertCircle className="h-6 w-6" />,
               borderColor: 'orange' as const,
@@ -1058,15 +1105,15 @@ export default function CustomerDetailClient({ customerId }: Props) {
       >
         <div>
           <h2 className="bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-3xl font-bold text-transparent">
-            Chi tiết khách hàng
+            {t('customer.detail.title')}
           </h2>
-          <p className="mt-1 text-sm text-slate-500">Quản lý thông tin và hợp đồng khách hàng</p>
+          <p className="mt-1 text-sm text-slate-500">{t('customer.detail.subtitle')}</p>
         </div>
         <div className="flex items-center gap-2">
           <Link href="/system/customers">
             <Button variant="outline" size="sm" className="gap-2">
               <ArrowRight className="h-4 w-4 rotate-180" />
-              Quay lại danh sách
+              {t('customer.detail.back_to_list')}
             </Button>
           </Link>
         </div>
@@ -1092,29 +1139,31 @@ export default function CustomerDetailClient({ customerId }: Props) {
           onValueChange={(value) => setActiveTab(value as 'contracts' | 'inventory' | 'invoices')}
           className="space-y-6"
         >
-          <TabsList className="grid w-full grid-cols-3 bg-slate-100 p-1">
-            <TabsTrigger
-              value="contracts"
-              className="gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm"
-            >
-              <FileText className="h-4 w-4" />
-              Hợp đồng
-            </TabsTrigger>
-            <TabsTrigger
-              value="inventory"
-              className="gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm"
-            >
-              <Package className="h-4 w-4" />
-              Kho khách hàng
-            </TabsTrigger>
-            <TabsTrigger
-              value="invoices"
-              className="gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm"
-            >
-              <Receipt className="h-4 w-4" />
-              Hóa đơn
-            </TabsTrigger>
-          </TabsList>
+          <div className="mb-6">
+            <TabsList className="bg-muted inline-flex h-10 items-center justify-start rounded-lg p-1">
+              <TabsTrigger
+                value="contracts"
+                className="ring-offset-background focus-visible:ring-ring data-[state=active]:bg-background data-[state=active]:text-foreground inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium whitespace-nowrap transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm"
+              >
+                <FileText className="h-4 w-4" />
+                {t('customer.detail.tab.contracts')}
+              </TabsTrigger>
+              <TabsTrigger
+                value="inventory"
+                className="ring-offset-background focus-visible:ring-ring data-[state=active]:bg-background data-[state=active]:text-foreground inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium whitespace-nowrap transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm"
+              >
+                <Package className="h-4 w-4" />
+                {t('customer.detail.tab.inventory')}
+              </TabsTrigger>
+              <TabsTrigger
+                value="invoices"
+                className="ring-offset-background focus-visible:ring-ring data-[state=active]:bg-background data-[state=active]:text-foreground inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium whitespace-nowrap transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm"
+              >
+                <Receipt className="h-4 w-4" />
+                {t('customer.detail.tab.invoices')}
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="contracts" className="space-y-4">
             <Card className="border-slate-200 shadow-lg">
@@ -1125,10 +1174,10 @@ export default function CustomerDetailClient({ customerId }: Props) {
                       <div className="rounded-lg bg-sky-100 p-2">
                         <Package className="h-5 w-5 text-sky-600" />
                       </div>
-                      Hợp đồng & thiết bị
+                      {t('customer.detail.contracts.title')}
                     </CardTitle>
                     <CardDescription className="mt-2">
-                      Tổng quan các hợp đồng đang hoạt động cùng danh sách thiết bị trực thuộc
+                      {t('customer.detail.contracts.description')}
                     </CardDescription>
                   </div>
                   <div className="flex items-center gap-2">
@@ -1139,7 +1188,7 @@ export default function CustomerDetailClient({ customerId }: Props) {
                         className="gap-2 bg-gradient-to-r from-sky-600 to-blue-600 shadow-sm hover:from-sky-700 hover:to-blue-700"
                       >
                         <Plus className="h-4 w-4" />
-                        Tạo hợp đồng
+                        {t('customer.detail.contracts.create')}
                       </Button>
                     )}
                     <Button
@@ -1152,12 +1201,12 @@ export default function CustomerDetailClient({ customerId }: Props) {
                       {isAllExpanded ? (
                         <>
                           <ChevronUp className="h-4 w-4" />
-                          Thu gọn
+                          {t('customer.detail.contracts.collapse')}
                         </>
                       ) : (
                         <>
                           <ChevronDown className="h-4 w-4" />
-                          Mở tất cả
+                          {t('customer.detail.contracts.expand_all')}
                         </>
                       )}
                     </Button>
@@ -1171,7 +1220,7 @@ export default function CustomerDetailClient({ customerId }: Props) {
                       )}
                     >
                       <Filter className="h-4 w-4" />
-                      Bộ lọc
+                      {t('customer.detail.contracts.filters')}
                       {hasActiveFilters && (
                         <Badge
                           variant="secondary"
@@ -1201,7 +1250,7 @@ export default function CustomerDetailClient({ customerId }: Props) {
                             <Input
                               value={search}
                               onChange={(event) => setSearch(event.target.value)}
-                              placeholder="Tìm số hợp đồng..."
+                              placeholder={t('customer.detail.contracts.search_placeholder')}
                               className="pl-9"
                             />
                           </div>
@@ -1214,11 +1263,21 @@ export default function CustomerDetailClient({ customerId }: Props) {
                             }}
                             className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm transition-colors focus:border-sky-500 focus:ring-2 focus:ring-sky-200 focus:outline-none"
                           >
-                            <option value="">Tất cả trạng thái</option>
-                            <option value="PENDING">Chờ xử lý</option>
-                            <option value="ACTIVE">Đang hoạt động</option>
-                            <option value="EXPIRED">Hết hạn</option>
-                            <option value="TERMINATED">Đã chấm dứt</option>
+                            <option value="">
+                              {t('customer.detail.contracts.filter.all_status')}
+                            </option>
+                            <option value="PENDING">
+                              {t('customer.detail.contracts.filter.status.pending')}
+                            </option>
+                            <option value="ACTIVE">
+                              {t('customer.detail.contracts.filter.status.active')}
+                            </option>
+                            <option value="EXPIRED">
+                              {t('customer.detail.contracts.filter.status.expired')}
+                            </option>
+                            <option value="TERMINATED">
+                              {t('customer.detail.contracts.filter.status.terminated')}
+                            </option>
                           </select>
 
                           <select
@@ -1229,7 +1288,9 @@ export default function CustomerDetailClient({ customerId }: Props) {
                             }}
                             className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm transition-colors focus:border-sky-500 focus:ring-2 focus:ring-sky-200 focus:outline-none"
                           >
-                            <option value="">Tất cả loại</option>
+                            <option value="">
+                              {t('customer.detail.contracts.filter.all_types')}
+                            </option>
                             <option value="MPS_CLICK_CHARGE">MPS Click Charge</option>
                             <option value="MPS_CONSUMABLE">MPS Consumable</option>
                             <option value="CMPS_CLICK_CHARGE">CMPS Click Charge</option>
@@ -1247,7 +1308,9 @@ export default function CustomerDetailClient({ customerId }: Props) {
                               className="flex-1 gap-2"
                             >
                               <RefreshCw className="h-4 w-4" />
-                              {sortOrder === 'desc' ? 'Mới nhất' : 'Cũ nhất'}
+                              {sortOrder === 'desc'
+                                ? t('customer.detail.contracts.sort.newest')
+                                : t('customer.detail.contracts.sort.oldest')}
                             </Button>
                             <Button
                               variant="ghost"
@@ -1263,7 +1326,7 @@ export default function CustomerDetailClient({ customerId }: Props) {
                               className="gap-2"
                             >
                               <X className="h-4 w-4" />
-                              Xóa
+                              {t('customer.detail.contracts.clear')}
                             </Button>
                           </div>
                         </div>
@@ -1283,7 +1346,7 @@ export default function CustomerDetailClient({ customerId }: Props) {
                     <div className="flex items-start gap-3">
                       <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0" />
                       <div>
-                        <p className="font-semibold">Đã xảy ra lỗi</p>
+                        <p className="font-semibold">{t('customer.detail.error.title')}</p>
                         <p className="mt-1">{error}</p>
                       </div>
                     </div>
@@ -1295,7 +1358,7 @@ export default function CustomerDetailClient({ customerId }: Props) {
                       <div className="absolute inset-0 h-12 w-12 animate-ping rounded-full bg-sky-400 opacity-20" />
                     </div>
                     <p className="text-sm font-medium text-slate-600">
-                      Đang tải dữ liệu hợp đồng...
+                      {t('customer.detail.contracts.loading')}
                     </p>
                   </div>
                 ) : contracts.length === 0 && unassignedDevices.length === 0 ? (
@@ -1308,9 +1371,11 @@ export default function CustomerDetailClient({ customerId }: Props) {
                       <PackageSearch className="h-10 w-10 text-slate-400" />
                     </div>
                     <div>
-                      <p className="text-lg font-semibold text-slate-700">Chưa có hợp đồng nào</p>
+                      <p className="text-lg font-semibold text-slate-700">
+                        {t('customer.detail.contracts.empty.title')}
+                      </p>
                       <p className="mt-1 text-sm text-slate-500">
-                        Hãy tạo hợp đồng mới hoặc gán thiết bị
+                        {t('customer.detail.contracts.empty.description')}
                       </p>
                     </div>
                   </motion.div>
@@ -1323,34 +1388,34 @@ export default function CustomerDetailClient({ customerId }: Props) {
                             &nbsp;
                           </th>
                           <th className="min-w-[200px] py-4 pr-4 pl-6 text-left text-xs font-semibold tracking-wide text-slate-600 uppercase">
-                            Thiết bị / Hợp đồng
+                            {t('customer.detail.table.device_contract')}
                           </th>
                           <th className="w-28 py-4 pr-4 pl-4 text-right text-xs font-semibold tracking-wide text-slate-600 uppercase">
-                            Giá thuê/tháng
+                            {t('customer.detail.table.monthly_rent')}
                           </th>
                           <th className="w-24 px-4 py-4 text-right text-xs font-semibold tracking-wide text-slate-600 uppercase">
-                            Giá B/W
+                            {t('customer.detail.table.price_bw')}
                           </th>
                           <th className="w-24 px-4 py-4 text-right text-xs font-semibold tracking-wide text-slate-600 uppercase">
-                            Giá Màu
+                            {t('customer.detail.table.price_color')}
                           </th>
                           <th className="w-28 px-4 py-4 text-right text-xs font-semibold tracking-wide text-slate-600 uppercase">
-                            Tổng
+                            {t('customer.detail.table.total')}
                           </th>
                           <th className="w-24 px-4 py-4 text-right text-xs font-semibold tracking-wide text-slate-600 uppercase">
-                            Màu
+                            {t('customer.detail.table.color')}
                           </th>
                           <th className="w-24 px-4 py-4 text-right text-xs font-semibold tracking-wide text-slate-600 uppercase">
-                            B/W
+                            {t('customer.detail.table.bw')}
                           </th>
                           <th className="min-w-[150px] px-4 py-4 text-left text-xs font-semibold tracking-wide text-slate-600 uppercase">
-                            Vị trí
+                            {t('customer.detail.table.location')}
                           </th>
                           <th className="w-28 px-4 py-4 text-left text-xs font-semibold tracking-wide text-slate-600 uppercase">
-                            Trạng thái
+                            {t('customer.detail.table.status')}
                           </th>
                           <th className="w-32 px-4 py-4 text-right text-xs font-semibold tracking-wide text-slate-600 uppercase">
-                            Hành động
+                            {t('customer.detail.table.actions')}
                           </th>
                         </tr>
                       </thead>
@@ -1364,7 +1429,11 @@ export default function CustomerDetailClient({ customerId }: Props) {
                               className="border-t border-slate-200 bg-gradient-to-r from-sky-50/50 via-blue-50/30 to-indigo-50/50"
                             >
                               <td className="px-4 py-5 align-top">
-                                <Checkbox aria-label={`Hợp đồng ${contract.contractNumber}`} />
+                                <Checkbox
+                                  aria-label={t('customer.detail.contracts.checkbox', {
+                                    number: contract.contractNumber,
+                                  })}
+                                />
                               </td>
                               <td colSpan={7} className="px-6 py-5">
                                 <div className="flex flex-col gap-2.5">
@@ -1404,13 +1473,15 @@ export default function CustomerDetailClient({ customerId }: Props) {
                                                   number: contract.contractNumber,
                                                 })
                                               }
-                                              aria-label="Tạo billing"
+                                              aria-label={t(
+                                                'customer.detail.contracts.create_billing'
+                                              )}
                                             >
                                               <Receipt className="h-4 w-4" />
                                             </Button>
                                           </TooltipTrigger>
                                           <TooltipContent sideOffset={4}>
-                                            Tạo hóa đơn billing
+                                            {t('customer.detail.contracts.create_billing')}
                                           </TooltipContent>
                                         </Tooltip>
                                       )}
@@ -1422,13 +1493,13 @@ export default function CustomerDetailClient({ customerId }: Props) {
                                               size="sm"
                                               className="h-8 w-8 p-0 text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                                               onClick={() => setEditingContract(contract)}
-                                              aria-label="Chỉnh sửa hợp đồng"
+                                              aria-label={t('customer.detail.contracts.edit')}
                                             >
                                               <Edit className="h-4 w-4" />
                                             </Button>
                                           </TooltipTrigger>
                                           <TooltipContent sideOffset={4}>
-                                            Chỉnh sửa hợp đồng
+                                            {t('customer.detail.contracts.edit')}
                                           </TooltipContent>
                                         </Tooltip>
                                       )}
@@ -1443,30 +1514,40 @@ export default function CustomerDetailClient({ customerId }: Props) {
                                                 setAttachModalContractId(contract.id)
                                                 setAttachModalOpen(true)
                                               }}
-                                              aria-label="Gán thiết bị"
+                                              aria-label={t(
+                                                'customer.detail.contracts.attach_device'
+                                              )}
                                             >
                                               <MonitorSmartphone className="h-4 w-4" />
                                             </Button>
                                           </TooltipTrigger>
                                           <TooltipContent sideOffset={4}>
-                                            Gán thiết bị
+                                            {t('customer.detail.contracts.attach_device')}
                                           </TooltipContent>
                                         </Tooltip>
                                       )}
                                       {canDeleteContract && (
                                         <Tooltip>
                                           <DeleteDialog
-                                            title="Xóa hợp đồng"
-                                            description={`Bạn có chắc chắn muốn xóa hợp đồng "${contract.contractNumber}" không? Hành động này không thể hoàn tác.`}
+                                            title={t('customer.detail.contracts.delete.title')}
+                                            description={t(
+                                              'customer.detail.contracts.delete.description',
+                                              { number: contract.contractNumber }
+                                            )}
                                             onConfirm={async () => {
                                               try {
                                                 await contractsClientService.delete(contract.id)
                                                 await loadOverview()
-                                                toast.success('Xóa hợp đồng thành công')
+                                                toast.success(
+                                                  t('customer.detail.contracts.delete.success')
+                                                )
                                               } catch (err: unknown) {
                                                 console.error('Delete contract error', err)
                                                 const apiMsg = extractApiMessage(err)
-                                                toast.error(apiMsg || 'Có lỗi khi xóa hợp đồng')
+                                                toast.error(
+                                                  apiMsg ||
+                                                    t('customer.detail.contracts.delete.error')
+                                                )
                                               }
                                             }}
                                             trigger={
@@ -1475,7 +1556,9 @@ export default function CustomerDetailClient({ customerId }: Props) {
                                                   variant="ghost"
                                                   size="sm"
                                                   className="h-8 w-8 p-0 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
-                                                  aria-label="Xóa hợp đồng"
+                                                  aria-label={t(
+                                                    'customer.detail.contracts.delete.label'
+                                                  )}
                                                 >
                                                   <Trash2 className="h-4 w-4" />
                                                 </Button>
@@ -1483,7 +1566,7 @@ export default function CustomerDetailClient({ customerId }: Props) {
                                             }
                                           />
                                           <TooltipContent sideOffset={4}>
-                                            Xóa hợp đồng
+                                            {t('customer.detail.contracts.delete.label')}
                                           </TooltipContent>
                                         </Tooltip>
                                       )}
@@ -1491,7 +1574,9 @@ export default function CustomerDetailClient({ customerId }: Props) {
                                   </div>
                                   <div className="flex items-center gap-4 text-xs text-slate-600">
                                     <span className="flex items-center gap-1.5">
-                                      <span className="font-medium">Hiệu lực:</span>
+                                      <span className="font-medium">
+                                        {t('customer.detail.contracts.effective')}:
+                                      </span>
                                       {formatDateRange(contract.startDate, contract.endDate)}
                                     </span>
                                   </div>
@@ -1511,10 +1596,14 @@ export default function CustomerDetailClient({ customerId }: Props) {
                                     variant="outline"
                                     className="border-slate-300 bg-slate-100 text-xs font-medium text-slate-800"
                                   >
-                                    {contract.contractDevices?.length ?? 0} thiết bị
+                                    {t('customer.detail.contracts.device_count', {
+                                      count: contract.contractDevices?.length ?? 0,
+                                    })}
                                   </Badge>
                                 ) : (
-                                  <span className="text-xs text-slate-400">Chưa có thiết bị</span>
+                                  <span className="text-xs text-slate-400">
+                                    {t('customer.detail.contracts.no_devices')}
+                                  </span>
                                 )}
                               </td>
                               <td className="px-4 py-5 text-right">
@@ -1551,10 +1640,14 @@ export default function CustomerDetailClient({ customerId }: Props) {
               {pagination && contracts.length > 0 && (
                 <div className="flex flex-wrap items-center justify-between gap-4 border-t border-slate-100 bg-slate-50/50 px-6 py-4">
                   <div className="text-sm text-slate-600">
-                    Trang <span className="font-semibold">{pagination.page}</span> /{' '}
-                    <span className="font-semibold">{pagination.totalPages}</span> • Tổng{' '}
-                    <span className="font-semibold">{formatInteger(pagination.total)}</span> hợp
-                    đồng
+                    {t('customer.detail.pagination.page', {
+                      current: pagination.page,
+                      total: pagination.totalPages,
+                    })}{' '}
+                    •{' '}
+                    {t('customer.detail.pagination.total', {
+                      count: formatInteger(pagination.total),
+                    })}
                   </div>
                   <div className="flex items-center gap-2">
                     <Button
@@ -1565,7 +1658,7 @@ export default function CustomerDetailClient({ customerId }: Props) {
                       className="gap-2"
                     >
                       <ChevronUp className="h-4 w-4 rotate-90" />
-                      Trang trước
+                      {t('customer.detail.pagination.previous')}
                     </Button>
                     <Button
                       variant="outline"
@@ -1580,7 +1673,7 @@ export default function CustomerDetailClient({ customerId }: Props) {
                       }
                       className="gap-2"
                     >
-                      Trang sau
+                      {t('customer.detail.pagination.next')}
                       <ChevronDown className="h-4 w-4 -rotate-90" />
                     </Button>
                   </div>
@@ -1598,10 +1691,10 @@ export default function CustomerDetailClient({ customerId }: Props) {
                       <div className="rounded-lg bg-amber-100 p-2">
                         <PackageSearch className="h-5 w-5 text-amber-600" />
                       </div>
-                      Kho khách hàng
+                      {t('customer.detail.inventory.title')}
                     </CardTitle>
                     <CardDescription className="mt-2">
-                      Toàn bộ vật tư sở hữu bởi khách hàng và trạng thái sử dụng hiện tại
+                      {t('customer.detail.inventory.description')}
                     </CardDescription>
                   </div>
                   <div className="flex items-center gap-3">
@@ -1609,8 +1702,10 @@ export default function CustomerDetailClient({ customerId }: Props) {
                       variant="outline"
                       className="border-amber-300 bg-amber-50 text-amber-700"
                     >
-                      {consumablesData?.pagination?.total ?? consumablesData?.items.length ?? 0} vật
-                      tư
+                      {t('customer.detail.inventory.count', {
+                        count:
+                          consumablesData?.pagination?.total ?? consumablesData?.items.length ?? 0,
+                      })}
                     </Badge>
                     {groupedConsumables.length > 0 && (
                       <Button
@@ -1622,12 +1717,12 @@ export default function CustomerDetailClient({ customerId }: Props) {
                         {expandedConsumableTypes.size === groupedConsumables.length ? (
                           <>
                             <ChevronUp className="h-4 w-4" />
-                            Thu gọn
+                            {t('customer.detail.inventory.collapse')}
                           </>
                         ) : (
                           <>
                             <ChevronDown className="h-4 w-4" />
-                            Mở tất cả
+                            {t('customer.detail.inventory.expand_all')}
                           </>
                         )}
                       </Button>
@@ -1641,7 +1736,7 @@ export default function CustomerDetailClient({ customerId }: Props) {
                     <Input
                       value={consumablesSearch}
                       onChange={(event) => setConsumablesSearch(event.target.value)}
-                      placeholder="Tìm vật tư..."
+                      placeholder={t('customer.detail.inventory.search_placeholder')}
                       className="pl-9"
                     />
                   </div>
@@ -1654,7 +1749,9 @@ export default function CustomerDetailClient({ customerId }: Props) {
                     className="gap-2"
                   >
                     <RefreshCw className="h-4 w-4" />
-                    {consumablesSortOrder === 'desc' ? 'Mới nhất' : 'Cũ nhất'}
+                    {consumablesSortOrder === 'desc'
+                      ? t('customer.detail.inventory.sort.newest')
+                      : t('customer.detail.inventory.sort.oldest')}
                   </Button>
                 </div>
               </CardHeader>
@@ -1669,7 +1766,7 @@ export default function CustomerDetailClient({ customerId }: Props) {
                     <div className="flex items-start gap-3">
                       <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0" />
                       <div>
-                        <p className="font-semibold">Đã xảy ra lỗi</p>
+                        <p className="font-semibold">{t('customer.detail.error.title')}</p>
                         <p className="mt-1">{consumablesError}</p>
                       </div>
                     </div>
@@ -1680,7 +1777,9 @@ export default function CustomerDetailClient({ customerId }: Props) {
                       <Loader2 className="h-12 w-12 animate-spin text-amber-500" />
                       <div className="absolute inset-0 h-12 w-12 animate-ping rounded-full bg-amber-400 opacity-20" />
                     </div>
-                    <p className="text-sm font-medium text-slate-600">Đang tải kho khách hàng...</p>
+                    <p className="text-sm font-medium text-slate-600">
+                      {t('customer.detail.inventory.loading')}
+                    </p>
                   </div>
                 ) : !consumablesData || groupedConsumables.length === 0 ? (
                   <motion.div
@@ -1692,9 +1791,11 @@ export default function CustomerDetailClient({ customerId }: Props) {
                       <Package className="h-10 w-10 text-amber-500" />
                     </div>
                     <div>
-                      <p className="text-lg font-semibold text-amber-900">Kho đang trống</p>
+                      <p className="text-lg font-semibold text-amber-900">
+                        {t('customer.detail.inventory.empty.title')}
+                      </p>
                       <p className="mt-1 text-sm text-amber-700">
-                        Chưa ghi nhận vật tư nào cho khách hàng
+                        {t('customer.detail.inventory.empty.description')}
                       </p>
                     </div>
                   </motion.div>
@@ -1710,19 +1811,19 @@ export default function CustomerDetailClient({ customerId }: Props) {
                             Part Number
                           </th>
                           <th className="px-6 py-4 text-left text-xs font-semibold tracking-wide text-amber-900 uppercase">
-                            Tên vật tư
+                            {t('customer.detail.inventory.table.name')}
                           </th>
                           <th className="px-6 py-4 text-left text-xs font-semibold tracking-wide text-amber-900 uppercase">
-                            Dòng tương thích
+                            {t('customer.detail.inventory.table.compatible_line')}
                           </th>
                           <th className="px-6 py-4 text-left text-xs font-semibold tracking-wide text-amber-900 uppercase">
-                            Dung lượng
+                            {t('customer.detail.inventory.table.capacity')}
                           </th>
                           <th className="px-6 py-4 text-left text-xs font-semibold tracking-wide text-amber-900 uppercase">
-                            Trạng thái sử dụng
+                            {t('customer.detail.inventory.table.usage_status')}
                           </th>
                           <th className="px-6 py-4 text-left text-xs font-semibold tracking-wide text-amber-900 uppercase">
-                            Trạng thái
+                            {t('customer.detail.inventory.table.status')}
                           </th>
                         </tr>
                       </thead>
@@ -1762,7 +1863,7 @@ export default function CustomerDetailClient({ customerId }: Props) {
                               </td>
                               <td className="px-6 py-5">
                                 <div className="font-semibold text-amber-900">
-                                  {group.type?.name ?? 'Không rõ tên'}
+                                  {group.type?.name ?? t('customer.detail.inventory.unknown_name')}
                                 </div>
                               </td>
                               <td className="px-6 py-5 text-sm text-amber-800">
@@ -1781,7 +1882,9 @@ export default function CustomerDetailClient({ customerId }: Props) {
                               </td>
                               <td className="px-6 py-5 text-sm text-amber-800">
                                 {group.type?.capacity
-                                  ? `${formatInteger(group.type.capacity)} trang`
+                                  ? t('customer.detail.inventory.capacity', {
+                                      pages: formatInteger(group.type.capacity),
+                                    })
                                   : '—'}
                               </td>
                               <td className="px-6 py-5">
@@ -1790,19 +1893,25 @@ export default function CustomerDetailClient({ customerId }: Props) {
                                     variant="outline"
                                     className="border-slate-300 bg-slate-100 text-xs text-slate-700"
                                   >
-                                    Tổng: {group.total}
+                                    {t('customer.detail.inventory.usage.total', {
+                                      count: group.total,
+                                    })}
                                   </Badge>
                                   <Badge
                                     variant="outline"
                                     className="border-emerald-300 bg-emerald-100 text-xs text-emerald-700"
                                   >
-                                    Đã dùng: {group.used}
+                                    {t('customer.detail.inventory.usage.used', {
+                                      count: group.used,
+                                    })}
                                   </Badge>
                                   <Badge
                                     variant="outline"
                                     className="border-blue-300 bg-blue-100 text-xs text-blue-700"
                                   >
-                                    Còn lại: {group.available}
+                                    {t('customer.detail.inventory.usage.available', {
+                                      count: group.available,
+                                    })}
                                   </Badge>
                                 </div>
                               </td>
@@ -1811,7 +1920,7 @@ export default function CustomerDetailClient({ customerId }: Props) {
                                   variant="outline"
                                   className="border-amber-300 bg-amber-100 text-amber-800"
                                 >
-                                  {group.total} vật tư
+                                  {t('customer.detail.inventory.count', { count: group.total })}
                                 </Badge>
                               </td>
                             </motion.tr>
@@ -1835,10 +1944,12 @@ export default function CustomerDetailClient({ customerId }: Props) {
                                     </td>
                                     <td className="px-6 py-4">
                                       <div className="font-medium text-slate-800">
-                                        {item.consumableType?.name ?? 'Không rõ tên'}
+                                        {item.consumableType?.name ??
+                                          t('customer.detail.inventory.unknown_name')}
                                       </div>
                                       <p className="mt-0.5 text-xs text-slate-500">
-                                        SN: {item.serialNumber ?? '—'}
+                                        {t('customer.detail.inventory.serial')}:{' '}
+                                        {item.serialNumber ?? '—'}
                                       </p>
                                       {/* If this consumable is installed on a device, show extra info */}
                                       {(() => {
@@ -1854,7 +1965,7 @@ export default function CustomerDetailClient({ customerId }: Props) {
                                         const installedDevice = findDeviceById(activeDc.deviceId)
                                         return (
                                           <p className="mt-1 text-xs text-slate-500">
-                                            Lắp tại:{' '}
+                                            {t('customer.detail.inventory.installed_at')}:{' '}
                                             {installedDevice ? (
                                               <Link
                                                 href={`/system/devices/${installedDevice.id}`}
@@ -1875,11 +1986,12 @@ export default function CustomerDetailClient({ customerId }: Props) {
                                             )}{' '}
                                             •{' '}
                                             {formatDate(activeDc.installedAt ?? activeDc.createdAt)}{' '}
-                                            • In:{' '}
+                                            • {t('customer.detail.inventory.printed')}:{' '}
                                             {formatInteger(
                                               activeDc.actualPagesPrinted ?? undefined
                                             )}{' '}
-                                            trang • Cảnh báo:{' '}
+                                            {t('customer.detail.inventory.pages')} •{' '}
+                                            {t('customer.detail.inventory.warning')}:{' '}
                                             {activeDc.warningPercentage != null
                                               ? `${activeDc.warningPercentage}%`
                                               : '—'}
@@ -1903,7 +2015,9 @@ export default function CustomerDetailClient({ customerId }: Props) {
                                     </td>
                                     <td className="px-6 py-4 text-sm text-slate-600">
                                       {item.consumableType?.capacity
-                                        ? `${formatInteger(item.consumableType.capacity)} trang`
+                                        ? t('customer.detail.inventory.capacity', {
+                                            pages: formatInteger(item.consumableType.capacity),
+                                          })
                                         : '—'}
                                     </td>
                                     <td className="px-6 py-4">{renderUsageBadge(item)}</td>
@@ -1924,13 +2038,14 @@ export default function CustomerDetailClient({ customerId }: Props) {
               {consumablesData?.pagination && consumablesData.pagination.totalPages > 1 && (
                 <div className="flex flex-wrap items-center justify-between gap-4 border-t border-slate-100 bg-amber-50/30 px-6 py-4">
                   <div className="text-sm text-slate-600">
-                    Trang <span className="font-semibold">{consumablesData.pagination.page}</span> /{' '}
-                    <span className="font-semibold">{consumablesData.pagination.totalPages}</span> •
-                    Tổng{' '}
-                    <span className="font-semibold">
-                      {formatInteger(consumablesData.pagination.total)}
-                    </span>{' '}
-                    vật tư
+                    {t('customer.detail.pagination.page', {
+                      current: consumablesData.pagination.page,
+                      total: consumablesData.pagination.totalPages,
+                    })}{' '}
+                    •{' '}
+                    {t('customer.detail.pagination.total', {
+                      count: formatInteger(consumablesData.pagination.total),
+                    })}
                   </div>
                   <div className="flex items-center gap-2">
                     <Button
@@ -1941,7 +2056,7 @@ export default function CustomerDetailClient({ customerId }: Props) {
                       className="gap-2"
                     >
                       <ChevronUp className="h-4 w-4 rotate-90" />
-                      Trang trước
+                      {t('customer.detail.pagination.previous')}
                     </Button>
                     <Button
                       variant="outline"
@@ -1960,7 +2075,7 @@ export default function CustomerDetailClient({ customerId }: Props) {
                       }
                       className="gap-2"
                     >
-                      Trang sau
+                      {t('customer.detail.pagination.next')}
                       <ChevronDown className="h-4 w-4 -rotate-90" />
                     </Button>
                   </div>
@@ -1999,8 +2114,10 @@ export default function CustomerDetailClient({ customerId }: Props) {
       {/* Create Contract Dialog */}
       <Dialog open={createContractOpen} onOpenChange={setCreateContractOpen}>
         <SystemModalLayout
-          title="Tạo hợp đồng mới"
-          description={`Hợp đồng sẽ gắn với khách hàng ${customerInfo?.name || ''}`}
+          title={t('customer.detail.contracts.create_modal.title')}
+          description={t('customer.detail.contracts.create_modal.description', {
+            name: customerInfo?.name || '',
+          })}
           icon={FileText}
           variant="create"
           maxWidth="!max-w-[75vw]"
@@ -2023,8 +2140,10 @@ export default function CustomerDetailClient({ customerId }: Props) {
         <AnimatePresence>
           {editingContract && (
             <SystemModalLayout
-              title="Chỉnh sửa hợp đồng"
-              description={`Cập nhật thông tin hợp đồng ${editingContract.contractNumber}`}
+              title={t('customer.detail.contracts.edit_modal.title')}
+              description={t('customer.detail.contracts.edit_modal.description', {
+                number: editingContract.contractNumber,
+              })}
               icon={FileText}
               variant="edit"
               maxWidth="!max-w-[75vw]"
@@ -2148,11 +2267,17 @@ export default function CustomerDetailClient({ customerId }: Props) {
       {/* Assign Device to Contract Modal */}
       <Dialog open={assignDeviceModalOpen} onOpenChange={setAssignDeviceModalOpen}>
         <SystemModalLayout
-          title="Gán thiết bị vào hợp đồng"
+          title={t('customer.detail.assign_device_modal.title')}
           description={
             selectedDeviceForAssign
-              ? `Thiết bị: ${selectedDeviceForAssign.serialNumber} - ${selectedDeviceForAssign.deviceModel?.name ?? selectedDeviceForAssign.model ?? 'Không rõ model'}`
-              : 'Chọn hợp đồng để gán thiết bị'
+              ? t('customer.detail.assign_device_modal.description.with_device', {
+                  serial: selectedDeviceForAssign.serialNumber,
+                  model:
+                    selectedDeviceForAssign.deviceModel?.name ??
+                    selectedDeviceForAssign.model ??
+                    t('customer.detail.device.unknown_model'),
+                })
+              : t('customer.detail.assign_device_modal.description.select_contract')
           }
           icon={MonitorSmartphone}
           variant="view"
@@ -2163,7 +2288,9 @@ export default function CustomerDetailClient({ customerId }: Props) {
               <div className="rounded-full bg-slate-100 p-3">
                 <AlertCircle className="h-8 w-8 text-slate-400" />
               </div>
-              <p className="text-sm text-slate-500">Không có hợp đồng nào để gán thiết bị</p>
+              <p className="text-sm text-slate-500">
+                {t('customer.detail.assign_device_modal.no_contracts')}
+              </p>
             </div>
           ) : (
             <div className="max-h-[400px] space-y-2 overflow-y-auto">
@@ -2204,7 +2331,8 @@ export default function CustomerDetailClient({ customerId }: Props) {
                         </Badge>
                       </div>
                       <p className="text-xs text-slate-500">
-                        Hiệu lực: {formatDateRange(contract.startDate, contract.endDate)}
+                        {t('customer.detail.contracts.effective')}:{' '}
+                        {formatDateRange(contract.startDate, contract.endDate)}
                       </p>
                     </div>
                   </Button>
@@ -2231,19 +2359,21 @@ export default function CustomerDetailClient({ customerId }: Props) {
               <div className="rounded-full bg-rose-100 p-2">
                 <Trash2 className="h-5 w-5 text-rose-600" />
               </div>
-              Xác nhận gỡ thiết bị
+              {t('customer.detail.detach_device_confirm.title')}
             </AlertDialogTitle>
             <AlertDialogDescription className="text-base">
-              Bạn có chắc chắn muốn gỡ thiết bị này khỏi hợp đồng? Hành động này không thể hoàn tác.
+              {t('customer.detail.detach_device_confirm.description')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setPendingDetach(null)}>Hủy</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setPendingDetach(null)}>
+              {t('cancel')}
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDetachDevice}
               className="bg-rose-600 text-white hover:bg-rose-700"
             >
-              Gỡ thiết bị
+              {t('customer.detail.detach_device_confirm.confirm')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

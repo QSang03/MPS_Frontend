@@ -164,4 +164,20 @@ export const API_ENDPOINTS = {
     MARK_READ: (id: string) => `/notifications/${id}/read`,
     MARK_ALL_READ: '/notifications/read-all',
   },
+
+  // Currencies
+  CURRENCIES: {
+    LIST: '/currencies',
+    DETAIL: (id: string) => `/currencies/${id}`,
+  },
+
+  // Exchange Rates
+  EXCHANGE_RATES: {
+    LIST: '/exchange-rates',
+    DETAIL: (id: string) => `/exchange-rates/${id}`,
+    CREATE: '/exchange-rates',
+    UPDATE: (id: string) => `/exchange-rates/${id}`,
+    DELETE: (id: string) => `/exchange-rates/${id}`,
+    CONVERT: '/exchange-rates/convert',
+  },
 } as const

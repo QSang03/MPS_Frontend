@@ -53,8 +53,10 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { StatsCard, StatsCardsGrid } from '@/components/shared/StatsCard'
 import { SearchInput } from '@/components/shared/SearchInput'
 import { CONSUMABLE_STYLES } from '@/constants/consumableStyles'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 export default function ConsumablesPageClient() {
+  const { t } = useLocale()
   const [consumables, setConsumables] = useState<Record<string, unknown>[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -192,7 +194,7 @@ export default function ConsumablesPageClient() {
 
   const handleRefresh = () => {
     void loadConsumables(page)
-    toast.success('Đã làm mới dữ liệu')
+    toast.success(t('toast.refreshed'))
   }
 
   const clearFilters = () => {
@@ -201,7 +203,7 @@ export default function ConsumablesPageClient() {
     setPage(1)
     setDebouncedSearch('')
     void loadConsumables(1)
-    toast.success('Đã đặt lại bộ lọc')
+    toast.success(t('toast.filters_reset'))
   }
 
   // column menu is rendered inline below; we keep this placeholder state for
@@ -307,17 +309,17 @@ export default function ConsumablesPageClient() {
       (Array.isArray(item.activeDeviceIds) && item.activeDeviceIds.length > 0)
     return used ? (
       <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">
-        Đã sử dụng
+        {t('consumables.used')}
       </Badge>
     ) : (
       <Badge variant="outline" className="border-slate-200 bg-slate-50 text-slate-600">
-        Chưa sử dụng
+        {t('consumables.not_used')}
       </Badge>
     )
   }
 
   if (loading && page === 1 && consumables.length === 0) {
-    return <LoadingState text="Đang tải danh sách vật tư..." />
+    return <LoadingState text={t('loading.consumables')} />
   }
 
   return (
@@ -330,8 +332,8 @@ export default function ConsumablesPageClient() {
 
       {/* Header */}
       <PageHeader
-        title="Kho Vật Tư Của Tôi"
-        subtitle="Quản lý vật tư liên quan đến thiết bị"
+        title={t('page.consumables.title')}
+        subtitle={t('page.consumables.subtitle')}
         icon={<Package className="h-8 w-8 text-black dark:text-white" />}
         titleClassName="text-[32px] font-bold"
         actions={
@@ -341,7 +343,7 @@ export default function ConsumablesPageClient() {
               size="icon"
               onClick={handleRefresh}
               className="border-white/20 bg-white/10 text-black hover:bg-white/20 dark:text-white"
-              title="Làm mới dữ liệu"
+              title={t('button.refresh')}
             >
               <RefreshCw className={`${loading ? 'animate-spin' : ''} h-5 w-5`} />
             </Button>
@@ -350,7 +352,7 @@ export default function ConsumablesPageClient() {
                 trigger={
                   <Button className="bg-white text-blue-600 hover:bg-blue-50">
                     <Plus className="mr-2 h-4 w-4" />
-                    Tạo Vật Tư Mới
+                    {t('page.consumables.create')}
                   </Button>
                 }
               />
@@ -362,15 +364,25 @@ export default function ConsumablesPageClient() {
       {/* Stats Cards */}
       <StatsCardsGrid>
         <StatsCard
-          label="Đã lắp"
+          label={t('user_consumables.stats.installed')}
           value={stats.installed}
           icon={<CheckCircle />}
           variant="success"
         />
-        <StatsCard label="Chưa lắp" value={stats.notInstalled} icon={<Box />} variant="neutral" />
-        <StatsCard label="Hoạt động" value={stats.active} icon={<Zap />} variant="info" />
         <StatsCard
-          label="Không hoạt động"
+          label={t('user_consumables.stats.not_installed')}
+          value={stats.notInstalled}
+          icon={<Box />}
+          variant="neutral"
+        />
+        <StatsCard
+          label={t('user_consumables.stats.active')}
+          value={stats.active}
+          icon={<Zap />}
+          variant="info"
+        />
+        <StatsCard
+          label={t('user_consumables.stats.inactive')}
           value={stats.inactive}
           icon={<XCircle />}
           variant="warning"
@@ -391,7 +403,7 @@ export default function ConsumablesPageClient() {
               <span className="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-blue-50 text-xs font-semibold text-blue-600">
                 C
               </span>
-              Cột
+              {t('user_consumables.columns')}
             </Button>
 
             {showColumnMenu && (
@@ -441,9 +453,11 @@ export default function ConsumablesPageClient() {
                   <Filter className="h-4 w-4" />
                 </div>
                 <div>
-                  <div className="text-[16px] font-semibold">Bộ lọc & Tìm kiếm</div>
+                  <div className="text-[16px] font-semibold">
+                    {t('user_consumables.filter.title')}
+                  </div>
                   <div className="text-[13px] text-gray-500">
-                    Lọc và tìm kiếm vật tư theo tiêu chí
+                    {t('user_consumables.filter.subtitle')}
                   </div>
                 </div>
               </div>
@@ -454,7 +468,7 @@ export default function ConsumablesPageClient() {
           <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-start">
             <div className="w-full sm:max-w-md">
               <SearchInput
-                placeholder="Tìm kiếm vật tư..."
+                placeholder={t('user_consumables.filter.search_placeholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyDown={(e) => {
@@ -483,15 +497,19 @@ export default function ConsumablesPageClient() {
                 <SelectTrigger className="h-10 w-44 text-sm">
                   <div className="flex items-center gap-2">
                     <Filter className="h-4 w-4" />
-                    <SelectValue placeholder="Lọc trạng thái" />
+                    <SelectValue placeholder={t('user_consumables.filter.status_placeholder')} />
                   </div>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ALL">Tất cả trạng thái</SelectItem>
-                  <SelectItem value="INSTALLED">Đã lắp đặt</SelectItem>
-                  <SelectItem value="NOT_INSTALLED">Chưa lắp đặt</SelectItem>
-                  <SelectItem value="ACTIVE">Đang hoạt động</SelectItem>
-                  <SelectItem value="INACTIVE">Ngừng hoạt động</SelectItem>
+                  <SelectItem value="ALL">{t('user_consumables.filter.all_status')}</SelectItem>
+                  <SelectItem value="INSTALLED">
+                    {t('user_consumables.filter.installed')}
+                  </SelectItem>
+                  <SelectItem value="NOT_INSTALLED">
+                    {t('user_consumables.filter.not_installed')}
+                  </SelectItem>
+                  <SelectItem value="ACTIVE">{t('user_consumables.filter.active')}</SelectItem>
+                  <SelectItem value="INACTIVE">{t('user_consumables.filter.inactive')}</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -553,7 +571,7 @@ export default function ConsumablesPageClient() {
           {/* Reset button */}
           <div className="mt-4">
             <Button variant="outline" size="sm" onClick={clearFilters} className="text-sm">
-              Đặt lại
+              {t('common.reset')}
             </Button>
           </div>
         </div>
@@ -564,7 +582,9 @@ export default function ConsumablesPageClient() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Package className="h-5 w-5 text-gray-500" />
-            <h2 className={CONSUMABLE_STYLES.typography.sectionTitle}>Danh sách Vật tư</h2>
+            <h2 className={CONSUMABLE_STYLES.typography.sectionTitle}>
+              {t('user_consumables.list.title')}
+            </h2>
           </div>
         </div>
 
@@ -576,22 +596,22 @@ export default function ConsumablesPageClient() {
                   &nbsp;
                 </TableHead>
                 <TableHead className="px-6 py-4 text-left text-xs font-semibold tracking-wide text-amber-900 uppercase">
-                  Part Number
+                  {t('user_consumables.table.part_number')}
                 </TableHead>
                 <TableHead className="px-6 py-4 text-left text-xs font-semibold tracking-wide text-amber-900 uppercase">
-                  Tên vật tư
+                  {t('user_consumables.table.name')}
                 </TableHead>
                 <TableHead className="px-6 py-4 text-left text-xs font-semibold tracking-wide text-amber-900 uppercase">
-                  Dòng tương thích
+                  {t('user_consumables.table.compatible')}
                 </TableHead>
                 <TableHead className="px-6 py-4 text-left text-xs font-semibold tracking-wide text-amber-900 uppercase">
-                  Dung lượng
+                  {t('user_consumables.table.capacity')}
                 </TableHead>
                 <TableHead className="px-6 py-4 text-left text-xs font-semibold tracking-wide text-amber-900 uppercase">
-                  Trạng thái sử dụng
+                  {t('user_consumables.table.usage_status')}
                 </TableHead>
                 <TableHead className="px-6 py-4 text-left text-xs font-semibold tracking-wide text-amber-900 uppercase">
-                  Trạng thái
+                  {t('filters.status_label')}
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -601,7 +621,7 @@ export default function ConsumablesPageClient() {
                   <TableCell colSpan={7} className="h-24 text-center">
                     <div className="flex items-center justify-center gap-2">
                       <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
-                      <span>Đang tải dữ liệu...</span>
+                      <span>{t('loading.default')}</span>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -611,18 +631,18 @@ export default function ConsumablesPageClient() {
                     <EmptyState
                       title={
                         searchTerm || statusFilter !== 'ALL'
-                          ? 'Không tìm thấy vật tư'
-                          : 'Chưa có vật tư nào'
+                          ? t('user_consumables.empty.search')
+                          : t('user_consumables.empty.no_items')
                       }
                       description={
                         searchTerm || statusFilter !== 'ALL'
-                          ? 'Thử thay đổi từ khóa tìm kiếm hoặc bộ lọc'
-                          : 'Thêm vật tư mới để bắt đầu quản lý'
+                          ? t('user_consumables.empty.search_description')
+                          : t('user_consumables.empty.description')
                       }
                       action={
                         !(searchTerm || statusFilter !== 'ALL') && can('create')
                           ? {
-                              label: 'Tạo Vật Tư Mới',
+                              label: t('user_consumables.empty.create_button'),
                               onClick: () =>
                                 document.getElementById('create-consumable-trigger')?.click(),
                             }
@@ -672,7 +692,7 @@ export default function ConsumablesPageClient() {
                       </TableCell>
                       <TableCell className="px-6 py-5">
                         <div className="font-semibold text-amber-900">
-                          {String(group.type?.name ?? 'Không rõ tên')}
+                          {String(group.type?.name ?? t('user_consumables.unknown_name'))}
                         </div>
                       </TableCell>
                       <TableCell className="px-6 py-5 text-sm text-amber-800">
@@ -689,7 +709,7 @@ export default function ConsumablesPageClient() {
                       </TableCell>
                       <TableCell className="px-6 py-5 text-sm text-amber-800">
                         {group.type?.capacity
-                          ? `${formatInteger(Number(group.type.capacity))} trang`
+                          ? `${formatInteger(Number(group.type.capacity))} ${t('user_consumables.pages')}`
                           : '—'}
                       </TableCell>
                       <TableCell className="px-6 py-5">
@@ -698,19 +718,19 @@ export default function ConsumablesPageClient() {
                             variant="outline"
                             className="border-slate-300 bg-slate-100 text-xs text-slate-700"
                           >
-                            Tổng: {group.total}
+                            {t('user_consumables.stats.total')}: {group.total}
                           </Badge>
                           <Badge
                             variant="outline"
                             className="border-emerald-300 bg-emerald-100 text-xs text-emerald-700"
                           >
-                            Đã dùng: {group.used}
+                            {t('user_consumables.stats.used')}: {group.used}
                           </Badge>
                           <Badge
                             variant="outline"
                             className="border-blue-300 bg-blue-100 text-xs text-blue-700"
                           >
-                            Còn lại: {group.available}
+                            {t('user_consumables.stats.available')}: {group.available}
                           </Badge>
                         </div>
                       </TableCell>
@@ -719,7 +739,7 @@ export default function ConsumablesPageClient() {
                           variant="outline"
                           className="border-amber-300 bg-amber-100 text-amber-800"
                         >
-                          {group.total} vật tư
+                          {group.total} {t('user_consumables.items')}
                         </Badge>
                       </TableCell>
                     </motion.tr>
@@ -743,7 +763,7 @@ export default function ConsumablesPageClient() {
                             </TableCell>
                             <TableCell className="px-6 py-4">
                               <div className="font-medium text-slate-800">
-                                {String(group.type?.name ?? 'Không rõ tên')}
+                                {String(group.type?.name ?? t('user_consumables.unknown_name'))}
                               </div>
                               <p className="mt-0.5 text-xs text-slate-500">
                                 SN: {String(item.serialNumber ?? '—')}
@@ -765,7 +785,7 @@ export default function ConsumablesPageClient() {
                             </TableCell>
                             <TableCell className="px-6 py-4 text-sm font-medium text-orange-600">
                               {group.type?.capacity
-                                ? `${formatInteger(Number(group.type.capacity))} trang`
+                                ? `${formatInteger(Number(group.type.capacity))} ${t('user_consumables.pages')}`
                                 : '—'}
                             </TableCell>
                             <TableCell className="px-6 py-4">
@@ -794,7 +814,8 @@ export default function ConsumablesPageClient() {
                                   if (!maybeInstalledAt) return null
                                   return (
                                     <span className="text-xs text-slate-500">
-                                      Lắp: {formatDate(String(maybeInstalledAt))}
+                                      {t('user_consumables.installed_at')}:{' '}
+                                      {formatDate(String(maybeInstalledAt))}
                                     </span>
                                   )
                                 })()}
@@ -819,7 +840,7 @@ export default function ConsumablesPageClient() {
                                       }}
                                     >
                                       <FileText className="mr-2 h-4 w-4" />
-                                      Xem chi tiết
+                                      {t('common.view_detail')}
                                     </DropdownMenuItem>
                                   </DropdownMenuContent>
                                 </DropdownMenu>
@@ -840,7 +861,8 @@ export default function ConsumablesPageClient() {
           <>
             <div className="mt-4 flex items-center justify-between border-t border-gray-200 pt-4">
               <div className={CONSUMABLE_STYLES.typography.helperText}>
-                Hiển thị {filteredConsumables.length} / {total} vật tư
+                {t('common.display')} {filteredConsumables.length} / {total}{' '}
+                {t('user_consumables.items')}
               </div>
 
               <div className="flex items-center gap-2">
@@ -852,7 +874,7 @@ export default function ConsumablesPageClient() {
                   className={CONSUMABLE_STYLES.button.borderRadius}
                 >
                   <ChevronLeft className="mr-1 h-4 w-4" />
-                  Trước
+                  {t('common.previous')}
                 </Button>
 
                 <div className="flex items-center gap-1 text-sm">
@@ -868,7 +890,7 @@ export default function ConsumablesPageClient() {
                   disabled={page >= totalPages || loading}
                   className={CONSUMABLE_STYLES.button.borderRadius}
                 >
-                  Sau
+                  {t('common.next')}
                   <ChevronRight className="ml-1 h-4 w-4" />
                 </Button>
               </div>

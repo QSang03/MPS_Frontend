@@ -12,6 +12,7 @@ export async function GET(request: NextRequest) {
       if (s === '' || s === 'null' || s === 'undefined') continue
       params[k] = s
     }
+    // baseCurrencyId sẽ tự động được forward vì đã include trong params
 
     console.log('[API] Enterprise profit request:', params)
 

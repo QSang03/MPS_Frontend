@@ -8,6 +8,7 @@ import { useSocket } from '@/components/providers/SocketProvider'
 import { notificationsClientService } from '@/lib/api/services/notifications-client.service'
 import type { NotificationEventPayload } from '@/types/models/notification'
 import { toast } from 'sonner'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 // Global deduplication: track notifications đã nhận across all hook instances
 // User có thể join nhiều rooms (sys + customer:{id}) nên nhận duplicate
@@ -24,6 +25,7 @@ export function useNotifications() {
   const router = useRouter()
   const [isPanelOpen, setIsPanelOpen] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const { t } = useLocale()
 
   // Preload notification sound để tránh trễ lần đầu
   useEffect(() => {
@@ -80,13 +82,20 @@ export function useNotifications() {
   // Prefer cookie (set after login), fallback to localStorage, then session JWT
   const getIsDefaultCustomer = (): boolean => {
     try {
-      // 1. Try cookie first (most reliable, set during login)
+      // 1. Prefer localStorage first (set during login)
+      if (typeof window !== 'undefined') {
+        try {
+          const stored = localStorage.getItem('mps_is_default_customer')
+          if (stored !== null) return stored === 'true'
+        } catch {
+          // ignore localStorage errors
+        }
+      }
+      // 2. Fallback to cookie
       const cookieFlag = Cookies.get('mps_is_default_customer')
       if (typeof cookieFlag !== 'undefined') {
         return cookieFlag === 'true'
       }
-
-      // 2. Fallback to localStorage
       if (typeof window !== 'undefined') {
         try {
           const stored = localStorage.getItem('mps_is_default_customer')
@@ -284,17 +293,17 @@ export function useNotifications() {
       await markAsReadMutation.mutateAsync(id)
     } catch (error) {
       console.error('Failed to mark notification as read:', error)
-      toast.error('Không thể đánh dấu đã đọc')
+      toast.error(t('notifications.mark_as_read_error'))
     }
   }
 
   const handleMarkAllAsRead = async () => {
     try {
       await markAllAsReadMutation.mutateAsync()
-      toast.success('Đã đánh dấu tất cả thông báo đã đọc')
+      toast.success(t('notifications.mark_all_success'))
     } catch (error) {
       console.error('Failed to mark all notifications as read:', error)
-      toast.error('Không thể đánh dấu tất cả đã đọc')
+      toast.error(t('notifications.mark_all_error'))
     }
   }
 

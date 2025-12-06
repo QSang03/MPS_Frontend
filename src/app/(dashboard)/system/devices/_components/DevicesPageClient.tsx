@@ -16,6 +16,7 @@ import type { Customer } from '@/types/models/customer'
 import type { ColumnDef } from '@tanstack/react-table'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import {
   Monitor,
   Search,
@@ -33,6 +34,12 @@ import {
   Settings,
 } from 'lucide-react'
 import { FilterSection } from '@/components/system/FilterSection'
+import { OwnershipBadge } from '@/components/shared/OwnershipBadge'
+import {
+  isHistoricalDevice,
+  isCurrentDevice,
+  formatOwnershipPeriod,
+} from '@/lib/utils/device-ownership.utils'
 import { StatsCards } from '@/components/system/StatsCard'
 import { TableSkeleton } from '@/components/system/TableSkeleton'
 import { TableWrapper } from '@/components/system/TableWrapper'
@@ -51,7 +58,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { DeleteDialog } from '@/components/shared/DeleteDialog'
 import { ActionGuard } from '@/components/shared/ActionGuard'
-import { useNavigation } from '@/contexts/NavigationContext'
+// import { useNavigation } from '@/contexts/NavigationContext' // not used, keep for future if required
 import DeviceFormModal from './deviceformmodal'
 import DevicePricingModal from './DevicePricingModal'
 import ToggleActiveModal from './ToggleActiveModal'
@@ -69,12 +76,14 @@ type DeviceStats = { total: number; active: number; inactive: number }
 
 export default function DevicesPageClient() {
   const { can } = useActionPermission('devices')
+  const { t } = useLocale()
 
   // NOTE: This component uses a per-row check for session role via IIFE calls with useNavigation.
   // Be careful folding hooks into loops; keep useNavigation at top-level if refactoring later.
 
   const [searchInput, setSearchInput] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
+  // Keep locale reader near columns to avoid lint issues
   const [statusFilter, setStatusFilter] = useState<string | null>(() => {
     if (typeof window === 'undefined') return null
     try {
@@ -138,7 +147,7 @@ export default function DevicesPageClient() {
     const filters: Array<{ label: string; value: string; onRemove: () => void }> = []
     if (searchInput) {
       filters.push({
-        label: `Tìm kiếm: "${searchInput}"`,
+        label: t('filters.search').replace('{query}', searchInput),
         value: searchInput,
         onRemove: () => setSearchInput(''),
       })
@@ -147,7 +156,7 @@ export default function DevicesPageClient() {
       const customerName =
         customerOptions.find((c) => c.id === customerFilter)?.name || customerFilter
       filters.push({
-        label: `Khách hàng: ${customerName}`,
+        label: t('filters.customer').replace('{customer}', customerName),
         value: customerFilter,
         onRemove: () => setCustomerFilter('all'),
       })
@@ -155,14 +164,14 @@ export default function DevicesPageClient() {
     if (statusFilter) {
       const statusLabel = STATUS_DISPLAY[statusFilter as DeviceStatusValue]?.label || statusFilter
       filters.push({
-        label: `Trạng thái: ${statusLabel}`,
+        label: t('filters.status').replace('{status}', statusLabel),
         value: statusFilter,
         onRemove: () => setStatusFilter(null),
       })
     }
     if (showInactiveStatuses) {
       filters.push({
-        label: 'Hiện trạng thái không hoạt động',
+        label: t('filters.show_inactive'),
         value: 'show-inactive',
         onRemove: () => setShowInactiveStatuses(false),
       })
@@ -183,6 +192,7 @@ export default function DevicesPageClient() {
     customerOptions,
     sorting.sortBy,
     sorting.sortOrder,
+    t,
   ])
 
   const handleResetFilters = () => {
@@ -229,8 +239,8 @@ export default function DevicesPageClient() {
       />
 
       <FilterSection
-        title="Bộ lọc & Tìm kiếm"
-        subtitle="Lọc theo khách hàng, trạng thái hoặc tìm kiếm theo serial"
+        title={t('devices.filter.title')}
+        subtitle={t('page.devices.subtitle')}
         onReset={handleResetFilters}
         activeFilters={activeFilters}
         columnVisibilityMenu={columnVisibilityMenu}
@@ -241,13 +251,13 @@ export default function DevicesPageClient() {
               className="mb-2 block text-sm font-medium text-gray-700"
               htmlFor="device-search-input"
             >
-              Tìm kiếm
+              {t('devices.filter.search')}
             </Label>
             <div className="relative">
               <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <Input
                 id="device-search-input"
-                placeholder="Tìm kiếm serial hoặc tên khách hàng..."
+                placeholder={t('devices.filter.search_placeholder')}
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 onKeyDown={(e) => {
@@ -263,7 +273,9 @@ export default function DevicesPageClient() {
 
           {can('filter-by-customer') && (
             <div>
-              <Label className="mb-2 block text-sm font-medium text-gray-700">Khách hàng</Label>
+              <Label className="mb-2 block text-sm font-medium text-gray-700">
+                {t('devices.filter.customer')}
+              </Label>
               <Select
                 value={customerFilter}
                 onValueChange={(value) => {
@@ -272,10 +284,10 @@ export default function DevicesPageClient() {
                 }}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Tất cả khách hàng" />
+                  <SelectValue placeholder={t('devices.filter.all_customers')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Tất cả khách hàng</SelectItem>
+                  <SelectItem value="all">{t('devices.filter.all_customers')}</SelectItem>
                   {customerOptions.map((customer) => (
                     <SelectItem key={customer.id} value={customer.id}>
                       {customer.name} {customer.code ? `(${customer.code})` : ''}
@@ -287,7 +299,9 @@ export default function DevicesPageClient() {
           )}
 
           <div>
-            <Label className="mb-2 block text-sm font-medium text-gray-700">Trạng thái</Label>
+            <Label className="mb-2 block text-sm font-medium text-gray-700">
+              {t('filters.status_label')}
+            </Label>
             <Select
               value={statusFilter ?? 'ALL'}
               onValueChange={(value) => {
@@ -296,10 +310,10 @@ export default function DevicesPageClient() {
               }}
             >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Tất cả trạng thái" />
+                <SelectValue placeholder={t('placeholder.all_statuses')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="ALL">Tất cả</SelectItem>
+                <SelectItem value="ALL">{t('devices.filter.all')}</SelectItem>
                 {Object.entries(STATUS_DISPLAY).map(([key, meta]) => (
                   <SelectItem key={key} value={key}>
                     {meta.label}
@@ -311,7 +325,7 @@ export default function DevicesPageClient() {
 
           <div className="flex flex-col gap-2 pt-1">
             <Label htmlFor="show-inactive-checkbox" className="text-sm font-medium text-gray-700">
-              Hiển thị thiết bị dừng hoạt động
+              {t('devices.filter.show_inactive')}
             </Label>
             <div className="flex items-center gap-2">
               <Checkbox
@@ -324,7 +338,9 @@ export default function DevicesPageClient() {
                 }}
                 className="h-4 w-4 border-gray-300 data-[state=checked]:bg-blue-600 data-[state=checked]:text-white"
               />
-              <span className="text-sm text-gray-600">Bao gồm cả trạng thái đã dừng hoạt động</span>
+              <span className="text-sm text-gray-600">
+                {t('filters.show_inactive_description')}
+              </span>
             </div>
           </div>
         </div>
@@ -361,12 +377,56 @@ function AssignPricingButton({
   device: Device
   onSaved: () => void | Promise<void>
 }) {
-  const { sessionRole } = useNavigation()
+  // Read role from localStorage (canonical source for UI role gating). This keeps behavior consistent
+  // with other client components that already read mps_user_role from localStorage.
+  const [localStorageRoleState, setLocalStorageRoleState] = useState<string | null>(
+    typeof window !== 'undefined' ? localStorage.getItem('mps_user_role') : null
+  )
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const handler = (e: StorageEvent) => {
+      if (e.key === 'mps_user_role') setLocalStorageRoleState(e.newValue)
+    }
+    window.addEventListener('storage', handler)
+    return () => window.removeEventListener('storage', handler)
+  }, [])
+
+  const sessionRole = localStorageRoleState
   const isCustomerManager = String(sessionRole ?? '').toLowerCase() === 'customer-manager'
+  const isSystemAdmin = (() => {
+    const role = String(sessionRole ?? '').toLowerCase()
+    if (!role) return false
+    if (role.includes('system') && role.includes('admin')) return true
+    if (role === 'admin') return true
+    return role === 'system-admin' || role === 'system_admin' || role === 'systemadmin'
+  })()
+
+  // Hook to check action permission (from nav context)
+  const { can: canAction } = useActionPermission('devices')
+  const hasAssignPricingPermission = canAction('assign-pricing')
+
+  // Debug: show assigned state in dev console
+  if (process.env.NODE_ENV !== 'production') {
+    console.debug('AssignPricingButton', {
+      sessionRole,
+      isCustomerManager,
+      isSystemAdmin,
+      hasAssignPricingPermission,
+    })
+  }
+
+  // If user is system-admin, allow showing the modal even if the backend navigation doesn't include this action
+  if (isSystemAdmin) {
+    return !isCustomerManager ? (
+      <DevicePricingModal device={device} compact onSaved={onSaved} />
+    ) : null
+  }
 
   return (
     <ActionGuard pageId="devices" actionId="assign-pricing">
-      {!isCustomerManager ? <DevicePricingModal device={device} compact onSaved={onSaved} /> : null}
+      {!isCustomerManager && hasAssignPricingPermission ? (
+        <DevicePricingModal device={device} compact onSaved={onSaved} />
+      ) : null}
     </ActionGuard>
   )
 }
@@ -411,6 +471,7 @@ function DevicesTableContent({
   const [a4ModalDevice, setA4ModalDevice] = useState<Device | null>(null)
   const [a4HistoryOpen, setA4HistoryOpen] = useState(false)
   const [a4HistoryDevice, setA4HistoryDevice] = useState<Device | null>(null)
+  const { t } = useLocale()
 
   const router = useRouter()
   const queryClient = useQueryClient()
@@ -430,7 +491,24 @@ function DevicesTableContent({
   )
 
   const { data } = useDevicesQuery(queryParams, { version: sortVersion })
-  const devices = useMemo(() => data?.data ?? [], [data?.data])
+
+  // Sort: current devices first, then historical (UI preference only, doesn't affect pagination)
+  // Sort directly from data to avoid hydration issues
+  const devices = useMemo(() => {
+    const rawDevices = data?.data ?? []
+    if (rawDevices.length === 0) {
+      return []
+    }
+    const sorted = [...rawDevices]
+    sorted.sort((a, b) => {
+      const aIsCurrent = isCurrentDevice(a)
+      const bIsCurrent = isCurrentDevice(b)
+      if (aIsCurrent && !bIsCurrent) return -1
+      if (!aIsCurrent && bIsCurrent) return 1
+      return 0
+    })
+    return sorted
+  }, [data?.data])
   const paginationMeta = useMemo(
     () =>
       data?.pagination ?? {
@@ -466,18 +544,18 @@ function DevicesTableContent({
         if (customerLocation) {
           await devicesClientService.update(editingDeviceId, { location: customerLocation })
         }
-        toast.success(`Đã gán thiết bị cho khách hàng ${customer.name}`)
+        toast.success(t('devices.assign_customer.success', { customer: customer.name }))
         await invalidateDevices()
       } catch (err) {
         console.error('Failed to assign customer', err)
-        toast.error('Không thể gán khách hàng cho thiết bị')
+        toast.error(t('devices.assign_customer.error'))
       } finally {
         setUpdatingCustomer(false)
         setEditingDeviceId(null)
         setShowCustomerSelect(false)
       }
     },
-    [editingDeviceId, invalidateDevices]
+    [editingDeviceId, invalidateDevices, t]
   )
 
   const handleRemoveCustomer = useCallback(
@@ -502,37 +580,38 @@ function DevicesTableContent({
         } catch (error) {
           console.error('Failed to update warehouse location', error)
         }
-        toast.success('Đã đưa thiết bị về kho (System)')
+        toast.success(t('devices.return_to_warehouse.success'))
         await invalidateDevices()
       } catch (err) {
         console.error('Failed to return device to warehouse', err)
-        toast.error('Không thể đưa thiết bị về kho')
+        toast.error(t('devices.return_to_warehouse.error'))
       } finally {
         setUpdatingCustomer(false)
       }
     },
-    [invalidateDevices]
+    [invalidateDevices, t]
   )
 
   const handleDeleteDevice = useCallback(
     async (deviceId: string) => {
       try {
         await devicesClientService.delete(deviceId)
-        toast.success('Xóa thiết bị thành công')
+        toast.success(t('device.delete_success'))
         await invalidateDevices()
       } catch (err) {
         console.error('Delete device error', err)
-        toast.error('Có lỗi khi xóa thiết bị')
+        toast.error(t('device.delete_error'))
       }
     },
-    [invalidateDevices]
+    [invalidateDevices, t]
   )
 
+  // no extra translator alias; using `t` from useLocale()
   const columns = useMemo<ColumnDef<Device>[]>(() => {
     return [
       {
         id: 'index',
-        header: 'STT',
+        header: t('table.index'),
         cell: ({ row, table }) => {
           const index = table.getSortedRowModel().rows.findIndex((r) => r.id === row.id)
           return (
@@ -548,14 +627,14 @@ function DevicesTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <Monitor className="h-4 w-4 text-gray-600" />
-            Serial
+            {t('table.serial')}
           </div>
         ),
         enableSorting: true,
         cell: ({ row }) => (
           <code
             role="button"
-            title="Xem chi tiết"
+            title={t('button.view')}
             onClick={() => router.push(`/system/devices/${row.original.id}`)}
             className="cursor-pointer rounded bg-blue-100 px-2 py-1 text-sm font-semibold text-blue-700"
           >
@@ -569,7 +648,7 @@ function DevicesTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <Package className="h-4 w-4 text-gray-600" />
-            Model
+            {t('table.model')}
           </div>
         ),
         cell: ({ row }) => (
@@ -585,7 +664,7 @@ function DevicesTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <Users className="h-4 w-4 text-gray-600" />
-            Khách hàng
+            {t('table.customer')}
           </div>
         ),
         cell: ({ row }) => {
@@ -601,37 +680,43 @@ function DevicesTableContent({
                 <span className="text-muted-foreground">—</span>
               )}
               <ActionGuard pageId="devices" actionId="assign-customer">
-                {customer?.code === 'SYS' && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 w-7 p-0 hover:bg-rose-100"
-                    onClick={() => {
-                      setEditingDeviceId(device.id)
-                      setShowCustomerSelect(true)
-                    }}
-                    title="Chỉnh sửa khách hàng"
-                  >
-                    <Edit2 className="h-3.5 w-3.5 text-rose-600" />
-                  </Button>
-                )}
-                {customer?.code && customer.code !== 'SYS' && (
-                  <DeleteDialog
-                    title={`Gỡ khách hàng khỏi thiết bị ${device.serialNumber || device.id}`}
-                    description="Thiết bị sẽ được chuyển về kho hệ thống."
-                    onConfirm={async () => handleRemoveCustomer(device.id)}
-                    trigger={
+                {!isHistoricalDevice(device) && (
+                  <>
+                    {customer?.code === 'SYS' && (
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-7 w-7 p-0 hover:bg-red-100"
-                        disabled={updatingCustomer}
-                        title="Gỡ về kho"
+                        className="h-7 w-7 p-0 hover:bg-rose-100"
+                        onClick={() => {
+                          setEditingDeviceId(device.id)
+                          setShowCustomerSelect(true)
+                        }}
+                        title={`${t('button.edit')} ${t('customer')}`}
                       >
-                        <X className="h-3.5 w-3.5 text-red-600" />
+                        <Edit2 className="h-3.5 w-3.5 text-rose-600" />
                       </Button>
-                    }
-                  />
+                    )}
+                    {customer?.code && customer.code !== 'SYS' && (
+                      <DeleteDialog
+                        title={t('devices.remove_customer.title', {
+                          serial: device.serialNumber || device.id,
+                        })}
+                        description={t('devices.remove_customer.description')}
+                        onConfirm={async () => handleRemoveCustomer(device.id)}
+                        trigger={
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0 hover:bg-red-100"
+                            disabled={updatingCustomer}
+                            title={t('devices.unassign')}
+                          >
+                            <X className="h-3.5 w-3.5 text-red-600" />
+                          </Button>
+                        }
+                      />
+                    )}
+                  </>
                 )}
               </ActionGuard>
             </div>
@@ -644,7 +729,7 @@ function DevicesTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <MapPin className="h-4 w-4 text-gray-600" />
-            Vị trí
+            {t('devices.table.location')}
           </div>
         ),
         enableSorting: true,
@@ -662,11 +747,80 @@ function DevicesTableContent({
         ),
       },
       {
+        id: 'ownership',
+        accessorKey: 'isCustomerOwned',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <Users className="h-4 w-4 text-gray-600" />
+            Sở hữu
+          </div>
+        ),
+        enableSorting: true,
+        cell: ({ row }) => {
+          const device = row.original
+          const ownershipPeriod = device.ownershipPeriod
+
+          // Xác định trạng thái sở hữu
+          let badgeContent: React.ReactNode
+          let tooltipText: string | null = null
+
+          if (device.isCustomerOwned === true) {
+            // Đã mua đứt (sở hữu vĩnh viễn)
+            badgeContent = (
+              <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-200">Đã mua đứt</Badge>
+            )
+            if (ownershipPeriod) {
+              tooltipText = formatOwnershipPeriod(ownershipPeriod.fromDate, ownershipPeriod.toDate)
+            }
+          } else if (device.ownershipStatus === 'current') {
+            // Đang sở hữu (có thể là thuê)
+            badgeContent = (
+              <Badge className="bg-green-100 text-green-700 hover:bg-green-200">Đang sở hữu</Badge>
+            )
+            if (ownershipPeriod) {
+              tooltipText = formatOwnershipPeriod(ownershipPeriod.fromDate, ownershipPeriod.toDate)
+            }
+          } else if (device.ownershipStatus === 'historical') {
+            // Đã từng sở hữu
+            badgeContent = (
+              <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700">
+                Đã từng sở hữu
+              </Badge>
+            )
+            if (ownershipPeriod) {
+              tooltipText = formatOwnershipPeriod(ownershipPeriod.fromDate, ownershipPeriod.toDate)
+            }
+          } else {
+            // Không sở hữu
+            badgeContent = (
+              <Badge variant="outline" className="bg-gray-50 text-gray-600">
+                Không sở hữu
+              </Badge>
+            )
+          }
+
+          if (!tooltipText) {
+            return badgeContent
+          }
+
+          return (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="cursor-help">{badgeContent}</div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="text-sm">{tooltipText}</p>
+              </TooltipContent>
+            </Tooltip>
+          )
+        },
+      },
+      {
         accessorKey: 'status',
         header: () => (
           <div className="flex items-center gap-2">
             <CheckCircle2 className="h-4 w-4 text-gray-600" />
-            Trạng thái
+            {t('devices.table.status')}
           </div>
         ),
         enableSorting: true,
@@ -691,17 +845,20 @@ function DevicesTableContent({
           const cls = colorClassMap[meta.color] || 'bg-gray-400 text-white'
           return (
             <div className="flex items-center gap-3">
-              <Badge className={cls}>
-                {meta.icon && <span className="mr-1 text-xs">{meta.icon}</span>}
-                {meta.label}
-              </Badge>
+              <div className="flex items-center gap-2">
+                <Badge className={cls}>
+                  {meta.icon && <span className="mr-1 text-xs">{meta.icon}</span>}
+                  {meta.label}
+                </Badge>
+                <OwnershipBadge device={device} />
+              </div>
               {device.isActive ? (
                 <Button
                   variant="ghost"
                   size="sm"
                   type="button"
                   aria-label="On"
-                  title="Hoạt động"
+                  title={t('devices.toggle_active.title')}
                   className="h-7 w-7 p-0 transition-all hover:bg-green-100 hover:text-green-700"
                   onClick={() => {
                     setToggleTargetDevice(device)
@@ -719,7 +876,7 @@ function DevicesTableContent({
                       size="sm"
                       type="button"
                       aria-label="Off"
-                      title="Tạm dừng"
+                      title={t('devices.toggle_paused.title')}
                       className="h-7 w-7 p-0 transition-all hover:bg-gray-100 hover:text-gray-700"
                       onClick={() => {
                         setToggleTargetDevice(device)
@@ -732,7 +889,7 @@ function DevicesTableContent({
                   </TooltipTrigger>
                   <TooltipContent>
                     <div className="max-w-xs text-xs">
-                      Lý do:{' '}
+                      {t('devices.inactive_reason')}{' '}
                       {(device as unknown as { inactiveReason?: string }).inactiveReason || '—'}
                     </div>
                   </TooltipContent>
@@ -747,40 +904,60 @@ function DevicesTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <Settings className="h-4 w-4 text-gray-600" />
-            Thao tác
+            {t('devices.table.actions')}
           </div>
         ),
         enableSorting: false,
         cell: ({ row }) => {
           const device = row.original
+          const isHistorical = isHistoricalDevice(device)
           return (
             <div className="flex items-center justify-end gap-2">
-              <ActionGuard pageId="devices" actionId="update">
-                <DeviceFormModal
-                  mode="edit"
-                  device={device}
-                  compact
-                  onSaved={async () => {
-                    toast.success('Cập nhật thiết bị thành công')
-                    await invalidateDevices()
-                  }}
-                />
-              </ActionGuard>
-              <AssignPricingButton device={device} onSaved={invalidateDevices} />
-              <ActionGuard pageId="devices" actionId="set-a4-pricing">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-7 w-7 bg-sky-50 p-0 text-sky-600 hover:bg-sky-100"
-                  onClick={() => {
-                    setA4ModalDevice(device)
-                    setA4ModalOpen(true)
-                  }}
-                  title="Ghi/Chỉnh sửa snapshot A4"
-                >
-                  <BarChart3 className="h-3.5 w-3.5" />
-                </Button>
-              </ActionGuard>
+              {isHistorical ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 w-7 p-0 text-gray-400"
+                      disabled
+                      title={t('devices.history_edit_disabled')}
+                    >
+                      <Edit2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>{t('devices.history_edit_disabled')}</TooltipContent>
+                </Tooltip>
+              ) : (
+                <ActionGuard pageId="devices" actionId="update">
+                  <DeviceFormModal
+                    mode="edit"
+                    device={device}
+                    compact
+                    onSaved={async () => {
+                      toast.success(t('device.update_success'))
+                      await invalidateDevices()
+                    }}
+                  />
+                </ActionGuard>
+              )}
+              {!isHistorical && <AssignPricingButton device={device} onSaved={invalidateDevices} />}
+              {!isHistorical && (
+                <ActionGuard pageId="devices" actionId="set-a4-pricing">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 w-7 bg-sky-50 p-0 text-sky-600 hover:bg-sky-100"
+                    onClick={() => {
+                      setA4ModalDevice(device)
+                      setA4ModalOpen(true)
+                    }}
+                    title={t('devices.a4_snapshot.title')}
+                  >
+                    <BarChart3 className="h-3.5 w-3.5" />
+                  </Button>
+                </ActionGuard>
+              )}
               <Button
                 variant="ghost"
                 size="sm"
@@ -789,26 +966,28 @@ function DevicesTableContent({
                   setA4HistoryDevice(device)
                   setA4HistoryOpen(true)
                 }}
-                title="Xem lịch sử snapshot A4"
+                title={t('devices.a4_history.title')}
               >
                 <RefreshCw className="h-3.5 w-3.5" />
               </Button>
-              <ActionGuard pageId="devices" actionId="delete">
-                <DeleteDialog
-                  title={`Xóa thiết bị ${device.serialNumber || device.id}`}
-                  description="Hành động này không thể hoàn tác."
-                  onConfirm={async () => handleDeleteDevice(device.id)}
-                  trigger={
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 w-7 p-0 text-red-600 hover:bg-red-100"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  }
-                />
-              </ActionGuard>
+              {!isHistorical && (
+                <ActionGuard pageId="devices" actionId="delete">
+                  <DeleteDialog
+                    title={t('device.delete.title', { serial: device.serialNumber || device.id })}
+                    description={t('device.delete.description')}
+                    onConfirm={async () => handleDeleteDevice(device.id)}
+                    trigger={
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0 text-red-600 hover:bg-red-100"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    }
+                  />
+                </ActionGuard>
+              )}
             </div>
           )
         },
@@ -822,6 +1001,7 @@ function DevicesTableContent({
     updatingCustomer,
     invalidateDevices,
     handleDeleteDevice,
+    t,
   ])
 
   return (
@@ -860,18 +1040,18 @@ function DevicesTableContent({
               </div>
               <h3 className="mb-2 text-xl font-bold text-gray-700">
                 {rawSearch
-                  ? `Không tìm thấy thiết bị phù hợp với "${rawSearch}"`
-                  : 'Chưa có thiết bị nào'}
+                  ? t('empty.devices.search_result').replace('{query}', rawSearch)
+                  : t('empty.devices.empty')}
               </h3>
               <p className="mb-6 text-gray-500">
-                {rawSearch ? 'Thử điều chỉnh bộ lọc hoặc tìm kiếm' : 'Hãy tạo thiết bị đầu tiên'}
+                {rawSearch ? t('empty.devices.try_filter') : t('empty.devices.first')}
               </p>
               {!rawSearch && (
                 <ActionGuard pageId="devices" actionId="create">
                   <DeviceFormModal
                     mode="create"
                     onSaved={async () => {
-                      toast.success('Tạo thiết bị thành công')
+                      toast.success(t('device.create_success'))
                       await invalidateDevices()
                     }}
                   />

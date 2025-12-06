@@ -41,6 +41,23 @@ export interface Device {
   }
   createdAt: string
   updatedAt: string
+  /**
+   * Trạng thái sở hữu thiết bị
+   * - 'current': Thiết bị hiện đang thuộc về khách hàng
+   * - 'historical': Thiết bị đã từng thuộc về khách hàng nhưng đã chuyển giao
+   * - 'none': Không có quyền sở hữu (không nên xuất hiện trong response)
+   */
+  ownershipStatus?: 'current' | 'historical' | 'none'
+  /**
+   * Khoảng thời gian sở hữu thiết bị
+   * - Chỉ có khi ownershipStatus là 'current' hoặc 'historical'
+   * - fromDate: Ngày bắt đầu sở hữu
+   * - toDate: Ngày kết thúc sở hữu (null nếu đang sở hữu)
+   */
+  ownershipPeriod?: {
+    fromDate: string // ISO 8601 date string
+    toDate: string | null // ISO 8601 date string hoặc null
+  }
 }
 
 /**
@@ -68,6 +85,21 @@ export interface CreateDeviceDto {
  * Update device DTO
  */
 export type UpdateDeviceDto = Partial<CreateDeviceDto>
+
+/**
+ * Device Pricing (for device pricing endpoints)
+ */
+export interface DevicePricing {
+  id?: string
+  deviceId: string
+  pricePerBWPage?: number | null
+  pricePerColorPage?: number | null
+  currencyId?: string | null
+  currency?: import('./currency').CurrencyDataDto | null
+  currentExchangeRate?: number | null
+  createdAt?: string
+  updatedAt?: string
+}
 
 /**
  * Device statistics

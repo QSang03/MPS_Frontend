@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState, useCallback } from 'react'
 import { Input } from '@/components/ui/input'
 import { Loader2 } from 'lucide-react'
 import { consumableTypesClientService } from '@/lib/api/services/consumable-types-client.service'
@@ -50,34 +50,35 @@ export function ConsumableTypeSelect({ value, onChange, disabled, placeholder }:
     }
   }, [value])
 
-  const fetchPage = async (p = 1, q = query, append = false) => {
-    setLoading(true)
-    try {
-      const res = await consumableTypesClientService.getAll({ page: p, limit, search: q })
-      if (append) setItems((prev) => [...prev, ...(res.data || [])])
-      else setItems(res.data || [])
-      setPagination(res.pagination ?? null)
-    } finally {
-      setLoading(false)
-    }
-  }
+  const fetchPage = useCallback(
+    async (p = 1, q = query, append = false) => {
+      setLoading(true)
+      try {
+        const res = await consumableTypesClientService.getAll({ page: p, limit, search: q })
+        if (append) setItems((prev) => [...prev, ...(res.data || [])])
+        else setItems(res.data || [])
+        setPagination(res.pagination ?? null)
+      } finally {
+        setLoading(false)
+      }
+    },
+    [limit, query]
+  )
 
   useEffect(() => {
     if (debounceRef.current) window.clearTimeout(debounceRef.current)
     debounceRef.current = window.setTimeout(() => {
       setPage(1)
-      fetchPage(1, query, false)
+      void fetchPage(1, query, false)
     }, 300)
     return () => {
       if (debounceRef.current) window.clearTimeout(debounceRef.current)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query])
+  }, [query, fetchPage])
 
   useEffect(() => {
-    fetchPage(1, '')
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+    void fetchPage(1, '')
+  }, [fetchPage])
 
   const onSelect = (t: ConsumableType) => {
     setSelectedLabel(t.name ?? '')
@@ -85,13 +86,13 @@ export function ConsumableTypeSelect({ value, onChange, disabled, placeholder }:
     if (onChange) onChange(t.id)
   }
 
-  const loadMore = async () => {
+  const loadMore = useCallback(async () => {
     if (!pagination) return
     const next = (page ?? 1) + 1
     if (next > (pagination.totalPages ?? 1)) return
     await fetchPage(next, query, true)
     setPage(next)
-  }
+  }, [pagination, query, fetchPage, page])
 
   useEffect(() => {
     if (!open) return
@@ -114,8 +115,7 @@ export function ConsumableTypeSelect({ value, onChange, disabled, placeholder }:
 
     observer.observe(sentinel)
     return () => observer.disconnect()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, pagination, loading, page])
+  }, [open, pagination, loading, page, loadMore])
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {

@@ -9,13 +9,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import {
   Table,
   TableBody,
   TableCell,
@@ -29,8 +22,9 @@ import { purchaseRequestsClientService } from '@/lib/api/services/purchase-reque
 import { PurchaseRequestStatus, Priority } from '@/constants/status'
 import { PermissionGuard } from '@/components/shared/PermissionGuard'
 import { SearchableSelect } from '@/app/(dashboard)/system/policies/_components/RuleBuilder/SearchableSelect'
-import { getAllowedPurchaseTransitions } from '@/lib/utils/status-flow'
 import type { Session } from '@/lib/auth/session'
+import { PurchaseStatusStepper } from '@/components/system/PurchaseStatusStepper'
+import { PurchaseStatusButtonGrid } from '@/components/system/PurchaseStatusButtonGrid'
 import type { LucideIcon } from 'lucide-react'
 import {
   ArrowLeft,
@@ -50,6 +44,7 @@ import {
 } from 'lucide-react'
 import type { PurchaseRequest } from '@/types/models/purchase-request'
 import { cn } from '@/lib/utils/cn'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import {
   Dialog,
   DialogContent,
@@ -75,15 +70,6 @@ type TimelineEvent = {
 
 type TimelineEntry = TimelineEvent & { time: string }
 
-const allStatusOptions: { label: string; value: PurchaseRequestStatus }[] = [
-  { label: 'Chờ duyệt', value: PurchaseRequestStatus.PENDING },
-  { label: 'Đã duyệt', value: PurchaseRequestStatus.APPROVED },
-  { label: 'Đã đặt hàng', value: PurchaseRequestStatus.ORDERED },
-  { label: 'Đang vận chuyển', value: PurchaseRequestStatus.IN_TRANSIT },
-  { label: 'Đã nhận hàng', value: PurchaseRequestStatus.RECEIVED },
-  { label: 'Đã hủy', value: PurchaseRequestStatus.CANCELLED },
-]
-
 const statusBadgeMap: Record<PurchaseRequestStatus, string> = {
   [PurchaseRequestStatus.PENDING]: 'bg-amber-50 text-amber-700 border-amber-200',
   [PurchaseRequestStatus.APPROVED]: 'bg-emerald-50 text-emerald-700 border-emerald-200',
@@ -107,11 +93,14 @@ function toNumber(value?: string | number | null): number {
 }
 
 export function PurchaseRequestDetailClient({ id, session }: Props) {
+  const { t } = useLocale()
   const router = useRouter()
   const queryClient = useQueryClient()
   const [statusUpdating, setStatusUpdating] = useState(false)
   const [assignNote, setAssignNote] = useState('')
   const [selectedAssignee, setSelectedAssignee] = useState<string | undefined>(undefined)
+  const [pendingStatusChange, setPendingStatusChange] = useState<PurchaseRequestStatus | null>(null)
+  const [statusNote, setStatusNote] = useState('')
 
   const { data, isLoading } = useQuery({
     queryKey: ['purchase-requests', 'detail', id],
@@ -127,10 +116,13 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['purchase-requests'] })
       queryClient.invalidateQueries({ queryKey: ['purchase-requests', 'detail', id] })
-      toast.success('Cập nhật trạng thái thành công')
+      toast.success(t('requests.purchase.update_status.success'))
+      setPendingStatusChange(null)
+      setStatusNote('')
     },
     onError: (error: unknown) => {
-      const message = error instanceof Error ? error.message : 'Không thể cập nhật trạng thái'
+      const message =
+        error instanceof Error ? error.message : t('requests.purchase.update_status.error')
       toast.error(message)
     },
     onSettled: () => setStatusUpdating(false),
@@ -166,12 +158,6 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
       toast.error(message)
     },
   })
-
-  const availableStatusOptions = useMemo(() => {
-    if (!detail) return []
-    const allowed = getAllowedPurchaseTransitions(detail.status)
-    return allStatusOptions.filter((opt) => allowed.includes(opt.value))
-  }, [detail])
 
   if (isLoading) {
     return (
@@ -335,7 +321,9 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
                   <p className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
                     Tổng giá trị (ước tính)
                   </p>
-                  <p className="text-xl font-bold text-blue-600">{formatCurrency(totalAmount)}</p>
+                  <p className="text-xl font-bold text-blue-600">
+                    {formatCurrency(totalAmount, detail.currency)}
+                  </p>
                 </div>
               </div>
 
@@ -458,10 +446,10 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
                           <TableCell>{item.quantity}</TableCell>
                           <TableCell>{item.consumableType?.unit ?? '—'}</TableCell>
                           <TableCell className="text-right tabular-nums">
-                            {formatCurrency(toNumber(item.unitPrice))}
+                            {formatCurrency(toNumber(item.unitPrice), detail.currency)}
                           </TableCell>
                           <TableCell className="text-right font-medium text-emerald-600 tabular-nums">
-                            {formatCurrency(toNumber(item.totalPrice))}
+                            {formatCurrency(toNumber(item.totalPrice), detail.currency)}
                           </TableCell>
                           <TableCell className="text-muted-foreground max-w-[200px] truncate text-xs">
                             {item.notes ?? '—'}
@@ -503,45 +491,85 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
         {/* --- RIGHT COLUMN (Sidebar) --- */}
         <div className="space-y-6 lg:col-span-4">
           {/* 1. Actions Panel */}
-          <Card className="border-l-4 border-l-blue-500 shadow-md">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-muted-foreground text-sm font-semibold tracking-wider uppercase">
-                Quản lý & Tác vụ
-              </CardTitle>
+          <Card className="border-l-4 border-l-blue-500 shadow-lg">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-base font-bold text-gray-800">Quản lý & Tác vụ</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm leading-none font-medium">Cập nhật trạng thái</label>
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <div className="border-b border-gray-200 pb-3">
+                  <label className="text-sm font-semibold text-gray-700">Trạng thái xử lý</label>
+                </div>
                 <PermissionGuard
                   session={session}
                   action="update"
                   resource={{ type: 'purchaseRequest', customerId: detail.customerId }}
                   fallback={
-                    <div className="bg-muted text-muted-foreground rounded p-2 text-sm">
+                    <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
                       Bạn không có quyền cập nhật.
                     </div>
                   }
                 >
-                  <Select
-                    value={detail.status}
-                    onValueChange={(value) =>
-                      updateStatusMutation.mutate(value as PurchaseRequestStatus)
-                    }
-                    disabled={statusUpdating}
-                  >
-                    <SelectTrigger className="bg-background w-full">
-                      <SelectValue placeholder="Chọn trạng thái" />
-                      {statusUpdating && <Loader2 className="ml-2 h-3 w-3 animate-spin" />}
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableStatusOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="space-y-4">
+                    <PurchaseStatusStepper current={detail.status} />
+                    <div className="border-t border-gray-100 pt-2">
+                      <div className="mb-3 text-sm font-medium text-gray-600">
+                        Chuyển trạng thái
+                      </div>
+                      <PurchaseStatusButtonGrid
+                        current={detail.status}
+                        hasPermission={true}
+                        onSelect={(s) => setPendingStatusChange(s)}
+                      />
+                    </div>
+                  </div>
                 </PermissionGuard>
+                <Dialog
+                  open={Boolean(pendingStatusChange)}
+                  onOpenChange={(open) => {
+                    if (!open) {
+                      setPendingStatusChange(null)
+                      setStatusNote('')
+                    }
+                  }}
+                >
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Cập nhật trạng thái</DialogTitle>
+                      <DialogDescription className="sr-only">
+                        Nhập ghi chú hành động (tùy chọn) để lưu cùng bản ghi cập nhật trạng thái
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="mt-2">
+                      <p className="text-muted-foreground text-sm">Ghi chú hành động (tùy chọn)</p>
+                      <textarea
+                        value={statusNote}
+                        onChange={(e) => setStatusNote(e.target.value)}
+                        placeholder="Nhập ghi chú để lưu cùng cập nhật trạng thái"
+                        className="mt-2 w-full rounded-md border px-3 py-2 text-sm"
+                      />
+                    </div>
+                    <DialogFooter className="mt-4">
+                      <div className="flex w-full gap-2">
+                        <Button variant="outline" onClick={() => setPendingStatusChange(null)}>
+                          Hủy
+                        </Button>
+                        <Button
+                          onClick={() => {
+                            if (!pendingStatusChange) return
+                            const status = pendingStatusChange
+                            setPendingStatusChange(null)
+                            updateStatusMutation.mutate(status)
+                            setStatusNote('')
+                          }}
+                          disabled={statusUpdating}
+                        >
+                          {statusUpdating ? 'Đang cập nhật...' : 'Xác nhận'}
+                        </Button>
+                      </div>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
               </div>
 
               <div className="border-t pt-2">
@@ -551,19 +579,21 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
                   resource={{ type: 'purchaseRequest', customerId: detail.customerId }}
                   fallback={null}
                 >
-                  <Button
-                    variant="destructive"
-                    className="h-auto w-full justify-start px-2 py-2 text-white hover:bg-rose-50 hover:text-rose-700"
-                    onClick={() => setShowDeleteConfirm(true)}
-                    disabled={deleteMutation.isPending}
-                  >
-                    {deleteMutation.isPending ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <XCircle className="mr-2 h-4 w-4" />
-                    )}
-                    Xóa yêu cầu này
-                  </Button>
+                  <div className="flex justify-center">
+                    <Button
+                      variant="destructive"
+                      className="h-auto px-2 py-2 text-white hover:bg-rose-50 hover:text-rose-700"
+                      onClick={() => setShowDeleteConfirm(true)}
+                      disabled={deleteMutation.isPending}
+                    >
+                      {deleteMutation.isPending ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <XCircle className="mr-2 h-4 w-4" />
+                      )}
+                      Xóa yêu cầu này
+                    </Button>
+                  </div>
                 </PermissionGuard>
                 <Dialog
                   open={showDeleteConfirm}

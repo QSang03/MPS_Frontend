@@ -1,7 +1,6 @@
 'use client'
-/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps */
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { Dialog } from '@/components/ui/dialog'
 import { SystemModalLayout } from '@/components/system/SystemModalLayout'
 import { Button } from '@/components/ui/button'
@@ -58,36 +57,39 @@ export function AddConsumableModal({
     return () => clearTimeout(timer)
   }, [searchTerm])
 
-  const loadConsumables = async (p = page, search = '') => {
-    try {
-      setLoading(true)
-      const res = await consumableTypesClientService.getAll({ page: p, limit, search })
-      const available = res.data.filter((c) => !existingConsumableIds.has(c.id))
-      setConsumables(available)
-      setTotal(res.pagination?.total ?? res.data.length)
-      setTotalPages(res.pagination?.totalPages ?? 1)
-    } catch (error: any) {
-      console.error('Error loading consumable types:', error)
-      toast.error('Không thể tải danh sách vật tư tiêu hao')
-    } finally {
-      setLoading(false)
-    }
-  }
+  const loadConsumables = useCallback(
+    async (p = page, search = '') => {
+      try {
+        setLoading(true)
+        const res = await consumableTypesClientService.getAll({ page: p, limit, search })
+        const available = res.data.filter((c) => !existingConsumableIds.has(c.id))
+        setConsumables(available)
+        setTotal(res.pagination?.total ?? res.data.length)
+        setTotalPages(res.pagination?.totalPages ?? 1)
+      } catch (error: unknown) {
+        console.error('Error loading consumable types:', error)
+        toast.error(String(error) || 'Không thể tải danh sách vật tư tiêu hao')
+      } finally {
+        setLoading(false)
+      }
+    },
+    [page, limit, existingConsumableIds]
+  )
 
   useEffect(() => {
     if (open) {
       setPage(1)
       setSearchTerm('')
       setDebouncedSearchTerm('')
-      loadConsumables(1, '')
+      void loadConsumables(1, '')
     }
-  }, [open])
+  }, [open, loadConsumables])
 
   useEffect(() => {
     if (open) {
-      loadConsumables(page, debouncedSearchTerm)
+      void loadConsumables(page, debouncedSearchTerm)
     }
-  }, [page, debouncedSearchTerm])
+  }, [open, page, debouncedSearchTerm, loadConsumables])
 
   const handleAdd = async (consumableTypeId: string) => {
     setAddingId(consumableTypeId)
@@ -96,9 +98,13 @@ export function AddConsumableModal({
       toast.success('Đã thêm vật tư tiêu hao')
       onAdded()
       onOpenChange(false)
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error adding consumable:', error)
-      toast.error(error.message || 'Không thể thêm vật tư tiêu hao')
+      const message =
+        typeof error === 'object' && error !== null && 'message' in error
+          ? (error as { message?: unknown }).message
+          : undefined
+      toast.error(String(message ?? error) || 'Không thể thêm vật tư tiêu hao')
     } finally {
       setAddingId(null)
     }

@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 'use client'
 
 import React, { useState, useEffect, useId } from 'react'
@@ -56,7 +55,6 @@ export default function DateTimeLocalPicker({
   const baseId = id ?? generatedIdBase
 
   // Fix hydration: Only render interactive parts after mount
-  // ESLint: calling setState in an effect is intentional here (hydrate -> show interactive parts)
   useEffect(() => {
     const t = window.setTimeout(() => setMounted(true), 0)
     return () => window.clearTimeout(t)
@@ -64,21 +62,29 @@ export default function DateTimeLocalPicker({
 
   // Parse value to state
   useEffect(() => {
+    let t: number | undefined
     if (value && value.length >= 16) {
       try {
         const d = new Date(value)
         if (!isNaN(d.getTime())) {
-          setDate(d)
-          setHour(String(d.getHours()))
-          setMinute(String(d.getMinutes()))
+          t = window.setTimeout(() => {
+            setDate(d)
+            setHour(String(d.getHours()))
+            setMinute(String(d.getMinutes()))
+          }, 0)
         }
       } catch {
         // Invalid date
       }
     } else {
-      setDate(undefined)
-      setHour('')
-      setMinute('')
+      t = window.setTimeout(() => {
+        setDate(undefined)
+        setHour('')
+        setMinute('')
+      }, 0)
+    }
+    return () => {
+      if (t !== undefined) window.clearTimeout(t)
     }
   }, [value])
 

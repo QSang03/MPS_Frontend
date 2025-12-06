@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { stockItemsClientService } from '@/lib/api/services/stock-items-client.service'
 import { Dialog } from '@/components/ui/dialog'
@@ -8,6 +8,14 @@ import { SystemModalLayout } from '@/components/system/SystemModalLayout'
 import { Button } from '@/components/ui/button'
 import { Loader2, Eye } from 'lucide-react'
 import { format } from 'date-fns'
+
+// Regex helpers are module scoped and can be safely referenced in useEffect deps without being re-created
+const CONSUMABLE_TO_DEVICE_ID_RE =
+  /consumable[:\s]*([0-9a-fA-F-]{36}).*(?:installed to device|được cài đặt cho thiết bị)[:\s]*([0-9a-fA-F-]{36})/i
+const CONSUMABLE_TO_DEVICE_NAME_RE =
+  /consumable[:\s]*([0-9a-fA-F-]{36}).*(?:installed to device|được cài đặt cho thiết bị)[:\s]*([^\n\(,\.]+)/i
+const CONSUMABLE_START_RE = /^\s*consumable[:\s]*([0-9a-fA-F-]{36})/i
+const DEVICE_RE = /device(?:model)?[:\s]*([0-9a-fA-F-]{36})/i
 import { consumablesClientService } from '@/lib/api/services/consumables-client.service'
 import { devicesClientService } from '@/lib/api/services/devices-client.service'
 
@@ -51,19 +59,17 @@ export default function MovementHistoryModal({
     }
   }, [open, stockId])
 
-  const movements: Movement[] = (data as unknown as { data?: Movement[] })?.data ?? []
+  const movements: Movement[] = useMemo(
+    () => (data as unknown as { data?: Movement[] })?.data ?? [],
+    [data]
+  )
   const pagination = (
     data as unknown as { pagination?: { page?: number; totalPages?: number; total?: number } }
   )?.pagination
 
   // regex helpers are defined in the processing effect where they are used
 
-  const consumableToDeviceIdRegex =
-    /consumable[:\s]*([0-9a-fA-F-]{36}).*(?:installed to device|được cài đặt cho thiết bị)[:\s]*([0-9a-fA-F-]{36})/i
-  const consumableToDeviceNameRegex =
-    /consumable[:\s]*([0-9a-fA-F-]{36}).*(?:installed to device|được cài đặt cho thiết bị)[:\s]*([^\n\(,\.]+)/i
-  const consumableStartRegex = /^\s*consumable[:\s]*([0-9a-fA-F-]{36})/i
-  const deviceRegex = /device(?:model)?[:\s]*([0-9a-fA-F-]{36})/i
+  // Regex helpers are declared at module scope — they are pure and static
 
   const [consumableNames, setConsumableNames] = useState<Record<string, string>>({})
   const [deviceNames, setDeviceNames] = useState<Record<string, string>>({})
@@ -86,7 +92,7 @@ export default function MovementHistoryModal({
       const notes = mv.notes ?? ''
 
       // Try id-based full pattern first
-      let m = consumableToDeviceIdRegex.exec(notes)
+      let m = CONSUMABLE_TO_DEVICE_ID_RE.exec(notes)
       if (m) {
         if (m[1]) consumableIds.add(m[1])
         if (m[2]) deviceIds.add(m[2])
@@ -94,7 +100,7 @@ export default function MovementHistoryModal({
       }
 
       // Try pattern where device is a name (text) after the phrase
-      m = consumableToDeviceNameRegex.exec(notes)
+      m = CONSUMABLE_TO_DEVICE_NAME_RE.exec(notes)
       if (m) {
         if (m[1]) consumableIds.add(m[1])
         if (m[2]) {
@@ -109,13 +115,13 @@ export default function MovementHistoryModal({
       }
 
       // If notes start with "Consumable..." capture consumable id
-      m = consumableStartRegex.exec(notes)
+      m = CONSUMABLE_START_RE.exec(notes)
       if (m && m[1]) {
         consumableIds.add(m[1])
       }
 
       // Finally, try to find a device id anywhere
-      m = deviceRegex.exec(notes)
+      m = DEVICE_RE.exec(notes)
       if (m && m[1]) {
         deviceIds.add(m[1])
       }
@@ -200,14 +206,13 @@ export default function MovementHistoryModal({
         setNamesLoading(false)
       }
     })()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [movements])
+  }, [movements, consumableNames, deviceNames])
 
   const formatNotes = (notes?: string | null) => {
     if (!notes) return '—'
 
     // If pattern contains both ids (consumable id + device id)
-    const cmFullId = consumableToDeviceIdRegex.exec(notes)
+    const cmFullId = CONSUMABLE_TO_DEVICE_ID_RE.exec(notes)
     if (cmFullId) {
       const consumableId = cmFullId[1]
       const deviceId = cmFullId[2]
@@ -220,7 +225,7 @@ export default function MovementHistoryModal({
     }
 
     // If pattern contains consumable id + device NAME (text), prefer that
-    const cmFullName = consumableToDeviceNameRegex.exec(notes)
+    const cmFullName = CONSUMABLE_TO_DEVICE_NAME_RE.exec(notes)
     if (cmFullName) {
       const consumableId = cmFullName[1]
       const deviceNameText = (cmFullName[2] || '').trim()
@@ -231,8 +236,8 @@ export default function MovementHistoryModal({
       if (deviceNameText) return `Thiết bị ${deviceNameText}`
     }
 
-    const cm = consumableStartRegex.exec(notes)
-    const dm = deviceRegex.exec(notes)
+    const cm = CONSUMABLE_START_RE.exec(notes)
+    const dm = DEVICE_RE.exec(notes)
     const consumableId = cm && cm[1]
     const deviceId = dm && dm[1]
 

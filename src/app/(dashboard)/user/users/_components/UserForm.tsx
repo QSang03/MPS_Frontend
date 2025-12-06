@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -49,6 +50,7 @@ interface UserFormProps {
 export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormProps) {
   const router = useRouter()
   const queryClient = useQueryClient()
+  const { t } = useLocale()
 
   const form = useForm<UserFormData>({
     resolver: zodResolver(userSchema),
@@ -105,7 +107,7 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
     mutationFn: (data: UserFormData) => usersClientService.createUser(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] })
-      toast.success('Tạo người dùng thành công!')
+      toast.success(t('user.create_success'))
       form.reset()
       if (onSuccess) {
         onSuccess()
@@ -123,7 +125,7 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
       const message =
         _backend.message ||
         _backend.error ||
-        (error instanceof Error ? error.message : 'Tạo người dùng thất bại')
+        (error instanceof Error ? error.message : t('user.create_error'))
       const details = _backend.details as BackendDetails | undefined
 
       setServerError(message)
@@ -186,7 +188,7 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
     mutationFn: (data: UserFormData) => usersClientService.updateUser(initialData!.id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] })
-      toast.success('Cập nhật người dùng thành công!')
+      toast.success(t('user.update_success'))
       form.reset()
       if (onSuccess) {
         onSuccess()
@@ -202,8 +204,7 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
         details?: BackendDetails | undefined
       }
       const message =
-        _backend.message ||
-        (error instanceof Error ? error.message : 'Cập nhật người dùng thất bại')
+        _backend.message || (error instanceof Error ? error.message : t('user.update_error'))
       const details = _backend.details as BackendDetails | undefined
 
       setServerError(message)

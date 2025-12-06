@@ -1,6 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
+
 import { useEffect, useMemo, useRef, useState } from 'react'
+import type { Device, CreateDeviceDto, UpdateDeviceDto } from '@/types/models/device'
 import { useQuery } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogTrigger } from '@/components/ui/dialog'
@@ -41,18 +42,23 @@ import {
 } from '@/components/ui/alert-dialog'
 // removed Info import as it's unused
 import { toast } from 'sonner'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { devicesClientService } from '@/lib/api/services/devices-client.service'
 import deviceModelsClientService from '@/lib/api/services/device-models-client.service'
 import { customersClientService } from '@/lib/api/services/customers-client.service'
 import { removeEmpty } from '@/lib/utils/clean'
-import { DEVICE_STATUS } from '@/constants/status'
+import {
+  DEVICE_STATUS,
+  STATUS_ALLOWED_FOR_ACTIVE,
+  STATUS_ALLOWED_FOR_INACTIVE,
+} from '@/constants/status'
 import { Switch } from '@/components/ui/switch'
 // removed unused Customer type import
 
 interface Props {
   mode?: 'create' | 'edit'
-  device?: any | null
-  onSaved?: (d?: any) => void
+  device?: Device | null
+  onSaved?: (d?: Device) => void
   // When true, render compact icon-only trigger button (used in table action column)
   compact?: boolean
   trigger?: React.ReactNode
@@ -91,7 +97,9 @@ export default function DeviceFormModal({
   const [showSerialWarning, setShowSerialWarning] = useState(false)
   const [customerAddresses, setCustomerAddresses] = useState<string[]>([])
   const [loadingAddresses, setLoadingAddresses] = useState(false)
-  const [form, setForm] = useState<any>(() => buildInitialForm())
+  type DeviceFormState = ReturnType<typeof buildInitialForm>
+  const [form, setForm] = useState<DeviceFormState>(() => buildInitialForm())
+  const { t } = useLocale()
   // device models and customers are shared resources; use React Query to deduplicate
   const { data: modelsData, isLoading: modelsLoading } = useQuery({
     queryKey: ['device-models', { page: 1, limit: 100 }],
@@ -111,7 +119,7 @@ export default function DeviceFormModal({
 
   const resolvedCustomerId = useMemo(() => {
     if (mode === 'edit') {
-      return form.customerId || (device as any)?.customerId || (device as any)?.customer?.id || ''
+      return form.customerId || device?.customerId || ''
     }
     return form.customerId || ''
   }, [mode, form.customerId, device])
@@ -153,7 +161,7 @@ export default function DeviceFormModal({
           (device.isActive ? DEVICE_STATUS.ACTIVE : DEVICE_STATUS.DECOMMISSIONED),
         inactiveReasonOption: device.inactiveReason ? device.inactiveReason : '',
         inactiveReasonText: device.inactiveReason || '',
-        customerId: device.customerId || device.customer?.id || '',
+        customerId: device.customerId || '',
       })
     } else {
       // Pre-fill create form when initial props provided (creating device under a customer)
@@ -218,7 +226,7 @@ export default function DeviceFormModal({
           ) {
             const firstAddr = details.address[0]
             if (firstAddr) {
-              setForm((s: any) => ({ ...s, customerLocation: firstAddr }))
+              setForm((s: DeviceFormState) => ({ ...s, customerLocation: firstAddr }))
               hasPrefilledLocationRef.current = true
             }
           }
@@ -229,7 +237,7 @@ export default function DeviceFormModal({
         }
       } catch (err) {
         console.error('Failed to fetch customer details', err)
-        toast.error('Không thể tải địa chỉ khách hàng')
+        toast.error(t('error.load_customer_addresses'))
         setCustomerAddresses([])
         hasPrefilledLocationRef.current = false
         lastFetchedCustomerIdRef.current = null
@@ -239,7 +247,7 @@ export default function DeviceFormModal({
     }
 
     fetchCustomerDetails()
-  }, [open, mode, device, resolvedCustomerId, selectedCustomer?.code, form.customerLocation])
+  }, [open, mode, device, resolvedCustomerId, selectedCustomer?.code, form.customerLocation, t])
 
   // previous explicit loaders replaced by React Query above
 
@@ -247,7 +255,7 @@ export default function DeviceFormModal({
     setSubmitting(true)
     try {
       if (!form.serialNumber) {
-        toast.error('Serial number là bắt buộc')
+        toast.error(t('device.form.validation.serial_required'))
         setSubmitting(false)
         return
       }
@@ -257,7 +265,7 @@ export default function DeviceFormModal({
         const selectedCustomer = customers.find((c) => c.id === form.customerId)
         const isSystemWarehouse = selectedCustomer?.code === 'SYS'
         if (selectedCustomer && !isSystemWarehouse && !form.customerLocation?.trim()) {
-          toast.error('Vị trí tại khách hàng là bắt buộc')
+          toast.error(t('device.form.validation.location_required'))
           setSubmitting(false)
           return
         }
@@ -273,7 +281,7 @@ export default function DeviceFormModal({
           chosenReason = form.inactiveReasonOption
         }
         if (!chosenReason || String(chosenReason).trim() === '') {
-          toast.error('Vui lòng cung cấp lý do khi thay đổi trạng thái')
+          toast.error(t('device.provide_inactive_reason'))
           setSubmitting(false)
           return
         }
@@ -285,9 +293,7 @@ export default function DeviceFormModal({
         const inactiveStatuses = ['DECOMMISSIONED', 'SUSPENDED']
         const allowedStatuses = form.isActive ? activeStatuses : inactiveStatuses
         if (!allowedStatuses.includes(String(form.status))) {
-          toast.error(
-            `Trạng thái không hợp lệ khi isActive=${String(form.isActive)}. Vui lòng chọn trạng thái hợp lệ.`
-          )
+          toast.error(t('device.invalid_status_for_is_active', { isActive: String(form.isActive) }))
           setSubmitting(false)
           return
         }
@@ -321,7 +327,7 @@ export default function DeviceFormModal({
       payload = removeEmpty(payload) as typeof payload
 
       if (mode === 'create') {
-        const created = await devicesClientService.create(payload as any)
+        const created = await devicesClientService.create(payload as unknown as CreateDeviceDto)
 
         // If a customer was selected, explicitly assign the created device to
         // that customer using the assign endpoint (body: { customerId }).
@@ -339,14 +345,17 @@ export default function DeviceFormModal({
           // If assignment fails, surface an error but keep device created.
           console.error('Assign to customer after create failed', assignErr)
           // show user-friendly message
-          toast.error('Thiết bị đã được tạo nhưng gán khách hàng thất bại')
+          toast.error(t('device.assign_after_create_failed'))
         }
 
-        toast.success('Tạo thiết bị thành công')
+        toast.success(t('device.create_success'))
         setOpen(false)
         onSaved?.(created)
       } else if (device && device.id) {
-        const updated = await devicesClientService.update(device.id, payload as any)
+        const updated = await devicesClientService.update(
+          device.id,
+          payload as unknown as UpdateDeviceDto
+        )
         // Update location if customerLocation is provided
         if (form.customerLocation) {
           try {
@@ -356,15 +365,18 @@ export default function DeviceFormModal({
             // Don't fail the whole update if location update fails
           }
         }
-        toast.success('Cập nhật thiết bị thành công')
+        toast.success(t('device.update_success'))
         setOpen(false)
         onSaved?.(updated)
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Device save error', err)
       // Try to extract backend error message from Axios-like error
-      const backendData = err?.response?.data
-      let errorMessage = 'Có lỗi khi lưu thiết bị'
+      const backendData = (
+        err as { response?: { data?: { message?: string | string[]; error?: string | string[] } } }
+      )?.response?.data
+      const axiosError = err as { message?: string }
+      let errorMessage = t('device.form.save_error')
 
       if (backendData?.message) {
         // Handle array of messages
@@ -379,8 +391,8 @@ export default function DeviceFormModal({
         } else {
           errorMessage = String(backendData.error)
         }
-      } else if (err?.message) {
-        errorMessage = err.message
+      } else if (axiosError?.message) {
+        errorMessage = axiosError.message
       }
 
       toast.error(errorMessage)
@@ -398,7 +410,7 @@ export default function DeviceFormModal({
     }
     // For edit mode, do not allow changing serial if original exists
     if (mode === 'edit' && device?.serialNumber && form.serialNumber !== device.serialNumber) {
-      toast.error('Số Serial đã được thiết lập và không thể chỉnh sửa')
+      toast.error(t('device.serial.locked'))
       return
     }
     await performSave()
@@ -412,12 +424,12 @@ export default function DeviceFormModal({
         <DialogTrigger asChild>
           <Button className="gap-2 bg-white text-blue-600 hover:bg-white/90">
             <Plus className="h-4 w-4" />
-            Thêm thiết bị
+            {t('devices.add')}
           </Button>
         </DialogTrigger>
       ) : compact ? (
         <Tooltip>
-          <TooltipContent sideOffset={4}>Sửa</TooltipContent>
+          <TooltipContent sideOffset={4}>{t('button.edit')}</TooltipContent>
           <TooltipTrigger asChild>
             <DialogTrigger asChild>
               <div>
@@ -442,9 +454,9 @@ export default function DeviceFormModal({
       )}
 
       <SystemModalLayout
-        title={mode === 'create' ? 'Tạo thiết bị mới' : 'Chỉnh sửa thiết bị'}
+        title={mode === 'create' ? t('device.create_title') : t('device.edit_title')}
         description={
-          mode === 'create' ? 'Thêm thiết bị mới vào hệ thống' : 'Cập nhật thông tin thiết bị'
+          mode === 'create' ? t('device.create_description') : t('device.edit_description')
         }
         icon={mode === 'create' ? Sparkles : Edit}
         variant={mode}
@@ -457,7 +469,7 @@ export default function DeviceFormModal({
               disabled={submitting}
               className="min-w-[100px]"
             >
-              Hủy
+              {t('cancel')}
             </Button>
             <Button
               type="submit"
@@ -468,17 +480,17 @@ export default function DeviceFormModal({
               {submitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {mode === 'create' ? 'Đang tạo...' : 'Đang lưu...'}
+                  {mode === 'create' ? t('button.creating') : t('button.saving')}
                 </>
               ) : mode === 'create' ? (
                 <>
                   <Plus className="mr-2 h-4 w-4" />
-                  Tạo thiết bị
+                  {t('device.create_submit')}
                 </>
               ) : (
                 <>
                   <CheckCircle2 className="mr-2 h-4 w-4" />
-                  Lưu thay đổi
+                  {t('device.save_changes')}
                 </>
               )}
             </Button>
@@ -490,21 +502,23 @@ export default function DeviceFormModal({
           <div className="space-y-4">
             <div className="flex items-center gap-2 text-sm font-semibold text-blue-700">
               <Package className="h-4 w-4" />
-              Thông tin Model
+              {t('device.model_info')}
             </div>
 
             <div className="space-y-2">
               <Label className="flex items-center gap-2 text-base font-semibold">
                 <Monitor className="h-4 w-4 text-blue-600" />
-                Device Model
+                {t('device.form.device_model')}
               </Label>
               <Select
                 value={form.deviceModelId}
-                onValueChange={(v) => setForm((s: any) => ({ ...s, deviceModelId: v }))}
+                onValueChange={(v) => setForm((s: DeviceFormState) => ({ ...s, deviceModelId: v }))}
               >
                 <SelectTrigger className="h-11">
                   <SelectValue
-                    placeholder={modelsLoading ? 'Đang tải model...' : 'Chọn model thiết bị'}
+                    placeholder={
+                      modelsLoading ? t('loading.models') : t('placeholder.select_model')
+                    }
                   />
                 </SelectTrigger>
                 <SelectContent>
@@ -512,13 +526,13 @@ export default function DeviceFormModal({
                     <SelectItem value="__loading" disabled>
                       <div className="flex items-center gap-2">
                         <Loader2 className="h-4 w-4 animate-spin" />
-                        Đang tải...
+                        {t('loading.loading')}
                       </div>
                     </SelectItem>
                   )}
                   {!modelsLoading && models.length === 0 && (
                     <SelectItem value="__empty" disabled>
-                      Không có model
+                      {t('empty.models')}
                     </SelectItem>
                   )}
                   {models.map((m) => (
@@ -549,12 +563,16 @@ export default function DeviceFormModal({
                   </Label>
                   <Select
                     value={form.customerId}
-                    onValueChange={(v) => setForm((s: any) => ({ ...s, customerId: v }))}
+                    onValueChange={(v) =>
+                      setForm((s: DeviceFormState) => ({ ...s, customerId: v }))
+                    }
                   >
                     <SelectTrigger className="h-11">
                       <SelectValue
                         placeholder={
-                          customersLoading ? 'Đang tải khách hàng...' : 'Chọn khách hàng'
+                          customersLoading
+                            ? t('loading.customers')
+                            : t('placeholder.select_customer')
                         }
                       />
                     </SelectTrigger>
@@ -569,7 +587,7 @@ export default function DeviceFormModal({
                       )}
                       {!customersLoading && customers.length === 0 && (
                         <SelectItem value="__empty" disabled>
-                          Không có khách hàng
+                          {t('empty.customers')}
                         </SelectItem>
                       )}
                       {customers.map((c) => (
@@ -580,7 +598,7 @@ export default function DeviceFormModal({
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-gray-500">
-                    Chọn khách hàng để gán thiết bị. Để trong kho, chọn "Kho Công Ty"
+                    {t('device.assign_to_customer_instructions')}
                   </p>
                 </div>
 
@@ -600,17 +618,19 @@ export default function DeviceFormModal({
                       {/* If customer has address as array, show a Select so user can pick an address.
                             If address is a string or missing, fall back to an Input. */}
                       {(() => {
-                        const addr = (selectedCustomer as any)?.address
+                        const addr = selectedCustomer?.address
                         if (Array.isArray(addr) && addr.length > 0) {
                           return (
                             <Select
                               value={form.customerLocation}
                               onValueChange={(v) =>
-                                setForm((s: any) => ({ ...s, customerLocation: v }))
+                                setForm((s: DeviceFormState) => ({ ...s, customerLocation: v }))
                               }
                             >
                               <SelectTrigger className="h-11">
-                                <SelectValue placeholder="Chọn địa chỉ khách hàng" />
+                                <SelectValue
+                                  placeholder={t('placeholder.select_customer_address')}
+                                />
                               </SelectTrigger>
                               <SelectContent>
                                 {addr.map((a: string, i: number) => (
@@ -628,9 +648,12 @@ export default function DeviceFormModal({
                           <Input
                             value={form.customerLocation}
                             onChange={(e) =>
-                              setForm((s: any) => ({ ...s, customerLocation: e.target.value }))
+                              setForm((s: DeviceFormState) => ({
+                                ...s,
+                                customerLocation: e.target.value,
+                              }))
                             }
-                            placeholder="Vị trí lắp đặt tại khách hàng..."
+                            placeholder={t('placeholder.customer_installation_location')}
                             className="h-11"
                             required
                           />
@@ -663,16 +686,16 @@ export default function DeviceFormModal({
               </Label>
               <Input
                 value={form.serialNumber}
-                onChange={(e) => setForm((s: any) => ({ ...s, serialNumber: e.target.value }))}
+                onChange={(e) =>
+                  setForm((s: DeviceFormState) => ({ ...s, serialNumber: e.target.value }))
+                }
                 placeholder="SN123456789"
                 required
                 className="h-11"
                 disabled={mode === 'edit' && !!device?.serialNumber}
               />
               {mode === 'edit' && device?.serialNumber ? (
-                <p className="text-muted-foreground mt-1 text-xs">
-                  Serial đã được lưu và không thể chỉnh sửa
-                </p>
+                <p className="text-muted-foreground mt-1 text-xs">{t('device.serial.locked')}</p>
               ) : null}
             </div>
 
@@ -684,7 +707,9 @@ export default function DeviceFormModal({
                 </Label>
                 <Input
                   value={form.firmware}
-                  onChange={(e) => setForm((s: any) => ({ ...s, firmware: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((s: DeviceFormState) => ({ ...s, firmware: e.target.value }))
+                  }
                   placeholder="v1.0.0"
                   className="h-11"
                 />
@@ -694,15 +719,15 @@ export default function DeviceFormModal({
             <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <p className="text-sm font-semibold text-slate-800">Thuộc sở hữu khách hàng</p>
-                  <p className="text-xs text-slate-500">
-                    Bật nếu thiết bị do khách hàng sở hữu (không thuộc kho công ty).
+                  <p className="text-sm font-semibold text-slate-800">
+                    {t('device.is_customer_owned_label')}
                   </p>
+                  <p className="text-xs text-slate-500">{t('device.is_customer_owned_desc')}</p>
                 </div>
                 <Switch
                   checked={!!form.isCustomerOwned}
                   onCheckedChange={(checked: boolean) =>
-                    setForm((s: any) => ({ ...s, isCustomerOwned: checked }))
+                    setForm((s: DeviceFormState) => ({ ...s, isCustomerOwned: checked }))
                   }
                 />
               </div>
@@ -712,8 +737,7 @@ export default function DeviceFormModal({
           {/* Address field in edit mode - Show when device has a customer (not System warehouse) */}
           {mode === 'edit' &&
             (() => {
-              const currentCustomerId =
-                form.customerId || (device as any)?.customerId || (device as any)?.customer?.id
+              const currentCustomerId = form.customerId || device?.customerId
               const selectedCustomer = customers.find((c) => c.id === currentCustomerId)
               const isSystemWarehouse = selectedCustomer?.code === 'SYS'
               const showAddressField =
@@ -725,20 +749,22 @@ export default function DeviceFormModal({
                 <div className="mt-4">
                   <Label className="flex items-center gap-2 text-base font-semibold">
                     <MapPin className="h-4 w-4 text-rose-600" />
-                    Địa chỉ
+                    {t('device.address')}
                   </Label>
                   {loadingAddresses ? (
                     <div className="mt-2 flex items-center gap-2 text-sm text-gray-500">
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      Đang tải địa chỉ...
+                      {t('loading.addresses')}
                     </div>
                   ) : customerAddresses.length > 0 ? (
                     <Select
                       value={form.customerLocation}
-                      onValueChange={(v) => setForm((s: any) => ({ ...s, customerLocation: v }))}
+                      onValueChange={(v) =>
+                        setForm((s: DeviceFormState) => ({ ...s, customerLocation: v }))
+                      }
                     >
                       <SelectTrigger className="mt-2 h-11">
-                        <SelectValue placeholder="Chọn địa chỉ khách hàng" />
+                        <SelectValue placeholder={t('placeholder.select_customer_address')} />
                       </SelectTrigger>
                       <SelectContent>
                         {customerAddresses.map((addr, i) => (
@@ -752,16 +778,19 @@ export default function DeviceFormModal({
                     <Input
                       value={form.customerLocation}
                       onChange={(e) =>
-                        setForm((s: any) => ({ ...s, customerLocation: e.target.value }))
+                        setForm((s: DeviceFormState) => ({
+                          ...s,
+                          customerLocation: e.target.value,
+                        }))
                       }
-                      placeholder="Nhập địa chỉ..."
+                      placeholder={t('placeholder.enter_address')}
                       className="mt-2 h-11"
                     />
                   )}
                   <p className="mt-1 text-xs text-gray-500">
                     {customerAddresses.length > 0
-                      ? 'Chọn địa chỉ từ danh sách địa chỉ của khách hàng'
-                      : 'Nhập địa chỉ của thiết bị tại khách hàng'}
+                      ? t('device.choose_address_from_list')
+                      : t('device.enter_customer_address')}
                   </p>
                 </div>
               ) : null
@@ -778,16 +807,16 @@ export default function DeviceFormModal({
                 <div>
                   <Switch
                     checked={!!form.isActive}
-                    onCheckedChange={(v: any) =>
-                      setForm((s: any) => {
+                    onCheckedChange={(v: boolean) =>
+                      setForm((s: DeviceFormState) => {
                         const isActiveNew = !!v
                         // adjust status default when toggling
                         let newStatus = s.status
                         if (!isActiveNew) {
                           // switch to a safe inactive status if current is active-type
                           if (
-                            ['ACTIVE', 'MAINTENANCE', 'ERROR', 'OFFLINE'].includes(
-                              String(s.status) as any
+                            STATUS_ALLOWED_FOR_ACTIVE.includes(
+                              String(s.status) as import('@/constants/status').DeviceStatusValue
                             )
                           ) {
                             newStatus = DEVICE_STATUS.DECOMMISSIONED
@@ -795,8 +824,8 @@ export default function DeviceFormModal({
                         } else {
                           // switching to active: if currently DECOMMISSIONED/SUSPENDED, set to ACTIVE
                           if (
-                            [DEVICE_STATUS.DECOMMISSIONED, DEVICE_STATUS.SUSPENDED].includes(
-                              String(s.status) as any
+                            STATUS_ALLOWED_FOR_INACTIVE.includes(
+                              String(s.status) as import('@/constants/status').DeviceStatusValue
                             )
                           ) {
                             newStatus = DEVICE_STATUS.ACTIVE
@@ -818,13 +847,13 @@ export default function DeviceFormModal({
 
               {/* Status selector */}
               <div className="mt-3">
-                <Label className="text-sm font-medium">Trạng thái</Label>
+                <Label className="text-sm font-medium">{t('device.form.status')}</Label>
                 <Select
                   value={form.status}
-                  onValueChange={(v) => setForm((s: any) => ({ ...s, status: v }))}
+                  onValueChange={(v) => setForm((s: DeviceFormState) => ({ ...s, status: v }))}
                 >
                   <SelectTrigger className="h-11">
-                    <SelectValue placeholder="Chọn trạng thái" />
+                    <SelectValue placeholder={t('device.form.status_placeholder')} />
                   </SelectTrigger>
                   <SelectContent>
                     {form.isActive ? (
@@ -847,19 +876,27 @@ export default function DeviceFormModal({
               {/* Show reason selector when isActive is false */}
               {form.isActive === false && (
                 <div className="mt-3 space-y-2">
-                  <Label className="text-sm font-medium">Lý do</Label>
+                  <Label className="text-sm font-medium">{t('device.form.reason')}</Label>
                   <Select
                     value={form.inactiveReasonOption}
-                    onValueChange={(v) => setForm((s: any) => ({ ...s, inactiveReasonOption: v }))}
+                    onValueChange={(v) =>
+                      setForm((s: DeviceFormState) => ({ ...s, inactiveReasonOption: v }))
+                    }
                   >
                     <SelectTrigger className="h-11">
-                      <SelectValue placeholder="Chọn lý do " />
+                      <SelectValue placeholder={t('device.form.reason_placeholder')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Tạm dừng do lỗi">Tạm dừng do lỗi</SelectItem>
-                      <SelectItem value="Hủy HĐ">Hủy HĐ</SelectItem>
-                      <SelectItem value="Hoàn tất HĐ">Hoàn tất HĐ</SelectItem>
-                      <SelectItem value="__other">Khác</SelectItem>
+                      <SelectItem value="Tạm dừng do lỗi">
+                        {t('device.form.reason.pause_error')}
+                      </SelectItem>
+                      <SelectItem value="Hủy HĐ">
+                        {t('device.form.reason.cancel_contract')}
+                      </SelectItem>
+                      <SelectItem value="Hoàn tất HĐ">
+                        {t('device.form.reason.complete_contract')}
+                      </SelectItem>
+                      <SelectItem value="__other">{t('device.form.reason.other')}</SelectItem>
                     </SelectContent>
                   </Select>
 
@@ -867,9 +904,12 @@ export default function DeviceFormModal({
                     <Input
                       value={form.inactiveReasonText}
                       onChange={(e) =>
-                        setForm((s: any) => ({ ...s, inactiveReasonText: e.target.value }))
+                        setForm((s: DeviceFormState) => ({
+                          ...s,
+                          inactiveReasonText: e.target.value,
+                        }))
                       }
-                      placeholder="Nhập lý do..."
+                      placeholder={t('device.form.reason.other_placeholder')}
                       className="h-11"
                     />
                   )}
@@ -884,18 +924,20 @@ export default function DeviceFormModal({
           <div className="space-y-4">
             <div className="flex items-center gap-2 text-sm font-semibold text-teal-700">
               <Wifi className="h-4 w-4" />
-              Thông tin mạng
+              {t('device.form.network_info')}
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label className="flex items-center gap-2 text-base font-semibold">
                   <Wifi className="h-4 w-4 text-blue-600" />
-                  Địa chỉ IP
+                  {t('device.ip')}
                 </Label>
                 <Input
                   value={form.ipAddress}
-                  onChange={(e) => setForm((s: any) => ({ ...s, ipAddress: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((s: DeviceFormState) => ({ ...s, ipAddress: e.target.value }))
+                  }
                   placeholder="192.168.1.100"
                   className="h-11 font-mono"
                 />
@@ -904,11 +946,13 @@ export default function DeviceFormModal({
               <div className="space-y-2">
                 <Label className="flex items-center gap-2 text-base font-semibold">
                   <HardDrive className="h-4 w-4 text-purple-600" />
-                  Địa chỉ MAC
+                  {t('device.mac')}
                 </Label>
                 <Input
                   value={form.macAddress}
-                  onChange={(e) => setForm((s: any) => ({ ...s, macAddress: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((s: DeviceFormState) => ({ ...s, macAddress: e.target.value }))
+                  }
                   placeholder="00:00:00:00:00:00"
                   className="h-11 font-mono"
                 />
@@ -922,10 +966,11 @@ export default function DeviceFormModal({
         <AlertDialogContent className="max-w-lg overflow-hidden rounded-lg border p-0 shadow-lg">
           <div className="px-6 py-5">
             <AlertDialogHeader className="space-y-2 text-left">
-              <AlertDialogTitle className="text-lg font-bold">Xác nhận Serial</AlertDialogTitle>
+              <AlertDialogTitle className="text-lg font-bold">
+                {t('device.serial.confirm_title')}
+              </AlertDialogTitle>
               <AlertDialogDescription className="text-muted-foreground text-sm">
-                Bạn đang đặt số Serial cho thiết bị. Sau khi thiết lập, Serial sẽ không thể chỉnh
-                sửa sau này. Bạn có chắc chắn muốn tiếp tục?
+                {t('device.serial.confirm_description')}
               </AlertDialogDescription>
             </AlertDialogHeader>
           </div>
@@ -934,7 +979,7 @@ export default function DeviceFormModal({
               onClick={() => setShowSerialWarning(false)}
               className="min-w-[100px]"
             >
-              Hủy
+              {t('cancel')}
             </AlertDialogCancel>
             <Button
               onClick={async () => {
@@ -943,7 +988,7 @@ export default function DeviceFormModal({
               }}
               className="min-w-[120px] bg-amber-600"
             >
-              Xác nhận
+              {t('confirm.ok')}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>

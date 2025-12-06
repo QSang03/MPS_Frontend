@@ -1,5 +1,6 @@
 import { getWithDedupe } from '../internal-client'
 import type { AxiosError } from 'axios'
+import type { CurrencyDataDto } from '@/types/models/currency'
 
 function extractErrorMessage(data: unknown): string | undefined {
   // Recursively walk object/array to find a message-like field
@@ -46,6 +47,16 @@ export type ProfitabilityTrendItem = {
   totalCogs: number
   grossProfit: number
   grossMargin?: number
+  // Currency conversion fields - ⭐ MỚI
+  revenueRentalConverted?: number
+  revenueRepairConverted?: number
+  revenuePageBWConverted?: number
+  revenuePageColorConverted?: number
+  totalRevenueConverted?: number
+  cogsConsumableConverted?: number
+  cogsRepairConverted?: number
+  totalCogsConverted?: number
+  grossProfitConverted?: number
 }
 
 export type EnterpriseProfitResponse = {
@@ -59,6 +70,7 @@ export type EnterpriseProfitResponse = {
     devicesCount: number
     customersCount: number
     profitability?: ProfitabilityTrendItem[]
+    baseCurrency?: CurrencyDataDto | null // ⭐ MỚI
   }
   message?: string
 }
@@ -70,6 +82,10 @@ export type CustomerProfitItem = {
   totalCogs: number
   grossProfit: number
   devicesCount: number
+  // Currency conversion fields - ⭐ MỚI
+  totalRevenueConverted?: number
+  totalCogsConverted?: number
+  grossProfitConverted?: number
 }
 
 export type CustomersProfitResponse = {
@@ -78,6 +94,7 @@ export type CustomersProfitResponse = {
     period: string
     customers: CustomerProfitItem[]
     profitability?: ProfitabilityTrendItem[]
+    baseCurrency?: CurrencyDataDto | null // ⭐ MỚI
   }
   message?: string
 }
@@ -89,6 +106,10 @@ export type DeviceProfitItem = {
   revenue: number
   cogs: number
   profit: number
+  // Currency conversion fields - ⭐ MỚI
+  revenueConverted?: number
+  cogsConverted?: number
+  profitConverted?: number
 }
 
 export type CustomerDetailProfitResponse = {
@@ -101,9 +122,14 @@ export type CustomerDetailProfitResponse = {
       totalRevenue: number
       totalCogs: number
       grossProfit: number
+      // Currency conversion fields - ⭐ MỚI
+      totalRevenueConverted?: number
+      totalCogsConverted?: number
+      grossProfitConverted?: number
     }
     devices: DeviceProfitItem[]
     profitability?: ProfitabilityTrendItem[]
+    baseCurrency?: CurrencyDataDto | null // ⭐ MỚI
   }
   message?: string
 }
@@ -120,6 +146,16 @@ export type DeviceProfitabilityItem = {
   cogsRepair: number
   totalCogs: number
   grossProfit: number
+  // Currency conversion fields - ⭐ MỚI
+  revenueRentalConverted?: number
+  revenueRepairConverted?: number
+  revenuePageBWConverted?: number
+  revenuePageColorConverted?: number
+  totalRevenueConverted?: number
+  cogsConsumableConverted?: number
+  cogsRepairConverted?: number
+  totalCogsConverted?: number
+  grossProfitConverted?: number
 }
 
 export type DeviceProfitabilityResponse = {
@@ -153,6 +189,156 @@ export type ConsumableLifecycleResponse = {
   message?: string
 }
 
+// ============ Usage Analytics Types ============
+
+export type UsageTrendItem = {
+  month: string
+  bwPages: number
+  colorPages: number
+  totalPages: number
+  bwPagesA4: number
+  colorPagesA4: number
+  totalPagesA4: number
+}
+
+export type EnterpriseUsageResponse = {
+  success: boolean
+  data?: {
+    period: string
+    totalPages: number
+    totalColorPages: number
+    totalBwPages: number
+    totalPagesA4: number
+    totalColorPagesA4: number
+    totalBwPagesA4: number
+    devicesCount: number
+    customersCount: number
+    usage?: UsageTrendItem[]
+  }
+  message?: string
+}
+
+export type CustomerUsageItem = {
+  customerId: string
+  name: string
+  totalPages: number
+  totalColorPages: number
+  totalBwPages: number
+  totalPagesA4: number
+  devicesCount: number
+}
+
+export type CustomersUsageResponse = {
+  success: boolean
+  data?: {
+    period: string
+    customers: CustomerUsageItem[]
+    usage?: UsageTrendItem[]
+  }
+  message?: string
+}
+
+export type DeviceUsageItem = {
+  deviceId: string
+  serialNumber: string
+  model: string
+  totalPages: number
+  totalColorPages: number
+  totalBwPages: number
+  totalPagesA4: number
+}
+
+export type CustomerDetailUsageResponse = {
+  success: boolean
+  data?: {
+    period: string
+    customer: {
+      customerId: string
+      name: string
+      totalPages: number
+      totalColorPages: number
+      totalBwPages: number
+      totalPagesA4: number
+    }
+    devices: DeviceUsageItem[]
+    usage?: UsageTrendItem[]
+  }
+  message?: string
+}
+
+export type DeviceUsageResponse = {
+  success: boolean
+  data?: {
+    device: {
+      deviceId: string
+      serialNumber: string
+      model: string
+    }
+    usage: UsageTrendItem[]
+  }
+  message?: string
+}
+
+// ============ Cost Analytics Types ============
+
+export type DeviceCostItem = {
+  deviceId: string
+  serialNumber: string
+  model: string
+  cogsConsumable: number
+  cogsRepair: number
+  totalCogs: number
+  // Currency conversion fields - ⭐ MỚI
+  cogsConsumableConverted?: number
+  cogsRepairConverted?: number
+  totalCogsConverted?: number
+}
+
+export type CustomerCostResponse = {
+  success: boolean
+  data?: {
+    period: string
+    customer: {
+      customerId: string
+      name: string
+      cogsConsumable: number
+      cogsRepair: number
+      totalCogs: number
+      // Currency conversion fields - ⭐ MỚI
+      cogsConsumableConverted?: number
+      cogsRepairConverted?: number
+      totalCogsConverted?: number
+    }
+    devices: DeviceCostItem[]
+    baseCurrency?: CurrencyDataDto | null // ⭐ MỚI
+  }
+  message?: string
+}
+
+export type DeviceCostTrendItem = {
+  month: string
+  cogsConsumable: number
+  cogsRepair: number
+  totalCogs: number
+  // Currency conversion fields - ⭐ MỚI
+  cogsConsumableConverted?: number
+  cogsRepairConverted?: number
+  totalCogsConverted?: number
+}
+
+export type DeviceCostResponse = {
+  success: boolean
+  data?: {
+    device: {
+      deviceId: string
+      serialNumber: string
+      model: string
+    }
+    cost: DeviceCostTrendItem[]
+  }
+  message?: string
+}
+
 // ============ Service ============
 
 export const reportsAnalyticsService = {
@@ -165,6 +351,7 @@ export const reportsAnalyticsService = {
     from?: string
     to?: string
     year?: string
+    baseCurrencyId?: string // ⭐ MỚI
   }): Promise<EnterpriseProfitResponse> {
     try {
       const resp = await getWithDedupe<EnterpriseProfitResponse>(
@@ -209,6 +396,7 @@ export const reportsAnalyticsService = {
     from?: string
     to?: string
     year?: string
+    baseCurrencyId?: string // ⭐ MỚI
   }): Promise<CustomersProfitResponse> {
     try {
       const resp = await getWithDedupe<CustomersProfitResponse>(
@@ -244,7 +432,13 @@ export const reportsAnalyticsService = {
    */
   async getCustomerDetailProfit(
     customerId: string,
-    params: { period?: string; from?: string; to?: string; year?: string }
+    params: {
+      period?: string
+      from?: string
+      to?: string
+      year?: string
+      baseCurrencyId?: string // ⭐ MỚI
+    }
   ): Promise<CustomerDetailProfitResponse> {
     try {
       // Allow 404 responses to be handled gracefully by the client instead of
@@ -295,7 +489,13 @@ export const reportsAnalyticsService = {
    */
   async getDeviceProfitability(
     deviceId: string,
-    params: { period?: string; from?: string; to?: string; year?: string }
+    params: {
+      period?: string
+      from?: string
+      to?: string
+      year?: string
+      baseCurrencyId?: string // ⭐ MỚI
+    }
   ): Promise<DeviceProfitabilityResponse> {
     try {
       const resp = await getWithDedupe<DeviceProfitabilityResponse>(
@@ -362,6 +562,245 @@ export const reportsAnalyticsService = {
         success: false,
         message,
       }
+    }
+  },
+
+  /**
+   * Get enterprise-wide usage analytics for a period
+   * GET /reports/analytics/usage/enterprise?period=2025-01
+   */
+  async getEnterpriseUsage(params: {
+    period?: string
+    from?: string
+    to?: string
+    year?: string
+  }): Promise<EnterpriseUsageResponse> {
+    try {
+      const resp = await getWithDedupe<EnterpriseUsageResponse>(
+        '/api/reports/analytics/usage/enterprise',
+        {
+          params,
+          validateStatus: (status: number) => (status >= 200 && status < 300) || status === 404,
+        }
+      )
+      if (resp.status === 404) {
+        const data = resp.data as unknown
+        return {
+          success: false,
+          message: extractErrorMessage(data) || 'No data found for enterprise usage in this period',
+        }
+      }
+      return resp.data
+    } catch (err) {
+      const axiosErr = err as AxiosError | undefined
+      const message =
+        extractErrorMessage(axiosErr?.response?.data) ?? axiosErr?.message ?? 'No data found'
+      return { success: false, message }
+    }
+  },
+
+  /**
+   * Get usage analytics by customer for a period
+   * GET /reports/analytics/usage/customers?period=2025-01
+   */
+  async getCustomersUsage(params: {
+    period?: string
+    from?: string
+    to?: string
+    year?: string
+  }): Promise<CustomersUsageResponse> {
+    try {
+      const resp = await getWithDedupe<CustomersUsageResponse>(
+        '/api/reports/analytics/usage/customers',
+        {
+          params,
+          validateStatus: (status: number) => (status >= 200 && status < 300) || status === 404,
+        }
+      )
+      if (resp.status === 404) {
+        const data = resp.data as unknown
+        return {
+          success: false,
+          message: extractErrorMessage(data) || 'No data found for customers usage in this period',
+        }
+      }
+      return resp.data
+    } catch (err) {
+      const axiosErr = err as AxiosError | undefined
+      const message =
+        extractErrorMessage(axiosErr?.response?.data) ?? axiosErr?.message ?? 'No data found'
+      return { success: false, message }
+    }
+  },
+
+  /**
+   * Get usage analytics for a specific customer with device breakdown
+   * GET /reports/analytics/usage/customers/:customerId?period=2025-01
+   */
+  async getCustomerDetailUsage(
+    customerId: string,
+    params: { period?: string; from?: string; to?: string; year?: string }
+  ): Promise<CustomerDetailUsageResponse> {
+    try {
+      const resp = await getWithDedupe<CustomerDetailUsageResponse>(
+        `/api/reports/analytics/usage/customers/${customerId}`,
+        {
+          params,
+          validateStatus: (status: number) => (status >= 200 && status < 300) || status === 404,
+        }
+      )
+      if (resp.status === 404) {
+        const data = resp.data as unknown
+        return {
+          success: false,
+          message: extractErrorMessage(data) || 'No data found for customer usage in this period',
+        }
+      }
+      return resp.data
+    } catch (err) {
+      const axiosErr = err as AxiosError | undefined
+      const message =
+        extractErrorMessage(axiosErr?.response?.data) ?? axiosErr?.message ?? 'No data found'
+      return { success: false, message }
+    }
+  },
+
+  /**
+   * Get usage time series for a specific device
+   * GET /reports/analytics/usage/devices/:deviceId?from=2024-01&to=2025-01
+   */
+  async getDeviceUsage(
+    deviceId: string,
+    params: { period?: string; from?: string; to?: string; year?: string }
+  ): Promise<DeviceUsageResponse> {
+    try {
+      const resp = await getWithDedupe<DeviceUsageResponse>(
+        `/api/reports/analytics/usage/devices/${deviceId}`,
+        {
+          params,
+          validateStatus: (status: number) => (status >= 200 && status < 300) || status === 404,
+        }
+      )
+      if (resp.status === 404) {
+        const data = resp.data as unknown
+        return {
+          success: false,
+          message: extractErrorMessage(data) || 'No data found for device usage in this period',
+        }
+      }
+      return resp.data
+    } catch (err) {
+      const axiosErr = err as AxiosError | undefined
+      const message =
+        extractErrorMessage(axiosErr?.response?.data) ?? axiosErr?.message ?? 'No data found'
+      return { success: false, message }
+    }
+  },
+
+  /**
+   * Get customer usage detail with device breakdown (Customer only)
+   * GET /reports/analytics/usage/customer?period=2025-01
+   */
+  async getCustomerUsage(params: {
+    period?: string
+    from?: string
+    to?: string
+    year?: string
+  }): Promise<CustomerDetailUsageResponse> {
+    try {
+      const resp = await getWithDedupe<CustomerDetailUsageResponse>(
+        '/api/reports/analytics/usage/customer',
+        {
+          params,
+          validateStatus: (status: number) => (status >= 200 && status < 300) || status === 404,
+        }
+      )
+      if (resp.status === 404) {
+        const data = resp.data as unknown
+        return {
+          success: false,
+          message: extractErrorMessage(data) || 'No data found for customer usage in this period',
+        }
+      }
+      return resp.data
+    } catch (err) {
+      const axiosErr = err as AxiosError | undefined
+      const message =
+        extractErrorMessage(axiosErr?.response?.data) ?? axiosErr?.message ?? 'No data found'
+      return { success: false, message }
+    }
+  },
+
+  /**
+   * Get customer cost detail with device breakdown (COGS only) - Customer only
+   * GET /reports/analytics/cost/customer?period=2025-01
+   */
+  async getCustomerCost(params: {
+    period?: string
+    from?: string
+    to?: string
+    year?: string
+    baseCurrencyId?: string // ⭐ MỚI
+  }): Promise<CustomerCostResponse> {
+    try {
+      const resp = await getWithDedupe<CustomerCostResponse>(
+        '/api/reports/analytics/cost/customer',
+        {
+          params,
+          validateStatus: (status: number) => (status >= 200 && status < 300) || status === 404,
+        }
+      )
+      if (resp.status === 404) {
+        const data = resp.data as unknown
+        return {
+          success: false,
+          message: extractErrorMessage(data) || 'No data found for customer cost in this period',
+        }
+      }
+      return resp.data
+    } catch (err) {
+      const axiosErr = err as AxiosError | undefined
+      const message =
+        extractErrorMessage(axiosErr?.response?.data) ?? axiosErr?.message ?? 'No data found'
+      return { success: false, message }
+    }
+  },
+
+  /**
+   * Get device-level cost time series (COGS only)
+   * GET /reports/analytics/cost/devices/:deviceId?from=2024-01&to=2025-01
+   */
+  async getDeviceCost(
+    deviceId: string,
+    params: {
+      period?: string
+      from?: string
+      to?: string
+      year?: string
+      baseCurrencyId?: string // ⭐ MỚI
+    }
+  ): Promise<DeviceCostResponse> {
+    try {
+      const resp = await getWithDedupe<DeviceCostResponse>(
+        `/api/reports/analytics/cost/devices/${deviceId}`,
+        {
+          params,
+          validateStatus: (status: number) => (status >= 200 && status < 300) || status === 404,
+        }
+      )
+      if (resp.status === 404) {
+        const data = resp.data as unknown
+        return {
+          success: false,
+          message: extractErrorMessage(data) || 'No data found for device cost in this period',
+        }
+      }
+      return resp.data
+    } catch (err) {
+      const axiosErr = err as AxiosError | undefined
+      const message =
+        extractErrorMessage(axiosErr?.response?.data) ?? axiosErr?.message ?? 'No data found'
+      return { success: false, message }
     }
   },
 }

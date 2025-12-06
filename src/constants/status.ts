@@ -101,5 +101,19 @@ export const PRIORITY_DISPLAY: Record<Priority, { label: string; color: string }
   [Priority.URGENT]: { label: 'Khẩn cấp', color: 'red' },
 }
 
+// Unified Vietnamese display labels & color tokens for purchase request statuses
+export const PURCHASE_REQUEST_STATUS_DISPLAY: Record<
+  PurchaseRequestStatus,
+  { label: string; color: string }
+> = {
+  [PurchaseRequestStatus.PENDING]: { label: 'Chờ duyệt', color: 'amber' },
+  [PurchaseRequestStatus.APPROVED]: { label: 'Đã duyệt', color: 'green' },
+  [PurchaseRequestStatus.ORDERED]: { label: 'Đã đặt hàng', color: 'blue' },
+  [PurchaseRequestStatus.IN_TRANSIT]: { label: 'Đang vận chuyển', color: 'purple' },
+  [PurchaseRequestStatus.RECEIVED]: { label: 'Đã nhận hàng', color: 'green' },
+  [PurchaseRequestStatus.CANCELLED]: { label: 'Đã hủy', color: 'red' },
+}
+
 export type ServiceRequestStatusValue = ServiceRequestStatus
+export type PurchaseRequestStatusValue = PurchaseRequestStatus
 export type PriorityValue = Priority

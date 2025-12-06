@@ -1,4 +1,5 @@
 import React from 'react'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Search, X } from 'lucide-react'
@@ -18,6 +19,7 @@ export default function SearchInput({
   className = '',
   onKeyDown,
 }: Props) {
+  const { t } = useLocale()
   return (
     <div className={`relative ${className}`}>
       <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -35,7 +37,7 @@ export default function SearchInput({
             variant="ghost"
             size="icon"
             onClick={() => onValueChange('')}
-            aria-label="Clear search"
+            aria-label={t('aria.clear_search')}
           >
             <X className="h-4 w-4 text-slate-500" />
           </Button>

@@ -45,15 +45,20 @@ export default function ContractDevicesSection({ contractId, attachedDevices }: 
     )
   }
 
-  const formatPrice = (value?: number | null) => {
+  const formatPrice = (
+    value?: number | null,
+    currency?: { symbol?: string; code?: string } | null
+  ) => {
     if (value === undefined || value === null) return '—'
     if (typeof value !== 'number') return String(value)
+    const currencySymbol = currency?.symbol || (currency?.code ? currency.code : '$')
     // keep up to 5 decimal places, then remove unnecessary trailing zeros
     // e.g. 0.50000 -> "0.5", 2.00000 -> "2", 1.234567 -> "1.23457"
-    return value
+    const formatted = value
       .toFixed(5)
       .replace(/(?:\.0+|(?<=\.[0-9]*?)0+)$/, '')
       .replace(/\.$/, '')
+    return `${currencySymbol} ${formatted}`
   }
 
   return (

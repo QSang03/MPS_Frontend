@@ -463,7 +463,9 @@ function UserPurchaseRequestsTableContent({
             row.original.items?.reduce((sum, item) => sum + (item.totalPrice ?? 0), 0) ??
             row.original.estimatedCost ??
             0
-          return <span className="font-semibold">{formatCurrency(total)}</span>
+          return (
+            <span className="font-semibold">{formatCurrency(total, row.original.currency)}</span>
+          )
         },
       },
       {

@@ -40,22 +40,28 @@ import { CustomerSelect } from '@/components/shared/CustomerSelect'
 import { formatCurrency, formatDateTime, formatRelativeTime } from '@/lib/utils/formatters'
 import { cn } from '@/lib/utils/cn'
 import { purchaseRequestsClientService } from '@/lib/api/services/purchase-requests-client.service'
-import { Priority, PurchaseRequestStatus } from '@/constants/status'
+import {
+  Priority,
+  PurchaseRequestStatus,
+  PURCHASE_REQUEST_STATUS_DISPLAY,
+} from '@/constants/status'
 import type { PurchaseRequest } from '@/types/models/purchase-request'
 import type { Customer } from '@/types/models/customer'
 import { usePurchaseRequestsQuery } from '@/lib/hooks/queries/usePurchaseRequestsQuery'
+import { useLocale } from '@/components/providers/LocaleProvider'
+import { getAllowedPurchaseTransitions } from '@/lib/utils/status-flow'
 
 type PurchaseRequestRow = PurchaseRequest & {
   customer?: Customer
 }
 
-const statusOptions = [
-  { label: 'Chờ duyệt', value: PurchaseRequestStatus.PENDING },
-  { label: 'Đã duyệt', value: PurchaseRequestStatus.APPROVED },
-  { label: 'Đã đặt hàng', value: PurchaseRequestStatus.ORDERED },
-  { label: 'Đang vận chuyển', value: PurchaseRequestStatus.IN_TRANSIT },
-  { label: 'Đã nhận', value: PurchaseRequestStatus.RECEIVED },
-  { label: 'Đã hủy', value: PurchaseRequestStatus.CANCELLED },
+const getStatusOptions = (t: (key: string) => string) => [
+  { label: t('requests.purchase.status.pending'), value: PurchaseRequestStatus.PENDING },
+  { label: t('requests.purchase.status.approved'), value: PurchaseRequestStatus.APPROVED },
+  { label: t('requests.purchase.status.ordered'), value: PurchaseRequestStatus.ORDERED },
+  { label: t('requests.purchase.status.in_transit'), value: PurchaseRequestStatus.IN_TRANSIT },
+  { label: t('requests.purchase.status.received'), value: PurchaseRequestStatus.RECEIVED },
+  { label: t('requests.purchase.status.cancelled'), value: PurchaseRequestStatus.CANCELLED },
 ]
 
 const statusBadgeMap: Record<PurchaseRequestStatus, string> = {
@@ -80,19 +86,42 @@ type TimelineStep = {
   by?: string
 }
 
-const buildTimelineSteps = (request: PurchaseRequestRow): TimelineStep[] =>
+const buildTimelineSteps = (
+  request: PurchaseRequestRow,
+  t: (key: string) => string
+): TimelineStep[] =>
   (
     [
-      { label: 'Tạo yêu cầu', time: request.createdAt, by: request.requestedBy },
       {
-        label: 'Đã duyệt',
+        label: t('requests.purchase.timeline.created'),
+        time: request.createdAt,
+        by: request.requestedBy,
+      },
+      {
+        label: t('requests.purchase.timeline.approved'),
         time: request.approvedAt,
         by: request.approvedByName ?? request.approvedBy,
       },
-      { label: 'Đặt hàng', time: request.orderedAt, by: request.orderedBy },
-      { label: 'Đã nhận', time: request.receivedAt, by: request.receivedBy },
-      { label: 'Hủy', time: request.cancelledAt, by: request.cancelledBy },
-      { label: 'Khách hủy', time: request.customerCancelledAt, by: request.customerCancelledBy },
+      {
+        label: t('requests.purchase.timeline.ordered'),
+        time: request.orderedAt,
+        by: request.orderedBy,
+      },
+      {
+        label: t('requests.purchase.timeline.received'),
+        time: request.receivedAt,
+        by: request.receivedBy,
+      },
+      {
+        label: t('requests.purchase.timeline.cancelled'),
+        time: request.cancelledAt,
+        by: request.cancelledBy,
+      },
+      {
+        label: t('requests.purchase.timeline.customer_cancelled'),
+        time: request.customerCancelledAt,
+        by: request.customerCancelledBy,
+      },
     ] as Array<Omit<TimelineStep, 'time'> & { time?: string }>
   ).filter((step): step is TimelineStep => Boolean(step.time))
 
@@ -106,6 +135,7 @@ function useDebouncedValue<T>(value: T, delay = 400) {
 }
 
 export function PurchaseRequestsTable() {
+  const { t } = useLocale()
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 })
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<PurchaseRequestStatus | 'all'>('all')
@@ -123,6 +153,7 @@ export function PurchaseRequestsTable() {
   })
 
   const debouncedSearch = useDebouncedValue(search, 400)
+  const statusOptions = getStatusOptions(t)
 
   const handleResetFilters = () => {
     setSearch('')
@@ -133,7 +164,7 @@ export function PurchaseRequestsTable() {
   const activeFilters: Array<{ label: string; value: string; onRemove: () => void }> = []
   if (search) {
     activeFilters.push({
-      label: `Tìm kiếm: "${search}"`,
+      label: `${t('filters.search')}: "${search}"`,
       value: search,
       onRemove: () => setSearch(''),
     })
@@ -142,14 +173,14 @@ export function PurchaseRequestsTable() {
     const statusLabel =
       statusOptions.find((opt) => opt.value === statusFilter)?.label || statusFilter
     activeFilters.push({
-      label: `Trạng thái: ${statusLabel}`,
+      label: `${t('filters.status_label')}: ${statusLabel}`,
       value: statusFilter,
       onRemove: () => setStatusFilter('all'),
     })
   }
   if (customerFilter) {
     activeFilters.push({
-      label: `Khách hàng: ${customerFilter}`,
+      label: `${t('customer')}: ${customerFilter}`,
       value: customerFilter,
       onRemove: () => setCustomerFilter(''),
     })
@@ -160,25 +191,25 @@ export function PurchaseRequestsTable() {
       <StatsCards
         cards={[
           {
-            label: 'Tổng yêu cầu',
+            label: t('requests.purchase.stats.total'),
             value: summary.total,
             icon: <ListOrdered className="h-6 w-6" />,
             borderColor: 'blue',
           },
           {
-            label: 'Chờ duyệt',
+            label: t('requests.purchase.stats.pending'),
             value: summary.pending,
             icon: <ListOrdered className="h-6 w-6" />,
             borderColor: 'amber',
           },
           {
-            label: 'Đặt hàng',
+            label: t('requests.purchase.stats.ordered'),
             value: summary.ordered,
             icon: <ListOrdered className="h-6 w-6" />,
             borderColor: 'blue',
           },
           {
-            label: 'Đã nhận',
+            label: t('requests.purchase.stats.received'),
             value: summary.received,
             icon: <ListOrdered className="h-6 w-6" />,
             borderColor: 'green',
@@ -187,35 +218,35 @@ export function PurchaseRequestsTable() {
       />
 
       <FilterSection
-        title="Bộ lọc & Tìm kiếm"
+        title={t('requests.purchase.filter.title')}
         onReset={handleResetFilters}
         activeFilters={activeFilters}
         columnVisibilityMenu={columnVisibilityMenu}
       >
         <div className="grid gap-4 md:grid-cols-3">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Tìm kiếm</label>
+            <label className="text-sm font-medium">{t('requests.purchase.filter.search')}</label>
             <Input
-              placeholder="Tìm kiếm tiêu đề, mô tả..."
+              placeholder={t('requests.purchase.filter.search_placeholder')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium">Trạng thái</label>
+            <label className="text-sm font-medium">{t('requests.purchase.filter.status')}</label>
             <Select
               value={statusFilter}
               onValueChange={(value) => setStatusFilter(value as PurchaseRequestStatus | 'all')}
             >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Tất cả trạng thái">
+                <SelectValue placeholder={t('requests.purchase.filter.status_all')}>
                   {statusFilter === 'all'
-                    ? 'Tất cả trạng thái'
+                    ? t('requests.purchase.filter.status_all')
                     : statusOptions.find((opt) => opt.value === statusFilter)?.label}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                <SelectItem value="all">{t('requests.purchase.filter.status_all')}</SelectItem>
                 {statusOptions.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
@@ -225,11 +256,11 @@ export function PurchaseRequestsTable() {
             </Select>
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium">Khách hàng</label>
+            <label className="text-sm font-medium">{t('requests.purchase.filter.customer')}</label>
             <CustomerSelect
               value={customerFilter}
               onChange={setCustomerFilter}
-              placeholder="Lọc theo khách hàng"
+              placeholder={t('requests.purchase.filter.customer_placeholder')}
             />
           </div>
         </div>
@@ -283,10 +314,12 @@ function PurchaseRequestsTableContent({
   onStatsChange,
   renderColumnVisibilityMenu,
 }: PurchaseRequestsTableContentProps) {
+  const { t } = useLocale()
   const queryClient = useQueryClient()
   const [sortVersion, setSortVersion] = useState(0)
   const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+  const statusOptions = getStatusOptions(t)
 
   const queryParams = useMemo(
     () => ({
@@ -321,12 +354,13 @@ function PurchaseRequestsTableContent({
     mutationFn: ({ id, status }: { id: string; status: PurchaseRequestStatus }) =>
       purchaseRequestsClientService.updateStatus(id, { status }),
     onSuccess: () => {
-      toast.success('Cập nhật trạng thái mua hàng thành công')
+      toast.success(t('requests.purchase.update_status.success'))
       queryClient.invalidateQueries({ queryKey: ['purchase-requests', queryParams] })
       queryClient.invalidateQueries({ queryKey: ['system-requests-purchase'] })
     },
     onError: (error: unknown) => {
-      const message = error instanceof Error ? error.message : 'Không thể cập nhật trạng thái'
+      const message =
+        error instanceof Error ? error.message : t('requests.purchase.update_status.error')
       toast.error(message)
     },
     onSettled: () => setStatusUpdatingId(null),
@@ -344,7 +378,7 @@ function PurchaseRequestsTableContent({
     () => [
       {
         id: 'index',
-        header: 'STT',
+        header: t('table.index'),
         cell: ({ row, table }) => {
           const index = table.getSortedRowModel().rows.findIndex((r) => r.id === row.id)
           return (
@@ -360,7 +394,7 @@ function PurchaseRequestsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <Hash className="h-4 w-4 text-gray-500" />
-            Mã yêu cầu
+            {t('requests.purchase.table.request_code')}
           </div>
         ),
         cell: ({ row }) => (
@@ -378,7 +412,7 @@ function PurchaseRequestsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <Heading className="h-4 w-4 text-gray-500" />
-            Tiêu đề
+            {t('requests.purchase.table.title')}
           </div>
         ),
         cell: ({ row }) => (
@@ -398,7 +432,7 @@ function PurchaseRequestsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <Building2 className="h-4 w-4 text-gray-500" />
-            Khách hàng
+            {t('requests.purchase.table.customer')}
           </div>
         ),
         enableSorting: true,
@@ -414,7 +448,7 @@ function PurchaseRequestsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <Tag className="h-4 w-4 text-gray-500" />
-            Người phụ trách
+            {t('requests.purchase.table.assigned_to')}
           </div>
         ),
         cell: ({ row }) => (
@@ -430,7 +464,7 @@ function PurchaseRequestsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <Tag className="h-4 w-4 text-gray-500" />
-            Ưu tiên
+            {t('requests.purchase.table.priority')}
           </div>
         ),
         cell: ({ row }) => (
@@ -444,13 +478,17 @@ function PurchaseRequestsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <TrendingUp className="h-4 w-4 text-gray-500" />
-            Tiến trình
+            {t('requests.purchase.table.progress')}
           </div>
         ),
         cell: ({ row }) => {
-          const steps = buildTimelineSteps(row.original)
+          const steps = buildTimelineSteps(row.original, t)
           if (steps.length === 0) {
-            return <span className="text-muted-foreground text-xs">Chờ xử lý</span>
+            return (
+              <span className="text-muted-foreground text-xs">
+                {t('requests.purchase.timeline.waiting')}
+              </span>
+            )
           }
           const latest = steps[steps.length - 1]!
           return (
@@ -483,7 +521,7 @@ function PurchaseRequestsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <DollarSign className="h-4 w-4 text-gray-500" />
-            Tổng dự toán
+            {t('requests.purchase.table.total_amount')}
           </div>
         ),
         cell: ({ row }) => {
@@ -492,7 +530,9 @@ function PurchaseRequestsTableContent({
             row.original.items?.reduce((sum, item) => sum + (item.totalPrice ?? 0), 0) ??
             row.original.estimatedCost ??
             0
-          return <span className="font-semibold">{formatCurrency(total)}</span>
+          return (
+            <span className="font-semibold">{formatCurrency(total, row.original.currency)}</span>
+          )
         },
       },
       {
@@ -500,7 +540,7 @@ function PurchaseRequestsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <Package className="h-4 w-4 text-gray-500" />
-            Chi tiết vật tư
+            {t('requests.purchase.table.items')}
           </div>
         ),
         cell: ({ row }) => {
@@ -513,23 +553,31 @@ function PurchaseRequestsTableContent({
               <PopoverTrigger asChild>
                 <Button variant="outline" size="sm" className="flex items-center gap-2">
                   <ListOrdered className="h-4 w-4" />
-                  {items.length} mục
+                  {t('requests.purchase.table.items_count', { count: items.length })}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-80 space-y-2">
-                <p className="text-sm font-semibold">Danh sách vật tư</p>
+                <p className="text-sm font-semibold">{t('requests.purchase.table.items_list')}</p>
                 <div className="max-h-60 space-y-3 overflow-y-auto">
                   {items.map((item) => (
                     <div key={item.id} className="rounded-md border p-2">
                       <div className="flex items-center justify-between text-sm font-medium">
-                        <span>Số lượng: {item.quantity}</span>
+                        <span>
+                          {t('requests.purchase.table.quantity', { quantity: item.quantity })}
+                        </span>
                         {item.totalPrice !== undefined && (
                           <span>{formatCurrency(item.totalPrice)}</span>
                         )}
                       </div>
                       <div className="text-muted-foreground mt-1 space-y-1 text-xs">
-                        <p>Đơn giá: {item.unitPrice ? formatCurrency(item.unitPrice) : '—'}</p>
-                        {item.notes && <p>Ghi chú: {item.notes}</p>}
+                        <p>
+                          {t('requests.purchase.table.unit_price', {
+                            price: item.unitPrice ? formatCurrency(item.unitPrice) : '—',
+                          })}
+                        </p>
+                        {item.notes && (
+                          <p>{t('requests.purchase.table.notes', { notes: item.notes })}</p>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -544,7 +592,7 @@ function PurchaseRequestsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <CalendarCheck className="h-4 w-4 text-gray-500" />
-            Đã duyệt
+            {t('requests.purchase.table.approved')}
           </div>
         ),
         cell: ({ row }) => (
@@ -563,43 +611,86 @@ function PurchaseRequestsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <CheckCircle2 className="h-4 w-4 text-gray-500" />
-            Trạng thái
+            {t('requests.purchase.table.status')}
           </div>
         ),
-        cell: ({ row }) => (
-          <Select
-            value={row.original.status}
-            onValueChange={(value) =>
-              handleStatusChange(row.original.id, value as PurchaseRequestStatus)
-            }
-            disabled={statusUpdatingId === row.original.id && mutation.isPending}
-          >
-            <SelectTrigger className="h-9 w-full justify-between">
-              <SelectValue placeholder="Chọn trạng thái">
-                <Badge className={cn('text-xs', statusBadgeMap[row.original.status])}>
-                  {row.original.status}
-                </Badge>
-              </SelectValue>
-              {statusUpdatingId === row.original.id && mutation.isPending && (
-                <Loader2 className="text-muted-foreground h-4 w-4 animate-spin" />
-              )}
-            </SelectTrigger>
-            <SelectContent>
-              {statusOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        ),
+        cell: ({ row }) => {
+          const allowed = getAllowedPurchaseTransitions(row.original.status)
+          const isUpdating = statusUpdatingId === row.original.id && mutation.isPending
+
+          if (allowed.length === 0) {
+            return (
+              <Badge className={cn('text-xs', statusBadgeMap[row.original.status])}>
+                {statusOptions.find((opt) => opt.value === row.original.status)?.label ||
+                  row.original.status}
+              </Badge>
+            )
+          }
+
+          return (
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={cn(
+                    'h-9 min-w-[120px] text-xs',
+                    isUpdating && 'cursor-not-allowed opacity-50'
+                  )}
+                  disabled={isUpdating}
+                >
+                  {isUpdating ? (
+                    <>
+                      <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                      <span>Đang cập nhật...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Badge className={cn('text-xs', statusBadgeMap[row.original.status])}>
+                        {statusOptions.find((opt) => opt.value === row.original.status)?.label ||
+                          row.original.status}
+                      </Badge>
+                      <span className="ml-1 text-xs">▼</span>
+                    </>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-56 p-2" align="start">
+                <div className="space-y-1">
+                  <div className="px-2 py-1.5 text-xs font-semibold text-gray-700">
+                    Chuyển trạng thái
+                  </div>
+                  <div className="grid grid-cols-1 gap-1">
+                    {allowed.map((status) => {
+                      const disp = PURCHASE_REQUEST_STATUS_DISPLAY[status]
+                      return (
+                        <Button
+                          key={status}
+                          variant="ghost"
+                          size="sm"
+                          className="h-auto justify-start py-2 text-xs"
+                          onClick={() => handleStatusChange(row.original.id, status)}
+                        >
+                          <div className="flex flex-col text-left">
+                            <span className="font-medium">→ {disp.label}</span>
+                            <span className="text-muted-foreground text-[10px]">{status}</span>
+                          </div>
+                        </Button>
+                      )
+                    })}
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+          )
+        },
       },
       {
         accessorKey: 'createdAt',
         header: () => (
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-gray-500" />
-            Ngày tạo
+            {t('requests.purchase.table.created_at')}
           </div>
         ),
         cell: ({ row }) => (
@@ -618,6 +709,8 @@ function PurchaseRequestsTableContent({
       statusUpdatingId,
       pagination.pageIndex,
       pagination.pageSize,
+      statusOptions,
+      t,
     ]
   )
 
@@ -651,9 +744,13 @@ function PurchaseRequestsTableContent({
             <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200">
               <ListOrdered className="h-12 w-12 opacity-20" />
             </div>
-            <h3 className="mb-2 text-xl font-bold text-gray-700">Không có yêu cầu mua hàng</h3>
+            <h3 className="mb-2 text-xl font-bold text-gray-700">
+              {t('requests.purchase.empty.title')}
+            </h3>
             <p className="mb-6 text-gray-500">
-              {searchInput ? 'Không tìm thấy yêu cầu phù hợp' : 'Hãy tạo yêu cầu mua hàng đầu tiên'}
+              {searchInput
+                ? t('requests.purchase.empty.search')
+                : t('requests.purchase.empty.create_first')}
             </p>
           </div>
         ) : undefined

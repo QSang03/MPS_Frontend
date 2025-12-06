@@ -259,7 +259,18 @@ export function ServiceRequestDetailClient({ id }: Props) {
                   <p className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
                     Tổng chi phí
                   </p>
-                  <p className="text-xl font-bold text-blue-600">{formatCurrency(totalCosts)}</p>
+                  <p className="text-xl font-bold text-blue-600">
+                    {costsQuery.data?.data && costsQuery.data.data.length > 0
+                      ? costsQuery.data.data
+                          .map((cost) =>
+                            formatCurrency(
+                              cost.totalAmount,
+                              cost.currency?.code || cost.currency?.symbol || 'USD'
+                            )
+                          )
+                          .join(' + ')
+                      : formatCurrency(totalCosts)}
+                  </p>
                 </div>
               </div>
 
@@ -319,7 +330,10 @@ export function ServiceRequestDetailClient({ id }: Props) {
                               {item.note || '—'}
                             </TableCell>
                             <TableCell className="text-right font-medium tabular-nums">
-                              {formatCurrency(item.amount)}
+                              {formatCurrency(
+                                item.amount,
+                                cost.currency?.code || cost.currency?.symbol || 'USD'
+                              )}
                             </TableCell>
                           </TableRow>
                         ))
@@ -329,7 +343,16 @@ export function ServiceRequestDetailClient({ id }: Props) {
                           Tổng cộng
                         </TableCell>
                         <TableCell className="text-right text-emerald-600">
-                          {formatCurrency(totalCosts)}
+                          {costsQuery.data?.data && costsQuery.data.data.length > 0
+                            ? costsQuery.data.data
+                                .map((cost) =>
+                                  formatCurrency(
+                                    cost.totalAmount,
+                                    cost.currency?.code || cost.currency?.symbol || 'USD'
+                                  )
+                                )
+                                .join(' + ')
+                            : formatCurrency(totalCosts)}
                         </TableCell>
                       </TableRow>
                     </TableBody>

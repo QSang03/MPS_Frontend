@@ -59,12 +59,27 @@ export function usePolicyCatalogsCache() {
         resourceTypes,
         fetchedAt: Date.now(),
       }
-      globalCache = newCache
-      // bump local state so consumers re-render
-      setVersion((v) => v + 1)
+      // Only update globalCache and bump version when there is a real change to avoid cascading renders
+      const shouldUpdate = !globalCache || globalCache.fetchedAt < newCache.fetchedAt
+      let timer: ReturnType<typeof setTimeout> | null = null
+      if (shouldUpdate) {
+        globalCache = newCache
+        // schedule setState to avoid sync setState in effect (avoids cascading renders)
+        timer = setTimeout(() => setVersion((v) => v + 1), 0)
+      }
+      return () => {
+        if (timer) clearTimeout(timer)
+      }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [operatorsLoading, conditionsLoading, resourceTypesLoading])
+    return undefined
+  }, [
+    operatorsLoading,
+    conditionsLoading,
+    resourceTypesLoading,
+    policyOperators,
+    policyConditions,
+    resourceTypes,
+  ])
 
   // Filter operators by dataType from cache
   const getOperatorsByDataType = useCallback(

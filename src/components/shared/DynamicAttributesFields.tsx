@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { CustomerMultiSelect } from '@/components/shared/CustomerMultiSelect'
 import type { AttributeSchema } from '@/lib/hooks/useRoleAttributeSchema'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 interface DynamicAttributeInputProps {
   fieldName: string
@@ -24,6 +25,7 @@ export function DynamicAttributeInput({
   error,
   disabled,
 }: DynamicAttributeInputProps) {
+  const { t } = useLocale()
   const label = schema.description || fieldName
   const isRequired = schema.required
 
@@ -35,7 +37,7 @@ export function DynamicAttributeInput({
             value={(value as string) || ''}
             onChange={(e) => onChange(e.target.value)}
             disabled={disabled}
-            placeholder={`Nhập ${label.toLowerCase()}...`}
+            placeholder={t('placeholder.enter_field', { field: label.toLowerCase() })}
             className={error ? 'border-destructive' : ''}
           />
         )
@@ -47,7 +49,7 @@ export function DynamicAttributeInput({
             value={(value as number) ?? ''}
             onChange={(e) => onChange(e.target.value ? Number(e.target.value) : undefined)}
             disabled={disabled}
-            placeholder={`Nhập ${label.toLowerCase()}...`}
+            placeholder={t('placeholder.enter_field', { field: label.toLowerCase() })}
             min={schema.min}
             max={schema.max}
             className={error ? 'border-destructive' : ''}
@@ -74,7 +76,7 @@ export function DynamicAttributeInput({
               value={(value as string[]) || []}
               onChange={(ids) => onChange(ids)}
               disabled={disabled}
-              placeholder={`Chọn ${label.toLowerCase()}...`}
+              placeholder={t('placeholder.select_field', { field: label.toLowerCase() })}
               min={schema.min}
               max={schema.max}
             />
@@ -93,7 +95,7 @@ export function DynamicAttributeInput({
               onChange(arr)
             }}
             disabled={disabled}
-            placeholder={`Nhập ${label.toLowerCase()} (phân cách bằng dấu phẩy)...`}
+            placeholder={t('placeholder.enter_field_comma', { field: label.toLowerCase() })}
             className={error ? 'border-destructive' : ''}
           />
         )
@@ -113,7 +115,7 @@ export function DynamicAttributeInput({
               onChange(arr)
             }}
             disabled={disabled}
-            placeholder={`Nhập ${label.toLowerCase()} (phân cách bằng dấu phẩy)...`}
+            placeholder={t('placeholder.enter_field_comma', { field: label.toLowerCase() })}
             className={error ? 'border-destructive' : ''}
           />
         )
@@ -124,7 +126,7 @@ export function DynamicAttributeInput({
             value={String(value || '')}
             onChange={(e) => onChange(e.target.value)}
             disabled={disabled}
-            placeholder={`Nhập ${label.toLowerCase()}...`}
+            placeholder={t('placeholder.enter_field', { field: label.toLowerCase() })}
             className={error ? 'border-destructive' : ''}
           />
         )

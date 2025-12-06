@@ -30,16 +30,18 @@ export function NotificationItem({ notification, onMarkAsRead }: NotificationIte
 
   const getIsDefaultCustomer = (): boolean => {
     try {
-      const cookieFlag = Cookies.get('mps_is_default_customer')
-      if (typeof cookieFlag !== 'undefined') return cookieFlag === 'true'
+      // Prefer localStorage flag first
       if (typeof window !== 'undefined') {
         try {
           const stored = localStorage.getItem('mps_is_default_customer')
           if (stored !== null) return stored === 'true'
         } catch {
-          // ignore
+          // ignore localStorage errors
         }
       }
+      // Fallback to cookie if localStorage not available
+      const cookieFlag = Cookies.get('mps_is_default_customer')
+      if (typeof cookieFlag !== 'undefined') return cookieFlag === 'true'
     } catch (err) {
       console.error('Failed to read isDefaultCustomer flag:', err)
     }

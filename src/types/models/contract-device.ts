@@ -1,14 +1,16 @@
 import type { Device } from '@/types/models/device'
+import type { CurrencyDataDto } from './currency'
 
 export interface ContractDevice {
   id: string
   contractId: string
   deviceId: string
   monthlyRent?: number | null
-  exchangeRate?: number | null
+  currencyId?: string | null
+  currency?: CurrencyDataDto | null
+  currentExchangeRate?: number | null
   pricePerBWPage?: number | null
   pricePerColorPage?: number | null
-  pricePerPageExchangeRate?: number | null
   activeFrom?: string | null
   activeTo?: string | null
   createdAt?: string
@@ -19,6 +21,7 @@ export interface ContractDevice {
 export interface AttachDeviceItem {
   deviceId: string
   monthlyRent?: number | null
+  currencyId?: string | null
   activeFrom?: string | null
   activeTo?: string | null
 }

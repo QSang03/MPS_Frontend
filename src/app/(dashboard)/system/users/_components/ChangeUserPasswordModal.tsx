@@ -8,6 +8,7 @@ import { Key } from 'lucide-react'
 import { usersClientService } from '@/lib/api/services/users-client.service'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { toast } from 'sonner'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { useQueryClient } from '@tanstack/react-query'
 import type { User } from '@/types/users'
 // no local form usage anymore
@@ -27,6 +28,7 @@ export default function ChangeUserPasswordModal({
 }: Props) {
   const [isLoading, setIsLoading] = useState(false)
   const queryClient = useQueryClient()
+  const { t } = useLocale()
 
   const handleResetToDefault = async () => {
     if (!user) return
@@ -34,13 +36,13 @@ export default function ChangeUserPasswordModal({
     setIsLoading(true)
     try {
       await usersClientService.resetPassword(user.id)
-      toast.success('Đặt lại mật khẩu về mặc định thành công')
+      toast.success(t('user.reset_password_success'))
       queryClient.invalidateQueries({ queryKey: ['users'] })
       if (onPasswordChanged) onPasswordChanged(user.id)
       onClose()
     } catch (err) {
       console.error('Reset user password error', err)
-      const message = err instanceof Error ? err.message : 'Có lỗi khi reset mật khẩu'
+      const message = err instanceof Error ? err.message : t('user.reset_password_error')
       toast.error(message)
     } finally {
       setIsLoading(false)
@@ -53,33 +55,36 @@ export default function ChangeUserPasswordModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <SystemModalLayout title="Đổi mật khẩu người dùng" icon={Key} variant="view">
+      <SystemModalLayout title={t('user.reset_password')} icon={Key} variant="view">
         <div className="space-y-4">
           <div>
-            <div className="text-sm font-medium text-gray-700">Người dùng</div>
+            <div className="text-sm font-medium text-gray-700">{t('user')}</div>
             <div className="text-sm text-gray-500">{user?.email || '—'}</div>
           </div>
 
           <div className="rounded-lg border-2 border-amber-200 bg-amber-50 p-4">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm font-bold text-gray-800">Mật khẩu mặc định</div>
+                <div className="text-sm font-bold text-gray-800">{t('user.default_password')}</div>
                 <div className="text-sm text-gray-600">
                   {process.env.NEXT_PUBLIC_DEFAULT_USER_PASSWORD
                     ? process.env.NEXT_PUBLIC_DEFAULT_USER_PASSWORD
-                    : 'Chưa cấu hình'}
+                    : t('user.default_password_unconfigured')}
                 </div>
               </div>
               <div className="flex gap-2">
                 <ConfirmDialog
-                  title="Đặt lại mật khẩu"
-                  description={`Bạn có chắc muốn đặt lại mật khẩu người dùng "${user?.email || ''}" về mật khẩu mặc định không?`}
-                  confirmLabel="Đặt lại"
-                  cancelLabel="Hủy"
+                  title={t('user.reset_password')}
+                  description={t('user.reset_password_confirmation').replace(
+                    '{email}',
+                    user?.email || ''
+                  )}
+                  confirmLabel={t('confirm.reset')}
+                  cancelLabel={t('cancel')}
                   onConfirm={handleResetToDefault}
                   trigger={
                     <Button variant="ghost" disabled={isLoading}>
-                      Đặt lại về mặc định
+                      {t('user.reset_password_action')}
                     </Button>
                   }
                 />
@@ -89,7 +94,7 @@ export default function ChangeUserPasswordModal({
 
           <div className="flex gap-3">
             <Button type="button" variant="outline" onClick={handleClose} className="flex-1">
-              Đóng
+              {t('button.close')}
             </Button>
           </div>
         </div>

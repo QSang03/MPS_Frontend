@@ -1,7 +1,6 @@
 'use client'
-/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps */
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { Dialog } from '@/components/ui/dialog'
 import { SystemModalLayout } from '@/components/system/SystemModalLayout'
 import { Button } from '@/components/ui/button'
@@ -47,25 +46,25 @@ export function ConsumableCompatibilityModal({
   const [hideOuter, setHideOuter] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
 
-  const loadCompatibleConsumables = async () => {
+  const loadCompatibleConsumables = useCallback(async () => {
     try {
       setLoading(true)
       const compatible = await deviceModelsClientService.getCompatibleConsumables(deviceModelId)
       setCompatibleConsumables(compatible)
       setFilteredConsumables(compatible)
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error loading compatible consumables:', error)
-      toast.error('Không thể tải danh sách vật tư tương thích')
+      toast.error(String(error) || 'Không thể tải danh sách vật tư tương thích')
     } finally {
       setLoading(false)
     }
-  }
+  }, [deviceModelId])
 
   useEffect(() => {
     if (open) {
-      loadCompatibleConsumables()
+      void loadCompatibleConsumables()
     }
-  }, [open])
+  }, [open, loadCompatibleConsumables])
 
   // Filter consumables based on search term
   useEffect(() => {
@@ -87,14 +86,14 @@ export function ConsumableCompatibilityModal({
 
   const removeCompatibility = async (consumableTypeId: string) => {
     try {
-      const res: any = await deviceModelsClientService.removeCompatibleConsumable(
+      const res: unknown = await deviceModelsClientService.removeCompatibleConsumable(
         deviceModelId,
         consumableTypeId
       )
 
       // The API route may return a business-error payload with 200 status (e.g. { error: 'COMPATIBILITY_IN_USE', message: 'Cannot remove...'}).
       // If payload contains an error/message, surface it to the user. Otherwise treat as success.
-      const payload = res ?? {}
+      const payload = (res ?? {}) as { error?: string; message?: string } | undefined
       if (payload && (payload.error || payload.message)) {
         // Prefer Vietnamese user-facing message for known business error
         if (
@@ -115,14 +114,17 @@ export function ConsumableCompatibilityModal({
 
       toast.success('Đã xóa liên kết vật tư tiêu hao')
       await loadCompatibleConsumables()
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error removing compatibility:', error)
 
       // Backend may return a specific error when the consumable is in use by devices
       // Example payload: { error: 'COMPATIBILITY_IN_USE', message: 'Cannot remove compatibility while devices are using this consumable type' }
-      const errPayload = error?.response?.data ?? error
+      const err = error as { response?: { data?: unknown }; message?: string } | undefined
+      const errPayload = (err?.response?.data ?? (err as { message?: string } | undefined)) as
+        | { error?: string; code?: string; message?: string }
+        | undefined
       const code = errPayload?.error || errPayload?.code
-      const msg = errPayload?.message || error?.message || 'Không thể xóa liên kết'
+      const msg = errPayload?.message || err?.message || 'Không thể xóa liên kết'
 
       if (code === 'COMPATIBILITY_IN_USE' || /compatibilit/i.test(String(msg))) {
         // Show Vietnamese message for this business case

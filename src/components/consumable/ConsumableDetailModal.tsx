@@ -64,6 +64,14 @@ export default function ConsumableDetailModal({
     customer?: { name?: string; contactPerson?: string; contactPhone?: string }
     returnReason?: string
     returnNotes?: string
+    price?: number | null
+    currencyId?: string | null
+    currency?: {
+      id?: string
+      code?: string
+      name?: string
+      symbol?: string
+    } | null
   }
 
   const typedItem = item as ConsumableDetail | null
@@ -250,6 +258,15 @@ export default function ConsumableDetailModal({
                           : '-'}
                       </span>
                     </div>
+                    {typedItem?.price !== undefined && typedItem?.price !== null && (
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Giá</span>
+                        <span className="font-medium text-slate-900">
+                          {typedItem.currency?.symbol || typedItem.currency?.code || 'USD'}{' '}
+                          {Number(typedItem.price).toLocaleString('vi-VN')}
+                        </span>
+                      </div>
+                    )}
                     <div className="flex justify-between">
                       <span className="text-slate-500">Ngày tạo</span>
                       <span className="font-medium text-slate-900">

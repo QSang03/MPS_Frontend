@@ -1,6 +1,7 @@
 import axios from 'axios'
 import type { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios'
 import { getAccessToken } from '@/lib/auth/session'
+import { cookies } from 'next/headers'
 
 /**
  * Server-side API client with token attachment
@@ -14,7 +15,7 @@ const serverApiClient: AxiosInstance = axios.create({
   },
 })
 
-// Request interceptor - attach token from server-side cookies
+// Request interceptor - attach token and language preference from server-side cookies
 serverApiClient.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
     // Get access token from server-side cookies
@@ -22,6 +23,34 @@ serverApiClient.interceptors.request.use(
 
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`
+    }
+
+    // Get language preference from cookies or default to 'vi'
+    let language = 'vi'
+    try {
+      const cookieStore = await cookies()
+      const localeCookie = cookieStore.get('mps_locale')
+      if (localeCookie?.value === 'en' || localeCookie?.value === 'vi') {
+        language = localeCookie.value
+      }
+    } catch {
+      // If cookies() fails, try to get from config headers (if passed from API route)
+      const acceptLanguage =
+        config.headers?.['Accept-Language'] || config.headers?.['accept-language']
+      if (acceptLanguage && typeof acceptLanguage === 'string') {
+        const firstPart = acceptLanguage.split(',')[0]
+        if (firstPart) {
+          const lang = firstPart.split('-')[0]?.toLowerCase()
+          if (lang === 'en' || lang === 'vi') {
+            language = lang
+          }
+        }
+      }
+    }
+
+    // Add Accept-Language header
+    if (config.headers) {
+      config.headers['Accept-Language'] = language
     }
 
     return config

@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import StatusStepper from '@/components/system/StatusStepper'
 import StatusButtonGrid from '@/components/system/StatusButtonGrid'
+import Image from 'next/image'
 import {
   Select,
   SelectContent,
@@ -62,6 +63,8 @@ import { DeleteDialog } from '@/components/shared/DeleteDialog'
 import type { Session } from '@/lib/auth/session'
 import type { UpdateServiceRequestStatusDto } from '@/types/models/service-request'
 import { cn } from '@/lib/utils/cn'
+import { CurrencySelector } from '@/components/currency/CurrencySelector'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 interface Props {
   id: string
@@ -97,6 +100,7 @@ const statusBadgeMap: Record<ServiceRequestStatus, string> = {
 }
 
 export function ServiceRequestDetailClient({ id, session }: Props) {
+  const { t } = useLocale()
   const router = useRouter()
   const queryClient = useQueryClient()
   const [updating, setUpdating] = useState(false)
@@ -152,7 +156,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
     onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ['service-requests'] })
       queryClient.invalidateQueries({ queryKey: ['service-requests', 'detail', id] })
-      toast.success('Cập nhật trạng thái thành công')
+      toast.success(t('requests.service.update_status.success'))
     },
     onError: (err: unknown) => {
       const msg = err instanceof Error ? err.message : 'Không thể cập nhật'
@@ -201,11 +205,15 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
   const [newItems, setNewItems] = useState<
     Array<{ type: 'LABOR' | 'PARTS' | 'OTHER'; amount: number; note?: string }>
   >([{ type: 'LABOR', amount: 0, note: '' }])
+  const [costCurrencyId, setCostCurrencyId] = useState<string | null>(null)
+  const [costCurrencyCode, setCostCurrencyCode] = useState<string | null>(null)
 
   const createCostMutation = useMutation({
     mutationFn: (payload: {
       deviceId?: string
       totalAmount?: number
+      currencyId?: string
+      currencyCode?: string
       items: Array<{ type: 'LABOR' | 'PARTS' | 'OTHER'; amount: number; note?: string }>
     }) => serviceRequestsClientService.createCost(id, payload),
     onSuccess: () => {
@@ -214,6 +222,8 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
       queryClient.invalidateQueries({ queryKey: ['service-requests'] })
       setShowAddCost(false)
       setNewItems([{ type: 'LABOR', amount: 0, note: '' }])
+      setCostCurrencyId(null)
+      setCostCurrencyCode(null)
     },
     onError: (err: unknown) => {
       const msg = err instanceof Error ? err.message : 'Không thể lưu chi phí'
@@ -406,10 +416,11 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                           className="group bg-muted/10 flex h-28 w-full items-center justify-center overflow-hidden rounded border p-1"
                         >
                           {isImage ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
+                            <Image
                               src={url}
                               alt={`attachment-${idx}`}
+                              width={400}
+                              height={300}
                               className="max-h-full max-w-full object-contain"
                             />
                           ) : (
@@ -492,7 +503,10 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                           <div className="text-lg font-bold text-emerald-600">
                             {cost.totalAmount.toLocaleString()}{' '}
                             <span className="text-muted-foreground text-xs font-normal">
-                              {cost.currency}
+                              {cost.currency?.symbol ||
+                                cost.currency?.code ||
+                                cost.currencyId ||
+                                'USD'}
                             </span>
                           </div>
                         </div>
@@ -537,30 +551,32 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
         {/* --- RIGHT COLUMN (Sidebar) --- */}
         <div className="space-y-6 lg:col-span-4">
           {/* 1. Control Panel (Actions) - Sticky top if needed */}
-          <Card className="border-l-4 border-l-blue-500 shadow-md">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-muted-foreground text-sm font-semibold tracking-wider uppercase">
-                Quản lý & Tác vụ
-              </CardTitle>
+          <Card className="border-l-4 border-l-blue-500 shadow-lg">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-base font-bold text-gray-800">Quản lý & Tác vụ</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-5">
+            <CardContent className="space-y-6">
               {/* Status Section */}
-              <div className="space-y-2">
-                <label className="text-sm leading-none font-medium">Trạng thái xử lý</label>
+              <div className="space-y-4">
+                <div className="border-b border-gray-200 pb-3">
+                  <label className="text-sm font-semibold text-gray-700">Trạng thái xử lý</label>
+                </div>
                 <PermissionGuard
                   session={session}
                   action="update"
                   resource={{ type: 'serviceRequest', customerId: data.customerId }}
                   fallback={
-                    <div className="bg-muted text-muted-foreground rounded p-2 text-sm">
+                    <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
                       Bạn không có quyền thay đổi.
                     </div>
                   }
                 >
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     <StatusStepper current={data.status} />
-                    <div>
-                      <div className="text-muted-foreground mb-1 text-sm">Chuyển trạng thái</div>
+                    <div className="border-t border-gray-100 pt-2">
+                      <div className="mb-3 text-sm font-medium text-gray-600">
+                        Chuyển trạng thái
+                      </div>
                       <StatusButtonGrid
                         current={data.status}
                         assignedTo={data.assignedTo ?? selectedAssignee}
@@ -687,19 +703,23 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
               </div>
 
               {/* Assignee Section */}
-              <div className="space-y-2">
-                <label className="text-sm leading-none font-medium">Kỹ thuật viên phụ trách</label>
+              <div className="space-y-4">
+                <div className="border-b border-gray-200 pb-3">
+                  <label className="text-sm font-semibold text-gray-700">
+                    Kỹ thuật viên phụ trách
+                  </label>
+                </div>
                 <PermissionGuard
                   session={session}
                   action="update"
                   resource={{ type: 'serviceRequest', customerId: data.customerId }}
                   fallback={
-                    <div className="bg-muted rounded p-2 text-sm font-medium">
+                    <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm font-medium text-gray-700">
                       {data.assignedToName ?? data.assignedTo ?? 'Chưa phân công'}
                     </div>
                   }
                 >
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <SearchableSelect
                       field="user.id"
                       operator="$eq"
@@ -711,13 +731,13 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                     />
                     <textarea
                       placeholder="Ghi chú phân công (tùy chọn)..."
-                      className="border-input placeholder:text-muted-foreground focus-visible:ring-ring flex min-h-[60px] w-full resize-y rounded-md border bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:ring-1 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                      className="flex min-h-[80px] w-full resize-y rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm shadow-sm transition-colors placeholder:text-gray-400 focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                       value={assignNote}
                       onChange={(e) => setAssignNote(e.target.value)}
                     />
                     <Button
-                      variant="secondary"
-                      className="w-full"
+                      variant="default"
+                      className="w-full bg-blue-600 font-medium text-white hover:bg-blue-700"
                       size="sm"
                       onClick={() => {
                         if (!selectedAssignee) {
@@ -731,7 +751,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                       }}
                       disabled={assignMutation.isPending}
                     >
-                      Cập nhật phân công
+                      {assignMutation.isPending ? 'Đang cập nhật...' : 'Cập nhật phân công'}
                     </Button>
                   </div>
                 </PermissionGuard>
@@ -744,23 +764,25 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                   resource={{ type: 'serviceRequest', customerId: data.customerId }}
                   fallback={null}
                 >
-                  <DeleteDialog
-                    title="Xóa yêu cầu"
-                    description={`Bạn có chắc chắn muốn xóa yêu cầu ${data.title ?? ''}? Hành động không thể hoàn tác.`}
-                    onConfirm={async () => {
-                      await deleteMutation.mutateAsync()
-                    }}
-                    trigger={
-                      <Button
-                        variant="destructive"
-                        className="h-auto w-full justify-start px-2 py-2 text-white hover:bg-rose-50 hover:text-rose-700"
-                        disabled={deleteMutation.isPending}
-                      >
-                        <XCircle className="mr-2 h-4 w-4" />
-                        Xóa yêu cầu này
-                      </Button>
-                    }
-                  />
+                  <div className="flex justify-center">
+                    <DeleteDialog
+                      title="Xóa yêu cầu"
+                      description={`Bạn có chắc chắn muốn xóa yêu cầu ${data.title ?? ''}? Hành động không thể hoàn tác.`}
+                      onConfirm={async () => {
+                        await deleteMutation.mutateAsync()
+                      }}
+                      trigger={
+                        <Button
+                          variant="destructive"
+                          className="h-auto px-2 py-2 text-white hover:bg-rose-50 hover:text-rose-700"
+                          disabled={deleteMutation.isPending}
+                        >
+                          <XCircle className="mr-2 h-4 w-4" />
+                          Xóa yêu cầu này
+                        </Button>
+                      }
+                    />
+                  </div>
                 </PermissionGuard>
                 {/* DeleteDialog handles confirmation UI and action */}
               </div>
@@ -924,6 +946,8 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                   createCostMutation.mutate({
                     deviceId: data?.device?.id ?? undefined,
                     totalAmount: totalAmountForDraft,
+                    currencyId: costCurrencyId || undefined,
+                    currencyCode: costCurrencyCode || undefined,
                     items: newItems.map((it) => ({
                       type: it.type,
                       amount: Number(it.amount),
@@ -939,11 +963,28 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
           }
         >
           <div className="flex h-full flex-col">
-            <div className="mb-4 flex items-center justify-between">
-              <span className="text-muted-foreground text-sm">Danh sách khoản mục</span>
-              <Button variant="secondary" size="sm" onClick={addItem} className="h-8 text-xs">
-                <Plus className="mr-1 h-3 w-3" /> Thêm mục
-              </Button>
+            <div className="mb-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground text-sm">Danh sách khoản mục</span>
+                <Button variant="secondary" size="sm" onClick={addItem} className="h-8 text-xs">
+                  <Plus className="mr-1 h-3 w-3" /> Thêm mục
+                </Button>
+              </div>
+              <CurrencySelector
+                label="Tiền tệ"
+                value={costCurrencyId}
+                onChange={(value) => {
+                  setCostCurrencyId(value)
+                  if (!value) {
+                    setCostCurrencyCode(null)
+                  }
+                }}
+                onSelect={(currency) => {
+                  setCostCurrencyCode(currency?.code || null)
+                }}
+                optional
+                placeholder="Chọn tiền tệ (mặc định: USD)"
+              />
             </div>
 
             <div className="-mx-1 max-h-[400px] min-h-[200px] flex-1 space-y-3 overflow-y-auto px-1 pb-2">
@@ -1045,10 +1086,11 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
           </DialogHeader>
           <div className="flex items-center justify-center p-4">
             {selectedAttachment && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
+              <Image
                 src={selectedAttachment}
                 alt="attachment"
+                width={800}
+                height={600}
                 className="max-h-[80vh] max-w-full object-contain"
               />
             )}

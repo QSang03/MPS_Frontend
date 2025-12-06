@@ -38,10 +38,12 @@ import {
   Calendar,
 } from 'lucide-react'
 import { DeleteDialog } from '@/components/shared/DeleteDialog'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { useActionPermission } from '@/lib/hooks/useActionPermission'
 import { ActionGuard } from '@/components/shared/ActionGuard'
 
 export function DepartmentsTable() {
+  const { t } = useLocale()
   // Permission checks
   const { canUpdate, canDelete } = useActionPermission('departments')
 
@@ -94,15 +96,15 @@ export function DepartmentsTable() {
       if (editingDept) {
         await departmentsClientService.updateDepartment(editingDept.id, formData)
         queryClient.invalidateQueries({ queryKey: ['departments'] })
-        toast.success('✅ Cập nhật bộ phận thành công')
+        toast.success(t('department.update_success'))
       } else {
         await departmentsClientService.createDepartment(formData)
         queryClient.invalidateQueries({ queryKey: ['departments'] })
-        toast.success('✅ Tạo bộ phận thành công')
+        toast.success(t('department.create_success'))
       }
     } catch (err) {
       console.error('Create/update department error', err)
-      toast.error('❌ Có lỗi khi lưu bộ phận')
+      toast.error(t('department.save_error'))
     }
   }
 
@@ -110,10 +112,10 @@ export function DepartmentsTable() {
     try {
       await departmentsClientService.deleteDepartment(deptId)
       queryClient.invalidateQueries({ queryKey: ['departments'] })
-      toast.success('✅ Xóa bộ phận thành công')
+      toast.success(t('department.delete_success'))
     } catch (err) {
       console.error('Delete department error', err)
-      toast.error('❌ Có lỗi khi xóa bộ phận')
+      toast.error(t('department.delete_error'))
     }
   }
 
@@ -133,9 +135,11 @@ export function DepartmentsTable() {
               <Building2 className="h-8 w-8 text-white" />
             </div>
             <div className="text-white">
-              <CardTitle className="text-3xl font-bold tracking-tight">Quản lý Bộ phận</CardTitle>
+              <CardTitle className="text-3xl font-bold tracking-tight">
+                {t('page.departments.title')}
+              </CardTitle>
               <p className="mt-1 text-sm font-medium text-cyan-100">
-                ⚡ {pagination.total} bộ phận đang hoạt động
+                {t('page.departments.status_active').replace('{count}', String(pagination.total))}
               </p>
             </div>
           </div>
@@ -146,7 +150,7 @@ export function DepartmentsTable() {
               className="transform rounded-xl bg-white px-6 py-2 text-base font-bold text-blue-600 shadow-lg transition-all duration-300 hover:scale-105 hover:bg-cyan-50 hover:shadow-2xl"
             >
               <Plus className="mr-2 h-5 w-5" />
-              Tạo Bộ phận
+              {t('page.departments.create')}
             </Button>
           </ActionGuard>
         </div>
@@ -159,7 +163,7 @@ export function DepartmentsTable() {
             <div className="rounded-lg bg-gradient-to-r from-blue-500 to-cyan-500 p-2">
               <Filter className="h-5 w-5 text-white" />
             </div>
-            <h3 className="text-lg font-bold text-gray-800">Bộ lọc & Tìm kiếm</h3>
+            <h3 className="text-lg font-bold text-gray-800">{t('filters.general')}</h3>
           </div>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -167,7 +171,7 @@ export function DepartmentsTable() {
             <div className="group relative">
               <Search className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-blue-400 transition-colors group-focus-within:text-blue-600" />
               <Input
-                placeholder="🔍 Tìm kiếm tên hoặc mã bộ phận..."
+                placeholder={t('filters.search_placeholder')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 onKeyDown={(e) => {
@@ -184,25 +188,25 @@ export function DepartmentsTable() {
             <div className="relative flex gap-2">
               <Select value={isActive} onValueChange={setIsActive}>
                 <SelectTrigger className="h-10 rounded-xl border-2 border-gray-200 bg-gradient-to-r from-gray-50 to-white text-base focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200">
-                  <SelectValue placeholder="Chọn trạng thái" />
+                  <SelectValue placeholder={t('filters.select_status')} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">
                     <span className="flex items-center gap-2">
                       <Building2 className="h-4 w-4" />
-                      Tất cả bộ phận
+                      {t('filters.status_all')}
                     </span>
                   </SelectItem>
                   <SelectItem value="true">
                     <span className="flex items-center gap-2">
                       <CheckCircle2 className="h-4 w-4 text-blue-600" />
-                      Hoạt động
+                      {t('filters.status_active')}
                     </span>
                   </SelectItem>
                   <SelectItem value="false">
                     <span className="flex items-center gap-2">
                       <XCircle className="h-4 w-4 text-red-600" />
-                      Ngừng hoạt động
+                      {t('filters.status_inactive')}
                     </span>
                   </SelectItem>
                 </SelectContent>
@@ -212,7 +216,7 @@ export function DepartmentsTable() {
                 size="icon"
                 onClick={() => refetch()}
                 className="h-10 w-10 cursor-pointer rounded-xl border-2 border-gray-200 transition-all duration-300 hover:border-blue-400 hover:bg-blue-50"
-                title="Làm mới dữ liệu"
+                title={t('button.refresh')}
               >
                 <RefreshCw className={`${isFetching ? 'animate-spin' : ''} h-5 w-5`} />
               </Button>

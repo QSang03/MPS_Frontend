@@ -11,19 +11,91 @@ import { logout } from '@/app/actions/auth'
 import { useNavigation } from '@/contexts/NavigationContext'
 import { SidebarNavItem } from '@/components/layout/SidebarWithSubmenu'
 import * as Icons from 'lucide-react'
+import {
+  LayoutDashboard,
+  BarChart3,
+  ShoppingCart,
+  Package,
+  FileText,
+  Users,
+  Settings,
+  Plus,
+  Edit,
+  Trash2,
+  Filter,
+  UserPlus,
+  Tag,
+  Bell,
+  Eye,
+  Building2,
+  Layers,
+  Wrench,
+  ClipboardCheck,
+  Shield,
+  MonitorSmartphone,
+} from 'lucide-react'
 import { NAVIGATION_PAYLOAD, USER_NAVIGATION_PAYLOAD } from '@/constants/navigation'
 import { Dialog, DialogTrigger, DialogContent } from '@/components/ui/dialog'
 import SettingsPanel from './SettingsPanel'
+import { useLocale } from '@/components/providers/LocaleProvider'
+
+// Icon mapping - map string icon names to lucide-react components
+const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
+  LayoutDashboard,
+  Printer,
+  BarChart3,
+  ShoppingCart,
+  Package,
+  FileText,
+  Users,
+  Settings,
+  Plus,
+  Edit,
+  Edit2: Edit,
+  Trash2,
+  Filter,
+  UserPlus,
+  Tag,
+  Bell,
+  Eye,
+  Building2,
+  Layers,
+  Wrench,
+  ClipboardCheck,
+  Shield,
+  MonitorSmartphone,
+  Zap,
+}
 
 // Icon mapping helper - map our string icon names to lucide-react components
-function getIconComponent(name?: string) {
-  if (!name) return Icons.LayoutDashboard
-  // Try to find the icon in lucide-react export map
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  const comp = Icons[name]
-  if (comp) return comp
-  return Icons.LayoutDashboard
+function getIconComponent(name?: string): React.ComponentType<{ className?: string }> {
+  if (!name) {
+    if (process.env.NODE_ENV === 'development') {
+      console.warn(`[ModernSidebar] No icon name provided, using LayoutDashboard`)
+    }
+    return LayoutDashboard
+  }
+
+  const iconName = String(name).trim()
+
+  // First, try the explicit mapping
+  if (ICON_MAP[iconName]) {
+    return ICON_MAP[iconName]
+  }
+
+  // Then, try to find the icon in lucide-react export map
+  const comp = (Icons as Record<string, unknown>)[iconName]
+  if (comp && typeof comp === 'function') {
+    return comp as React.ComponentType<{ className?: string }>
+  }
+
+  // If not found, log warning and return default
+  if (process.env.NODE_ENV === 'development') {
+    console.warn(`[ModernSidebar] Icon "${iconName}" not found, using LayoutDashboard as fallback`)
+    console.log(`[ModernSidebar] Available icons in map:`, Object.keys(ICON_MAP))
+  }
+
+  return LayoutDashboard
 }
 
 interface SidebarProps {
@@ -54,6 +126,7 @@ export function ModernSidebar({ session }: SidebarProps) {
     return () => window.removeEventListener('resize', handleResize)
   }, [openSidebar, closeSidebar])
   const { currentSubmenu } = useNavigation()
+  const { t } = useLocale()
 
   const isUserRole = String(session.role ?? '').toLowerCase() === 'user'
   const roleBasedFallback = isUserRole ? USER_NAVIGATION_PAYLOAD : NAVIGATION_PAYLOAD
@@ -69,18 +142,109 @@ export function ModernSidebar({ session }: SidebarProps) {
     ? []
     : (navItems ?? (roleBasedFallback as unknown as Array<Record<string, unknown>>))
 
+  // Create a map of fallback items by id/route for icon lookup
+  const fallbackMap = new Map<string, Record<string, unknown>>()
+  const fallbackByRoute = new Map<string, Record<string, unknown>>()
+  ;(roleBasedFallback as Array<Record<string, unknown>>).forEach((item) => {
+    const id = item.id as string
+    const route = (item.route as string) || (item.href as string)
+    if (id) fallbackMap.set(id, item)
+    if (route) {
+      fallbackMap.set(route, item)
+      fallbackByRoute.set(route, item)
+      // Also add route without leading slash for matching
+      if (route.startsWith('/')) {
+        fallbackByRoute.set(route.substring(1), item)
+      }
+    }
+  })
+
   const navigation = (source as Array<Record<string, unknown>>)
     .filter(Boolean)
     // Items from backend are already filtered in NavigationContext (hasAccess === false items and actions are removed)
     // So we can use them directly without additional filtering
-    .map((it) => ({
-      label: String(it.label ?? ''),
-      href: (it.route as string) || (it.href as string) || '#',
-      icon: getIconComponent(it.icon as string),
-      badge: undefined,
-      submenu: undefined,
-      raw: it,
-    }))
+    .map((it) => {
+      const navId = it?.id as string
+      const navName = it?.name as string
+      const navLabel = it?.label as string
+      const navRoute = (it.route as string) || (it.href as string) || '#'
+
+      // Try to get icon from backend item first, then fallback to payload
+      let iconName = it.icon as string | undefined
+      if (!iconName) {
+        // Try to find icon from fallback payload by id first, then by route
+        let fallbackItem = fallbackMap.get(navId)
+        if (!fallbackItem && navRoute) {
+          fallbackItem = fallbackMap.get(navRoute) || fallbackByRoute.get(navRoute)
+          // Also try matching route without leading slash
+          if (!fallbackItem && navRoute.startsWith('/')) {
+            fallbackItem = fallbackByRoute.get(navRoute.substring(1))
+          }
+        }
+
+        if (fallbackItem) {
+          iconName = fallbackItem.icon as string | undefined
+        } else {
+          // Last resort: search in entire fallback array by matching route or id
+          const found = (roleBasedFallback as Array<Record<string, unknown>>).find((item) => {
+            const itemRoute = (item.route as string) || (item.href as string)
+            return item.id === navId || itemRoute === navRoute
+          })
+          if (found) {
+            iconName = found.icon as string | undefined
+          }
+        }
+      }
+
+      // Debug: log icon resolution in development
+      if (process.env.NODE_ENV === 'development') {
+        if (!iconName) {
+          console.warn(`[ModernSidebar] No icon found for item:`, {
+            id: navId,
+            name: navName,
+            route: navRoute,
+            backendIcon: it.icon,
+          })
+        } else {
+          console.log(`[ModernSidebar] Icon resolved:`, {
+            id: navId,
+            iconName,
+            fromBackend: !!it.icon,
+          })
+        }
+      }
+
+      // Try to get translation by id first, then by name, then fallback to label
+      let translatedLabel = ''
+      if (navId) {
+        const key = `nav.${navId}`
+        const translated = t(key)
+        if (translated !== key) {
+          translatedLabel = translated
+        }
+      }
+      if (!translatedLabel && navName) {
+        const key = `nav.${navName}`
+        const translated = t(key)
+        if (translated !== key) {
+          translatedLabel = translated
+        }
+      }
+      if (!translatedLabel && typeof navLabel === 'string') {
+        translatedLabel = navLabel
+      }
+      // Ensure we always have an icon - use fallback if needed
+      const finalIcon = getIconComponent(iconName)
+
+      return {
+        label: translatedLabel,
+        href: navRoute,
+        icon: finalIcon,
+        badge: undefined,
+        submenu: undefined,
+        raw: it,
+      }
+    })
 
   const handleLogout = async () => {
     try {
@@ -134,7 +298,7 @@ export function ModernSidebar({ session }: SidebarProps) {
                     className="flex-shrink-0 rounded-xl border border-slate-200 bg-slate-50 p-2.5 shadow-sm"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    aria-label="Mở cài đặt giao diện"
+                    aria-label={t('settings.open')}
                   >
                     <Printer className="h-6 w-6 text-blue-600" />
                   </motion.button>
@@ -146,8 +310,12 @@ export function ModernSidebar({ session }: SidebarProps) {
               </Dialog>
 
               <div className="min-w-0 flex-1">
-                <h1 className="truncate text-sm font-bold text-slate-900">MPS</h1>
-                <p className="truncate text-xs font-medium text-slate-500">CHÍNH NHÂN TECHNOLOGY</p>
+                <h1 className="truncate text-sm font-bold text-slate-900">
+                  {t('sidebar.logo.title')}
+                </h1>
+                <p className="truncate text-xs font-medium text-slate-500">
+                  {t('sidebar.logo.subtitle')}
+                </p>
               </div>
             </div>
             <Button
@@ -179,16 +347,16 @@ export function ModernSidebar({ session }: SidebarProps) {
               title: string
               matcher: (href: string) => boolean
             }[] = [
-              { key: 'overview', title: 'Tổng quan', matcher: (h) => h === '/system' },
+              { key: 'overview', title: t('nav.overview'), matcher: (h) => h === '/system' },
               {
                 key: 'devices',
-                title: 'Thiết bị',
+                title: t('nav.devices'),
                 matcher: (h) =>
                   h.startsWith('/system/devices') || h.startsWith('/system/device-models'),
               },
               {
                 key: 'consumables',
-                title: 'Vật tư',
+                title: t('nav.consumables'),
                 matcher: (h) =>
                   h.startsWith('/system/consumables') ||
                   h.startsWith('/system/consumable-types') ||
@@ -196,12 +364,12 @@ export function ModernSidebar({ session }: SidebarProps) {
               },
               {
                 key: 'customers',
-                title: 'Khách hàng',
+                title: t('nav.customers'),
                 matcher: (h) => h.startsWith('/system/customers'),
               },
               {
                 key: 'reports',
-                title: 'Báo cáo',
+                title: t('nav.reports'),
                 matcher: (h) => h.startsWith('/system/reports') || h.startsWith('/system/revenue'),
               },
             ]
@@ -212,26 +380,34 @@ export function ModernSidebar({ session }: SidebarProps) {
               title: string
               matcher: (href: string) => boolean
             }[] = [
-              { key: 'overview', title: 'Tổng quan', matcher: (h) => h === '/user/dashboard' },
+              {
+                key: 'overview',
+                title: t('nav.overview'),
+                matcher: (h) => h === '/user/dashboard',
+              },
               {
                 key: 'costs',
-                title: 'Chi phí',
+                title: t('nav.costs'),
                 matcher: (h) =>
                   h.startsWith('/user/dashboard/costs') || h.startsWith('/user/costs'),
               },
-              { key: 'devices', title: 'Thiết bị', matcher: (h) => h.startsWith('/user/devices') },
+              {
+                key: 'devices',
+                title: t('nav.devices'),
+                matcher: (h) => h.startsWith('/user/devices'),
+              },
               {
                 key: 'consumables',
-                title: 'Vật tư tiêu hao',
+                title: t('nav.consumables'),
                 matcher: (h) =>
                   h.startsWith('/user/consumables') || h.startsWith('/user/warehouse-documents'),
               },
               {
                 key: 'contracts',
-                title: 'Hợp đồng',
+                title: t('nav.contracts'),
                 matcher: (h) => h.startsWith('/user/contracts'),
               },
-              { key: 'users', title: 'Người dùng', matcher: (h) => h.startsWith('/user/users') },
+              { key: 'users', title: t('nav.users'), matcher: (h) => h.startsWith('/user/users') },
             ]
 
             // Prefer user sections when session role is 'user' OR when the navigation contains /user routes.
@@ -256,7 +432,8 @@ export function ModernSidebar({ session }: SidebarProps) {
             )
             let renderIndex = 0
             return orderedKeys.map((key) => {
-              const title = sections.find((s) => s.key === key)?.title ?? 'Khác'
+              const sectionMeta = sections.find((s) => s.key === key)
+              const title = sectionMeta?.title ?? t(`nav.${key}`)
               const items = grouped.get(key) ?? []
               return (
                 <div key={key} className="mb-4">
@@ -319,7 +496,7 @@ export function ModernSidebar({ session }: SidebarProps) {
             whileTap={{ scale: 0.99 }}
           >
             <LogOut className="h-5 w-5 flex-shrink-0" />
-            <span className="flex-1 text-left">Đăng xuất</span>
+            <span className="flex-1 text-left">{t('logout')}</span>
           </motion.button>
 
           {/* Footer Info - Minimal Card */}
@@ -327,8 +504,8 @@ export function ModernSidebar({ session }: SidebarProps) {
             <div className="flex items-start gap-2">
               <Zap className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-500" />
               <div>
-                <p className="text-xs font-bold text-slate-800">MPS v1.0.0</p>
-                <p className="mt-0.5 text-xs text-slate-500">© 2025 Chính Nhân Technology</p>
+                <p className="text-xs font-bold text-slate-800">{t('footer.version')}</p>
+                <p className="mt-0.5 text-xs text-slate-500">{t('footer.copyright')}</p>
               </div>
             </div>
           </div>

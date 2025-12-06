@@ -15,7 +15,21 @@ export const purchaseRequestSchema = z.object({
   estimatedCost: z
     .number()
     .min(0, 'Chi phí ước tính phải lớn hơn hoặc bằng 0')
-    .max(10000000, 'Chi phí ước tính không được quá 10,000,000 VND'),
+    .refine(
+      (val) => {
+        const str = String(val)
+        const parts = str.split('.')
+        const integerPart = parts[0] || ''
+        const decimalPart = parts[1] || ''
+        return integerPart.length <= 20 && decimalPart.length <= 10
+      },
+      {
+        message:
+          'Chi phí ước tính phải có tối đa 20 chữ số trước dấu chấm và 10 chữ số sau dấu chấm',
+      }
+    ),
+  currencyId: z.string().optional(),
+  currencyCode: z.string().optional(),
   priority: z.nativeEnum(Priority),
   requestedBy: z.string().min(1, 'Người yêu cầu là bắt buộc'),
 })

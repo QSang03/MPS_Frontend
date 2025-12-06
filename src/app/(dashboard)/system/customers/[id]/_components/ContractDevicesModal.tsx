@@ -24,6 +24,7 @@ import { contractsClientService } from '@/lib/api/services/contracts-client.serv
 import { devicesClientService } from '@/lib/api/services/devices-client.service'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { cn } from '@/lib/utils'
 
 import type { ContractDevice } from '@/types/models/contract-device'
@@ -60,6 +61,7 @@ export default function ContractDevicesModal({
   attachedDevices = [],
   allContracts = [],
 }: Props) {
+  const { t } = useLocale()
   const [attachOpen, setAttachOpen] = useState(false)
   const [hideOuter, setHideOuter] = useState(false)
   const [selectedToAttach, setSelectedToAttach] = useState<string[]>([])
@@ -150,7 +152,7 @@ export default function ContractDevicesModal({
     ) => contractsClientService.attachDevices(contractId as string, { items }),
     onSuccess: () => {
       const hasUpdates = selectedToAttach.some((id) => attachedDeviceIds.has(id))
-      toast.success(hasUpdates ? 'Cập nhật thiết bị thành công' : 'Đính kèm thiết bị thành công')
+      toast.success(hasUpdates ? t('device.update_success') : t('device.attach_success'))
       setAttachOpen(false)
       setHideOuter(false)
       setSelectedToAttach([])
@@ -174,7 +176,7 @@ export default function ContractDevicesModal({
           }
         )?.response?.data?.message ||
         (err as { message?: string })?.message ||
-        'Đính kèm thiết bị thất bại'
+        t('device.attach_error')
 
       if (
         apiMessage.includes(

@@ -1,10 +1,12 @@
 'use client'
 
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -34,6 +36,7 @@ import { purchaseRequestService } from '@/lib/api/services/purchase-request.serv
 import type { PurchaseRequest } from '@/types/models'
 import type { CreatePurchaseRequestDto } from '@/types/models/purchase-request'
 import { Priority } from '@/constants/status'
+import { CurrencySelector } from '@/components/currency/CurrencySelector'
 
 interface PurchaseRequestFormProps {
   initialData?: PurchaseRequest
@@ -50,6 +53,9 @@ export function PurchaseRequestForm({
 }: PurchaseRequestFormProps) {
   const router = useRouter()
   const queryClient = useQueryClient()
+  const { t } = useLocale()
+
+  const [currencyCode, setCurrencyCode] = useState<string | null>(null)
 
   const form = useForm<PurchaseRequestFormData>({
     resolver: zodResolver(purchaseRequestSchema),
@@ -58,6 +64,8 @@ export function PurchaseRequestForm({
       description: initialData?.notes || '',
       quantity: initialData?.quantity || 1,
       estimatedCost: initialData?.estimatedCost || 0,
+      currencyId: initialData?.currencyId || undefined,
+      currencyCode: initialData?.currency?.code || undefined,
       priority: initialData?.priority || Priority.NORMAL,
       requestedBy: initialData?.requestedBy || '',
     },
@@ -67,7 +75,7 @@ export function PurchaseRequestForm({
     mutationFn: purchaseRequestService.create,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['purchase-requests'] })
-      toast.success('Tạo yêu cầu mua hàng thành công!')
+      toast.success(t('purchase_request.create_success'))
       form.reset()
       if (onSuccess) {
         onSuccess()
@@ -76,7 +84,7 @@ export function PurchaseRequestForm({
       }
     },
     onError: (error: unknown) => {
-      const message = error instanceof Error ? error.message : 'Tạo yêu cầu mua hàng thất bại'
+      const message = error instanceof Error ? error.message : t('purchase_request.create_error')
       toast.error(message)
     },
   })
@@ -86,7 +94,7 @@ export function PurchaseRequestForm({
       purchaseRequestService.update(initialData!.id, removeEmpty({ notes: data.description })),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['purchase-requests'] })
-      toast.success('Cập nhật yêu cầu mua hàng thành công!')
+      toast.success(t('purchase_request.update_success'))
       form.reset()
       if (onSuccess) {
         onSuccess()
@@ -95,7 +103,7 @@ export function PurchaseRequestForm({
       }
     },
     onError: (error: unknown) => {
-      const message = error instanceof Error ? error.message : 'Cập nhật yêu cầu mua hàng thất bại'
+      const message = error instanceof Error ? error.message : t('purchase_request.update_error')
       toast.error(message)
     },
   })
@@ -105,6 +113,7 @@ export function PurchaseRequestForm({
     const requestData = removeEmpty({
       ...data,
       customerId,
+      currencyCode: currencyCode || data.currencyCode || undefined,
     })
 
     if (mode === 'create') {
@@ -181,7 +190,7 @@ export function PurchaseRequestForm({
             name="estimatedCost"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Chi phí ước tính (VND)</FormLabel>
+                <FormLabel>Chi phí ước tính</FormLabel>
                 <FormControl>
                   <Input
                     type="number"
@@ -197,6 +206,35 @@ export function PurchaseRequestForm({
             )}
           />
         </div>
+
+        <FormField
+          control={form.control}
+          name="currencyId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Tiền tệ</FormLabel>
+              <FormControl>
+                <CurrencySelector
+                  value={field.value || null}
+                  onChange={(value) => {
+                    field.onChange(value || undefined)
+                    if (!value) {
+                      setCurrencyCode(null)
+                    }
+                  }}
+                  onSelect={(currency) => {
+                    setCurrencyCode(currency?.code || null)
+                  }}
+                  disabled={isPending}
+                  optional
+                  placeholder="Chọn tiền tệ (mặc định: USD)"
+                />
+              </FormControl>
+              <FormDescription>Tiền tệ cho chi phí ước tính</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <FormField
           control={form.control}

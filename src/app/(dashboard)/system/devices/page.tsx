@@ -8,8 +8,10 @@ import { Button } from '@/components/ui/button'
 import { ActionGuard } from '@/components/shared/ActionGuard'
 import DeviceFormModal from './_components/deviceformmodal'
 import { toast } from 'sonner'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 export default function DevicesPage() {
+  const { t } = useLocale()
   return (
     <SystemPageLayout fullWidth>
       <SystemPageHeader
@@ -21,7 +23,7 @@ export default function DevicesPage() {
             <DeviceFormModal
               mode="create"
               onSaved={() => {
-                toast.success('Tạo thiết bị thành công')
+                toast.success(t('device.create_success'))
                 if (typeof window !== 'undefined') {
                   window.location.reload()
                 }
@@ -29,7 +31,7 @@ export default function DevicesPage() {
               trigger={
                 <Button className="border-0 bg-white text-[#0066CC] hover:bg-blue-50">
                   <Plus className="mr-2 h-4 w-4" />
-                  Tạo thiết bị
+                  {t('devices.add')}
                 </Button>
               }
             />

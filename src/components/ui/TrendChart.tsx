@@ -1,16 +1,16 @@
 'use client'
 
 import React, { useMemo } from 'react'
+import { useLocale } from '@/components/providers/LocaleProvider'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts'
 import {
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  Legend,
-  CartesianGrid,
-} from 'recharts'
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+} from './chart'
+import type { ChartConfig } from './chart'
 
 type TrendPoint = {
   month: string
@@ -35,6 +35,7 @@ type Props = {
 
 export default function TrendChart({ data, height = 280, showMargin = true }: Props) {
   const sorted = useMemo(() => [...data].sort((a, b) => (a.month > b.month ? 1 : -1)), [data])
+  const { t } = useLocale()
 
   // No per-series visibility toggle — match dashboard style (all series shown by default)
 
@@ -76,27 +77,47 @@ export default function TrendChart({ data, height = 280, showMargin = true }: Pr
     : [0, 100]
 
   if (normalized.length === 0) {
-    return (
-      <div className="p-6 text-center text-sm text-gray-500">
-        Chưa có dữ liệu trong khoảng thời gian này
-      </div>
-    )
+    return <div className="p-6 text-center text-sm text-gray-500">{t('charts.empty')}</div>
+  }
+
+  // Local chart configuration (Option A: local)
+  const chartConfig: ChartConfig = {
+    totalRevenue: { label: t('charts.total_revenue'), color: '#3b82f6' },
+    totalCogs: { label: t('charts.total_cogs'), color: '#f59e0b' },
+    grossProfit: { label: t('charts.gross_profit'), color: '#10b981' },
+    __grossMargin: { label: t('charts.gross_margin'), color: '#f97316' },
   }
 
   return (
     <div style={{ width: '100%', height }}>
-      {/* dashboard-style legend is shown inside chart */}
-      <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={normalized} margin={{ top: 12, right: 56, left: 0, bottom: 12 }}>
-          <CartesianGrid strokeDasharray="4 4" stroke="#e0e0e0" />
-          <XAxis dataKey="month" tick={{ fontSize: 13, fill: '#444' }} />
+      <ChartContainer config={chartConfig} className="h-full w-full">
+        <LineChart
+          accessibilityLayer
+          data={normalized}
+          margin={{ top: 12, right: 56, left: 0, bottom: 12 }}
+        >
+          <CartesianGrid vertical={false} strokeDasharray="3 3" className="stroke-border/40" />
+          <XAxis
+            dataKey="month"
+            tickLine={false}
+            axisLine={false}
+            tickMargin={10}
+            tick={{ fontSize: 13, fill: 'hsl(var(--foreground))' }}
+          />
           <YAxis
             yAxisId="left"
             domain={leftDomain}
             tickCount={6}
-            tickFormatter={(v) => Intl.NumberFormat('vi-VN').format(Number(v))}
-            tick={{ fill: '#555', fontSize: 12 }}
-            stroke="#888"
+            tickFormatter={(v) => {
+              const num = Number(v)
+              if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`
+              if (num >= 1000) return `${(num / 1000).toFixed(1)}K`
+              return Intl.NumberFormat('vi-VN').format(num)
+            }}
+            tickLine={false}
+            axisLine={false}
+            tickMargin={10}
+            tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
           />
           {showMargin && (
             <YAxis
@@ -104,51 +125,96 @@ export default function TrendChart({ data, height = 280, showMargin = true }: Pr
               orientation="right"
               domain={marginDomain}
               tickFormatter={(v) => `${Number(v).toFixed(1)}%`}
-              tick={{ fill: '#555', fontSize: 12 }}
-              stroke="#AAA"
+              tickLine={false}
+              axisLine={false}
+              tickMargin={10}
+              tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
             />
           )}
-          <Tooltip />
-          <Legend verticalAlign="top" height={36} />
+          <ChartTooltip
+            content={
+              <ChartTooltipContent
+                indicator="dot"
+                formatter={(value, name) => {
+                  if (name === '__grossMargin') {
+                    return `${Number(value).toFixed(2)}%`
+                  }
+                  if (typeof value === 'number') {
+                    return Intl.NumberFormat('vi-VN', {
+                      style: 'currency',
+                      currency: 'VND',
+                      maximumFractionDigits: 0,
+                    }).format(value)
+                  }
+                  return String(value ?? '-')
+                }}
+              />
+            }
+          />
+          <ChartLegend content={<ChartLegendContent />} />
 
           <Line
             type="monotone"
             dataKey="totalRevenue"
-            stroke="#3b82f6"
-            strokeWidth={2}
+            stroke="var(--color-totalRevenue)"
+            strokeWidth={3}
             dot={false}
-            name="Tổng doanh thu"
+            activeDot={{
+              r: 5,
+              fill: 'var(--color-totalRevenue)',
+              strokeWidth: 2,
+              stroke: 'hsl(var(--background))',
+            }}
+            name={t('charts.total_revenue')}
           />
           <Line
             type="monotone"
             dataKey="totalCogs"
-            stroke="#f59e0b"
-            strokeWidth={2}
+            stroke="var(--color-totalCogs)"
+            strokeWidth={3}
             dot={false}
-            name="Tổng chi phí"
+            activeDot={{
+              r: 5,
+              fill: 'var(--color-totalCogs)',
+              strokeWidth: 2,
+              stroke: 'hsl(var(--background))',
+            }}
+            name={t('charts.total_cogs')}
           />
           <Line
             type="monotone"
             dataKey="grossProfit"
-            stroke="#10b981"
-            strokeWidth={2}
+            stroke="var(--color-grossProfit)"
+            strokeWidth={3}
             dot={false}
-            name="Lợi nhuận gộp"
+            activeDot={{
+              r: 5,
+              fill: 'var(--color-grossProfit)',
+              strokeWidth: 2,
+              stroke: 'hsl(var(--background))',
+            }}
+            name={t('charts.gross_profit')}
           />
           {showMargin && (
             <Line
               type="monotone"
               dataKey="__grossMargin"
-              stroke="#f59e0b"
-              strokeWidth={2}
+              stroke="var(--color-__grossMargin)"
+              strokeWidth={3}
               dot={false}
-              name="Biên lợi nhuận"
+              activeDot={{
+                r: 5,
+                fill: 'var(--color-__grossMargin)',
+                strokeWidth: 2,
+                stroke: 'hsl(var(--background))',
+              }}
+              name={t('charts.gross_margin')}
               yAxisId="right"
-              strokeDasharray="6 4"
+              strokeDasharray="8 4"
             />
           )}
         </LineChart>
-      </ResponsiveContainer>
+      </ChartContainer>
     </div>
   )
 }

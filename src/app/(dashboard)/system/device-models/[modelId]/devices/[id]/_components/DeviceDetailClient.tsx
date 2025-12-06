@@ -64,6 +64,7 @@ import {
 import { SystemModalLayout } from '@/components/system/SystemModalLayout'
 import { DeleteDialog } from '@/components/shared/DeleteDialog'
 import { toast } from 'sonner'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { useRouter } from 'next/navigation'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { consumablesClientService } from '@/lib/api/services/consumables-client.service'
@@ -75,6 +76,8 @@ import { Separator } from '@/components/ui/separator'
 import { removeEmpty } from '@/lib/utils/clean'
 import DeviceHeader from '@/components/device/DeviceHeader'
 import InfoCard from '@/components/ui/InfoCard'
+import { CurrencySelector } from '@/components/currency/CurrencySelector'
+import { validateDecimal3010, formatDecimal3010 } from '@/lib/utils/decimal-validation'
 import type { MonthlyUsagePagesItem, MonthlyUsagePagesResponse } from '@/types/api'
 import type {
   DeviceConsumable,
@@ -112,6 +115,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
   const [error, setError] = useState<string | null>(null)
   const [showEdit, setShowEdit] = useState(false)
   const [editing, setEditing] = useState(false)
+  const { t } = useLocale()
   const [, setLocationEdit] = useState('')
   const [ipEdit, setIpEdit] = useState('')
   const [macEdit, setMacEdit] = useState('')
@@ -162,9 +166,9 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
   const [createActualPagesPrintedError, setCreateActualPagesPrintedError] = useState<string | null>(
     null
   )
-  const [createPriceVND, setCreatePriceVND] = useState<number | ''>('')
-  const [createPriceUSD, setCreatePriceUSD] = useState<number | ''>('')
-  const [createExchangeRate, setCreateExchangeRate] = useState<number | ''>('')
+  const [createPrice, setCreatePrice] = useState<number | ''>('')
+  const [createCurrencyId, setCreateCurrencyId] = useState<string | null>(null)
+  const [createCurrencyCode, setCreateCurrencyCode] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState('overview')
   const router = useRouter()
   // NOTE: debugNav removed — temporary debug code cleaned up
@@ -315,36 +319,11 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
   const [editActualPagesPrintedError, setEditActualPagesPrintedError] = useState<string | null>(
     null
   )
-  // Price precision validation: up to 8 digits before decimal, up to 5 digits after
+  // Price validation using Decimal(30,10) format
   const [createPriceError, setCreatePriceError] = useState<string | null>(null)
   const [editPriceError, setEditPriceError] = useState<string | null>(null)
-
-  const checkPricePrecision = (n: number) => {
-    if (n === undefined || n === null || Number.isNaN(n)) return `Giá không hợp lệ`
-    // Use absolute value for digit counts
-    const s = String(Math.abs(n))
-    // Split by decimal point or scientific notation
-    const parts = s.split('.')
-    const intPart = (parts[0] ?? '').replace(/e.*$/i, '') // defensive
-    const fracPart = parts[1] ?? ''
-    // If scientific notation present, convert to fixed with sufficient decimals
-    if (/e/i.test(String(n))) {
-      // rely on toFixed with 10 decimals then trim
-      const fixed = Math.abs(n).toFixed(10).replace(/0+$/, '')
-      const p = fixed.split('.')
-      const fixedInt = p[0] ?? ''
-      const fixedFrac = p[1] ?? ''
-      if (fixedInt.length > 8) return `Phần nguyên tối đa 8 chữ số`
-      if (fixedFrac.length > 5) return `Tối đa 5 chữ số thập phân`
-      return null
-    }
-    if (intPart.length > 8) return `Phần nguyên tối đa 8 chữ số`
-    if (fracPart.length > 5) return `Tối đa 5 chữ số thập phân`
-    return null
-  }
-  const [editPriceVND, setEditPriceVND] = useState<number | ''>('')
-  const [editPriceUSD, setEditPriceUSD] = useState<number | ''>('')
-  const [editExchangeRate, setEditExchangeRate] = useState<number | ''>('')
+  const [editPrice, setEditPrice] = useState<number | ''>('')
+  const [editCurrencyId, setEditCurrencyId] = useState<string | null>(null)
   // we only need the setter in places below; ignore the first tuple value to avoid unused-var lint
   const [, setEditConsumableStatus] = useState('ACTIVE')
   const [editShowRemovedAt, setEditShowRemovedAt] = useState(false) // Checkbox state
@@ -375,13 +354,6 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
     const hh = pad(d.getHours())
     const min = pad(d.getMinutes())
     return `${yyyy}-${mm}-${dd}T${hh}:${min}`
-  }
-  // Helper: limit a numeric value to at most `max` decimal places.
-  const formatDecimal = (v: number | string | undefined | null, max = 8) => {
-    if (v === undefined || v === null || v === '') return undefined
-    const n = Number(v)
-    if (Number.isNaN(n)) return undefined
-    return Number(n.toFixed(max))
   }
 
   useEffect(() => {
@@ -487,7 +459,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
         }
       } catch (err) {
         console.error('Failed to fetch customer details', err)
-        toast.error('Không thể tải địa chỉ khách hàng')
+        toast.error(t('error.load_customer_addresses'))
         setCustomerAddresses([])
       } finally {
         setLoadingAddresses(false)
@@ -495,7 +467,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
     }
 
     fetchCustomerDetails()
-  }, [customerIdEdit, device, showEdit, locationAddressEdit])
+  }, [customerIdEdit, device, showEdit, locationAddressEdit, t])
 
   // customers are loaded via React Query above; no local effect needed
 
@@ -713,13 +685,13 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                     onConfirm={async () => {
                       try {
                         await devicesClientService.delete(deviceId)
-                        toast.success('Xóa thiết bị thành công')
+                        toast.success(t('device.delete_success'))
                         if (backHref) router.push(backHref)
                         else if (modelId) router.push(`/system/device-models/${modelId}`)
                         else router.push('/system/device-models')
                       } catch (err) {
                         console.error('Delete device failed', err)
-                        toast.error('Xóa thiết bị thất bại')
+                        toast.error(t('device.delete_error'))
                       }
                     }}
                     trigger={
@@ -752,57 +724,85 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="mb-6 grid w-full grid-cols-5">
-          <TabsTrigger value="overview" className="flex items-center gap-2">
-            <Info className="h-4 w-4" />
-            Tổng quan
-          </TabsTrigger>
-          <TabsTrigger value="consumables" className="flex items-center gap-2">
-            <Package className="h-4 w-4" />
-            Vật tư
-          </TabsTrigger>
-          <TabsTrigger value="maintenance" className="flex items-center gap-2">
-            <Wrench className="h-4 w-4" />
-            Bảo trì
-          </TabsTrigger>
-          <TabsTrigger value="history" className="flex items-center gap-2">
-            <BarChart3 className="h-4 w-4" />
-            Lịch sử vật tư
-          </TabsTrigger>
-          <TabsTrigger value="usage-history" className="flex items-center gap-2">
-            <BarChart3 className="h-4 w-4" />
-            Lịch sử sử dụng
-          </TabsTrigger>
-        </TabsList>
+        <div className="mb-6">
+          <TabsList className="bg-muted inline-flex h-10 items-center justify-start rounded-lg p-1">
+            <TabsTrigger
+              value="overview"
+              className="ring-offset-background focus-visible:ring-ring data-[state=active]:bg-background data-[state=active]:text-foreground inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium whitespace-nowrap transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm"
+            >
+              <Info className="h-4 w-4" />
+              Tổng quan
+            </TabsTrigger>
+            <TabsTrigger
+              value="consumables"
+              className="ring-offset-background focus-visible:ring-ring data-[state=active]:bg-background data-[state=active]:text-foreground inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium whitespace-nowrap transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm"
+            >
+              <Package className="h-4 w-4" />
+              Vật tư
+            </TabsTrigger>
+            <TabsTrigger
+              value="maintenance"
+              className="ring-offset-background focus-visible:ring-ring data-[state=active]:bg-background data-[state=active]:text-foreground inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium whitespace-nowrap transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm"
+            >
+              <Wrench className="h-4 w-4" />
+              Bảo trì
+            </TabsTrigger>
+            <TabsTrigger
+              value="history"
+              className="ring-offset-background focus-visible:ring-ring data-[state=active]:bg-background data-[state=active]:text-foreground inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium whitespace-nowrap transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm"
+            >
+              <BarChart3 className="h-4 w-4" />
+              Lịch sử vật tư
+            </TabsTrigger>
+            <TabsTrigger
+              value="usage-history"
+              className="ring-offset-background focus-visible:ring-ring data-[state=active]:bg-background data-[state=active]:text-foreground inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium whitespace-nowrap transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm"
+            >
+              <BarChart3 className="h-4 w-4" />
+              Lịch sử sử dụng
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-6">
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <InfoCard
-              title="Thông tin mạng"
+              title={t('user_device_detail.info.network')}
               titleIcon={<Wifi className="h-4 w-4 text-blue-600" />}
               items={[
-                { label: 'Địa chỉ IP', value: device.ipAddress || 'Chưa cấu hình', mono: true },
                 {
-                  label: 'Địa chỉ MAC',
-                  value: device.macAddress || 'Chưa có thông tin',
+                  label: t('user_device_detail.info.ip'),
+                  value: device.ipAddress || t('user_device_detail.info.not_configured'),
                   mono: true,
                 },
-                { label: 'Firmware', value: device.firmware || 'N/A' },
+                {
+                  label: t('user_device_detail.info.mac'),
+                  value: device.macAddress || t('user_device_detail.info.no_info'),
+                  mono: true,
+                },
+                { label: t('user_device_detail.info.firmware'), value: device.firmware || 'N/A' },
               ]}
             />
 
             <InfoCard
-              title="Thông tin thiết bị"
+              title={t('user_device_detail.info.device')}
               titleIcon={<Monitor className="h-4 w-4 text-teal-600" />}
               items={[
-                { label: 'Số Serial', value: device.serialNumber || '-', mono: true },
-                { label: 'Vị trí', value: device.location || 'Chưa xác định' },
                 {
-                  label: 'Lần truy cập cuối',
+                  label: t('user_device_detail.info.serial'),
+                  value: device.serialNumber || '-',
+                  mono: true,
+                },
+                {
+                  label: t('table.location'),
+                  value: device.location || t('user_device_detail.info.location_unknown'),
+                },
+                {
+                  label: t('user_device_detail.info.last_seen'),
                   value: device.lastSeen
                     ? new Date(device.lastSeen).toLocaleString('vi-VN')
-                    : 'Chưa có dữ liệu',
+                    : t('user_device_detail.info.no_data'),
                 },
               ]}
             />
@@ -816,9 +816,11 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                 <div>
                   <CardTitle className="flex items-center gap-2">
                     <BarChart3 className="h-5 w-5 text-indigo-600" />
-                    Sử dụng trang theo tháng
+                    {t('user_device_detail.monthly_usage.title')}
                   </CardTitle>
-                  <CardDescription>Thống kê số trang in theo tháng</CardDescription>
+                  <CardDescription>
+                    {t('user_device_detail.monthly_usage.description')}
+                  </CardDescription>
                 </div>
                 <Button
                   variant="outline"
@@ -828,7 +830,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                   disabled={monthlyUsageLoading}
                 >
                   <RefreshCw className={cn('h-4 w-4', monthlyUsageLoading && 'animate-spin')} />
-                  Làm mới
+                  {t('button.refresh')}
                 </Button>
               </div>
             </CardHeader>
@@ -836,7 +838,9 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
               {/* Date Range Filters */}
               <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
                 <div className="flex-1">
-                  <Label className="text-sm font-medium">Từ tháng</Label>
+                  <Label className="text-sm font-medium">
+                    {t('user_device_detail.monthly_usage.from_month')}
+                  </Label>
                   <Input
                     type="month"
                     value={usageFromMonth}
@@ -855,7 +859,9 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                   />
                 </div>
                 <div className="flex-1">
-                  <Label className="text-sm font-medium">Đến tháng</Label>
+                  <Label className="text-sm font-medium">
+                    {t('user_device_detail.monthly_usage.to_month')}
+                  </Label>
                   <Input
                     type="month"
                     value={usageToMonth}
@@ -883,7 +889,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                   size="sm"
                   className="gap-2"
                 >
-                  Mặc định (12 tháng)
+                  {t('user_device_detail.monthly_usage.default')}
                 </Button>
               </div>
 
@@ -895,25 +901,25 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
               ) : monthlyUsageError ? (
                 <div className="text-muted-foreground p-8 text-center">
                   <AlertCircle className="mx-auto mb-3 h-12 w-12 text-red-500 opacity-20" />
-                  <p className="text-red-600">Đã xảy ra lỗi khi tải dữ liệu</p>
+                  <p className="text-red-600">{t('user_device_detail.error.load_data')}</p>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => refetchMonthlyUsage()}
                     className="mt-4"
                   >
-                    Thử lại
+                    {t('button.retry')}
                   </Button>
                 </div>
               ) : !customerId ? (
                 <div className="text-muted-foreground p-8 text-center">
                   <AlertCircle className="mx-auto mb-3 h-12 w-12 opacity-20" />
-                  <p>Thiết bị chưa có khách hàng</p>
+                  <p>{t('system_device_detail.no_customer')}</p>
                 </div>
               ) : monthlyUsageItems.length === 0 ? (
                 <div className="text-muted-foreground p-8 text-center">
                   <BarChart3 className="mx-auto mb-3 h-12 w-12 opacity-20" />
-                  <p>Chưa có dữ liệu sử dụng trong khoảng thời gian này</p>
+                  <p>{t('user_device_detail.monthly_usage.empty')}</p>
                 </div>
               ) : (
                 <div className="overflow-hidden rounded-lg border">
@@ -921,33 +927,41 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                     <table className="w-full min-w-[900px]">
                       <thead className="bg-gray-100">
                         <tr>
-                          <th className="px-4 py-3 text-left text-xs font-semibold">Tháng</th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold">Tên model</th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold">Số serial</th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold">Mã phần</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold">
+                            {t('user_device_detail.table.month')}
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold">
+                            {t('user_device_detail.table.model_name')}
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold">
+                            {t('user_device_detail.table.serial')}
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold">
+                            {t('user_device_detail.table.part_number')}
+                          </th>
                           {showStandardColumns && (
                             <>
                               <th className="px-4 py-3 text-right text-xs font-semibold">
-                                Trang đen trắng
+                                {t('user_device_detail.table.bw_pages')}
                               </th>
                               <th className="px-4 py-3 text-right text-xs font-semibold">
-                                Trang màu
+                                {t('user_device_detail.table.color_pages')}
                               </th>
                               <th className="px-4 py-3 text-right text-xs font-semibold">
-                                Tổng trang
+                                {t('user_device_detail.table.total_pages')}
                               </th>
                             </>
                           )}
                           {showA4Columns && (
                             <>
                               <th className="px-4 py-3 text-right text-xs font-semibold">
-                                Trang đen trắng A4
+                                {t('user_device_detail.table.bw_pages_a4')}
                               </th>
                               <th className="px-4 py-3 text-right text-xs font-semibold">
-                                Trang màu A4
+                                {t('user_device_detail.table.color_pages_a4')}
                               </th>
                               <th className="px-4 py-3 text-right text-xs font-semibold">
-                                Tổng trang A4
+                                {t('user_device_detail.table.total_pages_a4')}
                               </th>
                             </>
                           )}
@@ -959,7 +973,10 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                           .map((item, idx) => {
                             // Format month: YYYY-MM -> Tháng MM/YYYY
                             const [year, month] = item.month.split('-')
-                            const monthDisplay = `Tháng ${month}/${year}`
+                            const monthDisplay = t('user_device_detail.table.month_display', {
+                              month: month ?? '',
+                              year: year ?? '',
+                            })
 
                             return (
                               <tr
@@ -1190,10 +1207,10 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                 <div>
                   <CardTitle className="flex items-center gap-2">
                     <Package className="h-5 w-5 text-emerald-600" />
-                    Vật tư trong máy
+                    {t('system_device_detail.consumables.installed.title')}
                   </CardTitle>
                   <CardDescription className="mt-1">
-                    Danh sách vật tư hiện đang sử dụng
+                    {t('system_device_detail.consumables.installed.description')}
                   </CardDescription>
                 </div>
                 <div className="flex items-center gap-2">
@@ -1206,7 +1223,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                           setShowAttachFromOrphaned(true)
                           const cid = device?.customerId
                           if (!cid) {
-                            toast.error('Thiết bị chưa có khách hàng')
+                            toast.error(t('system_device_detail.no_customer'))
                             return
                           }
                           setConsumablesLoading(true)
@@ -1225,13 +1242,13 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                           setOrphanedList(items)
                         } catch (e) {
                           console.error('Load orphaned consumables failed', e)
-                          toast.error('Không tải được vật tư đã xuất sẵn')
+                          toast.error(t('system_device_detail.consumables.load_orphaned_error'))
                         } finally {
                           setConsumablesLoading(false)
                         }
                       }}
                     >
-                      Chọn từ vật tư đã xuất sẵn
+                      {t('system_device_detail.consumables.select_from_orphaned')}
                     </Button>
                   </ActionGuard>
                 </div>
@@ -1245,7 +1262,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
               ) : installedConsumables.length === 0 ? (
                 <div className="text-muted-foreground p-8 text-center">
                   <Package className="mx-auto mb-3 h-12 w-12 opacity-20" />
-                  <p>Chưa có vật tư nào được lắp đặt</p>
+                  <p>{t('system_device_detail.consumables.empty')}</p>
                 </div>
               ) : (
                 <div className="overflow-hidden rounded-lg border">
@@ -1253,14 +1270,24 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                     <thead className="bg-gray-100">
                       <tr>
                         <th className="px-4 py-3 text-left text-xs font-semibold">#</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold">Tên</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold">Serial</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold">Trạng thái</th>
                         <th className="px-4 py-3 text-left text-xs font-semibold">
-                          Số trang khả dụng
+                          {t('system_device_detail.consumables.table.name')}
                         </th>
-                        <th className="px-4 py-3 text-right text-xs font-semibold">Ngày lắp đặt</th>
-                        <th className="px-4 py-3 text-center text-xs font-semibold">Thao tác</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold">
+                          {t('table.serial')}
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold">
+                          {t('filters.status_label')}
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold">
+                          {t('system_device_detail.consumables.table.available_pages')}
+                        </th>
+                        <th className="px-4 py-3 text-right text-xs font-semibold">
+                          {t('system_device_detail.consumables.table.installed_date')}
+                        </th>
+                        <th className="px-4 py-3 text-center text-xs font-semibold">
+                          {t('table.actions')}
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y">
@@ -1362,7 +1389,9 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                                         variant="outline"
                                         className="ml-2 bg-yellow-50 text-yellow-700"
                                       >
-                                        Cảnh báo {c.warningPercentage}%
+                                        {t('system_device_detail.consumables.warning_badge', {
+                                          percentage: c.warningPercentage,
+                                        })}
                                       </Badge>
                                     ) : null}
                                   </div>
@@ -1449,7 +1478,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                                             </span>
                                           </TooltipTrigger>
                                           <TooltipContent sideOffset={4}>
-                                            {`“Vẫn dùng tốt – chỉ thay khi mờ.”`}
+                                            {t('system_device_detail.consumables.low_ink_tooltip')}
                                           </TooltipContent>
                                         </Tooltip>
                                       ) : null}
@@ -1482,12 +1511,14 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                                       setSelectedConsumableId(String(selectedId))
                                       setShowConsumableHistoryModal(true)
                                     } else {
-                                      toast.error('Không tìm thấy ID vật tư')
+                                      toast.error(
+                                        t('system_device_detail.consumables.not_found_id')
+                                      )
                                     }
                                   }}
                                   className="gap-2"
                                 >
-                                  Lịch sử
+                                  {t('system_device_detail.consumables.history')}
                                 </Button>
 
                                 <ActionGuard pageId="devices" actionId="edit-consumable">
@@ -1540,33 +1571,17 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                                       // Always default checkbox to unchecked
                                       setEditShowRemovedAt(false)
 
-                                      // Set price fields: if exchangeRate exists, show VND mode
+                                      // Set price and currency fields
                                       const existingPrice = hasPrice(c) ? c.price : undefined
-                                      const existingExchangeRate = Number(c.exchangeRate ?? '')
-
-                                      if (existingExchangeRate && existingPrice) {
-                                        // VND mode: calculate VND from price * exchangeRate
-                                        setEditPriceVND(existingPrice * existingExchangeRate)
-                                        setEditExchangeRate(existingExchangeRate)
-                                        setEditPriceUSD('')
-                                      } else if (existingPrice) {
-                                        // USD mode: use price directly
-                                        setEditPriceUSD(existingPrice)
-                                        setEditPriceVND('')
-                                        setEditExchangeRate('')
-                                      } else {
-                                        // No price data
-                                        setEditPriceVND('')
-                                        setEditPriceUSD('')
-                                        setEditExchangeRate('')
-                                      }
+                                      setEditPrice(existingPrice || '')
+                                      setEditCurrencyId(c.currencyId || null)
 
                                       setShowEditConsumable(true)
                                     }}
                                     className="gap-2"
                                   >
                                     <Edit className="h-4 w-4" />
-                                    Sửa
+                                    {t('common.edit')}
                                   </Button>
                                 </ActionGuard>
                                 {canShowWarningButton ? (
@@ -1585,7 +1600,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                                     className="gap-2"
                                   >
                                     <Bell className="h-4 w-4" />
-                                    Cảnh báo
+                                    {t('system_device_detail.consumables.warning')}
                                   </Button>
                                 ) : null}
                               </div>
@@ -1694,9 +1709,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                                       setCreateInstalledAtInput('')
                                       // removed createInstalledAtError clearing
                                       setCreateActualPagesPrinted('')
-                                      setCreatePriceVND('')
-                                      setCreatePriceUSD('')
-                                      setCreateExchangeRate('')
+                                      setCreatePrice('')
                                       setShowCreateConsumable(true)
                                     }}
                                     className="gap-2"
@@ -1761,15 +1774,15 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
         </TabsContent>
 
         <TabsContent value="usage-history" className="space-y-6">
-          <DeviceUsageHistory deviceId={deviceId} />
+          <DeviceUsageHistory deviceId={deviceId} device={device} />
         </TabsContent>
       </Tabs>
 
       {/* Edit Modal - Modern Design */}
       <Dialog open={showEdit} onOpenChange={setShowEdit}>
         <SystemModalLayout
-          title="Chỉnh sửa thiết bị"
-          description={`Cập nhật thông tin thiết bị ${device.serialNumber}`}
+          title={t('device.edit_title')}
+          description={t('device.edit_description').replace('{serial}', device.serialNumber)}
           icon={Edit}
           variant="edit"
           maxWidth="!max-w-[60vw]"
@@ -1805,7 +1818,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                         chosenReason = inactiveReasonOptionEdit
                       }
                       if (!chosenReason || String(chosenReason).trim() === '') {
-                        toast.error('Vui lòng cung cấp lý do khi thay đổi trạng thái')
+                        toast.error(t('device.provide_inactive_reason'))
                         setEditing(false)
                         return
                       }
@@ -1817,7 +1830,10 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                     const allowedStatuses = finalIsActive ? activeStatuses : inactiveStatuses
                     if (!allowedStatuses.includes(finalStatus)) {
                       toast.error(
-                        `Trạng thái không hợp lệ khi isActive=${String(finalIsActive)}. Vui lòng chọn trạng thái hợp lệ.`
+                        t('device.invalid_status_for_is_active').replace(
+                          '{isActive}',
+                          String(finalIsActive)
+                        )
                       )
                       setEditing(false)
                       return
@@ -1838,14 +1854,14 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                     const updated = await devicesClientService.update(deviceId, dto)
                     if (updated) {
                       setDevice(updated)
-                      toast.success('Cập nhật thiết bị thành công')
+                      toast.success(t('device.update_success'))
                       setShowEdit(false)
                     } else {
-                      toast.error('Cập nhật thất bại')
+                      toast.error(t('device.update_error'))
                     }
                   } catch (err) {
                     console.error('Update device failed', err)
-                    toast.error('Cập nhật thiết bị thất bại')
+                    toast.error(t('device.update_error'))
                   } finally {
                     setEditing(false)
                   }
@@ -1856,10 +1872,10 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                 {editing ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Đang lưu...
+                    {t('button.saving')}
                   </>
                 ) : (
-                  'Lưu thay đổi'
+                  t('device.save_changes')
                 )}
               </Button>
             </>
@@ -1868,7 +1884,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
           <div className="space-y-4">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
-                <Label className="text-base font-semibold">Địa chỉ IP</Label>
+                <Label className="text-base font-semibold">{t('device.ip')}</Label>
                 <Input
                   value={ipEdit}
                   onChange={(e) => setIpEdit(e.target.value)}
@@ -1877,7 +1893,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                 />
               </div>
               <div>
-                <Label className="text-base font-semibold">Địa chỉ MAC</Label>
+                <Label className="text-base font-semibold">{t('device.mac')}</Label>
                 <Input
                   value={macEdit}
                   onChange={(e) => setMacEdit(e.target.value)}
@@ -1886,7 +1902,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                 />
               </div>
               <div>
-                <Label className="text-base font-semibold">Firmware</Label>
+                <Label className="text-base font-semibold">{t('device.firmware')}</Label>
                 <Input
                   value={firmwareEdit}
                   onChange={(e) => setFirmwareEdit(e.target.value)}
@@ -1899,11 +1915,13 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
             {/* Customer editing - Only show when customer is System */}
             {hasCustomer(device) && device.customer?.name === 'System' && (
               <div className="mt-4">
-                <Label className="text-base font-semibold">Khách hàng</Label>
+                <Label className="text-base font-semibold">{t('customer.title')}</Label>
                 <Select value={customerIdEdit} onValueChange={(v) => setCustomerIdEdit(v)}>
                   <SelectTrigger className="mt-2 h-11">
                     <SelectValue
-                      placeholder={customersLoading ? 'Đang tải...' : 'Chọn khách hàng'}
+                      placeholder={
+                        customersLoading ? t('common.loading') : t('customer.select_placeholder')
+                      }
                     />
                   </SelectTrigger>
                   <SelectContent>
@@ -1911,13 +1929,13 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                       <SelectItem value="__loading" disabled>
                         <div className="flex items-center gap-2">
                           <Loader2 className="h-4 w-4 animate-spin" />
-                          Đang tải...
+                          {t('common.loading')}
                         </div>
                       </SelectItem>
                     )}
                     {!customersLoading && customers.length === 0 && (
                       <SelectItem value="__empty" disabled>
-                        Không có khách hàng
+                        {t('customer.empty')}
                       </SelectItem>
                     )}
                     {customers.map((c) => (
@@ -1950,12 +1968,12 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                 <div className="mt-4">
                   <Label className="flex items-center gap-2 text-base font-semibold">
                     <MapPin className="h-4 w-4 text-rose-600" />
-                    Địa chỉ
+                    {t('device.address')}
                   </Label>
                   {loadingAddresses ? (
                     <div className="mt-2 flex items-center gap-2 text-sm text-gray-500">
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      Đang tải địa chỉ...
+                      {t('loading.addresses')}
                     </div>
                   ) : customerAddresses.length > 0 ? (
                     <Select
@@ -1963,7 +1981,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                       onValueChange={(v) => setLocationAddressEdit(v)}
                     >
                       <SelectTrigger className="mt-2 h-11">
-                        <SelectValue placeholder="Chọn địa chỉ khách hàng" />
+                        <SelectValue placeholder={t('placeholder.select_customer_address')} />
                       </SelectTrigger>
                       <SelectContent>
                         {customerAddresses.map((addr, i) => (
@@ -1977,14 +1995,14 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                     <Input
                       value={locationAddressEdit}
                       onChange={(e) => setLocationAddressEdit(e.target.value)}
-                      placeholder="Nhập địa chỉ..."
+                      placeholder={t('placeholder.enter_address')}
                       className="mt-2 h-11"
                     />
                   )}
                   <p className="mt-1 text-xs text-gray-500">
                     {customerAddresses.length > 0
-                      ? 'Chọn địa chỉ từ danh sách địa chỉ của khách hàng'
-                      : 'Nhập địa chỉ của thiết bị tại khách hàng'}
+                      ? t('device.choose_address_from_list')
+                      : t('device.enter_customer_address')}
                   </p>
                 </div>
               ) : null
@@ -1995,7 +2013,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-base font-semibold text-gray-700">
                   <Package className="h-4 w-4 text-gray-600" />
-                  Trạng thái hoạt động
+                  {t('system_device_detail.status.title')}
                 </div>
                 <div>
                   <Switch
@@ -2027,10 +2045,10 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
               </div>
 
               <div className="mt-3">
-                <Label className="text-sm font-medium">Trạng thái</Label>
+                <Label className="text-sm font-medium">{t('filters.status_label')}</Label>
                 <Select value={statusEdit} onValueChange={(v) => setStatusEdit(v)}>
                   <SelectTrigger className="h-11">
-                    <SelectValue placeholder="Chọn trạng thái" />
+                    <SelectValue placeholder={t('device.form.status_placeholder')} />
                   </SelectTrigger>
                   <SelectContent>
                     {(isActiveEdit === null ? Boolean(device?.isActive) : isActiveEdit) ? (
@@ -2053,19 +2071,25 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
               {/* Show reason selector when isActive is false */}
               {(isActiveEdit === null ? Boolean(device?.isActive) : isActiveEdit) === false && (
                 <div className="mt-3 space-y-2">
-                  <Label className="text-sm font-medium">Lý do</Label>
+                  <Label className="text-sm font-medium">{t('toggle_active.reason')}</Label>
                   <Select
                     value={inactiveReasonOptionEdit}
                     onValueChange={(v) => setInactiveReasonOptionEdit(v)}
                   >
                     <SelectTrigger className="h-11">
-                      <SelectValue placeholder="Chọn lý do " />
+                      <SelectValue placeholder={t('device.form.reason_placeholder')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Tạm dừng do lỗi">Tạm dừng do lỗi</SelectItem>
-                      <SelectItem value="Hủy HĐ">Hủy HĐ</SelectItem>
-                      <SelectItem value="Hoàn tất HĐ">Hoàn tất HĐ</SelectItem>
-                      <SelectItem value="__other">Khác</SelectItem>
+                      <SelectItem value="Tạm dừng do lỗi">
+                        {t('toggle_active.modal.reason.pause_error')}
+                      </SelectItem>
+                      <SelectItem value="Hủy HĐ">
+                        {t('toggle_active.modal.reason.cancel_contract')}
+                      </SelectItem>
+                      <SelectItem value="Hoàn tất HĐ">
+                        {t('toggle_active.modal.reason.complete_contract')}
+                      </SelectItem>
+                      <SelectItem value="__other">{t('device.form.reason.other')}</SelectItem>
                     </SelectContent>
                   </Select>
 
@@ -2073,7 +2097,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                     <Input
                       value={inactiveReasonTextEdit}
                       onChange={(e) => setInactiveReasonTextEdit(e.target.value)}
-                      placeholder="Nhập lý do..."
+                      placeholder={t('device.form.reason.other_placeholder')}
                       className="h-11"
                     />
                   )}
@@ -2093,16 +2117,16 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
           <div className="px-6 py-5">
             <AlertDialogHeader className="space-y-2 text-left">
               <AlertDialogTitle className="text-lg font-bold">
-                Xác nhận Serial vật tư
+                {t('system_device_detail.consumables.serial_confirm.title')}
               </AlertDialogTitle>
               <AlertDialogDescription className="text-muted-foreground text-sm">
-                Serial đã được điền và sẽ không thể sửa sau khi lưu. Bạn có chắc chắn muốn tiếp tục?
+                {t('system_device_detail.consumables.serial_confirm.description')}
               </AlertDialogDescription>
             </AlertDialogHeader>
           </div>
           <AlertDialogFooter className="bg-muted/50 border-t px-6 py-4">
             <AlertDialogCancel onClick={() => setShowConsumableSerialWarning(false)}>
-              Hủy
+              {t('common.cancel')}
             </AlertDialogCancel>
             <Button
               onClick={async () => {
@@ -2113,7 +2137,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
               }}
               className="min-w-[120px] bg-amber-600"
             >
-              Xác nhận
+              {t('confirm.ok')}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -2122,8 +2146,10 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
       {/* Create Consumable Modal - Modern Design */}
       <Dialog open={showCreateConsumable} onOpenChange={setShowCreateConsumable}>
         <SystemModalLayout
-          title="Tạo và lắp vật tư"
-          description={`Thêm vật tư mới vào thiết bị ${device.serialNumber}`}
+          title={t('system_device_detail.consumables.create_modal.title')}
+          description={t('system_device_detail.consumables.create_modal.description', {
+            serial: device.serialNumber,
+          })}
           icon={Plus}
           variant="create"
           maxWidth="!max-w-[60vw]"
@@ -2134,7 +2160,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                 onClick={() => setShowCreateConsumable(false)}
                 className="min-w-[100px]"
               >
-                Hủy
+                {t('common.cancel')}
               </Button>
               <Button
                 onClick={async () => {
@@ -2150,7 +2176,9 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                         createActualPagesPrinted > MAX_ACTUAL_PAGES
                       ) {
                         setCreateActualPagesPrintedError(
-                          `Số trang không được lớn hơn ${MAX_ACTUAL_PAGES.toLocaleString('en-US')}`
+                          t('system_device_detail.consumables.pages_max_error', {
+                            max: MAX_ACTUAL_PAGES.toLocaleString('en-US'),
+                          })
                         )
                         // clear any price error so the user sees the page error only
                         setCreatePriceError(null)
@@ -2170,48 +2198,36 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
 
                       const created = await consumablesClientService.create(dto)
                       if (!created || !created.id) {
-                        toast.error('Tạo vật tư thất bại')
+                        toast.error(t('system_device_detail.consumables.create_error'))
                         return
                       }
 
-                      // Prepare install payload per API: installedAt, actualPagesPrinted, price, exchangeRate
+                      // Prepare install payload per API: installedAt, actualPagesPrinted, price, currencyId
                       let installPayload: Partial<UpdateDeviceConsumableDto> = {}
                       if (createInstalledAt) installPayload.installedAt = createInstalledAt
                       if (typeof createActualPagesPrinted === 'number')
                         installPayload.actualPagesPrinted = createActualPagesPrinted
 
-                      // Calculate price based on VND or USD input
-                      if (createPriceVND && createExchangeRate) {
-                        // VND mode: price = VND / exchangeRate (limit decimals)
-                        const raw = createPriceVND / createExchangeRate
-                        // When auto-converting from VND->USD, limit to 5 fractional digits
-                        const formatted = formatDecimal(raw, 5)
+                      // Set price and currencyId
+                      if (typeof createPrice === 'number' && createPrice > 0) {
+                        const priceErr = validateDecimal3010(createPrice)
+                        if (priceErr) {
+                          setCreatePriceError(priceErr)
+                          setCreateActualPagesPrintedError(null)
+                          setCreatingConsumable(false)
+                          return
+                        }
+                        const formatted = formatDecimal3010(createPrice)
                         if (formatted !== undefined) {
-                          const priceErr = checkPricePrecision(formatted)
-                          if (priceErr) {
-                            setCreatePriceError(priceErr)
-                            // clear any pages error so user sees price error under price input
-                            setCreateActualPagesPrintedError(null)
-                            setCreatingConsumable(false)
-                            return
-                          }
                           installPayload.price = formatted
                           setCreatePriceError(null)
                         }
-                        installPayload.exchangeRate = formatDecimal(createExchangeRate, 8)
-                      } else if (createPriceUSD) {
-                        // USD mode: price = USD directly (limit decimals)
-                        const formatted = formatDecimal(createPriceUSD, 8)
-                        if (formatted !== undefined) {
-                          const priceErr = checkPricePrecision(formatted)
-                          if (priceErr) {
-                            setCreatePriceError(priceErr)
-                            setCreatingConsumable(false)
-                            return
-                          }
-                          installPayload.price = formatted
-                          setCreatePriceError(null)
-                        }
+                      }
+                      if (createCurrencyId) {
+                        installPayload.currencyId = createCurrencyId
+                      }
+                      if (createCurrencyCode) {
+                        installPayload.currencyCode = createCurrencyCode
                       }
 
                       installPayload = removeEmpty(installPayload)
@@ -2222,7 +2238,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                         installPayload
                       )
 
-                      toast.success('Đã lắp vật tư vào thiết bị')
+                      toast.success(t('system_device_detail.consumables.install_success'))
                       setShowCreateConsumable(false)
 
                       setConsumablesLoading(true)
@@ -2239,7 +2255,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                       setCompatibleConsumables(Array.isArray(compatibleRaw) ? compatibleRaw : [])
                     } catch (err) {
                       console.error('Create/install consumable failed', err)
-                      toast.error('Không thể tạo hoặc lắp vật tư')
+                      toast.error(t('system_device_detail.consumables.create_install_error'))
                     } finally {
                       setCreatingConsumable(false)
                       setConsumablesLoading(false)
@@ -2265,12 +2281,12 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                 {creatingConsumable ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Đang tạo...
+                    {t('system_device_detail.consumables.creating')}
                   </>
                 ) : (
                   <>
                     <Plus className="mr-2 h-4 w-4" />
-                    Tạo và lắp
+                    {t('system_device_detail.consumables.create_install_button')}
                   </>
                 )}
               </Button>
@@ -2279,7 +2295,9 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
         >
           <div className="space-y-5">
             <div className="rounded-lg border border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50 p-4">
-              <p className="text-muted-foreground mb-1 text-sm font-medium">Loại vật tư</p>
+              <p className="text-muted-foreground mb-1 text-sm font-medium">
+                {t('system_device_detail.consumables.type_label')}
+              </p>
               <p className="text-lg font-bold text-emerald-700">
                 {selectedConsumableType?.name ?? '—'}
               </p>
@@ -2294,7 +2312,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
-                <Label className="text-base font-semibold">Số Serial</Label>
+                <Label className="text-base font-semibold">{t('table.serial')}</Label>
                 <Input
                   value={serialNumber}
                   onChange={(e) => setSerialNumber(e.target.value)}
@@ -2308,7 +2326,9 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
               {/* Expiry date removed per spec */}
 
               <div>
-                <Label className="text-base font-semibold">Thời gian lắp đặt</Label>
+                <Label className="text-base font-semibold">
+                  {t('system_device_detail.consumables.install_time')}
+                </Label>
                 <DateTimeLocalPicker
                   id="create-installedAt"
                   value={createInstalledAtInput}
@@ -2327,7 +2347,9 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                 {/* removed incomplete-datetime error display */}
               </div>
               <div>
-                <Label className="text-base font-semibold">Số trang thực tế </Label>
+                <Label className="text-base font-semibold">
+                  {t('system_device_detail.consumables.actual_pages')}
+                </Label>
                 <Input
                   type="number"
                   value={createActualPagesPrinted?.toString() ?? ''}
@@ -2337,7 +2359,9 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                     // validate immediately and show error inline
                     if (typeof v === 'number' && v > MAX_ACTUAL_PAGES) {
                       setCreateActualPagesPrintedError(
-                        `Số trang không được lớn hơn ${MAX_ACTUAL_PAGES.toLocaleString('en-US')}`
+                        t('system_device_detail.consumables.pages_max_error', {
+                          max: MAX_ACTUAL_PAGES.toLocaleString('en-US'),
+                        })
                       )
                       // clear any price error so the UI focuses on the pages error
                       setCreatePriceError(null)
@@ -2354,66 +2378,38 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                 )}
               </div>
               <div>
-                <Label className="text-base font-semibold">Giá (VND)</Label>
+                <Label className="text-base font-semibold">Giá</Label>
                 <Input
                   type="number"
-                  step="0.01"
-                  value={createPriceVND?.toString() ?? ''}
+                  step="any"
+                  value={createPrice?.toString() ?? ''}
                   onChange={(e) => {
                     const value = e.target.value ? Number(e.target.value) : ''
-                    setCreatePriceVND(value)
-                    if (value) {
-                      setCreatePriceUSD('') // Clear USD when VND is filled
-                    }
+                    setCreatePrice(value)
                   }}
-                  placeholder="3000000"
+                  placeholder="Nhập giá"
                   className="mt-2 h-11"
                 />
-                {createPriceError && createPriceVND !== '' && createPriceVND !== undefined && (
+                {createPriceError && createPrice !== '' && createPrice !== undefined && (
                   <p className="mt-1 text-sm text-red-600">{createPriceError}</p>
                 )}
               </div>
-              {createPriceVND && (
-                <div>
-                  <Label className="text-base font-semibold">Tỷ giá (Exchange Rate)</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={createExchangeRate?.toString() ?? ''}
-                    onChange={(e) =>
-                      setCreateExchangeRate(e.target.value ? Number(e.target.value) : '')
-                    }
-                    placeholder="25000"
-                    className="mt-2 h-11"
-                  />
-                  {createExchangeRate && (
-                    <p className="mt-2 text-sm font-medium text-emerald-600">
-                      💵 Giá sau quy đổi: ${(createPriceVND / createExchangeRate).toFixed(2)} USD
-                    </p>
-                  )}
-                </div>
-              )}
               <div>
-                <Label className="text-base font-semibold">Giá (USD)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={createPriceUSD?.toString() ?? ''}
-                  onChange={(e) => {
-                    const value = e.target.value ? Number(e.target.value) : ''
-                    setCreatePriceUSD(value)
-                    if (value) {
-                      setCreatePriceVND('') // Clear VND when USD is filled
-                      setCreateExchangeRate('') // Clear exchange rate when using USD
+                <CurrencySelector
+                  label="Tiền tệ"
+                  value={createCurrencyId}
+                  onChange={(value) => {
+                    setCreateCurrencyId(value)
+                    if (!value) {
+                      setCreateCurrencyCode(null)
                     }
                   }}
-                  placeholder="120.5"
-                  className="mt-2 h-11"
-                  disabled={!!createPriceVND}
+                  onSelect={(currency) => {
+                    setCreateCurrencyCode(currency?.code || null)
+                  }}
+                  optional
+                  placeholder="Chọn tiền tệ (mặc định: USD)"
                 />
-                {createPriceError && createPriceUSD !== '' && createPriceUSD !== undefined && (
-                  <p className="mt-1 text-sm text-red-600">{createPriceError}</p>
-                )}
               </div>
             </div>
           </div>
@@ -2423,8 +2419,8 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
       {/* Attach From Orphaned Modal */}
       <Dialog open={showAttachFromOrphaned} onOpenChange={setShowAttachFromOrphaned}>
         <SystemModalLayout
-          title="Lắp vật tư đã xuất sẵn"
-          description="Chọn vật tư đã xuất cho khách hàng và cập nhật thông tin trước khi lắp"
+          title={t('system_device_detail.consumables.attach_orphaned.title')}
+          description={t('system_device_detail.consumables.attach_orphaned.description')}
           icon={Plus}
           variant="create"
           maxWidth="!max-w-[60vw]"
@@ -2435,13 +2431,13 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                 onClick={() => setShowAttachFromOrphaned(false)}
                 className="min-w-[100px]"
               >
-                Hủy
+                {t('common.cancel')}
               </Button>
               <Button
                 onClick={async () => {
                   try {
                     if (!selectedOrphanedId) {
-                      toast.error('Vui lòng chọn vật tư')
+                      toast.error(t('system_device_detail.consumables.select_required'))
                       return
                     }
                     // Update serial/expiry then install
@@ -2456,7 +2452,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                       {}
                     )
 
-                    toast.success('Đã lắp vật tư từ kho đã xuất sẵn')
+                    toast.success(t('system_device_detail.consumables.attach_orphaned.success'))
                     setShowAttachFromOrphaned(false)
 
                     // Refresh installed and orphaned lists
@@ -2467,21 +2463,23 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                     setInstalledConsumables(Array.isArray(installed) ? installed : [])
                   } catch (e) {
                     console.error('Attach orphaned consumable failed', e)
-                    toast.error('Không thể lắp vật tư')
+                    toast.error(t('system_device_detail.consumables.attach_orphaned.error'))
                   } finally {
                     setConsumablesLoading(false)
                   }
                 }}
                 className="min-w-[120px] bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700"
               >
-                Lắp vào thiết bị
+                {t('system_device_detail.consumables.attach_orphaned.button')}
               </Button>
             </>
           }
         >
           <div className="space-y-5">
             <div>
-              <Label className="text-base font-semibold">Chọn vật tư</Label>
+              <Label className="text-base font-semibold">
+                {t('system_device_detail.consumables.select_consumable')}
+              </Label>
               <Select
                 value={selectedOrphanedId}
                 onValueChange={(v) => {
@@ -2498,25 +2496,32 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                 }}
               >
                 <SelectTrigger className="mt-2 h-11">
-                  <SelectValue placeholder={consumablesLoading ? 'Đang tải...' : 'Chọn vật tư'} />
+                  <SelectValue
+                    placeholder={
+                      consumablesLoading
+                        ? t('common.loading')
+                        : t('system_device_detail.consumables.select_consumable_placeholder')
+                    }
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   {consumablesLoading && (
                     <SelectItem value="__loading" disabled>
                       <div className="flex items-center gap-2">
                         <Loader2 className="h-4 w-4 animate-spin" />
-                        Đang tải...
+                        {t('common.loading')}
                       </div>
                     </SelectItem>
                   )}
                   {!consumablesLoading && orphanedList.length === 0 && (
                     <SelectItem value="__empty" disabled>
-                      Không có vật tư trống
+                      {t('system_device_detail.consumables.no_orphaned')}
                     </SelectItem>
                   )}
                   {orphanedList.map((c: Consumable) => (
                     <SelectItem key={c.id} value={String(c.id)}>
-                      {(c?.consumableType?.name || 'Vật tư') +
+                      {(c?.consumableType?.name ||
+                        t('system_device_detail.consumables.default_name')) +
                         (c?.serialNumber ? ` - ${c?.serialNumber}` : '')}
                     </SelectItem>
                   ))}
@@ -2526,7 +2531,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
-                <Label className="text-base font-semibold">Số Serial</Label>
+                <Label className="text-base font-semibold">{t('table.serial')}</Label>
                 <Input
                   value={orphanedSerial}
                   onChange={(e) => setOrphanedSerial(e.target.value)}
@@ -2535,7 +2540,9 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                 />
               </div>
               <div>
-                <Label className="text-base font-semibold">Ngày hết hạn</Label>
+                <Label className="text-base font-semibold">
+                  {t('system_device_detail.consumables.expiry_date')}
+                </Label>
                 <Input
                   type="date"
                   value={orphanedExpiry}
@@ -2558,7 +2565,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
             // refresh device data after saving snapshot
             const updated = await devicesClientService.getById(deviceId)
             setDevice(updated ?? null)
-            toast.success('Cập nhật dữ liệu thiết bị sau khi lưu snapshot A4')
+            toast.success(t('system_device_detail.a4_snapshot.refresh_success'))
           } catch (err) {
             console.error('Failed to refresh device after A4 save', err)
           }
@@ -2568,15 +2575,17 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
       {/* Warning modal: edit warning percentage for consumable type on device */}
       <Dialog open={showWarningDialog} onOpenChange={setShowWarningDialog}>
         <SystemModalLayout
-          title="Cập nhật ngưỡng cảnh báo"
-          description={`Cập nhật ngưỡng cảnh báo cho vật tư ${warningTarget?.consumableType?.name ?? warningTarget?.serialNumber ?? ''}`}
+          title={t('system_device_detail.warning_modal.title')}
+          description={t('system_device_detail.warning_modal.description', {
+            name: warningTarget?.consumableType?.name ?? warningTarget?.serialNumber ?? '',
+          })}
           icon={Bell}
           variant="edit"
           maxWidth="!max-w-[32rem]"
           footer={
             <>
               <Button variant="outline" onClick={() => setShowWarningDialog(false)}>
-                Hủy
+                {t('common.cancel')}
               </Button>
               <Button
                 onClick={async () => {
@@ -2586,7 +2595,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                     warningTarget.consumable?.consumableTypeId ??
                     warningTarget.consumableType?.id
                   if (!ctId) {
-                    toast.error('Không thể xác định loại vật tư')
+                    toast.error(t('system_device_detail.warning_modal.cannot_determine_type'))
                     return
                   }
                   const v =
@@ -2594,7 +2603,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                       ? warningPercentageEdit
                       : Number(warningPercentageEdit)
                   if (Number.isNaN(v) || v < 0 || v > 100) {
-                    toast.error('Vui lòng nhập số phần trăm hợp lệ (0 - 100)')
+                    toast.error(t('system_device_detail.warning_modal.invalid_percentage'))
                     return
                   }
                   try {
@@ -2604,7 +2613,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                       String(ctId),
                       v
                     )
-                    toast.success('Cập nhật ngưỡng cảnh báo thành công')
+                    toast.success(t('system_device_detail.warning_modal.update_success'))
                     setInstalledConsumables((prev) =>
                       prev.map((it) => {
                         // match by consumableTypeId or nested consumableType.id
@@ -2621,7 +2630,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                     setShowWarningDialog(false)
                   } catch (err) {
                     console.error('Update warning failed', err)
-                    toast.error('Cập nhật ngưỡng cảnh báo thất bại')
+                    toast.error(t('system_device_detail.warning_modal.update_error'))
                   } finally {
                     setUpdatingWarning(false)
                   }
@@ -2632,10 +2641,10 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                 {updatingWarning ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Đang lưu...
+                    {t('button.saving')}
                   </>
                 ) : (
-                  'Lưu thay đổi'
+                  t('device.save_changes')
                 )}
               </Button>
             </>
@@ -2643,7 +2652,9 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
         >
           <div className="space-y-4">
             <div>
-              <Label className="text-sm font-medium">Ngưỡng cảnh báo (%)</Label>
+              <Label className="text-sm font-medium">
+                {t('system_device_detail.warning_modal.threshold_label')}
+              </Label>
               <Input
                 type="number"
                 min={0}
@@ -2657,7 +2668,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                 className="mt-2 h-11"
               />
               <p className="mt-1 text-xs text-gray-500">
-                Nhập giá trị phần trăm cảnh báo (0 - 100)
+                {t('system_device_detail.warning_modal.threshold_hint')}
               </p>
             </div>
           </div>
@@ -2691,8 +2702,10 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
       {/* Edit Consumable Modal - Modern Design */}
       <Dialog open={showEditConsumable} onOpenChange={setShowEditConsumable}>
         <SystemModalLayout
-          title="Chỉnh sửa vật tư"
-          description={`Cập nhật thông tin vật tư ${editingConsumable?.serialNumber ?? editingConsumable?.consumableType?.name ?? ''}`}
+          title={t('system_device_detail.consumables.edit_modal.title')}
+          description={t('system_device_detail.consumables.edit_modal.description', {
+            name: editingConsumable?.serialNumber ?? editingConsumable?.consumableType?.name ?? '',
+          })}
           icon={Edit}
           variant="edit"
           maxWidth="!max-w-[60vw]"
@@ -2703,7 +2716,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                 onClick={() => setShowEditConsumable(false)}
                 className="min-w-[100px]"
               >
-                Hủy
+                {t('common.cancel')}
               </Button>
               <Button
                 onClick={async () => {
@@ -2717,7 +2730,9 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                       const installedDate = new Date(editInstalledAt).getTime()
                       const removedDate = new Date(editRemovedAt).getTime()
                       if (installedDate >= removedDate) {
-                        toast.error('Ngày lắp đặt phải nhỏ hơn ngày gỡ (không được bằng)')
+                        toast.error(
+                          t('system_device_detail.consumables.validation.installed_before_removed')
+                        )
                         return
                       }
                     }
@@ -2726,7 +2741,9 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                       const installedDate = new Date(editInstalledAt).getTime()
                       const expiryDate = new Date(editExpiryDate + 'T23:59:59').getTime()
                       if (installedDate >= expiryDate) {
-                        toast.error('Ngày lắp đặt phải nhỏ hơn ngày hết hạn (không được bằng)')
+                        toast.error(
+                          t('system_device_detail.consumables.validation.installed_before_expiry')
+                        )
                         return
                       }
                     }
@@ -2738,7 +2755,9 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                         editActualPagesPrinted > MAX_ACTUAL_PAGES
                       ) {
                         setEditActualPagesPrintedError(
-                          `Số trang không được lớn hơn ${MAX_ACTUAL_PAGES.toLocaleString('en-US')}`
+                          t('system_device_detail.consumables.pages_max_error', {
+                            max: MAX_ACTUAL_PAGES.toLocaleString('en-US'),
+                          })
                         )
                         // clear price error to keep focus on pages error
                         setEditPriceError(null)
@@ -2755,7 +2774,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                         editingConsumable?.serialNumber &&
                         editSerialNumber !== editingConsumable.serialNumber
                       ) {
-                        toast.error('Serial đã được lưu trước đó và không thể chỉnh sửa')
+                        toast.error(t('system_device_detail.consumables.serial_locked'))
                         setUpdatingConsumable(false)
                         return
                       }
@@ -2770,7 +2789,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                         dto
                       )
                       if (!updated) {
-                        toast.error('Cập nhật vật tư thất bại')
+                        toast.error(t('system_device_detail.consumables.update_error'))
                         return
                       }
 
@@ -2784,37 +2803,23 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
 
                         // Only include price if removedAt is not being set (checkbox not checked)
                         if (!editShowRemovedAt) {
-                          // Calculate price based on VND or USD input
-                          if (editPriceVND && editExchangeRate) {
-                            // VND mode: price = VND / exchangeRate
-                            const raw = editPriceVND / editExchangeRate
-                            // When auto-converting from VND->USD, limit to 5 fractional digits
-                            const formatted = formatDecimal(raw, 5)
+                          // Set price and currencyId
+                          if (typeof editPrice === 'number' && editPrice > 0) {
+                            const priceErr = validateDecimal3010(editPrice)
+                            if (priceErr) {
+                              setEditPriceError(priceErr)
+                              setEditActualPagesPrintedError(null)
+                              setUpdatingConsumable(false)
+                              return
+                            }
+                            const formatted = formatDecimal3010(editPrice)
                             if (formatted !== undefined) {
-                              const priceErr = checkPricePrecision(formatted)
-                              if (priceErr) {
-                                setEditPriceError(priceErr)
-                                setEditActualPagesPrintedError(null)
-                                setUpdatingConsumable(false)
-                                return
-                              }
                               deviceDto.price = formatted
                               setEditPriceError(null)
                             }
-                            deviceDto.exchangeRate = editExchangeRate
-                          } else if (editPriceUSD) {
-                            // USD mode: price = USD directly
-                            const formatted = formatDecimal(editPriceUSD, 8)
-                            if (formatted !== undefined) {
-                              const priceErr = checkPricePrecision(formatted)
-                              if (priceErr) {
-                                setEditPriceError(priceErr)
-                                setUpdatingConsumable(false)
-                                return
-                              }
-                              deviceDto.price = formatted
-                              setEditPriceError(null)
-                            }
+                          }
+                          if (editCurrencyId) {
+                            deviceDto.currencyId = editCurrencyId
                           }
                         }
 
@@ -2828,12 +2833,10 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                       } catch (err) {
                         console.error('Update device-consumable failed', err)
                         // Non-fatal: show warning but continue
-                        toast(
-                          'Vật tư đã cập nhật (nhưng có lỗi khi cập nhật thông tin trên thiết bị)'
-                        )
+                        toast(t('system_device_detail.consumables.update_partial_success'))
                       }
 
-                      toast.success('Cập nhật vật tư thành công')
+                      toast.success(t('system_device_detail.consumables.update_success'))
                       setShowEditConsumable(false)
 
                       // Refresh installed consumables list
@@ -2844,7 +2847,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                       setInstalledConsumables(Array.isArray(installed) ? installed : [])
                     } catch (err) {
                       console.error('Update consumable failed', err)
-                      toast.error('Không thể cập nhật vật tư')
+                      toast.error(t('system_device_detail.consumables.update_error'))
                     } finally {
                       setUpdatingConsumable(false)
                       setConsumablesLoading(false)
@@ -2858,7 +2861,9 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                     const installedDate = new Date(editInstalledAt).getTime()
                     const removedDate = new Date(editRemovedAt).getTime()
                     if (installedDate >= removedDate) {
-                      toast.error('Ngày lắp đặt phải nhỏ hơn ngày gỡ (không được bằng)')
+                      toast.error(
+                        t('system_device_detail.consumables.validation.installed_before_removed')
+                      )
                       return
                     }
                   }
@@ -2867,7 +2872,9 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                     const installedDate = new Date(editInstalledAt).getTime()
                     const expiryDate = new Date(editExpiryDate + 'T23:59:59').getTime()
                     if (installedDate >= expiryDate) {
-                      toast.error('Ngày lắp đặt phải nhỏ hơn ngày hết hạn (không được bằng)')
+                      toast.error(
+                        t('system_device_detail.consumables.validation.installed_before_expiry')
+                      )
                       return
                     }
                   }
@@ -2879,7 +2886,9 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                       editActualPagesPrinted > MAX_ACTUAL_PAGES
                     ) {
                       setEditActualPagesPrintedError(
-                        `Số trang không được lớn hơn ${MAX_ACTUAL_PAGES.toLocaleString('en-US')}`
+                        t('system_device_detail.consumables.pages_max_error', {
+                          max: MAX_ACTUAL_PAGES.toLocaleString('en-US'),
+                        })
                       )
                       // clear price error to keep focus on pages error
                       setEditPriceError(null)
@@ -2896,7 +2905,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                       editingConsumable?.serialNumber &&
                       editSerialNumber !== editingConsumable.serialNumber
                     ) {
-                      toast.error('Serial đã được lưu trước đó và không thể chỉnh sửa')
+                      toast.error(t('system_device_detail.consumables.serial_locked'))
                       setUpdatingConsumable(false)
                       return
                     }
@@ -2918,7 +2927,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                     await runEditConsumable()
                   } catch (err) {
                     console.error('Update consumable failed', err)
-                    toast.error('Không thể cập nhật vật tư')
+                    toast.error(t('system_device_detail.consumables.update_error'))
                   } finally {
                     setUpdatingConsumable(false)
                     setConsumablesLoading(false)
@@ -2930,12 +2939,12 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                 {updatingConsumable ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Đang lưu...
+                    {t('button.saving')}
                   </>
                 ) : (
                   <>
                     <Edit className="mr-2 h-4 w-4" />
-                    Lưu thay đổi
+                    {t('device.save_changes')}
                   </>
                 )}
               </Button>
@@ -2944,7 +2953,9 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
         >
           <div className="space-y-5">
             <div className="rounded-lg border border-blue-200 bg-gradient-to-r from-blue-50 to-cyan-50 p-4">
-              <p className="text-muted-foreground mb-1 text-sm font-medium">Loại vật tư</p>
+              <p className="text-muted-foreground mb-1 text-sm font-medium">
+                {t('system_device_detail.consumables.type_label')}
+              </p>
               <p className="text-lg font-bold text-blue-700">
                 {editingConsumable?.consumableType?.name ?? '—'}
               </p>
@@ -2959,7 +2970,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
-                <Label className="text-base font-semibold">Số Serial</Label>
+                <Label className="text-base font-semibold">{t('table.serial')}</Label>
                 <Input
                   value={editSerialNumber}
                   onChange={(e) => setEditSerialNumber(e.target.value)}
@@ -2969,14 +2980,16 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                 />
                 {editingConsumable?.serialNumber ? (
                   <p className="text-muted-foreground mt-1 text-xs">
-                    Serial đã được lưu và không thể chỉnh sửa
+                    {t('system_device_detail.consumables.serial_locked_hint')}
                   </p>
                 ) : null}
               </div>
               {/* Batch removed per spec */}
               {/* removed capacity/remaining fields from edit form per request */}
               <div>
-                <Label className="text-base font-semibold">Ngày dự kiến hết hạn</Label>
+                <Label className="text-base font-semibold">
+                  {t('system_device_detail.consumables.expected_expiry')}
+                </Label>
                 <Input
                   type="date"
                   value={editExpiryDate}
@@ -2987,7 +3000,9 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
 
               {/* device-consumable specific fields */}
               <div>
-                <Label className="text-base font-semibold">Ngày lắp đặt (installedAt)</Label>
+                <Label className="text-base font-semibold">
+                  {t('system_device_detail.consumables.installed_at')}
+                </Label>
                 <DateTimeLocalPicker
                   id="edit-installedAt"
                   value={editInstalledAtInput}
@@ -3018,13 +3033,15 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                   htmlFor="showRemovedAt"
                   className="cursor-pointer text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                 >
-                  Vật tư đã được gỡ (nhập ngày gỡ)
+                  {t('system_device_detail.consumables.removed_checkbox')}
                 </Label>
               </div>
 
               {editShowRemovedAt && (
                 <div>
-                  <Label className="text-base font-semibold">Ngày gỡ (removedAt)</Label>
+                  <Label className="text-base font-semibold">
+                    {t('system_device_detail.consumables.removed_at')}
+                  </Label>
                   <DateTimeLocalPicker
                     id="edit-removedAt"
                     value={formatISOToLocalDatetime(editRemovedAt)}
@@ -3039,7 +3056,9 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
               )}
 
               <div>
-                <Label className="text-base font-semibold">Số trang thực tế đã in</Label>
+                <Label className="text-base font-semibold">
+                  {t('system_device_detail.consumables.actual_pages')}
+                </Label>
                 <Input
                   type="number"
                   value={editActualPagesPrinted?.toString() ?? ''}
@@ -3048,7 +3067,9 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                     setEditActualPagesPrinted(v)
                     if (typeof v === 'number' && v > MAX_ACTUAL_PAGES) {
                       setEditActualPagesPrintedError(
-                        `Số trang không được lớn hơn ${MAX_ACTUAL_PAGES.toLocaleString('en-US')}`
+                        t('system_device_detail.consumables.pages_max_error', {
+                          max: MAX_ACTUAL_PAGES.toLocaleString('en-US'),
+                        })
                       )
                       setEditPriceError(null)
                     } else {
@@ -3068,63 +3089,30 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
               {!editShowRemovedAt && (
                 <>
                   <div>
-                    <Label className="text-base font-semibold">Giá (VND)</Label>
+                    <Label className="text-base font-semibold">Giá</Label>
                     <Input
                       type="number"
-                      step="0.01"
-                      value={editPriceVND?.toString() ?? ''}
+                      step="any"
+                      value={editPrice?.toString() ?? ''}
                       onChange={(e) => {
                         const value = e.target.value ? Number(e.target.value) : ''
-                        setEditPriceVND(value)
-                        if (value) {
-                          setEditPriceUSD('') // Clear USD when VND is filled
-                        }
+                        setEditPrice(value)
                       }}
-                      placeholder="3000000"
+                      placeholder="Nhập giá"
                       className="mt-2 h-11"
                     />
-                  </div>
-                  {editPriceVND && (
-                    <div>
-                      <Label className="text-base font-semibold">Tỷ giá (Exchange Rate)</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={editExchangeRate?.toString() ?? ''}
-                        onChange={(e) =>
-                          setEditExchangeRate(e.target.value ? Number(e.target.value) : '')
-                        }
-                        placeholder="25000"
-                        className="mt-2 h-11"
-                      />
-                      {editExchangeRate && (
-                        <p className="mt-2 text-sm font-medium text-blue-600">
-                          💵 Giá sau quy đổi: ${(editPriceVND / editExchangeRate).toFixed(2)} USD
-                        </p>
-                      )}
-                    </div>
-                  )}
-                  <div>
-                    <Label className="text-base font-semibold">Giá (USD)</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={editPriceUSD?.toString() ?? ''}
-                      onChange={(e) => {
-                        const value = e.target.value ? Number(e.target.value) : ''
-                        setEditPriceUSD(value)
-                        if (value) {
-                          setEditPriceVND('') // Clear VND when USD is filled
-                          setEditExchangeRate('') // Clear exchange rate when using USD
-                        }
-                      }}
-                      placeholder="120.5"
-                      className="mt-2 h-11"
-                      disabled={!!editPriceVND}
-                    />
-                    {editPriceError && editPriceUSD !== '' && editPriceUSD !== undefined && (
+                    {editPriceError && editPrice !== '' && editPrice !== undefined && (
                       <p className="mt-1 text-sm text-red-600">{editPriceError}</p>
                     )}
+                  </div>
+                  <div>
+                    <CurrencySelector
+                      label="Tiền tệ"
+                      value={editCurrencyId}
+                      onChange={(value) => setEditCurrencyId(value)}
+                      optional
+                      placeholder="Chọn tiền tệ (mặc định: USD)"
+                    />
                   </div>
                 </>
               )}
@@ -3177,6 +3165,7 @@ export function ConsumableUsageHistory({
     [k: string]: unknown
   }
 
+  const { t } = useLocale()
   const [items, setItems] = useState<HistoryRecord[]>([])
   const [loading, setLoading] = useState(false)
   const [page, setPage] = useState(1)
@@ -3220,11 +3209,11 @@ export function ConsumableUsageHistory({
       setItems(Array.isArray(list) ? (list as HistoryRecord[]) : [])
     } catch (err) {
       console.error('Load consumable usage history failed', err)
-      toast.error('Không tải được lịch sử sử dụng vật tư')
+      toast.error(t('system_device_detail.consumable_history.load_error'))
     } finally {
       setLoading(false)
     }
-  }, [deviceId, page, limit, search, startDate, endDate, consumableId])
+  }, [deviceId, page, limit, search, startDate, endDate, consumableId, t])
 
   // helper: format numbers and IDs
   const fmt = (v: unknown) => (typeof v === 'number' ? v.toLocaleString('vi-VN') : String(v ?? '-'))
@@ -3247,7 +3236,7 @@ export function ConsumableUsageHistory({
           <div className="flex w-full items-center gap-2 rounded-lg border bg-white px-3 py-2 shadow-sm">
             <Search className="h-4 w-4 text-gray-400" />
             <Input
-              placeholder="Tìm kiếm theo ID hoặc consumable..."
+              placeholder={t('system_device_detail.consumable_history.search_placeholder')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               onKeyDown={(e) => {
@@ -3266,27 +3255,27 @@ export function ConsumableUsageHistory({
               <RefreshCw className="h-4 w-4" />
             </Button>
             <Button variant="outline" size="sm" onClick={() => handleSearch()} className="ml-2">
-              Tìm
+              {t('common.search')}
             </Button>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <Label className="text-sm">Từ</Label>
+          <Label className="text-sm">{t('common.from')}</Label>
           <Input
             type="date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
             className="h-8"
           />
-          <Label className="text-sm">Đến</Label>
+          <Label className="text-sm">{t('common.to')}</Label>
           <Input
             type="date"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
             className="h-8"
           />
-          <Label className="text-sm">Hiển thị</Label>
+          <Label className="text-sm">{t('common.display')}</Label>
           <select
             value={String(limit)}
             onChange={(e) => setLimit(Number(e.target.value))}
@@ -3297,7 +3286,7 @@ export function ConsumableUsageHistory({
             <option value="50">50</option>
           </select>
           <Button variant="ghost" size="sm" onClick={() => load()}>
-            Làm mới
+            {t('button.refresh')}
           </Button>
         </div>
       </div>
@@ -3308,19 +3297,31 @@ export function ConsumableUsageHistory({
             <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
           </div>
         ) : items.length === 0 ? (
-          <div className="text-muted-foreground p-8 text-center">Chưa có bản ghi</div>
+          <div className="text-muted-foreground p-8 text-center">
+            {t('system_device_detail.consumable_history.empty')}
+          </div>
         ) : (
           <div className="w-full overflow-auto">
             <table className="w-full min-w-[900px]">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-4 py-3 text-left text-sm font-semibold">ID</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">Tên vật tư</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">
+                    {t('system_device_detail.consumable_history.table.consumable_name')}
+                  </th>
                   <th className="px-4 py-3 text-right text-sm font-semibold">%</th>
-                  <th className="px-4 py-3 text-right text-sm font-semibold">Remaining</th>
-                  <th className="px-4 py-3 text-right text-sm font-semibold">Capacity</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">Status</th>
-                  <th className="px-4 py-3 text-right text-sm font-semibold">Recorded At</th>
+                  <th className="px-4 py-3 text-right text-sm font-semibold">
+                    {t('system_device_detail.consumable_history.table.remaining')}
+                  </th>
+                  <th className="px-4 py-3 text-right text-sm font-semibold">
+                    {t('system_device_detail.consumable_history.table.capacity')}
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">
+                    {t('filters.status_label')}
+                  </th>
+                  <th className="px-4 py-3 text-right text-sm font-semibold">
+                    {t('system_device_detail.consumable_history.table.recorded_at')}
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y">
@@ -3350,7 +3351,7 @@ export function ConsumableUsageHistory({
       </div>
 
       <div className="flex items-center justify-between">
-        <div className="text-muted-foreground text-sm">Trang {page}</div>
+        <div className="text-muted-foreground text-sm">{t('common.page', { page })}</div>
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
@@ -3358,7 +3359,7 @@ export function ConsumableUsageHistory({
             disabled={page <= 1 || loading}
             onClick={() => setPage((p) => Math.max(1, p - 1))}
           >
-            Trước
+            {t('common.previous')}
           </Button>
           <Button
             variant="outline"
@@ -3366,7 +3367,7 @@ export function ConsumableUsageHistory({
             disabled={loading}
             onClick={() => setPage((p) => p + 1)}
           >
-            Sau
+            {t('common.next')}
           </Button>
         </div>
       </div>

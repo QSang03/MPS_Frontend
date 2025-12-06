@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -51,6 +52,7 @@ interface UserFormProps {
 export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormProps) {
   const router = useRouter()
   const queryClient = useQueryClient()
+  const { t } = useLocale()
 
   // Fetch roles
   const { data: roles = [], isLoading: isLoadingRoles } = useQuery({
@@ -132,7 +134,7 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
       // For create: clear the select and show a toast
       if (mode === 'create') {
         form.setValue('roleId', '')
-        toast.warning('Khách hàng không phải SYS, vui lòng chọn vai trò Manager hoặc User')
+        toast.warning(t('user.role_invalid_for_customer'))
       } else {
         // For edit: set a validation error but keep the value for admins to correct
         try {
@@ -143,7 +145,7 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
         } catch {}
       }
     }
-  }, [watchedCustomerCode, roles, form, initialData?.roleId, mode])
+  }, [watchedCustomerCode, roles, form, initialData?.roleId, mode, t])
 
   // Parse role attribute schema
   const { schema: attributeSchema, validate: validateAttributes } = useRoleAttributeSchema(
@@ -167,7 +169,7 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
     mutationFn: (data: UserFormData) => usersClientService.createUser(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] })
-      toast.success('Tạo người dùng thành công!')
+      toast.success(t('user.create_success'))
       form.reset()
       if (onSuccess) {
         onSuccess()
@@ -193,7 +195,7 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
       const message =
         _backend.message ||
         _backend.error ||
-        (error instanceof Error ? error.message : 'Tạo người dùng thất bại')
+        (error instanceof Error ? error.message : t('user.create_error'))
       const details = _backend.details as BackendDetails | undefined
 
       setServerError(message)

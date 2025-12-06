@@ -14,7 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { formatDateTime } from '@/lib/utils/formatters'
+import { formatDateTime, formatCurrency } from '@/lib/utils/formatters'
 import { warehouseDocumentsClientService } from '@/lib/api/services/warehouse-documents-client.service'
 import type { WarehouseDocument } from '@/types/models'
 import { ArrowLeft } from 'lucide-react'
@@ -130,8 +130,19 @@ export default function WarehouseDocumentDetailClient({ id }: Props) {
                             </div>
                           </TableCell>
                           <TableCell>{item.quantity}</TableCell>
-                          <TableCell className="text-right">{item.unitPrice ?? '-'}</TableCell>
-                          <TableCell className="text-right">{item.totalPrice ?? '-'}</TableCell>
+                          <TableCell className="text-right">
+                            {item.unitPrice !== undefined && item.unitPrice !== null
+                              ? formatCurrency(item.unitPrice, item.currency?.code || item.currency)
+                              : '-'}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {item.totalPrice !== undefined && item.totalPrice !== null
+                              ? formatCurrency(
+                                  item.totalPrice,
+                                  item.currency?.code || item.currency
+                                )
+                              : '-'}
+                          </TableCell>
                           <TableCell className="text-muted-foreground max-w-[200px] truncate text-xs">
                             {item.notes ?? '-'}
                           </TableCell>

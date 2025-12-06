@@ -55,6 +55,7 @@ import { removeEmpty } from '@/lib/utils/clean'
 import { cn } from '@/lib/utils'
 import ContractDevicesSection from './ContractDevicesSection'
 import { getPublicUrl } from '@/lib/utils/publicUrl'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 interface ContractFormProps {
   initial?: Partial<ContractFormData>
@@ -89,6 +90,7 @@ const CONTRACT_PDF_MAX_MB = Math.round(CONTRACT_PDF_MAX_BYTES / (1024 * 1024))
 export function ContractForm({ initial, onSuccess }: ContractFormProps) {
   const queryClient = useQueryClient()
   const [showValidationErrors, setShowValidationErrors] = useState(false)
+  const { t } = useLocale()
 
   const form = useForm<ContractFormData>({
     resolver: zodResolver(contractFormSchema),
@@ -115,14 +117,16 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
       } catch {
         // ignore
       }
-      toast.success('✅ Tạo hợp đồng thành công', {
-        description: `Hợp đồng ${created?.contractNumber} đã được tạo`,
+      toast.success(t('contract.create_success'), {
+        description: t('contract.create_success_description', {
+          contractNumber: created?.contractNumber || '',
+        }),
       })
       if (onSuccess) onSuccess(created)
     },
     onError: (error: unknown) => {
-      const message = error instanceof Error ? error.message : 'Tạo hợp đồng thất bại'
-      toast.error('❌ ' + message)
+      const message = error instanceof Error ? error.message : t('contract.create_error')
+      toast.error(message)
     },
   })
 
@@ -135,14 +139,16 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
       } catch {
         // ignore
       }
-      toast.success('✅ Cập nhật hợp đồng thành công', {
-        description: `Hợp đồng ${updated?.contractNumber} đã được cập nhật`,
+      toast.success(t('contract.update_success'), {
+        description: t('contract.update_success_description', {
+          contractNumber: updated?.contractNumber || '',
+        }),
       })
       if (onSuccess) onSuccess(updated)
     },
     onError: (error: unknown) => {
-      const message = error instanceof Error ? error.message : 'Cập nhật hợp đồng thất bại'
-      toast.error('❌ ' + message)
+      const message = error instanceof Error ? error.message : t('contract.update_error')
+      toast.error(message)
     },
   })
 

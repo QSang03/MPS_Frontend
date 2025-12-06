@@ -1,3 +1,5 @@
+import type { CurrencyDataDto } from './currency'
+
 export type WarehouseDocumentType =
   | 'IMPORT_FROM_SUPPLIER'
   | 'EXPORT_TO_CUSTOMER'
@@ -10,6 +12,8 @@ export interface WarehouseDocumentItem {
   consumableTypeId: string
   quantity: number
   unitPrice?: number
+  currencyId?: string | null
+  currency?: CurrencyDataDto | null
   totalPrice?: number
   notes?: string
   consumableType?: {
@@ -46,6 +50,8 @@ export interface CreateWarehouseDocumentDto {
     consumableTypeId: string
     quantity: number
     unitPrice?: number
+    currencyId?: string | null
+    currencyCode?: string
     notes?: string
   }>
 }

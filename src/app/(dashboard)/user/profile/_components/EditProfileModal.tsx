@@ -25,6 +25,7 @@ import { Loader2, User, Mail, Edit } from 'lucide-react'
 import type { UserProfile } from '@/types/auth'
 import { authClientService } from '@/lib/api/services/auth-client.service'
 import { toast } from 'sonner'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 // Validation schema for editing profile
 const editProfileSchema = z.object({
@@ -50,6 +51,7 @@ export function EditProfileModal({
   onProfileUpdated,
 }: EditProfileModalProps) {
   const [isLoading, setIsLoading] = useState(false)
+  const { t } = useLocale()
 
   const form = useForm<EditProfileFormData>({
     resolver: zodResolver(editProfileSchema),
@@ -71,8 +73,7 @@ export function EditProfileModal({
         lastName: (profile.user.lastName as string) || '',
       })
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile])
+  }, [profile, form])
 
   const onSubmit = async (data: EditProfileFormData) => {
     if (!profile) return
@@ -93,7 +94,7 @@ export function EditProfileModal({
 
       const updatedProfile = await authClientService.updateProfile(cleanedPayload)
 
-      toast.success('✅ Cập nhật hồ sơ thành công')
+      toast.success(t('user.update_success'))
       onProfileUpdated(updatedProfile)
       onClose()
     } catch (error) {
@@ -114,7 +115,7 @@ export function EditProfileModal({
               form.setError(field as keyof EditProfileFormData, { type: 'server', message })
             }
           })
-          toast.error('❌ Vui lòng kiểm tra các trường có lỗi')
+          toast.error(t('validation.fields_error'))
           return
         }
       }

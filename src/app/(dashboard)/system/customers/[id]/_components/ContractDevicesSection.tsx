@@ -101,12 +101,18 @@ export default function ContractDevicesSection({
     if (typeof onRequestOpenAttach === 'function') onRequestOpenAttach()
   }
 
-  const formatPrice = (value?: number | string | null) => {
+  const formatPrice = (
+    value?: number | string | null,
+    currency?: { symbol?: string; code?: string } | null
+  ) => {
     if (value === undefined || value === null) return '—'
+    const currencySymbol = currency?.symbol || (currency?.code ? currency.code : '$')
     if (typeof value === 'number') {
-      return new Intl.NumberFormat('vi-VN').format(value)
+      const formatted = new Intl.NumberFormat('vi-VN').format(value)
+      // Use non-breaking space to prevent line break between currency symbol and value
+      return `${currencySymbol}\u00A0${formatted}`
     }
-    return String(value)
+    return `${currencySymbol}\u00A0${String(value)}`
   }
 
   const formatDate = (date?: string | null) => {
@@ -264,16 +270,18 @@ export default function ContractDevicesSection({
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="text-sm font-semibold text-indigo-700">
-                        {formatPrice(d.monthlyRent)}
+                      <span className="text-sm font-semibold whitespace-nowrap text-indigo-700">
+                        {formatPrice(d.monthlyRent, d.currency)}
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="text-sm text-gray-700">{formatPrice(d.pricePerBWPage)}</span>
+                      <span className="text-sm whitespace-nowrap text-gray-700">
+                        {formatPrice(d.pricePerBWPage, d.currency)}
+                      </span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="text-sm text-gray-700">
-                        {formatPrice(d.pricePerColorPage)}
+                      <span className="text-sm whitespace-nowrap text-gray-700">
+                        {formatPrice(d.pricePerColorPage, d.currency)}
                       </span>
                     </td>
                     <td className="px-4 py-3">

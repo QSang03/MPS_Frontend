@@ -1,5 +1,6 @@
 import internalApiClient from '../internal-client'
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import axios from 'axios'
+
 import type {
   ConsumableType,
   CreateConsumableTypeDto,
@@ -37,13 +38,18 @@ class ConsumableTypesClientService {
 
       const { data, pagination } = response.data || { data: [], pagination: undefined }
       return { data: Array.isArray(data) ? data : [], pagination }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to fetch consumable types:', error)
-      const msg =
-        error.response?.data?.error ||
-        error.response?.data?.message ||
-        'Không thể tải danh sách loại vật tư tiêu hao'
-      throw new Error(msg)
+      try {
+        if (axios.isAxiosError(error)) {
+          const body = error.response?.data as { error?: string; message?: string } | undefined
+          const msg = body?.error || body?.message || 'Không thể tải danh sách loại vật tư tiêu hao'
+          throw new Error(msg)
+        }
+      } catch {
+        // fallback
+      }
+      throw new Error('Không thể tải danh sách loại vật tư tiêu hao')
     }
   }
 
@@ -53,13 +59,18 @@ class ConsumableTypesClientService {
         `/api/consumable-types/${id}`
       )
       return response.data.data || null
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to fetch consumable type:', error)
-      const msg =
-        error.response?.data?.error ||
-        error.response?.data?.message ||
-        'Không thể tải thông tin loại vật tư tiêu hao'
-      throw new Error(msg)
+      try {
+        if (axios.isAxiosError(error)) {
+          const body = error.response?.data as { error?: string; message?: string } | undefined
+          const msg = body?.error || body?.message || 'Không thể tải thông tin loại vật tư tiêu hao'
+          throw new Error(msg)
+        }
+      } catch {
+        // fallback
+      }
+      throw new Error('Không thể tải thông tin loại vật tư tiêu hao')
     }
   }
 
@@ -70,13 +81,18 @@ class ConsumableTypesClientService {
         data
       )
       return response.data.data || null
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to create consumable type:', error)
-      const msg =
-        error.response?.data?.error ||
-        error.response?.data?.message ||
-        'Không thể tạo loại vật tư tiêu hao'
-      throw new Error(msg)
+      try {
+        if (axios.isAxiosError(error)) {
+          const body = error.response?.data as { error?: string; message?: string } | undefined
+          const msg = body?.error || body?.message || 'Không thể tạo loại vật tư tiêu hao'
+          throw new Error(msg)
+        }
+      } catch {
+        // fallback
+      }
+      throw new Error('Không thể tạo loại vật tư tiêu hao')
     }
   }
 
@@ -87,26 +103,36 @@ class ConsumableTypesClientService {
         data
       )
       return response.data.data || null
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to update consumable type:', error)
-      const msg =
-        error.response?.data?.error ||
-        error.response?.data?.message ||
-        'Không thể cập nhật loại vật tư tiêu hao'
-      throw new Error(msg)
+      try {
+        if (axios.isAxiosError(error)) {
+          const body = error.response?.data as { error?: string; message?: string } | undefined
+          const msg = body?.error || body?.message || 'Không thể cập nhật loại vật tư tiêu hao'
+          throw new Error(msg)
+        }
+      } catch {
+        // fallback
+      }
+      throw new Error('Không thể cập nhật loại vật tư tiêu hao')
     }
   }
 
   async delete(id: string): Promise<void> {
     try {
       await internalApiClient.delete(`/api/consumable-types/${id}`)
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to delete consumable type:', error)
-      const msg =
-        error.response?.data?.error ||
-        error.response?.data?.message ||
-        'Không thể xóa loại vật tư tiêu hao'
-      throw new Error(msg)
+      try {
+        if (axios.isAxiosError(error)) {
+          const body = error.response?.data as { error?: string; message?: string } | undefined
+          const msg = body?.error || body?.message || 'Không thể xóa loại vật tư tiêu hao'
+          throw new Error(msg)
+        }
+      } catch {
+        // fallback
+      }
+      throw new Error('Không thể xóa loại vật tư tiêu hao')
     }
   }
 }

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { SystemPageHeader } from '@/components/system/SystemPageHeader'
 import { UserPageLayout } from '@/components/user/UserPageLayout'
 import { LoadingState } from '@/components/ui/LoadingState'
@@ -41,6 +41,7 @@ import {
 import { dashboardClientService } from '@/lib/api/services/dashboard-client.service'
 import { getClientUserProfile } from '@/lib/auth/client-auth'
 import { ServiceRequestFormModal } from '@/app/(dashboard)/user/my-requests/_components/ServiceRequestFormModal'
+import MonthPicker from '@/components/ui/month-picker'
 // Removed unused cn import
 
 // `Skeleton` removed — not used in this module
@@ -86,14 +87,20 @@ type Overview = {
 
 // COLORS removed — not used in this component
 
-export default function DashboardPageClient({ month }: { month?: string }) {
+export default function DashboardPageClient({ month: initialMonth }: { month?: string }) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [overview, setOverview] = useState<Overview | null>(null)
   const [displayName, setDisplayName] = useState<string | null>(null)
   const [roleName, setRoleName] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [expandedDeviceId, setExpandedDeviceId] = useState<string | null>(null)
+
+  // Get month from URL searchParams or prop or default to current month
+  const now = new Date()
+  const defaultMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+  const month = searchParams.get('month') || initialMonth || defaultMonth
 
   useEffect(() => {
     // load current user display name for the hero
@@ -136,6 +143,13 @@ export default function DashboardPageClient({ month }: { month?: string }) {
       mountedName = false
     }
   }, [month])
+
+  // Handle month change
+  const handleMonthChange = (newMonth: string) => {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('month', newMonth)
+    router.push(`/user/dashboard?${params.toString()}`)
+  }
 
   if (loading) {
     return <LoadingState text="Đang tải dữ liệu tổng quan..." />
@@ -237,6 +251,7 @@ export default function DashboardPageClient({ month }: { month?: string }) {
         icon={<LayoutDashboard className="h-7 w-7" />}
         actions={
           <>
+            <MonthPicker value={month} onChange={handleMonthChange} />
             <Button
               variant="secondary"
               className="h-10 rounded-full border-white/30 bg-white/10 px-5 text-sm font-semibold text-[#0066CC] backdrop-blur hover:bg-white/20"

@@ -1,3 +1,5 @@
+import type { CurrencyDataDto } from './currency'
+
 /**
  * Customer model
  */
@@ -17,6 +19,8 @@ export interface Customer {
   contractCount?: number
   userCount?: number
   billingDay?: number
+  defaultCurrencyId?: string | null
+  defaultCurrency?: CurrencyDataDto | null
   createdAt: string
   updatedAt: string
 }
@@ -28,6 +32,8 @@ export interface CreateCustomerDto {
   name: string
   address?: string[]
   invoiceInfo?: InvoiceInfo
+  defaultCurrencyId?: string
+  defaultCurrencyCode?: string
 }
 
 /**

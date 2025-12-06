@@ -173,6 +173,21 @@ export const contractsClientService = {
   },
 
   /**
+   * Update monthly rent for a contract device
+   */
+  async updateMonthlyRent(
+    contractId: string,
+    deviceId: string,
+    payload: { monthlyRent: number; currencyId?: string; currencyCode?: string }
+  ): Promise<ContractDevice | null> {
+    const response = await internalApiClient.patch(
+      `/api/contracts/${contractId}/devices/${deviceId}/monthly-rent`,
+      payload
+    )
+    return response.data?.data ?? null
+  },
+
+  /**
    * Detach devices from a contract
    */
   async detachDevices(contractId: string, payload: DetachDevicesDto): Promise<boolean> {

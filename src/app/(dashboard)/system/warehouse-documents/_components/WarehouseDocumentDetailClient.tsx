@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import {
@@ -15,7 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { formatDateTime } from '@/lib/utils/formatters'
+import { formatDateTime, formatCurrencyWithSymbol } from '@/lib/utils/formatters'
 import { warehouseDocumentsClientService } from '@/lib/api/services/warehouse-documents-client.service'
 import { PermissionGuard } from '@/components/shared/PermissionGuard'
 import type { Session } from '@/lib/auth/session'
@@ -31,6 +32,7 @@ export function WarehouseDocumentDetailClient({ id, session }: Props) {
   const router = useRouter()
   const queryClient = useQueryClient()
   const [isProcessing, setIsProcessing] = useState(false)
+  const { t } = useLocale()
 
   const { data, isLoading } = useQuery<WarehouseDocument | null>({
     queryKey: ['warehouse-documents', 'detail', id],
@@ -44,10 +46,10 @@ export function WarehouseDocumentDetailClient({ id, session }: Props) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['warehouse-documents'] })
       queryClient.invalidateQueries({ queryKey: ['warehouse-documents', 'detail', id] })
-      toast.success('Chứng từ đã được xác nhận')
+      toast.success(t('warehouse_document.confirmed'))
     },
     onError: (error: unknown) => {
-      const message = error instanceof Error ? error.message : 'Không thể xác nhận chứng từ'
+      const message = error instanceof Error ? error.message : t('warehouse_document.confirm_error')
       toast.error(message)
     },
     onSettled: () => setIsProcessing(false),
@@ -59,11 +61,11 @@ export function WarehouseDocumentDetailClient({ id, session }: Props) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['warehouse-documents'] })
       queryClient.invalidateQueries({ queryKey: ['warehouse-documents', 'detail', id] })
-      toast.success('Chứng từ đã hủy')
+      toast.success(t('warehouse_document.cancelled'))
       router.refresh()
     },
     onError: (error: unknown) => {
-      const message = error instanceof Error ? error.message : 'Không thể hủy chứng từ'
+      const message = error instanceof Error ? error.message : t('warehouse_document.cancel_error')
       toast.error(message)
     },
     onSettled: () => setIsProcessing(false),
@@ -196,8 +198,16 @@ export function WarehouseDocumentDetailClient({ id, session }: Props) {
                             </div>
                           </TableCell>
                           <TableCell>{item.quantity}</TableCell>
-                          <TableCell className="text-right">{item.unitPrice ?? '-'}</TableCell>
-                          <TableCell className="text-right">{item.totalPrice ?? '-'}</TableCell>
+                          <TableCell className="text-right">
+                            {item.unitPrice !== undefined && item.unitPrice !== null
+                              ? formatCurrencyWithSymbol(item.unitPrice, item.currency)
+                              : '-'}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {item.totalPrice !== undefined && item.totalPrice !== null
+                              ? formatCurrencyWithSymbol(item.totalPrice, item.currency)
+                              : '-'}
+                          </TableCell>
                           <TableCell className="text-muted-foreground max-w-[200px] truncate text-xs">
                             {item.notes ?? '-'}
                           </TableCell>

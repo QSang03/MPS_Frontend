@@ -19,6 +19,7 @@ import { toast } from 'sonner'
 import { customersClientService } from '@/lib/api/services/customers-client.service'
 import removeEmpty from '@/lib/utils/clean'
 import type { Customer } from '@/types/models/customer'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 // Axios-like error structure used for parsing error responses from server.
 type AxiosLikeError = {
@@ -35,6 +36,7 @@ type LocalCustomerForm = Partial<Customer> & {
   isActive?: boolean
   description?: string
   billingDay?: number
+  defaultCurrencyId?: string | null
   invoiceInfo?: {
     billTo?: string
     address?: string
@@ -45,6 +47,7 @@ type LocalCustomerForm = Partial<Customer> & {
   }
 }
 import { Plus, Edit, Loader2, Building2, User, MapPin, CheckCircle2, FileText } from 'lucide-react'
+import { CurrencySelector } from '@/components/currency/CurrencySelector'
 
 interface Props {
   mode?: 'create' | 'edit'
@@ -55,6 +58,7 @@ interface Props {
 }
 
 export function CustomerFormModal({ mode = 'create', customer = null, onSaved, trigger }: Props) {
+  const { t } = useLocale()
   const [open, setOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [form, setForm] = useState<LocalCustomerForm>({
@@ -157,6 +161,7 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
         tier: customer.tier || 'BASIC',
         isActive: customer.isActive ?? true,
         billingDay: customer.billingDay,
+        defaultCurrencyId: customer.defaultCurrencyId ?? null,
         invoiceInfo: customer.invoiceInfo
           ? {
               billTo: customer.invoiceInfo?.billTo || '',
@@ -236,7 +241,7 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
       const payload = removeEmpty({ ...form })
       if (mode === 'create') {
         const created = await customersClientService.create(payload as Partial<Customer>)
-        toast.success('Tạo khách hàng thành công')
+        toast.success(t('customer.create_success'))
         setOpen(false)
         onSaved?.(created || null)
       } else if (customer) {
@@ -244,7 +249,7 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
           customer.id,
           payload as Partial<Customer>
         )
-        toast.success('Cập nhật khách hàng thành công')
+        toast.success(t('customer.update_success'))
         setOpen(false)
         onSaved?.(updated || null)
       }
@@ -573,6 +578,18 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
                 {fieldErrors.billingDay && (
                   <p className="text-destructive mt-1 text-sm">{fieldErrors.billingDay}</p>
                 )}
+              </div>
+
+              <div className="space-y-2">
+                <CurrencySelector
+                  label="Tiền tệ mặc định"
+                  value={form.defaultCurrencyId ?? null}
+                  onChange={(value) => {
+                    setForm((s) => ({ ...s, defaultCurrencyId: value ?? null }))
+                  }}
+                  optional
+                  placeholder="Chọn tiền tệ mặc định"
+                />
               </div>
             </div>
           </div>

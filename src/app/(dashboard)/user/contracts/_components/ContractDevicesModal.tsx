@@ -19,6 +19,7 @@ import { devicesClientService } from '@/lib/api/services/devices-client.service'
 import { DialogFooter } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 import type { ContractDevice } from '@/types/models/contract-device'
 
@@ -43,6 +44,7 @@ export default function ContractDevicesModal({
   attachedDevices = [], // Nhận danh sách thiết bị đã gán từ props
   allContracts = [], // Danh sách tất cả hợp đồng
 }: Props) {
+  const { t } = useLocale()
   const [attachOpen, setAttachOpen] = useState(false)
   const [hideOuter, setHideOuter] = useState(false)
   const [selectedToAttach, setSelectedToAttach] = useState<string[]>([])
@@ -113,7 +115,7 @@ export default function ContractDevicesModal({
     ) => contractsClientService.attachDevices(contractId as string, { items }),
     onSuccess: () => {
       const hasUpdates = selectedToAttach.some((id) => attachedDeviceIds.has(id))
-      toast.success(hasUpdates ? 'Cập nhật thiết bị thành công' : 'Đính kèm thiết bị thành công')
+      toast.success(hasUpdates ? t('device.update_success') : t('device.attach_success'))
       setAttachOpen(false)
       // un-hide outer modal content and refresh parent list
       setHideOuter(false)
@@ -136,7 +138,7 @@ export default function ContractDevicesModal({
           }
         )?.response?.data?.message ||
         (err as { message?: string })?.message ||
-        'Đính kèm thiết bị thất bại'
+        t('device.attach_error')
 
       // Kiểm tra nếu là lỗi conflict với hợp đồng active khác
       if (
@@ -411,14 +413,14 @@ export default function ContractDevicesModal({
                   value={activeTo}
                   onChange={(e) => setActiveTo(e.target.value)}
                   className="h-11"
-                  placeholder="Đến ngày"
+                  placeholder={t('common.to')}
                 />
               </div>
             </div>
 
             <DialogFooter className="flex w-full justify-end gap-2 rounded-b-xl bg-gradient-to-r from-transparent via-indigo-50 to-transparent px-6 pb-6">
               <Button variant="outline" onClick={() => setAttachOpen(false)}>
-                Hủy
+                {t('common.cancel')}
               </Button>
               <Button
                 onClick={handleAttach}
@@ -426,10 +428,10 @@ export default function ContractDevicesModal({
                 className="bg-gradient-to-r from-indigo-600 to-cyan-600 px-6 font-bold text-white shadow"
               >
                 {attachMutation.status === 'pending'
-                  ? 'Đang gửi...'
+                  ? t('common.sending')
                   : hasAttachedDevicesSelected
-                    ? 'Cập nhật'
-                    : 'Đính kèm'}
+                    ? t('common.update')
+                    : t('contract.device.attach')}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -437,7 +439,7 @@ export default function ContractDevicesModal({
 
         <div className="flex justify-end gap-2 rounded-b-2xl bg-gradient-to-r from-transparent via-blue-50 to-transparent p-6">
           <Button variant="outline" onClick={() => onOpenChange(false)} className="font-semibold">
-            Đóng
+            {t('common.close')}
           </Button>
         </div>
       </DialogContent>

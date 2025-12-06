@@ -1,7 +1,6 @@
 'use client'
-/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps */
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Dialog } from '@/components/ui/dialog'
 import { SystemModalLayout } from '@/components/system/SystemModalLayout'
@@ -41,7 +40,7 @@ export default function DeviceModelDevicesModal({
   const [loading, setLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
 
-  const load = async () => {
+  const load = useCallback(async () => {
     try {
       setLoading(true)
       const resp = await devicesClientService.getAll({
@@ -51,17 +50,17 @@ export default function DeviceModelDevicesModal({
       })
       setDevices(resp.data || [])
       setFilteredDevices(resp.data || [])
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Load devices for model failed', err)
-      toast.error('Không thể tải danh sách thiết bị cho model này')
+      toast.error(String(err) || 'Không thể tải danh sách thiết bị cho model này')
     } finally {
       setLoading(false)
     }
-  }
+  }, [deviceModelId])
 
   useEffect(() => {
     if (open) load()
-  }, [open])
+  }, [open, load])
 
   // Filter devices based on search term
   useEffect(() => {

@@ -8,6 +8,7 @@ export async function GET(request: NextRequest) {
     const from = searchParams.get('from')
     const to = searchParams.get('to')
     const deviceId = searchParams.get('deviceId')
+    const baseCurrencyId = searchParams.get('baseCurrencyId') // ⭐ MỚI
 
     const resp = await backendApiClient.get('/reports/costs/monthly/series', {
       params: {
@@ -15,6 +16,7 @@ export async function GET(request: NextRequest) {
         from,
         to,
         deviceId: deviceId || undefined,
+        baseCurrencyId: baseCurrencyId || undefined, // ⭐ MỚI
       },
     })
     return NextResponse.json(resp.data)

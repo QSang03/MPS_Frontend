@@ -87,8 +87,12 @@ type ChartType = 'area' | 'line'
 // Custom tooltip component (outside render to avoid recreation)
 interface CustomTooltipProps {
   active?: boolean
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  payload?: any[]
+  payload?: Array<{
+    dataKey?: string
+    color?: string
+    value?: number | string | null
+    payload?: Record<string, unknown>
+  }>
   label?: string
 }
 
@@ -97,8 +101,7 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
     return (
       <div className="rounded-lg border-0 bg-[#1F2937] p-3 text-white shadow-[0_4px_12px_rgba(0,0,0,0.15)]">
         <p className="mb-2 font-semibold text-white">{label}</p>
-        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-        {payload.map((entry: any) => {
+        {payload.map((entry) => {
           const config = METRIC_CONFIG[entry.dataKey as keyof typeof METRIC_CONFIG]
           if (!config) return null
 
@@ -115,7 +118,11 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
             <div key={entry.dataKey} className="flex items-center gap-2 text-sm">
               <div className="h-3 w-3 rounded-full" style={{ backgroundColor: entry.color }} />
               <span className="text-gray-300">{config.label}:</span>
-              <span className="font-semibold text-white">{formatValue(entry.value)}</span>
+              <span className="font-semibold text-white">
+                {formatValue(
+                  typeof entry.value === 'number' ? entry.value : Number(entry.value) || 0
+                )}
+              </span>
             </div>
           )
         })}

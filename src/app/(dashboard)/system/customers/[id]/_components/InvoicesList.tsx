@@ -51,11 +51,11 @@ export function InvoicesList({ customerId, contractId }: InvoicesListProps) {
     })
   }
 
-  const formatPrice = (value?: number | null) => {
+  const formatPrice = (value?: number | null, currencyCode?: string) => {
     if (value === undefined || value === null) return '—'
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
-      currency: 'USD',
+      currency: currencyCode || 'USD',
       minimumFractionDigits: 2,
     }).format(value)
   }
@@ -275,10 +275,10 @@ export function InvoicesList({ customerId, contractId }: InvoicesListProps) {
                         </Badge>
                       </td>
                       <td className="px-4 py-4 text-right text-sm font-semibold text-slate-800">
-                        {formatPrice(invoice.totalAmount)}
+                        {formatPrice(invoice.totalAmount, invoice.currency)}
                       </td>
                       <td className="px-4 py-4">
-                        <div className="flex items-center justify-end gap-1.5 opacity-0 transition-opacity group-hover:opacity-100">
+                        <div className="flex items-center justify-end gap-1.5">
                           <Button
                             variant="ghost"
                             size="sm"

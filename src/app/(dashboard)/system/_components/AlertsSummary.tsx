@@ -268,6 +268,8 @@ export function AlertsSummary({
                                   className="text-xs text-gray-500 hover:underline"
                                 >
                                   {item.deviceName ?? item.deviceId}
+                                  {item.serialNumber ? ` (SN: ${item.serialNumber})` : ''}
+                                  {item.ipAddress ? ` • IP: ${item.ipAddress}` : ''}
                                   {item.consumableTypeName ? ` - ${item.consumableTypeName}` : ''}
                                   {item.remainingPercentage !== undefined
                                     ? ` • ${Math.round(item.remainingPercentage)}% còn lại`
@@ -400,7 +402,7 @@ export function AlertsSummary({
                     <ul className="space-y-2">
                       {alerts!.consumableWarnings!.items!.map((it, i) => (
                         <li key={i} className="flex items-start justify-between gap-4">
-                          <div>
+                          <div className="flex-1">
                             <button
                               type="button"
                               onClick={(e) => {
@@ -416,14 +418,31 @@ export function AlertsSummary({
                             >
                               {it.deviceName ?? it.deviceId}
                             </button>
-                            <div className="text-xs text-gray-500">
-                              {it.consumableTypeName ? `${it.consumableTypeName} • ` : ''}
-                              {it.remainingPercentage !== undefined
-                                ? `${Math.round(it.remainingPercentage)}% còn lại`
-                                : ''}
+                            <div className="mt-1 space-y-1">
+                              <div className="text-xs text-gray-500">
+                                {it.serialNumber && <span>Serial: {it.serialNumber}</span>}
+                                {it.serialNumber && it.ipAddress && <span> • </span>}
+                                {it.ipAddress && <span>IP: {it.ipAddress}</span>}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {it.consumableTypeName ? `${it.consumableTypeName} • ` : ''}
+                                {it.remainingPercentage !== undefined
+                                  ? `${Math.round(it.remainingPercentage)}% còn lại`
+                                  : ''}
+                              </div>
                             </div>
                           </div>
-                          <div className="text-xs text-gray-500">{it.lastUpdatedAt}</div>
+                          <div className="text-xs whitespace-nowrap text-gray-500">
+                            {it.lastUpdatedAt
+                              ? new Date(it.lastUpdatedAt).toLocaleString('vi-VN', {
+                                  day: '2-digit',
+                                  month: '2-digit',
+                                  year: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })
+                              : ''}
+                          </div>
                         </li>
                       ))}
                     </ul>

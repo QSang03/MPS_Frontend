@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import backendApiClient from '@/lib/api/backend-client'
 import { API_ENDPOINTS } from '@/lib/api/endpoints'
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -92,16 +91,19 @@ export async function DELETE(
     return NextResponse.json({ success: true })
   } catch (error: unknown) {
     // If backend returned an axios error with response payload, handle business errors specially
-    const errAny = error as any
+    const err = error as
+      | { response?: { status?: number; data?: unknown }; message?: string }
+      | undefined
 
-    if (errAny?.response && typeof errAny.response === 'object') {
-      const status = errAny.response.status || 500
-      const data = errAny.response.data ?? { error: errAny.message || 'Internal Server Error' }
+    if (err?.response && typeof err.response === 'object') {
+      const status = err.response.status || 500
+      const data = err.response.data ?? { error: err.message || 'Internal Server Error' }
+      const dataObj = data as { error?: string } | undefined
 
       // Map known business error 'COMPATIBILITY_IN_USE' to 200 (OK)
       // Return 200 with the business payload so Next dev overlay won't treat it as an internal server error.
       // The client can still inspect the returned payload.error to show an appropriate message.
-      if (data && data.error === 'COMPATIBILITY_IN_USE') {
+      if (data && dataObj?.error === 'COMPATIBILITY_IN_USE') {
         console.debug(
           'API Route /api/device-models/[id]/compatible-consumables DELETE business error mapped to 200 (business conflict):',
           data
@@ -122,11 +124,8 @@ export async function DELETE(
 
     console.error(
       'API Route /api/device-models/[id]/compatible-consumables DELETE error: ',
-      errAny?.message || errAny
+      err?.message || err
     )
-    return NextResponse.json(
-      { error: (errAny && errAny.message) || 'Internal Server Error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: err?.message || 'Internal Server Error' }, { status: 500 })
   }
 }

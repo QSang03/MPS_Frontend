@@ -1,6 +1,7 @@
 import axios from 'axios'
 import type { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios'
 import { getClientAccessToken } from '@/lib/auth/client-auth'
+import { getLanguage } from '@/lib/utils/language'
 
 const apiClient: AxiosInstance = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
@@ -10,7 +11,7 @@ const apiClient: AxiosInstance = axios.create({
   },
 })
 
-// Request interceptor - attach token
+// Request interceptor - attach token and language preference
 apiClient.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
     // Get access token from server-side cookies via server action
@@ -18,6 +19,14 @@ apiClient.interceptors.request.use(
 
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`
+    }
+
+    // Add language preference as query parameter
+    const language = getLanguage()
+    if (config.params) {
+      config.params.lang = language
+    } else {
+      config.params = { lang: language }
     }
 
     return config

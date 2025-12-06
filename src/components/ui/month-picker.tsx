@@ -12,6 +12,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 type Props = {
   value?: string // expected format: YYYY-MM
@@ -124,67 +125,132 @@ export function MonthPicker({ value, onChange, onApply, className, placeholder }
     setOpen(false)
   }
 
+  const { t } = useLocale()
+
+  // Handle direct input
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputValue = e.target.value
+    setDisplayValue(inputValue)
+
+    // Validate format YYYY-MM
+    const regex = /^\d{4}-\d{2}$/
+    if (regex.test(inputValue)) {
+      const [y, m] = inputValue.split('-')
+      const year = Number(y)
+      const month = Number(m)
+
+      // Validate year and month ranges
+      if (year >= minYear && year <= maxYear && month >= 1 && month <= 12) {
+        const normalized = `${year}-${String(month).padStart(2, '0')}`
+        onChange?.(normalized)
+        onApply?.(normalized)
+        setSelYear(year)
+        setSelMonth(month)
+        selYearRef.current = year
+        selMonthRef.current = month
+      }
+    }
+  }
+
+  const handleInputBlur = () => {
+    // Validate and normalize on blur
+    const regex = /^\d{4}-\d{2}$/
+    if (regex.test(displayValue)) {
+      const [y, m] = displayValue.split('-')
+      const year = Number(y)
+      const month = Number(m)
+
+      if (year >= minYear && year <= maxYear && month >= 1 && month <= 12) {
+        const normalized = `${year}-${String(month).padStart(2, '0')}`
+        setDisplayValue(normalized)
+        onChange?.(normalized)
+        onApply?.(normalized)
+      } else {
+        // Reset to current value if invalid
+        setDisplayValue(normalizedFromValue)
+      }
+    } else {
+      // Reset to current value if format invalid
+      setDisplayValue(normalizedFromValue)
+    }
+  }
+
+  // Auto-apply when selecting month from grid
+  const handleMonthClick = (m: number) => {
+    selMonthRef.current = m
+    setSelMonth(m)
+    const year = selYearRef.current
+    const normalized = `${year}-${String(m).padStart(2, '0')}`
+    setDisplayValue(normalized)
+    onChange?.(normalized)
+    onApply?.(normalized)
+    setOpen(false)
+  }
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger>
-        {/* Provide a no-op onChange so the `Input` renders as a controlled input
-            and updates when `displayValue` changes. The input is readOnly. */}
+      <PopoverTrigger asChild>
         <Input
-          readOnly
-          placeholder={placeholder}
+          placeholder={placeholder || 'YYYY-MM'}
           value={displayValue}
-          onChange={() => {}}
-          className={cn(className)}
+          onChange={handleInputChange}
+          onBlur={handleInputBlur}
+          onFocus={() => setOpen(true)}
+          className={cn('w-32 cursor-pointer', className)}
         />
       </PopoverTrigger>
 
-      <PopoverContent className="w-auto">
-        <div className="mb-3">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  const n = selYearRef.current - 1
+      <PopoverContent className="w-64 p-2">
+        <div className="mb-2">
+          <div className="mb-2 flex items-center justify-center gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                const n = selYearRef.current - 1
+                if (n >= minYear) {
                   selYearRef.current = n
                   setSelYear(n)
-                }}
-                className="rounded px-2 py-1 text-sm"
-              >
-                ‹
-              </button>
-              <div className="text-sm font-medium">{selYear}</div>
-              <button
-                type="button"
-                onClick={() => {
-                  const n = selYearRef.current + 1
+                }
+              }}
+              disabled={selYear <= minYear}
+              className="h-6 w-6 p-0"
+            >
+              ‹
+            </Button>
+            <div className="min-w-[50px] text-center text-sm font-semibold">{selYear}</div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                const n = selYearRef.current + 1
+                if (n <= maxYear) {
                   selYearRef.current = n
                   setSelYear(n)
-                }}
-                className="rounded px-2 py-1 text-sm"
-              >
-                ›
-              </button>
-            </div>
-            <div className="text-muted-foreground text-xs">Chọn tháng</div>
+                }
+              }}
+              disabled={selYear >= maxYear}
+              className="h-6 w-6 p-0"
+            >
+              ›
+            </Button>
           </div>
 
-          <div className="mt-2 grid grid-cols-6 gap-2">
+          <div className="grid grid-cols-6 gap-1">
             {months.map((m, idx) => {
               const selected = selMonth === m
               return (
                 <button
                   key={m}
                   type="button"
-                  onClick={() => {
-                    selMonthRef.current = m
-                    setSelMonth(m)
-                  }}
+                  onClick={() => handleMonthClick(m)}
                   className={cn(
-                    'rounded px-2 py-1 text-sm',
+                    'rounded px-1.5 py-1 text-[10px] font-medium transition-colors',
                     selected
-                      ? 'bg-indigo-600 text-white'
-                      : 'bg-transparent text-slate-700 hover:bg-slate-100'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-muted text-muted-foreground hover:bg-muted/80'
                   )}
                 >
                   {monthNames[idx]}
@@ -194,8 +260,8 @@ export function MonthPicker({ value, onChange, onApply, className, placeholder }
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <div className="min-w-[9rem]">
+        <div className="flex items-center gap-1.5 border-t pt-2">
+          <div className="flex-1">
             <Select
               value={String(selMonth)}
               onValueChange={(v) => {
@@ -204,21 +270,20 @@ export function MonthPicker({ value, onChange, onApply, className, placeholder }
                 setSelMonth(n)
               }}
             >
-              <SelectTrigger className="w-full">
-                {/* Let SelectValue render the current value; show placeholder when empty */}
+              <SelectTrigger className="h-7 w-full text-xs">
                 <SelectValue placeholder="MM" />
               </SelectTrigger>
               <SelectContent>
                 {months.map((m) => (
-                  <SelectItem key={m} value={String(m)}>
-                    {String(m).padStart(2, '0')}
+                  <SelectItem key={m} value={String(m)} className="text-xs">
+                    {String(m).padStart(2, '0')} - {monthNames[m - 1]}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
 
-          <div className="min-w-[9rem]">
+          <div className="flex-1">
             <Select
               value={String(selYear)}
               onValueChange={(v) => {
@@ -227,12 +292,12 @@ export function MonthPicker({ value, onChange, onApply, className, placeholder }
                 setSelYear(n)
               }}
             >
-              <SelectTrigger className="w-full">
+              <SelectTrigger className="h-7 w-full text-xs">
                 <SelectValue placeholder="YYYY" />
               </SelectTrigger>
               <SelectContent>
                 {years.map((y) => (
-                  <SelectItem key={y} value={String(y)}>
+                  <SelectItem key={y} value={String(y)} className="text-xs">
                     {y}
                   </SelectItem>
                 ))}
@@ -241,12 +306,12 @@ export function MonthPicker({ value, onChange, onApply, className, placeholder }
           </div>
         </div>
 
-        <div className="mt-3 flex justify-end gap-2">
-          <Button variant="ghost" size="sm" onClick={cancel}>
-            Cancel
+        <div className="mt-2 flex justify-end gap-1.5">
+          <Button variant="ghost" size="sm" onClick={cancel} className="h-7 px-2 text-xs">
+            {t('cancel')}
           </Button>
-          <Button size="sm" onClick={apply}>
-            Apply
+          <Button size="sm" onClick={apply} className="h-7 px-2 text-xs">
+            {t('button.apply')}
           </Button>
         </div>
       </PopoverContent>

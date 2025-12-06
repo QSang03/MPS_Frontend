@@ -112,6 +112,7 @@ export interface AdminOverviewData {
         deviceId?: string
         deviceName?: string
         serialNumber?: string
+        ipAddress?: string
         consumableTypeName?: string
         remainingPercentage?: number
         warningThresholdPercentage?: number
@@ -190,8 +191,7 @@ export interface ConsumableHistory {
     id?: string
     name?: string
     type?: string
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    [key: string]: any // Flexible for additional consumable properties
+    [key: string]: unknown // Flexible for additional consumable properties
   }
 }
 
@@ -212,8 +212,7 @@ export interface DevicePages {
   totalPages?: number
   bwPages?: number
   colorPages?: number
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  [key: string]: any // Flexible for additional page metrics
+  [key: string]: unknown // Flexible for additional page metrics
 }
 
 /**
@@ -321,8 +320,7 @@ export interface ConsumableDashboardData {
     totalConsumables?: number
     activeConsumables?: number
     replacedConsumables?: number
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    [key: string]: any
+    [key: string]: unknown
   }
   byType?: Array<{
     typeId: string
@@ -341,8 +339,7 @@ export interface ConsumableDashboardData {
     count: number
     cost?: number
   }>
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  [key: string]: any // Flexible for API evolution
+  [key: string]: unknown // Flexible for API evolution
 }
 
 /**

@@ -1,14 +1,15 @@
-import AnalyticsPageClient from './_components/AnalyticsPageClient'
-import { Suspense } from 'react'
+'use client'
 
-export const metadata = {
-  title: 'Phân tích lợi nhuận',
-}
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 
-export default async function AnalyticsPage() {
-  return (
-    <Suspense>
-      <AnalyticsPageClient />
-    </Suspense>
-  )
+export default function AnalyticsPage() {
+  const router = useRouter()
+
+  useEffect(() => {
+    // Redirect to main revenue page - the tab will be set by the main page based on pathname
+    router.replace('/system/revenue')
+  }, [router])
+
+  return null
 }

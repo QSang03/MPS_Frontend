@@ -19,6 +19,7 @@ import { customersClientService } from '@/lib/api/services/customers-client.serv
 import type { Customer } from '@/types/models/customer'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 interface CustomerSelectDialogProps {
   open: boolean
@@ -33,6 +34,7 @@ export function CustomerSelectDialog({
   onSelect,
   currentCustomerId,
 }: CustomerSelectDialogProps) {
+  const { t } = useLocale()
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
   const [customerLocation, setCustomerLocation] = useState('')
@@ -78,7 +80,7 @@ export function CustomerSelectDialog({
         }
       } catch (err) {
         console.error('Failed to fetch customer details', err)
-        toast.error('Không thể tải địa chỉ khách hàng')
+        toast.error(t('customer.select.error.load_addresses'))
         setCustomerAddresses([])
       } finally {
         setLoadingAddresses(false)
@@ -86,14 +88,14 @@ export function CustomerSelectDialog({
     }
 
     fetchCustomerDetails()
-  }, [selectedCustomer, isWarehouseCustomer])
+  }, [selectedCustomer, isWarehouseCustomer, t])
 
   useEffect(() => {
     if (error) {
       console.error('Failed to fetch customers', error)
-      toast.error('Không thể tải danh sách khách hàng')
+      toast.error(t('customer.select.error.load_list'))
     }
-  }, [error])
+  }, [error, t])
 
   const filteredCustomers = customers.filter((c) => {
     const term = searchTerm.toLowerCase()
@@ -116,7 +118,7 @@ export function CustomerSelectDialog({
 
     // Validate customerLocation if required (not warehouse)
     if (requiresLocation && !customerLocation.trim()) {
-      toast.error('Vui lòng nhập vị trí tại khách hàng')
+      toast.error(t('customer.select.error.location_required'))
       return
     }
 
@@ -131,8 +133,8 @@ export function CustomerSelectDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <SystemModalLayout
-        title="Chọn khách hàng"
-        description="Chọn khách hàng cho thiết bị này"
+        title={t('customer.select.title')}
+        description={t('customer.select.description')}
         icon={Building2}
         variant="view"
         footer={
@@ -147,7 +149,7 @@ export function CustomerSelectDialog({
               }}
               className="min-w-[100px]"
             >
-              Hủy
+              {t('cancel')}
             </Button>
             <Button
               onClick={handleConfirm}
@@ -155,18 +157,18 @@ export function CustomerSelectDialog({
               className="min-w-[120px] bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
             >
               <CheckCircle2 className="mr-2 h-4 w-4" />
-              Xác nhận
+              {t('customer.select.confirm')}
             </Button>
           </>
         }
       >
         {/* Search */}
         <div>
-          <Label className="text-base font-semibold">Tìm kiếm</Label>
+          <Label className="text-base font-semibold">{t('customer.select.search')}</Label>
           <div className="relative mt-2">
             <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
             <Input
-              placeholder="Tìm theo tên, mã khách hàng..."
+              placeholder={t('customer.select.search_placeholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="h-11 pl-9"
@@ -183,7 +185,7 @@ export function CustomerSelectDialog({
           ) : filteredCustomers.length === 0 ? (
             <div className="text-muted-foreground p-8 text-center">
               <Building2 className="mx-auto mb-3 h-12 w-12 opacity-20" />
-              <p>Không tìm thấy khách hàng</p>
+              <p>{t('customer.select.empty')}</p>
             </div>
           ) : (
             filteredCustomers.map((customer) => {
@@ -207,12 +209,14 @@ export function CustomerSelectDialog({
                         <span className="font-semibold">{customer.name}</span>
                         {isCurrent && (
                           <span className="rounded bg-green-500 px-2 py-0.5 text-xs text-white">
-                            Hiện tại
+                            {t('customer.select.current')}
                           </span>
                         )}
                       </div>
                       <div className="text-muted-foreground mt-1 flex items-center gap-3 text-sm">
-                        <span>Mã: {customer.code || '—'}</span>
+                        <span>
+                          {t('customer.select.code')}: {customer.code || '—'}
+                        </span>
                       </div>
                       {customer.address && (
                         <div className="text-muted-foreground mt-1 text-sm">
@@ -235,19 +239,19 @@ export function CustomerSelectDialog({
           <div className="space-y-2 rounded-lg border border-blue-200 bg-blue-50/50 p-4">
             <Label className="flex items-center gap-2 text-base font-semibold text-blue-900">
               <MapPin className="h-4 w-4 text-blue-600" />
-              Vị trí tại khách hàng
+              {t('customer.select.location.label')}
               <span className="text-red-500">*</span>
             </Label>
             {loadingAddresses ? (
               <Select disabled>
                 <SelectTrigger className="h-11 border-blue-200 bg-white">
-                  <SelectValue placeholder="Đang tải địa chỉ..." />
+                  <SelectValue placeholder={t('customer.select.location.loading')} />
                 </SelectTrigger>
               </Select>
             ) : customerAddresses.length > 0 ? (
               <Select value={customerLocation} onValueChange={setCustomerLocation}>
                 <SelectTrigger className="h-11 border-blue-200 bg-white">
-                  <SelectValue placeholder="Chọn địa chỉ..." />
+                  <SelectValue placeholder={t('customer.select.location.select_placeholder')} />
                 </SelectTrigger>
                 <SelectContent>
                   {customerAddresses.map((addr, idx) => (
@@ -261,15 +265,15 @@ export function CustomerSelectDialog({
               <Input
                 value={customerLocation}
                 onChange={(e) => setCustomerLocation(e.target.value)}
-                placeholder="Nhập vị trí lắp đặt tại khách hàng..."
+                placeholder={t('customer.select.location.input_placeholder')}
                 className="h-11 border-blue-200 bg-white"
                 autoFocus
               />
             )}
             <p className="text-xs text-blue-700">
               {customerAddresses.length > 0
-                ? 'Chọn địa chỉ từ danh sách hoặc liên hệ để cập nhật địa chỉ mới'
-                : 'Nhập vị trí cụ thể của thiết bị tại khách hàng (phòng, tầng, khu vực...)'}
+                ? t('customer.select.location.hint.with_addresses')
+                : t('customer.select.location.hint.no_addresses')}
             </p>
           </div>
         )}

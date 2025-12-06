@@ -20,6 +20,7 @@ import { ActionGuard } from '@/components/shared/ActionGuard'
 import { slaTemplatesClientService } from '@/lib/api/services/sla-templates-client.service'
 import type { SLATemplate } from '@/types/models/sla-template'
 import { DeleteDialog } from '@/components/shared/DeleteDialog'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import CustomerSelect from '@/components/shared/CustomerSelect'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -27,6 +28,7 @@ import type { SlaTemplateFormValues } from './SlaTemplateFormDialog'
 import type { CreateSlaTemplateDto } from '@/types/models/sla-template'
 
 export default function SlaTemplatesClient({ session }: { session?: Session | null }) {
+  const { t } = useLocale()
   void session
   const queryClient = useQueryClient()
 
@@ -80,11 +82,11 @@ export default function SlaTemplatesClient({ session }: { session?: Session | nu
     if (!id) return
     try {
       await slaTemplatesClientService.delete(id)
-      toast.success('Đã xóa template SLA')
+      toast.success(t('sla.delete_success'))
       queryClient.invalidateQueries({ queryKey: ['sla-templates'] })
     } catch (err) {
       console.error(err)
-      toast.error('Không thể xóa template')
+      toast.error(t('sla.delete_error'))
     }
   }
 
@@ -101,16 +103,16 @@ export default function SlaTemplatesClient({ session }: { session?: Session | nu
 
       if (editing) {
         await slaTemplatesClientService.update(editing.id, payload)
-        toast.success('Cập nhật template thành công')
+        toast.success(t('sla.update_success'))
       } else {
         await slaTemplatesClientService.create(payload)
-        toast.success('Tạo template thành công')
+        toast.success(t('sla.create_success'))
       }
       setDialogOpen(false)
       queryClient.invalidateQueries({ queryKey: ['sla-templates'] })
     } catch (err) {
       console.error(err)
-      toast.error('Không thể lưu template')
+      toast.error(t('sla.save_error'))
     } finally {
       setSubmitting(false)
     }
@@ -127,7 +129,7 @@ export default function SlaTemplatesClient({ session }: { session?: Session | nu
   const handleApplyConfirm = async () => {
     if (!applyingId) return
     if (!applyCustomerId) {
-      toast.error('Vui lòng chọn khách hàng để áp dụng template')
+      toast.error(t('sla.apply_error_no_customer'))
       return
     }
     setApplySubmitting(true)
@@ -139,7 +141,11 @@ export default function SlaTemplatesClient({ session }: { session?: Session | nu
       // attempt to read totals from either `resp.data` or direct `resp` depending on backend
       const totalCreated = resp?.totalCreated ?? 0
       const totalSkipped = resp?.totalSkipped ?? 0
-      toast.success(`Đã áp dụng template: tạo mới ${totalCreated} - bỏ qua ${totalSkipped}`)
+      toast.success(
+        t('sla.apply_result')
+          .replace('{created}', String(totalCreated))
+          .replace('{skipped}', String(totalSkipped))
+      )
       // Apply response received; logging removed in production
       setApplyDialogOpen(false)
       setApplyingId(null)
@@ -179,7 +185,7 @@ export default function SlaTemplatesClient({ session }: { session?: Session | nu
         }
         return null
       }
-      const msg = extractMessage(err) ?? 'Không thể áp dụng template'
+      const msg = extractMessage(err) ?? t('sla.apply_error')
       toast.error(msg)
     } finally {
       setApplySubmitting(false)
@@ -190,32 +196,32 @@ export default function SlaTemplatesClient({ session }: { session?: Session | nu
     const filters: Array<{ label: string; value: string; onRemove: () => void }> = []
     if (search) {
       filters.push({
-        label: `Tìm kiếm: "${search}"`,
+        label: `${t('filters.search_label')}: "${search}"`,
         value: search,
         onRemove: () => setSearch(''),
       })
     }
     if (sorting.sortBy !== 'createdAt' || sorting.sortOrder !== 'desc') {
       filters.push({
-        label: `Sắp xếp: ${sorting.sortBy} (${sorting.sortOrder === 'asc' ? 'Tăng dần' : 'Giảm dần'})`,
+        label: `${t('filters.sorted_by')}: ${sorting.sortBy} (${sorting.sortOrder === 'asc' ? t('filters.sort_direction_asc') : t('filters.sort_direction_desc')})`,
         value: `${sorting.sortBy}-${sorting.sortOrder}`,
         onRemove: () => setSorting({ sortBy: 'createdAt', sortOrder: 'desc' }),
       })
     }
     return filters
-  }, [search, sorting])
+  }, [search, sorting, t])
 
   return (
     <div className="space-y-6">
       <SystemPageHeader
-        title="SLA Templates"
-        subtitle="Quản lý các mẫu SLA để áp dụng cho khách hàng"
+        title={t('page.sla.title')}
+        subtitle={t('page.sla.subtitle')}
         icon={<Zap className="h-6 w-6" />}
         actions={
           canCreate ? (
             <Button onClick={handleCreate}>
               <Plus className="mr-2 h-4 w-4" />
-              Tạo Template
+              {t('page.sla.create')}
             </Button>
           ) : null
         }
@@ -223,29 +229,29 @@ export default function SlaTemplatesClient({ session }: { session?: Session | nu
 
       <Card>
         <CardHeader>
-          <CardTitle>Danh sách SLA templates</CardTitle>
-          <CardDescription>Danh sách mẫu SLA cho hệ thống</CardDescription>
+          <CardTitle>{t('page.sla.title')}</CardTitle>
+          <CardDescription>{t('page.sla.subtitle')}</CardDescription>
         </CardHeader>
         <CardContent>
           <FilterSection
-            title="Bộ lọc & Tìm kiếm"
+            title={t('filters.general')}
             onReset={() => setSearch('')}
             activeFilters={activeFilters}
           >
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Tìm kiếm</label>
+                <label className="text-sm font-medium">{t('filters.search_label')}</label>
                 <Input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Tìm theo tên..."
+                  placeholder={t('filters.search_placeholder_contracts')}
                 />
               </div>
             </div>
           </FilterSection>
 
           {isLoading ? (
-            <TableSkeleton />
+            <TableSkeleton rows={10} columns={5} />
           ) : (
             <TableWrapper
               tableId="sla-templates"
@@ -256,16 +262,18 @@ export default function SlaTemplatesClient({ session }: { session?: Session | nu
                     header: '#',
                     cell: ({ row }) => <div className="text-sm">{row.index + 1}</div>,
                   },
-                  { id: 'name', header: 'Tên', accessorKey: 'name' },
-                  { id: 'description', header: 'Mô tả', accessorKey: 'description' },
+                  { id: 'name', header: t('table.name'), accessorKey: 'name' },
+                  { id: 'description', header: t('table.description'), accessorKey: 'description' },
                   {
                     id: 'isActive',
-                    header: 'Trạng thái',
-                    cell: ({ row }) => <div>{row.original.isActive ? 'Active' : 'Inactive'}</div>,
+                    header: t('table.status'),
+                    cell: ({ row }) => (
+                      <div>{row.original.isActive ? t('status.active') : t('status.inactive')}</div>
+                    ),
                   },
                   {
                     id: 'actions',
-                    header: 'Thao tác',
+                    header: t('table.actions'),
                     cell: ({ row }) => (
                       <div className="flex items-center justify-end gap-2">
                         {canUpdate && (
@@ -273,7 +281,7 @@ export default function SlaTemplatesClient({ session }: { session?: Session | nu
                             size="sm"
                             variant="ghost"
                             onClick={() => handleEdit(row.original)}
-                            title="Chỉnh sửa"
+                            title={t('button.edit')}
                           >
                             <Edit3 className="h-4 w-4" />
                           </Button>
@@ -281,13 +289,13 @@ export default function SlaTemplatesClient({ session }: { session?: Session | nu
 
                         {canDelete && (
                           <DeleteDialog
-                            title={`Xóa template ${row.original.name}`}
-                            description="Bạn có chắc muốn xóa template này?"
+                            title={t('sla.delete_confirm_title')}
+                            description={t('sla.delete_confirmation')}
                             onConfirm={async () => {
                               await handleDelete(row.original.id)
                             }}
                             trigger={
-                              <Button size="sm" variant="ghost" title="Xóa">
+                              <Button size="sm" variant="ghost" title={t('button.delete')}>
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             }
@@ -302,7 +310,7 @@ export default function SlaTemplatesClient({ session }: { session?: Session | nu
                               size="sm"
                               variant="outline"
                               onClick={() => openApplyDialog(row.original.id)}
-                              title="Áp dụng"
+                              title={t('button.apply')}
                             >
                               <FileText className="h-4 w-4" />
                             </Button>
@@ -331,8 +339,8 @@ export default function SlaTemplatesClient({ session }: { session?: Session | nu
 
       <Dialog open={applyDialogOpen} onOpenChange={(o) => setApplyDialogOpen(o)}>
         <SystemModalLayout
-          title="Áp dụng SLA Template"
-          description="Chọn khách hàng để áp dụng template"
+          title={t('sla.apply_title')}
+          description={t('sla.apply_description')}
           icon={FileText}
           variant="view"
           footer={
@@ -342,13 +350,13 @@ export default function SlaTemplatesClient({ session }: { session?: Session | nu
                 onClick={() => setApplyDialogOpen(false)}
                 disabled={applySubmitting}
               >
-                Hủy
+                {t('cancel')}
               </Button>
               <Button
                 onClick={() => void handleApplyConfirm()}
                 disabled={!applyCustomerId || applySubmitting}
               >
-                Áp dụng
+                {t('button.apply')}
               </Button>
             </>
           }
@@ -363,7 +371,7 @@ export default function SlaTemplatesClient({ session }: { session?: Session | nu
                 checked={applySkipExisting}
                 onCheckedChange={(v) => setApplySkipExisting(!!v)}
               />
-              <span className="text-sm">Bỏ qua priorities đã tồn tại (skipExisting)</span>
+              <span className="text-sm">{t('sla.skip_existing_label')}</span>
             </div>
           </div>
         </SystemModalLayout>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { Input } from '@/components/ui/input'
 import { Loader2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -115,43 +115,46 @@ export function SearchableSelect({
 
   const selectedValues = isMultiSelect ? (Array.isArray(value) ? value : []) : value ? [value] : []
 
-  const fetchItems = async (searchQuery = '') => {
-    setLoading(true)
-    try {
-      if (!config) {
+  const memoFetchParams = useMemo(() => (fetchParams ? { ...fetchParams } : {}), [fetchParams])
+
+  const fetchItems = useCallback(
+    async (searchQuery = '') => {
+      setLoading(true)
+      try {
+        if (!config) {
+          setItems([])
+          return
+        }
+        const res = await config.fetchFn({
+          page: 1,
+          limit: 50,
+          search: searchQuery,
+          ...memoFetchParams,
+        })
+        setItems(res.data || [])
+      } catch (error) {
+        console.error(`Failed to fetch items for ${field}:`, error)
         setItems([])
-        return
+      } finally {
+        setLoading(false)
       }
-      const res = await config.fetchFn({
-        page: 1,
-        limit: 50,
-        search: searchQuery,
-        ...(fetchParams || {}),
-      })
-      setItems(res.data || [])
-    } catch (error) {
-      console.error(`Failed to fetch items for ${field}:`, error)
-      setItems([])
-    } finally {
-      setLoading(false)
-    }
-  }
+    },
+    [field, config, memoFetchParams]
+  )
 
   useEffect(() => {
-    fetchItems('')
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [field, JSON.stringify(fetchParams)])
+    void fetchItems('')
+  }, [fetchItems])
 
   useEffect(() => {
     if (debounceRef.current) window.clearTimeout(debounceRef.current)
     debounceRef.current = window.setTimeout(() => {
-      fetchItems(query)
+      void fetchItems(query)
     }, 300)
     return () => {
       if (debounceRef.current) window.clearTimeout(debounceRef.current)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query])
+  }, [query, fetchItems])
 
   const getDisplayValue = (item: SelectableItem): string => {
     return config

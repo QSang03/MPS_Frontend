@@ -13,10 +13,13 @@ import { SystemPageLayout } from '@/components/system/SystemPageLayout'
 import { SystemPageHeader } from '@/components/system/SystemPageHeader'
 import { ServiceRequestCreateModal } from '../service-requests/_components/ServiceRequestCreateModal'
 import { Separator } from '@/components/ui/separator'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 export const dynamic = 'force-dynamic'
 
 export default function RequestsPage() {
+  const { t } = useLocale()
+
   // Fetch quick counts
   const { data: serviceData, isLoading: loadingService } = useQuery({
     queryKey: ['service-requests', 'count'],
@@ -38,8 +41,8 @@ export default function RequestsPage() {
   return (
     <SystemPageLayout fullWidth>
       <SystemPageHeader
-        title="Quản trị yêu cầu khách hàng"
-        subtitle="Theo dõi và xử lý nhanh các yêu cầu bảo trì & mua vật tư"
+        title={t('page.requests.title')}
+        subtitle={t('page.requests.subtitle')}
         icon={<FileText className="h-6 w-6" />}
         actions={
           <div className="flex items-center gap-2">
@@ -52,17 +55,15 @@ export default function RequestsPage() {
 
       <Tabs defaultValue="service" className="space-y-6">
         {/* Tabs List với style hiện đại hơn */}
-        <div className="border-b">
-          <TabsList className="h-auto w-full justify-start gap-6 bg-transparent p-0">
+        <div>
+          <TabsList className="bg-muted inline-flex h-10 items-center justify-start rounded-lg p-1">
             <TabsTrigger
               value="service"
-              className="group relative gap-2 rounded-none border-b-2 border-transparent pt-2 pb-4 font-medium transition hover:text-red-700 data-[state=active]:border-red-500 data-[state=active]:text-red-600"
+              className="ring-offset-background focus-visible:ring-ring data-[state=active]:bg-background data-[state=active]:text-foreground inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium whitespace-nowrap transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm"
             >
               <span className="flex items-center gap-2">
-                <Wrench
-                  className={`text-muted-foreground h-4 w-4 transition group-data-[state=active]:text-red-500`}
-                />
-                Service Request
+                <Wrench className="h-4 w-4" />
+                {t('page.requests.tab.service')}
               </span>
               <Badge className="ml-1 h-5 rounded-full border border-red-200 bg-red-100 px-1.5 text-[10px] font-normal text-red-700">
                 {loadingService ? <Loader2 className="h-3 w-3 animate-spin" /> : serviceCount}
@@ -71,13 +72,11 @@ export default function RequestsPage() {
 
             <TabsTrigger
               value="purchase"
-              className="group relative gap-2 rounded-none border-b-2 border-transparent pt-2 pb-4 font-medium transition hover:text-blue-700 data-[state=active]:border-blue-500 data-[state=active]:text-blue-600"
+              className="ring-offset-background focus-visible:ring-ring data-[state=active]:bg-background data-[state=active]:text-foreground inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium whitespace-nowrap transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm"
             >
               <span className="flex items-center gap-2">
-                <ShoppingCart
-                  className={`text-muted-foreground h-4 w-4 transition group-data-[state=active]:text-blue-500`}
-                />
-                Purchase Request
+                <ShoppingCart className="h-4 w-4" />
+                {t('page.requests.tab.purchase')}
               </span>
               <Badge className="ml-1 h-5 rounded-full border border-blue-200 bg-blue-100 px-1.5 text-[10px] font-normal text-blue-700">
                 {loadingPurchase ? <Loader2 className="h-3 w-3 animate-spin" /> : purchaseCount}
@@ -86,13 +85,11 @@ export default function RequestsPage() {
 
             <TabsTrigger
               value="sla"
-              className="group relative gap-2 rounded-none border-b-2 border-transparent pt-2 pb-4 font-medium transition hover:text-amber-700 data-[state=active]:border-amber-500 data-[state=active]:text-amber-600"
+              className="ring-offset-background focus-visible:ring-ring data-[state=active]:bg-background data-[state=active]:text-foreground inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium whitespace-nowrap transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm"
             >
               <span className="flex items-center gap-2">
-                <Clock
-                  className={`text-muted-foreground h-4 w-4 transition group-data-[state=active]:text-amber-500`}
-                />
-                SLA
+                <Clock className="h-4 w-4" />
+                {t('page.requests.tab.sla')}
               </span>
               <Badge className="ml-1 h-5 rounded-full border border-amber-200 bg-amber-100 px-1.5 text-[10px] font-normal text-amber-700">
                 {slaCount}

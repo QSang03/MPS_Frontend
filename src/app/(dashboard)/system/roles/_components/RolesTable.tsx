@@ -45,6 +45,7 @@ import { useActionPermission } from '@/lib/hooks/useActionPermission'
 import { FilterSection } from '@/components/system/FilterSection'
 import { StatsCards } from '@/components/system/StatsCard'
 import { TableSkeleton } from '@/components/system/TableSkeleton'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 interface RolesTableProps {
   onCreateTrigger?: boolean
@@ -58,6 +59,7 @@ interface RolesStats {
 }
 
 export function RolesTable({ onCreateTrigger, onCreateTriggerReset }: RolesTableProps = {}) {
+  const { t } = useLocale()
   const { canUpdate, canDelete } = useActionPermission('roles')
   const queryClient = useQueryClient()
 
@@ -177,19 +179,19 @@ export function RolesTable({ onCreateTrigger, onCreateTriggerReset }: RolesTable
       <StatsCards
         cards={[
           {
-            label: 'Tổng vai trò',
+            label: t('roles.stats.total'),
             value: stats.total,
             icon: <Layers className="h-6 w-6" />,
             borderColor: 'emerald',
           },
           {
-            label: 'Đang hoạt động',
+            label: t('roles.stats.active'),
             value: stats.active,
             icon: <CheckCircle2 className="h-6 w-6" />,
             borderColor: 'green',
           },
           {
-            label: 'Tạm dừng',
+            label: t('roles.stats.inactive'),
             value: stats.inactive,
             icon: <XCircle className="h-6 w-6" />,
             borderColor: 'gray',
@@ -198,19 +200,21 @@ export function RolesTable({ onCreateTrigger, onCreateTriggerReset }: RolesTable
       />
 
       <FilterSection
-        title="Bộ lọc & Tìm kiếm"
-        subtitle="Tìm kiếm vai trò theo tên hoặc mô tả"
+        title={t('roles.filter.title')}
+        subtitle={t('roles.filter.subtitle')}
         onReset={handleResetFilters}
         activeFilters={activeFilters}
         columnVisibilityMenu={columnVisibilityMenu}
       >
         <div className="grid gap-4 md:grid-cols-2">
           <div>
-            <label className="mb-2 block text-sm font-medium">Tìm kiếm</label>
+            <label className="mb-2 block text-sm font-medium">
+              {t('roles.filter.search_label')}
+            </label>
             <div className="relative">
               <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <Input
-                placeholder="Tìm kiếm vai trò..."
+                placeholder={t('roles.filter.search_placeholder')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 onKeyDown={(e) => {
@@ -225,28 +229,30 @@ export function RolesTable({ onCreateTrigger, onCreateTriggerReset }: RolesTable
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium">Trạng thái</label>
+            <label className="mb-2 block text-sm font-medium">
+              {t('roles.filter.status_label')}
+            </label>
             <Select value={isActive} onValueChange={setIsActive}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Chọn trạng thái" />
+                <SelectValue placeholder={t('roles.filter.status_placeholder')} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">
                   <span className="flex items-center gap-2">
                     <Layers className="h-4 w-4" />
-                    Tất cả vai trò
+                    {t('roles.filter.all_roles')}
                   </span>
                 </SelectItem>
                 <SelectItem value="true">
                   <span className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                    Hoạt động
+                    {t('roles.filter.status.active')}
                   </span>
                 </SelectItem>
                 <SelectItem value="false">
                   <span className="flex items-center gap-2">
                     <XCircle className="h-4 w-4 text-red-600" />
-                    Ngừng hoạt động
+                    {t('roles.filter.status.inactive')}
                   </span>
                 </SelectItem>
               </SelectContent>
@@ -323,6 +329,7 @@ function RolesTableContent({
   canDelete,
   searchValue,
 }: RolesTableContentProps) {
+  const { t } = useLocale()
   const [isPending, startTransition] = useTransition()
   const [sortVersion, setSortVersion] = useState(0)
 
@@ -365,7 +372,7 @@ function RolesTableContent({
     return [
       {
         id: 'index',
-        header: 'STT',
+        header: t('table.index'),
         cell: ({ row, table }) => {
           const index = table.getSortedRowModel().rows.findIndex((r) => r.id === row.id)
           return (
@@ -382,7 +389,7 @@ function RolesTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <Layers className="h-4 w-4 text-gray-600" />
-            Vai trò
+            {t('roles.table.name')}
           </div>
         ),
         cell: ({ row }) => (
@@ -395,7 +402,7 @@ function RolesTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <FileText className="h-4 w-4 text-gray-600" />
-            Mô tả
+            {t('roles.table.description')}
           </div>
         ),
         cell: ({ row }) => (
@@ -423,7 +430,7 @@ function RolesTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <CheckCircle2 className="h-4 w-4 text-gray-600" />
-            Trạng thái
+            {t('roles.table.status')}
           </div>
         ),
         cell: ({ row }) => (
@@ -434,12 +441,12 @@ function RolesTableContent({
             {row.original.isActive ? (
               <>
                 <CheckCircle2 className="mr-1 h-3 w-3" />
-                Hoạt động
+                {t('roles.table.status.active')}
               </>
             ) : (
               <>
                 <XCircle className="mr-1 h-3 w-3" />
-                Ngừng
+                {t('roles.table.status.inactive')}
               </>
             )}
           </Badge>
@@ -451,7 +458,7 @@ function RolesTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-gray-600" />
-            Ngày tạo
+            {t('roles.table.created_at')}
           </div>
         ),
         cell: ({ row }) => (
@@ -465,7 +472,7 @@ function RolesTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <Settings className="h-4 w-4 text-gray-600" />
-            Hành động
+            {t('roles.table.actions')}
           </div>
         ),
         enableSorting: false,
@@ -484,7 +491,7 @@ function RolesTableContent({
                   variant="ghost"
                   onClick={() => !isProtectedRole && onEditRole(row.original)}
                   className="transition-all hover:bg-blue-100 hover:text-blue-700"
-                  title={isProtectedRole ? 'Vai trò hệ thống không thể chỉnh sửa' : 'Chỉnh sửa'}
+                  title={isProtectedRole ? t('roles.table.protected_edit') : t('roles.table.edit')}
                   disabled={isProtectedRole}
                 >
                   <Edit className="h-4 w-4" />
@@ -492,8 +499,8 @@ function RolesTableContent({
               )}
               {canDelete && (
                 <DeleteDialog
-                  title="Xóa vai trò"
-                  description={`Bạn có chắc chắn muốn xóa vai trò "${row.original.name}" không?\n\nHành động này không thể hoàn tác.`}
+                  title={t('roles.table.delete_title')}
+                  description={t('roles.table.delete_description', { name: row.original.name })}
                   onConfirm={async () => {
                     await Promise.resolve(onDeleteRole(row.original.id))
                   }}
@@ -502,7 +509,11 @@ function RolesTableContent({
                       size="sm"
                       variant="ghost"
                       className="transition-all hover:bg-red-100 hover:text-red-700"
-                      title={isProtectedRole ? 'Vai trò hệ thống không thể xóa' : 'Xóa'}
+                      title={
+                        isProtectedRole
+                          ? t('roles.table.protected_delete')
+                          : t('roles.table.delete')
+                      }
                       disabled={isProtectedRole}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -515,7 +526,7 @@ function RolesTableContent({
         },
       },
     ]
-  }, [pagination, canUpdate, canDelete, onEditRole, onDeleteRole])
+  }, [pagination, canUpdate, canDelete, onEditRole, onDeleteRole, t])
 
   return (
     <TableWrapper<UserRole>
@@ -547,18 +558,18 @@ function RolesTableContent({
             <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200">
               <Layers className="h-12 w-12 opacity-20" />
             </div>
-            <h3 className="mb-2 text-xl font-bold text-gray-700">Không có vai trò nào</h3>
+            <h3 className="mb-2 text-xl font-bold text-gray-700">{t('roles.empty.title')}</h3>
             <p className="mb-6 text-gray-500">
               {searchValue || statusFilterIsFiltered(statusFilter)
-                ? 'Thử điều chỉnh bộ lọc hoặc tạo vai trò mới'
-                : 'Bắt đầu bằng cách tạo vai trò đầu tiên'}
+                ? t('roles.empty.filtered')
+                : t('roles.empty.no_roles')}
             </p>
             <Button
               onClick={onCreateRole}
               className="rounded-lg bg-blue-600 px-6 py-2 text-white transition-all hover:bg-blue-700"
             >
               <Plus className="mr-2 h-4 w-4" />
-              Tạo Vai trò
+              {t('roles.empty.create_button')}
             </Button>
           </div>
         ) : undefined

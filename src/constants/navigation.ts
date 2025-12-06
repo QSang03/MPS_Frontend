@@ -120,6 +120,18 @@ export const USER_NAVIGATION_PAYLOAD: NavItemPayload[] = [
         },
       },
       {
+        id: 'assign-pricing',
+        label: 'Gán giá cho thiết bị',
+        icon: 'Tag',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [
+            { resource: 'devices', action: 'update' },
+            { resource: 'reports', action: 'create' },
+          ],
+        },
+      },
+      {
         id: 'set-consumable-warning',
         label: 'Cập nhật ngưỡng cảnh báo',
         icon: 'Bell',

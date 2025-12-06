@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import type { Contract } from '@/types/models/contract'
 import {
   Trash2,
@@ -35,6 +35,7 @@ import { toast } from 'sonner'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { VN } from '@/constants/vietnamese'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { useActionPermission } from '@/lib/hooks/useActionPermission'
 import { ActionGuard } from '@/components/shared/ActionGuard'
 import Link from 'next/link'
@@ -42,6 +43,7 @@ import { useRouter } from 'next/navigation'
 import { getPublicUrl } from '@/lib/utils/publicUrl'
 
 export default function ContractsPageClient() {
+  const { t } = useLocale()
   type ContractWithDoc = Contract &
     Partial<Record<'documentUrl' | 'document_url' | 'pdfUrl' | 'pdf_url', string>>
   const { canCreate, canUpdate, canDelete } = useActionPermission('contracts')
@@ -77,65 +79,69 @@ export default function ContractsPageClient() {
 
   const inFlightRef = useState(() => new Map<string, Promise<unknown>>())[0]
 
-  const fetchContracts = async (opts?: { silent?: boolean }) => {
-    const silent = opts?.silent === true
-    const key = JSON.stringify({
-      type: 'contracts',
-      page,
-      limit,
-      search: debouncedSearch,
-      statusFilter,
-      typeFilter,
-    })
+  const fetchContracts = useCallback(
+    async (opts?: { silent?: boolean }) => {
+      const silent = opts?.silent === true
+      const key = JSON.stringify({
+        type: 'contracts',
+        page,
+        limit,
+        search: debouncedSearch,
+        statusFilter,
+        typeFilter,
+      })
 
-    const existing = inFlightRef.get(key) as Promise<{ data?: Contract[] } | undefined> | undefined
-    if (existing) {
-      try {
-        const res = await existing
-        if (!silent) setLoading(false)
-        setContracts((res?.data as Contract[]) || [])
-        return res
-      } catch {
-        // fallthrough
+      const existing = inFlightRef.get(key) as
+        | Promise<{ data?: Contract[] } | undefined>
+        | undefined
+      if (existing) {
+        try {
+          const res = await existing
+          if (!silent) setLoading(false)
+          setContracts((res?.data as Contract[]) || [])
+          return res
+        } catch {
+          // fallthrough
+        }
       }
-    }
 
-    if (!silent) setLoading(true)
-    const promise = (async () => {
-      try {
-        const res = await contractsClientService.getAll({
-          page,
-          limit,
-          search: debouncedSearch || undefined,
-          status: statusFilter,
-          type: typeFilter,
-        })
-        setContracts(res.data || [])
-        return res
-      } catch (err: unknown) {
-        console.error('fetch contracts error', err)
-        const apiMsg = extractApiMessage(err)
-        toast.error(apiMsg || '❌ Không thể tải danh sách hợp đồng')
-        return undefined
-      } finally {
-        if (!silent) setLoading(false)
-        inFlightRef.delete(key)
-      }
-    })()
+      if (!silent) setLoading(true)
+      const promise = (async () => {
+        try {
+          const res = await contractsClientService.getAll({
+            page,
+            limit,
+            search: debouncedSearch || undefined,
+            status: statusFilter,
+            type: typeFilter,
+          })
+          setContracts(res.data || [])
+          return res
+        } catch (err: unknown) {
+          console.error('fetch contracts error', err)
+          const apiMsg = extractApiMessage(err)
+          toast.error(apiMsg || t('contract.fetch_error'))
+          return undefined
+        } finally {
+          if (!silent) setLoading(false)
+          inFlightRef.delete(key)
+        }
+      })()
 
-    inFlightRef.set(key, promise)
-    return promise
-  }
+      inFlightRef.set(key, promise)
+      return promise
+    },
+    [page, limit, debouncedSearch, statusFilter, typeFilter, t, inFlightRef]
+  )
 
   const refreshData = async () => {
     await fetchContracts()
-    toast.success('Đã làm mới dữ liệu')
+    toast.success(t('toast.refreshed'))
   }
 
   useEffect(() => {
     void fetchContracts()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearch, statusFilter, typeFilter, page])
+  }, [fetchContracts])
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -227,12 +233,10 @@ export default function ContractsPageClient() {
               <div className="flex items-center gap-2">
                 <LayoutDashboard className="h-6 w-6 text-blue-600" />
                 <h1 className="text-2xl font-bold tracking-tight text-gray-900">
-                  Danh sách hợp đồng
+                  {t('page.contracts.title')}
                 </h1>
               </div>
-              <p className="text-muted-foreground mt-1">
-                Quản lý và theo dõi tất cả hợp đồng của công ty
-              </p>
+              <p className="text-muted-foreground mt-1">{t('page.contracts.subtitle')}</p>
             </div>
             <div className="flex items-center gap-2">
               <Button
@@ -242,7 +246,7 @@ export default function ContractsPageClient() {
                 className="gap-2 border-gray-300 hover:bg-gray-50"
               >
                 <RefreshCcw className="h-4 w-4" />
-                Làm mới
+                {t('button.refresh')}
               </Button>
               <ActionGuard pageId="contracts" actionId="create">
                 <ContractFormModal
@@ -252,7 +256,7 @@ export default function ContractsPageClient() {
                       className="gap-2 bg-blue-600 text-white shadow-sm hover:bg-blue-700"
                     >
                       <Plus className="h-4 w-4" />
-                      Thêm hợp đồng
+                      {t('page.contracts.create')}
                     </Button>
                   }
                   onCreated={(c) => c && setContracts((prev) => [c, ...prev])}
@@ -272,9 +276,11 @@ export default function ContractsPageClient() {
                 <Package className="h-6 w-6 text-blue-600" />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-500">Tổng hợp đồng</p>
+                <p className="text-sm font-medium text-gray-500">
+                  {t('contracts.stats.total_title')}
+                </p>
                 <h3 className="mt-1 text-3xl font-bold text-gray-900">{contracts.length}</h3>
-                <p className="mt-1 text-xs text-gray-400">Tất cả hợp đồng trong hệ thống</p>
+                <p className="mt-1 text-xs text-gray-400">{t('contracts.stats.total_desc')}</p>
               </div>
             </div>
           </CardContent>
@@ -286,9 +292,11 @@ export default function ContractsPageClient() {
                 <CheckCircle2 className="h-6 w-6 text-emerald-600" />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-500">Đang hoạt động</p>
+                <p className="text-sm font-medium text-gray-500">
+                  {t('contracts.stats.active_title')}
+                </p>
                 <h3 className="mt-1 text-3xl font-bold text-gray-900">{activeCount}</h3>
-                <p className="mt-1 text-xs text-gray-400">Hợp đồng đang có hiệu lực</p>
+                <p className="mt-1 text-xs text-gray-400">{t('contracts.stats.active_desc')}</p>
               </div>
             </div>
           </CardContent>
@@ -300,9 +308,11 @@ export default function ContractsPageClient() {
                 <Clock className="h-6 w-6 text-amber-600" />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-500">Chờ xử lý</p>
+                <p className="text-sm font-medium text-gray-500">
+                  {t('contracts.stats.pending_title')}
+                </p>
                 <h3 className="mt-1 text-3xl font-bold text-gray-900">{pendingCount}</h3>
-                <p className="mt-1 text-xs text-gray-400">Hợp đồng đang chờ duyệt</p>
+                <p className="mt-1 text-xs text-gray-400">{t('contracts.stats.pending_desc')}</p>
               </div>
             </div>
           </CardContent>
@@ -314,14 +324,14 @@ export default function ContractsPageClient() {
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-2">
               <Search className="h-5 w-5 text-blue-600" />
-              <h3 className="font-semibold text-gray-900">Tìm kiếm & Bộ lọc</h3>
+              <h3 className="font-semibold text-gray-900">{t('filters.general')}</h3>
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
               <div className="relative w-64">
                 <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
                 <Input
-                  placeholder="Tìm kiếm mã, khách hàng..."
+                  placeholder={t('filters.search_placeholder_contracts')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   onKeyPress={handleSearchKeyPress}
@@ -338,11 +348,11 @@ export default function ContractsPageClient() {
                 }}
                 className="rounded-md border bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none"
               >
-                <option value="">Tất cả trạng thái</option>
-                <option value="PENDING">Chờ xử lý</option>
-                <option value="ACTIVE">Đang hoạt động</option>
-                <option value="EXPIRED">Hết hạn</option>
-                <option value="TERMINATED">Đã chấm dứt</option>
+                <option value="">{t('filters.status_all')}</option>
+                <option value="PENDING">{t('filters.status_pending')}</option>
+                <option value="ACTIVE">{t('filters.status_active')}</option>
+                <option value="EXPIRED">{t('filters.status_expired')}</option>
+                <option value="TERMINATED">{t('filters.status_terminated')}</option>
               </select>
 
               <select
@@ -354,7 +364,7 @@ export default function ContractsPageClient() {
                 }}
                 className="rounded-md border bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none"
               >
-                <option value="">Tất cả loại</option>
+                <option value="">{t('filters.type_all')}</option>
                 <option value="MPS_CLICK_CHARGE">MPS_CLICK_CHARGE</option>
                 <option value="MPS_CONSUMABLE">MPS_CONSUMABLE</option>
                 <option value="CMPS_CLICK_CHARGE">CMPS_CLICK_CHARGE</option>
@@ -379,7 +389,7 @@ export default function ContractsPageClient() {
                   } catch (err) {
                     console.error('Failed to clear filters and fetch contracts', err)
                     const apiMsg = extractApiMessage(err)
-                    toast.error(apiMsg || 'Không thể tải danh sách hợp đồng')
+                    toast.error(apiMsg || t('contract.fetch_error'))
                   } finally {
                     setLoading(false)
                   }
@@ -387,7 +397,7 @@ export default function ContractsPageClient() {
                 className="gap-2 border-dashed"
               >
                 <RefreshCcw className="h-3.5 w-3.5" />
-                Reset
+                {t('button.reset')}
               </Button>
             </div>
           </div>
@@ -399,20 +409,22 @@ export default function ContractsPageClient() {
                 <tr>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">#</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
-                    Mã hợp đồng
+                    {t('table.contract_number')}
                   </th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
-                    Khách hàng
-                  </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Loại</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
-                    Trạng thái
+                    {t('table.customer')}
                   </th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
-                    Thời gian
+                    {t('table.type')}
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                    {t('table.status')}
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                    {t('table.time')}
                   </th>
                   <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900">
-                    Thao tác
+                    {t('table.actions')}
                   </th>
                 </tr>
               </thead>
@@ -424,12 +436,12 @@ export default function ContractsPageClient() {
                         {searchTerm ? (
                           <>
                             <Search className="h-12 w-12 opacity-20" />
-                            <p>Không tìm thấy hợp đồng phù hợp</p>
+                            <p>{t('empty.contracts.search')}</p>
                           </>
                         ) : (
                           <>
                             <FileText className="h-12 w-12 opacity-20" />
-                            <p>Chưa có hợp đồng nào</p>
+                            <p>{t('empty.contracts.empty')}</p>
                             <ActionGuard pageId="contracts" actionId="create">
                               <ContractFormModal
                                 onCreated={(c) => c && setContracts((prev) => [c, ...prev])}
@@ -488,7 +500,7 @@ export default function ContractsPageClient() {
                             size="icon"
                             className="h-8 w-8 text-gray-500 hover:text-blue-600"
                             onClick={() => router.push(`/user/contracts/${c.id}`)}
-                            title="Xem chi tiết"
+                            title={t('button.view')}
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
@@ -506,7 +518,7 @@ export default function ContractsPageClient() {
                                   variant="ghost"
                                   size="icon"
                                   className="h-8 w-8 text-gray-500 hover:text-emerald-600"
-                                  title="Xem tài liệu PDF"
+                                  title={t('button.view_pdf')}
                                   onClick={(event) => {
                                     event.stopPropagation()
                                     const url = getPublicUrl(docUrl as string)
@@ -547,17 +559,20 @@ export default function ContractsPageClient() {
 
                                 {canDelete && (
                                   <DeleteDialog
-                                    title="Xóa hợp đồng"
-                                    description={`Bạn có chắc chắn muốn xóa hợp đồng "${c.contractNumber}" không? Hành động này không thể hoàn tác.`}
+                                    title={t('contract.delete_confirm_title')}
+                                    description={t('contract.delete_confirmation').replace(
+                                      '{contractNumber}',
+                                      c.contractNumber
+                                    )}
                                     onConfirm={async () => {
                                       try {
                                         await contractsClientService.delete(c.id)
                                         setContracts((prev) => prev.filter((p) => p.id !== c.id))
-                                        toast.success('Xóa hợp đồng thành công')
+                                        toast.success(t('contract.delete_success'))
                                       } catch (err: unknown) {
                                         console.error('Delete contract error', err)
                                         const apiMsg = extractApiMessage(err)
-                                        toast.error(apiMsg || 'Có lỗi khi xóa hợp đồng')
+                                        toast.error(apiMsg || t('contract.delete_error'))
                                       }
                                     }}
                                     trigger={
@@ -566,7 +581,7 @@ export default function ContractsPageClient() {
                                         onSelect={(e) => e.preventDefault()}
                                       >
                                         <Trash2 className="h-4 w-4" />
-                                        Xóa
+                                        {t('button.delete')}
                                       </DropdownMenuItem>
                                     }
                                   />
@@ -588,14 +603,15 @@ export default function ContractsPageClient() {
               <div className="flex items-center gap-2">
                 <BarChart3 className="h-4 w-4" />
                 <span>
-                  Hiển thị <span className="text-foreground font-semibold">{contracts.length}</span>
+                  {t('contracts.stats.showing')}{' '}
+                  <span className="text-foreground font-semibold">{contracts.length}</span>
                   {searchTerm && <span> / {contracts.length}</span>} hợp đồng
                 </span>
               </div>
 
               {searchTerm && (
                 <Button variant="ghost" size="sm" onClick={() => setSearchTerm('')} className="h-8">
-                  Xóa bộ lọc
+                  {t('button.reset')}
                 </Button>
               )}
             </div>

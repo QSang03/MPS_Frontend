@@ -49,6 +49,7 @@ import { ActionGuard } from '@/components/shared/ActionGuard'
 import { DeleteDialog } from '@/components/shared/DeleteDialog'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { toast } from 'sonner'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { useUsersQuery } from '@/lib/hooks/queries/useUsersQuery'
 import type { User, UserFilters, UserPagination, UserRole, UsersResponse } from '@/types/users'
 import type { Customer } from '@/types/models/customer'
@@ -63,6 +64,7 @@ export function UsersTable() {
   const pathname = usePathname()
   const [sortVersion, setSortVersion] = useState(0) // version counter to force refetch when user explicitly changes sorting
   const queryClient = useQueryClient()
+  const { t } = useLocale()
 
   const [filters, setFilters] = useState<UserFilters>(() => ({
     search: searchParams.get('search') || '',
@@ -173,10 +175,10 @@ export function UsersTable() {
     try {
       await usersClientService.resetPassword(userId)
       await queryClient.invalidateQueries({ queryKey: ['users'] })
-      toast.success('Đặt lại mật khẩu thành công')
+      toast.success(t('user.reset_password_success'))
     } catch (err) {
       console.error('Reset user password error', err)
-      toast.error('Có lỗi khi đặt lại mật khẩu')
+      toast.error(t('user.reset_password_error'))
     }
   }
 
@@ -184,10 +186,10 @@ export function UsersTable() {
     try {
       await usersClientService.deleteUser(userId)
       await queryClient.invalidateQueries({ queryKey: ['users'] })
-      toast.success('✅ Xóa người dùng thành công')
+      toast.success(t('user.delete_success'))
     } catch (err) {
       console.error('Delete user error', err)
-      toast.error('❌ Có lỗi khi xóa người dùng')
+      toast.error(t('user.delete_error'))
     }
   }
 
@@ -195,7 +197,7 @@ export function UsersTable() {
     const items: Array<{ label: string; value: string; onRemove: () => void }> = []
     if (filters.search) {
       items.push({
-        label: `Tìm kiếm: "${filters.search}"`,
+        label: t('filters.search').replace('{query}', filters.search),
         value: filters.search,
         onRemove: () => {
           setSearchInput('')
@@ -206,7 +208,7 @@ export function UsersTable() {
     if (filters.roleId !== 'all') {
       const roleName = roles.find((r: UserRole) => r.id === filters.roleId)?.name || filters.roleId
       items.push({
-        label: `Vai trò: ${roleName}`,
+        label: t('filters.role').replace('{role}', roleName),
         value: filters.roleId,
         onRemove: () => setFilters((prev) => ({ ...prev, roleId: 'all' })),
       })
@@ -217,20 +219,31 @@ export function UsersTable() {
         availableCustomerCodes.find((code) => customerCodeToId[code] === selectedCustomerId) ??
         selectedCustomerId
       items.push({
-        label: `KH: ${customerCode}`,
+        label: t('filters.customer').replace('{customer}', customerCode),
         value: selectedCustomerId,
         onRemove: () => setFilters((prev) => ({ ...prev, customerId: 'all' })),
       })
     }
     if (sorting.sortBy !== 'createdAt' || sorting.sortOrder !== 'desc') {
       items.push({
-        label: `Sắp xếp: ${sorting.sortBy} (${sorting.sortOrder === 'asc' ? 'Tăng dần' : 'Giảm dần'})`,
+        label: t('filters.sort')
+          .replace('{sortBy}', sorting.sortBy ?? '')
+          .replace('{direction}', sorting.sortOrder === 'asc' ? t('sort.asc') : t('sort.desc')),
         value: `${sorting.sortBy}-${sorting.sortOrder}`,
         onRemove: () => setSorting({ sortBy: 'createdAt', sortOrder: 'desc' }),
       })
     }
     return items
-  }, [filters, roles, availableCustomerCodes, customerCodeToId, sorting.sortBy, sorting.sortOrder])
+  }, [
+    filters,
+    roles,
+    availableCustomerCodes,
+    customerCodeToId,
+    sorting.sortBy,
+    sorting.sortOrder,
+    t,
+  ])
+  // include t because activeFilters uses localized strings
 
   const handleResetFilters = () => {
     setFilters({
@@ -263,19 +276,19 @@ export function UsersTable() {
       <StatsCards
         cards={[
           {
-            label: 'Tổng người dùng',
+            label: t('user.total_users'),
             value: stats.total,
             icon: <Users className="h-6 w-6" />,
             borderColor: 'blue',
           },
           {
-            label: 'Đang hoạt động',
+            label: t('user.active'),
             value: stats.active,
             icon: <CheckCircle2 className="h-6 w-6" />,
             borderColor: 'green',
           },
           {
-            label: 'Tạm dừng',
+            label: t('user.inactive'),
             value: stats.inactive,
             icon: <AlertCircle className="h-6 w-6" />,
             borderColor: 'gray',
@@ -284,19 +297,19 @@ export function UsersTable() {
       />
 
       <FilterSection
-        title="Bộ lọc & Tìm kiếm"
-        subtitle="Tìm kiếm và lọc người dùng"
+        title={t('filter.title')}
+        subtitle={t('filter.subtitle')}
         onReset={handleResetFilters}
         activeFilters={activeFilters}
         columnVisibilityMenu={columnVisibilityMenu}
       >
         <div className="grid items-end gap-4 md:grid-cols-4">
           <div className="space-y-2">
-            <label className="text-sm font-bold text-gray-700">🔍 Tìm kiếm</label>
+            <label className="text-sm font-bold text-gray-700">🔍 {t('filter.search')}</label>
             <div className="relative">
               <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <Input
-                placeholder="Tìm theo email..."
+                placeholder={t('placeholder.search_email')}
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 className="w-full rounded-lg border-2 border-gray-200 pl-10 transition-all focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
@@ -305,16 +318,16 @@ export function UsersTable() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-bold text-gray-700">🎭 Vai trò</label>
+            <label className="text-sm font-bold text-gray-700">🎭 {t('user.role')}</label>
             <Select
               value={filters.roleId}
               onValueChange={(value) => setFilters((prev) => ({ ...prev, roleId: value }))}
             >
               <SelectTrigger className="w-full rounded-lg border-2 border-gray-200 transition-all focus:border-purple-500 focus:ring-2 focus:ring-purple-200">
-                <SelectValue placeholder="Chọn vai trò" />
+                <SelectValue placeholder={t('placeholder.select_role')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tất cả vai trò</SelectItem>
+                <SelectItem value="all">{t('placeholder.all_roles')}</SelectItem>
                 {roles.map((role: UserRole) => (
                   <SelectItem key={role.id} value={role.id}>
                     {role.name}
@@ -325,16 +338,16 @@ export function UsersTable() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-bold text-gray-700">🏪 Khách hàng</label>
+            <label className="text-sm font-bold text-gray-700">🏪 {t('customer')}</label>
             <Select
               value={filters.customerId}
               onValueChange={(value) => setFilters((prev) => ({ ...prev, customerId: value }))}
             >
               <SelectTrigger className="w-full rounded-lg border-2 border-gray-200 transition-all focus:border-purple-500 focus:ring-2 focus:ring-purple-200">
-                <SelectValue placeholder="Chọn mã KH" />
+                <SelectValue placeholder={t('placeholder.select_customer_code')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tất cả KH</SelectItem>
+                <SelectItem value="all">{t('placeholder.all_customers')}</SelectItem>
                 {availableCustomerCodes.map((code) => (
                   <SelectItem key={code} value={customerCodeToId[code] || code}>
                     {code}
@@ -423,6 +436,7 @@ function UsersTableContent({
   sortVersion,
 }: UsersTableContentProps) {
   const [isPending, startTransition] = useTransition()
+  const { t } = useLocale()
 
   const queryParams = useMemo(
     () => ({
@@ -489,7 +503,7 @@ function UsersTableContent({
     return [
       {
         id: 'index',
-        header: 'STT',
+        header: t('table.index'),
         cell: ({ row, table }) => {
           const index = table.getSortedRowModel().rows.findIndex((r) => r.id === row.id)
           return (
@@ -506,7 +520,7 @@ function UsersTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <Mail className="h-4 w-4 text-gray-600" />
-            Người dùng
+            {t('user')}
           </div>
         ),
         cell: ({ row }) => (
@@ -521,7 +535,7 @@ function UsersTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <Building2 className="h-4 w-4 text-gray-600" />
-            Khách hàng
+            {t('customer')}
           </div>
         ),
         cell: ({ row }) => (
@@ -536,7 +550,7 @@ function UsersTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <UserCog className="h-4 w-4 text-gray-600" />
-            Vai trò
+            {t('user.role')}
           </div>
         ),
         cell: ({ row }) => (
@@ -554,8 +568,8 @@ function UsersTableContent({
         enableSorting: true,
         header: () => (
           <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-gray-600" />
-            Ngày tạo
+            <Calendar className="h-4 w-4 text-gray-400" />
+            {t('table.created_at')}
           </div>
         ),
         cell: ({ row }) => (
@@ -570,7 +584,7 @@ function UsersTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <UserCog className="h-4 w-4 text-gray-600" />
-            Thao tác
+            {t('table.actions')}
           </div>
         ),
         enableSorting: false,
@@ -588,8 +602,8 @@ function UsersTableContent({
                 className="transition-all hover:bg-blue-100 hover:text-blue-700"
                 title={
                   String(row.original.email || '').toLowerCase() === 'duongnvq@nguyenkimvn.vn'
-                    ? 'Tài khoản hệ thống không thể chỉnh sửa'
-                    : 'Chỉnh sửa'
+                    ? t('user.protected_edit')
+                    : t('button.edit')
                 }
                 disabled={
                   String(row.original.email || '').toLowerCase() === 'duongnvq@nguyenkimvn.vn'
@@ -599,10 +613,13 @@ function UsersTableContent({
               </Button>
             )}
             <ConfirmDialog
-              title="Đặt lại mật khẩu"
-              description={`Bạn có chắc muốn đặt lại mật khẩu người dùng "${row.original.email}" về mật khẩu mặc định không?`}
-              confirmLabel="Đặt lại"
-              cancelLabel="Hủy"
+              title={t('user.reset_password')}
+              description={t('user.reset_password_confirmation').replace(
+                '{email}',
+                row.original.email
+              )}
+              confirmLabel={t('confirm.reset')}
+              cancelLabel={t('cancel')}
               onConfirm={async () => {
                 await onResetPassword(row.original.id)
               }}
@@ -611,7 +628,7 @@ function UsersTableContent({
                   size="sm"
                   variant="ghost"
                   className="transition-all hover:bg-blue-100 hover:text-blue-700"
-                  title="Đặt lại mật khẩu"
+                  title={t('user.reset_password')}
                 >
                   <RotateCcw className="h-4 w-4" />
                 </Button>
@@ -619,8 +636,8 @@ function UsersTableContent({
             />
             {canDelete && (
               <DeleteDialog
-                title="Xóa người dùng"
-                description={`Bạn có chắc chắn muốn xóa người dùng "${row.original.email}" không?\n\nHành động này không thể hoàn tác.`}
+                title={t('user.delete')}
+                description={t('user.delete_confirmation').replace('{email}', row.original.email)}
                 onConfirm={async () => {
                   await onDeleteUser(row.original.id)
                 }}
@@ -631,8 +648,8 @@ function UsersTableContent({
                     className="transition-all hover:bg-red-100 hover:text-red-700"
                     title={
                       String(row.original.email || '').toLowerCase() === 'duongnvq@nguyenkimvn.vn'
-                        ? 'Tài khoản hệ thống không thể xóa'
-                        : 'Xóa'
+                        ? t('user.protected_delete')
+                        : t('button.delete')
                     }
                     disabled={
                       String(row.original.email || '').toLowerCase() === 'duongnvq@nguyenkimvn.vn'
@@ -655,6 +672,7 @@ function UsersTableContent({
     onEditUser,
     onResetPassword,
     onDeleteUser,
+    t,
   ])
 
   return (
@@ -686,9 +704,9 @@ function UsersTableContent({
             <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200">
               <Users className="h-12 w-12 opacity-20" />
             </div>
-            <h3 className="mb-2 text-xl font-bold text-gray-700">Không có người dùng nào</h3>
+            <h3 className="mb-2 text-xl font-bold text-gray-700">{t('user.empty.title')}</h3>
             <p className="mb-6 text-gray-500">
-              {searchInput ? 'Không tìm thấy người dùng phù hợp' : 'Hãy tạo người dùng đầu tiên'}
+              {searchInput ? t('user.empty.search_result') : t('user.empty.create_first')}
             </p>
             {!searchInput && (
               <ActionGuard pageId="users" actionId="create">

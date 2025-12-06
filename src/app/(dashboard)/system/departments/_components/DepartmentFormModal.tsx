@@ -61,8 +61,7 @@ export function DepartmentFormModal({
     } else {
       form.reset({ name: '', code: '', description: '', isActive: true })
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialData])
+  }, [initialData, form])
 
   const handleSubmit = async (data: DepartmentFormData) => {
     setIsLoading(true)

@@ -13,6 +13,7 @@ import { Switch } from '@/components/ui/switch'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Key, User, Mail, Bell, Save, Eye, EyeOff, CheckCircle, AlertCircle } from 'lucide-react'
 import type { UserProfile } from '@/types/auth'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 interface SettingsClientProps {
   initialProfile: UserProfile | null
@@ -20,6 +21,7 @@ interface SettingsClientProps {
 }
 
 export function SettingsClient({ initialProfile, initialTab = 'account' }: SettingsClientProps) {
+  const { t } = useLocale()
   const [profile, setProfile] = useState(initialProfile)
   const [activeTab, setActiveTab] = useState<'account' | 'password' | 'notifications'>(initialTab)
 
@@ -98,9 +100,7 @@ export function SettingsClient({ initialProfile, initialTab = 'account' }: Setti
       <Card className="rounded-3xl border-2 border-gray-200">
         <CardContent className="p-8 text-center">
           <p className="text-lg text-gray-500">
-            {isFetchingProfile
-              ? '⏳ Đang tải thông tin cài đặt...'
-              : '❌ Không thể tải thông tin cài đặt'}
+            {isFetchingProfile ? t('settings.loading') : t('settings.load_error')}
           </p>
         </CardContent>
       </Card>
@@ -113,9 +113,9 @@ export function SettingsClient({ initialProfile, initialTab = 'account' }: Setti
 
     try {
       await new Promise((resolve) => setTimeout(resolve, 1000))
-      setMessage({ success: true, text: '✅ Cập nhật thông tin thành công!' })
+      setMessage({ success: true, text: t('settings.account.update_success') })
     } catch {
-      setMessage({ success: false, text: '❌ Có lỗi xảy ra khi cập nhật thông tin' })
+      setMessage({ success: false, text: t('settings.account.update_error') })
     } finally {
       setIsLoading(false)
     }
@@ -130,25 +130,23 @@ export function SettingsClient({ initialProfile, initialTab = 'account' }: Setti
     let hasError = false
 
     if (!currentPassword) {
-      setCurrentPasswordError('Mật khẩu hiện tại là bắt buộc')
+      setCurrentPasswordError(t('settings.password.current_required'))
       hasError = true
     }
 
     if (newPassword !== confirmPassword) {
-      setConfirmPasswordError('Mật khẩu xác nhận không khớp')
+      setConfirmPasswordError(t('settings.password.confirm_mismatch'))
       hasError = true
     }
 
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/
     if (!passwordRegex.test(newPassword)) {
-      setNewPasswordError(
-        'Mật khẩu mới phải có ít nhất 8 ký tự, chứa 1 chữ thường, 1 chữ hoa và 1 số'
-      )
+      setNewPasswordError(t('settings.password.requirements'))
       hasError = true
     }
 
     if (currentPassword && currentPassword === newPassword) {
-      setNewPasswordError('Mật khẩu mới không được giống mật khẩu hiện tại')
+      setNewPasswordError(t('settings.password.same_as_current'))
       hasError = true
     }
 
@@ -174,7 +172,7 @@ export function SettingsClient({ initialProfile, initialTab = 'account' }: Setti
           if (payload.success === true) {
             setMessage({
               success: true,
-              text: String(payload.message || '✅ Đổi mật khẩu thành công!'),
+              text: String(payload.message || t('settings.password.change_success')),
             })
             setCurrentPassword('')
             setNewPassword('')
@@ -187,7 +185,9 @@ export function SettingsClient({ initialProfile, initialTab = 'account' }: Setti
               if (errors.confirmPassword) setConfirmPasswordError(String(errors.confirmPassword))
               if (payload.message) setMessage({ success: false, text: String(payload.message) })
             } else {
-              const errText = String(payload.error || payload.message || 'Đổi mật khẩu thất bại')
+              const errText = String(
+                payload.error || payload.message || t('settings.password.change_error')
+              )
               const lower = errText.toLowerCase()
               if (
                 lower.includes('current') ||
@@ -229,7 +229,7 @@ export function SettingsClient({ initialProfile, initialTab = 'account' }: Setti
           } else {
             setMessage({
               success: true,
-              text: String(payload.message || '✅ Đổi mật khẩu thành công!'),
+              text: String(payload.message || t('settings.password.change_success')),
             })
             setCurrentPassword('')
             setNewPassword('')
@@ -237,13 +237,13 @@ export function SettingsClient({ initialProfile, initialTab = 'account' }: Setti
           }
         }
       } else {
-        setMessage({ success: true, text: '✅ Đổi mật khẩu thành công!' })
+        setMessage({ success: true, text: t('settings.password.change_success') })
         setCurrentPassword('')
         setNewPassword('')
         setConfirmPassword('')
       }
     } catch {
-      setMessage({ success: false, text: '❌ Có lỗi xảy ra khi đổi mật khẩu' })
+      setMessage({ success: false, text: t('settings.password.change_error') })
     } finally {
       setIsLoading(false)
     }
@@ -255,18 +255,18 @@ export function SettingsClient({ initialProfile, initialTab = 'account' }: Setti
 
     try {
       await new Promise((resolve) => setTimeout(resolve, 1000))
-      setMessage({ success: true, text: '✅ Lưu cài đặt thông báo thành công!' })
+      setMessage({ success: true, text: t('settings.notifications.save_success') })
     } catch {
-      setMessage({ success: false, text: '❌ Có lỗi xảy ra khi lưu cài đặt' })
+      setMessage({ success: false, text: t('settings.notifications.save_error') })
     } finally {
       setIsLoading(false)
     }
   }
 
   const tabs = [
-    { id: 'account', label: 'Tài khoản', icon: User },
-    { id: 'password', label: 'Mật khẩu', icon: Key },
-    { id: 'notifications', label: 'Thông báo', icon: Bell },
+    { id: 'account', label: t('settings.tabs.account'), icon: User },
+    { id: 'password', label: t('settings.tabs.password'), icon: Key },
+    { id: 'notifications', label: t('settings.tabs.notifications'), icon: Bell },
   ]
 
   return (
@@ -323,52 +323,54 @@ export function SettingsClient({ initialProfile, initialTab = 'account' }: Setti
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <User className="h-5 w-5" />
-                Thông tin tài khoản
+                {t('settings.account.title')}
               </CardTitle>
-              <CardDescription>Cập nhật thông tin cá nhân của bạn</CardDescription>
+              <CardDescription>{t('settings.account.description')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid gap-4 md:grid-cols-2">
                 {/* Email */}
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">{t('settings.account.email')}</Label>
                   <div className="flex items-center gap-2">
                     <Mail className="text-muted-foreground h-4 w-4" />
                     <Input id="email" value={profile.user.email} disabled className="bg-muted" />
                   </div>
-                  <p className="text-muted-foreground text-xs">Email không thể thay đổi</p>
+                  <p className="text-muted-foreground text-xs">
+                    {t('settings.account.email_readonly')}
+                  </p>
                 </div>
 
                 {/* Username */}
                 <div className="space-y-2">
-                  <Label htmlFor="username">Tên đăng nhập</Label>
+                  <Label htmlFor="username">{t('settings.account.username')}</Label>
                   <Input
                     id="username"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    placeholder="Nhập tên đăng nhập"
+                    placeholder={t('settings.account.username_placeholder')}
                   />
                 </div>
 
                 {/* First Name */}
                 <div className="space-y-2">
-                  <Label htmlFor="firstName">Tên</Label>
+                  <Label htmlFor="firstName">{t('settings.account.first_name')}</Label>
                   <Input
                     id="firstName"
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
-                    placeholder="Nhập tên"
+                    placeholder={t('settings.account.first_name_placeholder')}
                   />
                 </div>
 
                 {/* Last Name */}
                 <div className="space-y-2">
-                  <Label htmlFor="lastName">Họ</Label>
+                  <Label htmlFor="lastName">{t('settings.account.last_name')}</Label>
                   <Input
                     id="lastName"
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
-                    placeholder="Nhập họ"
+                    placeholder={t('settings.account.last_name_placeholder')}
                   />
                 </div>
               </div>
@@ -378,7 +380,7 @@ export function SettingsClient({ initialProfile, initialTab = 'account' }: Setti
               <div className="flex justify-end">
                 <Button onClick={handleSaveAccount} disabled={isLoading}>
                   <Save className="mr-2 h-4 w-4" />
-                  {isLoading ? 'Đang lưu...' : 'Lưu thay đổi'}
+                  {isLoading ? t('button.saving') : t('device.save_changes')}
                 </Button>
               </div>
             </CardContent>
@@ -391,21 +393,21 @@ export function SettingsClient({ initialProfile, initialTab = 'account' }: Setti
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Key className="h-5 w-5" />
-                Đổi mật khẩu
+                {t('settings.password.title')}
               </CardTitle>
-              <CardDescription>Thay đổi mật khẩu để bảo mật tài khoản</CardDescription>
+              <CardDescription>{t('settings.password.description')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Current Password */}
               <div className="space-y-2">
-                <Label htmlFor="currentPassword">Mật khẩu hiện tại</Label>
+                <Label htmlFor="currentPassword">{t('settings.password.current')}</Label>
                 <div className="relative">
                   <Input
                     id="currentPassword"
                     type={showCurrentPassword ? 'text' : 'password'}
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
-                    placeholder="Nhập mật khẩu hiện tại"
+                    placeholder={t('settings.password.current_placeholder')}
                     className={currentPasswordError ? 'border-destructive' : ''}
                   />
                   {currentPasswordError && (
@@ -431,14 +433,14 @@ export function SettingsClient({ initialProfile, initialTab = 'account' }: Setti
 
               {/* New Password */}
               <div className="space-y-2">
-                <Label htmlFor="newPassword">Mật khẩu mới</Label>
+                <Label htmlFor="newPassword">{t('settings.password.new')}</Label>
                 <div className="relative">
                   <Input
                     id="newPassword"
                     type={showNewPassword ? 'text' : 'password'}
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="Nhập mật khẩu mới"
+                    placeholder={t('settings.password.new_placeholder')}
                     className={newPasswordError ? 'border-destructive' : ''}
                   />
                   {newPasswordError && (
@@ -462,14 +464,14 @@ export function SettingsClient({ initialProfile, initialTab = 'account' }: Setti
 
               {/* Confirm Password */}
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Xác nhận mật khẩu mới</Label>
+                <Label htmlFor="confirmPassword">{t('settings.password.confirm')}</Label>
                 <div className="relative">
                   <Input
                     id="confirmPassword"
                     type={showConfirmPassword ? 'text' : 'password'}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Nhập lại mật khẩu mới"
+                    placeholder={t('settings.password.confirm_placeholder')}
                     className={confirmPasswordError ? 'border-destructive' : ''}
                   />
                   {confirmPasswordError && (
@@ -495,8 +497,8 @@ export function SettingsClient({ initialProfile, initialTab = 'account' }: Setti
 
               <div className="bg-muted/50 rounded-lg border p-4">
                 <p className="text-muted-foreground text-xs">
-                  <span className="font-bold">Yêu cầu mật khẩu:</span> Ít nhất 8 ký tự, chứa chữ
-                  thường, chữ hoa và số
+                  <span className="font-bold">{t('settings.password.requirements_label')}:</span>{' '}
+                  {t('settings.password.requirements_text')}
                 </p>
               </div>
 
@@ -505,7 +507,9 @@ export function SettingsClient({ initialProfile, initialTab = 'account' }: Setti
               <div className="flex justify-end">
                 <Button onClick={handleChangePassword} disabled={isLoading}>
                   <Key className="mr-2 h-4 w-4" />
-                  {isLoading ? 'Đang đổi...' : 'Đổi mật khẩu'}
+                  {isLoading
+                    ? t('settings.password.changing')
+                    : t('settings.password.change_button')}
                 </Button>
               </div>
             </CardContent>
@@ -518,18 +522,18 @@ export function SettingsClient({ initialProfile, initialTab = 'account' }: Setti
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Bell className="h-5 w-5" />
-                Cài đặt thông báo
+                {t('settings.notifications.title')}
               </CardTitle>
-              <CardDescription>Quản lý cách bạn nhận thông báo qua email</CardDescription>
+              <CardDescription>{t('settings.notifications.description')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-4">
                 {/* Email Notifications */}
                 <div className="flex items-center justify-between rounded-lg border p-4">
                   <div className="flex-1 space-y-0.5">
-                    <Label className="text-base">Thông báo email chung</Label>
+                    <Label className="text-base">{t('settings.notifications.email_general')}</Label>
                     <p className="text-muted-foreground text-sm">
-                      Nhận thông báo quan trọng qua email
+                      {t('settings.notifications.email_general_desc')}
                     </p>
                   </div>
                   <Switch checked={emailNotifications} onCheckedChange={setEmailNotifications} />
@@ -538,9 +542,9 @@ export function SettingsClient({ initialProfile, initialTab = 'account' }: Setti
                 {/* Login Alerts */}
                 <div className="flex items-center justify-between rounded-lg border p-4">
                   <div className="flex-1 space-y-0.5">
-                    <Label className="text-base">Cảnh báo đăng nhập</Label>
+                    <Label className="text-base">{t('settings.notifications.login_alerts')}</Label>
                     <p className="text-muted-foreground text-sm">
-                      Thông báo khi có đăng nhập từ thiết bị mới
+                      {t('settings.notifications.login_alerts_desc')}
                     </p>
                   </div>
                   <Switch checked={loginAlerts} onCheckedChange={setLoginAlerts} />
@@ -549,9 +553,11 @@ export function SettingsClient({ initialProfile, initialTab = 'account' }: Setti
                 {/* System Updates */}
                 <div className="flex items-center justify-between rounded-lg border p-4">
                   <div className="flex-1 space-y-0.5">
-                    <Label className="text-base">Cập nhật hệ thống</Label>
+                    <Label className="text-base">
+                      {t('settings.notifications.system_updates')}
+                    </Label>
                     <p className="text-muted-foreground text-sm">
-                      Thông báo về cập nhật và bảo trì hệ thống
+                      {t('settings.notifications.system_updates_desc')}
                     </p>
                   </div>
                   <Switch checked={systemUpdates} onCheckedChange={setSystemUpdates} />
@@ -560,9 +566,11 @@ export function SettingsClient({ initialProfile, initialTab = 'account' }: Setti
                 {/* Marketing Emails */}
                 <div className="flex items-center justify-between rounded-lg border p-4">
                   <div className="flex-1 space-y-0.5">
-                    <Label className="text-base">Email marketing</Label>
+                    <Label className="text-base">
+                      {t('settings.notifications.marketing_emails')}
+                    </Label>
                     <p className="text-muted-foreground text-sm">
-                      Nhận email về sản phẩm và dịch vụ mới
+                      {t('settings.notifications.marketing_emails_desc')}
                     </p>
                   </div>
                   <Switch checked={marketingEmails} onCheckedChange={setMarketingEmails} />
@@ -574,7 +582,7 @@ export function SettingsClient({ initialProfile, initialTab = 'account' }: Setti
               <div className="flex justify-end">
                 <Button onClick={handleSaveNotifications} disabled={isLoading}>
                   <Save className="mr-2 h-4 w-4" />
-                  {isLoading ? 'Đang lưu...' : 'Lưu cài đặt'}
+                  {isLoading ? t('button.saving') : t('settings.notifications.save_button')}
                 </Button>
               </div>
             </CardContent>

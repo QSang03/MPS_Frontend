@@ -1,11 +1,12 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useForm, Controller, useFieldArray, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { Loader2, Plus, Trash } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -34,6 +35,7 @@ import { removeEmpty } from '@/lib/utils/clean'
 import { warehouseDocumentsClientService } from '@/lib/api/services/warehouse-documents-client.service'
 import ConsumableTypeSelect from '@/components/shared/ConsumableTypeSelect'
 import CustomerSelect from '@/components/shared/CustomerSelect'
+import { CurrencySelector } from '@/components/currency/CurrencySelector'
 import type { WarehouseDocument } from '@/types/models/warehouse-document'
 
 interface Props {
@@ -44,6 +46,7 @@ interface Props {
 export function WarehouseDocumentForm({ initialData, onSuccess }: Props) {
   const router = useRouter()
   const queryClient = useQueryClient()
+  const { t } = useLocale()
 
   const form = useForm<CreateWarehouseDocumentForm>({
     resolver: zodResolver(createWarehouseDocumentSchema),
@@ -56,32 +59,65 @@ export function WarehouseDocumentForm({ initialData, onSuccess }: Props) {
         consumableTypeId: it.consumableTypeId,
         quantity: it.quantity,
         unitPrice: it.unitPrice || undefined,
+        currencyId: it.currencyId || undefined,
+        currencyCode: it.currency?.code || undefined,
         notes: it.notes || undefined,
-      })) ?? [{ consumableTypeId: '', quantity: 1, unitPrice: undefined, notes: '' }],
+      })) ?? [
+        {
+          consumableTypeId: '',
+          quantity: 1,
+          unitPrice: undefined,
+          currencyId: undefined,
+          currencyCode: undefined,
+          notes: '',
+        },
+      ],
     },
   })
 
-  const { control, handleSubmit, reset } = form
+  const { control, handleSubmit, reset, setValue } = form
   const { fields, append, remove } = useFieldArray({ control, name: 'items' })
   const watchType = useWatch({ control, name: 'type' })
+
+  // Tự động clear giá trị không phù hợp khi type thay đổi
+  useEffect(() => {
+    if (watchType === 'IMPORT_FROM_SUPPLIER') {
+      // Nếu là IMPORT, clear customerId
+      setValue('customerId', undefined)
+    } else if (watchType === 'EXPORT_TO_CUSTOMER' || watchType === 'RETURN_FROM_CUSTOMER') {
+      // Nếu là EXPORT hoặc RETURN, clear supplierName
+      setValue('supplierName', '')
+    }
+  }, [watchType, setValue])
 
   const createMutation = useMutation({
     mutationFn: (data: CreateWarehouseDocumentForm) => warehouseDocumentsClientService.create(data),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['warehouse-documents'] })
-      toast.success('Tạo chứng từ kho thành công')
+      toast.success(t('warehouse_document.create_success'))
       if (onSuccess) onSuccess(data)
       else router.push(`/system/warehouse-documents/${data?.id}`)
     },
     onError: (err: unknown) => {
-      const message = err instanceof Error ? err.message : 'Tạo chứng từ thất bại'
+      const message = err instanceof Error ? err.message : t('warehouse_document.create_error')
       toast.error(message)
     },
   })
 
   const onSubmit = (dto: CreateWarehouseDocumentForm) => {
-    const cleaned = removeEmpty(dto)
-    createMutation.mutate(cleaned as CreateWarehouseDocumentForm)
+    // Ràng buộc chặt chẽ: loại bỏ giá trị không phù hợp trước khi gửi
+    const cleaned: CreateWarehouseDocumentForm = { ...dto }
+
+    if (cleaned.type === 'IMPORT_FROM_SUPPLIER') {
+      // IMPORT không được có customerId
+      delete cleaned.customerId
+    } else if (cleaned.type === 'EXPORT_TO_CUSTOMER' || cleaned.type === 'RETURN_FROM_CUSTOMER') {
+      // EXPORT/RETURN không được có supplierName
+      delete cleaned.supplierName
+    }
+
+    const finalData = removeEmpty(cleaned)
+    createMutation.mutate(finalData as CreateWarehouseDocumentForm)
   }
 
   const isPending = createMutation.isPending
@@ -98,7 +134,15 @@ export function WarehouseDocumentForm({ initialData, onSuccess }: Props) {
                 <FormLabel>Loại chứng từ</FormLabel>
                 <FormControl>
                   <Select
-                    onValueChange={field.onChange}
+                    onValueChange={(value) => {
+                      field.onChange(value)
+                      // Clear giá trị không phù hợp ngay khi thay đổi type
+                      if (value === 'IMPORT_FROM_SUPPLIER') {
+                        setValue('customerId', undefined)
+                      } else {
+                        setValue('supplierName', '')
+                      }
+                    }}
                     defaultValue={field.value}
                     disabled={isPending}
                   >
@@ -194,7 +238,14 @@ export function WarehouseDocumentForm({ initialData, onSuccess }: Props) {
             </div>
             <Button
               onClick={() =>
-                append({ consumableTypeId: '', quantity: 1, unitPrice: undefined, notes: '' })
+                append({
+                  consumableTypeId: '',
+                  quantity: 1,
+                  unitPrice: undefined,
+                  currencyId: undefined,
+                  currencyCode: undefined,
+                  notes: '',
+                })
               }
               type="button"
               variant="outline"
@@ -209,7 +260,7 @@ export function WarehouseDocumentForm({ initialData, onSuccess }: Props) {
             {fields.map((fieldItem, idx) => (
               <div
                 key={fieldItem.id}
-                className="grid grid-cols-1 gap-3 rounded border p-3 md:grid-cols-4"
+                className="grid grid-cols-1 gap-3 rounded border p-3 md:grid-cols-5"
               >
                 <div className="md:col-span-2">
                   <FormField
@@ -261,14 +312,47 @@ export function WarehouseDocumentForm({ initialData, onSuccess }: Props) {
                     name={`items.${idx}.unitPrice` as const}
                     render={({ field: pField }) => (
                       <FormItem>
-                        <FormLabel>Đơn giá</FormLabel>
+                        <FormLabel>{t('warehouse_document.unit_price')}</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
-                            placeholder="Đơn giá"
+                            placeholder={t('warehouse_document.unit_price_placeholder')}
                             {...pField}
                             onChange={(e) => pField.onChange(Number(e.target.value) || undefined)}
                             disabled={isPending}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div>
+                  <FormField
+                    control={control}
+                    name={`items.${idx}.currencyId` as const}
+                    render={({ field: cField }) => (
+                      <FormItem>
+                        <FormLabel>Tiền tệ</FormLabel>
+                        <FormControl>
+                          <CurrencySelector
+                            value={cField.value || null}
+                            onChange={(value) => {
+                              cField.onChange(value || undefined)
+                              if (!value) {
+                                setValue(`items.${idx}.currencyCode` as const, undefined)
+                              }
+                            }}
+                            onSelect={(currency) => {
+                              setValue(
+                                `items.${idx}.currencyCode` as const,
+                                currency?.code || undefined
+                              )
+                            }}
+                            disabled={isPending}
+                            optional
+                            placeholder="Chọn tiền tệ"
                           />
                         </FormControl>
                         <FormMessage />
@@ -284,7 +368,11 @@ export function WarehouseDocumentForm({ initialData, onSuccess }: Props) {
                     render={({ field: nField }) => (
                       <FormItem>
                         <FormControl>
-                          <Input placeholder="Ghi chú" {...nField} disabled={isPending} />
+                          <Input
+                            placeholder={t('warehouse_document.notes_placeholder')}
+                            {...nField}
+                            disabled={isPending}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -311,10 +399,10 @@ export function WarehouseDocumentForm({ initialData, onSuccess }: Props) {
         <div className="flex gap-4">
           <Button type="submit" disabled={isPending}>
             {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Tạo chứng từ
+            {t('warehouse_document.create_button')}
           </Button>
           <Button type="button" variant="outline" onClick={() => reset()} disabled={isPending}>
-            Hủy
+            {t('button.cancel')}
           </Button>
         </div>
       </form>

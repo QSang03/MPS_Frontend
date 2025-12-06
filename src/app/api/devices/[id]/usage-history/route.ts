@@ -39,6 +39,40 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Handle 403 Access Denied with clear message
+    if (axiosError.response?.status === 403) {
+      const backendData = axiosError.response?.data
+      if (backendData && typeof backendData === 'object') {
+        const errorData = backendData as {
+          success?: boolean
+          code?: string
+          message?: string
+          statusCode?: number
+        }
+        return NextResponse.json(
+          {
+            success: false,
+            code: errorData.code || 'ACCESS_DENIED',
+            message:
+              errorData.message ||
+              'Access denied: Customer does not have ownership of this device during the requested date range',
+            statusCode: 403,
+          },
+          { status: 403 }
+        )
+      }
+      return NextResponse.json(
+        {
+          success: false,
+          code: 'ACCESS_DENIED',
+          message:
+            'Access denied: Customer does not have ownership of this device during the requested date range',
+          statusCode: 403,
+        },
+        { status: 403 }
+      )
+    }
+
     const backendData = axiosError.response?.data
     if (backendData && typeof backendData === 'object') {
       return NextResponse.json(backendData, { status: axiosError.response?.status || 500 })

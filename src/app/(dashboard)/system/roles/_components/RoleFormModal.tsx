@@ -61,8 +61,7 @@ export function RoleFormModal({ isOpen, onClose, onSubmit, initialData }: RoleFo
     } else {
       form.reset({ name: '', description: '', level: 0, isActive: true })
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialData])
+  }, [initialData, form])
 
   const handleSubmit = async (data: RoleFormData) => {
     setIsLoading(true)

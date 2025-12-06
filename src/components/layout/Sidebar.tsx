@@ -4,6 +4,8 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils/cn'
 import { Button } from '@/components/ui/button'
+import { useLocale } from '@/components/providers/LocaleProvider'
+import LanguageSwitcher from '@/components/LanguageSwitcher'
 import { ChevronLeft, Printer, UserCircle } from 'lucide-react'
 import type { Session } from '@/lib/auth/session'
 import { useUIStore } from '@/lib/store/uiStore'
@@ -19,6 +21,7 @@ interface SidebarProps {
 }
 
 export function Sidebar({ session }: SidebarProps) {
+  const { t } = useLocale()
   const pathname = usePathname()
   const { sidebarOpen, toggleSidebar } = useUIStore()
 
@@ -78,14 +81,14 @@ export function Sidebar({ session }: SidebarProps) {
       if (!navigation.some((it) => it.href === ROUTES.CUSTOMER_ADMIN_ROLES)) {
         navigation.push({
           href: ROUTES.CUSTOMER_ADMIN_ROLES,
-          label: 'Quản lý vai trò',
+          label: t('nav.roles'),
           icon: Layers,
         })
       }
       if (!navigation.some((it) => it.href === ROUTES.CUSTOMER_ADMIN_DEPARTMENTS)) {
         navigation.push({
           href: ROUTES.CUSTOMER_ADMIN_DEPARTMENTS,
-          label: 'Quản lý bộ phận',
+          label: t('nav.departments'),
           icon: ClipboardList,
         })
       }
@@ -95,7 +98,7 @@ export function Sidebar({ session }: SidebarProps) {
         const deviceIndex = navigation.findIndex((it) => it.href === ROUTES.CUSTOMER_ADMIN_DEVICES)
         const item: SidebarNavItem = {
           href: ROUTES.CUSTOMER_ADMIN_DEVICE_MODELS,
-          label: 'Mẫu thiết bị',
+          label: t('nav.device_models'),
           icon: Layers,
         }
         if (deviceIndex >= 0 && deviceIndex < navigation.length - 1) {
@@ -135,7 +138,9 @@ export function Sidebar({ session }: SidebarProps) {
               <div className="bg-primary flex h-8 w-8 items-center justify-center rounded-lg">
                 <Printer className="text-primary-foreground h-5 w-5" />
               </div>
-              <span className="text-xl font-bold">MPS - CHÍNH NHÂN TECHNOLOGY</span>
+              <span className="text-xl font-bold">
+                {t('sidebar.logo.title')} - {t('sidebar.logo.subtitle')}
+              </span>
             </div>
             <Button variant="ghost" size="sm" className="lg:hidden" onClick={toggleSidebar}>
               <ChevronLeft className="h-5 w-5" />
@@ -171,16 +176,32 @@ export function Sidebar({ session }: SidebarProps) {
                     'group flex items-center gap-3 rounded-full px-3 py-2 text-sm font-semibold transition-all duration-150',
                     isActive
                       ? 'bg-blue-50 text-[#0B63D1] shadow-sm ring-1 ring-blue-200'
-                      : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
+                      : 'hover:bg-slate-100'
                   )}
                 >
                   <item.icon
                     className={cn(
                       'h-5 w-5 shrink-0',
-                      isActive ? 'text-[#0B63D1]' : 'text-slate-400 group-hover:text-[#0B63D1]'
+                      isActive
+                        ? 'text-[#0B63D1]'
+                        : 'text-[var(--sidebar-foreground)] group-hover:text-[#0B63D1] dark:text-[var(--sidebar-foreground)]'
                     )}
                   />
-                  <span className="flex-1">{item.label}</span>
+                  <span className="flex-1">
+                    {(() => {
+                      const navId = item.raw?.id as string
+                      const navName = item.raw?.name as string
+                      const navLabel = item.raw?.label as string
+                      // Try to get translation by id first, then by name, then fallback to label
+                      if (navId && t(`nav.${navId}`) !== `nav.${navId}`) {
+                        return t(`nav.${navId}`)
+                      }
+                      if (navName && t(`nav.${navName}`) !== `nav.${navName}`) {
+                        return t(`nav.${navName}`)
+                      }
+                      return typeof navLabel === 'string' ? navLabel : ''
+                    })()}
+                  </span>
                   {item.badge !== undefined && item.badge > 0 && (
                     <span className="bg-destructive flex h-5 min-w-[1.25rem] items-center justify-center rounded-full px-1.5 text-xs text-white">
                       {item.badge}
@@ -193,10 +214,16 @@ export function Sidebar({ session }: SidebarProps) {
 
           {/* Footer */}
           <div className="border-t p-4">
-            <p className="text-muted-foreground text-xs">
-              MPS v1.0.0
-              <br />© 2025 All rights reserved
-            </p>
+            <div className="flex items-center justify-between">
+              <p className="text-muted-foreground text-xs">
+                {t('footer.version')}
+                <br />
+                {t('footer.copyright')}
+              </p>
+              <div className="hidden lg:block">
+                <LanguageSwitcher />
+              </div>
+            </div>
           </div>
         </div>
       </aside>

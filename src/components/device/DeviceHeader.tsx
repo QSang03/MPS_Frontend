@@ -1,4 +1,6 @@
+'use client'
 import React from 'react'
+import Image from 'next/image'
 import styles from './deviceHeader.module.css'
 
 type Device = {
@@ -23,8 +25,7 @@ export default function DeviceHeader({ device = {}, onPrimaryAction, rightConten
       <div className={styles.left}>
         <div className={styles.iconWrap}>
           {iconUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={iconUrl} alt="device" className={styles.icon} />
+            <Image src={iconUrl} alt="device" className={styles.icon} width={48} height={48} />
           ) : (
             <div className={styles.iconPlaceholder} />
           )}
@@ -37,7 +38,6 @@ export default function DeviceHeader({ device = {}, onPrimaryAction, rightConten
 
       <div className={styles.right}>
         {/** If parent supplies rightContent, render it; otherwise render default status + primary button */}
-        {/** eslint-disable-next-line react/no-danger */}
         {rightContent ? (
           rightContent
         ) : (

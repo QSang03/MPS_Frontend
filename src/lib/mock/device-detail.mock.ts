@@ -189,20 +189,20 @@ export const mockConsumables: ConsumableItem[] = [
 ]
 
 // Helper functions
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function getUsageHistoryByDevice(_deviceId: string): UsageHistoryItem[] {
   // In real app, this would filter by deviceId
+  void _deviceId
   return mockUsageHistory
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function getServiceHistoryByDevice(_deviceId: string): ServiceHistoryItem[] {
   // In real app, this would filter by deviceId
+  void _deviceId
   return mockServiceHistory
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function getConsumablesByDevice(_deviceId: string): ConsumableItem[] {
   // In real app, this would filter by deviceId
+  void _deviceId
   return mockConsumables
 }

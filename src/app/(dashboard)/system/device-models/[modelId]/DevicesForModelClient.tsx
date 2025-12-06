@@ -10,6 +10,7 @@ import { SystemModalLayout } from '@/components/system/SystemModalLayout'
 import { deviceModelsClientService } from '@/lib/api/services/device-models-client.service'
 import { devicesClientService } from '@/lib/api/services/devices-client.service'
 import { toast } from 'sonner'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import type { CreateDeviceDto } from '@/types/models/device'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
@@ -59,6 +60,7 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
   const [ipAddressValue, setIpAddressValue] = useState('')
   const [macAddressValue, setMacAddressValue] = useState('')
   const [firmwareValue, setFirmwareValue] = useState('')
+  const { t } = useLocale()
 
   useEffect(() => {
     const load = async () => {
@@ -124,7 +126,7 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
         const created = await devicesClientService.create(dto as CreateDeviceDto)
         if (created) {
           setDevices((prev) => [created, ...prev])
-          toast.success('Tạo thiết bị thành công')
+          toast.success(t('device.create_success'))
           setSerialNumber('')
           setLocationValue('')
           setIpAddressValue('')
@@ -132,12 +134,12 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
           setFirmwareValue('')
           setShowCreate(false)
         } else {
-          toast.error('Tạo thiết bị thất bại')
+          toast.error(t('device.create_error'))
         }
       } catch (err: unknown) {
         const e = err as Error
         console.error('Create device failed', e)
-        toast.error(e?.message || 'Tạo thiết bị thất bại')
+        toast.error(e?.message || t('device.create_error'))
       } finally {
         setCreating(false)
         createConfirmRef.current = null
@@ -163,14 +165,16 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
             <Link href="/system/device-models">
               <Button variant="ghost" className="-ml-2 gap-2 text-white hover:bg-white/20">
                 <ArrowLeft className="h-4 w-4" />
-                Quay lại
+                {t('common.back')}
               </Button>
             </Link>
             <div className="flex items-center gap-3">
               <Monitor className="h-10 w-10" />
               <div>
-                <h1 className="text-2xl font-bold">Thiết bị thuộc model</h1>
-                <p className="mt-1 text-white/90">Model: {modelName}</p>
+                <h1 className="text-2xl font-bold">{t('page.device_model.devices_title')}</h1>
+                <p className="mt-1 text-white/90">
+                  {t('page.device_model.model_label')}: {modelName}
+                </p>
               </div>
             </div>
           </div>
@@ -180,28 +184,28 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
             className="gap-2 bg-white text-blue-600 hover:bg-white/90"
           >
             <Plus className="h-4 w-4" />
-            Tạo thiết bị
+            {t('devices.add')}
           </Button>
         </div>
 
         {/* Quick Stats */}
         <div className="mt-6 grid grid-cols-3 gap-4">
           <div className="rounded-lg border border-white/20 bg-white/10 p-3 backdrop-blur-sm">
-            <p className="text-sm text-white/80">Tổng thiết bị</p>
+            <p className="text-sm text-white/80">{t('device_model.stats.total_label')}</p>
             <p className="mt-1 text-2xl font-bold">{devices.length}</p>
           </div>
           <div className="rounded-lg border border-white/20 bg-white/10 p-3 backdrop-blur-sm">
-            <p className="text-sm text-white/80">Hoạt động</p>
+            <p className="text-sm text-white/80">{t('device_model.stats.active_label')}</p>
             <p className="mt-1 text-2xl font-bold">{devices.filter((d) => d.isActive).length}</p>
           </div>
           <div className="rounded-lg border border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-3">
-            <p className="text-sm text-white/80">Loại Counter</p>
+            <p className="text-sm text-white/80">{t('device_model.stats.counter_type')}</p>
             <p className="mt-1 text-lg font-bold text-white/90">
               {modelUseA4 === undefined ? 'N/A' : modelUseA4 ? 'A4 Counter' : 'Standard Counter'}
             </p>
           </div>
           <div className="rounded-lg border border-white/20 bg-white/10 p-3 backdrop-blur-sm">
-            <p className="text-sm text-white/80">Tạm dừng</p>
+            <p className="text-sm text-white/80">{t('device_model.stats.paused_label')}</p>
             <p className="mt-1 text-2xl font-bold">{devices.filter((d) => !d.isActive).length}</p>
           </div>
         </div>
@@ -212,12 +216,12 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
         {loading ? (
           <div className="text-muted-foreground py-12 text-center">
             <Loader2 className="mx-auto mb-3 h-8 w-8 animate-spin" />
-            <p>Đang tải...</p>
+            <p>{t('loading.default')}</p>
           </div>
         ) : notFound ? (
           <div className="py-12 text-center text-red-500">
             <AlertCircle className="mx-auto mb-3 h-12 w-12 opacity-50" />
-            <p>Không tìm thấy model</p>
+            <p>{t('device_model.not_found')}</p>
           </div>
         ) : (
           <div className="overflow-hidden rounded-lg border">
@@ -231,15 +235,17 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
                       Serial
                     </div>
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">Model</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">{t('table.model')}</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold">
                     <div className="flex items-center gap-2">
                       <MapPin className="h-4 w-4 text-indigo-600" />
-                      Vị trí
+                      {t('table.location')}
                     </div>
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">Trạng thái</th>
-                  <th className="px-4 py-3 text-right text-sm font-semibold">Thao tác</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">{t('table.status')}</th>
+                  <th className="px-4 py-3 text-right text-sm font-semibold">
+                    {t('table.actions')}
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y">
@@ -247,10 +253,10 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
                   <tr>
                     <td colSpan={6} className="px-4 py-12 text-center">
                       <Monitor className="text-muted-foreground mx-auto mb-3 h-12 w-12 opacity-20" />
-                      <p className="text-muted-foreground">Chưa có thiết bị nào cho model này</p>
+                      <p className="text-muted-foreground">{t('empty.device_model.empty')}</p>
                       <Button size="sm" onClick={() => setShowCreate(true)} className="mt-3 gap-2">
                         <Plus className="h-4 w-4" />
-                        Tạo thiết bị đầu tiên
+                        {t('empty.devices.first')}
                       </Button>
                     </td>
                   </tr>
@@ -313,8 +319,8 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
       {/* Create Modal */}
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
         <SystemModalLayout
-          title="Tạo thiết bị mới"
-          description={`Thêm thiết bị cho model ${modelName}`}
+          title={t('device.create_title')}
+          description={t('device.create_description').replace('{modelName}', modelName)}
           icon={Plus}
           variant="create"
           maxWidth="!max-w-[70vw]"
@@ -325,7 +331,7 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
                 onClick={() => setShowCreate(false)}
                 className="min-w-[100px]"
               >
-                Hủy
+                {t('cancel')}
               </Button>
               <Button
                 onClick={() => void handleCreate()}
@@ -448,7 +454,7 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
                       await createConfirmRef.current()
                     } catch (e) {
                       console.error('createConfirmRef failed', e)
-                      toast.error('Tạo thiết bị thất bại')
+                      toast.error(t('device.create_error'))
                     }
                   }
                 }}

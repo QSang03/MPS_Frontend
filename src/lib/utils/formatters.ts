@@ -28,13 +28,52 @@ export function formatNumber(num: number): string {
   return new Intl.NumberFormat('en-US').format(num)
 }
 
+import type { CurrencyDataDto } from '@/types/models/currency'
+
 /**
- * Format currency
+ * Format currency with symbol
  */
-export function formatCurrency(amount: number, currency = 'USD'): string {
+export function formatCurrencyWithSymbol(
+  amount: number,
+  currency?: CurrencyDataDto | null
+): string {
+  if (!currency || !currency.symbol) {
+    return formatCurrency(amount, 'USD')
+  }
+  return `${currency.symbol} ${new Intl.NumberFormat('en-US').format(amount)}`
+}
+
+/**
+ * Format currency with code
+ */
+export function formatCurrencyWithCode(amount: number, currency?: CurrencyDataDto | null): string {
+  const code = currency?.code || 'USD'
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency,
+    currency: code,
+  }).format(amount)
+}
+
+/**
+ * Format currency
+ * Supports both string currency code and CurrencyDataDto object
+ */
+export function formatCurrency(
+  amount: number,
+  currency: string | CurrencyDataDto | null | undefined = 'USD'
+): string {
+  if (typeof currency === 'string') {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency,
+    }).format(amount)
+  }
+  if (currency && typeof currency === 'object' && 'code' in currency) {
+    return formatCurrencyWithCode(amount, currency)
+  }
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
   }).format(amount)
 }
 

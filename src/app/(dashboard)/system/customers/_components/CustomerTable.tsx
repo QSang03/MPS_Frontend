@@ -19,6 +19,7 @@ import { customersClientService } from '@/lib/api/services/customers-client.serv
 import { consumablesClientService } from '@/lib/api/services/consumables-client.service'
 import type { Customer } from '@/types/models/customer'
 import { toast } from 'sonner'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import {
   Check,
   Edit,
@@ -61,6 +62,7 @@ export function CustomerTable({
   renderColumnVisibilityMenu,
 }: CustomerTableProps) {
   const queryClient = useQueryClient()
+  const { t } = useLocale()
   const [sorting, setSorting] = useState<{ sortBy?: string; sortOrder?: 'asc' | 'desc' }>({
     sortBy: 'createdAt',
     sortOrder: 'desc',
@@ -397,13 +399,13 @@ export function CustomerTable({
                       variant="ghost"
                       size="sm"
                       className="transition-all hover:bg-sky-50 hover:text-sky-700"
-                      aria-label="Thêm thiết bị"
+                      aria-label={t('devices.add')}
                     >
                       <Plus className="h-4 w-4" />
                     </Button>
                   }
                   onSaved={async () => {
-                    toast.success('Tạo thiết bị thành công')
+                    toast.success(t('device.create_success'))
                     await queryClient.invalidateQueries({ queryKey: ['customers'] })
                   }}
                 />
@@ -450,6 +452,7 @@ export function CustomerTable({
       handleDelete,
       loadConsumablesForCustomer,
       queryClient,
+      t,
     ]
   )
 

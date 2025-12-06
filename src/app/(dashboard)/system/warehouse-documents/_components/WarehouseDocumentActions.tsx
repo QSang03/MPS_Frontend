@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { MoreHorizontal, Eye, Check, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -24,17 +25,18 @@ interface Props {
 export function WarehouseDocumentActions({ warehouseDocument }: Props) {
   const router = useRouter()
   const queryClient = useQueryClient()
+  const { t } = useLocale()
 
   const confirmMutation = useMutation({
     mutationFn: () =>
       warehouseDocumentsClientService.updateStatus(warehouseDocument.id, { status: 'CONFIRMED' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['warehouse-documents'] })
-      toast.success('Chứng từ đã được xác nhận')
+      toast.success(t('warehouse_document.confirmed'))
       router.refresh()
     },
     onError: (error: unknown) => {
-      const message = error instanceof Error ? error.message : 'Không thể xác nhận chứng từ'
+      const message = error instanceof Error ? error.message : t('warehouse_document.confirm_error')
       toast.error(message)
     },
   })
@@ -43,11 +45,11 @@ export function WarehouseDocumentActions({ warehouseDocument }: Props) {
     mutationFn: () => warehouseDocumentsClientService.cancel(warehouseDocument.id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['warehouse-documents'] })
-      toast.success('Chứng từ đã hủy')
+      toast.success(t('warehouse_document.cancelled'))
       router.refresh()
     },
     onError: (error: unknown) => {
-      const message = error instanceof Error ? error.message : 'Không thể hủy chứng từ'
+      const message = error instanceof Error ? error.message : t('warehouse_document.cancel_error')
       toast.error(message)
     },
   })

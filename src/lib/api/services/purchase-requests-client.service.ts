@@ -21,6 +21,8 @@ export const purchaseRequestsClientService = {
     deviceId?: string
     title?: string
     description?: string
+    currencyId?: string
+    currencyCode?: string
     items: PurchaseRequestItemPayload[]
   }): Promise<PurchaseRequest | null> {
     const response = await internalApiClient.post('/api/purchase-requests', payload)

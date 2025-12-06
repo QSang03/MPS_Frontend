@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useCallback } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -93,30 +93,33 @@ export function PolicyFormModal({
     setLocalViewOnly(!!viewOnly)
   }, [viewOnly])
 
-  const initialFormDefaults: PolicyFormData = {
-    name: '',
-    effect: 'ALLOW',
-    actions: '',
-    includeRole: false,
-    roleMatchBy: 'name',
-    roleOperator: '$eq',
-    roleUseList: true,
-    roleNameManual: '',
-    roleNameFromList: '',
-    roleLevel: '',
-    roleValues: [],
-    includeDepartment: false,
-    deptMatchBy: 'name',
-    deptOperator: '$eq',
-    deptUseList: true,
-    deptNameManual: '',
-    deptNameFromList: '',
-    deptCodeFromList: '',
-    deptValues: [],
-    conditions: '',
-    resourceOperator: '$eq',
-    resourceTypeFromList: '',
-  }
+  const initialFormDefaults: PolicyFormData = useMemo(
+    () => ({
+      name: '',
+      effect: 'ALLOW',
+      actions: '',
+      includeRole: false,
+      roleMatchBy: 'name',
+      roleOperator: '$eq',
+      roleUseList: true,
+      roleNameManual: '',
+      roleNameFromList: '',
+      roleLevel: '',
+      roleValues: [],
+      includeDepartment: false,
+      deptMatchBy: 'name',
+      deptOperator: '$eq',
+      deptUseList: true,
+      deptNameManual: '',
+      deptNameFromList: '',
+      deptCodeFromList: '',
+      deptValues: [],
+      conditions: '',
+      resourceOperator: '$eq',
+      resourceTypeFromList: '',
+    }),
+    []
+  )
 
   const form = useForm<PolicyFormData>({
     resolver: zodResolver(policySchema),
@@ -145,6 +148,8 @@ export function PolicyFormModal({
 
   const roleMatchBy = form.watch('roleMatchBy')
   const deptMatchBy = form.watch('deptMatchBy')
+  const roleOperatorWatch = useWatch({ control: form.control, name: 'roleOperator' })
+  const deptOperatorWatch = useWatch({ control: form.control, name: 'deptOperator' })
   const _rawRoleValues = useWatch({ control: form.control, name: 'roleValues' })
   const _rawDeptValues = useWatch({ control: form.control, name: 'deptValues' })
   const roleValuesWatch = useMemo(
@@ -335,18 +340,21 @@ export function PolicyFormModal({
     return op.description ? `${op.name} — ${op.description}` : op.name
   }
 
-  const getOperatorByName = (name?: string) => {
-    if (!name) return null
-    const fromRole = (roleOperators || []).find((op) => op.name === name)
-    if (fromRole) return fromRole
-    const fromDept = (deptOperators || []).find((op) => op.name === name)
-    if (fromDept) return fromDept
-    if (!operatorsResp) return null
-    return operatorsResp.find((op) => op.name === name)
-  }
+  const getOperatorByName = useCallback(
+    (name?: string) => {
+      if (!name) return null
+      const fromRole = (roleOperators || []).find((op) => op.name === name)
+      if (fromRole) return fromRole
+      const fromDept = (deptOperators || []).find((op) => op.name === name)
+      if (fromDept) return fromDept
+      if (!operatorsResp) return null
+      return operatorsResp.find((op) => op.name === name)
+    },
+    [operatorsResp, roleOperators, deptOperators]
+  )
 
   useEffect(() => {
-    const op = getOperatorByName(form.getValues('roleOperator'))
+    const op = getOperatorByName(roleOperatorWatch)
     const applies = op?.appliesTo || []
     const isArray = isArrayApplies(applies)
     if (isArray) {
@@ -359,11 +367,18 @@ export function PolicyFormModal({
         form.setValue('roleValues', roleValuesFromList || [])
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form.watch('roleOperator'), form.watch('roleMatchBy')])
+  }, [
+    roleOperatorWatch,
+    roleMatchBy,
+    roleArrayInput,
+    roleValuesFromList,
+    roleValuesManual,
+    getOperatorByName,
+    form,
+  ])
 
   useEffect(() => {
-    const op = getOperatorByName(form.getValues('deptOperator'))
+    const op = getOperatorByName(deptOperatorWatch)
     const applies = op?.appliesTo || []
     const isArray = isArrayApplies(applies)
     if (isArray) {
@@ -375,8 +390,15 @@ export function PolicyFormModal({
         form.setValue('deptValues', deptValuesFromList || [])
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form.watch('deptOperator'), form.watch('deptMatchBy')])
+  }, [
+    deptOperatorWatch,
+    deptMatchBy,
+    deptArrayInput,
+    deptValuesFromList,
+    deptValuesManual,
+    getOperatorByName,
+    form,
+  ])
 
   const isArrayApplies = (applies: string[] | undefined) => {
     if (!applies || !applies.length) return false
@@ -528,8 +550,7 @@ export function PolicyFormModal({
       if (typeof form.getValues('roleNameManual') === 'undefined')
         form.setValue('roleNameManual', '')
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [includeRoleWatch])
+  }, [includeRoleWatch, form])
 
   useEffect(() => {
     if (includeDepartmentWatch) {
@@ -543,8 +564,7 @@ export function PolicyFormModal({
       if (typeof form.getValues('deptCodeFromList') === 'undefined')
         form.setValue('deptCodeFromList', '')
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [includeDepartmentWatch])
+  }, [includeDepartmentWatch, form])
 
   useEffect(() => {
     if (initialData) {
@@ -703,8 +723,7 @@ export function PolicyFormModal({
       setDeptValuesManual([])
       setLocalViewOnly(!!viewOnly)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialData, rolesResp, deptsResp])
+  }, [initialData, rolesResp, deptsResp, form, initialFormDefaults, viewOnly])
 
   const handleSubmit = async (data: PolicyFormData) => {
     setIsLoading(true)

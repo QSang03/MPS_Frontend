@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogTrigger } from '@/components/ui/dialog'
 import { SystemModalLayout } from '@/components/system/SystemModalLayout'
 import { UserForm } from './UserForm'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 interface UserFormModalProps {
   customerId?: string // ✅ FIX: Thay từ required string thành optional
@@ -17,6 +18,7 @@ interface UserFormModalProps {
  */
 export function UserFormModal({ customerId = '' }: UserFormModalProps) {
   // ✅ FIX: Thêm default value = '' để đảm bảo luôn là string
+  const { t } = useLocale()
   const [open, setOpen] = useState(false)
   const router = useRouter()
 
@@ -24,13 +26,13 @@ export function UserFormModal({ customerId = '' }: UserFormModalProps) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button className="gap-2 shadow-lg transition-all duration-300 hover:shadow-xl">
-          <Plus className="h-5 w-5" /> Thêm người dùng
+          <Plus className="h-5 w-5" /> {t('user.form_modal.add_user')}
         </Button>
       </DialogTrigger>
 
       <SystemModalLayout
-        title="Tạo người dùng mới"
-        description="Điền thông tin chi tiết để tạo tài khoản người dùng"
+        title={t('user.form_modal.title')}
+        description={t('user.form_modal.description')}
         icon={Users}
         variant="create"
         maxWidth="!max-w-3xl"

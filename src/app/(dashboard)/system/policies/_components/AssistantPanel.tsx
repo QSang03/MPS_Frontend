@@ -7,6 +7,7 @@ import { Loader2, ShieldCheck, ShieldAlert, AlertTriangle } from 'lucide-react'
 import type { PolicyAssistantAnalysis, Policy } from '@/types/policies'
 import { TestScenarioTable } from './TestScenarioTable'
 import { AIAssistantPanel } from './AIAssistantPanel'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 interface AssistantPanelProps {
   analysis: PolicyAssistantAnalysis | null
@@ -32,23 +33,36 @@ export function AssistantPanel({
   draftValid,
   onUseSuggestion,
 }: AssistantPanelProps) {
+  const { t } = useLocale()
   return (
     <Card className="flex h-full flex-col gap-5 rounded-2xl border-2 border-slate-100 p-5 shadow-xl">
       <Tabs defaultValue="analysis" className="flex h-full flex-col">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="analysis">Phân tích</TabsTrigger>
-          <TabsTrigger value="chat">AI Chat</TabsTrigger>
-        </TabsList>
+        <div>
+          <TabsList className="bg-muted inline-flex h-10 items-center justify-start rounded-lg p-1">
+            <TabsTrigger
+              value="analysis"
+              className="ring-offset-background focus-visible:ring-ring data-[state=active]:bg-background data-[state=active]:text-foreground inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium whitespace-nowrap transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm"
+            >
+              {t('policies.assistant.tab.analysis')}
+            </TabsTrigger>
+            <TabsTrigger
+              value="chat"
+              className="ring-offset-background focus-visible:ring-ring data-[state=active]:bg-background data-[state=active]:text-foreground inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium whitespace-nowrap transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm"
+            >
+              {t('policies.assistant.tab.chat')}
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="analysis" className="flex-1 space-y-5 overflow-y-auto">
           <div>
             <p className="text-xs font-semibold tracking-widest text-fuchsia-500 uppercase">
-              AI Assistant
+              {t('policies.assistant.title')}
             </p>
-            <h2 className="text-2xl font-bold text-slate-900">Phân tích & Guardrail</h2>
-            <p className="text-sm text-slate-500">
-              Analyze draft để nhận conflict, khuyến nghị và test scenario.
-            </p>
+            <h2 className="text-2xl font-bold text-slate-900">
+              {t('policies.assistant.subtitle')}
+            </h2>
+            <p className="text-sm text-slate-500">{t('policies.assistant.description')}</p>
           </div>
 
           <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-inner">
@@ -60,23 +74,27 @@ export function AssistantPanel({
                   <ShieldAlert className="h-5 w-5 text-amber-500" />
                 )}
                 <div>
-                  <p className="text-sm font-semibold text-slate-700">Trạng thái draft</p>
+                  <p className="text-sm font-semibold text-slate-700">
+                    {t('policies.assistant.draft_status')}
+                  </p>
                   <p className="text-xs text-slate-500">
                     {safeToCreate
-                      ? 'Safe to create - không phát hiện conflict nghiêm trọng.'
-                      : 'Có conflicts được phát hiện. Bạn vẫn có thể tạo policy, nhưng hãy xem xét các conflicts bên dưới.'}
+                      ? t('policies.assistant.draft_status.safe')
+                      : t('policies.assistant.draft_status.conflicts')}
                   </p>
                 </div>
               </div>
               <Badge variant={safeToCreate ? 'default' : 'secondary'}>
-                {safeToCreate ? 'Safe' : 'Pending'}
+                {safeToCreate
+                  ? t('policies.assistant.badge.safe')
+                  : t('policies.assistant.badge.pending')}
               </Badge>
             </div>
 
             {!draftValid ? (
               <div className="mt-3 flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 p-2 text-xs text-amber-700">
                 <AlertTriangle className="h-4 w-4" />
-                Tên policy và actions là bắt buộc trước khi Analyze.
+                {t('policies.assistant.warning.required_fields')}
               </div>
             ) : null}
           </div>
@@ -97,10 +115,10 @@ export function AssistantPanel({
               {isAnalyzing ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Đang phân tích...
+                  {t('policies.assistant.button.analyzing')}
                 </>
               ) : (
-                'Analyze Draft'
+                t('policies.assistant.button.analyze')
               )}
             </Button>
 
@@ -118,12 +136,12 @@ export function AssistantPanel({
               {isCreating ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Đang tạo...
+                  {t('policies.assistant.button.creating')}
                 </>
               ) : safeToCreate ? (
-                'Create Policy'
+                t('policies.assistant.button.create')
               ) : (
-                'Create Policy (Có conflicts)'
+                t('policies.assistant.button.create_with_conflicts')
               )}
             </Button>
           </div>
@@ -134,7 +152,9 @@ export function AssistantPanel({
               <div className="space-y-4 overflow-y-auto">
                 {analysis.conflicts?.length ? (
                   <div className="space-y-2 rounded-2xl border border-red-100 bg-red-50/60 p-4">
-                    <p className="text-sm font-semibold text-red-700">Conflicts</p>
+                    <p className="text-sm font-semibold text-red-700">
+                      {t('policies.assistant.conflicts.title')}
+                    </p>
                     {analysis.conflicts.map((conflict, idx) => (
                       <div
                         key={`${conflict.policy_name}-${idx}`}
@@ -142,7 +162,8 @@ export function AssistantPanel({
                       >
                         <p className="text-sm font-semibold text-red-700">{conflict.policy_name}</p>
                         <p className="text-xs text-slate-500">
-                          Effect: {conflict.effect} | Actions:{' '}
+                          {t('policies.assistant.conflicts.effect')}: {conflict.effect} |{' '}
+                          {t('policies.assistant.conflicts.actions')}:{' '}
                           {(conflict.overlapping_actions || []).join(', ') || '—'}
                         </p>
                         {(conflict.reasons || []).length ? (
@@ -164,7 +185,9 @@ export function AssistantPanel({
 
                 {analysis.warnings?.length ? (
                   <div className="rounded-2xl border border-amber-100 bg-amber-50/80 p-4">
-                    <p className="text-sm font-semibold text-amber-700">Warnings</p>
+                    <p className="text-sm font-semibold text-amber-700">
+                      {t('policies.assistant.warnings.title')}
+                    </p>
                     <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-amber-700">
                       {analysis.warnings.map((warning, idx) => (
                         <li key={`${warning}-${idx}`}>{warning}</li>
@@ -175,7 +198,9 @@ export function AssistantPanel({
 
                 {analysis.recommendations?.length ? (
                   <div className="rounded-2xl border border-slate-100 bg-white p-4">
-                    <p className="text-sm font-semibold text-slate-700">Recommendations</p>
+                    <p className="text-sm font-semibold text-slate-700">
+                      {t('policies.assistant.recommendations.title')}
+                    </p>
                     <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-slate-600">
                       {analysis.recommendations.map((change, idx) => (
                         <li key={`${change}-${idx}`}>{change}</li>
@@ -186,7 +211,9 @@ export function AssistantPanel({
 
                 {analysis.testScenarios?.length ? (
                   <div className="rounded-2xl border border-slate-100 bg-white p-4">
-                    <p className="text-sm font-semibold text-slate-700">Test scenarios (OPA)</p>
+                    <p className="text-sm font-semibold text-slate-700">
+                      {t('policies.assistant.test_scenarios.title')}
+                    </p>
                     <TestScenarioTable scenarios={analysis.testScenarios} />
                   </div>
                 ) : null}
@@ -195,8 +222,8 @@ export function AssistantPanel({
           ) : (
             <div className="rounded-2xl border border-dashed border-slate-200 p-4 text-sm text-slate-500">
               {analysisError
-                ? 'Có lỗi khi phân tích. Vui lòng kiểm tra lại dữ liệu và thử lại.'
-                : 'Chưa có phân tích. Hãy nhấn “Analyze Draft” để nhận conflict & đề xuất.'}
+                ? t('policies.assistant.empty.error')
+                : t('policies.assistant.empty.no_analysis')}
             </div>
           )}
         </TabsContent>

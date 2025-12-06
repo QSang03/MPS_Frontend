@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import backendApiClient from '@/lib/api/backend-client'
 import { API_ENDPOINTS } from '@/lib/api/endpoints'
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 export async function GET(request: NextRequest) {
   try {
@@ -21,7 +20,7 @@ export async function GET(request: NextRequest) {
     const sortBy = searchParams.get('sortBy')
     const sortOrder = searchParams.get('sortOrder')
 
-    const params: any = {}
+    const params: Record<string, string | number | boolean> = {}
     if (page) params.page = page
     if (limit) params.limit = limit
     if (search) params.search = search
@@ -40,10 +39,14 @@ export async function GET(request: NextRequest) {
     })
 
     return NextResponse.json(response.data)
-  } catch (error: any) {
-    console.error('Error fetching consumable types:', error.response?.data || error.message)
+  } catch (error: unknown) {
+    const axiosError = error as { response?: { data?: unknown; status?: number }; message?: string }
+    console.error(
+      'Error fetching consumable types:',
+      axiosError.response?.data || axiosError.message
+    )
 
-    if (error.response?.status === 401) {
+    if (axiosError.response?.status === 401) {
       const cookieStore = await cookies()
       const refreshToken = cookieStore.get('refresh_token')?.value
 
@@ -70,7 +73,7 @@ export async function GET(request: NextRequest) {
             const sortBy = searchParams.get('sortBy')
             const sortOrder = searchParams.get('sortOrder')
 
-            const params: any = {}
+            const params: Record<string, string | number | boolean> = {}
             if (page) params.page = page
             if (limit) params.limit = limit
             if (search) params.search = search
@@ -109,13 +112,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const responseData = error.response?.data || {}
+    const responseData = (axiosError.response?.data as { error?: string }) || {}
     return NextResponse.json(
       {
         error: responseData.error || 'Failed to fetch consumable types',
         data: responseData,
       },
-      { status: error.response?.status || 500 }
+      { status: axiosError.response?.status || 500 }
     )
   }
 }
@@ -138,10 +141,14 @@ export async function POST(request: NextRequest) {
     })
 
     return NextResponse.json(response.data, { status: 201 })
-  } catch (error: any) {
-    console.error('Error creating consumable type:', error.response?.data || error.message)
+  } catch (error: unknown) {
+    const axiosError = error as { response?: { data?: unknown; status?: number }; message?: string }
+    console.error(
+      'Error creating consumable type:',
+      axiosError.response?.data || axiosError.message
+    )
 
-    if (error.response?.status === 401) {
+    if (axiosError.response?.status === 401) {
       const cookieStore = await cookies()
       const refreshToken = cookieStore.get('refresh_token')?.value
 
@@ -195,13 +202,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const responseData = error.response?.data || {}
+    const responseData = (axiosError.response?.data as { error?: string }) || {}
     return NextResponse.json(
       {
         error: responseData.error || 'Failed to create consumable type',
         data: responseData,
       },
-      { status: error.response?.status || 500 }
+      { status: axiosError.response?.status || 500 }
     )
   }
 }

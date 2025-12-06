@@ -1,4 +1,5 @@
 import internalApiClient from '../internal-client'
+import type { CurrencyDataDto } from '@/types/models/currency'
 
 export type MonthlyCostsDeviceItem = {
   rentalCost: number
@@ -12,15 +13,73 @@ export type MonthlyCostsDeviceItem = {
   deviceModelName: string
   serialNumber: string
   partNumber: string
+  // Currency conversion fields - ⭐ MỚI
+  rentalCostConverted?: number
+  repairCostConverted?: number
+  pageCostBWConverted?: number
+  pageCostColorConverted?: number
+  totalCostConverted?: number
+  currencyId?: string | null
+  currency?: CurrencyDataDto | null
+  baseCurrency?: CurrencyDataDto | null
+  exchangeRate?: number | null
+}
+
+export type MonthlySeriesItem = {
+  rentalCost: number
+  repairCost: number
+  pageCostBW: number
+  pageCostColor: number
+  totalCost: number
+  month: string
+  // Currency conversion fields - ⭐ MỚI
+  rentalCostConverted?: number
+  repairCostConverted?: number
+  pageCostBWConverted?: number
+  pageCostColorConverted?: number
+  totalCostConverted?: number
+  currencyId?: string | null
+  currency?: CurrencyDataDto | null
+  baseCurrency?: CurrencyDataDto | null
+  exchangeRate?: number | null
+}
+
+export type TopCustomerItem = {
+  customerId: string
+  customerName: string
+  totalCost: number
+  // Currency conversion fields - ⭐ MỚI
+  totalCostConverted?: number
+  currencyId?: string | null
+  currency?: CurrencyDataDto | null
+  baseCurrency?: CurrencyDataDto | null
+  exchangeRate?: number | null
 }
 
 export const reportsClientService = {
-  async getMonthlyCosts(params: { customerId: string; month: string; deviceId?: string }) {
-    const resp = await internalApiClient.get('/api/reports/costs/monthly', { params })
+  async getMonthlyCosts(params: {
+    customerId: string
+    month: string
+    deviceId?: string
+    baseCurrencyId?: string // ⭐ MỚI
+  }) {
+    const resp = await internalApiClient.get('/api/reports/costs/monthly', {
+      params: {
+        customerId: params.customerId,
+        month: params.month,
+        deviceId: params.deviceId || undefined,
+        baseCurrencyId: params.baseCurrencyId || undefined,
+      },
+    })
     // Expected shape { success, data: { month, customerId, devices: [...] } }
     return resp.data as {
       success: boolean
-      data?: { month: string; customerId: string; devices: MonthlyCostsDeviceItem[] }
+      data?: {
+        month: string
+        customerId: string
+        devices: MonthlyCostsDeviceItem[]
+        baseCurrency?: CurrencyDataDto | null // ⭐ MỚI
+      }
       message?: string
     }
   },
@@ -30,19 +89,22 @@ export const reportsClientService = {
     from: string
     to: string
     deviceId?: string
+    baseCurrencyId?: string // ⭐ MỚI
   }) {
-    const resp = await internalApiClient.get('/api/reports/costs/monthly/series', { params })
+    const resp = await internalApiClient.get('/api/reports/costs/monthly/series', {
+      params: {
+        customerId: params.customerId,
+        from: params.from,
+        to: params.to,
+        deviceId: params.deviceId || undefined,
+        baseCurrencyId: params.baseCurrencyId || undefined,
+      },
+    })
     // Expected shape { success, data: [{ month, rentalCost, repairCost, pageCostBW, pageCostColor, totalCost }] }
     return resp.data as {
       success: boolean
-      data?: Array<{
-        rentalCost: number
-        repairCost: number
-        pageCostBW: number
-        pageCostColor: number
-        totalCost: number
-        month: string
-      }>
+      data?: MonthlySeriesItem[]
+      baseCurrency?: CurrencyDataDto | null // ⭐ MỚI
       message?: string
     }
   },
@@ -54,6 +116,7 @@ export const reportsClientService = {
     search?: string
     sortBy?: string
     sortOrder?: 'asc' | 'desc'
+    baseCurrencyId?: string // ⭐ MỚI
   }) {
     const resp = await internalApiClient.get('/api/reports/costs/top-customers', {
       params: {
@@ -63,12 +126,14 @@ export const reportsClientService = {
         search: params.search,
         sortBy: params.sortBy,
         sortOrder: params.sortOrder,
+        baseCurrencyId: params.baseCurrencyId || undefined,
       },
     })
     return resp.data as {
       success: boolean
-      data?: Array<{ customerId: string; customerName: string; totalCost: number }>
+      data?: TopCustomerItem[]
       pagination?: { page: number; limit: number; total: number; totalPages: number }
+      baseCurrency?: CurrencyDataDto | null // ⭐ MỚI
     }
   },
 

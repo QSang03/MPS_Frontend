@@ -189,7 +189,6 @@ export function TableWrapper<TData>({
   }, [sorting, defaultSorting])
   const effectiveTotalCount = typeof totalCount === 'number' ? totalCount : data.length
 
-  // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     data,
     columns,

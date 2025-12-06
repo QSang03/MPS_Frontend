@@ -30,6 +30,7 @@ import CustomerSelect from '@/components/shared/CustomerSelect'
 import { consumableTypesClientService } from '@/lib/api/services/consumable-types-client.service'
 import { consumablesClientService } from '@/lib/api/services/consumables-client.service'
 import { toast } from 'sonner'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 interface RowItem {
   serialNumber?: string
@@ -66,6 +67,7 @@ function SearchableConsumableTypeSelectInner({
   types,
   loading,
 }: SearchableConsumableTypeSelectProps) {
+  const { t } = useLocale()
   const [search, setSearch] = useState('')
   const debouncedSearch = useDebounce(search, 2000)
   const [remoteTypes, setRemoteTypes] = useState<Record<string, unknown>[]>([])
@@ -139,17 +141,18 @@ function SearchableConsumableTypeSelectInner({
         <SelectValue>
           <div className="max-w-[260px] truncate text-sm">
             {value
-              ? selectedTypeLabel || (loading ? 'Đang tải...' : 'Chọn loại vật tư')
+              ? selectedTypeLabel ||
+                (loading ? t('loading.default') : t('bulk_assign.select_consumable_type'))
               : loading
-                ? 'Đang tải...'
-                : 'Chọn loại vật tư'}
+                ? t('loading.default')
+                : t('bulk_assign.select_consumable_type')}
           </div>
         </SelectValue>
       </SelectTrigger>
       <SelectContent>
         <div className="px-3 py-2">
           <Input
-            placeholder="Tìm kiếm loại..."
+            placeholder={t('bulk_assign.search_type_placeholder')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onKeyDown={(e) => {
@@ -165,19 +168,19 @@ function SearchableConsumableTypeSelectInner({
         {loading && (
           <SelectItem value="__loading" disabled>
             <div className="flex items-center gap-2">
-              <Loader2 className="h-4 w-4 animate-spin" /> Đang tải...
+              <Loader2 className="h-4 w-4 animate-spin" /> {t('loading.default')}
             </div>
           </SelectItem>
         )}
 
         {!loading && filteredTypes.length === 0 && (
           <SelectItem value="__empty" disabled>
-            Không tìm thấy loại vật tư
+            {t('bulk_assign.no_types_found')}
           </SelectItem>
         )}
 
-        {filteredTypes.map((t) => {
-          const tObj = t as Record<string, unknown>
+        {filteredTypes.map((typeItem) => {
+          const tObj = typeItem as Record<string, unknown>
           const partNumber = String(tObj.partNumber ?? '')
           const compatibleMachineLine = String(tObj.compatibleMachineLine ?? '')
           return (
@@ -193,11 +196,11 @@ function SearchableConsumableTypeSelectInner({
                 </div>
                 <div className="flex min-w-0 flex-col border-l pl-3">
                   <span className="text-muted-foreground text-xs font-semibold">
-                    Dòng tương thích:
+                    {t('bulk_assign.compatible_line')}:
                   </span>
                   <span className="truncate text-xs">
                     {compatibleMachineLine || (
-                      <span className="text-gray-400 italic">Chưa có thông tin</span>
+                      <span className="text-gray-400 italic">{t('bulk_assign.no_info')}</span>
                     )}
                   </span>
                 </div>
@@ -217,6 +220,7 @@ const SearchableConsumableTypeSelect = React.memo(
 ;(SearchableConsumableTypeSelect as unknown as { displayName?: string }).displayName =
   'SearchableConsumableTypeSelect'
 export default function BulkAssignModal({ trigger }: BulkAssignModalProps) {
+  const { t } = useLocale()
   const queryClient = useQueryClient()
   const [open, setOpen] = useState(false)
   const [customerId, setCustomerId] = useState<string>('')
@@ -268,7 +272,7 @@ export default function BulkAssignModal({ trigger }: BulkAssignModalProps) {
 
   const doBulkCreate = async () => {
     if (!customerId || !consumableTypeId || rows.length === 0) {
-      toast.error('Vui lòng chọn khách hàng, loại vật tư và số lượng')
+      toast.error(t('bulk_assign.error.select_required'))
       return
     }
     try {
@@ -281,16 +285,16 @@ export default function BulkAssignModal({ trigger }: BulkAssignModalProps) {
       const res = await consumablesClientService.bulkCreate({ customerId, items })
       setResult(res as Record<string, unknown>)
       if ((res as Record<string, unknown>)?.success) {
-        toast.success(res?.message || 'Gán vật tư thành công')
+        toast.success(res?.message || t('bulk_assign.success'))
         // Invalidate queries to refresh stock and consumables
         queryClient.invalidateQueries({ queryKey: ['consumable-types'] })
         queryClient.invalidateQueries({ queryKey: ['consumables'] })
       } else {
-        toast('Hoàn tất với một số lỗi')
+        toast(t('bulk_assign.completed_with_errors'))
       }
     } catch (e) {
       console.error('Bulk create failed', e)
-      toast.error('Không thể gán vật tư')
+      toast.error(t('bulk_assign.error.failed'))
     } finally {
       setSubmitting(false)
     }
@@ -322,8 +326,8 @@ export default function BulkAssignModal({ trigger }: BulkAssignModalProps) {
       <AnimatePresence>
         {open && (
           <SystemModalLayout
-            title="Gán vật tư cho KH (batch)"
-            description="Hỗ trợ gán hàng loạt vật tư chỉ trong vài giây"
+            title={t('bulk_assign.title')}
+            description={t('bulk_assign.description')}
             icon={ShoppingCart}
             variant="create"
             maxWidth="!max-w-[70vw]"
@@ -335,7 +339,7 @@ export default function BulkAssignModal({ trigger }: BulkAssignModalProps) {
                   disabled={submitting}
                   className="min-w-[100px]"
                 >
-                  Đóng
+                  {t('button.close')}
                 </Button>
                 <Button
                   onClick={submit}
@@ -344,11 +348,11 @@ export default function BulkAssignModal({ trigger }: BulkAssignModalProps) {
                 >
                   {submitting ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Đang gửi
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t('button.submitting')}
                     </>
                   ) : (
                     <>
-                      <Plus className="mr-2 h-4 w-4" /> Gán vật tư
+                      <Plus className="mr-2 h-4 w-4" /> {t('bulk_assign.assign_button')}
                     </>
                   )}
                 </Button>
@@ -364,27 +368,29 @@ export default function BulkAssignModal({ trigger }: BulkAssignModalProps) {
               <div className="mb-6 flex items-center gap-3 text-xs font-semibold text-teal-700">
                 <div className="flex items-center gap-2">
                   <div className="h-2 w-2 rounded-full bg-emerald-600"></div>
-                  Chọn khách hàng và vật tư
+                  {t('bulk_assign.progress.step1')}
                 </div>
                 <ArrowRight className="h-4 w-4 text-gray-400" />
                 <div className="flex items-center gap-2">
                   <div className="h-2 w-2 rounded-full bg-gray-300"></div>
-                  Nhập serial/ngày hết hạn
+                  {t('bulk_assign.progress.step2')}
                 </div>
                 <ArrowRight className="h-4 w-4 text-gray-400" />
                 <div className="flex items-center gap-2">
                   <div className="h-2 w-2 rounded-full bg-gray-300"></div>
-                  Xác nhận
+                  {t('bulk_assign.progress.step3')}
                 </div>
               </div>
 
               <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
-                  <Label className="mb-1 font-semibold">Khách hàng</Label>
+                  <Label className="mb-1 font-semibold">{t('bulk_assign.customer_label')}</Label>
                   <CustomerSelect value={customerId} onChange={setCustomerId} />
                 </div>
                 <div>
-                  <Label className="mb-1 font-semibold">Loại vật tư</Label>
+                  <Label className="mb-1 font-semibold">
+                    {t('bulk_assign.consumable_type_label')}
+                  </Label>
                   <SearchableConsumableTypeSelect
                     value={consumableTypeId}
                     onChange={setConsumableTypeId}
@@ -395,7 +401,7 @@ export default function BulkAssignModal({ trigger }: BulkAssignModalProps) {
               </div>
 
               <div className="mb-4 w-36">
-                <Label className="mb-1 font-semibold">Số lượng</Label>
+                <Label className="mb-1 font-semibold">{t('bulk_assign.quantity_label')}</Label>
                 <Input
                   type="number"
                   min={1}
@@ -412,9 +418,15 @@ export default function BulkAssignModal({ trigger }: BulkAssignModalProps) {
                   <thead className="bg-gradient-to-r from-emerald-100 via-teal-100 to-cyan-100 text-gray-700">
                     <tr>
                       <th className="px-3 py-2 text-left text-sm font-bold">#</th>
-                      <th className="px-3 py-2 text-left text-sm font-bold">Serial</th>
-                      <th className="px-3 py-2 text-left text-sm font-bold">Ngày hết hạn</th>
-                      <th className="px-3 py-2 text-right text-sm font-bold">Hành động</th>
+                      <th className="px-3 py-2 text-left text-sm font-bold">
+                        {t('bulk_assign.table.serial')}
+                      </th>
+                      <th className="px-3 py-2 text-left text-sm font-bold">
+                        {t('bulk_assign.table.expiry_date')}
+                      </th>
+                      <th className="px-3 py-2 text-right text-sm font-bold">
+                        {t('bulk_assign.table.actions')}
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -430,7 +442,7 @@ export default function BulkAssignModal({ trigger }: BulkAssignModalProps) {
                         <td className="text-muted-foreground px-3 py-2">{idx + 1}</td>
                         <td className="px-3 py-2">
                           <Input
-                            placeholder="SN..."
+                            placeholder={t('bulk_assign.serial_placeholder')}
                             value={r.serialNumber ?? ''}
                             onChange={(e) => {
                               const v = e.target.value
@@ -466,7 +478,7 @@ export default function BulkAssignModal({ trigger }: BulkAssignModalProps) {
                               setRows((cur) => cur.filter((_, i) => i !== idx))
                               setQuantity((q) => Math.max(1, q - 1))
                             }}
-                            aria-label="Xóa dòng"
+                            aria-label={t('bulk_assign.delete_row')}
                           >
                             <Trash2 className="h-4 w-4 text-red-600" />
                           </Button>
@@ -484,12 +496,15 @@ export default function BulkAssignModal({ trigger }: BulkAssignModalProps) {
                   transition={{ duration: 0.3 }}
                   className="text-md mt-5 rounded-md border border-emerald-300 bg-emerald-50 p-3 font-semibold text-emerald-900"
                 >
-                  <div>Kết quả: {String(result.message || '')}</div>
                   <div>
-                    Thành công:{' '}
-                    <span className="font-bold">{Number(result.successCount || 0)}</span> — Thất
-                    bại: <span className="font-bold">{Number(result.failedCount || 0)}</span> —
-                    Tổng:{' '}
+                    {t('bulk_assign.result.message')}: {String(result.message || '')}
+                  </div>
+                  <div>
+                    {t('bulk_assign.result.success')}:{' '}
+                    <span className="font-bold">{Number(result.successCount || 0)}</span> —{' '}
+                    {t('bulk_assign.result.failed')}:{' '}
+                    <span className="font-bold">{Number(result.failedCount || 0)}</span> —
+                    {t('bulk_assign.result.total')}:{' '}
                     <span className="font-bold">{Number(result.totalCount || rows.length)}</span>
                   </div>
                   {Array.isArray(result?.errors) && result!.errors!.length > 0 && (
@@ -498,8 +513,11 @@ export default function BulkAssignModal({ trigger }: BulkAssignModalProps) {
                         const eObj = e as Record<string, unknown>
                         return (
                           <li key={i}>
-                            Hàng {String(eObj.row ?? '')}: {String(eObj.field ?? '')} —{' '}
-                            {String(eObj.message ?? '')}
+                            {t('bulk_assign.result.error_row', {
+                              row: String(eObj.row ?? ''),
+                              field: String(eObj.field ?? ''),
+                              message: String(eObj.message ?? ''),
+                            })}
                           </li>
                         )
                       })}
@@ -515,15 +533,18 @@ export default function BulkAssignModal({ trigger }: BulkAssignModalProps) {
         <AlertDialogContent className="max-w-lg overflow-hidden rounded-lg border p-0 shadow-lg">
           <div className="px-6 py-5">
             <AlertDialogHeader className="space-y-2 text-left">
-              <AlertDialogTitle className="text-lg font-bold">Xác nhận Serial</AlertDialogTitle>
+              <AlertDialogTitle className="text-lg font-bold">
+                {t('bulk_assign.serial_warning.title')}
+              </AlertDialogTitle>
               <AlertDialogDescription className="text-muted-foreground text-sm">
-                Một hoặc nhiều vật tư trong danh sách có Serial. Sau khi lưu, Serial sẽ không thể
-                chỉnh sửa. Bạn có chắc chắn muốn tiếp tục?
+                {t('bulk_assign.serial_warning.description')}
               </AlertDialogDescription>
             </AlertDialogHeader>
           </div>
           <AlertDialogFooter className="bg-muted/50 border-t px-6 py-4">
-            <AlertDialogCancel onClick={() => setShowSerialWarning(false)}>Hủy</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setShowSerialWarning(false)}>
+              {t('button.cancel')}
+            </AlertDialogCancel>
             <Button
               onClick={async () => {
                 setShowSerialWarning(false)
@@ -531,7 +552,7 @@ export default function BulkAssignModal({ trigger }: BulkAssignModalProps) {
               }}
               className="min-w-[120px] bg-amber-600"
             >
-              Xác nhận
+              {t('confirm.ok')}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>

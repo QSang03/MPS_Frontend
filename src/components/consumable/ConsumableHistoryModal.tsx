@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -59,7 +59,7 @@ export function ConsumableUsageHistory({
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
 
-  const load = async () => {
+  const load = useCallback(async () => {
     if (!deviceId) return
     setLoading(true)
     try {
@@ -98,16 +98,15 @@ export function ConsumableUsageHistory({
     } finally {
       setLoading(false)
     }
-  }
+  }, [deviceId, page, limit, search, startDate, endDate, consumableId])
 
   // helper: format numbers and IDs
   const fmt = (v: unknown) => (typeof v === 'number' ? v.toLocaleString('vi-VN') : String(v ?? '-'))
   const shortId = (id?: string) => (id ? `${id.slice(0, 8)}…${id.slice(-4)}` : '-')
 
   useEffect(() => {
-    load()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [deviceId, page, limit, consumableId])
+    void load()
+  }, [load])
 
   const handleSearch = () => {
     setPage(1)

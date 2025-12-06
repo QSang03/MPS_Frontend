@@ -15,8 +15,14 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { toast } from 'sonner'
 import { devicesClientService } from '@/lib/api/services/devices-client.service'
-import { Loader2, RefreshCw } from 'lucide-react'
+import { Loader2, RefreshCw, AlertTriangle } from 'lucide-react'
 import type { DeviceConsumableTypeUsage, DeviceUsageHistoryResponse } from '@/types/dashboard'
+import type { Device } from '@/types/models/device'
+import {
+  getOwnershipPeriodDateRange,
+  validateDateRangeAgainstOwnershipPeriod,
+  isHistoricalDevice,
+} from '@/lib/utils/device-ownership.utils'
 import {
   ChartContainer,
   ChartLegend,
@@ -29,25 +35,60 @@ import type { ChartConfig } from '@/components/ui/chart'
 // Use shared types from dashboard.ts
 type ConsumableTypeWithSeries = DeviceConsumableTypeUsage
 
-export default function DeviceUsageHistory({ deviceId }: { deviceId: string }) {
+interface DeviceUsageHistoryProps {
+  deviceId: string
+  device?: Device | null
+}
+
+export default function DeviceUsageHistory({ deviceId, device }: DeviceUsageHistoryProps) {
+  // Get date range constraints from ownership period if device is historical
+  const ownershipDateRange = useMemo(() => {
+    if (device?.ownershipPeriod && isHistoricalDevice(device)) {
+      return getOwnershipPeriodDateRange(device.ownershipPeriod)
+    }
+    return null
+  }, [device])
+
   const [fromDate, setFromDate] = useState<string>(() => {
+    if (ownershipDateRange) {
+      return ownershipDateRange.minDate
+    }
     const d = new Date()
     d.setMonth(d.getMonth() - 1) // default: last 1 month
     return d.toISOString().slice(0, 10)
   })
-  const [toDate, setToDate] = useState<string>(() => new Date().toISOString().slice(0, 10))
+  const [toDate, setToDate] = useState<string>(() => {
+    if (ownershipDateRange) {
+      return ownershipDateRange.maxDate
+    }
+    return new Date().toISOString().slice(0, 10)
+  })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [consumables, setConsumables] = useState<ConsumableTypeWithSeries[]>([])
   const [valueMode, setValueMode] = useState<'percentage' | 'remaining'>('percentage')
   const [visibleTypes, setVisibleTypes] = useState<boolean[]>([])
 
-  const load = async () => {
+  const load = useCallback(async () => {
     if (!deviceId) return
     if (fromDate && toDate && fromDate > toDate) {
       setError('Ngày bắt đầu phải nhỏ hơn hoặc bằng ngày kết thúc')
       return
     }
+
+    // Validate date range against ownership period for historical devices
+    if (device?.ownershipPeriod && isHistoricalDevice(device)) {
+      const validation = validateDateRangeAgainstOwnershipPeriod(
+        fromDate,
+        toDate,
+        device.ownershipPeriod
+      )
+      if (!validation.isValid) {
+        setError(validation.error || 'Khoảng thời gian không hợp lệ')
+        return
+      }
+    }
+
     setError(null)
     setLoading(true)
     try {
@@ -71,18 +112,32 @@ export default function DeviceUsageHistory({ deviceId }: { deviceId: string }) {
       setVisibleTypes(maybeConsumables.map(() => true))
     } catch (err: unknown) {
       console.error('Failed to load device usage history', err)
-      const msg = err instanceof Error ? err.message : 'Lỗi tải dữ liệu'
-      toast.error(msg)
-      setError(msg)
+
+      // Handle 403 Access Denied error
+      const axiosError = err as {
+        response?: { status?: number; data?: { message?: string; code?: string } }
+        message?: string
+      }
+
+      if (axiosError.response?.status === 403) {
+        const errorMessage =
+          axiosError.response.data?.message ||
+          'Bạn không có quyền xem dữ liệu trong khoảng thời gian này. Thiết bị đã được chuyển giao.'
+        setError(errorMessage)
+        toast.error(errorMessage)
+      } else {
+        const msg = err instanceof Error ? err.message : 'Lỗi tải dữ liệu'
+        toast.error(msg)
+        setError(msg)
+      }
     } finally {
       setLoading(false)
     }
-  }
+  }, [deviceId, fromDate, toDate, device])
 
   useEffect(() => {
-    load()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [deviceId, fromDate, toDate])
+    void load()
+  }, [load])
 
   // Build aggregated data: one line per consumable type across all series
   const yMode = valueMode // 'percentage' | 'remaining'
@@ -122,7 +177,7 @@ export default function DeviceUsageHistory({ deviceId }: { deviceId: string }) {
     })
 
     return data
-  }, [consumables, yMode, fromDate, toDate])
+  }, [consumables, yMode])
 
   // Debug: log chartData to help inspect why lines aren't rendering
   useEffect(() => {
@@ -191,14 +246,45 @@ export default function DeviceUsageHistory({ deviceId }: { deviceId: string }) {
           </div>
         </CardHeader>
         <CardContent>
+          {device && isHistoricalDevice(device) && device.ownershipPeriod && (
+            <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 px-4 py-3">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="mt-0.5 h-5 w-5 text-amber-600" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-amber-800">Thiết bị đã được chuyển giao</p>
+                  <p className="mt-1 text-xs text-amber-700">
+                    Bạn chỉ có thể xem dữ liệu từ{' '}
+                    {new Date(device.ownershipPeriod.fromDate).toLocaleDateString('vi-VN')} đến{' '}
+                    {device.ownershipPeriod.toDate
+                      ? new Date(device.ownershipPeriod.toDate).toLocaleDateString('vi-VN')
+                      : 'ngày hiện tại'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div>
               <Label className="text-sm font-medium">Từ ngày</Label>
-              <Input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
+              <Input
+                type="date"
+                value={fromDate}
+                onChange={(e) => setFromDate(e.target.value)}
+                min={ownershipDateRange?.minDate}
+                max={ownershipDateRange?.maxDate}
+                disabled={!!ownershipDateRange}
+              />
             </div>
             <div>
               <Label className="text-sm font-medium">Đến ngày</Label>
-              <Input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} />
+              <Input
+                type="date"
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value)}
+                min={ownershipDateRange?.minDate}
+                max={ownershipDateRange?.maxDate}
+                disabled={!!ownershipDateRange}
+              />
             </div>
             <div>
               <Label className="text-sm font-medium">Giá trị</Label>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -22,6 +22,7 @@ import { reportsClientService } from '@/lib/api/services/reports-client.service'
 import { DeleteDialog } from '@/components/shared/DeleteDialog'
 import { TableWrapper } from '@/components/system/TableWrapper'
 import type { ColumnDef, CellContext } from '@tanstack/react-table'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 export function A4EquivalentUsageHistory({
   deviceId,
@@ -46,6 +47,7 @@ export function A4EquivalentUsageHistory({
     createdAt?: string
   }
 
+  const { t } = useLocale()
   const [items, setItems] = useState<Row[]>([])
   const [loading, setLoading] = useState(false)
   const [page, setPage] = useState(1)
@@ -59,7 +61,7 @@ export function A4EquivalentUsageHistory({
     sortOrder: 'desc',
   })
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true)
     try {
       // If no deviceId or customerId provided, do not call the backend.
@@ -100,15 +102,14 @@ export function A4EquivalentUsageHistory({
     } finally {
       setLoading(false)
     }
-  }
+  }, [deviceId, customerId, page, limit, search, recordedAtFrom, recordedAtTo, sorting])
 
   const fmt = (v: unknown) => (typeof v === 'number' ? v.toLocaleString('vi-VN') : String(v ?? '-'))
   const shortId = (id?: string) => (id ? `${id.slice(0, 8)}…${id.slice(-4)}` : '-')
 
   useEffect(() => {
-    load()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [deviceId, customerId, page, limit, sorting])
+    void load()
+  }, [load])
 
   // Decide whether to show only A4, only non-A4, or both.
   // We centralize logic by fetching device model flag (if needed) and then running
@@ -240,31 +241,34 @@ export function A4EquivalentUsageHistory({
       cell: ({ row }) => (
         <div className="flex items-center justify-end gap-2">
           <DeleteDialog
-            title="Xóa snapshot A4"
-            description={`Bạn có chắc chắn muốn xóa snapshot ${row.original.snapshotId ?? ''}? Hành động không thể hoàn tác.`}
+            title={t('devices.a4_history.delete.title')}
+            description={t('devices.a4_history.delete.description', {
+              snapshotId: row.original.snapshotId ?? '',
+            })}
             onConfirm={async () => {
               try {
                 const snapshotId = row.original.snapshotId
                 if (!snapshotId) {
-                  toast.error('Snapshot không hợp lệ')
+                  toast.error(t('devices.a4_history.error.invalid_snapshot'))
                   return
                 }
                 const res = await reportsClientService.deleteA4Equivalent(snapshotId)
                 if (res && res.success) {
-                  toast.success(res.message || 'Xóa snapshot thành công')
+                  toast.success(res.message || t('devices.a4_history.delete_success'))
                   await load()
                 } else {
-                  const msg = res?.message || res?.error || 'Không thể xóa snapshot'
+                  const msg = res?.message || res?.error || t('devices.a4_history.delete_error')
                   toast.error(msg)
                 }
               } catch (err) {
                 console.error('Xóa snapshot thất bại', err)
-                const message = err instanceof Error ? err.message : 'Không thể xóa snapshot'
+                const message =
+                  err instanceof Error ? err.message : t('devices.a4_history.delete_error')
                 toast.error(message)
               }
             }}
             trigger={
-              <Button size="sm" variant="ghost" title="Xóa">
+              <Button size="sm" variant="ghost" title={t('devices.a4_history.delete')}>
                 {' '}
                 <Trash2 className="h-4 w-4 text-red-600" />{' '}
               </Button>
@@ -280,11 +284,11 @@ export function A4EquivalentUsageHistory({
       <div className="flex flex-col gap-4 rounded-lg border bg-slate-50/50 p-4 md:flex-row md:items-end md:justify-between">
         <div className="flex flex-1 flex-col gap-4 md:flex-row md:items-end">
           <div className="w-full space-y-1.5 md:max-w-xs">
-            <Label className="text-xs text-slate-500">Tìm kiếm</Label>
+            <Label className="text-xs text-slate-500">{t('devices.a4_history.search')}</Label>
             <div className="relative">
               <Search className="absolute top-2.5 left-2.5 h-4 w-4 text-slate-400" />
               <Input
-                placeholder="ID snapshot hoặc mô tả..."
+                placeholder={t('devices.a4_history.search_placeholder')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 onKeyDown={(e) => {
@@ -297,7 +301,7 @@ export function A4EquivalentUsageHistory({
 
           <div className="flex gap-2">
             <div className="space-y-1.5">
-              <Label className="text-xs text-slate-500">Từ ngày ghi nhận</Label>
+              <Label className="text-xs text-slate-500">{t('devices.a4_history.from_date')}</Label>
               <div className="relative">
                 <Input
                   type="date"
@@ -309,7 +313,7 @@ export function A4EquivalentUsageHistory({
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs text-slate-500">Đến ngày ghi nhận</Label>
+              <Label className="text-xs text-slate-500">{t('devices.a4_history.to_date')}</Label>
               <div className="relative">
                 <Input
                   type="date"
@@ -324,16 +328,23 @@ export function A4EquivalentUsageHistory({
 
           <div className="flex gap-2">
             <Button variant="default" onClick={() => setPage(1)}>
-              Tìm kiếm
+              {t('devices.a4_history.search_button')}
             </Button>
-            <Button variant="outline" size="icon" onClick={() => load()} title="Làm mới">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => load()}
+              title={t('devices.a4_history.refresh')}
+            >
               <RefreshCw className="h-4 w-4" />
             </Button>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <Label className="text-xs whitespace-nowrap text-slate-500">Hiển thị</Label>
+          <Label className="text-xs whitespace-nowrap text-slate-500">
+            {t('devices.a4_history.display')}
+          </Label>
           <Select value={String(limit)} onValueChange={(v) => setLimit(Number(v))}>
             <SelectTrigger className="h-9 w-[70px] bg-white">
               <SelectValue placeholder="20" />
@@ -386,11 +397,12 @@ export default function A4EquivalentHistoryModal({
   title?: string
   showA4?: boolean | 'auto'
 }) {
+  const { t } = useLocale()
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <SystemModalLayout
-        title={title ?? 'Lịch sử snapshot A4'}
-        description={`Lịch sử ghi nhận trang cho thiết bị: ${deviceId ?? customerId ?? '—'}`}
+        title={title ?? t('devices.a4_history.title')}
+        description={`${t('consumable.history.description')}: ${deviceId ?? customerId ?? '—'}`}
         icon={FileText}
         variant="view"
         footer={

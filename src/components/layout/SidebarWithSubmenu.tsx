@@ -27,15 +27,28 @@ interface SidebarNavItemProps {
 export function SidebarNavItem({ item, index }: SidebarNavItemProps) {
   const pathname = usePathname()
 
+  // Normalize paths: remove trailing slashes and ensure consistent format
+  const normalizePath = (path: string) => path.replace(/\/+$/, '') || '/'
+  const normalizedPathname = normalizePath(pathname)
+  const normalizedHref = normalizePath(item.href)
+
   // Check if this item or any submenu is active
-  // Only treat the parent as active for child paths when it actually has a submenu.
-  // This prevents top-level items like `/user/dashboard` from being highlighted when
-  // visiting unrelated nested routes such as `/user/dashboard/costs/monthly` if the
-  // parent has no submenu entries.
+  // Treat the parent as active if:
+  // 1. Exact match with pathname
+  // 2. Pathname starts with item.href + '/' (for sub-pages)
+  // 3. For dynamic routes: check if pathname matches the base route pattern
+  // Special case: /system only matches exactly to avoid highlighting on all /system/* routes
   const isParentActive =
-    item.href === '/system'
-      ? pathname === item.href
-      : pathname === item.href || (item.submenu && pathname.startsWith(item.href + '/'))
+    normalizedHref === '/system'
+      ? normalizedPathname === normalizedHref
+      : normalizedPathname === normalizedHref ||
+        normalizedPathname.startsWith(normalizedHref + '/') ||
+        // Handle cases where route is /system/requests but pathname is /system/service-requests/*
+        (normalizedHref === '/system/requests' &&
+          normalizedPathname.startsWith('/system/service-requests/')) ||
+        // Handle cases where route is /system/purchase-requests but pathname is /system/purchase-requests/*
+        (normalizedHref === '/system/requests' &&
+          normalizedPathname.startsWith('/system/purchase-requests/'))
 
   // Auto-expand if submenu item is active
   const hasActiveSubmenu = item.submenu?.some((sub) => pathname.startsWith(sub.href))
@@ -82,7 +95,7 @@ export function SidebarNavItem({ item, index }: SidebarNavItemProps) {
             'group flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all',
             isParentActive
               ? 'from-brand-500 to-brand-600 shadow-soft bg-gradient-to-r text-white'
-              : 'text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800'
+              : 'text-[var(--sidebar-foreground)] hover:bg-neutral-100 dark:text-[var(--sidebar-foreground)] dark:hover:bg-neutral-800'
           )}
         >
           <item.icon
@@ -90,7 +103,7 @@ export function SidebarNavItem({ item, index }: SidebarNavItemProps) {
               'h-5 w-5 shrink-0 transition-colors',
               isParentActive
                 ? 'text-white'
-                : 'text-brand-600 dark:text-brand-400 group-hover:text-brand-700 dark:group-hover:text-brand-300'
+                : 'group-hover:text-brand-700 dark:group-hover:text-brand-300 text-[var(--sidebar-foreground)] dark:text-[var(--sidebar-foreground)]'
             )}
           />
           <span className="flex-1">{item.label}</span>
@@ -139,7 +152,7 @@ export function SidebarNavItem({ item, index }: SidebarNavItemProps) {
                       'block rounded-lg px-3 py-2 text-sm transition-colors',
                       isSubActive
                         ? 'bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-400 font-medium'
-                        : 'text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800'
+                        : 'text-[var(--sidebar-foreground)] hover:bg-neutral-100 dark:text-[var(--sidebar-foreground)] dark:hover:bg-neutral-800'
                     )}
                   >
                     {subItem.label}

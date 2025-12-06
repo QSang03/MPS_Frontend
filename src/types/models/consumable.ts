@@ -1,4 +1,5 @@
 import type { ConsumableType, StockItem } from './consumable-type'
+import type { CurrencyDataDto } from './currency'
 
 export interface Consumable {
   id: string
@@ -10,11 +11,11 @@ export interface Consumable {
   consumableTypeId?: string
   consumableType?: ConsumableType
   /** Pricing fields coming from API */
-  priceVND?: number | null
-  priceUSD?: number | null
-  exchangeRate?: number | null
-  status?: string
   price?: number | null
+  currencyId?: string | null
+  currency?: CurrencyDataDto | null
+  currentExchangeRate?: number | null
+  status?: string
   createdAt?: string
   updatedAt?: string
 }
@@ -38,9 +39,9 @@ export interface DeviceConsumable {
   expiryDate?: string | null
   status?: string
   price?: number | null
-  priceVND?: number | null
-  priceUSD?: number | null
-  exchangeRate?: number | null
+  currencyId?: string | null
+  currency?: CurrencyDataDto | null
+  currentExchangeRate?: number | null
   createdAt?: string | null
   updatedAt?: string | null
   /** Warning threshold percentage for this consumable installed on the device (0-100) */
@@ -75,8 +76,7 @@ export interface UpdateDeviceConsumableDto {
   installedAt?: string | null
   removedAt?: string | null
   actualPagesPrinted?: number | null
-  priceVND?: number | null
-  priceUSD?: number | null
-  exchangeRate?: number | null
   price?: number | null
+  currencyId?: string | null
+  currencyCode?: string
 }

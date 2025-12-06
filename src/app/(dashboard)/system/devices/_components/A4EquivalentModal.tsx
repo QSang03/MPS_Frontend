@@ -12,6 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from 'sonner'
 import internalApiClient from '@/lib/api/internal-client'
 import type { Device } from '@/types/models/device'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 interface Props {
   // Accept any device-like object which must include `id` and optionally `serialNumber`.
@@ -24,6 +25,7 @@ interface Props {
 }
 
 export default function A4EquivalentModal({ device, open, onOpenChange, onSaved }: Props) {
+  const { t } = useLocale()
   const [submitting, setSubmitting] = useState(false)
   const [totalPageCountA4, setTotalPageCountA4] = useState<string>('')
   const [totalColorPagesA4, setTotalColorPagesA4] = useState<string>('')
@@ -117,27 +119,31 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
       if (finalColor !== undefined && finalBw !== undefined) {
         if (finalColor + finalBw !== finalTotal) {
           toast.error(
-            `Tổng counter màu (${finalColor}) + đen trắng (${finalBw}) phải bằng tổng (${finalTotal})`
+            t('device.a4.validation.total_mismatch', {
+              color: finalColor,
+              bw: finalBw,
+              total: finalTotal,
+            })
           )
           return
         }
       } else if (finalColor !== undefined && finalBw === undefined) {
         const computedBw = finalTotal - finalColor
         if (computedBw < 0) {
-          toast.error('Giá trị counter không hợp lệ: counter màu lớn hơn tổng counter')
+          toast.error(t('device.a4.error.color_exceeds_total'))
           return
         }
         finalBw = computedBw
         // show a gentle info so user knows we computed it
-        toast('Tự động điền Tổng counter đen trắng = ' + computedBw)
+        toast(t('device.a4.auto_fill_bw', { value: computedBw }))
       } else if (finalBw !== undefined && finalColor === undefined) {
         const computedColor = finalTotal - finalBw
         if (computedColor < 0) {
-          toast.error('Giá trị counter không hợp lệ: counter đen trắng lớn hơn tổng counter')
+          toast.error(t('device.a4.error.bw_exceeds_total'))
           return
         }
         finalColor = computedColor
-        toast('Tự động điền Tổng counter màu = ' + computedColor)
+        toast(t('device.a4.auto_fill_color', { value: computedColor }))
       }
     }
 
@@ -146,26 +152,30 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
       if (finalColorA4 !== undefined && finalBwA4 !== undefined) {
         if (finalColorA4 + finalBwA4 !== finalTotalA4) {
           toast.error(
-            `Tổng counter màu (A4) (${finalColorA4}) + đen trắng (A4) (${finalBwA4}) phải bằng tổng (A4) (${finalTotalA4})`
+            t('device.a4.validation.total_mismatch_a4', {
+              color: finalColorA4,
+              bw: finalBwA4,
+              total: finalTotalA4,
+            })
           )
           return
         }
       } else if (finalColorA4 !== undefined && finalBwA4 === undefined) {
         const computedBw = finalTotalA4 - finalColorA4
         if (computedBw < 0) {
-          toast.error('Giá trị counter (A4) không hợp lệ: counter màu lớn hơn tổng counter')
+          toast.error(t('device.a4.error.color_exceeds_total_a4'))
           return
         }
         finalBwA4 = computedBw
-        toast('Tự động điền Tổng counter đen trắng (A4) = ' + computedBw)
+        toast(t('device.a4.auto_fill_bw_a4', { value: computedBw }))
       } else if (finalBwA4 !== undefined && finalColorA4 === undefined) {
         const computedColor = finalTotalA4 - finalBwA4
         if (computedColor < 0) {
-          toast.error('Giá trị counter (A4) không hợp lệ: counter đen trắng lớn hơn tổng counter')
+          toast.error(t('device.a4.error.bw_exceeds_total_a4'))
           return
         }
         finalColorA4 = computedColor
-        toast('Tự động điền Tổng counter màu (A4) = ' + computedColor)
+        toast(t('device.a4.auto_fill_color_a4', { value: computedColor }))
       }
     } else {
       // A4 total not provided. If color and bw provided, set total to sum so backend gets full info.
@@ -214,7 +224,7 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
     setSubmitting(true)
     try {
       await internalApiClient.post('/api/reports/usage/a4-equivalent', body)
-      toast.success('Lưu snapshot A4 thành công')
+      toast.success(t('device.a4.save_success'))
       onSaved?.()
       onOpenChange(false)
     } catch (err: unknown) {
@@ -318,8 +328,8 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <SystemModalLayout
-        title="Ghi nhật ký A4 cho thiết bị"
-        description={`Thiết bị: ${device.serialNumber || device.id}`}
+        title={t('device.a4.log_title')}
+        description={`${t('device.form.status')}: ${device.serialNumber || device.id}`}
         icon={FileText}
         variant="create"
         footer={
@@ -338,7 +348,7 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
               disabled={submitting}
               className="min-w-[120px] bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
             >
-              {submitting ? 'Đang lưu...' : 'Lưu'}
+              {submitting ? t('button.saving') : t('button.update')}
             </Button>
           </>
         }
@@ -355,11 +365,11 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
           {!useA4 && (
             <>
               <div>
-                <Label className="text-sm font-semibold">Tổng counter màu</Label>
+                <Label className="text-sm font-semibold">{t('device.a4.total_color')}</Label>
                 <Input
                   value={totalColorPages}
                   onChange={(e) => handleColorChangeNonA4(e.target.value)}
-                  placeholder="Ví dụ: 2000"
+                  placeholder={t('device.a4.example', { value: '2000' })}
                   className="mt-2 h-11"
                   type="number"
                   min={0}
@@ -367,11 +377,11 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
               </div>
 
               <div>
-                <Label className="text-sm font-semibold">Tổng counter đen trắng</Label>
+                <Label className="text-sm font-semibold">{t('device.a4.total_bw')}</Label>
                 <Input
                   value={totalBlackWhitePages}
                   onChange={(e) => handleBwChangeNonA4(e.target.value)}
-                  placeholder="Ví dụ: 8000"
+                  placeholder={t('device.a4.example', { value: '8000' })}
                   className="mt-2 h-11"
                   type="number"
                   min={0}
@@ -379,11 +389,11 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
               </div>
 
               <div>
-                <Label className="text-sm font-semibold">Tổng counter</Label>
+                <Label className="text-sm font-semibold">{t('device.a4.total')}</Label>
                 <Input
                   value={totalPageCount}
                   onChange={(e) => handleTotalChangeNonA4(e.target.value)}
-                  placeholder="Ví dụ: 10000"
+                  placeholder={t('device.a4.example', { value: '10000' })}
                   className="mt-2 h-11"
                   type="number"
                   min={0}
@@ -396,11 +406,11 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
           {useA4 && (
             <>
               <div>
-                <Label className="text-sm font-semibold">Tổng counter màu (A4)</Label>
+                <Label className="text-sm font-semibold">{t('device.a4.total_color_a4')}</Label>
                 <Input
                   value={totalColorPagesA4}
                   onChange={(e) => handleColorChange(e.target.value)}
-                  placeholder="Ví dụ: 2000"
+                  placeholder={t('device.a4.example', { value: '2000' })}
                   className="mt-2 h-11"
                   type="number"
                   min={0}
@@ -408,11 +418,11 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
               </div>
 
               <div>
-                <Label className="text-sm font-semibold">Tổng counter đen trắng (A4)</Label>
+                <Label className="text-sm font-semibold">{t('device.a4.total_bw_a4')}</Label>
                 <Input
                   value={totalBlackWhitePagesA4}
                   onChange={(e) => handleBwChange(e.target.value)}
-                  placeholder="Ví dụ: 8000"
+                  placeholder={t('device.a4.example', { value: '8000' })}
                   className="mt-2 h-11"
                   type="number"
                   min={0}
@@ -420,11 +430,11 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
               </div>
 
               <div>
-                <Label className="text-sm font-semibold">Tổng counter (A4)</Label>
+                <Label className="text-sm font-semibold">{t('device.a4.total_a4')}</Label>
                 <Input
                   value={totalPageCountA4}
                   onChange={(e) => handleTotalChange(e.target.value)}
-                  placeholder="Ví dụ: 10000"
+                  placeholder={t('device.a4.example', { value: '10000' })}
                   className="mt-2 h-11"
                   type="number"
                   min={0}
@@ -434,7 +444,7 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
           )}
 
           <div>
-            <Label className="text-sm font-semibold">Thời gian ghi nhận</Label>
+            <Label className="text-sm font-semibold">{t('device.a4.recorded_at_time')}</Label>
             <DateTimeLocalPicker
               id="a4-recordedAt"
               value={recordedAt}
@@ -445,7 +455,7 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
 
           <div className="flex items-center gap-3">
             <Checkbox checked={updateLatest} onCheckedChange={(v) => setUpdateLatest(Boolean(v))} />
-            <Label className="text-sm">Cập nhật bản ghi mới nhất (updateLatest)</Label>
+            <Label className="text-sm">{t('device.a4.update_latest_label')}</Label>
           </div>
         </form>
       </SystemModalLayout>

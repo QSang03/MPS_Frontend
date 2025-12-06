@@ -13,6 +13,7 @@ import {
   Printer,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { usePathname } from 'next/navigation'
 import { NAVIGATION_PAYLOAD, USER_NAVIGATION_PAYLOAD } from '@/constants/navigation'
 import {
@@ -33,6 +34,7 @@ import { NotificationPanel } from '@/components/notifications/NotificationPanel'
 import { useNotifications } from '@/lib/hooks/useNotifications'
 import { useState, useEffect } from 'react'
 import { clearAuthCookies } from '@/lib/auth/client-auth'
+import LanguageSwitcher from '@/components/LanguageSwitcher'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -59,14 +61,18 @@ export function Navbar({ session }: NavbarProps) {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
 
   const currentMonth = new Date().toISOString().slice(0, 7)
+  const { t } = useLocale()
 
   // Start with a server-safe default to avoid SSR/client mismatch. Update
   // the value on the client after hydration. We defer the setState call
   // using `setTimeout` to avoid the lint warning about synchronous
   // setState inside effects.
-  const [companyName, setCompanyName] = useState<string>('CHÍNH NHÂN TECHNOLOGY')
+  const [companyName, setCompanyName] = useState<string>('CHINH NHAN TECHNOLOGY')
 
   useEffect(() => {
+    // Set default localized company name on mount
+    setCompanyName(t('sidebar.logo.subtitle'))
+
     try {
       if (typeof window !== 'undefined' && window.localStorage) {
         const n = localStorage.getItem('mps_customer_name')
@@ -79,7 +85,7 @@ export function Navbar({ session }: NavbarProps) {
     } catch {
       // ignore
     }
-  }, [])
+  }, [t])
 
   // derive the best matching title from NAVIGATION_PAYLOAD by choosing the longest
   // route that is a prefix of the current pathname. This ensures /system/devices
@@ -93,7 +99,27 @@ export function Navbar({ session }: NavbarProps) {
     const matches = navPayload.filter((n) => n.route && pathname.startsWith(n.route))
     if (!matches.length) return null
     matches.sort((a, b) => (b.route?.length || 0) - (a.route?.length || 0))
-    return matches[0]?.label ?? null
+    const m = matches[0]
+    if (!m) return null
+
+    // Try to translate by name first, then by id, then fallback to label
+    if (m.name) {
+      const translated = t(`nav.${String(m.name)}`)
+      if (translated && translated !== `nav.${String(m.name)}`) {
+        return translated
+      }
+    }
+
+    // Try to translate by id if name translation failed or name doesn't exist
+    if (m.id) {
+      const translated = t(`nav.${String(m.id)}`)
+      if (translated && translated !== `nav.${String(m.id)}`) {
+        return translated
+      }
+    }
+
+    // Fallback to label
+    return m.label ?? null
   })()
 
   const performLogout = async () => {
@@ -168,7 +194,7 @@ export function Navbar({ session }: NavbarProps) {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-blue-600">
               <Printer className="h-5 w-5" />
             </div>
-            <span className="text-sm font-bold text-slate-900">MPS</span>
+            <span className="text-sm font-bold text-slate-900">{t('sidebar.logo.title')}</span>
           </div>
 
           {/* Center - Page title & Company (compact) */}
@@ -180,11 +206,14 @@ export function Navbar({ session }: NavbarProps) {
                 </div>
                 <div className="flex flex-col">
                   <h2 className="font-display truncate text-lg font-bold text-gray-800">
-                    {derivedTitle || pageTitle || 'Tổng quan'}
+                    {derivedTitle || pageTitle || t('nav.overview')}
                   </h2>
                   <div className="mt-0.5 text-xs text-gray-500">
                     <span className="font-medium text-gray-600">{companyName}</span>
-                    <span className="hidden sm:inline"> • Tháng {currentMonth}</span>
+                    <span className="hidden sm:inline">
+                      {' '}
+                      • {t('dashboard.month')} {currentMonth}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -193,6 +222,9 @@ export function Navbar({ session }: NavbarProps) {
 
           {/* Right side - Actions */}
           <div className="flex items-center gap-1 md:gap-3">
+            <div className="hidden md:block">
+              <LanguageSwitcher />
+            </div>
             {/* Dashboard shortcut removed in favor of header info */}
             {/* Notifications - Premium Bell */}
             <NotificationPanel>
@@ -260,7 +292,7 @@ export function Navbar({ session }: NavbarProps) {
                     </Avatar>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-bold text-gray-800">
-                        {session.username || 'Người dùng'}
+                        {session.username || t('user')}
                       </p>
                       <p className="mt-0.5 truncate text-xs text-gray-600">{session.email}</p>
                       <div className="mt-2 inline-block rounded-full bg-blue-100 px-2.5 py-1 text-xs font-bold text-blue-700">
@@ -279,7 +311,7 @@ export function Navbar({ session }: NavbarProps) {
                       className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 font-medium text-gray-700 transition-all duration-300 hover:bg-blue-50 hover:text-blue-700"
                     >
                       <User className="h-4 w-4 flex-shrink-0" />
-                      <span className="flex-1">Hồ sơ cá nhân</span>
+                      <span className="flex-1">{t('profile')}</span>
                       <ChevronDown className="h-3 w-3 rotate-90 opacity-50" />
                     </DropdownMenuItem>
                   </motion.div>
@@ -291,7 +323,7 @@ export function Navbar({ session }: NavbarProps) {
                       className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 font-medium text-gray-700 transition-all duration-300 hover:bg-purple-50 hover:text-purple-700"
                     >
                       <Settings className="h-4 w-4 flex-shrink-0 transition-transform duration-300 hover:rotate-90" />
-                      <span className="flex-1">Cài đặt tài khoản</span>
+                      <span className="flex-1">{t('settings.account')}</span>
                       <ChevronDown className="h-3 w-3 rotate-90 opacity-50" />
                     </DropdownMenuItem>
                   </motion.div>
@@ -311,7 +343,7 @@ export function Navbar({ session }: NavbarProps) {
                       className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 font-medium text-red-600 transition-all duration-300 hover:bg-red-50 hover:text-red-700"
                     >
                       <LogOut className="h-4 w-4 flex-shrink-0" />
-                      <span className="flex-1">Đăng xuất</span>
+                      <span className="flex-1">{t('logout')}</span>
                     </DropdownMenuItem>
                   </motion.div>
                 </div>
@@ -321,7 +353,8 @@ export function Navbar({ session }: NavbarProps) {
                   <div className="flex items-center gap-2">
                     <Zap className="h-3.5 w-3.5 text-amber-500" />
                     <p className="text-xs text-gray-600">
-                      <span className="font-bold text-gray-800">MPS v1.0.0</span> • © 2025
+                      <span className="font-bold text-gray-800">{t('footer.version')}</span> • ©
+                      2025
                     </p>
                   </div>
                 </div>
@@ -334,15 +367,13 @@ export function Navbar({ session }: NavbarProps) {
       <AlertDialog open={showLogoutConfirm} onOpenChange={setShowLogoutConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Xác nhận đăng xuất</AlertDialogTitle>
-            <AlertDialogDescription>
-              Bạn có chắc chắn muốn đăng xuất khỏi hệ thống không?
-            </AlertDialogDescription>
+            <AlertDialogTitle>{t('logout.confirm.title')}</AlertDialogTitle>
+            <AlertDialogDescription>{t('logout.confirm.description')}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={performLogout} className="bg-red-600 hover:bg-red-700">
-              Đăng xuất
+              {t('logout')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

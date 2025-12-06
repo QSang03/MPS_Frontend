@@ -5,6 +5,7 @@ import { useEffect, useRef } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { Loader2, FileText, Calendar, Tag, Building, Clock, Paperclip, Link2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -48,6 +49,7 @@ const CONTRACT_PDF_MAX_MB = Math.round(CONTRACT_PDF_MAX_BYTES / (1024 * 1024))
 
 export function ContractForm({ initial, onSuccess }: ContractFormProps) {
   const queryClient = useQueryClient()
+  const { t } = useLocale()
 
   const form = useForm<ContractFormData>({
     resolver: zodResolver(contractFormSchema),
@@ -75,11 +77,11 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
       } catch {
         // ignore
       }
-      toast.success('Tạo hợp đồng thành công')
+      toast.success(t('contract.create_success'))
       if (onSuccess) onSuccess(created)
     },
     onError: (error: unknown) => {
-      const message = error instanceof Error ? error.message : 'Tạo hợp đồng thất bại'
+      const message = error instanceof Error ? error.message : t('contract.create_error')
       toast.error(message)
     },
   })
@@ -93,11 +95,11 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
       } catch {
         // ignore
       }
-      toast.success('Cập nhật hợp đồng thành công')
+      toast.success(t('contract.update_success'))
       if (onSuccess) onSuccess(updated)
     },
     onError: (error: unknown) => {
-      const message = error instanceof Error ? error.message : 'Cập nhật hợp đồng thất bại'
+      const message = error instanceof Error ? error.message : t('contract.update_error')
       toast.error(message)
     },
   })
@@ -105,7 +107,7 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
   const onSubmit = async (data: ContractFormData) => {
     const valid = await form.trigger()
     if (!valid) {
-      toast.error('⚠️ Vui lòng sửa lỗi trong form trước khi gửi')
+      toast.error(t('validation.fields_error'))
       return
     }
     try {
@@ -147,7 +149,7 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
       }
     } catch (err) {
       console.error('Failed to prepare contract payload', err)
-      toast.error('Lỗi khi chuẩn bị dữ liệu gửi lên máy chủ')
+      toast.error(t('contract.prepare_payload_error'))
     }
   }
 
@@ -186,8 +188,8 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
     }
 
     if (file.type !== 'application/pdf') {
-      form.setError('pdfFile', { type: 'manual', message: 'Chỉ chấp nhận file PDF' })
-      toast.error('Chỉ chấp nhận file PDF')
+      form.setError('pdfFile', { type: 'manual', message: t('contract.pdf_only') })
+      toast.error(t('contract.pdf_only'))
       if (fileInputRef.current) fileInputRef.current.value = ''
       return false
     }
@@ -195,9 +197,9 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
     if (file.size > CONTRACT_PDF_MAX_BYTES) {
       form.setError('pdfFile', {
         type: 'manual',
-        message: `Tệp vượt quá ${CONTRACT_PDF_MAX_MB}MB`,
+        message: t('contract.pdf_too_large').replace('{size}', String(CONTRACT_PDF_MAX_MB)),
       })
-      toast.error(`File vượt quá ${CONTRACT_PDF_MAX_MB}MB`)
+      toast.error(t('contract.pdf_too_large').replace('{size}', String(CONTRACT_PDF_MAX_MB)))
       if (fileInputRef.current) fileInputRef.current.value = ''
       return false
     }

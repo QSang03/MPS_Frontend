@@ -150,6 +150,8 @@ export interface ServiceRequestCostItem {
   createdAt: string
 }
 
+import type { CurrencyDataDto } from './currency'
+
 /**
  * Service request cost
  */
@@ -158,7 +160,8 @@ export interface ServiceRequestCost {
   serviceRequestId: string
   deviceId: string
   totalAmount: number
-  currency: string
+  currencyId: string | null
+  currency: CurrencyDataDto | null
   createdAt: string
   updatedAt: string
   items: ServiceRequestCostItem[]
@@ -194,6 +197,10 @@ export interface CreateServiceRequestCostDto {
   deviceId?: string
   /** Total amount - optional, backend will sum item amounts if omitted */
   totalAmount?: number
+  /** Currency ID - optional, will use customer default or USD if not provided */
+  currencyId?: string
+  /** Currency code - optional, backend can resolve from currencyId */
+  currencyCode?: string
   items: Array<{
     type: ServiceRequestCostItemType
     amount: number

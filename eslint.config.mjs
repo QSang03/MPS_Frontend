@@ -17,6 +17,7 @@ const eslintConfig = [...nextCoreWebVitals, ...nextTypescript, ...compat.extends
     "@typescript-eslint/no-explicit-any": "warn",
     "react/no-unescaped-entities": "off",
     "@next/next/no-img-element": "warn",
+    "react-hooks/incompatible-library": "off", // Suppress warnings about external libraries that can't be memoized
   },
 }, {
   ignores: ["node_modules/**", ".next/**", "out/**", "build/**", "next-env.d.ts"]

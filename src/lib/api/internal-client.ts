@@ -6,6 +6,7 @@ import type {
   AxiosResponse,
   AxiosRequestConfig,
 } from 'axios'
+import { getLanguage } from '@/lib/utils/language'
 
 /**
  * Client-side axios instance để gọi Next.js API Routes (không gọi trực tiếp backend)
@@ -76,6 +77,7 @@ let refreshPromise: Promise<string | null> | null = null
 // until the refresh completes. This prevents a burst of requests from all
 // failing with 401 while a refresh is underway — they will wait and then
 // continue with the new session state.
+// Also adds language preference as query parameter
 internalApiClient.interceptors.request.use(
   async (config) => {
     try {
@@ -83,6 +85,15 @@ internalApiClient.interceptors.request.use(
         // Wait for the refresh to finish (may throw if refresh failed)
         await refreshPromise
       }
+
+      // Add language preference as query parameter
+      const language = getLanguage()
+      if (config.params) {
+        config.params.lang = language
+      } else {
+        config.params = { lang: language }
+      }
+
       return config
     } catch (err) {
       // If refresh failed, reject the request so callers can handle it.

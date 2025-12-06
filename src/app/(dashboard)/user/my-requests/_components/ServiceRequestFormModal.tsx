@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect, type ReactNode } from 'react'
+import Image from 'next/image'
+import { useWatch } from 'react-hook-form'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Plus,
@@ -56,6 +58,7 @@ import deviceModelsClientService from '@/lib/api/services/device-models-client.s
 import { Priority } from '@/constants/status'
 import slasClientService from '@/lib/api/services/slas-client.service'
 import { removeEmpty } from '@/lib/utils/clean'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 interface ServiceRequestFormModalProps {
   customerId: string
@@ -64,36 +67,7 @@ interface ServiceRequestFormModalProps {
   preselectedDeviceId?: string
 }
 
-const priorityConfig = {
-  [Priority.LOW]: {
-    label: 'Thấp',
-    icon: '▼',
-    color: 'text-slate-600 dark:text-slate-400',
-    bgColor: 'bg-slate-100 dark:bg-slate-700',
-    description: 'Không khẩn cấp, có thể xử lý sau',
-  },
-  [Priority.NORMAL]: {
-    label: 'Bình thường',
-    icon: '→',
-    color: 'text-blue-600 dark:text-blue-400',
-    bgColor: 'bg-blue-100 dark:bg-blue-900/30',
-    description: 'Ưu tiên bình thường',
-  },
-  [Priority.HIGH]: {
-    label: 'Cao',
-    icon: '▲',
-    color: 'text-orange-600 dark:text-orange-400',
-    bgColor: 'bg-orange-100 dark:bg-orange-900/30',
-    description: 'Cần xử lý sớm',
-  },
-  [Priority.URGENT]: {
-    label: 'Khẩn cấp',
-    icon: '🔴',
-    color: 'text-red-600 dark:text-red-400',
-    bgColor: 'bg-red-100 dark:bg-red-900/30',
-    description: 'Cần xử lý ngay lập tức',
-  },
-}
+// priorityConfig sẽ được tạo trong component để có thể sử dụng t()
 
 /**
  * Service Request Form in a modal dialog for user
@@ -104,9 +78,41 @@ export function ServiceRequestFormModal({
   children,
   preselectedDeviceId,
 }: ServiceRequestFormModalProps) {
+  const { t } = useLocale()
   const [open, setOpen] = useState(false)
   const [mode, setMode] = useState<'SERVICE' | 'PURCHASE'>('SERVICE')
   const queryClient = useQueryClient()
+
+  const priorityConfig = {
+    [Priority.LOW]: {
+      label: t('priority.low'),
+      icon: '▼',
+      color: 'text-slate-600 dark:text-slate-400',
+      bgColor: 'bg-slate-100 dark:bg-slate-700',
+      description: t('priority.low.description'),
+    },
+    [Priority.NORMAL]: {
+      label: t('priority.normal'),
+      icon: '→',
+      color: 'text-blue-600 dark:text-blue-400',
+      bgColor: 'bg-blue-100 dark:bg-blue-900/30',
+      description: t('priority.normal.description'),
+    },
+    [Priority.HIGH]: {
+      label: t('priority.high'),
+      icon: '▲',
+      color: 'text-orange-600 dark:text-orange-400',
+      bgColor: 'bg-orange-100 dark:bg-orange-900/30',
+      description: t('priority.high.description'),
+    },
+    [Priority.URGENT]: {
+      label: t('priority.urgent'),
+      icon: '🔴',
+      color: 'text-red-600 dark:text-red-400',
+      bgColor: 'bg-red-100 dark:bg-red-900/30',
+      description: t('priority.urgent.description'),
+    },
+  }
   const [purchaseItems, setPurchaseItems] = useState<
     Array<{ consumableTypeId: string; quantity: number; name?: string }>
   >([])
@@ -139,16 +145,15 @@ export function ServiceRequestFormModal({
     if (preselectedDeviceId) {
       form.reset({ ...form.getValues(), deviceId: preselectedDeviceId, customerId })
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [preselectedDeviceId, open])
+  }, [preselectedDeviceId, open, form, customerId])
 
   const createServiceMutation = useMutation({
     mutationFn: serviceRequestsClientService.create,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['service-requests', customerId] })
       queryClient.invalidateQueries({ queryKey: ['service-requests'] })
-      toast.success('Tạo yêu cầu bảo trì thành công!', {
-        description: 'Yêu cầu của bạn đã được gửi đi',
+      toast.success(t('user_service_request.create.success'), {
+        description: t('user_service_request.create.success_description'),
         icon: <CheckCircle className="h-5 w-5 text-black dark:text-white" />,
       })
       form.reset({
@@ -164,9 +169,10 @@ export function ServiceRequestFormModal({
       }
     },
     onError: (error: unknown) => {
-      const message = error instanceof Error ? error.message : 'Tạo yêu cầu bảo trì thất bại'
+      const message =
+        error instanceof Error ? error.message : t('user_service_request.create.error')
       toast.error(message, {
-        description: 'Vui lòng thử lại sau',
+        description: t('common.try_again_later'),
         icon: <AlertCircle className="h-5 w-5 text-black dark:text-white" />,
       })
     },
@@ -177,8 +183,8 @@ export function ServiceRequestFormModal({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['purchase-requests', customerId] })
       queryClient.invalidateQueries({ queryKey: ['purchase-requests'] })
-      toast.success('Tạo yêu cầu mua hàng thành công!', {
-        description: 'Yêu cầu mua đã được gửi đi',
+      toast.success(t('user_purchase_request.create.success'), {
+        description: t('user_purchase_request.create.success_description'),
         icon: <CheckCircle className="h-5 w-5 text-black dark:text-white" />,
       })
       setPurchaseItems([])
@@ -193,9 +199,10 @@ export function ServiceRequestFormModal({
       if (onSuccess) onSuccess()
     },
     onError: (error: unknown) => {
-      const message = error instanceof Error ? error.message : 'Tạo yêu cầu mua hàng thất bại'
+      const message =
+        error instanceof Error ? error.message : t('user_purchase_request.create.error')
       toast.error(message, {
-        description: 'Vui lòng thử lại sau',
+        description: t('common.try_again_later'),
         icon: <AlertCircle className="h-5 w-5 text-black dark:text-white" />,
       })
     },
@@ -205,12 +212,12 @@ export function ServiceRequestFormModal({
     if (mode === 'SERVICE') {
       // Guard: If creating a SERVICE request and there are no active SLAs available, block
       if (!slasLoading && availableSlas.length === 0) {
-        toast.error('Không có SLA cho khách hàng này. Không thể tạo yêu cầu bảo trì')
+        toast.error(t('user_service_request.no_sla'))
         return
       }
       // Guard: If the selected priority isn't mapped to an SLA, block
       if (!availablePriorities.includes(data.priority)) {
-        toast.error('Độ ưu tiên đã chọn không có SLA, vui lòng chọn mức khác hoặc liên hệ quản trị')
+        toast.error(t('user_service_request.priority_no_sla'))
         return
       }
 
@@ -259,11 +266,11 @@ export function ServiceRequestFormModal({
 
     // PURCHASE mode
     if (!data.deviceId) {
-      toast.error('Vui lòng chọn thiết bị trước khi mua hàng')
+      toast.error(t('user_purchase_request.select_device'))
       return
     }
     if (purchaseItems.length === 0) {
-      toast.error('Thêm ít nhất một vật tư cần mua')
+      toast.error(t('user_purchase_request.add_item'))
       return
     }
     createPurchaseMutation.mutate({
@@ -278,7 +285,7 @@ export function ServiceRequestFormModal({
   }
 
   // Fetch compatible consumables when device changes & mode is PURCHASE
-  const selectedDeviceId = form.watch('deviceId')
+  const selectedDeviceId = useWatch({ control: form.control, name: 'deviceId' })
   const selectedDevice = devicesData?.data.find((d) => d.id === selectedDeviceId)
   const deviceModelId = selectedDevice?.deviceModel?.id
   const { data: compatibleConsumables, isLoading: compatibleLoading } = useQuery({
@@ -308,8 +315,7 @@ export function ServiceRequestFormModal({
     if (!availablePriorities.includes(currentPriority)) {
       form.setValue('priority', availablePriorities[0] as Priority)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slasLoading, slasData, mode])
+  }, [slasLoading, slasData, mode, form, availablePriorities])
 
   const filteredConsumables = (compatibleConsumables || []).filter((c) =>
     !consumableSearch ? true : (c.name || '').toLowerCase().includes(consumableSearch.toLowerCase())
@@ -340,7 +346,7 @@ export function ServiceRequestFormModal({
         <DialogTrigger asChild>
           <Button className="gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30 transition-all duration-300 hover:scale-105 hover:from-blue-700 hover:to-indigo-700 hover:shadow-xl hover:shadow-blue-500/40">
             <Plus className="h-5 w-5" />
-            Tạo yêu cầu mới
+            {t('user_service_request.create_new')}
           </Button>
         </DialogTrigger>
       )}
@@ -361,10 +367,10 @@ export function ServiceRequestFormModal({
                   </div>
                   <div>
                     <DialogTitle className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-3xl font-bold text-transparent dark:from-blue-400 dark:via-indigo-400 dark:to-purple-400">
-                      Tạo Yêu Cầu Mới
+                      {t('user_service_request.modal.title')}
                     </DialogTitle>
                     <DialogDescription className="mt-1 text-base text-slate-600 dark:text-slate-400">
-                      Điền thông tin chi tiết cho yêu cầu bảo trì
+                      {t('user_service_request.modal.description')}
                     </DialogDescription>
                   </div>
                 </div>
@@ -385,7 +391,7 @@ export function ServiceRequestFormModal({
                         <FormItem>
                           <FormLabel className="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-300">
                             <Monitor className="h-4 w-4 text-black dark:text-white" />
-                            Thiết bị
+                            {t('table.device')}
                           </FormLabel>
                           <Select
                             onValueChange={field.onChange}
@@ -403,8 +409,8 @@ export function ServiceRequestFormModal({
                                   className="w-full text-left"
                                   placeholder={
                                     devicesLoading
-                                      ? 'Đang tải thiết bị...'
-                                      : 'Chọn thiết bị cần bảo trì'
+                                      ? t('loading.devices')
+                                      : t('user_service_request.select_device_placeholder')
                                   }
                                 />
                               </SelectTrigger>
@@ -415,7 +421,7 @@ export function ServiceRequestFormModal({
                                   <div className="flex items-center gap-2">
                                     <Loader2 className="h-4 w-4 animate-spin text-black dark:text-white" />
                                     <span className="text-slate-600 dark:text-slate-400">
-                                      Đang tải...
+                                      {t('common.loading')}
                                     </span>
                                   </div>
                                 </SelectItem>
@@ -424,7 +430,7 @@ export function ServiceRequestFormModal({
                                 <SelectItem value="__empty" disabled>
                                   <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
                                     <AlertCircle className="h-4 w-4 text-black dark:text-white" />
-                                    Không có thiết bị nào
+                                    {t('empty.devices.empty')}
                                   </div>
                                 </SelectItem>
                               )}
@@ -452,7 +458,7 @@ export function ServiceRequestFormModal({
                           </Select>
                           <FormDescription className="mt-1.5 flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
                             <Sparkles className="h-3 w-3 text-black dark:text-white" />
-                            Chọn thiết bị cho yêu cầu
+                            {t('user_service_request.select_device_hint')}
                           </FormDescription>
                           <FormMessage className="mt-1 text-xs" />
                         </FormItem>
@@ -471,7 +477,7 @@ export function ServiceRequestFormModal({
                           : 'text-slate-600 hover:text-slate-800 dark:text-slate-300 dark:hover:text-white'
                       }`}
                     >
-                      Yêu cầu bảo trì
+                      {t('user_service_request.mode.service')}
                     </button>
                     <button
                       type="button"
@@ -482,7 +488,7 @@ export function ServiceRequestFormModal({
                           : 'text-slate-600 hover:text-slate-800 dark:text-slate-300 dark:hover:text-white'
                       }`}
                     >
-                      Yêu cầu mua hàng
+                      {t('user_service_request.mode.purchase')}
                     </button>
                   </div>
 
@@ -499,18 +505,18 @@ export function ServiceRequestFormModal({
                         <FormItem>
                           <FormLabel className="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-300">
                             <FileText className="h-4 w-4 text-black dark:text-white" />
-                            Tiêu đề
+                            {t('user_service_request.title')}
                           </FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="Nhập tiêu đề ngắn gọn cho yêu cầu..."
+                              placeholder={t('user_service_request.title_placeholder')}
                               {...field}
                               disabled={createServiceMutation.isPending}
                               className="h-12 rounded-xl border-slate-300/50 bg-white/60 backdrop-blur-xl transition-all duration-300 hover:border-indigo-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-600/50 dark:bg-slate-700/60 dark:hover:border-indigo-500 dark:focus:border-indigo-400"
                             />
                           </FormControl>
                           <FormDescription className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
-                            Tiêu đề ngắn gọn mô tả vấn đề
+                            {t('user_service_request.title_hint')}
                           </FormDescription>
                           <FormMessage className="mt-1 text-xs" />
                         </FormItem>
@@ -531,11 +537,11 @@ export function ServiceRequestFormModal({
                         <FormItem>
                           <FormLabel className="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-300">
                             <FileText className="h-4 w-4 text-black dark:text-white" />
-                            Mô tả chi tiết
+                            {t('user_service_request.description')}
                           </FormLabel>
                           <FormControl>
                             <Textarea
-                              placeholder="Mô tả chi tiết vấn đề, triệu chứng, thời điểm xảy ra..."
+                              placeholder={t('user_service_request.description_placeholder')}
                               rows={6}
                               {...field}
                               disabled={createServiceMutation.isPending}
@@ -543,7 +549,7 @@ export function ServiceRequestFormModal({
                             />
                           </FormControl>
                           <FormDescription className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
-                            Cung cấp thông tin chi tiết để được hỗ trợ tốt hơn
+                            {t('user_service_request.description_hint')}
                           </FormDescription>
                           <FormMessage className="mt-1 text-xs" />
                         </FormItem>
@@ -561,18 +567,22 @@ export function ServiceRequestFormModal({
                       <FormItem>
                         <FormLabel className="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-300">
                           <FileText className="h-4 w-4 text-black dark:text-white" />
-                          Hình ảnh (tùy chọn)
+                          {t('user_service_request.images.optional')}
                         </FormLabel>
                         <div className="mt-2 flex flex-col gap-2">
                           <label className="relative flex cursor-pointer items-center justify-between rounded-xl border-2 border-dashed border-slate-300/60 bg-white/60 p-3 hover:border-indigo-400 dark:border-slate-600/50 dark:bg-slate-700/60">
                             <div className="flex items-center gap-3">
                               <ImageIcon className="h-5 w-5 text-slate-500 dark:text-slate-300" />
                               <div className="text-sm text-slate-700 dark:text-slate-300">
-                                Kéo & thả hoặc bấm để chọn ảnh
-                                <div className="text-xs text-slate-400">(JPEG, PNG, WebP, GIF)</div>
+                                {t('user_service_request.images.drag_drop')}
+                                <div className="text-xs text-slate-400">
+                                  {t('user_service_request.images.formats')}
+                                </div>
                               </div>
                             </div>
-                            <div className="text-xs text-slate-500">Chọn nhiều</div>
+                            <div className="text-xs text-slate-500">
+                              {t('user_service_request.images.multiple')}
+                            </div>
                             <input
                               type="file"
                               accept="image/*"
@@ -582,7 +592,11 @@ export function ServiceRequestFormModal({
                                 setImages((prev) => {
                                   const combined = [...prev, ...files]
                                   if (combined.length > MAX_IMAGES) {
-                                    toast.error(`Chỉ được tải tối đa ${MAX_IMAGES} ảnh`)
+                                    toast.error(
+                                      t('user_service_request.images.max_error', {
+                                        max: MAX_IMAGES,
+                                      })
+                                    )
                                     return combined.slice(0, MAX_IMAGES)
                                   }
                                   return combined
@@ -602,10 +616,12 @@ export function ServiceRequestFormModal({
                                   key={`${file.name}-${idx}`}
                                   className="relative flex h-20 w-20 flex-col items-center overflow-hidden rounded-lg border bg-white/60 p-1 text-xs shadow-sm dark:bg-slate-700/60"
                                 >
-                                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                                  <img
+                                  <Image
                                     src={URL.createObjectURL(file)}
                                     alt={file.name || ''}
+                                    width={80}
+                                    height={80}
+                                    unoptimized
                                     className="h-full w-full object-cover"
                                   />
                                   <button
@@ -615,7 +631,7 @@ export function ServiceRequestFormModal({
                                     }
                                     className="absolute top-0 right-0 rounded-bl bg-red-600/90 px-1 py-0.5 text-[10px] text-white"
                                   >
-                                    Xóa
+                                    {t('common.delete')}
                                   </button>
                                 </div>
                               ))}
@@ -623,8 +639,7 @@ export function ServiceRequestFormModal({
                           )}
                         </div>
                         <FormDescription className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
-                          Tải lên tối đa 10 ảnh (JPEG, PNG, WebP, GIF). Các ảnh sẽ được gửi cùng yêu
-                          cầu.
+                          {t('user_service_request.images.description')}
                         </FormDescription>
                       </FormItem>
                     </motion.div>
@@ -639,7 +654,7 @@ export function ServiceRequestFormModal({
                         transition={{ delay: 0.4 }}
                       >
                         <div className="rounded-xl border border-dashed border-slate-200/60 px-3 py-3 text-sm text-slate-600 dark:border-slate-600/50 dark:text-slate-400">
-                          Không có SLA cho khách hàng này. Không thể tạo yêu cầu bảo trì.
+                          {t('user_service_request.no_sla_message')}
                         </div>
                       </motion.div>
                     ) : (
@@ -655,11 +670,13 @@ export function ServiceRequestFormModal({
                             <FormItem>
                               <FormLabel className="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-300">
                                 <Flag className="h-4 w-4 text-black dark:text-white" />
-                                Độ ưu tiên
+                                {t('filters.priority_label')}
                               </FormLabel>
                               <div className="space-y-2">
                                 {slasLoading ? (
-                                  <div className="text-xs text-slate-500">Đang tải các SLA...</div>
+                                  <div className="text-xs text-slate-500">
+                                    {t('user_service_request.loading_slas')}
+                                  </div>
                                 ) : (
                                   availableSlas.map((sla) => (
                                     <label
@@ -697,7 +714,7 @@ export function ServiceRequestFormModal({
                               </div>
                               <FormDescription className="mt-1.5 flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
                                 <Sparkles className="h-3 w-3 text-black dark:text-white" />
-                                Đặt mức độ khẩn cấp của yêu cầu
+                                {t('user_service_request.priority_hint')}
                               </FormDescription>
                               <FormMessage className="mt-1 text-xs" />
                             </FormItem>
@@ -717,10 +734,10 @@ export function ServiceRequestFormModal({
                       <div className="rounded-xl border border-slate-200/60 p-4 dark:border-slate-600/50">
                         <div className="mb-3 flex items-center justify-between">
                           <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                            Vật tư tương thích
+                            {t('user_purchase_request.compatible_consumables')}
                           </h3>
                           <Input
-                            placeholder="Tìm kiếm vật tư..."
+                            placeholder={t('user_purchase_request.search_consumables')}
                             value={consumableSearch}
                             onChange={(e) => setConsumableSearch(e.target.value)}
                             className="h-8 w-40 rounded-lg border-slate-300/50 bg-white/70 text-xs dark:border-slate-600/50 dark:bg-slate-700/60"
@@ -730,12 +747,12 @@ export function ServiceRequestFormModal({
                           {compatibleLoading && (
                             <div className="flex items-center gap-2 p-2 text-xs text-slate-500 dark:text-slate-400">
                               <Loader2 className="h-4 w-4 animate-spin text-black dark:text-white" />
-                              Đang tải danh sách...
+                              {t('user_purchase_request.loading_list')}
                             </div>
                           )}
                           {!compatibleLoading && filteredConsumables.length === 0 && (
                             <div className="p-2 text-xs text-slate-500 dark:text-slate-400">
-                              Không có vật tư phù hợp hoặc trống.
+                              {t('user_purchase_request.no_consumables')}
                             </div>
                           )}
                           {filteredConsumables.map((c) => (
@@ -749,7 +766,7 @@ export function ServiceRequestFormModal({
                                 {c.name}
                               </span>
                               <span className="text-[10px] text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
-                                Thêm
+                                {t('common.add')}
                               </span>
                             </button>
                           ))}
@@ -757,11 +774,11 @@ export function ServiceRequestFormModal({
                       </div>
                       <div className="rounded-xl border border-slate-200/60 p-4 dark:border-slate-600/50">
                         <h3 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">
-                          Danh sách cần mua
+                          {t('user_purchase_request.purchase_list')}
                         </h3>
                         {purchaseItems.length === 0 && (
                           <p className="text-xs text-slate-500 dark:text-slate-400">
-                            Chưa có mục nào được thêm.
+                            {t('user_purchase_request.no_items')}
                           </p>
                         )}
                         <div className="space-y-2">
@@ -790,14 +807,14 @@ export function ServiceRequestFormModal({
                                 onClick={() => removePurchaseItem(item.consumableTypeId)}
                                 className="rounded-md px-2 py-1 text-[10px] font-semibold text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30"
                               >
-                                Xóa
+                                {t('common.delete')}
                               </button>
                             </div>
                           ))}
                         </div>
                         {purchaseItems.length > 0 && (
                           <p className="mt-2 text-[10px] text-slate-500 dark:text-slate-400">
-                            Tổng mục: {purchaseItems.length}
+                            {t('user_purchase_request.total_items')}: {purchaseItems.length}
                           </p>
                         )}
                       </div>
@@ -824,12 +841,14 @@ export function ServiceRequestFormModal({
                       {createServiceMutation.isPending || createPurchaseMutation.isPending ? (
                         <>
                           <Loader2 className="mr-2 h-5 w-5 animate-spin text-black dark:text-white" />
-                          Đang tạo...
+                          {t('button.creating')}
                         </>
                       ) : (
                         <>
                           <CheckCircle className="mr-2 h-5 w-5 text-black dark:text-white" />
-                          {mode === 'SERVICE' ? 'Tạo Yêu Cầu Bảo Trì' : 'Tạo Yêu Cầu Mua Hàng'}
+                          {mode === 'SERVICE'
+                            ? t('user_service_request.create.submit')
+                            : t('user_purchase_request.create.submit')}
                         </>
                       )}
                     </Button>
@@ -840,7 +859,7 @@ export function ServiceRequestFormModal({
                       disabled={createServiceMutation.isPending || createPurchaseMutation.isPending}
                       className="h-12 flex-1 border-slate-300/50 bg-white/60 font-semibold backdrop-blur-xl transition-all duration-300 hover:scale-105 hover:bg-white/80 dark:border-slate-600/50 dark:bg-slate-700/60 dark:hover:bg-slate-700/80"
                     >
-                      Hủy
+                      {t('common.cancel')}
                     </Button>
                   </motion.div>
                 </form>

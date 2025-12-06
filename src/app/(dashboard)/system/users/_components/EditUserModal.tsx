@@ -1,7 +1,7 @@
 'use client'
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -32,14 +32,14 @@ import removeEmpty from '@/lib/utils/clean'
 import type { User as UserType, UserRole } from '@/types/users'
 import { toast } from 'sonner'
 
-// Validation schema for editing user
-const editUserSchema = z.object({
-  email: z.string().min(1, 'Email là bắt buộc').email('Email không hợp lệ'),
-  roleId: z.string().min(1, 'Vai trò là bắt buộc'),
-  customerId: z.string().min(1, 'Khách hàng là bắt buộc'),
+// Default validation schema (English) for type inference
+export const editUserSchemaDefault = z.object({
+  email: z.string().min(1, 'Email is required').email('Invalid email address'),
+  roleId: z.string().min(1, 'Role is required'),
+  customerId: z.string().min(1, 'Customer is required'),
 })
 
-type EditUserFormData = z.infer<typeof editUserSchema>
+type EditUserFormData = z.infer<typeof editUserSchemaDefault>
 
 interface EditUserModalProps {
   user: UserType | null
@@ -58,14 +58,28 @@ export function EditUserModal({
   customerCodes = [],
   customerCodeToId = {},
 }: EditUserModalProps) {
+  const { t } = useLocale()
   const [isLoading, setIsLoading] = useState(false)
   const [roles, setRoles] = useState<UserRole[]>([])
   // Dynamic attributes state (edit mode should start with user's existing attributes)
   const [attributes, setAttributes] = useState<Record<string, unknown>>(user?.attributes || {})
   const [attributeErrors, setAttributeErrors] = useState<Record<string, string>>({})
 
+  const localEditUserSchema = useMemo(
+    () =>
+      z.object({
+        email: z
+          .string()
+          .min(1, t('validation.email_required'))
+          .email(t('validation.email_invalid')),
+        roleId: z.string().min(1, t('validation.role_required')),
+        customerId: z.string().min(1, t('validation.customer_required')),
+      }),
+    [t]
+  )
+
   const form = useForm<EditUserFormData>({
-    resolver: zodResolver(editUserSchema),
+    resolver: zodResolver(localEditUserSchema),
     defaultValues: {
       email: '',
       roleId: '',
@@ -113,12 +127,22 @@ export function EditUserModal({
     selectedRole?.attributeSchema
   )
 
+  const loadRoles = useCallback(async () => {
+    try {
+      const rolesData = await getRolesForClient()
+      setRoles(rolesData)
+    } catch (error) {
+      console.error('Error loading roles:', error)
+      toast.error(t('error.loading_roles'))
+    }
+  }, [t])
+
   // Load roles and departments when modal opens
   useEffect(() => {
     if (isOpen) {
       loadRoles()
     }
-  }, [isOpen])
+  }, [isOpen, loadRoles])
 
   // When watchedCustomerCode changes, enforce role restrictions by clearing or setting errors
   useEffect(() => {
@@ -162,18 +186,7 @@ export function EditUserModal({
       // ensure attributes state tracks the current user when opening edit modal
       setAttributes(user.attributes || {})
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user])
-
-  const loadRoles = async () => {
-    try {
-      const rolesData = await getRolesForClient()
-      setRoles(rolesData)
-    } catch (error) {
-      console.error('Error loading roles:', error)
-      toast.error('Không thể tải danh sách vai trò')
-    }
-  }
+  }, [user, form])
 
   const onSubmit = async (data: EditUserFormData) => {
     if (!user) return
@@ -183,7 +196,7 @@ export function EditUserModal({
       const validation = validateAttributes(attributes)
       if (!validation.valid) {
         setAttributeErrors(validation.errors)
-        toast.error('Vui lòng kiểm tra các thuộc tính bổ sung')
+        toast.error(t('error.check_attributes'))
         return
       }
       setAttributeErrors({})
@@ -208,9 +221,7 @@ export function EditUserModal({
 
       // Validate role restriction when switching from SYS to non-SYS
       if (switchedFromSysToNonSys && !currentRoleAllowedForNonSys()) {
-        toast.error(
-          'Vai trò hiện tại không hợp lệ khi chuyển từ SYS sang khách hàng khác. Vui lòng chuyển vai trò về Manager hoặc User.'
-        )
+        toast.error(t('user.role_invalid_for_customer'))
         setIsLoading(false)
         return
       }
@@ -224,15 +235,21 @@ export function EditUserModal({
 
       if (isUser) {
         const updatedUser = result as UserType
-        toast.success('✅ Cập nhật thông tin người dùng thành công')
+        toast.success(t('user.update_success'))
         onUserUpdated(updatedUser)
         onClose()
       } else {
         // Handle structured error payload from backend (validation / 409)
-        const err = result as any
+        const err = result as unknown
         // Map field errors to react-hook-form if possible
-        if (err?.errors && typeof err.errors === 'object') {
-          Object.entries(err.errors).forEach(([field, messages]) => {
+        if (
+          err &&
+          typeof err === 'object' &&
+          'errors' in err &&
+          typeof (err as Record<string, unknown>).errors === 'object'
+        ) {
+          const errorsObj = (err as Record<string, unknown>).errors as Record<string, unknown>
+          Object.entries(errorsObj).forEach(([field, messages]) => {
             const message = Array.isArray(messages) ? String(messages[0]) : String(messages)
             // Map to attribute errors if field targets attributes (e.g. attributes.x)
             if (typeof field === 'string' && field.startsWith('attributes.')) {
@@ -243,21 +260,26 @@ export function EditUserModal({
 
             // Only set known top-level form fields
             if (['email', 'roleId', 'customerId'].includes(field)) {
-              form.setError(field as any, { type: 'server', message })
+              form.setError(field as keyof EditUserFormData, { type: 'server', message })
             }
           })
-          toast.error('❌ Vui lòng kiểm tra các trường có lỗi')
-        } else if (err?.message) {
-          toast.error(String(err.message))
-        } else if (err?.authExpired) {
-          toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.')
+          toast.error(t('validation.fields_error'))
+        } else if (err && typeof err === 'object' && 'message' in err) {
+          toast.error(String((err as { message?: string } | undefined)?.message ?? ''))
+        } else if (
+          err &&
+          typeof err === 'object' &&
+          'authExpired' in err &&
+          (err as { authExpired?: boolean } | undefined)?.authExpired
+        ) {
+          toast.error(t('error.auth_expired'))
         } else {
-          toast.error('❌ Có lỗi xảy ra khi cập nhật thông tin người dùng')
+          toast.error(t('user.update_error'))
         }
       }
     } catch (error) {
       console.error('Error updating user:', error)
-      toast.error('❌ Có lỗi xảy ra khi cập nhật thông tin người dùng')
+      toast.error(t('user.update_error'))
     } finally {
       setIsLoading(false)
     }
@@ -271,14 +293,14 @@ export function EditUserModal({
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <SystemModalLayout
-        title="Chỉnh sửa người dùng"
-        description="Cập nhật thông tin và phân quyền cho người dùng"
+        title={t('user.edit_title')}
+        description={t('user.edit_description')}
         icon={User}
         variant="edit"
         footer={
           <>
             <Button type="button" variant="outline" onClick={handleClose} className="min-w-[100px]">
-              Hủy
+              {t('cancel')}
             </Button>
             <Button
               type="submit"
@@ -289,10 +311,10 @@ export function EditUserModal({
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Đang xử lý...
+                  {t('button.processing')}
                 </>
               ) : (
-                'Cập nhật'
+                t('button.update')
               )}
             </Button>
           </>
@@ -320,11 +342,11 @@ export function EditUserModal({
                 <FormItem>
                   <FormLabel className="flex items-center gap-2 text-sm font-bold text-gray-800">
                     <Mail className="h-4 w-4 text-purple-600" />
-                    Email *
+                    {t('user.email')} <span className="text-muted-foreground">*</span>
                   </FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="Nhập email người dùng"
+                      placeholder={t('user.email_placeholder')}
                       type="email"
                       {...field}
                       className="h-10 rounded-lg border-2 border-gray-200 text-base transition-all focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
@@ -345,7 +367,7 @@ export function EditUserModal({
                   <FormItem>
                     <FormLabel className="flex items-center gap-2 text-sm font-bold text-gray-800">
                       <Shield className="h-4 w-4 text-pink-600" />
-                      Vai trò *
+                      {t('filters.role_label')} <span className="text-muted-foreground">*</span>
                     </FormLabel>
                     <Select
                       onValueChange={field.onChange}
@@ -354,7 +376,7 @@ export function EditUserModal({
                     >
                       <FormControl>
                         <SelectTrigger className="h-10 rounded-lg border-2 border-gray-200 transition-all focus:border-pink-500 focus:ring-2 focus:ring-pink-200">
-                          <SelectValue placeholder="Chọn vai trò" />
+                          <SelectValue placeholder={t('filters.select_role_placeholder')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -384,12 +406,12 @@ export function EditUserModal({
                 <FormItem>
                   <FormLabel className="flex items-center gap-2 text-sm font-bold text-gray-800">
                     <span className="text-lg">🏪</span>
-                    Mã khách hàng *
+                    {t('user.customer_code')} <span className="text-muted-foreground">*</span>
                   </FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger className="h-10 rounded-lg border-2 border-gray-200 transition-all focus:border-amber-500 focus:ring-2 focus:ring-amber-200">
-                        <SelectValue placeholder="Chọn mã khách hàng">
+                        <SelectValue placeholder={t('filters.select_customer_placeholder')}>
                           {field.value &&
                             Object.entries(customerCodeToId).find(
                               ([, id]) => id === field.value

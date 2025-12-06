@@ -1,8 +1,11 @@
 'use client'
 
-import Link from 'next/link'
-import { useEffect, useRef, useState } from 'react'
-import { dashboardClientService } from '@/lib/api/services/dashboard-client.service'
+import { useCallback, useEffect, useState } from 'react'
+import { reportsAnalyticsService } from '@/lib/api/services/reports-analytics.service'
+import type {
+  DeviceCostItem,
+  DeviceCostTrendItem,
+} from '@/lib/api/services/reports-analytics.service'
 import {
   LineChart,
   Line,
@@ -17,10 +20,25 @@ import {
   Cell,
 } from 'recharts'
 import { Skeleton } from '@/components/ui/skeleton'
-import { ChevronRight, DollarSign, AlertCircle, ArrowUpDown, Info } from 'lucide-react'
+import {
+  ChevronRight,
+  DollarSign,
+  AlertCircle,
+  ArrowUpDown,
+  Info,
+  Calendar,
+  Loader2,
+} from 'lucide-react'
 import { MonthPicker } from '@/components/ui/month-picker'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import {
   Table,
   TableBody,
@@ -30,22 +48,65 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-// Badge and cn imports removed — not used in this file
+import { toast } from 'sonner'
+import { CurrencySelector } from '@/components/currency/CurrencySelector'
+import type { CurrencyDataDto } from '@/types/models/currency'
+import { formatCurrencyWithSymbol } from '@/lib/utils/formatters'
 
-type AnyRecord = Record<string, unknown>
+type TimeRangeMode = 'period' | 'range' | 'year'
+type TimeFilter = { period?: string; from?: string; to?: string; year?: string }
 
 export default function MonthlyCostsPage() {
-  const [month, setMonth] = useState(() => {
+  const [baseCurrencyId, setBaseCurrencyId] = useState<string | null>(null) // ⭐ MỚI
+  const [baseCurrency, setBaseCurrency] = useState<CurrencyDataDto | null>(null) // ⭐ MỚI
+  const [showConverted, setShowConverted] = useState(false) // ⭐ MỚI
+
+  const formatCurrency = (n?: number | null, currency?: CurrencyDataDto | null) => {
+    if (n === undefined || n === null || Number.isNaN(Number(n))) return '-'
+    if (currency) {
+      return formatCurrencyWithSymbol(n, currency)
+    }
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND',
+      maximumFractionDigits: 0,
+    }).format(Number(n))
+  }
+
+  // Helper to get value (original or converted)
+  const getValue = (original: number | undefined, converted: number | undefined) => {
+    if (showConverted && converted !== undefined) return converted
+    return original ?? 0
+  }
+
+  const [mode, setMode] = useState<TimeRangeMode>('period')
+  const [period, setPeriod] = useState(() => {
     const now = new Date()
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
   })
+  const [from, setFrom] = useState('')
+  const [to, setTo] = useState('')
+  const [year, setYear] = useState('')
   const [loading, setLoading] = useState(true)
-  const [data, setData] = useState<AnyRecord | null>(null)
-  const [chartLoading, setChartLoading] = useState(true)
-  const [series, setSeries] = useState<Array<{ month: string; totalCogs?: number }> | null>(null)
   const [error, setError] = useState<string | null>(null)
-  // Keep a ref to the latest `series` to avoid adding it to the effect deps
-  const seriesRef = useRef(series)
+  const [costData, setCostData] = useState<{
+    customer: {
+      customerId: string
+      name: string
+      cogsConsumable: number
+      cogsRepair: number
+      totalCogs: number
+      cogsConsumableConverted?: number
+      cogsRepairConverted?: number
+      totalCogsConverted?: number
+    }
+    devices: DeviceCostItem[]
+  } | null>(null)
+  const [deviceCostSeries, setDeviceCostSeries] = useState<DeviceCostTrendItem[] | null>(null)
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null)
+  const [aggregatedCostSeries, setAggregatedCostSeries] = useState<DeviceCostTrendItem[] | null>(
+    null
+  )
 
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(
     null
@@ -59,164 +120,198 @@ export default function MonthlyCostsPage() {
     setSortConfig({ key, direction })
   }
 
-  // View-friendly typed data derived from API response to avoid `any` in JSX
-  const viewData = (() => {
-    const totalCost = data ? Number((data as AnyRecord)['totalCost'] ?? 0) : 0
-    const totalBWPagesCost = data ? Number((data as AnyRecord)['totalBWPagesCost'] ?? 0) : 0
-    const totalColorPagesCost = data ? Number((data as AnyRecord)['totalColorPagesCost'] ?? 0) : 0
-    const byDeviceRaw = data
-      ? Array.isArray((data as AnyRecord)['byDevice'])
-        ? ((data as AnyRecord)['byDevice'] as unknown[])
-        : []
-      : []
-    const byDevice = byDeviceRaw.map((dRaw) => {
-      const d = dRaw as AnyRecord
-      return {
-        deviceId: String(d['deviceId'] ?? ''),
-        totalCost: Number(d['totalCost'] ?? 0),
-        deviceModelName: String(d['deviceModelName'] ?? ''),
-        partNumber: String(d['partNumber'] ?? ''),
-        serialNumber: String(d['serialNumber'] ?? ''),
-      }
-    })
-    return { totalCost, totalBWPagesCost, totalColorPagesCost, byDevice }
-  })()
+  function getCurrentMonth(): string {
+    const now = new Date()
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+  }
 
-  const sortedDevices = [...viewData.byDevice].sort((a, b) => {
-    if (!sortConfig) return 0
-    // @ts-expect-error dynamic key access validated by sortConfig
-    const aValue = a[sortConfig.key]
-    // @ts-expect-error dynamic key access validated by sortConfig
-    const bValue = b[sortConfig.key]
+  function getTwelveMonthsAgo(): string {
+    const now = new Date()
+    const twelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1)
+    return `${twelveMonthsAgo.getFullYear()}-${String(twelveMonthsAgo.getMonth() + 1).padStart(2, '0')}`
+  }
 
-    if (typeof aValue === 'number' && typeof bValue === 'number') {
-      return sortConfig.direction === 'asc' ? aValue - bValue : bValue - aValue
+  function getCurrentYear(): string {
+    const now = new Date()
+    return String(now.getFullYear())
+  }
+
+  const buildTimeForMode = useCallback((): TimeFilter => {
+    const out: TimeFilter = {}
+    if (mode === 'period' && period) out.period = period
+    if (mode === 'range' && from && to) {
+      out.from = from
+      out.to = to
     }
-    return sortConfig.direction === 'asc'
-      ? String(aValue).localeCompare(String(bValue))
-      : String(bValue).localeCompare(String(aValue))
-  })
+    if (mode === 'year' && year) out.year = year
+    return out
+  }, [mode, period, from, to, year])
 
-  const setMonthToCurrent = () => {
-    const now = new Date()
-    setMonth(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`)
-  }
+  const sortedDevices = costData
+    ? [...costData.devices].sort((a, b) => {
+        if (!sortConfig) return 0
+        // @ts-expect-error dynamic key access
+        const aValue = a[sortConfig.key]
+        // @ts-expect-error dynamic key access
+        const bValue = b[sortConfig.key]
+        if (typeof aValue === 'number' && typeof bValue === 'number') {
+          return sortConfig.direction === 'asc' ? aValue - bValue : bValue - aValue
+        }
+        return sortConfig.direction === 'asc'
+          ? String(aValue).localeCompare(String(bValue))
+          : String(bValue).localeCompare(String(aValue))
+      })
+    : []
 
-  const setMonthToPrevious = () => {
-    const now = new Date()
-    now.setMonth(now.getMonth() - 1)
-    setMonth(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`)
-  }
-
-  useEffect(() => {
-    let mounted = true
-    const load = async () => {
-      setLoading(true)
-      setError(null)
+  const loadAggregatedCostSeries = useCallback(
+    async (devices: DeviceCostItem[], params: TimeFilter & { baseCurrencyId?: string }) => {
       try {
-        const resp = await dashboardClientService.getMonthlyCosts(month)
-        if (!mounted) return
-
-        const norm: AnyRecord = {}
-
-        if (resp) {
-          if (resp.summary) {
-            norm.totalCost = resp.summary.totalCost ?? 0
-            norm.totalBWPagesCost = resp.summary.totalPageBW ?? 0
-            norm.totalColorPagesCost = resp.summary.totalPageColor ?? 0
-            norm.byDevice = (resp.devices || []).map((d: unknown) => {
-              const dd = d as AnyRecord
-              const pageBWCost = Number(dd['pageBWCost'] ?? 0)
-              const pageColorCost = Number(dd['pageColorCost'] ?? 0)
-              const rentalCost = Number(dd['rentalCost'] ?? 0)
-              const repairCost = Number(dd['repairCost'] ?? 0)
-              return {
-                deviceId: String(dd['deviceId'] ?? ''),
-                totalCost: Number(
-                  dd['totalCost'] ?? pageBWCost + pageColorCost + rentalCost + repairCost
-                ),
-                deviceModelName: String(dd['deviceModelName'] ?? ''),
-                partNumber: String(dd['partNumber'] ?? ''),
-                serialNumber: String(dd['serialNumber'] ?? ''),
-              }
-            })
-          } else if (resp.kpis || resp.topDevices) {
-            norm.totalCost = resp.kpis?.totalCost ?? 0
-            const tops = resp.topDevices || []
-            norm.totalBWPagesCost = (tops as unknown[]).reduce((acc: number, ddRaw: unknown) => {
-              const d = ddRaw as AnyRecord
-              return acc + Number(d['revenuePageBW'] ?? 0)
-            }, 0)
-            norm.totalColorPagesCost = (tops as unknown[]).reduce((acc: number, ddRaw: unknown) => {
-              const d = ddRaw as AnyRecord
-              return acc + Number(d['revenuePageColor'] ?? 0)
-            }, 0)
-            norm.byDevice = (tops as unknown[]).map((dRaw: unknown) => {
-              const d = dRaw as AnyRecord
-              return {
-                deviceId: String(d['deviceId'] ?? ''),
-                totalCost: Number(
-                  d['totalRevenue'] ??
-                    d['totalCost'] ??
-                    Number(d['revenuePageBW'] ?? 0) + Number(d['revenuePageColor'] ?? 0)
-                ),
-                deviceModelName: String(d['deviceModelName'] ?? ''),
-                partNumber: String(d['partNumber'] ?? ''),
-                serialNumber: String(d['serialNumber'] ?? ''),
-              }
-            })
-          } else {
-            norm.totalCost = resp.totalCost ?? resp.total ?? 0
-            norm.totalBWPagesCost = resp.totalBWPagesCost ?? resp.totalPageBW ?? 0
-            norm.totalColorPagesCost = resp.totalColorPagesCost ?? resp.totalPageColor ?? 0
-            norm.byDevice = resp.byDevice || resp.devices || []
+        const allSeries: DeviceCostTrendItem[][] = []
+        for (const device of devices) {
+          try {
+            const res = await reportsAnalyticsService.getDeviceCost(device.deviceId, params)
+            if (res.success && res.data && res.data.cost) {
+              allSeries.push(res.data.cost)
+            }
+          } catch (err) {
+            console.warn(`Failed to load cost for device ${device.deviceId}`, err)
           }
         }
 
-        setData(norm)
-        try {
-          const overview = await dashboardClientService.getOverview(month)
-          if (mounted && overview?.monthlySeries?.points) {
-            const pts = (overview.monthlySeries.points as unknown[]).map((pRaw: unknown) => {
-              const p = pRaw as AnyRecord
-              return {
-                month: String(p['month'] ?? ''),
-                totalCogs: Number(p['totalCogs'] ?? p['totalCost'] ?? 0),
-              }
+        // Aggregate by month
+        const monthMap = new Map<
+          string,
+          { cogsConsumable: number; cogsRepair: number; totalCogs: number }
+        >()
+        allSeries.forEach((series) => {
+          series.forEach((item) => {
+            const existing = monthMap.get(item.month) || {
+              cogsConsumable: 0,
+              cogsRepair: 0,
+              totalCogs: 0,
+            }
+            monthMap.set(item.month, {
+              cogsConsumable:
+                existing.cogsConsumable +
+                (showConverted
+                  ? (item.cogsConsumableConverted ?? item.cogsConsumable)
+                  : item.cogsConsumable),
+              cogsRepair:
+                existing.cogsRepair +
+                (showConverted ? (item.cogsRepairConverted ?? item.cogsRepair) : item.cogsRepair),
+              totalCogs:
+                existing.totalCogs +
+                (showConverted ? (item.totalCogsConverted ?? item.totalCogs) : item.totalCogs),
             })
-            setSeries(pts)
-            // update ref as well so the outer effect logic can read latest value
-            seriesRef.current = pts
-          }
-        } catch (err) {
-          console.warn('Failed to load monthly series for chart', err)
-        } finally {
-          if (mounted) setChartLoading(false)
+          })
+        })
+
+        const aggregated = Array.from(monthMap.entries())
+          .map(([month, values]) => ({
+            month,
+            ...values,
+          }))
+          .sort((a, b) => a.month.localeCompare(b.month))
+
+        setAggregatedCostSeries(aggregated.length > 0 ? aggregated : null)
+      } catch (err) {
+        console.error('Failed to aggregate cost series', err)
+        setAggregatedCostSeries(null)
+      }
+    },
+    [showConverted]
+  )
+
+  const loadCost = useCallback(async () => {
+    const params = buildTimeForMode()
+    if (mode === 'period' && !params.period) {
+      toast.warning('Vui lòng chọn tháng')
+      return
+    }
+    if (mode === 'range' && (!params.from || !params.to)) {
+      toast.warning('Vui lòng chọn khoảng thời gian')
+      return
+    }
+    if (mode === 'year' && !params.year) {
+      toast.warning('Vui lòng chọn năm')
+      return
+    }
+
+    setLoading(true)
+    setError(null)
+    try {
+      const res = await reportsAnalyticsService.getCustomerCost({
+        ...params,
+        baseCurrencyId: baseCurrencyId || undefined, // ⭐ MỚI
+      })
+      if (res.success && res.data) {
+        setCostData(res.data)
+        if (res.data.baseCurrency) {
+          setBaseCurrency(res.data.baseCurrency) // ⭐ MỚI
         }
 
-        if (mounted && (!seriesRef.current || seriesRef.current.length === 0)) {
-          const totalFallback = resp
-            ? (resp.totalCost ?? resp.total ?? resp.summary?.totalCost ?? resp.kpis?.totalCost)
-            : null
-          if (totalFallback !== null && totalFallback !== undefined) {
-            const fallback = [{ month, totalCogs: totalFallback }]
-            setSeries(fallback)
-            seriesRef.current = fallback
-          }
+        // Load aggregated cost series for range/year modes
+        if ((mode === 'range' || mode === 'year') && res.data.devices.length > 0) {
+          await loadAggregatedCostSeries(res.data.devices, {
+            ...params,
+            baseCurrencyId: baseCurrencyId || undefined, // ⭐ MỚI
+          })
+        } else {
+          setAggregatedCostSeries(null)
+        }
+      } else {
+        const msg = res.message || 'Không thể tải dữ liệu'
+        if (msg.toLowerCase().includes('no data')) {
+          toast.warning('Không có dữ liệu cho kỳ này')
+        } else {
+          toast.error(msg)
+        }
+        setCostData(null)
+        setError(msg)
+        setAggregatedCostSeries(null)
+      }
+    } catch (err) {
+      console.error('Failed to load cost', err)
+      setError('Không thể tải dữ liệu chi phí')
+      toast.error('Không thể tải dữ liệu chi phí')
+      setAggregatedCostSeries(null)
+    } finally {
+      setLoading(false)
+    }
+  }, [buildTimeForMode, mode, baseCurrencyId, loadAggregatedCostSeries])
+
+  const loadDeviceCost = useCallback(
+    async (deviceId: string) => {
+      const params = buildTimeForMode()
+      try {
+        const res = await reportsAnalyticsService.getDeviceCost(deviceId, {
+          ...params,
+          baseCurrencyId: baseCurrencyId || undefined, // ⭐ MỚI
+        })
+        if (res.success && res.data) {
+          setDeviceCostSeries(res.data.cost)
+        } else {
+          setDeviceCostSeries(null)
         }
       } catch (err) {
-        console.error('Failed to load monthly costs', err)
-        setError('Không thể tải dữ liệu chi phí')
-      } finally {
-        if (mounted) setLoading(false)
+        console.error('Failed to load device cost', err)
+        setDeviceCostSeries(null)
       }
-    }
+    },
+    [buildTimeForMode, baseCurrencyId]
+  )
 
-    void load()
-    return () => {
-      mounted = false
+  useEffect(() => {
+    void loadCost()
+  }, [loadCost])
+
+  useEffect(() => {
+    if (selectedDeviceId) {
+      void loadDeviceCost(selectedDeviceId)
+    } else {
+      setDeviceCostSeries(null)
     }
-  }, [month])
+  }, [selectedDeviceId, mode, period, from, to, year, loadDeviceCost])
 
   return (
     <div className="min-h-screen from-slate-50 via-blue-50 to-indigo-50 px-4 py-8 sm:px-6 lg:px-8 dark:from-slate-950 dark:via-blue-950 dark:to-indigo-950">
@@ -232,22 +327,89 @@ export default function MonthlyCostsPage() {
                 Theo dõi và quản lý chi phí hoạt động hàng tháng
               </p>
             </div>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={setMonthToPrevious}>
-                  Tháng trước
-                </Button>
-                <Button variant="outline" size="sm" onClick={setMonthToCurrent}>
-                  Tháng này
-                </Button>
-              </div>
-              <div className="flex items-center gap-3">
-                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                  Chọn tháng:
-                </label>
-                <div className="w-40">
-                  <MonthPicker value={month} onChange={setMonth} />
+            <div className="flex flex-col gap-3">
+              <Card className="p-3">
+                <div className="flex items-center gap-3">
+                  <Calendar className="text-muted-foreground h-4 w-4" />
+                  <Select
+                    value={mode}
+                    onValueChange={(v) => {
+                      const newMode = v as TimeRangeMode
+                      setMode(newMode)
+                      if (newMode === 'period') {
+                        setPeriod(getCurrentMonth())
+                        setFrom('')
+                        setTo('')
+                        setYear('')
+                      } else if (newMode === 'range') {
+                        setFrom(getTwelveMonthsAgo())
+                        setTo(getCurrentMonth())
+                        setPeriod('')
+                        setYear('')
+                      } else if (newMode === 'year') {
+                        setYear(getCurrentYear())
+                        setPeriod('')
+                        setFrom('')
+                        setTo('')
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="w-32">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="period">Tháng</SelectItem>
+                      <SelectItem value="range">Khoảng thời gian</SelectItem>
+                      <SelectItem value="year">Năm</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {mode === 'period' && <MonthPicker value={period} onChange={setPeriod} />}
+                  {mode === 'range' && (
+                    <>
+                      <MonthPicker placeholder="Từ tháng" value={from} onChange={setFrom} />
+                      <MonthPicker placeholder="Đến tháng" value={to} onChange={setTo} />
+                    </>
+                  )}
+                  {mode === 'year' && (
+                    <input
+                      type="number"
+                      className="h-10 w-28 rounded border p-2"
+                      placeholder="YYYY"
+                      value={year}
+                      onChange={(e) => setYear(e.target.value)}
+                    />
+                  )}
+                  <Button onClick={loadCost} disabled={loading}>
+                    {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    Tải dữ liệu
+                  </Button>
                 </div>
+              </Card>
+              <div className="flex items-center gap-3">
+                <CurrencySelector
+                  value={baseCurrencyId}
+                  onChange={(id) => {
+                    setBaseCurrencyId(id)
+                    setBaseCurrency(null)
+                  }}
+                  onSelect={(currency) => {
+                    setBaseCurrency(currency)
+                  }}
+                  label="Tiền tệ chuẩn"
+                  placeholder="Chọn tiền tệ để convert"
+                  optional
+                  className="w-64"
+                />
+                {baseCurrencyId && (
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowConverted(!showConverted)}
+                    className="gap-2"
+                  >
+                    <DollarSign className="h-4 w-4" />
+                    {showConverted ? 'Hiển thị giá trị gốc' : 'Hiển thị giá trị đã convert'}
+                  </Button>
+                )}
               </div>
             </div>
           </div>
@@ -277,10 +439,10 @@ export default function MonthlyCostsPage() {
               <p className="mt-1 text-sm text-red-700 dark:text-red-300">{error}</p>
             </div>
           </div>
-        ) : !data ? (
+        ) : !costData ? (
           <div className="rounded-xl bg-slate-100 p-12 text-center dark:bg-slate-800">
             <p className="text-lg text-slate-600 dark:text-slate-400">
-              Không có dữ liệu cho tháng này
+              Không có dữ liệu cho kỳ này
             </p>
           </div>
         ) : (
@@ -294,7 +456,7 @@ export default function MonthlyCostsPage() {
                     <div>
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                          Tổng Chi Phí
+                          Tổng Chi Phí (COGS)
                         </p>
                         <TooltipProvider>
                           <Tooltip>
@@ -302,13 +464,19 @@ export default function MonthlyCostsPage() {
                               <Info className="h-4 w-4 text-slate-400" />
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p>Tổng chi phí bao gồm in ấn, thuê máy và sửa chữa</p>
+                              <p>Tổng chi phí giá vốn bao gồm vật tư tiêu hao và sửa chữa</p>
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
                       </div>
                       <h3 className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
-                        ${viewData.totalCost.toLocaleString()}
+                        {formatCurrency(
+                          getValue(
+                            costData.customer.totalCogs,
+                            costData.customer.totalCogsConverted
+                          ),
+                          baseCurrency
+                        )}
                       </h3>
                     </div>
                     <div className="rounded-lg bg-blue-100 p-3 dark:bg-blue-900/30">
@@ -316,19 +484,19 @@ export default function MonthlyCostsPage() {
                     </div>
                   </div>
                   <p className="mt-4 text-xs text-slate-500 dark:text-slate-500">
-                    Chi phí toàn bộ trong tháng {month}
+                    Kỳ: {mode === 'period' ? period : mode === 'range' ? `${from} đến ${to}` : year}
                   </p>
                 </CardContent>
               </Card>
 
-              {/* B/W Pages Cost Card */}
+              {/* Consumable Cost Card */}
               <Card className="border-slate-200 shadow-sm transition-all hover:shadow-md dark:border-slate-700 dark:bg-slate-800">
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between">
                     <div>
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                          Chi Phí B/W
+                          Chi Phí Vật Tư
                         </p>
                         <TooltipProvider>
                           <Tooltip>
@@ -336,39 +504,29 @@ export default function MonthlyCostsPage() {
                               <Info className="h-4 w-4 text-slate-400" />
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p>Chi phí cho các trang in đen trắng</p>
+                              <p>Chi phí vật tư tiêu hao (consumables)</p>
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
                       </div>
                       <h3 className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
-                        ${viewData.totalBWPagesCost.toLocaleString()}
+                        {formatCurrency(
+                          getValue(
+                            costData.customer.cogsConsumable,
+                            costData.customer.cogsConsumableConverted
+                          ),
+                          baseCurrency
+                        )}
                       </h3>
                     </div>
-                    <div className="h-16 w-16">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={[
-                              { value: viewData.totalBWPagesCost },
-                              { value: viewData.totalCost - viewData.totalBWPagesCost },
-                            ]}
-                            innerRadius={20}
-                            outerRadius={30}
-                            paddingAngle={0}
-                            dataKey="value"
-                          >
-                            <Cell fill="#64748b" />
-                            <Cell fill="#e2e8f0" />
-                          </Pie>
-                        </PieChart>
-                      </ResponsiveContainer>
+                    <div className="rounded-lg bg-green-100 p-3 dark:bg-green-900/30">
+                      <DollarSign className="h-6 w-6 text-green-600 dark:text-green-400" />
                     </div>
                   </div>
                   <div className="mt-2 flex items-center gap-1">
                     <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                      {viewData.totalCost > 0
-                        ? `${((viewData.totalBWPagesCost / viewData.totalCost) * 100).toFixed(1)}%`
+                      {costData.customer.totalCogs > 0
+                        ? `${((costData.customer.cogsConsumable / costData.customer.totalCogs) * 100).toFixed(1)}%`
                         : '0%'}
                     </span>
                     <p className="text-xs text-slate-500 dark:text-slate-500">tổng chi phí</p>
@@ -376,14 +534,14 @@ export default function MonthlyCostsPage() {
                 </CardContent>
               </Card>
 
-              {/* Color Pages Cost Card */}
+              {/* Repair Cost Card */}
               <Card className="border-slate-200 shadow-sm transition-all hover:shadow-md dark:border-slate-700 dark:bg-slate-800">
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between">
                     <div>
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                          Chi Phí Màu
+                          Chi Phí Sửa Chữa
                         </p>
                         <TooltipProvider>
                           <Tooltip>
@@ -391,39 +549,29 @@ export default function MonthlyCostsPage() {
                               <Info className="h-4 w-4 text-slate-400" />
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p>Chi phí cho các trang in màu</p>
+                              <p>Chi phí sửa chữa thiết bị</p>
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
                       </div>
                       <h3 className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
-                        ${viewData.totalColorPagesCost.toLocaleString()}
+                        {formatCurrency(
+                          getValue(
+                            costData.customer.cogsRepair,
+                            costData.customer.cogsRepairConverted
+                          ),
+                          baseCurrency
+                        )}
                       </h3>
                     </div>
-                    <div className="h-16 w-16">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={[
-                              { value: viewData.totalColorPagesCost },
-                              { value: viewData.totalCost - viewData.totalColorPagesCost },
-                            ]}
-                            innerRadius={20}
-                            outerRadius={30}
-                            paddingAngle={0}
-                            dataKey="value"
-                          >
-                            <Cell fill="#8b5cf6" />
-                            <Cell fill="#e2e8f0" />
-                          </Pie>
-                        </PieChart>
-                      </ResponsiveContainer>
+                    <div className="rounded-lg bg-orange-100 p-3 dark:bg-orange-900/30">
+                      <DollarSign className="h-6 w-6 text-orange-600 dark:text-orange-400" />
                     </div>
                   </div>
                   <div className="mt-2 flex items-center gap-1">
                     <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                      {viewData.totalCost > 0
-                        ? `${((viewData.totalColorPagesCost / viewData.totalCost) * 100).toFixed(1)}%`
+                      {costData.customer.totalCogs > 0
+                        ? `${((costData.customer.cogsRepair / costData.customer.totalCogs) * 100).toFixed(1)}%`
                         : '0%'}
                     </span>
                     <p className="text-xs text-slate-500 dark:text-slate-500">tổng chi phí</p>
@@ -431,6 +579,89 @@ export default function MonthlyCostsPage() {
                 </CardContent>
               </Card>
             </div>
+
+            {/* Cost Breakdown Pie Chart */}
+            {costData && costData.customer.totalCogs > 0 && (
+              <Card className="border-slate-200 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+                <CardHeader>
+                  <CardTitle className="text-xl font-bold text-slate-900 dark:text-white">
+                    Phân Bổ Chi Phí
+                  </CardTitle>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    Tỷ lệ chi phí vật tư và sửa chữa
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-center">
+                    <div style={{ width: '100%', maxWidth: 400, height: 300 }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={[
+                              {
+                                name: 'Vật tư',
+                                value: costData.customer.cogsConsumable,
+                                color: '#10b981',
+                              },
+                              {
+                                name: 'Sửa chữa',
+                                value: costData.customer.cogsRepair,
+                                color: '#f59e0b',
+                              },
+                            ]}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            label={(props: { name?: string; percent?: number }) =>
+                              `${props.name ?? ''}: ${((props.percent ?? 0) * 100).toFixed(1)}%`
+                            }
+                            outerRadius={100}
+                            fill="#8884d8"
+                            dataKey="value"
+                          >
+                            <Cell fill="#10b981" />
+                            <Cell fill="#f59e0b" />
+                          </Pie>
+                          <RechartsTooltip
+                            formatter={(value: number) => [formatCurrency(value), 'Chi phí']}
+                            contentStyle={{
+                              backgroundColor: '#1e293b',
+                              border: 'none',
+                              borderRadius: '8px',
+                              color: '#fff',
+                            }}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex justify-center gap-6">
+                    <div className="flex items-center gap-2">
+                      <div className="h-4 w-4 rounded bg-green-500"></div>
+                      <span className="text-sm">
+                        Vật tư: {formatCurrency(costData.customer.cogsConsumable)} (
+                        {(
+                          (costData.customer.cogsConsumable / costData.customer.totalCogs) *
+                          100
+                        ).toFixed(1)}
+                        %)
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="h-4 w-4 rounded bg-orange-500"></div>
+                      <span className="text-sm">
+                        Sửa chữa: {formatCurrency(costData.customer.cogsRepair)} (
+                        {(
+                          (costData.customer.cogsRepair / costData.customer.totalCogs) *
+                          100
+                        ).toFixed(1)}
+                        %)
+                      </span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Device Breakdown */}
             <Card className="border-slate-200 shadow-sm dark:border-slate-700 dark:bg-slate-800">
@@ -443,54 +674,74 @@ export default function MonthlyCostsPage() {
                 </p>
               </CardHeader>
               <CardContent>
-                {viewData.byDevice && viewData.byDevice.length > 0 ? (
+                {costData.devices && costData.devices.length > 0 ? (
                   <div className="rounded-md border">
                     <Table>
                       <TableHeader>
                         <TableRow>
                           <TableHead className="w-[300px]">
-                            <Button variant="ghost" onClick={() => handleSort('deviceModelName')}>
+                            <Button variant="ghost" onClick={() => handleSort('model')}>
                               Thiết bị
                               <ArrowUpDown className="ml-2 h-4 w-4" />
                             </Button>
                           </TableHead>
-                          <TableHead>Part Number</TableHead>
+                          <TableHead>Serial Number</TableHead>
                           <TableHead className="text-right">
-                            <Button variant="ghost" onClick={() => handleSort('totalCost')}>
-                              Chi phí
+                            <Button variant="ghost" onClick={() => handleSort('totalCogs')}>
+                              Tổng chi phí
                               <ArrowUpDown className="ml-2 h-4 w-4" />
                             </Button>
                           </TableHead>
+                          <TableHead className="text-right">Vật tư</TableHead>
+                          <TableHead className="text-right">Sửa chữa</TableHead>
                           <TableHead className="text-right">% Tổng</TableHead>
                           <TableHead className="w-[50px]"></TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {sortedDevices.map((d, idx) => (
-                          <TableRow key={d.deviceId ?? idx}>
+                        {sortedDevices.map((d) => (
+                          <TableRow key={d.deviceId}>
                             <TableCell className="font-medium">
                               <div className="flex flex-col">
                                 <span className="text-slate-900 dark:text-white">
-                                  {d.deviceModelName ?? d.serialNumber ?? '—'}
+                                  {d.model ?? '—'}
                                 </span>
-                                <span className="text-xs text-slate-500">{d.serialNumber}</span>
                               </div>
                             </TableCell>
-                            <TableCell>{d.partNumber ?? '—'}</TableCell>
+                            <TableCell>{d.serialNumber ?? '—'}</TableCell>
                             <TableCell className="text-right font-bold">
-                              ${d.totalCost.toLocaleString()}
+                              {formatCurrency(
+                                getValue(d.totalCogs, d.totalCogsConverted),
+                                baseCurrency
+                              )}
                             </TableCell>
                             <TableCell className="text-right">
-                              {viewData.totalCost > 0
-                                ? `${((d.totalCost / viewData.totalCost) * 100).toFixed(1)}%`
+                              {formatCurrency(
+                                getValue(d.cogsConsumable, d.cogsConsumableConverted),
+                                baseCurrency
+                              )}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {formatCurrency(
+                                getValue(d.cogsRepair, d.cogsRepairConverted),
+                                baseCurrency
+                              )}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {costData.customer.totalCogs > 0
+                                ? `${((d.totalCogs / costData.customer.totalCogs) * 100).toFixed(1)}%`
                                 : '0%'}
                             </TableCell>
                             <TableCell>
-                              <Link href={`/user/devices/${encodeURIComponent(d.deviceId ?? '')}`}>
-                                <Button variant="ghost" size="icon">
-                                  <ChevronRight className="h-4 w-4" />
-                                </Button>
-                              </Link>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => {
+                                  setSelectedDeviceId(d.deviceId)
+                                }}
+                              >
+                                <ChevronRight className="h-4 w-4" />
+                              </Button>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -508,42 +759,33 @@ export default function MonthlyCostsPage() {
               </CardContent>
             </Card>
 
-            {/* Chart Section */}
-            <Card className="border-slate-200 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-              <CardHeader>
-                <CardTitle className="text-xl font-bold text-slate-900 dark:text-white">
-                  Xu Hướng Chi Phí
-                </CardTitle>
-                <p className="text-sm text-slate-600 dark:text-slate-400">
-                  Biểu đồ chi phí theo từng tháng
-                </p>
-              </CardHeader>
-              <CardContent>
-                {chartLoading || !series ? (
-                  <div className="flex h-64 items-center justify-center rounded-lg bg-slate-50 dark:bg-slate-700/50">
-                    <div className="animate-pulse">
-                      <div className="h-12 w-12 rounded-lg bg-slate-300 dark:bg-slate-600"></div>
-                    </div>
-                  </div>
-                ) : (
+            {/* Aggregated Cost Chart - for range/year modes */}
+            {!selectedDeviceId && aggregatedCostSeries && aggregatedCostSeries.length > 0 && (
+              <Card className="border-slate-200 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+                <CardHeader>
+                  <CardTitle className="text-xl font-bold text-slate-900 dark:text-white">
+                    Xu Hướng Chi Phí Tổng Quan
+                  </CardTitle>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    Biểu đồ chi phí tổng hợp theo từng tháng
+                  </p>
+                </CardHeader>
+                <CardContent>
                   <div style={{ width: '100%', height: 320 }}>
                     <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={series} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                        <defs>
-                          <linearGradient id="colorCogs" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
-                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                          </linearGradient>
-                        </defs>
+                      <LineChart
+                        data={aggregatedCostSeries}
+                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                      >
                         <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                         <XAxis dataKey="month" stroke="#64748b" />
                         <YAxis
                           stroke="#64748b"
-                          width={60}
-                          tickFormatter={(v) => `$${Number(v).toLocaleString()}`}
+                          width={80}
+                          tickFormatter={(v) => formatCurrency(Number(v))}
                         />
                         <RechartsTooltip
-                          formatter={(value: number) => [`$${value.toLocaleString()}`, 'Chi phí']}
+                          formatter={(value: number) => [formatCurrency(value), 'Chi phí']}
                           contentStyle={{
                             backgroundColor: '#1e293b',
                             border: 'none',
@@ -562,14 +804,105 @@ export default function MonthlyCostsPage() {
                           strokeWidth={3}
                           dot={{ fill: '#3b82f6', r: 4 }}
                           activeDot={{ r: 6 }}
-                          name="Chi phí"
+                          name="Tổng chi phí"
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="cogsConsumable"
+                          stroke="#10b981"
+                          strokeWidth={3}
+                          dot={{ fill: '#10b981', r: 4 }}
+                          activeDot={{ r: 6 }}
+                          name="Vật tư"
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="cogsRepair"
+                          stroke="#f59e0b"
+                          strokeWidth={3}
+                          dot={{ fill: '#f59e0b', r: 4 }}
+                          activeDot={{ r: 6 }}
+                          name="Sửa chữa"
                         />
                       </LineChart>
                     </ResponsiveContainer>
                   </div>
-                )}
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Device Cost Chart Section */}
+            {selectedDeviceId && deviceCostSeries && deviceCostSeries.length > 0 && (
+              <Card className="border-slate-200 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+                <CardHeader>
+                  <CardTitle className="text-xl font-bold text-slate-900 dark:text-white">
+                    Xu Hướng Chi Phí Thiết Bị
+                  </CardTitle>
+                  <CardDescription>
+                    {costData.devices.find((d) => d.deviceId === selectedDeviceId)?.model} -{' '}
+                    {costData.devices.find((d) => d.deviceId === selectedDeviceId)?.serialNumber}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div style={{ width: '100%', height: 320 }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart
+                        data={deviceCostSeries}
+                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                        <XAxis dataKey="month" stroke="#64748b" />
+                        <YAxis
+                          stroke="#64748b"
+                          width={80}
+                          tickFormatter={(v) => formatCurrency(Number(v))}
+                        />
+                        <RechartsTooltip
+                          formatter={(value: number) => [formatCurrency(value), 'Chi phí']}
+                          contentStyle={{
+                            backgroundColor: '#1e293b',
+                            border: 'none',
+                            borderRadius: '8px',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                            color: '#fff',
+                          }}
+                          itemStyle={{ color: '#fff' }}
+                          labelStyle={{ color: '#94a3b8', marginBottom: '0.5rem' }}
+                        />
+                        <Legend />
+                        <Line
+                          type="monotone"
+                          dataKey="totalCogs"
+                          stroke="#3b82f6"
+                          strokeWidth={3}
+                          dot={{ fill: '#3b82f6', r: 4 }}
+                          activeDot={{ r: 6 }}
+                          name="Tổng chi phí"
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="cogsConsumable"
+                          stroke="#10b981"
+                          strokeWidth={3}
+                          dot={{ fill: '#10b981', r: 4 }}
+                          activeDot={{ r: 6 }}
+                          name="Vật tư"
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="cogsRepair"
+                          stroke="#f59e0b"
+                          strokeWidth={3}
+                          dot={{ fill: '#f59e0b', r: 4 }}
+                          activeDot={{ r: 6 }}
+                          name="Sửa chữa"
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
         )}
       </div>

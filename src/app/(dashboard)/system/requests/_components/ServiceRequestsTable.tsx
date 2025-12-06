@@ -47,11 +47,14 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog'
-import { ServiceRequestStatus, Priority } from '@/constants/status'
+import { ServiceRequestStatus, Priority, SERVICE_REQUEST_STATUS_DISPLAY } from '@/constants/status'
 import type { ServiceRequest, UpdateServiceRequestStatusDto } from '@/types/models/service-request'
 import { useServiceRequestsQuery } from '@/lib/hooks/queries/useServiceRequestsQuery'
 import { TableSkeleton } from '@/components/system/TableSkeleton'
 import { cn } from '@/lib/utils'
+import { useLocale } from '@/components/providers/LocaleProvider'
+import { getAllowedTransitions } from '@/lib/utils/status-flow'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 
 type ServiceRequestRow = ServiceRequest
 type UpdateStatusPayload = {
@@ -62,20 +65,20 @@ type UpdateStatusPayload = {
   closedAt?: string
 }
 
-const statusOptions = [
-  { label: 'Mở', value: ServiceRequestStatus.OPEN },
-  { label: 'Đang xử lý', value: ServiceRequestStatus.IN_PROGRESS },
-  { label: 'Đã duyệt', value: ServiceRequestStatus.APPROVED },
-  { label: 'Đã xử lý', value: ServiceRequestStatus.RESOLVED },
-  { label: 'Đóng', value: ServiceRequestStatus.CLOSED },
+const getStatusOptions = (t: (key: string) => string) => [
+  { label: t('requests.service.status.open'), value: ServiceRequestStatus.OPEN },
+  { label: t('requests.service.status.in_progress'), value: ServiceRequestStatus.IN_PROGRESS },
+  { label: t('requests.service.status.approved'), value: ServiceRequestStatus.APPROVED },
+  { label: t('requests.service.status.resolved'), value: ServiceRequestStatus.RESOLVED },
+  { label: t('requests.service.status.closed'), value: ServiceRequestStatus.CLOSED },
 ]
 
-const priorityOptions = [
-  { label: 'Tất cả ưu tiên', value: 'all' },
-  { label: 'Thấp', value: Priority.LOW },
-  { label: 'Trung bình', value: Priority.NORMAL },
-  { label: 'Cao', value: Priority.HIGH },
-  { label: 'Khẩn cấp', value: Priority.URGENT },
+const getPriorityOptions = (t: (key: string) => string) => [
+  { label: t('requests.service.priority.all'), value: 'all' },
+  { label: t('requests.service.priority.low'), value: Priority.LOW },
+  { label: t('requests.service.priority.normal'), value: Priority.NORMAL },
+  { label: t('requests.service.priority.high'), value: Priority.HIGH },
+  { label: t('requests.service.priority.urgent'), value: Priority.URGENT },
 ]
 
 function renderTimestamp(timestamp?: string) {
@@ -95,6 +98,7 @@ function useDebouncedValue<T>(value: T, delay = 400) {
 }
 
 export function ServiceRequestsTable() {
+  const { t } = useLocale()
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 })
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<ServiceRequestStatus | 'all'>('all')
@@ -117,6 +121,8 @@ export function ServiceRequestsTable() {
   })
 
   const debouncedSearch = useDebouncedValue(search, 400)
+  const statusOptions = getStatusOptions(t)
+  const priorityOptions = getPriorityOptions(t)
 
   const handleResetFilters = () => {
     setSearch('')
@@ -130,7 +136,7 @@ export function ServiceRequestsTable() {
   const activeFilters: Array<{ label: string; value: string; onRemove: () => void }> = []
   if (search) {
     activeFilters.push({
-      label: `Tìm kiếm: "${search}"`,
+      label: `${t('filters.search')}: "${search}"`,
       value: search,
       onRemove: () => setSearch(''),
     })
@@ -139,7 +145,7 @@ export function ServiceRequestsTable() {
     const statusLabel =
       statusOptions.find((opt) => opt.value === statusFilter)?.label || statusFilter
     activeFilters.push({
-      label: `Trạng thái: ${statusLabel}`,
+      label: `${t('filters.status_label')}: ${statusLabel}`,
       value: statusFilter,
       onRemove: () => setStatusFilter('all'),
     })
@@ -148,35 +154,35 @@ export function ServiceRequestsTable() {
     const priorityLabel =
       priorityOptions.find((opt) => opt.value === priorityFilter)?.label || priorityFilter
     activeFilters.push({
-      label: `Ưu tiên: ${priorityLabel}`,
+      label: `${t('requests.service.table.priority')}: ${priorityLabel}`,
       value: priorityFilter,
       onRemove: () => setPriorityFilter('all'),
     })
   }
   if (customerFilter) {
     activeFilters.push({
-      label: `Khách hàng: ${customerFilter}`,
+      label: `${t('customer')}: ${customerFilter}`,
       value: customerFilter,
       onRemove: () => setCustomerFilter(''),
     })
   }
   if (deviceFilter) {
     activeFilters.push({
-      label: `Thiết bị: ${deviceFilter}`,
+      label: `${t('requests.service.table.device')}: ${deviceFilter}`,
       value: deviceFilter,
       onRemove: () => setDeviceFilter(''),
     })
   }
   if (assignedToFilter) {
     activeFilters.push({
-      label: `Người phụ trách: ${assignedToFilter}`,
+      label: `${t('requests.service.table.assigned_to')}: ${assignedToFilter}`,
       value: assignedToFilter,
       onRemove: () => setAssignedToFilter(''),
     })
   }
   if (sorting.sortBy !== 'createdAt' || sorting.sortOrder !== 'desc') {
     activeFilters.push({
-      label: `Sắp xếp: ${sorting.sortBy} (${sorting.sortOrder === 'asc' ? 'Tăng dần' : 'Giảm dần'})`,
+      label: `${t('filters.sorted_by')}: ${sorting.sortBy} (${sorting.sortOrder === 'asc' ? t('sort.asc') : t('sort.desc')})`,
       value: `${sorting.sortBy}-${sorting.sortOrder}`,
       onRemove: () => setSorting({ sortBy: 'createdAt', sortOrder: 'desc' }),
     })
@@ -188,31 +194,31 @@ export function ServiceRequestsTable() {
       <StatsCards
         cards={[
           {
-            label: 'Tổng yêu cầu',
+            label: t('requests.service.stats.total'),
             value: summary.total,
             icon: <FileText className="h-6 w-6" />,
             borderColor: 'blue',
           },
           {
-            label: 'Đang mở',
+            label: t('requests.service.stats.open'),
             value: summary.open,
             icon: <FileText className="h-6 w-6" />,
             borderColor: 'red',
           },
           {
-            label: 'Đang xử lý',
+            label: t('requests.service.stats.in_progress'),
             value: summary.inProgress,
             icon: <FileText className="h-6 w-6" />,
             borderColor: 'amber',
           },
           {
-            label: 'Đã xử lý',
+            label: t('requests.service.stats.resolved'),
             value: summary.resolved,
             icon: <FileText className="h-6 w-6" />,
             borderColor: 'green',
           },
           {
-            label: 'Ưu tiên khẩn',
+            label: t('requests.service.stats.urgent'),
             value: summary.urgent,
             icon: <FileText className="h-6 w-6" />,
             borderColor: 'orange',
@@ -223,35 +229,35 @@ export function ServiceRequestsTable() {
 
       {/* Bộ lọc - grid 4 cột, luôn border và padding */}
       <FilterSection
-        title="Bộ lọc & Tìm kiếm"
+        title={t('requests.service.filter.title')}
         onReset={handleResetFilters}
         activeFilters={activeFilters}
         columnVisibilityMenu={columnVisibilityMenu}
       >
         <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Tìm kiếm</label>
+            <label className="text-sm font-medium">{t('requests.service.filter.search')}</label>
             <Input
-              placeholder="Tìm kiếm tiêu đề, mô tả..."
+              placeholder={t('requests.service.filter.search_placeholder')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium">Trạng thái</label>
+            <label className="text-sm font-medium">{t('requests.service.filter.status')}</label>
             <Select
               value={statusFilter}
               onValueChange={(value) => setStatusFilter(value as ServiceRequestStatus | 'all')}
             >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Tất cả trạng thái">
+                <SelectValue placeholder={t('requests.service.filter.status_all')}>
                   {statusFilter === 'all'
-                    ? 'Tất cả trạng thái'
+                    ? t('requests.service.filter.status_all')
                     : statusOptions.find((opt) => opt.value === statusFilter)?.label}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                <SelectItem value="all">{t('requests.service.filter.status_all')}</SelectItem>
                 {statusOptions.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
@@ -261,15 +267,15 @@ export function ServiceRequestsTable() {
             </Select>
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium">Ưu tiên</label>
+            <label className="text-sm font-medium">{t('requests.service.filter.priority')}</label>
             <Select
               value={priorityFilter}
               onValueChange={(value) => setPriorityFilter(value as Priority | 'all')}
             >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Tất cả ưu tiên">
+                <SelectValue placeholder={t('requests.service.filter.priority_all')}>
                   {priorityFilter === 'all'
-                    ? 'Tất cả ưu tiên'
+                    ? t('requests.service.filter.priority_all')
                     : priorityOptions.find((opt) => opt.value === priorityFilter)?.label}
                 </SelectValue>
               </SelectTrigger>
@@ -283,29 +289,31 @@ export function ServiceRequestsTable() {
             </Select>
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium">Khách hàng</label>
+            <label className="text-sm font-medium">{t('requests.service.filter.customer')}</label>
             <CustomerSelect
               value={customerFilter}
               onChange={(id) => setCustomerFilter(id)}
-              placeholder="Lọc theo khách hàng"
+              placeholder={t('requests.service.filter.customer_placeholder')}
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium">Thiết bị</label>
+            <label className="text-sm font-medium">{t('requests.service.filter.device')}</label>
             <Input
               value={deviceFilter}
               onChange={(e) => setDeviceFilter(e.target.value)}
-              placeholder="deviceId (tùy chọn)"
+              placeholder={t('requests.service.filter.device_placeholder')}
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium">Người phụ trách</label>
+            <label className="text-sm font-medium">
+              {t('requests.service.filter.assigned_to')}
+            </label>
             <SearchableSelect
               field="user.id"
               operator="$eq"
               value={assignedToFilter}
               onChange={(v) => setAssignedToFilter(String(v ?? ''))}
-              placeholder="Lọc theo người phụ trách"
+              placeholder={t('requests.service.filter.assigned_to_placeholder')}
               fetchParams={customerFilter ? { customerId: customerFilter } : undefined}
             />
           </div>
@@ -377,6 +385,7 @@ function ServiceRequestsTableContent({
   renderColumnVisibilityMenu,
   sortVersion,
 }: ServiceRequestsTableContentProps) {
+  const { t } = useLocale()
   const queryClient = useQueryClient()
   const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null)
   const [pendingStatusChange, setPendingStatusChange] = useState<{
@@ -454,12 +463,13 @@ function ServiceRequestsTableContent({
       return serviceRequestsClientService.updateStatus(id, dto)
     },
     onSuccess: async () => {
-      toast.success('Cập nhật trạng thái thành công')
+      toast.success(t('requests.service.update_status.success'))
       queryClient.invalidateQueries({ queryKey: ['service-requests', queryParams] })
       queryClient.invalidateQueries({ queryKey: ['system-requests-service'] })
     },
     onError: (error: unknown) => {
-      const message = error instanceof Error ? error.message : 'Không thể cập nhật trạng thái'
+      const message =
+        error instanceof Error ? error.message : t('requests.service.update_status.error')
       toast.error(message)
     },
     onSettled: () => setStatusUpdatingId(null),
@@ -474,7 +484,7 @@ function ServiceRequestsTableContent({
     () => [
       {
         id: 'index',
-        header: 'STT',
+        header: t('table.index'),
         cell: ({ row, table }) => {
           const index = table.getSortedRowModel().rows.findIndex((r) => r.id === row.id)
           return (
@@ -491,14 +501,14 @@ function ServiceRequestsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <Hash className="h-4 w-4 text-gray-500" />
-            <span>Mã yêu cầu</span>
+            <span>{t('requests.service.table.request_code')}</span>
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Info className="text-muted-foreground h-4 w-4" />
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Mã rút gọn hiển thị 8 ký tự đầu</p>
+                  <p>{t('requests.service.table.request_code_tooltip')}</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -519,7 +529,7 @@ function ServiceRequestsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <Heading className="h-4 w-4 text-gray-500" />
-            Tiêu đề
+            {t('requests.service.table.title')}
           </div>
         ),
         cell: ({ row }) => (
@@ -535,7 +545,7 @@ function ServiceRequestsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <Building2 className="h-4 w-4 text-gray-500" />
-            Khách hàng
+            {t('requests.service.table.customer')}
           </div>
         ),
         enableSorting: true,
@@ -556,7 +566,7 @@ function ServiceRequestsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <Monitor className="h-4 w-4 text-gray-500" />
-            Thiết bị
+            {t('requests.service.table.device')}
           </div>
         ),
         cell: ({ row }) => (
@@ -573,7 +583,7 @@ function ServiceRequestsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <Tag className="h-4 w-4 text-gray-500" />
-            Người phụ trách
+            {t('requests.service.table.assigned_to')}
           </div>
         ),
         cell: ({ row }) => (
@@ -589,7 +599,7 @@ function ServiceRequestsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <Tag className="h-4 w-4 text-gray-500" />
-            SLA
+            {t('requests.service.table.sla')}
           </div>
         ),
         cell: ({ row }) => (
@@ -608,7 +618,7 @@ function ServiceRequestsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <ClockIcon className="h-4 w-4 text-gray-500" />
-            <span>Phản hồi</span>
+            <span>{t('requests.service.table.responded')}</span>
           </div>
         ),
         cell: ({ row }) => renderTimestamp(row.original.respondedAt ?? undefined),
@@ -618,7 +628,7 @@ function ServiceRequestsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <CalendarCheck className="h-4 w-4 text-gray-500" />
-            <span>Đã duyệt</span>
+            <span>{t('requests.service.table.approved')}</span>
           </div>
         ),
         cell: ({ row }) => (
@@ -637,7 +647,7 @@ function ServiceRequestsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <ClockIcon className="h-4 w-4 text-gray-500" />
-            <span>Giải quyết</span>
+            <span>{t('requests.service.table.resolved')}</span>
           </div>
         ),
         cell: ({ row }) => renderTimestamp(row.original.resolvedAt ?? undefined),
@@ -647,7 +657,7 @@ function ServiceRequestsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <Tag className="h-4 w-4 text-gray-500" />
-            Ưu tiên
+            {t('requests.service.table.priority')}
           </div>
         ),
         cell: ({ row }) => (
@@ -662,51 +672,79 @@ function ServiceRequestsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <CheckCircle2 className="h-4 w-4 text-gray-500" />
-            Trạng thái
+            {t('requests.service.table.status')}
           </div>
         ),
-        cell: ({ row }) => (
-          <Select
-            value={row.original.status}
-            onValueChange={(value) =>
-              handleStatusChange(row.original.id, value as ServiceRequestStatus)
-            }
-            disabled={statusUpdatingId === row.original.id && mutation.isPending}
-          >
-            <SelectTrigger
-              className={cn(
-                // Chiều cao, chiều rộng đồng nhất
-                'border-muted bg-background flex h-8 max-w-[140px] min-w-[120px] items-center rounded-md border px-2 text-xs font-medium shadow-none transition focus:ring-2',
-                statusUpdatingId === row.original.id && mutation.isPending
-                  ? 'cursor-not-allowed opacity-50'
-                  : ''
-              )}
-            >
-              <SelectValue />
-              {/* Không custom gì ở đây, tránh double */}
-              {statusUpdatingId === row.original.id && mutation.isPending && (
-                <Loader2 className="text-muted-foreground ml-1 h-3 w-3 animate-spin" />
-              )}
-            </SelectTrigger>
-            <SelectContent>
-              {statusOptions.map((option) => (
-                <SelectItem
-                  key={option.value}
-                  value={option.value}
-                  // Giữ cùng kích thước/row
-                  className="h-8"
+        cell: ({ row }) => {
+          const allowed = getAllowedTransitions(row.original.status)
+          const isUpdating = statusUpdatingId === row.original.id && mutation.isPending
+
+          if (allowed.length === 0) {
+            return (
+              <StatusBadge
+                serviceStatus={row.original.status}
+                className="h-6 justify-center px-2 text-xs"
+              />
+            )
+          }
+
+          return (
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={cn(
+                    'h-8 max-w-[140px] min-w-[120px] text-xs',
+                    isUpdating && 'cursor-not-allowed opacity-50'
+                  )}
+                  disabled={isUpdating}
                 >
-                  <span className="flex min-w-[80px] items-center gap-2">
-                    <StatusBadge
-                      serviceStatus={option.value as ServiceRequestStatus}
-                      className="h-6 w-full justify-center px-2 text-xs"
-                    />
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        ),
+                  {isUpdating ? (
+                    <>
+                      <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                      <span>Đang cập nhật...</span>
+                    </>
+                  ) : (
+                    <>
+                      <StatusBadge
+                        serviceStatus={row.original.status}
+                        className="h-5 justify-center px-2 text-xs"
+                      />
+                      <span className="ml-1 text-xs">▼</span>
+                    </>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-56 p-2" align="start">
+                <div className="space-y-1">
+                  <div className="px-2 py-1.5 text-xs font-semibold text-gray-700">
+                    Chuyển trạng thái
+                  </div>
+                  <div className="grid grid-cols-1 gap-1">
+                    {allowed.map((status) => {
+                      const disp = SERVICE_REQUEST_STATUS_DISPLAY[status]
+                      return (
+                        <Button
+                          key={status}
+                          variant="ghost"
+                          size="sm"
+                          className="h-auto justify-start py-2 text-xs"
+                          onClick={() => handleStatusChange(row.original.id, status)}
+                        >
+                          <div className="flex flex-col text-left">
+                            <span className="font-medium">→ {disp.label}</span>
+                            <span className="text-muted-foreground text-[10px]">{status}</span>
+                          </div>
+                        </Button>
+                      )
+                    })}
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+          )
+        },
       },
       {
         accessorKey: 'createdAt',
@@ -714,7 +752,7 @@ function ServiceRequestsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-gray-500" />
-            Ngày tạo
+            {t('requests.service.table.created_at')}
           </div>
         ),
         cell: ({ row }) => <div className="text-sm">{formatDateTime(row.original.createdAt)}</div>,
@@ -724,7 +762,7 @@ function ServiceRequestsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <Settings className="h-4 w-4 text-gray-500" />
-            Thao tác
+            {t('requests.service.table.actions')}
           </div>
         ),
         cell: ({ row }) => (
@@ -736,7 +774,7 @@ function ServiceRequestsTableContent({
           >
             <Link href={`/system/service-requests/${row.original.id}`}>
               <FileText className="h-3 w-3" />
-              Chi tiết
+              {t('requests.service.table.detail')}
             </Link>
           </Button>
         ),
@@ -748,6 +786,7 @@ function ServiceRequestsTableContent({
       statusUpdatingId,
       pagination.pageIndex,
       pagination.pageSize,
+      t,
     ]
   )
 
@@ -777,9 +816,13 @@ function ServiceRequestsTableContent({
               <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200">
                 <FileText className="h-12 w-12 opacity-20" />
               </div>
-              <h3 className="mb-2 text-xl font-bold text-gray-700">Không có yêu cầu dịch vụ</h3>
+              <h3 className="mb-2 text-xl font-bold text-gray-700">
+                {t('requests.service.empty.title')}
+              </h3>
               <p className="mb-6 text-gray-500">
-                {searchInput ? 'Không tìm thấy yêu cầu phù hợp' : 'Hãy tạo yêu cầu đầu tiên'}
+                {searchInput
+                  ? t('requests.service.empty.search')
+                  : t('requests.service.empty.create_first')}
               </p>
             </div>
           ) : undefined
@@ -800,18 +843,20 @@ function ServiceRequestsTableContent({
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Cập nhật trạng thái</DialogTitle>
+            <DialogTitle>{t('requests.service.update_status.title')}</DialogTitle>
             <DialogDescription className="sr-only">
-              Nhập ghi chú hành động (tùy chọn) để lưu cùng bản ghi cập nhật trạng thái
+              {t('requests.service.update_status.description')}
             </DialogDescription>
           </DialogHeader>
 
           <div className="mt-2">
-            <p className="text-muted-foreground text-sm">Ghi chú hành động (tùy chọn)</p>
+            <p className="text-muted-foreground text-sm">
+              {t('requests.service.update_status.action_note')}
+            </p>
             <textarea
               value={actionNoteForPending}
               onChange={(e) => setActionNoteForPending(e.target.value)}
-              placeholder="Nhập ghi chú để lưu cùng cập nhật trạng thái (ví dụ: đã kiểm tra onsite, chờ vật tư...)"
+              placeholder={t('requests.service.update_status.action_note_placeholder')}
               className="mt-2 w-full rounded-md border px-3 py-2 text-sm"
             />
             {pendingStatusChange?.status === ServiceRequestStatus.RESOLVED ||
@@ -823,11 +868,13 @@ function ServiceRequestsTableContent({
                     checked={isPastTimeForPending}
                     onChange={(e) => setIsPastTimeForPending(e.target.checked)}
                   />
-                  <span>Ghi nhận thời điểm trong quá khứ</span>
+                  <span>{t('requests.service.update_status.past_time')}</span>
                 </label>
                 {isPastTimeForPending && (
                   <div>
-                    <label className="text-muted-foreground text-sm">Thời gian</label>
+                    <label className="text-muted-foreground text-sm">
+                      {t('requests.service.update_status.time')}
+                    </label>
                     <input
                       type="datetime-local"
                       value={pastTimeForPending}
@@ -843,7 +890,7 @@ function ServiceRequestsTableContent({
           <DialogFooter className="mt-4">
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => setPendingStatusChange(null)}>
-                Hủy
+                {t('requests.service.update_status.cancel')}
               </Button>
               <Button
                 onClick={() => {
@@ -870,7 +917,7 @@ function ServiceRequestsTableContent({
                 }}
                 disabled={mutation.isPending || (isPastTimeForPending && !pastTimeForPending)}
               >
-                Xác nhận
+                {t('requests.service.update_status.confirm')}
               </Button>
             </div>
           </DialogFooter>

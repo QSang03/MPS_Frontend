@@ -18,6 +18,7 @@ import { toast } from 'sonner'
 import { devicesClientService } from '@/lib/api/services/devices-client.service'
 import { DEVICE_STATUS } from '@/constants/status'
 import { CheckCircle2, XCircle } from 'lucide-react'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 interface Props {
   device?: Device | null
@@ -34,6 +35,7 @@ export default function ToggleActiveModal({
   onOpenChange,
   onSuccess,
 }: Props) {
+  const { t } = useLocale()
   const [submitting, setSubmitting] = useState(false)
   const [status, setStatus] = useState<string>('')
   const [inactiveReasonOption, setInactiveReasonOption] = useState<string>('')
@@ -51,7 +53,7 @@ export default function ToggleActiveModal({
     if (!targetActive) {
       const chosen = inactiveReasonOption === '__other' ? inactiveReasonText : inactiveReasonOption
       if (!chosen || chosen.trim() === '') {
-        toast.error('Vui lòng cung cấp lý do khi tắt hoạt động')
+        toast.error(t('toggle_active.modal.error.reason_required'))
         return
       }
     }
@@ -78,12 +80,12 @@ export default function ToggleActiveModal({
         String(device.id),
         payload as unknown as Record<string, unknown>
       )) as Device
-      toast.success('Cập nhật trạng thái thiết bị thành công')
+      toast.success(t('toggle_active.modal.success'))
       onSuccess?.(updated)
       onOpenChange(false)
     } catch (err) {
       console.error('Toggle device active error', err)
-      toast.error('Không thể cập nhật trạng thái thiết bị')
+      toast.error(t('toggle_active.modal.error'))
     } finally {
       setSubmitting(false)
     }
@@ -94,11 +96,15 @@ export default function ToggleActiveModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <SystemModalLayout
-        title={targetActive ? 'Bật thiết bị' : 'Tắt thiết bị'}
+        title={
+          targetActive
+            ? t('toggle_active.modal.title.activate')
+            : t('toggle_active.modal.title.deactivate')
+        }
         description={
           targetActive
-            ? 'Kích hoạt thiết bị để sử dụng bình thường'
-            : 'Tắt thiết bị và cung cấp lý do'
+            ? t('toggle_active.modal.description.activate')
+            : t('toggle_active.modal.description.deactivate')
         }
         icon={targetActive ? CheckCircle2 : XCircle}
         variant="edit"
@@ -110,7 +116,7 @@ export default function ToggleActiveModal({
               disabled={submitting}
               className="min-w-[100px]"
             >
-              Hủy
+              {t('cancel')}
             </Button>
             <Button
               type="submit"
@@ -118,7 +124,11 @@ export default function ToggleActiveModal({
               disabled={submitting}
               className="min-w-[120px] bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
             >
-              {submitting ? 'Đang xử lý...' : targetActive ? 'Bật' : 'Tắt'}
+              {submitting
+                ? t('toggle_active.modal.button.processing')
+                : targetActive
+                  ? t('toggle_active.modal.button.activate')
+                  : t('toggle_active.modal.button.deactivate')}
             </Button>
           </>
         }
@@ -132,17 +142,17 @@ export default function ToggleActiveModal({
           className="space-y-6"
         >
           <div>
-            <Label className="text-sm font-semibold">Thiết bị</Label>
+            <Label className="text-sm font-semibold">{t('toggle_active.device')}</Label>
             <div className="mt-1 truncate text-sm font-medium text-gray-900">
               {String(device?.serialNumber ?? device?.id ?? '')}
             </div>
           </div>
 
           <div>
-            <Label className="text-sm font-semibold">Trạng thái</Label>
+            <Label className="text-sm font-semibold">{t('toggle_active.status')}</Label>
             <Select value={status} onValueChange={setStatus}>
               <SelectTrigger className="h-11">
-                <SelectValue placeholder="Chọn trạng thái" />
+                <SelectValue placeholder={t('device.form.status_placeholder')} />
               </SelectTrigger>
               <SelectContent>
                 {targetActive ? (
@@ -164,16 +174,22 @@ export default function ToggleActiveModal({
 
           {!targetActive && (
             <div>
-              <Label className="text-sm font-semibold">Lý do</Label>
+              <Label className="text-sm font-semibold">{t('toggle_active.reason')}</Label>
               <Select value={inactiveReasonOption} onValueChange={setInactiveReasonOption}>
                 <SelectTrigger className="h-11">
-                  <SelectValue placeholder="Chọn lý do" />
+                  <SelectValue placeholder={t('device.form.reason_placeholder')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Tạm dừng do lỗi">Tạm dừng do lỗi</SelectItem>
-                  <SelectItem value="Hủy HĐ">Hủy HĐ</SelectItem>
-                  <SelectItem value="Hoàn tất HĐ">Hoàn tất HĐ</SelectItem>
-                  <SelectItem value="__other">Khác</SelectItem>
+                  <SelectItem value="Tạm dừng do lỗi">
+                    {t('toggle_active.modal.reason.pause_error')}
+                  </SelectItem>
+                  <SelectItem value="Hủy HĐ">
+                    {t('toggle_active.modal.reason.cancel_contract')}
+                  </SelectItem>
+                  <SelectItem value="Hoàn tất HĐ">
+                    {t('toggle_active.modal.reason.complete_contract')}
+                  </SelectItem>
+                  <SelectItem value="__other">{t('device.form.reason.other')}</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -181,7 +197,7 @@ export default function ToggleActiveModal({
                 <Input
                   value={inactiveReasonText}
                   onChange={(e) => setInactiveReasonText(e.target.value)}
-                  placeholder="Nhập lý do..."
+                  placeholder={t('device.form.reason.other_placeholder')}
                   className="mt-2 h-11"
                   autoFocus
                 />

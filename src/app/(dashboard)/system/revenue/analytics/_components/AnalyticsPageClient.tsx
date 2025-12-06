@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   Select,
   SelectContent,
@@ -14,6 +14,7 @@ import CustomerSelect from '@/components/shared/CustomerSelect'
 import ConsumableTypeSelect from '@/components/shared/ConsumableTypeSelect'
 import MonthPicker from '@/components/ui/month-picker'
 import { Button } from '@/components/ui/button'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import {
   Loader2,
   TrendingUp,
@@ -22,7 +23,6 @@ import {
   Users,
   Printer,
   Calendar,
-  Search,
   Package,
 } from 'lucide-react'
 import { reportsAnalyticsService } from '@/lib/api/services/reports-analytics.service'
@@ -45,31 +45,44 @@ import {
   CartesianGrid,
   XAxis,
   YAxis,
-  Tooltip,
-  Legend,
   BarChart,
   Bar,
+  LabelList,
 } from 'recharts'
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
+} from '@/components/ui/chart'
+import type { ChartConfig } from '@/components/ui/chart'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 type TimeRangeMode = 'period' | 'range' | 'year'
 type TimeFilter = { period?: string; from?: string; to?: string; year?: string }
 type ConsumableParams = TimeFilter & { consumableTypeId?: string; customerId?: string }
 
 export default function AnalyticsPageClient() {
-  const formatCurrencyUSD = (n?: number | null) => {
+  const { t } = useLocale()
+  const formatCurrency = (n?: number | null) => {
     if (n === undefined || n === null || Number.isNaN(Number(n))) return '-'
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
-      currency: 'USD',
-      maximumFractionDigits: 2,
+      currency: 'VND',
+      maximumFractionDigits: 0,
     }).format(Number(n))
   }
+  // Active tab state
+  const [activeTab, setActiveTab] = useState('profit')
+
   // Global time filter (single control used by all sections)
   const [globalMode, setGlobalMode] = useState<TimeRangeMode>('period')
   const [globalPeriod, setGlobalPeriod] = useState('')
   const [globalFrom, setGlobalFrom] = useState('')
   const [globalTo, setGlobalTo] = useState('')
   const [globalYear, setGlobalYear] = useState('')
+  const hasInitialized = useRef(false)
 
   // Helper to apply global filter to all sections (declared later after load functions)
 
@@ -101,8 +114,7 @@ export default function AnalyticsPageClient() {
   const [customersYear, setCustomersYear] = useState('')
   const [customersLoading, setCustomersLoading] = useState(false)
   const [customersData, setCustomersData] = useState<CustomerProfitItem[]>([])
-  const [customersSearchTerm, setCustomersSearchTerm] = useState('')
-  const [customersSearchId, setCustomersSearchId] = useState('')
+  // Removed customersSearchTerm and customersSearchId - selection now uses selectedCustomerId
 
   // Customer Detail State
   const [selectedCustomerId, setSelectedCustomerId] = useState('')
@@ -119,6 +131,7 @@ export default function AnalyticsPageClient() {
     devices: DeviceProfitItem[]
     profitability?: ProfitabilityTrendItem[]
   } | null>(null)
+  const [showCustomerChart, setShowCustomerChart] = useState(false)
 
   // Device Profitability State
   const [selectedDeviceId, setSelectedDeviceId] = useState('')
@@ -170,15 +183,15 @@ export default function AnalyticsPageClient() {
 
       // validate that one of the modes is used and params are provided
       if (mode === 'period' && !params.period) {
-        toast.warning('Vui lòng nhập kỳ (YYYY-MM)')
+        toast.warning(t('analytics.validation.period_required'))
         return
       }
       if (mode === 'range' && (!params.from || !params.to)) {
-        toast.warning('Vui lòng nhập both from và to (YYYY-MM)')
+        toast.warning(t('analytics.validation.range_required'))
         return
       }
       if (mode === 'year' && !params.year) {
-        toast.warning('Vui lòng nhập năm (YYYY)')
+        toast.warning(t('analytics.validation.year_required'))
         return
       }
       setEnterpriseLoading(true)
@@ -189,7 +202,7 @@ export default function AnalyticsPageClient() {
           const fromDate = new Date(String(cleaned.from) + '-01')
           const toDate = new Date(String(cleaned.to) + '-01')
           if (fromDate > toDate) {
-            toast.warning('From phải nhỏ hơn hoặc bằng To')
+            toast.warning(t('analytics.validation.range_invalid'))
             setEnterpriseLoading(false)
             return
           }
@@ -202,9 +215,9 @@ export default function AnalyticsPageClient() {
               null
           )
         } else {
-          const msg = res.message || 'Không tải được dữ liệu doanh nghiệp'
+          const msg = res.message || t('analytics.error.load_enterprise')
           if (msg.toLowerCase().includes('no data')) {
-            toast.warning('Không có dữ liệu cho kỳ này')
+            toast.warning(t('analytics.warning.no_data'))
           } else {
             toast.error(msg)
           }
@@ -212,13 +225,13 @@ export default function AnalyticsPageClient() {
         }
       } catch (e) {
         console.error(e)
-        toast.error('Lỗi khi tải dữ liệu doanh nghiệp')
+        toast.error(t('analytics.error.load_enterprise'))
         setEnterpriseData(null)
       } finally {
         setEnterpriseLoading(false)
       }
     },
-    [enterprisePeriod, enterpriseMode, enterpriseFrom, enterpriseTo, enterpriseYear]
+    [enterprisePeriod, enterpriseMode, enterpriseFrom, enterpriseTo, enterpriseYear, t]
   )
 
   // Load Customers Profit
@@ -236,15 +249,15 @@ export default function AnalyticsPageClient() {
         } else if (mode === 'year') params.year = customersYear
       }
       if (mode === 'period' && !params.period) {
-        toast.warning('Vui lòng nhập kỳ (YYYY-MM)')
+        toast.warning(t('analytics.validation.period_required'))
         return
       }
       if (mode === 'range' && (!params.from || !params.to)) {
-        toast.warning('Vui lòng nhập both from và to (YYYY-MM)')
+        toast.warning(t('analytics.validation.range_required'))
         return
       }
       if (mode === 'year' && !params.year) {
-        toast.warning('Vui lòng nhập năm (YYYY)')
+        toast.warning(t('analytics.validation.year_required'))
         return
       }
       setCustomersLoading(true)
@@ -254,7 +267,7 @@ export default function AnalyticsPageClient() {
           const fromDate = new Date(String(cleaned.from) + '-01')
           const toDate = new Date(String(cleaned.to) + '-01')
           if (fromDate > toDate) {
-            toast.warning('From phải nhỏ hơn hoặc bằng To')
+            toast.warning(t('analytics.validation.range_invalid'))
             setCustomersLoading(false)
             return
           }
@@ -263,9 +276,9 @@ export default function AnalyticsPageClient() {
         if (res.success && res.data) {
           setCustomersData(res.data.customers)
         } else {
-          const msg = res.message || 'Không tải được dữ liệu khách hàng'
+          const msg = res.message || t('analytics.error.load_customers')
           if (msg.toLowerCase().includes('no data')) {
-            toast.warning('Không có dữ liệu cho kỳ này')
+            toast.warning(t('analytics.warning.no_data'))
           } else {
             toast.error(msg)
           }
@@ -273,13 +286,13 @@ export default function AnalyticsPageClient() {
         }
       } catch (e) {
         console.error(e)
-        toast.error('Lỗi khi tải dữ liệu khách hàng')
+        toast.error(t('analytics.error.load_customers'))
         setCustomersData([])
       } finally {
         setCustomersLoading(false)
       }
     },
-    [customersPeriod, customersMode, customersFrom, customersTo, customersYear]
+    [customersPeriod, customersMode, customersFrom, customersTo, customersYear, t]
   )
 
   // Helpers to compute defaults
@@ -368,7 +381,7 @@ export default function AnalyticsPageClient() {
         } else if (customersMode === 'year') params.year = customersYear
       }
       if (!idToUse || (mode === 'period' && !params.period)) {
-        toast.warning('Vui lòng nhập Customer ID và kỳ')
+        toast.warning(t('analytics.validation.customer_id_required'))
         return
       }
 
@@ -384,12 +397,12 @@ export default function AnalyticsPageClient() {
             setCustomerDetailPeriod(`${params.from} to ${params.to}`)
           else if (params.year) setCustomerDetailPeriod(String(params.year))
         } else {
-          const msg = res.message || 'Không tải được chi tiết khách hàng'
+          const msg = res.message || t('analytics.error.load_customer_detail')
           // If backend indicates a "no data" condition, don't mark it as a
           // fatal error in the UI; show a neutral warning and display an
           // empty state instead.
           if (msg.toLowerCase().includes('no data')) {
-            toast.warning('Không có dữ liệu cho kỳ này')
+            toast.warning(t('analytics.warning.no_data'))
           } else {
             toast.error(msg)
           }
@@ -397,7 +410,7 @@ export default function AnalyticsPageClient() {
         }
       } catch (e) {
         console.error(e)
-        toast.error('Lỗi khi tải chi tiết khách hàng')
+        toast.error(t('analytics.error.load_customer_detail'))
         setCustomerDetailData(null)
       } finally {
         setCustomerDetailLoading(false)
@@ -409,9 +422,26 @@ export default function AnalyticsPageClient() {
       customersMode,
       customersFrom,
       customersTo,
+      t,
       customersYear,
     ]
   )
+
+  // Auto-load customer detail when selectedCustomerId changes (or when global filter changes)
+  useEffect(() => {
+    if (!selectedCustomerId) return
+    const timeArg = buildTimeForMode(globalMode, globalPeriod, globalFrom, globalTo, globalYear)
+    if (!isValidTimeArg(timeArg)) return
+    void loadCustomerDetail(selectedCustomerId, timeArg)
+  }, [
+    selectedCustomerId,
+    globalMode,
+    globalPeriod,
+    globalFrom,
+    globalTo,
+    globalYear,
+    loadCustomerDetail,
+  ])
 
   // Load Device Profitability
   const loadDeviceProfitability = useCallback(
@@ -428,19 +458,19 @@ export default function AnalyticsPageClient() {
         } else if (deviceMode === 'year') params.year = deviceYear
       }
       if (!selectedDeviceId) {
-        toast.warning('Vui lòng nhập Device ID')
+        toast.warning(t('analytics.validation.device_id_required'))
         return
       }
       if (mode === 'period' && !params.period) {
-        toast.warning('Vui lòng nhập kỳ (YYYY-MM)')
+        toast.warning(t('analytics.validation.period_required'))
         return
       }
       if (mode === 'range' && (!params.from || !params.to)) {
-        toast.warning('Vui lòng nhập both from và to (YYYY-MM)')
+        toast.warning(t('analytics.validation.range_required'))
         return
       }
       if (mode === 'year' && !params.year) {
-        toast.warning('Vui lòng nhập năm (YYYY)')
+        toast.warning(t('analytics.validation.year_required'))
         return
       }
       setDeviceLoading(true)
@@ -450,7 +480,7 @@ export default function AnalyticsPageClient() {
           const fromDate = new Date(String(cleaned.from) + '-01')
           const toDate = new Date(String(cleaned.to) + '-01')
           if (fromDate > toDate) {
-            toast.warning('From phải nhỏ hơn hoặc bằng To')
+            toast.warning(t('analytics.validation.range_invalid'))
             setDeviceLoading(false)
             return
           }
@@ -459,9 +489,9 @@ export default function AnalyticsPageClient() {
         if (res.success && res.data) {
           setDeviceData(res.data)
         } else {
-          const msg = res.message || 'Không tải được dữ liệu thiết bị'
+          const msg = res.message || t('analytics.error.load_device')
           if (msg.toLowerCase().includes('no data')) {
-            toast.warning('Không có dữ liệu cho kỳ này')
+            toast.warning(t('analytics.warning.no_data'))
           } else {
             toast.error(msg)
           }
@@ -469,110 +499,136 @@ export default function AnalyticsPageClient() {
         }
       } catch (e) {
         console.error(e)
-        toast.error('Lỗi khi tải dữ liệu thiết bị')
+        toast.error(t('analytics.error.load_device'))
         setDeviceData(null)
       } finally {
         setDeviceLoading(false)
       }
     },
-    [selectedDeviceId, deviceMode, devicePeriod, deviceFrom, deviceTo, deviceYear]
+    [selectedDeviceId, deviceMode, devicePeriod, deviceFrom, deviceTo, deviceYear, t]
   )
 
   // Load Consumable Lifecycle
-  const loadConsumableLifecycle = async (time?: {
-    period?: string
-    from?: string
-    to?: string
-    year?: string
-  }) => {
-    const deduced = detectModeFromTime(time)
-    const mode = deduced ?? consumableMode
-    const params: ConsumableParams = {
-      consumableTypeId: consumableTypeId || undefined,
-      customerId: consumableCustomerId || undefined,
-    }
-    if (time) Object.assign(params, time)
-    else {
-      if (consumableMode === 'period') params.period = consumablePeriod
-      else if (consumableMode === 'range') {
-        params.from = consumableFrom
-        params.to = consumableTo
-      } else if (consumableMode === 'year') params.year = consumableYear
-    }
-    // basic validation
-    if (mode === 'period' && !params.period) {
-      toast.warning('Vui lòng nhập kỳ (YYYY-MM)')
-      return
-    }
-    if (mode === 'range' && (!params.from || !params.to)) {
-      toast.warning('Vui lòng nhập both from và to (YYYY-MM)')
-      return
-    }
-    if (mode === 'year' && !params.year) {
-      toast.warning('Vui lòng nhập năm (YYYY)')
-      return
-    }
-    setConsumableLoading(true)
-    try {
-      const cleaned = cleanParams(params as Record<string, unknown>)
-      if (consumableMode === 'range' && cleaned.from && cleaned.to) {
-        const fromDate = new Date(String(cleaned.from) + '-01')
-        const toDate = new Date(String(cleaned.to) + '-01')
-        if (fromDate > toDate) {
-          toast.warning('From phải nhỏ hơn hoặc bằng To')
-          setConsumableLoading(false)
-          return
-        }
+  const loadConsumableLifecycle = useCallback(
+    async (time?: { period?: string; from?: string; to?: string; year?: string }) => {
+      const deduced = detectModeFromTime(time)
+      const mode = deduced ?? consumableMode
+      const params: ConsumableParams = {
+        consumableTypeId: consumableTypeId || undefined,
+        customerId: consumableCustomerId || undefined,
       }
+      if (time) Object.assign(params, time)
+      else {
+        if (consumableMode === 'period') params.period = consumablePeriod
+        else if (consumableMode === 'range') {
+          params.from = consumableFrom
+          params.to = consumableTo
+        } else if (consumableMode === 'year') params.year = consumableYear
+      }
+      // basic validation
+      if (mode === 'period' && !params.period) {
+        toast.warning(t('analytics.validation.period_required'))
+        return
+      }
+      if (mode === 'range' && (!params.from || !params.to)) {
+        toast.warning(t('analytics.validation.range_required'))
+        return
+      }
+      if (mode === 'year' && !params.year) {
+        toast.warning(t('analytics.validation.year_required'))
+        return
+      }
+      setConsumableLoading(true)
+      try {
+        const cleaned = cleanParams(params as Record<string, unknown>)
+        if (consumableMode === 'range' && cleaned.from && cleaned.to) {
+          const fromDate = new Date(String(cleaned.from) + '-01')
+          const toDate = new Date(String(cleaned.to) + '-01')
+          if (fromDate > toDate) {
+            toast.warning(t('analytics.validation.range_invalid'))
+            setConsumableLoading(false)
+            return
+          }
+        }
 
-      const res = await reportsAnalyticsService.getConsumableLifecycle(cleaned)
-      if (res.success && res.data) {
-        setConsumableData(res.data.items || [])
-      } else {
-        const msg = res.message || 'Không tải được dữ liệu vật tư'
-        if (msg.toLowerCase().includes('no data')) {
-          toast.warning('Không có dữ liệu cho kỳ này')
+        const res = await reportsAnalyticsService.getConsumableLifecycle(cleaned)
+        if (res.success && res.data) {
+          setConsumableData(res.data.items || [])
         } else {
-          toast.error(msg)
+          const msg = res.message || t('analytics.error.load_consumable')
+          if (msg.toLowerCase().includes('no data')) {
+            toast.warning(t('analytics.warning.no_data'))
+          } else {
+            toast.error(msg)
+          }
+          setConsumableData([])
         }
+      } catch (e) {
+        console.error(e)
+        toast.error(t('analytics.error.load_consumable'))
         setConsumableData([])
+      } finally {
+        setConsumableLoading(false)
       }
-    } catch (e) {
-      console.error(e)
-      toast.error('Lỗi khi tải dữ liệu vật tư')
-      setConsumableData([])
-    } finally {
-      setConsumableLoading(false)
-    }
-  }
+    },
+    [
+      consumableMode,
+      consumableTypeId,
+      consumableCustomerId,
+      consumablePeriod,
+      consumableFrom,
+      consumableTo,
+      consumableYear,
+      t,
+    ]
+  )
 
   // Load multiple sections concurrently; report all settled (top-level helper)
-  const loadAllConcurrent = async (time?: {
-    mode?: TimeRangeMode
-    period?: string
-    from?: string
-    to?: string
-    year?: string
-  }) => {
-    const mode = time?.mode ?? globalMode
-    const period = time?.period ?? globalPeriod
-    const from = time?.from ?? globalFrom
-    const to = time?.to ?? globalTo
-    const year = time?.year ?? globalYear
-    const timeArg = buildTimeForMode(mode, period, from, to, year)
-    const promises: Promise<unknown>[] = []
-    promises.push(loadEnterpriseProfit(timeArg))
-    promises.push(loadCustomersProfit(timeArg))
-    promises.push(loadConsumableLifecycle(timeArg))
-    // only load details or device profitability if selected
-    if (selectedCustomerId) promises.push(loadCustomerDetail(selectedCustomerId, timeArg))
-    if (selectedDeviceId) promises.push(loadDeviceProfitability(timeArg))
-    const results = await Promise.allSettled(promises)
-    return results
-  }
+  const loadAllConcurrent = useCallback(
+    async (time?: {
+      mode?: TimeRangeMode
+      period?: string
+      from?: string
+      to?: string
+      year?: string
+    }) => {
+      const mode = time?.mode ?? globalMode
+      const period = time?.period ?? globalPeriod
+      const from = time?.from ?? globalFrom
+      const to = time?.to ?? globalTo
+      const year = time?.year ?? globalYear
+      const timeArg = buildTimeForMode(mode, period, from, to, year)
+      const promises: Promise<unknown>[] = []
+      promises.push(loadEnterpriseProfit(timeArg))
+      promises.push(loadCustomersProfit(timeArg))
+      promises.push(loadConsumableLifecycle(timeArg))
+      // only load details or device profitability if selected
+      if (selectedCustomerId) promises.push(loadCustomerDetail(selectedCustomerId, timeArg))
+      if (selectedDeviceId) promises.push(loadDeviceProfitability(timeArg))
+      const results = await Promise.allSettled(promises)
+      return results
+    },
+    [
+      globalMode,
+      globalPeriod,
+      globalFrom,
+      globalTo,
+      globalYear,
+      selectedCustomerId,
+      selectedDeviceId,
+      loadEnterpriseProfit,
+      loadCustomersProfit,
+      loadConsumableLifecycle,
+      loadCustomerDetail,
+      loadDeviceProfitability,
+    ]
+  )
 
   // Prefill current month and run initial concurrent load (once on mount)
   useEffect(() => {
+    if (hasInitialized.current) return
+    hasInitialized.current = true
+
     const now = new Date()
     const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
     setEnterprisePeriod(currentMonth)
@@ -605,41 +661,9 @@ export default function AnalyticsPageClient() {
         // ignore - load functions handle errors
       }
     })()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [loadAllConcurrent])
 
-  // Filter customers by search term or selected customer id
-  const filteredCustomers = customersData.filter((c) => {
-    if (customersSearchId) return c.customerId === customersSearchId
-    return c.name.toLowerCase().includes(customersSearchTerm.toLowerCase())
-  })
-
-  // Auto-load customer detail when a customer is selected from the CustomerSelect control
-  useEffect(() => {
-    if (!customersSearchId) return
-    if (customersSearchId === selectedCustomerId) return
-    const timeArg = buildTimeForMode(
-      customersMode,
-      customersPeriod,
-      customersFrom,
-      customersTo,
-      customersYear
-    )
-    if (!isValidTimeArg(timeArg)) {
-      // If the current per-section time isn't valid yet, skip auto-load
-      return
-    }
-    void loadCustomerDetail(customersSearchId, timeArg)
-  }, [
-    customersSearchId,
-    customersPeriod,
-    customersFrom,
-    customersTo,
-    customersYear,
-    customersMode,
-    selectedCustomerId,
-    loadCustomerDetail,
-  ])
+  // No per-section customer search logic - Customer selection now uses selectedCustomerId
 
   // Auto-load customer detail when selectedCustomerId changes (row selection)
   useEffect(() => {
@@ -674,18 +698,22 @@ export default function AnalyticsPageClient() {
   ])
 
   return (
-    <div className="space-y-6">
+    <div
+      className="space-y-6"
+      data-customers-count={customersData.length}
+      data-customers-loading={customersLoading ? 'true' : 'false'}
+    >
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Phân tích lợi nhuận & Vật tư</h2>
+        <h2 className="text-2xl font-bold">{t('analytics.title')}</h2>
       </div>
 
       {/* Global time filter card: single control for the entire analytics page */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            Bộ lọc thời gian (Toàn bộ trang)
+            {t('analytics.global_filter.title')}
           </CardTitle>
-          <CardDescription>Chọn kỳ áp dụng cho tất cả báo cáo trong trang</CardDescription>
+          <CardDescription>{t('analytics.global_filter.description')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-3">
@@ -694,7 +722,11 @@ export default function AnalyticsPageClient() {
               <div className="flex items-center gap-2">
                 <Select
                   value={globalMode}
+                  onOpenChange={(open) => {
+                    console.debug('Global mode select open state:', open)
+                  }}
                   onValueChange={(v) => {
+                    console.debug('Global mode select value change =>', v)
                     const mode = v as TimeRangeMode
                     setGlobalMode(mode)
                     // Auto-fill defaults and clear irrelevant fields when switching modes
@@ -719,17 +751,25 @@ export default function AnalyticsPageClient() {
                   <SelectTrigger className="bg-background h-8 w-32">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="period">Tháng</SelectItem>
-                    <SelectItem value="range">Khoảng</SelectItem>
-                    <SelectItem value="year">Năm</SelectItem>
+                  <SelectContent
+                    className="z-[99999]"
+                    sideOffset={4}
+                    position="item-aligned"
+                    onCloseAutoFocus={(e) => {
+                      // Prevent auto focus to avoid issues
+                      e.preventDefault()
+                    }}
+                  >
+                    <SelectItem value="period">{t('analytics.time_mode.period')}</SelectItem>
+                    <SelectItem value="range">{t('analytics.time_mode.range')}</SelectItem>
+                    <SelectItem value="year">{t('analytics.time_mode.year')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
             {globalMode === 'period' && (
               <MonthPicker
-                placeholder="Kỳ (YYYY-MM)"
+                placeholder={t('analytics.period_placeholder')}
                 value={globalPeriod}
                 onChange={(v) => setGlobalPeriod(v)}
               />
@@ -737,12 +777,12 @@ export default function AnalyticsPageClient() {
             {globalMode === 'range' && (
               <>
                 <MonthPicker
-                  placeholder="From (YYYY-MM)"
+                  placeholder={t('analytics.from_placeholder')}
                   value={globalFrom}
                   onChange={(v) => setGlobalFrom(v)}
                 />
                 <MonthPicker
-                  placeholder="To (YYYY-MM)"
+                  placeholder={t('analytics.to_placeholder')}
                   value={globalTo}
                   onChange={(v) => setGlobalTo(v)}
                 />
@@ -832,693 +872,1275 @@ export default function AnalyticsPageClient() {
                   setConsumableTo('')
                 }
 
-                // run concurrent loads
-                void loadAllConcurrent({
-                  mode: globalMode,
-                  period: globalPeriod,
-                  from: globalFrom,
-                  to: globalTo,
-                  year: globalYear,
-                })
+                // run concurrent loads - defer slightly so the event handler returns
+                // quickly and doesn't block pointerup/other UI events.
+                // This is a minimal latency mitigation; we'll refine further if needed.
+                setTimeout(() => {
+                  void loadAllConcurrent({
+                    mode: globalMode,
+                    period: globalPeriod,
+                    from: globalFrom,
+                    to: globalTo,
+                    year: globalYear,
+                  })
+                }, 50)
               }}
             >
-              Áp dụng cho tất cả
+              {t('analytics.apply_all')}
             </Button>
           </div>
         </CardContent>
       </Card>
 
-      {/* 1. Enterprise Profit Overview */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <DollarSign className="h-5 w-5 text-emerald-600" />
-            Tổng quan lợi nhuận doanh nghiệp
-          </CardTitle>
-          <CardDescription>Phân tích tổng doanh thu, chi phí và lợi nhuận theo kỳ</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="mb-4 flex gap-3">
-            <div className="flex items-center gap-2">
-              <Calendar className="text-muted-foreground h-4 w-4" />
-              <div className="flex items-center gap-2">
-                <span className="text-sm">
-                  Kỳ:{' '}
-                  {globalMode === 'period'
-                    ? globalPeriod
-                    : globalMode === 'range'
-                      ? `${globalFrom} to ${globalTo}`
-                      : globalYear}
-                </span>
-              </div>
-            </div>
-            <Button
-              onClick={() =>
-                void loadEnterpriseProfit(
-                  buildTimeForMode(globalMode, globalPeriod, globalFrom, globalTo, globalYear)
-                )
-              }
-              disabled={enterpriseLoading}
+      {/* Tabs for Profit and Consumable Analysis */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <div className="mb-6">
+          <TabsList className="bg-muted inline-flex h-10 items-center justify-start rounded-lg p-1">
+            <TabsTrigger
+              value="profit"
+              className="ring-offset-background focus-visible:ring-ring data-[state=active]:bg-background data-[state=active]:text-foreground inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium whitespace-nowrap transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm"
             >
-              {enterpriseLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              Tải dữ liệu
-            </Button>
-          </div>
-
-          {enterpriseData && (
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-              <Card className="border-blue-200 bg-blue-50">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-blue-700">
-                    Tổng doanh thu
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-blue-900">
-                    {formatCurrencyUSD(enterpriseData.totalRevenue)}
-                  </div>
-                  <p className="text-muted-foreground mt-1 text-xs">
-                    {enterpriseData.devicesCount} thiết bị • {enterpriseData.customersCount} khách
-                    hàng
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="border-orange-200 bg-orange-50">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-orange-700">
-                    Tổng chi phí (COGS)
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-orange-900">
-                    {formatCurrencyUSD(enterpriseData.totalCogs)}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card
-                className={
-                  enterpriseData.grossProfit >= 0
-                    ? 'border-emerald-200 bg-emerald-50'
-                    : 'border-red-200 bg-red-50'
-                }
-              >
-                <CardHeader className="pb-2">
-                  <CardTitle
-                    className={`text-sm font-medium ${enterpriseData.grossProfit >= 0 ? 'text-emerald-700' : 'text-red-700'}`}
-                  >
-                    Lợi nhuận gộp
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div
-                    className={`flex items-center gap-2 text-2xl font-bold ${enterpriseData.grossProfit >= 0 ? 'text-emerald-900' : 'text-red-900'}`}
-                  >
-                    {enterpriseData.grossProfit >= 0 ? (
-                      <TrendingUp className="h-5 w-5" />
-                    ) : (
-                      <TrendingDown className="h-5 w-5" />
-                    )}
-                    {formatCurrencyUSD(enterpriseData.grossProfit)}
-                  </div>
-                  <p className="text-muted-foreground mt-1 text-xs">
-                    Biên lợi nhuận: {enterpriseData.grossMargin.toFixed(1)}%
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          {enterpriseLoading ? (
-            <div className="mt-4">
-              <Skeleton className="h-64 w-full rounded-lg" />
-            </div>
-          ) : enterpriseProfitability ? (
-            <div className="mt-4">
-              <Suspense fallback={<Skeleton className="h-64 w-full rounded-lg" />}>
-                <TrendChart data={enterpriseProfitability ?? []} height={300} showMargin />
-              </Suspense>
-            </div>
-          ) : null}
-        </CardContent>
-      </Card>
-
-      {/* 2. Customers Profit Analysis */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5 text-sky-600" />
-            Phân tích lợi nhuận theo khách hàng
-          </CardTitle>
-          <CardDescription>Xem chi tiết doanh thu và lợi nhuận từng khách hàng</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="mb-4 flex flex-wrap gap-3">
-            <div className="flex items-center gap-2">
-              <Calendar className="text-muted-foreground h-4 w-4" />
-              <div className="flex items-center gap-2">
-                <span className="text-sm">
-                  Kỳ:{' '}
-                  {globalMode === 'period'
-                    ? globalPeriod
-                    : globalMode === 'range'
-                      ? `${globalFrom} to ${globalTo}`
-                      : globalYear}
-                </span>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Search className="text-muted-foreground h-4 w-4" />
-              <CustomerSelect
-                placeholder="Tìm kiếm khách hàng..."
-                value={customersSearchId}
-                onChange={(id) => {
-                  setCustomersSearchId(id)
-                  // Consider this customer selected for detail view
-                  setSelectedCustomerId(id)
-                  // clear text search when a selection is made
-                  setCustomersSearchTerm('')
-                }}
-              />
-            </div>
-            <Button
-              onClick={() =>
-                void loadCustomersProfit(
-                  buildTimeForMode(globalMode, globalPeriod, globalFrom, globalTo, globalYear)
-                )
-              }
-              disabled={customersLoading}
+              <DollarSign className="h-4 w-4" />
+              {t('analytics.tabs.profit')}
+            </TabsTrigger>
+            <TabsTrigger
+              value="consumable"
+              className="ring-offset-background focus-visible:ring-ring data-[state=active]:bg-background data-[state=active]:text-foreground inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium whitespace-nowrap transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm"
             >
-              {customersLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              Tải dữ liệu
-            </Button>
-          </div>
+              <Package className="h-4 w-4" />
+              {t('analytics.tabs.consumable')}
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
-          {customersLoading ? (
-            <div className="mb-4">
-              <Skeleton className="h-56 w-full rounded-lg" />
-            </div>
-          ) : null}
+        <TabsContent value="profit" className="space-y-6">
+          {/* Unified Revenue (Enterprise / Customer) */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <DollarSign className="h-5 w-5 text-emerald-600" />
+                {t('analytics.enterprise.title')}
+              </CardTitle>
+              <CardDescription>{t('analytics.enterprise.description')}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="mb-4 flex gap-3">
+                <div className="flex items-center gap-2">
+                  <Calendar className="text-muted-foreground h-4 w-4" />
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">
+                      {t('analytics.period_label')}{' '}
+                      {globalMode === 'period'
+                        ? globalPeriod
+                        : globalMode === 'range'
+                          ? `${globalFrom} to ${globalTo}`
+                          : globalYear}
+                    </span>
+                  </div>
+                </div>
+                <Button
+                  onClick={() => {
+                    // Defer the load slightly so clicking doesn't block UI events
+                    setTimeout(
+                      () =>
+                        void loadEnterpriseProfit(
+                          buildTimeForMode(
+                            globalMode,
+                            globalPeriod,
+                            globalFrom,
+                            globalTo,
+                            globalYear
+                          )
+                        ),
+                      50
+                    )
+                  }}
+                  disabled={enterpriseLoading}
+                >
+                  {enterpriseLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  {t('analytics.load_data')}
+                </Button>
+              </div>
 
-          <div className="overflow-x-auto rounded-lg border">
-            <table className="min-w-full divide-y">
-              <thead className="bg-sky-50">
-                <tr>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">Khách hàng</th>
-                  <th className="px-4 py-3 text-center text-sm font-semibold">Thiết bị</th>
-                  <th className="px-4 py-3 text-right text-sm font-semibold">Doanh thu</th>
-                  <th className="px-4 py-3 text-right text-sm font-semibold">Chi phí</th>
-                  <th className="px-4 py-3 text-right text-sm font-semibold">Lợi nhuận</th>
-                  <th className="px-4 py-3 text-center text-sm font-semibold">Thao tác</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                {customersLoading ? (
-                  <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center">
-                      <Loader2 className="mx-auto h-6 w-6 animate-spin text-sky-600" />
-                    </td>
-                  </tr>
-                ) : filteredCustomers.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-sm text-gray-500">
-                      Không có dữ liệu
-                    </td>
-                  </tr>
-                ) : (
-                  filteredCustomers.map((c) => (
-                    <tr key={c.customerId} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 text-sm font-medium">{c.name}</td>
-                      <td className="px-4 py-3 text-center text-sm">{c.devicesCount}</td>
-                      <td className="px-4 py-3 text-right text-sm">
-                        {formatCurrencyUSD(c.totalRevenue)}
-                      </td>
-                      <td className="px-4 py-3 text-right text-sm">
-                        {formatCurrencyUSD(c.totalCogs)}
-                      </td>
-                      <td
-                        className={`px-4 py-3 text-right text-sm font-semibold ${c.grossProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}
+              {enterpriseData && (
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                  <Card className="border-blue-200 bg-blue-50">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium text-blue-700">
+                        {t('analytics.total_revenue')}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold text-blue-900">
+                        {formatCurrency(enterpriseData.totalRevenue)}
+                      </div>
+                      <p className="text-muted-foreground mt-1 text-xs">
+                        {t('analytics.devices_count', { count: enterpriseData.devicesCount })} •{' '}
+                        {t('analytics.customers_count', { count: enterpriseData.customersCount })}
+                      </p>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border-orange-200 bg-orange-50">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium text-orange-700">
+                        {t('analytics.total_cogs')}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold text-orange-900">
+                        {formatCurrency(enterpriseData.totalCogs)}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card
+                    className={
+                      enterpriseData.grossProfit >= 0
+                        ? 'border-emerald-200 bg-emerald-50'
+                        : 'border-red-200 bg-red-50'
+                    }
+                  >
+                    <CardHeader className="pb-2">
+                      <CardTitle
+                        className={`text-sm font-medium ${enterpriseData.grossProfit >= 0 ? 'text-emerald-700' : 'text-red-700'}`}
                       >
-                        {formatCurrencyUSD(c.grossProfit)}
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            // select the customer to auto-load detail
-                            setSelectedCustomerId(c.customerId)
-                          }}
-                        >
-                          Chi tiết
-                        </Button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+                        {t('analytics.gross_profit')}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div
+                        className={`flex items-center gap-2 text-2xl font-bold ${enterpriseData.grossProfit >= 0 ? 'text-emerald-900' : 'text-red-900'}`}
+                      >
+                        {enterpriseData.grossProfit >= 0 ? (
+                          <TrendingUp className="h-5 w-5" />
+                        ) : (
+                          <TrendingDown className="h-5 w-5" />
+                        )}
+                        {formatCurrency(enterpriseData.grossProfit)}
+                      </div>
+                      <p className="text-muted-foreground mt-1 text-xs">
+                        {t('analytics.gross_margin')}: {enterpriseData.grossMargin.toFixed(1)}%
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
 
-      {/* 3. Customer Detail Profit */}
-      {selectedCustomerId && (
-        <Card className="border-sky-200">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-sky-600" />
-              Chi tiết lợi nhuận khách hàng
-            </CardTitle>
-            <CardDescription>Phân tích lợi nhuận theo từng thiết bị</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="mb-4 flex gap-3">
-              <Input
-                placeholder="Customer ID"
-                value={selectedCustomerId}
-                onChange={(e) => setSelectedCustomerId(e.target.value)}
-                className="w-80"
-              />
-              <div className="flex items-center gap-2">
-                <Calendar className="text-muted-foreground h-4 w-4" />
-                <div className="text-sm">
-                  Kỳ:{' '}
-                  {globalMode === 'period'
-                    ? globalPeriod
-                    : globalMode === 'range'
-                      ? `${globalFrom} to ${globalTo}`
-                      : globalYear}
+              {/* Unified Chart controls: Customer select + global date */}
+              <div className="mt-4 mb-2 flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <CustomerSelect
+                    placeholder={t('analytics.all_customers')}
+                    value={selectedCustomerId}
+                    onChange={(id) => {
+                      setSelectedCustomerId(id || '')
+                      if (id) {
+                        void loadCustomerDetail(id)
+                      }
+                    }}
+                  />
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      setSelectedCustomerId('')
+                      setCustomerDetailData(null)
+                    }}
+                  >
+                    {t('analytics.all')}
+                  </Button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={() => {
+                      if (selectedCustomerId) {
+                        void loadCustomerDetail(
+                          selectedCustomerId,
+                          buildTimeForMode(
+                            globalMode,
+                            globalPeriod,
+                            globalFrom,
+                            globalTo,
+                            globalYear
+                          )
+                        )
+                      } else {
+                        void loadEnterpriseProfit(
+                          buildTimeForMode(
+                            globalMode,
+                            globalPeriod,
+                            globalFrom,
+                            globalTo,
+                            globalYear
+                          )
+                        )
+                      }
+                    }}
+                    disabled={enterpriseLoading || customerDetailLoading}
+                  >
+                    {enterpriseLoading || customerDetailLoading ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : null}
+                    {t('analytics.load_data')}
+                  </Button>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+
+              {/* Chart */}
+              {enterpriseLoading || customerDetailLoading ? (
+                <div className="mt-4">
+                  <Skeleton className="h-64 w-full rounded-lg" />
+                </div>
+              ) : (
+                <div className="mt-4">
+                  <Suspense fallback={<Skeleton className="h-64 w-full rounded-lg" />}>
+                    {(() => {
+                      const data = selectedCustomerId
+                        ? (customerDetailData?.profitability ?? [])
+                        : (enterpriseProfitability ?? [])
+                      if (!data || data.length === 0) return null
+                      if (globalMode === 'period') {
+                        // Render as a bar chart with totals for single period
+                        const single = data[0]
+                        // Local chart config used to theme the chart
+                        const chartConfig: ChartConfig = {
+                          totalRevenue: { label: t('analytics.total_revenue'), color: '#3b82f6' },
+                          totalCogs: { label: t('analytics.table.total_cogs'), color: '#f59e0b' },
+                          grossProfit: { label: t('analytics.gross_profit'), color: '#10b981' },
+                        }
+                        const formatter = (v: unknown) =>
+                          typeof v === 'number'
+                            ? Intl.NumberFormat('vi-VN', {
+                                style: 'currency',
+                                currency: 'VND',
+                                maximumFractionDigits: 0,
+                              }).format(Number(v))
+                            : String(v ?? '-')
+                        return (
+                          <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
+                            <ResponsiveContainer width="100%" height={300}>
+                              <BarChart accessibilityLayer data={[single]}>
+                                <CartesianGrid
+                                  vertical={false}
+                                  strokeDasharray="3 3"
+                                  className="stroke-border/40"
+                                />
+                                <XAxis
+                                  dataKey="month"
+                                  tickLine={false}
+                                  axisLine={false}
+                                  tickMargin={10}
+                                  tick={{ fill: 'hsl(var(--foreground))' }}
+                                />
+                                <YAxis
+                                  tickLine={false}
+                                  axisLine={false}
+                                  tickMargin={10}
+                                  tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                                  tickFormatter={(v) => {
+                                    const num = Number(v)
+                                    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`
+                                    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`
+                                    return Intl.NumberFormat('vi-VN').format(num)
+                                  }}
+                                />
+                                <ChartTooltip
+                                  content={
+                                    <ChartTooltipContent
+                                      indicator="dot"
+                                      formatter={(v) =>
+                                        typeof v === 'number' ? formatter(v) : String(v ?? '-')
+                                      }
+                                    />
+                                  }
+                                />
+                                <ChartLegend content={<ChartLegendContent />} />
+                                <Bar
+                                  dataKey="totalRevenue"
+                                  fill="var(--color-totalRevenue)"
+                                  radius={[6, 6, 0, 0]}
+                                >
+                                  <LabelList
+                                    dataKey="totalRevenue"
+                                    position="top"
+                                    formatter={(v) => formatter(v)}
+                                    className="fill-foreground text-xs font-medium"
+                                  />
+                                </Bar>
+                                <Bar
+                                  dataKey="totalCogs"
+                                  fill="var(--color-totalCogs)"
+                                  radius={[6, 6, 0, 0]}
+                                >
+                                  <LabelList
+                                    dataKey="totalCogs"
+                                    position="top"
+                                    formatter={(v) => formatter(v)}
+                                    className="fill-foreground text-xs font-medium"
+                                  />
+                                </Bar>
+                                <Bar
+                                  dataKey="grossProfit"
+                                  fill="var(--color-grossProfit)"
+                                  radius={[6, 6, 0, 0]}
+                                >
+                                  <LabelList
+                                    dataKey="grossProfit"
+                                    position="top"
+                                    formatter={(v) => formatter(v)}
+                                    className="fill-foreground text-xs font-medium"
+                                  />
+                                </Bar>
+                              </BarChart>
+                            </ResponsiveContainer>
+                          </ChartContainer>
+                        )
+                      }
+                      return <TrendChart data={data} height={300} showMargin />
+                    })()}
+                  </Suspense>
+                </div>
+              )}
+
+              {/* Unified table below chart - show underlying profitability records */}
+              <div className="mt-6 overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead>
+                    <tr className="bg-gray-50">
+                      <th className="px-4 py-2 text-left text-sm font-semibold text-gray-600">
+                        {t('analytics.table.period')}
+                      </th>
+                      <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
+                        {t('analytics.table.rental')}
+                      </th>
+                      <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
+                        {t('analytics.table.repair')}
+                      </th>
+                      <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
+                        {t('analytics.table.page_bw')}
+                      </th>
+                      <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
+                        {t('analytics.table.page_color')}
+                      </th>
+                      <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
+                        {t('analytics.table.total_revenue')}
+                      </th>
+                      <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
+                        {t('analytics.table.total_cogs')}
+                      </th>
+                      <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
+                        {t('analytics.table.profit')}
+                      </th>
+                      <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
+                        {t('analytics.table.margin')}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {(selectedCustomerId
+                      ? (customerDetailData?.profitability ?? [])
+                      : (enterpriseProfitability ?? [])
+                    ).map((row) => (
+                      <tr key={row.month}>
+                        <td className="px-4 py-2 text-sm">{row.month}</td>
+                        <td className="px-4 py-2 text-right text-sm">
+                          {Number(row.revenueRental || 0).toLocaleString()}
+                        </td>
+                        <td className="px-4 py-2 text-right text-sm">
+                          {Number(row.revenueRepair || 0).toLocaleString()}
+                        </td>
+                        <td className="px-4 py-2 text-right text-sm">
+                          {Number(row.revenuePageBW || 0).toLocaleString()}
+                        </td>
+                        <td className="px-4 py-2 text-right text-sm">
+                          {Number(row.revenuePageColor || 0).toLocaleString()}
+                        </td>
+                        <td className="px-4 py-2 text-right text-sm font-semibold">
+                          {formatCurrency(Number(row.totalRevenue || 0))}
+                        </td>
+                        <td className="px-4 py-2 text-right text-sm">
+                          {formatCurrency(Number(row.totalCogs || 0))}
+                        </td>
+                        <td className="px-4 py-2 text-right text-sm font-semibold">
+                          {formatCurrency(Number(row.grossProfit || 0))}
+                        </td>
+                        <td className="px-4 py-2 text-right text-sm">
+                          {typeof row.grossMargin === 'number'
+                            ? `${row.grossMargin.toFixed(1)}%`
+                            : '-'}
+                        </td>
+                      </tr>
+                    ))}
+                    {(selectedCustomerId
+                      ? (customerDetailData?.profitability ?? [])
+                      : (enterpriseProfitability ?? [])
+                    ).length === 0 && !(enterpriseLoading || customerDetailLoading) ? (
+                      <tr>
+                        <td className="px-4 py-6 text-center text-sm text-gray-500" colSpan={9}>
+                          {t('empty.no_data')}
+                        </td>
+                      </tr>
+                    ) : null}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Note: Customers list removed - merged into unified revenue chart above */}
+
+          {/* 3. Customer Detail Profit */}
+          {selectedCustomerId && (
+            <Card className="border-sky-200">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-sky-600" />
+                  {t('analytics.customer_detail.title')}
+                </CardTitle>
+                <CardDescription>{t('analytics.customer_detail.description')}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="mb-4 flex gap-3">
+                  <Input
+                    placeholder="Customer ID"
+                    value={selectedCustomerId}
+                    onChange={(e) => setSelectedCustomerId(e.target.value)}
+                    className="w-80"
+                  />
+                  <div className="flex items-center gap-2">
+                    <Calendar className="text-muted-foreground h-4 w-4" />
+                    <div className="text-sm">
+                      {t('analytics.period_label')}{' '}
+                      {globalMode === 'period'
+                        ? globalPeriod
+                        : globalMode === 'range'
+                          ? `${globalFrom} to ${globalTo}`
+                          : globalYear}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      onClick={() =>
+                        void loadCustomerDetail(
+                          // prefer explicit selectedCustomerId, fallback to the search id
+                          selectedCustomerId,
+                          buildTimeForMode(
+                            globalMode,
+                            globalPeriod,
+                            globalFrom,
+                            globalTo,
+                            globalYear
+                          )
+                        )
+                      }
+                      disabled={!selectedCustomerId || customerDetailLoading}
+                    >
+                      {customerDetailLoading ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : null}
+                      {t('analytics.load_data')}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        // Clear selected customer
+                        setSelectedCustomerId('')
+                        // clear any per-section search
+                      }}
+                    >
+                      {t('analytics.customer_detail.clear')}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowCustomerChart((v) => !v)}
+                    >
+                      {showCustomerChart
+                        ? t('analytics.customer_detail.hide_chart')
+                        : t('analytics.customer_detail.show_chart')}
+                    </Button>
+                  </div>
+                </div>
+
+                {customerDetailData && (
+                  <div className="space-y-4">
+                    <Card className="bg-sky-50">
+                      <CardContent className="pt-4">
+                        <h3 className="mb-2 text-lg font-semibold">
+                          {customerDetailData.customer.name}
+                        </h3>
+                        <div className="grid grid-cols-3 gap-4 text-sm">
+                          <div>
+                            <span className="text-muted-foreground">
+                              {t('analytics.customer_detail.revenue')}
+                            </span>
+                            <p className="font-semibold">
+                              {formatCurrency(customerDetailData.customer.totalRevenue)}
+                            </p>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">
+                              {t('analytics.customer_detail.cost')}
+                            </span>
+                            <p className="font-semibold">
+                              {formatCurrency(customerDetailData.customer.totalCogs)}
+                            </p>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">
+                              {t('analytics.customer_detail.profit')}
+                            </span>
+                            <p
+                              className={`font-semibold ${customerDetailData.customer.grossProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}
+                            >
+                              {formatCurrency(customerDetailData.customer.grossProfit)}
+                            </p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {showCustomerChart && customerDetailData?.profitability && (
+                      <div className="mb-4">
+                        {(() => {
+                          const d = customerDetailData.profitability
+                          if (!d || d.length === 0) return null
+                          const data = d
+                          if (globalMode === 'period' && data.length === 1) {
+                            const single = data[0]
+                            const chartConfig: ChartConfig = {
+                              totalRevenue: {
+                                label: t('analytics.total_revenue'),
+                                color: '#3b82f6',
+                              },
+                              totalCogs: {
+                                label: t('analytics.table.total_cogs'),
+                                color: '#f59e0b',
+                              },
+                              grossProfit: { label: t('analytics.gross_profit'), color: '#10b981' },
+                            }
+                            const formatter = (v: unknown) =>
+                              typeof v === 'number'
+                                ? Intl.NumberFormat('vi-VN', {
+                                    style: 'currency',
+                                    currency: 'VND',
+                                    maximumFractionDigits: 0,
+                                  }).format(Number(v))
+                                : String(v ?? '-')
+                            return (
+                              <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
+                                <ResponsiveContainer width="100%" height={300}>
+                                  <BarChart accessibilityLayer data={[single]}>
+                                    <CartesianGrid
+                                      vertical={false}
+                                      strokeDasharray="3 3"
+                                      className="stroke-border/40"
+                                    />
+                                    <XAxis
+                                      dataKey="month"
+                                      tickLine={false}
+                                      axisLine={false}
+                                      tickMargin={10}
+                                      tick={{ fill: 'hsl(var(--foreground))' }}
+                                    />
+                                    <YAxis
+                                      tickLine={false}
+                                      axisLine={false}
+                                      tickMargin={10}
+                                      tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                                      tickFormatter={(v) => {
+                                        const num = Number(v)
+                                        if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`
+                                        if (num >= 1000) return `${(num / 1000).toFixed(1)}K`
+                                        return Intl.NumberFormat('vi-VN').format(num)
+                                      }}
+                                    />
+                                    <ChartTooltip
+                                      content={
+                                        <ChartTooltipContent
+                                          indicator="dot"
+                                          formatter={(v) =>
+                                            typeof v === 'number' ? formatter(v) : String(v ?? '-')
+                                          }
+                                        />
+                                      }
+                                    />
+                                    <ChartLegend content={<ChartLegendContent />} />
+                                    <Bar
+                                      dataKey="totalRevenue"
+                                      fill="var(--color-totalRevenue)"
+                                      radius={[6, 6, 0, 0]}
+                                    >
+                                      <LabelList
+                                        dataKey="totalRevenue"
+                                        position="top"
+                                        formatter={(v) => formatter(v)}
+                                        className="fill-foreground text-xs font-medium"
+                                      />
+                                    </Bar>
+                                    <Bar
+                                      dataKey="totalCogs"
+                                      fill="var(--color-totalCogs)"
+                                      radius={[6, 6, 0, 0]}
+                                    >
+                                      <LabelList
+                                        dataKey="totalCogs"
+                                        position="top"
+                                        formatter={(v) => formatter(v)}
+                                        className="fill-foreground text-xs font-medium"
+                                      />
+                                    </Bar>
+                                    <Bar
+                                      dataKey="grossProfit"
+                                      fill="var(--color-grossProfit)"
+                                      radius={[6, 6, 0, 0]}
+                                    >
+                                      <LabelList
+                                        dataKey="grossProfit"
+                                        position="top"
+                                        formatter={(v) => formatter(v)}
+                                        className="fill-foreground text-xs font-medium"
+                                      />
+                                    </Bar>
+                                  </BarChart>
+                                </ResponsiveContainer>
+                              </ChartContainer>
+                            )
+                          }
+                          return <TrendChart data={data} height={300} showMargin />
+                        })()}
+                      </div>
+                    )}
+                    <div className="overflow-x-auto rounded-lg border">
+                      <table className="min-w-full divide-y">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-4 py-3 text-left text-sm font-semibold">
+                              {t('analytics.customer_detail.table.model')}
+                            </th>
+                            <th className="px-4 py-3 text-left text-sm font-semibold">
+                              {t('analytics.customer_detail.table.serial')}
+                            </th>
+                            <th className="px-4 py-3 text-right text-sm font-semibold">
+                              {t('analytics.customer_detail.table.revenue')}
+                            </th>
+                            <th className="px-4 py-3 text-right text-sm font-semibold">
+                              {t('analytics.customer_detail.table.cost')}
+                            </th>
+                            <th className="px-4 py-3 text-right text-sm font-semibold">
+                              {t('analytics.customer_detail.table.profit')}
+                            </th>
+                            <th className="px-4 py-3 text-center text-sm font-semibold">
+                              {t('analytics.customer_detail.table.actions')}
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y">
+                          {customerDetailData.devices.map((d) => (
+                            <tr key={d.deviceId} className="hover:bg-gray-50">
+                              <td className="px-4 py-3 text-sm">{d.model}</td>
+                              <td className="px-4 py-3 text-sm">{d.serialNumber}</td>
+                              <td className="px-4 py-3 text-right text-sm">
+                                {formatCurrency(d.revenue)}
+                              </td>
+                              <td className="px-4 py-3 text-right text-sm">
+                                {formatCurrency(d.cogs)}
+                              </td>
+                              <td
+                                className={`px-4 py-3 text-right text-sm font-semibold ${d.profit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}
+                              >
+                                {formatCurrency(d.profit)}
+                              </td>
+                              <td className="px-4 py-3 text-center">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    setSelectedDeviceId(d.deviceId)
+                                  }}
+                                >
+                                  {t('analytics.customer_detail.view_series')}
+                                </Button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+                {!customerDetailLoading && !customerDetailData && (
+                  <div className="flex items-center justify-center p-6 text-sm text-gray-500">
+                    {t('empty.no_data')}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* 4. Device Profitability Time Series */}
+          {selectedDeviceId && (
+            <Card className="border-violet-200">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Printer className="h-5 w-5 text-violet-600" />
+                  {t('analytics.device.title')}
+                </CardTitle>
+                <CardDescription>{t('analytics.device.description')}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="mb-4 flex flex-wrap gap-3">
+                  <Input
+                    placeholder="Device ID"
+                    value={selectedDeviceId}
+                    onChange={(e) => setSelectedDeviceId(e.target.value)}
+                    className="w-80"
+                  />
+                  <div className="flex items-center gap-2">
+                    <Calendar className="text-muted-foreground h-4 w-4" />
+                    <div className="text-sm">
+                      {t('analytics.period_label')}{' '}
+                      {globalMode === 'period'
+                        ? globalPeriod
+                        : globalMode === 'range'
+                          ? `${globalFrom} to ${globalTo}`
+                          : globalYear}
+                    </div>
+                  </div>
+
+                  <Button
+                    onClick={() =>
+                      void loadDeviceProfitability(
+                        buildTimeForMode(globalMode, globalPeriod, globalFrom, globalTo, globalYear)
+                      )
+                    }
+                    disabled={!selectedDeviceId || deviceLoading}
+                  >
+                    {deviceLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    {t('analytics.load_data')}
+                  </Button>
+                </div>
+
+                {deviceData && (
+                  <div className="space-y-4">
+                    <div className="rounded-lg bg-violet-50 p-4">
+                      <h3 className="font-semibold">{deviceData.device.model}</h3>
+                      <p className="text-sm text-gray-600">
+                        {t('analytics.device.serial')} {deviceData.device.serialNumber}
+                      </p>
+                    </div>
+
+                    <div className="h-[360px] w-full">
+                      {deviceData.profitability.length === 0 ? (
+                        <div className="flex h-full items-center justify-center text-sm text-gray-500">
+                          {t('empty.no_data')}
+                        </div>
+                      ) : (
+                        <Suspense fallback={<Skeleton className="h-[360px] w-full rounded-lg" />}>
+                          {globalMode === 'period' && deviceData.profitability.length === 1
+                            ? (() => {
+                                const single = deviceData.profitability[0]
+                                const chartConfig: ChartConfig = {
+                                  totalRevenue: {
+                                    label: t('analytics.total_revenue'),
+                                    color: '#3b82f6',
+                                  },
+                                  totalCogs: { label: t('analytics.total_cogs'), color: '#f59e0b' },
+                                  grossProfit: {
+                                    label: t('analytics.gross_profit'),
+                                    color: '#10b981',
+                                  },
+                                }
+                                const formatter = (v: unknown) =>
+                                  typeof v === 'number'
+                                    ? Intl.NumberFormat('vi-VN', {
+                                        style: 'currency',
+                                        currency: 'VND',
+                                        maximumFractionDigits: 0,
+                                      }).format(Number(v))
+                                    : String(v ?? '-')
+                                return (
+                                  <ChartContainer config={chartConfig} className="h-full w-full">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                      <BarChart accessibilityLayer data={[single]}>
+                                        <CartesianGrid
+                                          vertical={false}
+                                          strokeDasharray="3 3"
+                                          className="stroke-border/40"
+                                        />
+                                        <XAxis
+                                          dataKey="month"
+                                          tickLine={false}
+                                          axisLine={false}
+                                          tickMargin={10}
+                                          tick={{ fill: 'hsl(var(--foreground))' }}
+                                        />
+                                        <YAxis
+                                          tickLine={false}
+                                          axisLine={false}
+                                          tickMargin={10}
+                                          tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                                          tickFormatter={(v) => {
+                                            const num = Number(v)
+                                            if (num >= 1000000)
+                                              return `${(num / 1000000).toFixed(1)}M`
+                                            if (num >= 1000) return `${(num / 1000).toFixed(1)}K`
+                                            return Intl.NumberFormat('vi-VN').format(num)
+                                          }}
+                                        />
+                                        <ChartTooltip
+                                          content={
+                                            <ChartTooltipContent
+                                              indicator="dot"
+                                              formatter={(v) =>
+                                                typeof v === 'number'
+                                                  ? formatter(v)
+                                                  : String(v ?? '-')
+                                              }
+                                            />
+                                          }
+                                        />
+                                        <ChartLegend content={<ChartLegendContent />} />
+                                        <Bar
+                                          dataKey="totalRevenue"
+                                          fill="var(--color-totalRevenue)"
+                                          radius={[6, 6, 0, 0]}
+                                        >
+                                          <LabelList
+                                            dataKey="totalRevenue"
+                                            position="top"
+                                            formatter={(v) => formatter(v)}
+                                            className="fill-foreground text-xs font-medium"
+                                          />
+                                        </Bar>
+                                        <Bar
+                                          dataKey="totalCogs"
+                                          fill="var(--color-totalCogs)"
+                                          radius={[6, 6, 0, 0]}
+                                        >
+                                          <LabelList
+                                            dataKey="totalCogs"
+                                            position="top"
+                                            formatter={(v) => formatter(v)}
+                                            className="fill-foreground text-xs font-medium"
+                                          />
+                                        </Bar>
+                                        <Bar
+                                          dataKey="grossProfit"
+                                          fill="var(--color-grossProfit)"
+                                          radius={[6, 6, 0, 0]}
+                                        >
+                                          <LabelList
+                                            dataKey="grossProfit"
+                                            position="top"
+                                            formatter={(v) => formatter(v)}
+                                            className="fill-foreground text-xs font-medium"
+                                          />
+                                        </Bar>
+                                      </BarChart>
+                                    </ResponsiveContainer>
+                                  </ChartContainer>
+                                )
+                              })()
+                            : (() => {
+                                const chartConfig: ChartConfig = {
+                                  totalRevenue: {
+                                    label: t('analytics.total_revenue'),
+                                    color: '#3b82f6',
+                                  },
+                                  totalCogs: { label: t('analytics.total_cogs'), color: '#f59e0b' },
+                                  grossProfit: {
+                                    label: t('analytics.gross_profit'),
+                                    color: '#10b981',
+                                  },
+                                }
+                                const formatter = (v: unknown) =>
+                                  typeof v === 'number'
+                                    ? Intl.NumberFormat('vi-VN', {
+                                        style: 'currency',
+                                        currency: 'VND',
+                                        maximumFractionDigits: 0,
+                                      }).format(Number(v))
+                                    : String(v ?? '-')
+                                return (
+                                  <ChartContainer config={chartConfig} className="h-full w-full">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                      <LineChart accessibilityLayer data={deviceData.profitability}>
+                                        <CartesianGrid
+                                          vertical={false}
+                                          strokeDasharray="3 3"
+                                          className="stroke-border/40"
+                                        />
+                                        <XAxis
+                                          dataKey="month"
+                                          tickLine={false}
+                                          axisLine={false}
+                                          tickMargin={10}
+                                          tick={{ fill: 'hsl(var(--foreground))' }}
+                                        />
+                                        <YAxis
+                                          tickLine={false}
+                                          axisLine={false}
+                                          tickMargin={10}
+                                          tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                                          tickFormatter={(v) => {
+                                            const num = Number(v)
+                                            if (num >= 1000000)
+                                              return `${(num / 1000000).toFixed(1)}M`
+                                            if (num >= 1000) return `${(num / 1000).toFixed(1)}K`
+                                            return Intl.NumberFormat('vi-VN').format(num)
+                                          }}
+                                        />
+                                        <ChartTooltip
+                                          content={
+                                            <ChartTooltipContent
+                                              indicator="dot"
+                                              formatter={(v) =>
+                                                typeof v === 'number'
+                                                  ? formatter(v)
+                                                  : String(v ?? '-')
+                                              }
+                                            />
+                                          }
+                                        />
+                                        <ChartLegend content={<ChartLegendContent />} />
+                                        <Line
+                                          type="monotone"
+                                          dataKey="totalRevenue"
+                                          stroke="var(--color-totalRevenue)"
+                                          name={t('analytics.total_revenue')}
+                                          strokeWidth={3}
+                                          dot={false}
+                                          activeDot={{
+                                            r: 5,
+                                            fill: 'var(--color-totalRevenue)',
+                                            strokeWidth: 2,
+                                            stroke: 'hsl(var(--background))',
+                                          }}
+                                        />
+                                        <Line
+                                          type="monotone"
+                                          dataKey="totalCogs"
+                                          stroke="var(--color-totalCogs)"
+                                          name={t('analytics.total_cogs')}
+                                          strokeWidth={3}
+                                          dot={false}
+                                          activeDot={{
+                                            r: 5,
+                                            fill: 'var(--color-totalCogs)',
+                                            strokeWidth: 2,
+                                            stroke: 'hsl(var(--background))',
+                                          }}
+                                        />
+                                        <Line
+                                          type="monotone"
+                                          dataKey="grossProfit"
+                                          stroke="var(--color-grossProfit)"
+                                          name={t('analytics.gross_profit')}
+                                          strokeWidth={3}
+                                          dot={false}
+                                          activeDot={{
+                                            r: 5,
+                                            fill: 'var(--color-grossProfit)',
+                                            strokeWidth: 2,
+                                            stroke: 'hsl(var(--background))',
+                                          }}
+                                        />
+                                      </LineChart>
+                                    </ResponsiveContainer>
+                                  </ChartContainer>
+                                )
+                              })()}
+                        </Suspense>
+                      )}
+                    </div>
+
+                    <div className="overflow-x-auto rounded-lg border">
+                      <table className="min-w-full divide-y text-sm">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-3 py-2 text-left font-semibold">
+                              {t('analytics.device.table.month')}
+                            </th>
+                            <th className="px-3 py-2 text-right font-semibold">
+                              {t('analytics.device.table.rental')}
+                            </th>
+                            <th className="px-3 py-2 text-right font-semibold">
+                              {t('analytics.device.table.repair')}
+                            </th>
+                            <th className="px-3 py-2 text-right font-semibold">
+                              {t('analytics.device.table.page_bw')}
+                            </th>
+                            <th className="px-3 py-2 text-right font-semibold">
+                              {t('analytics.device.table.page_color')}
+                            </th>
+                            <th className="px-3 py-2 text-right font-semibold">
+                              {t('analytics.device.table.total_revenue')}
+                            </th>
+                            <th className="px-3 py-2 text-right font-semibold">
+                              {t('analytics.device.table.cost_consumable')}
+                            </th>
+                            <th className="px-3 py-2 text-right font-semibold">
+                              {t('analytics.device.table.cost_repair')}
+                            </th>
+                            <th className="px-3 py-2 text-right font-semibold">
+                              {t('analytics.device.table.profit')}
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y">
+                          {deviceData.profitability.map((p) => (
+                            <tr key={p.month}>
+                              <td className="px-3 py-2">{p.month}</td>
+                              <td className="px-3 py-2 text-right">
+                                {formatCurrency(p.revenueRental)}
+                              </td>
+                              <td className="px-3 py-2 text-right">
+                                {formatCurrency(p.revenueRepair)}
+                              </td>
+                              <td className="px-3 py-2 text-right">
+                                {formatCurrency(p.revenuePageBW)}
+                              </td>
+                              <td className="px-3 py-2 text-right">
+                                {formatCurrency(p.revenuePageColor)}
+                              </td>
+                              <td className="px-3 py-2 text-right font-semibold">
+                                {formatCurrency(p.totalRevenue)}
+                              </td>
+                              <td className="px-3 py-2 text-right">
+                                {formatCurrency(p.cogsConsumable)}
+                              </td>
+                              <td className="px-3 py-2 text-right">
+                                {formatCurrency(p.cogsRepair)}
+                              </td>
+                              <td
+                                className={`px-3 py-2 text-right font-semibold ${p.grossProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}
+                              >
+                                {formatCurrency(p.grossProfit)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+                {!deviceLoading && !deviceData && (
+                  <div className="flex items-center justify-center p-6 text-sm text-gray-500">
+                    {t('empty.no_data')}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="consumable" className="space-y-6">
+          {/* 5. Consumable Lifecycle Analysis */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Package className="h-5 w-5 text-amber-600" />
+                {t('analytics.consumable.title')}
+              </CardTitle>
+              <CardDescription>{t('analytics.consumable.description')}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-5">
+                <div className="flex items-center gap-2">
+                  <Calendar className="text-muted-foreground h-4 w-4" />
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">
+                      {t('analytics.period_label')}{' '}
+                      {globalMode === 'period'
+                        ? globalPeriod
+                        : globalMode === 'range'
+                          ? `${globalFrom} to ${globalTo}`
+                          : globalYear}
+                    </span>
+                  </div>
+                </div>
+                <ConsumableTypeSelect
+                  placeholder={t('analytics.consumable.type_placeholder')}
+                  value={consumableTypeId}
+                  onChange={(id) => setConsumableTypeId(id)}
+                />
+                <CustomerSelect
+                  placeholder={t('analytics.consumable.customer_placeholder')}
+                  value={consumableCustomerId}
+                  onChange={(id) => setConsumableCustomerId(id)}
+                />
                 <Button
                   onClick={() =>
-                    void loadCustomerDetail(
-                      // prefer explicit selectedCustomerId, fallback to the search id
-                      selectedCustomerId ?? customersSearchId,
+                    void loadConsumableLifecycle(
                       buildTimeForMode(globalMode, globalPeriod, globalFrom, globalTo, globalYear)
                     )
                   }
-                  disabled={!selectedCustomerId || customerDetailLoading}
+                  disabled={consumableLoading}
                 >
-                  {customerDetailLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                  Tải dữ liệu
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    // Clear selected customer
-                    setSelectedCustomerId('')
-                    setCustomersSearchId('')
-                  }}
-                >
-                  Xóa
+                  {consumableLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  {t('analytics.load_data')}
                 </Button>
               </div>
-            </div>
 
-            {customerDetailData && (
-              <div className="space-y-4">
-                <Card className="bg-sky-50">
-                  <CardContent className="pt-4">
-                    <h3 className="mb-2 text-lg font-semibold">
-                      {customerDetailData.customer.name}
-                    </h3>
-                    <div className="grid grid-cols-3 gap-4 text-sm">
-                      <div>
-                        <span className="text-muted-foreground">Doanh thu:</span>
-                        <p className="font-semibold">
-                          {formatCurrencyUSD(customerDetailData.customer.totalRevenue)}
-                        </p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Chi phí:</span>
-                        <p className="font-semibold">
-                          {formatCurrencyUSD(customerDetailData.customer.totalCogs)}
-                        </p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Lợi nhuận:</span>
-                        <p
-                          className={`font-semibold ${customerDetailData.customer.grossProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}
-                        >
-                          {formatCurrencyUSD(customerDetailData.customer.grossProfit)}
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {customerDetailData.profitability && customerDetailData.profitability.length > 0 ? (
-                  <div className="mt-4">
-                    <Suspense fallback={<Skeleton className="h-64 w-full rounded-lg" />}>
-                      <TrendChart
-                        data={customerDetailData.profitability ?? []}
-                        height={300}
-                        showMargin
-                      />
-                    </Suspense>
-                  </div>
-                ) : null}
-
-                <div className="overflow-x-auto rounded-lg border">
-                  <table className="min-w-full divide-y">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-4 py-3 text-left text-sm font-semibold">Model</th>
-                        <th className="px-4 py-3 text-left text-sm font-semibold">Serial</th>
-                        <th className="px-4 py-3 text-right text-sm font-semibold">Doanh thu</th>
-                        <th className="px-4 py-3 text-right text-sm font-semibold">Chi phí</th>
-                        <th className="px-4 py-3 text-right text-sm font-semibold">Lợi nhuận</th>
-                        <th className="px-4 py-3 text-center text-sm font-semibold">Thao tác</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y">
-                      {customerDetailData.devices.map((d) => (
-                        <tr key={d.deviceId} className="hover:bg-gray-50">
-                          <td className="px-4 py-3 text-sm">{d.model}</td>
-                          <td className="px-4 py-3 text-sm">{d.serialNumber}</td>
-                          <td className="px-4 py-3 text-right text-sm">
-                            {formatCurrencyUSD(d.revenue)}
-                          </td>
-                          <td className="px-4 py-3 text-right text-sm">
-                            {formatCurrencyUSD(d.cogs)}
-                          </td>
-                          <td
-                            className={`px-4 py-3 text-right text-sm font-semibold ${d.profit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}
-                          >
-                            {formatCurrencyUSD(d.profit)}
-                          </td>
-                          <td className="px-4 py-3 text-center">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setSelectedDeviceId(d.deviceId)
-                              }}
-                            >
-                              Xem chuỗi
-                            </Button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-            {!customerDetailLoading && !customerDetailData && (
-              <div className="flex items-center justify-center p-6 text-sm text-gray-500">
-                Không có dữ liệu
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* 4. Device Profitability Time Series */}
-      {selectedDeviceId && (
-        <Card className="border-violet-200">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Printer className="h-5 w-5 text-violet-600" />
-              Chuỗi thời gian lợi nhuận thiết bị
-            </CardTitle>
-            <CardDescription>Phân tích chi tiết theo tháng</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="mb-4 flex flex-wrap gap-3">
-              <Input
-                placeholder="Device ID"
-                value={selectedDeviceId}
-                onChange={(e) => setSelectedDeviceId(e.target.value)}
-                className="w-80"
-              />
-              <div className="flex items-center gap-2">
-                <Calendar className="text-muted-foreground h-4 w-4" />
-                <div className="text-sm">
-                  Kỳ:{' '}
-                  {globalMode === 'period'
-                    ? globalPeriod
-                    : globalMode === 'range'
-                      ? `${globalFrom} to ${globalTo}`
-                      : globalYear}
-                </div>
-              </div>
-
-              <Button
-                onClick={() =>
-                  void loadDeviceProfitability(
-                    buildTimeForMode(globalMode, globalPeriod, globalFrom, globalTo, globalYear)
-                  )
-                }
-                disabled={!selectedDeviceId || deviceLoading}
-              >
-                {deviceLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                Tải dữ liệu
-              </Button>
-            </div>
-
-            {deviceData && (
-              <div className="space-y-4">
-                <div className="rounded-lg bg-violet-50 p-4">
-                  <h3 className="font-semibold">{deviceData.device.model}</h3>
-                  <p className="text-sm text-gray-600">Serial: {deviceData.device.serialNumber}</p>
-                </div>
-
-                <div className="h-[360px] w-full">
-                  {deviceData.profitability.length === 0 ? (
-                    <div className="flex h-full items-center justify-center text-sm text-gray-500">
-                      Không có dữ liệu
-                    </div>
-                  ) : (
-                    <Suspense fallback={<Skeleton className="h-[360px] w-full rounded-lg" />}>
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={deviceData.profitability}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="month" />
-                          <YAxis />
-                          <Tooltip />
-                          <Legend />
-                          <Line
-                            type="monotone"
-                            dataKey="totalRevenue"
-                            stroke="#3b82f6"
-                            name="Tổng doanh thu"
-                            strokeWidth={2}
-                          />
-                          <Line
-                            type="monotone"
-                            dataKey="totalCogs"
-                            stroke="#f59e0b"
-                            name="Tổng chi phí"
-                            strokeWidth={2}
-                          />
-                          <Line
-                            type="monotone"
-                            dataKey="grossProfit"
-                            stroke="#10b981"
-                            name="Lợi nhuận gộp"
-                            strokeWidth={2}
-                          />
-                        </LineChart>
-                      </ResponsiveContainer>
-                    </Suspense>
-                  )}
-                </div>
-
-                <div className="overflow-x-auto rounded-lg border">
-                  <table className="min-w-full divide-y text-sm">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-3 py-2 text-left font-semibold">Tháng</th>
-                        <th className="px-3 py-2 text-right font-semibold">Thuê bao</th>
-                        <th className="px-3 py-2 text-right font-semibold">Sửa chữa</th>
-                        <th className="px-3 py-2 text-right font-semibold">Trang BW</th>
-                        <th className="px-3 py-2 text-right font-semibold">Trang màu</th>
-                        <th className="px-3 py-2 text-right font-semibold">Tổng DT</th>
-                        <th className="px-3 py-2 text-right font-semibold">Chi phí VT</th>
-                        <th className="px-3 py-2 text-right font-semibold">Chi phí SC</th>
-                        <th className="px-3 py-2 text-right font-semibold">Lợi nhuận</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y">
-                      {deviceData.profitability.map((p) => (
-                        <tr key={p.month}>
-                          <td className="px-3 py-2">{p.month}</td>
-                          <td className="px-3 py-2 text-right">
-                            {formatCurrencyUSD(p.revenueRental)}
-                          </td>
-                          <td className="px-3 py-2 text-right">
-                            {formatCurrencyUSD(p.revenueRepair)}
-                          </td>
-                          <td className="px-3 py-2 text-right">
-                            {formatCurrencyUSD(p.revenuePageBW)}
-                          </td>
-                          <td className="px-3 py-2 text-right">
-                            {formatCurrencyUSD(p.revenuePageColor)}
-                          </td>
-                          <td className="px-3 py-2 text-right font-semibold">
-                            {formatCurrencyUSD(p.totalRevenue)}
-                          </td>
-                          <td className="px-3 py-2 text-right">
-                            {formatCurrencyUSD(p.cogsConsumable)}
-                          </td>
-                          <td className="px-3 py-2 text-right">
-                            {formatCurrencyUSD(p.cogsRepair)}
-                          </td>
-                          <td
-                            className={`px-3 py-2 text-right font-semibold ${p.grossProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}
-                          >
-                            {formatCurrencyUSD(p.grossProfit)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-            {!deviceLoading && !deviceData && (
-              <div className="flex items-center justify-center p-6 text-sm text-gray-500">
-                Không có dữ liệu
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* 5. Consumable Lifecycle Analysis */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Package className="h-5 w-5 text-amber-600" />
-            Phân tích vòng đời vật tư tiêu hao
-          </CardTitle>
-          <CardDescription>
-            Theo dõi chi phí thực tế vs lý thuyết và thời gian sử dụng
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-5">
-            <div className="flex items-center gap-2">
-              <Calendar className="text-muted-foreground h-4 w-4" />
-              <div className="flex items-center gap-2">
-                <span className="text-sm">
-                  Kỳ:{' '}
-                  {globalMode === 'period'
-                    ? globalPeriod
-                    : globalMode === 'range'
-                      ? `${globalFrom} to ${globalTo}`
-                      : globalYear}
-                </span>
-              </div>
-            </div>
-            <ConsumableTypeSelect
-              placeholder="Consumable Type (tùy chọn)"
-              value={consumableTypeId}
-              onChange={(id) => setConsumableTypeId(id)}
-            />
-            <CustomerSelect
-              placeholder="Customer ID (tùy chọn)"
-              value={consumableCustomerId}
-              onChange={(id) => setConsumableCustomerId(id)}
-            />
-            <Button
-              onClick={() =>
-                void loadConsumableLifecycle(
-                  buildTimeForMode(globalMode, globalPeriod, globalFrom, globalTo, globalYear)
-                )
-              }
-              disabled={consumableLoading}
-            >
-              {consumableLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              Tải dữ liệu
-            </Button>
-          </div>
-
-          <div className="mb-4 h-[300px] w-full">
-            {consumableLoading ? (
-              <Skeleton className="h-[300px] w-full rounded-lg" />
-            ) : consumableData.length === 0 ? (
-              <div className="flex h-full items-center justify-center text-sm text-gray-500">
-                Không có dữ liệu
-              </div>
-            ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={consumableData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="replacements" fill="#3b82f6" name="Số lần thay thế" />
-                  <Bar dataKey="avgTheoreticalCostPerPage" fill="#10b981" name="Chi phí LT/trang" />
-                  <Bar dataKey="avgActualCostPerPage" fill="#f59e0b" name="Chi phí TT/trang" />
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </div>
-
-          <div className="overflow-x-auto rounded-lg border">
-            <table className="min-w-full divide-y text-sm">
-              <thead className="bg-amber-50">
-                <tr>
-                  <th className="px-3 py-2 text-left font-semibold">Tháng</th>
-                  <th className="px-3 py-2 text-right font-semibold">Thay thế</th>
-                  <th className="px-3 py-2 text-right font-semibold">CP LT/trang</th>
-                  <th className="px-3 py-2 text-right font-semibold">CP TT/trang</th>
-                  <th className="px-3 py-2 text-right font-semibold">Chênh lệch</th>
-                  <th className="px-3 py-2 text-right font-semibold">TB thời gian (ngày)</th>
-                  <th className="px-3 py-2 text-right font-semibold">Trung vị thời gian (ngày)</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y">
+              <div className="mb-6 h-[300px] w-full overflow-hidden">
                 {consumableLoading ? (
-                  <tr>
-                    <td colSpan={7} className="px-4 py-8 text-center">
-                      <Loader2 className="mx-auto h-6 w-6 animate-spin text-amber-600" />
-                    </td>
-                  </tr>
+                  <Skeleton className="h-[300px] w-full rounded-lg" />
                 ) : consumableData.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="px-4 py-8 text-center text-sm text-gray-500">
-                      Không có dữ liệu
-                    </td>
-                  </tr>
+                  <div className="flex h-full items-center justify-center text-sm text-gray-500">
+                    {t('empty.no_data')}
+                  </div>
                 ) : (
-                  consumableData.map((item) => (
-                    <tr key={item.month}>
-                      <td className="px-3 py-2">{item.month}</td>
-                      <td className="px-3 py-2 text-right">{item.replacements}</td>
-                      <td className="px-3 py-2 text-right">
-                        {item.avgTheoreticalCostPerPage.toFixed(4)}
-                      </td>
-                      <td className="px-3 py-2 text-right">
-                        {item.avgActualCostPerPage.toFixed(4)}
-                      </td>
-                      <td
-                        className={`px-3 py-2 text-right font-semibold ${item.variance >= 0 ? 'text-red-600' : 'text-emerald-600'}`}
-                      >
-                        {item.variance.toFixed(4)}
-                      </td>
-                      <td className="px-3 py-2 text-right">
-                        {item.avgLifetimeDays?.toFixed(1) ?? '-'}
-                      </td>
-                      <td className="px-3 py-2 text-right">
-                        {item.medianLifetimeDays?.toFixed(1) ?? '-'}
-                      </td>
-                    </tr>
-                  ))
+                  (() => {
+                    const chartConfig: ChartConfig = {
+                      replacements: {
+                        label: t('analytics.consumable.chart.replacements'),
+                        color: '#3b82f6',
+                      },
+                      avgTheoreticalCostPerPage: {
+                        label: t('analytics.consumable.chart.theoretical_cost'),
+                        color: '#10b981',
+                      },
+                      avgActualCostPerPage: {
+                        label: t('analytics.consumable.chart.actual_cost'),
+                        color: '#f59e0b',
+                      },
+                    }
+                    const formatter = (v: unknown) =>
+                      typeof v === 'number' ? String(v) : String(v ?? '-')
+                    return (
+                      <ChartContainer config={chartConfig} className="h-[300px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart accessibilityLayer data={consumableData}>
+                            <CartesianGrid
+                              vertical={false}
+                              strokeDasharray="3 3"
+                              className="stroke-border/40"
+                            />
+                            <XAxis
+                              dataKey="month"
+                              tickLine={false}
+                              axisLine={false}
+                              tickMargin={10}
+                              tick={{ fill: 'hsl(var(--foreground))' }}
+                            />
+                            <YAxis
+                              tickLine={false}
+                              axisLine={false}
+                              tickMargin={10}
+                              tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                              tickFormatter={(v) => {
+                                const num = Number(v)
+                                if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`
+                                if (num >= 1000) return `${(num / 1000).toFixed(1)}K`
+                                return Intl.NumberFormat('vi-VN').format(num)
+                              }}
+                            />
+                            <ChartTooltip
+                              content={
+                                <ChartTooltipContent
+                                  indicator="dot"
+                                  formatter={(v) => formatter(v)}
+                                />
+                              }
+                            />
+                            <ChartLegend content={<ChartLegendContent />} />
+                            <Bar
+                              dataKey="replacements"
+                              fill="var(--color-replacements)"
+                              radius={[4, 4, 0, 0]}
+                            />
+                            <Bar
+                              dataKey="avgTheoreticalCostPerPage"
+                              fill="var(--color-avgTheoreticalCostPerPage)"
+                              radius={[4, 4, 0, 0]}
+                            />
+                            <Bar
+                              dataKey="avgActualCostPerPage"
+                              fill="var(--color-avgActualCostPerPage)"
+                              radius={[4, 4, 0, 0]}
+                            />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </ChartContainer>
+                    )
+                  })()
                 )}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+              </div>
+
+              <div className="mt-6 overflow-x-auto rounded-lg border">
+                <table className="min-w-full divide-y text-sm">
+                  <thead className="bg-amber-50">
+                    <tr>
+                      <th className="px-3 py-2 text-left font-semibold">
+                        {t('analytics.consumable.table.month')}
+                      </th>
+                      <th className="px-3 py-2 text-right font-semibold">
+                        {t('analytics.consumable.table.replacements')}
+                      </th>
+                      <th className="px-3 py-2 text-right font-semibold">
+                        {t('analytics.consumable.table.theoretical_cost')}
+                      </th>
+                      <th className="px-3 py-2 text-right font-semibold">
+                        {t('analytics.consumable.table.actual_cost')}
+                      </th>
+                      <th className="px-3 py-2 text-right font-semibold">
+                        {t('analytics.consumable.table.variance')}
+                      </th>
+                      <th className="px-3 py-2 text-right font-semibold">
+                        {t('analytics.consumable.table.avg_time')}
+                      </th>
+                      <th className="px-3 py-2 text-right font-semibold">
+                        {t('analytics.consumable.table.median_time')}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {consumableLoading ? (
+                      <tr>
+                        <td colSpan={7} className="px-4 py-8 text-center">
+                          <Loader2 className="mx-auto h-6 w-6 animate-spin text-amber-600" />
+                        </td>
+                      </tr>
+                    ) : consumableData.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="px-4 py-8 text-center text-sm text-gray-500">
+                          {t('empty.no_data')}
+                        </td>
+                      </tr>
+                    ) : (
+                      consumableData.map((item) => (
+                        <tr key={item.month}>
+                          <td className="px-3 py-2">{item.month}</td>
+                          <td className="px-3 py-2 text-right">{item.replacements}</td>
+                          <td className="px-3 py-2 text-right">
+                            {item.avgTheoreticalCostPerPage.toFixed(4)}
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            {item.avgActualCostPerPage.toFixed(4)}
+                          </td>
+                          <td
+                            className={`px-3 py-2 text-right font-semibold ${item.variance >= 0 ? 'text-red-600' : 'text-emerald-600'}`}
+                          >
+                            {item.variance.toFixed(4)}
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            {item.avgLifetimeDays?.toFixed(1) ?? '-'}
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            {item.medianLifetimeDays?.toFixed(1) ?? '-'}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

@@ -3,7 +3,6 @@ import { cookies } from 'next/headers'
 import backendApiClient from '@/lib/api/backend-client'
 import removeEmpty from '@/lib/utils/clean'
 import { API_ENDPOINTS } from '@/lib/api/endpoints'
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -19,9 +18,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     })
 
     return NextResponse.json(response.data)
-  } catch (error: any) {
-    console.error('Error fetching consumable type:', error.response?.data || error.message)
-    if (error.response?.status === 401) {
+  } catch (error: unknown) {
+    const axiosError = error as { response?: { data?: unknown; status?: number }; message?: string }
+    console.error(
+      'Error fetching consumable type:',
+      axiosError.response?.data || axiosError.message
+    )
+    if (axiosError.response?.status === 401) {
       const cookieStore = await cookies()
       const refreshToken = cookieStore.get('refresh_token')?.value
 
@@ -59,10 +62,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const responseData = error.response?.data || {}
+    const responseData = (axiosError.response?.data as { error?: string }) || {}
     return NextResponse.json(
       { error: responseData.error || 'Failed to fetch consumable type', data: responseData },
-      { status: error.response?.status || 500 }
+      { status: axiosError.response?.status || 500 }
     )
   }
 }
@@ -87,9 +90,13 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     )
 
     return NextResponse.json(response.data)
-  } catch (error: any) {
-    console.error('Error updating consumable type:', error.response?.data || error.message)
-    if (error.response?.status === 401) {
+  } catch (error: unknown) {
+    const axiosError = error as { response?: { data?: unknown; status?: number }; message?: string }
+    console.error(
+      'Error updating consumable type:',
+      axiosError.response?.data || axiosError.message
+    )
+    if (axiosError.response?.status === 401) {
       const cookieStore = await cookies()
       const refreshToken = cookieStore.get('refresh_token')?.value
 
@@ -131,10 +138,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const responseData = error.response?.data || {}
+    const responseData = (axiosError.response?.data as { error?: string }) || {}
     return NextResponse.json(
       { error: responseData.error || 'Failed to update consumable type', data: responseData },
-      { status: error.response?.status || 500 }
+      { status: axiosError.response?.status || 500 }
     )
   }
 }
@@ -156,9 +163,13 @@ export async function DELETE(
     })
 
     return NextResponse.json(response.data)
-  } catch (error: any) {
-    console.error('Error deleting consumable type:', error.response?.data || error.message)
-    if (error.response?.status === 401) {
+  } catch (error: unknown) {
+    const axiosError = error as { response?: { data?: unknown; status?: number }; message?: string }
+    console.error(
+      'Error deleting consumable type:',
+      axiosError.response?.data || axiosError.message
+    )
+    if (axiosError.response?.status === 401) {
       const cookieStore = await cookies()
       const refreshToken = cookieStore.get('refresh_token')?.value
 
@@ -196,10 +207,10 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const responseData = error.response?.data || {}
+    const responseData = (axiosError.response?.data as { error?: string }) || {}
     return NextResponse.json(
       { error: responseData.error || 'Failed to delete consumable type', data: responseData },
-      { status: error.response?.status || 500 }
+      { status: axiosError.response?.status || 500 }
     )
   }
 }

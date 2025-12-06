@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -31,16 +31,16 @@ import { useRoleAttributeSchema } from '@/lib/hooks/useRoleAttributeSchema'
 import type { UserRole } from '@/types/users'
 import type { User as UserType } from '@/types/users'
 import { toast } from 'sonner'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
-// Validation schema for editing user
-const editUserSchema = z.object({
-  email: z.string().min(1, 'Email là bắt buộc').email('Email không hợp lệ'),
-  roleId: z.string().min(1, 'Vai trò là bắt buộc'),
-  customerId: z.string().optional(),
-  departmentId: z.string().optional(),
-})
+// moved into component to allow translated messages
 
-type EditUserFormData = z.infer<typeof editUserSchema>
+type EditUserFormData = {
+  email: string
+  roleId: string
+  customerId?: string
+  departmentId?: string
+}
 
 interface EditUserModalProps {
   user: UserType | null
@@ -64,6 +64,21 @@ export function EditUserModal({
 
   const [attributes, setAttributes] = useState<Record<string, unknown>>(user?.attributes || {})
   const [, setAttributeErrors] = useState<Record<string, string>>({})
+  const { t } = useLocale()
+
+  const editUserSchema = useMemo(
+    () =>
+      z.object({
+        email: z
+          .string()
+          .min(1, t('validation.email_required'))
+          .email(t('validation.email_invalid')),
+        roleId: z.string().min(1, t('validation.role_required')),
+        customerId: z.string().optional(),
+        departmentId: z.string().optional(),
+      }),
+    [t]
+  )
 
   const form = useForm<EditUserFormData>({
     resolver: zodResolver(editUserSchema),
@@ -89,23 +104,22 @@ export function EditUserModal({
       // ensure attributes state tracks the current user when opening edit modal
       setAttributes(user.attributes || {})
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user])
+  }, [user, form])
 
   // load roles when modal opens
-  const loadRoles = async () => {
+  const loadRoles = useCallback(async () => {
     try {
       const rolesData = await getRolesForClient()
       setRoles(rolesData)
     } catch (error) {
       console.error('Error loading roles:', error)
-      toast.error('Không thể tải danh sách vai trò')
+      toast.error(t('error.loading_roles'))
     }
-  }
+  }, [t])
 
   useEffect(() => {
     if (isOpen) loadRoles()
-  }, [isOpen])
+  }, [isOpen, loadRoles])
 
   // watch role and derive attribute schema
   const selectedRoleId = useWatch({ control: form.control, name: 'roleId' })
@@ -133,7 +147,7 @@ export function EditUserModal({
         const validation = validateAttributes(attributes)
         if (!validation.valid) {
           setAttributeErrors(validation.errors)
-          toast.error('Vui lòng kiểm tra các thuộc tính bổ sung')
+          toast.error(t('error.check_attributes'))
           setIsLoading(false)
           return
         }
@@ -159,7 +173,7 @@ export function EditUserModal({
       // Update user
       const updatedUser = await usersClientService.updateUser(user.id, payload)
 
-      toast.success('✅ Cập nhật thông tin người dùng thành công')
+      toast.success(t('user.update_success'))
       onUserUpdated(updatedUser)
       onClose()
     } catch (error) {
@@ -171,7 +185,7 @@ export function EditUserModal({
       const message =
         _backend?.message ||
         _backend?.error ||
-        (error instanceof Error ? error.message : 'Cập nhật người dùng thất bại')
+        (error instanceof Error ? error.message : t('user.update_error'))
 
       // Map structured errors
       const details = _backend.details as unknown
@@ -207,7 +221,7 @@ export function EditUserModal({
           }
 
           if (errorFields.length > 0) {
-            toast.error('❌ Vui lòng kiểm tra các trường có lỗi')
+            toast.error(t('validation.fields_error'))
             setIsLoading(false)
             return
           }
@@ -220,7 +234,7 @@ export function EditUserModal({
           if (dField.startsWith('attributes.')) {
             const key = dField.replace(/^attributes\./, '')
             setAttributeErrors((s) => ({ ...s, [key]: String(msg) }))
-            toast.error('❌ Vui lòng kiểm tra các trường có lỗi')
+            toast.error(t('validation.fields_error'))
             setIsLoading(false)
             return
           }
@@ -232,7 +246,7 @@ export function EditUserModal({
           } catch {
             // ignore
           }
-          toast.error('❌ Vui lòng kiểm tra các trường có lỗi')
+          toast.error(t('validation.fields_error'))
           setIsLoading(false)
           return
         }
@@ -255,7 +269,7 @@ export function EditUserModal({
               }
             }
           }
-          toast.error('❌ Vui lòng kiểm tra các trường có lỗi')
+          toast.error(t('validation.fields_error'))
           setIsLoading(false)
           return
         }
@@ -276,14 +290,14 @@ export function EditUserModal({
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <SystemModalLayout
-        title="Chỉnh sửa người dùng"
-        description="Cập nhật thông tin và phân quyền cho người dùng"
+        title={t('user.edit_title')}
+        description={t('user.edit_description')}
         icon={User}
         variant="edit"
         footer={
           <>
             <Button type="button" variant="outline" onClick={handleClose} className="min-w-[100px]">
-              Hủy
+              {t('cancel')}
             </Button>
             <Button
               type="submit"
@@ -294,10 +308,10 @@ export function EditUserModal({
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Đang xử lý...
+                  {t('button.processing')}
                 </>
               ) : (
-                'Cập nhật'
+                t('button.update')
               )}
             </Button>
           </>
@@ -315,10 +329,10 @@ export function EditUserModal({
                   <FormItem>
                     <FormLabel className="flex items-center gap-2 text-sm font-medium">
                       <Mail className="text-muted-foreground h-4 w-4" />
-                      Email *
+                      {t('user.email')} <span className="text-muted-foreground">*</span>
                     </FormLabel>
                     <FormControl>
-                      <Input placeholder="Nhập email người dùng" type="email" {...field} />
+                      <Input placeholder={t('user.email_placeholder')} type="email" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -334,12 +348,12 @@ export function EditUserModal({
                     <FormItem>
                       <FormLabel className="flex items-center gap-2 text-sm font-medium">
                         <span className="text-lg">🏪</span>
-                        Mã khách hàng
+                        {t('user.customer_code')}
                       </FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Chọn mã khách hàng">
+                            <SelectValue placeholder={t('filters.select_customer_placeholder')}>
                               {field.value &&
                                 Object.entries(customerCodeToId).find(
                                   ([, id]) => id === field.value
@@ -366,8 +380,7 @@ export function EditUserModal({
               {/* Info card */}
               <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
                 <p className="text-xs text-blue-700">
-                  <span className="font-bold">💡 Tip:</span> Các thay đổi sẽ được lưu ngay khi bạn
-                  nhấn "Cập nhật".
+                  <span className="font-bold">💡 {t('hint')}:</span> {t('user.update_tip')}
                 </p>
               </div>
 
