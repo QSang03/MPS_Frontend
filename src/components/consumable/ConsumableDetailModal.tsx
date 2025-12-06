@@ -319,7 +319,7 @@ export default function ConsumableDetailModal({
                 {/* Customer Info */}
                 <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm md:col-span-2">
                   <div className="mb-3 flex items-center gap-2 border-b border-slate-100 pb-2">
-                    <User className="h-4 w-4 text-purple-500" />
+                    <User className="h-4 w-4 text-[var(--brand-600)]" />
                     <h4 className="font-semibold text-slate-900">Khách hàng & Ghi chú</h4>
                   </div>
                   <div className="grid gap-4 md:grid-cols-2">

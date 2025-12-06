@@ -75,7 +75,8 @@ const statusBadgeMap: Record<PurchaseRequestStatus, string> = {
   [PurchaseRequestStatus.APPROVED]: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   [PurchaseRequestStatus.ORDERED]:
     'bg-[var(--brand-50)] text-[var(--brand-700)] border-[var(--brand-200)]',
-  [PurchaseRequestStatus.IN_TRANSIT]: 'bg-purple-50 text-purple-700 border-purple-200',
+  [PurchaseRequestStatus.IN_TRANSIT]:
+    'bg-[var(--brand-50)] text-[var(--brand-700)] border-[var(--brand-200)]',
   [PurchaseRequestStatus.RECEIVED]: 'bg-green-50 text-green-700 border-green-200',
   [PurchaseRequestStatus.CANCELLED]:
     'bg-[var(--color-error-50)] text-[var(--color-error-500)] border-[var(--color-error-200)]',

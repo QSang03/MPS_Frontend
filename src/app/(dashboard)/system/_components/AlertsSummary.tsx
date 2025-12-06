@@ -132,9 +132,9 @@ export function AlertsSummary({
         | 'high'
         | 'critical',
       icon: Clock,
-      color: 'from-purple-500 to-purple-600',
-      bgColor: 'bg-purple-50',
-      iconColor: 'text-purple-600',
+      color: 'from-[var(--brand-600)] to-[var(--brand-500)]',
+      bgColor: 'bg-[var(--brand-50)]',
+      iconColor: 'text-[var(--brand-600)]',
       description: 'Yêu cầu quá hạn xử lý',
     },
   ]
@@ -160,7 +160,7 @@ export function AlertsSummary({
     switch (severity) {
       case 'critical':
         return (
-          <Badge variant="destructive" className="bg-purple-600">
+          <Badge variant="destructive" className="bg-[var(--warning-600)]">
             Nghiêm trọng
           </Badge>
         )
