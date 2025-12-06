@@ -238,8 +238,8 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
         {/* Basic Info Section */}
         <div className="space-y-4">
           <div className="flex items-center gap-2">
-            <div className="rounded-lg bg-blue-100 p-2">
-              <Tag className="h-4 w-4 text-blue-600" />
+            <div className="rounded-lg bg-[var(--brand-50)] p-2">
+              <Tag className="h-4 w-4 text-[var(--brand-600)]" />
             </div>
             <div>
               <h3 className="font-bold text-gray-900">Thông tin cơ bản</h3>
@@ -254,7 +254,7 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center gap-2 text-base font-semibold">
-                    <FileText className="h-4 w-4 text-blue-600" />
+                    <FileText className="h-4 w-4 text-[var(--brand-600)]" />
                     Mã hợp đồng *
                   </FormLabel>
                   <FormControl>
@@ -276,7 +276,7 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center gap-2 text-base font-semibold">
-                    <Tag className="h-4 w-4 text-indigo-600" />
+                    <Tag className="h-4 w-4 text-[var(--brand-600)]" />
                     Loại hợp đồng *
                   </FormLabel>
                   <FormControl>
@@ -303,7 +303,7 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center gap-2 text-base font-semibold">
-                    <Tag className="h-4 w-4 text-indigo-600" />
+                    <Tag className="h-4 w-4 text-[var(--brand-600)]" />
                     Trạng thái
                   </FormLabel>
                   <FormControl>
@@ -429,7 +429,7 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
             className={cn(
               'rounded-lg border-2 p-4 transition-colors',
               watched.startDate && watched.durationYears
-                ? 'border-green-200 bg-green-50'
+                ? 'border-[var(--color-success-200)] bg-[var(--color-success-50)]'
                 : 'border-gray-200 bg-gray-50'
             )}
           >
@@ -545,7 +545,7 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
                       href={resolvedDocumentUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-sm break-all text-blue-600 hover:underline"
+                      className="text-sm break-all text-[var(--brand-600)] hover:underline"
                     >
                       {resolvedDocumentUrl}
                     </a>
@@ -619,7 +619,7 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
                       type="button"
                       variant="ghost"
                       size="sm"
-                      className="text-red-600 hover:text-red-700"
+                      className="text-[var(--color-error-500)] hover:text-[var(--color-error-600)]"
                       onClick={() => {
                         setPdfFileValue(undefined)
                         field.onChange(undefined)
@@ -645,7 +645,7 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
           <Button
             type="submit"
             disabled={isPending}
-            className="h-11 flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+            className="h-11 flex-1 bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
           >
             {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {id ? '💾 Cập nhật' : '✨ Tạo hợp đồng'}

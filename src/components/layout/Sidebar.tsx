@@ -175,7 +175,7 @@ export function Sidebar({ session }: SidebarProps) {
                   className={cn(
                     'group flex items-center gap-3 rounded-full px-3 py-2 text-sm font-semibold transition-all duration-150',
                     isActive
-                      ? 'bg-blue-50 text-[#0B63D1] shadow-sm ring-1 ring-blue-200'
+                      ? 'bg-[var(--brand-50)] text-[var(--brand-700)] shadow-sm ring-1 ring-[var(--brand-200)]'
                       : 'hover:bg-slate-100'
                   )}
                 >
@@ -183,8 +183,8 @@ export function Sidebar({ session }: SidebarProps) {
                     className={cn(
                       'h-5 w-5 shrink-0',
                       isActive
-                        ? 'text-[#0B63D1]'
-                        : 'text-[var(--sidebar-foreground)] group-hover:text-[#0B63D1] dark:text-[var(--sidebar-foreground)]'
+                        ? 'text-[var(--brand-700)]'
+                        : 'text-[var(--sidebar-foreground)] group-hover:text-[var(--brand-700)] dark:text-[var(--sidebar-foreground)]'
                     )}
                   />
                   <span className="flex-1">

@@ -38,10 +38,10 @@ export function FilterSection({
         className
       )}
     >
-      <CardHeader className="border-b border-gray-100 bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/40 !p-0 !px-0 !pb-0">
+      <CardHeader className="border-b border-[var(--border)] bg-[var(--card)] !p-0 !px-0 !pb-0">
         <div className="flex items-start justify-between gap-3 px-4 py-3">
           <div className="flex flex-1 items-start gap-3">
-            <div className="rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 p-2.5 shadow-sm">
+            <div className="rounded-xl bg-gradient-to-br from-[var(--brand-500)] to-[var(--brand-600)] p-2.5 shadow-sm">
               <Filter className="h-4 w-4 text-white" />
             </div>
             <div className="min-w-0 flex-1">
@@ -69,12 +69,12 @@ export function FilterSection({
                   {activeFilters.map((filter, index) => (
                     <div
                       key={index}
-                      className="group inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 py-1 pr-1.5 pl-2.5 text-xs font-medium text-blue-700 shadow-sm transition-all duration-150 hover:border-blue-300 hover:shadow"
+                      className="group inline-flex items-center gap-1.5 rounded-lg border border-[var(--brand-200)] bg-gradient-to-r from-[var(--brand-50)] to-[var(--brand-100)] py-1 pr-1.5 pl-2.5 text-xs font-medium text-[var(--brand-700)] shadow-sm transition-all duration-150 hover:border-[var(--brand-300)] hover:shadow"
                     >
                       <span className="leading-none">{filter.label}</span>
                       <button
                         onClick={filter.onRemove}
-                        className="rounded-md p-0.5 transition-colors duration-150 group-hover:bg-blue-100 hover:bg-blue-200/60"
+                        className="rounded-md p-0.5 transition-colors duration-150 group-hover:bg-[var(--brand-100)] hover:bg-[var(--brand-200)] hover:opacity-60"
                         aria-label={`Xóa bộ lọc ${filter.label}`}
                       >
                         <X className="h-3 w-3" />

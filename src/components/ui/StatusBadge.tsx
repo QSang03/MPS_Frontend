@@ -12,19 +12,19 @@ export function StatusBadge({ status, variant = 'default', className }: StatusBa
   const getVariantStyles = (v: string) => {
     switch (v) {
       case 'success':
-        return 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border-emerald-200'
+        return 'bg-[var(--color-success-50)] text-[var(--color-success-500)] hover:bg-[var(--color-success-100)] border-[var(--color-success-200)]'
       case 'warning':
-        return 'bg-amber-100 text-amber-700 hover:bg-amber-200 border-amber-200'
+        return 'bg-[var(--color-warning-50)] text-[var(--color-warning-500)] hover:bg-[var(--color-warning-100)] border-[var(--color-warning-200)]'
       case 'info':
-        return 'bg-blue-100 text-blue-700 hover:bg-blue-200 border-blue-200'
+        return 'bg-[var(--brand-50)] text-[var(--brand-700)] hover:bg-[var(--brand-100)] border-[var(--brand-200)]'
       case 'destructive':
-        return 'bg-red-100 text-red-700 hover:bg-red-200 border-red-200'
+        return 'bg-[var(--color-destructive)]/10 text-[var(--destructive)] hover:bg-[var(--color-destructive)]/20 border-[var(--destructive)]'
       case 'secondary':
-        return 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-200'
+        return 'bg-[var(--neutral-100)] text-[var(--neutral-700)] hover:bg-[var(--neutral-200)] border-[var(--neutral-200)]'
       case 'outline':
         return 'text-foreground'
       default:
-        return 'bg-primary/10 text-primary hover:bg-primary/20 border-primary/20'
+        return 'bg-[var(--brand-50)] text-[var(--brand-700)] hover:bg-[var(--brand-100)] border-[var(--brand-200)]'
     }
   }
 

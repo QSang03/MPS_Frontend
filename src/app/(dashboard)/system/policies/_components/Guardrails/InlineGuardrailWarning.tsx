@@ -16,7 +16,7 @@ export function InlineGuardrailWarning({ warning, onAutoFix }: InlineGuardrailWa
       case 'warning':
         return <AlertTriangle className="h-4 w-4 text-amber-600" />
       case 'suggestion':
-        return <Info className="h-4 w-4 text-blue-600" />
+        return <Info className="h-4 w-4 text-[var(--brand-600)]" />
       default:
         return <Info className="h-4 w-4 text-gray-600" />
     }

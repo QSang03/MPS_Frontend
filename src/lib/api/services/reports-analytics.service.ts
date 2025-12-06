@@ -288,10 +288,7 @@ export type DeviceCostItem = {
   cogsConsumable: number
   cogsRepair: number
   totalCogs: number
-  // Currency conversion fields - ⭐ MỚI
-  cogsConsumableConverted?: number
-  cogsRepairConverted?: number
-  totalCogsConverted?: number
+  // Note: Customer Cost Analytics does NOT have converted values
 }
 
 export type CustomerCostResponse = {
@@ -304,13 +301,10 @@ export type CustomerCostResponse = {
       cogsConsumable: number
       cogsRepair: number
       totalCogs: number
-      // Currency conversion fields - ⭐ MỚI
-      cogsConsumableConverted?: number
-      cogsRepairConverted?: number
-      totalCogsConverted?: number
+      // Note: Customer Cost Analytics does NOT have converted values or baseCurrency
     }
     devices: DeviceCostItem[]
-    baseCurrency?: CurrencyDataDto | null // ⭐ MỚI
+    // Note: Customer Cost Analytics does NOT have baseCurrency (breaking change)
   }
   message?: string
 }
@@ -320,10 +314,7 @@ export type DeviceCostTrendItem = {
   cogsConsumable: number
   cogsRepair: number
   totalCogs: number
-  // Currency conversion fields - ⭐ MỚI
-  cogsConsumableConverted?: number
-  cogsRepairConverted?: number
-  totalCogsConverted?: number
+  // Note: Customer Cost Analytics does NOT have converted values
 }
 
 export type DeviceCostResponse = {
@@ -335,6 +326,7 @@ export type DeviceCostResponse = {
       model: string
     }
     cost: DeviceCostTrendItem[]
+    // Note: Customer Cost Analytics does NOT have baseCurrency (breaking change)
   }
   message?: string
 }

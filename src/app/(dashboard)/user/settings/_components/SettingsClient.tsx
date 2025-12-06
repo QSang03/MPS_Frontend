@@ -280,13 +280,13 @@ export function SettingsClient({ initialProfile, initialTab = 'account' }: Setti
           className={`rounded-2xl border-2 ${
             message.success
               ? 'border-emerald-300 bg-gradient-to-r from-emerald-50 to-emerald-100 text-emerald-800'
-              : 'border-red-300 bg-gradient-to-r from-red-50 to-red-100 text-red-800'
+              : 'border-[var(--color-error-200)] bg-gradient-to-r from-[var(--color-error-50)] to-[var(--color-error-50)] text-[var(--color-error-500)]'
           }`}
         >
           {message.success ? (
             <CheckCircle className="h-5 w-5 text-emerald-600" />
           ) : (
-            <AlertCircle className="h-5 w-5 text-red-600" />
+            <AlertCircle className="h-5 w-5 text-[var(--color-error-500)]" />
           )}
           <AlertDescription className="font-semibold">{message.text}</AlertDescription>
         </Alert>

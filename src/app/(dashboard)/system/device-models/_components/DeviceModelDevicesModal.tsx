@@ -96,7 +96,7 @@ export default function DeviceModelDevicesModal({
         <div className="mb-4 grid grid-cols-3 gap-3 rounded-lg border border-gray-200 bg-gradient-to-r from-blue-50 to-cyan-50 p-4">
           <div className="rounded-lg border border-blue-200 bg-white p-2.5">
             <p className="text-xs text-gray-600">Tổng thiết bị</p>
-            <p className="mt-1 text-xl font-bold text-blue-600">{devices.length}</p>
+            <p className="mt-1 text-xl font-bold text-[var(--brand-600)]">{devices.length}</p>
           </div>
           <div className="rounded-lg border border-green-200 bg-white p-2.5">
             <p className="text-xs text-gray-600">Hoạt động</p>
@@ -111,7 +111,7 @@ export default function DeviceModelDevicesModal({
         <div className="space-y-4">
           {loading ? (
             <div className="py-12 text-center">
-              <Loader2 className="mx-auto mb-3 h-8 w-8 animate-spin text-blue-600" />
+              <Loader2 className="mx-auto mb-3 h-8 w-8 animate-spin text-[var(--brand-600)]" />
               <p className="text-muted-foreground">Đang tải...</p>
             </div>
           ) : (
@@ -137,7 +137,7 @@ export default function DeviceModelDevicesModal({
                       <th className="px-4 py-3 text-left text-sm font-semibold">#</th>
                       <th className="px-4 py-3 text-left text-sm font-semibold">
                         <div className="flex items-center gap-2">
-                          <Monitor className="h-4 w-4 text-blue-600" />
+                          <Monitor className="h-4 w-4 text-[var(--brand-600)]" />
                           Serial
                         </div>
                       </th>

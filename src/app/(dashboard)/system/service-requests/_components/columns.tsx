@@ -9,7 +9,8 @@ import { ServiceRequestStatus, Priority } from '@/constants/status'
 import { ServiceRequestActions } from './ServiceRequestActions'
 
 const statusColorMap: Record<ServiceRequestStatus, string> = {
-  [ServiceRequestStatus.OPEN]: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
+  [ServiceRequestStatus.OPEN]:
+    'bg-[var(--brand-50)] text-[var(--brand-800)] dark:bg-[var(--brand-900)] dark:text-[var(--brand-300)]',
   [ServiceRequestStatus.IN_PROGRESS]:
     'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
   [ServiceRequestStatus.APPROVED]:
@@ -22,7 +23,7 @@ const statusColorMap: Record<ServiceRequestStatus, string> = {
 
 const priorityColorMap: Record<Priority, string> = {
   [Priority.LOW]: 'bg-gray-100 text-gray-800',
-  [Priority.NORMAL]: 'bg-blue-100 text-blue-800',
+  [Priority.NORMAL]: 'bg-[var(--brand-50)] text-[var(--brand-800)]',
   [Priority.HIGH]: 'bg-orange-100 text-orange-800',
   [Priority.URGENT]: 'bg-red-100 text-red-800',
 }

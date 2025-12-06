@@ -336,7 +336,7 @@ export default function DevicesPageClient() {
                   setShowInactiveStatuses(nextValue)
                   setPagination((prev) => ({ ...prev, page: 1 }))
                 }}
-                className="h-4 w-4 border-gray-300 data-[state=checked]:bg-blue-600 data-[state=checked]:text-white"
+                className="h-4 w-4 border-gray-300 data-[state=checked]:bg-[var(--brand-600)] data-[state=checked]:text-white"
               />
               <span className="text-sm text-gray-600">
                 {t('filters.show_inactive_description')}
@@ -636,7 +636,7 @@ function DevicesTableContent({
             role="button"
             title={t('button.view')}
             onClick={() => router.push(`/system/devices/${row.original.id}`)}
-            className="cursor-pointer rounded bg-blue-100 px-2 py-1 text-sm font-semibold text-blue-700"
+            className="cursor-pointer rounded bg-[var(--brand-50)] px-2 py-1 text-sm font-semibold text-[var(--brand-700)]"
           >
             {row.original.serialNumber || '—'}
           </code>
@@ -767,7 +767,9 @@ function DevicesTableContent({
           if (device.isCustomerOwned === true) {
             // Đã mua đứt (sở hữu vĩnh viễn)
             badgeContent = (
-              <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-200">Đã mua đứt</Badge>
+              <Badge className="bg-[var(--brand-50)] text-[var(--brand-700)] hover:bg-[var(--brand-100)]">
+                Đã mua đứt
+              </Badge>
             )
             if (ownershipPeriod) {
               tooltipText = formatOwnershipPeriod(ownershipPeriod.fromDate, ownershipPeriod.toDate)
@@ -834,12 +836,12 @@ function DevicesTableContent({
               icon: '',
             } as const)
           const colorClassMap: Record<string, string> = {
-            green: 'bg-green-500 text-white',
-            blue: 'bg-blue-500 text-white',
-            red: 'bg-red-500 text-white',
-            gray: 'bg-gray-400 text-white',
-            orange: 'bg-orange-500 text-white',
-            purple: 'bg-purple-600 text-white',
+            green: 'bg-[var(--color-success-500)] text-white',
+            blue: 'bg-[var(--brand-500)] text-white',
+            red: 'bg-[var(--error-500)] text-white',
+            gray: 'bg-[var(--neutral-300)] text-white',
+            orange: 'bg-[var(--warning-500)] text-white',
+            purple: 'bg-[var(--brand-600)] text-white',
             black: 'bg-black text-white',
           }
           const cls = colorClassMap[meta.color] || 'bg-gray-400 text-white'
@@ -859,7 +861,7 @@ function DevicesTableContent({
                   type="button"
                   aria-label="On"
                   title={t('devices.toggle_active.title')}
-                  className="h-7 w-7 p-0 transition-all hover:bg-green-100 hover:text-green-700"
+                  className="h-7 w-7 p-0 transition-all hover:bg-[var(--color-success-50)] hover:text-[var(--color-success-500)]"
                   onClick={() => {
                     setToggleTargetDevice(device)
                     setToggleTargetActive(false)
@@ -877,7 +879,7 @@ function DevicesTableContent({
                       type="button"
                       aria-label="Off"
                       title={t('devices.toggle_paused.title')}
-                      className="h-7 w-7 p-0 transition-all hover:bg-gray-100 hover:text-gray-700"
+                      className="h-7 w-7 p-0 transition-all hover:bg-[var(--neutral-100)] hover:text-[var(--neutral-700)]"
                       onClick={() => {
                         setToggleTargetDevice(device)
                         setToggleTargetActive(true)

@@ -306,7 +306,7 @@ export function EditUserModal({
               type="submit"
               form="edit-user-form"
               disabled={Boolean(isLoading || blockSaveDueToRoleMismatch)}
-              className="min-w-[120px] bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+              className="min-w-[120px] bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
             >
               {isLoading ? (
                 <>
@@ -352,7 +352,7 @@ export function EditUserModal({
                       className="h-10 rounded-lg border-2 border-gray-200 text-base transition-all focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
                     />
                   </FormControl>
-                  <FormMessage className="mt-1 text-xs text-red-600" />
+                  <FormMessage className="mt-1 text-xs text-[var(--color-error-500)]" />
                 </FormItem>
               )}
             />
@@ -390,7 +390,7 @@ export function EditUserModal({
                         ))}
                       </SelectContent>
                     </Select>
-                    <FormMessage className="mt-1 text-xs text-red-600" />
+                    <FormMessage className="mt-1 text-xs text-[var(--color-error-500)]" />
                   </FormItem>
                 )}
               />
@@ -412,10 +412,11 @@ export function EditUserModal({
                     <FormControl>
                       <SelectTrigger className="h-10 rounded-lg border-2 border-gray-200 transition-all focus:border-amber-500 focus:ring-2 focus:ring-amber-200">
                         <SelectValue placeholder={t('filters.select_customer_placeholder')}>
-                          {field.value &&
-                            Object.entries(customerCodeToId).find(
-                              ([, id]) => id === field.value
-                            )?.[0]}
+                          {watchedCustomerCode && (
+                            <span className="inline-block rounded bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700">
+                              {watchedCustomerCode}
+                            </span>
+                          )}
                         </SelectValue>
                       </SelectTrigger>
                     </FormControl>
@@ -429,7 +430,7 @@ export function EditUserModal({
                       ))}
                     </SelectContent>
                   </Select>
-                  <FormMessage className="mt-1 text-xs text-red-600" />
+                  <FormMessage className="mt-1 text-xs text-[var(--color-error-500)]" />
                 </FormItem>
               )}
             />
@@ -446,10 +447,10 @@ export function EditUserModal({
             )}
 
             {/* Info card */}
-            <div className="rounded-lg border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-purple-50 p-4">
+            <div className="rounded-lg border-2 border-[var(--brand-200)] bg-gradient-to-r from-[var(--brand-50)] to-[var(--brand-100)] p-4">
               <p className="text-xs text-gray-700">
-                <span className="font-bold text-blue-700">💡 Tip:</span> Các thay đổi sẽ được lưu
-                ngay khi bạn nhấn "Cập nhật".
+                <span className="font-bold text-[var(--brand-700)]">💡 Tip:</span> Các thay đổi sẽ
+                được lưu ngay khi bạn nhấn "Cập nhật".
               </p>
             </div>
           </form>

@@ -173,7 +173,7 @@ export function Navbar({ session }: NavbarProps) {
   return (
     <header className="sticky top-0 z-40 w-full">
       {/* Gradient border bottom */}
-      <div className="absolute right-0 bottom-0 left-0 h-px bg-gradient-to-r from-transparent via-blue-400 to-transparent opacity-50" />
+      <div className="absolute right-0 bottom-0 left-0 h-px bg-gradient-to-r from-transparent via-[var(--brand-400)] to-transparent opacity-50" />
 
       <div className="border-b border-gray-200/50 bg-white/95 shadow-sm backdrop-blur-lg">
         <div className="flex h-23 items-center justify-between px-4 md:px-6">
@@ -182,7 +182,7 @@ export function Navbar({ session }: NavbarProps) {
             <Button
               variant="ghost"
               size="sm"
-              className="rounded-lg transition-all duration-300 hover:bg-blue-50 hover:text-blue-700 lg:hidden"
+              className="rounded-lg transition-all duration-300 hover:bg-[var(--brand-50)] hover:text-[var(--brand-700)] lg:hidden"
               onClick={toggleSidebar}
             >
               <Menu className="h-6 w-6" />
@@ -191,7 +191,7 @@ export function Navbar({ session }: NavbarProps) {
 
           {/* Mobile Logo */}
           <div className="mr-auto ml-2 flex items-center gap-2 lg:hidden">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-blue-600">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-[var(--brand-600)]">
               <Printer className="h-5 w-5" />
             </div>
             <span className="text-sm font-bold text-slate-900">{t('sidebar.logo.title')}</span>
@@ -201,7 +201,7 @@ export function Navbar({ session }: NavbarProps) {
           <div className="hidden flex-1 items-center px-2 lg:flex">
             <div className="ml-2 min-w-0">
               <div className="flex items-center gap-3">
-                <div className="hidden rounded-lg bg-blue-50 p-2 text-blue-600 sm:block">
+                <div className="hidden rounded-lg bg-[var(--brand-50)] p-2 text-[var(--brand-600)] sm:block">
                   <LayoutDashboard className="h-5 w-5" />
                 </div>
                 <div className="flex flex-col">
@@ -232,11 +232,11 @@ export function Navbar({ session }: NavbarProps) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="relative rounded-lg transition-all duration-300 hover:bg-blue-50 hover:text-blue-700"
+                  className="relative rounded-lg transition-all duration-300 hover:bg-[var(--brand-50)] hover:text-[var(--brand-700)]"
                 >
                   <Bell className="h-5 w-5" />
                   {!isUnreadCountLoading && unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1.5 text-[10px] leading-none font-bold text-white shadow-sm">
+                    <span className="absolute -top-1 -right-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--color-error-600)] px-1.5 text-[10px] leading-none font-bold text-white shadow-sm">
                       {unreadCount > 99 ? '99+' : unreadCount}
                     </span>
                   )}
@@ -253,12 +253,12 @@ export function Navbar({ session }: NavbarProps) {
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                   <Button
                     variant="ghost"
-                    className="group gap-2.5 rounded-lg transition-all duration-300 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 hover:text-blue-700"
+                    className="group gap-2.5 rounded-lg transition-all duration-300 hover:bg-gradient-to-r hover:from-[var(--brand-50)] hover:to-[var(--brand-100)] hover:text-[var(--brand-700)]"
                   >
                     {/* Avatar with gradient border */}
                     <div className="relative">
                       <Avatar className="h-8 w-8 border-2 border-transparent transition-all duration-300 group-hover:border-blue-400">
-                        <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-xs font-bold text-white">
+                        <AvatarFallback className="bg-gradient-to-br from-[var(--brand-500)] to-[var(--brand-700)] text-xs font-bold text-white">
                           {initials}
                         </AvatarFallback>
                       </Avatar>
@@ -270,7 +270,7 @@ export function Navbar({ session }: NavbarProps) {
                       <span className="max-w-[150px] truncate text-sm font-semibold text-gray-700">
                         {session.username || session.email}
                       </span>
-                      <ChevronDown className="h-4 w-4 text-gray-500 transition-all duration-300 group-hover:rotate-180 group-hover:text-blue-700" />
+                      <ChevronDown className="h-4 w-4 text-gray-500 transition-all duration-300 group-hover:rotate-180 group-hover:text-[var(--brand-700)]" />
                     </div>
                   </Button>
                 </motion.div>
@@ -283,10 +283,10 @@ export function Navbar({ session }: NavbarProps) {
                 suppressHydrationWarning
               >
                 {/* Header with gradient background */}
-                <div className="rounded-t-lg border-b border-gray-100 bg-gradient-to-r from-blue-50 to-purple-50 p-4">
+                <div className="rounded-t-lg border-b border-gray-100 bg-gradient-to-r from-[var(--brand-50)] to-[var(--brand-200)] p-4">
                   <div className="flex items-start gap-3">
-                    <Avatar className="h-10 w-10 border-2 border-blue-300 shadow-md">
-                      <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-sm font-bold text-white">
+                    <Avatar className="h-10 w-10 border-2 border-[var(--brand-300)] shadow-md">
+                      <AvatarFallback className="bg-gradient-to-br from-[var(--brand-500)] to-[var(--brand-700)] text-sm font-bold text-white">
                         {initials}
                       </AvatarFallback>
                     </Avatar>
@@ -295,7 +295,7 @@ export function Navbar({ session }: NavbarProps) {
                         {session.username || t('user')}
                       </p>
                       <p className="mt-0.5 truncate text-xs text-gray-600">{session.email}</p>
-                      <div className="mt-2 inline-block rounded-full bg-blue-100 px-2.5 py-1 text-xs font-bold text-blue-700">
+                      <div className="mt-2 inline-block rounded-full bg-[var(--brand-100)] px-2.5 py-1 text-xs font-bold text-[var(--brand-700)]">
                         {session.role}
                       </div>
                     </div>
@@ -308,7 +308,7 @@ export function Navbar({ session }: NavbarProps) {
                   <motion.div whileHover={{ x: 4 }} whileTap={{ scale: 0.98 }}>
                     <DropdownMenuItem
                       onClick={handleProfile}
-                      className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 font-medium text-gray-700 transition-all duration-300 hover:bg-blue-50 hover:text-blue-700"
+                      className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 font-medium text-gray-700 transition-all duration-300 hover:bg-[var(--brand-50)] hover:text-[var(--brand-700)]"
                     >
                       <User className="h-4 w-4 flex-shrink-0" />
                       <span className="flex-1">{t('profile')}</span>
@@ -320,7 +320,7 @@ export function Navbar({ session }: NavbarProps) {
                   <motion.div whileHover={{ x: 4 }} whileTap={{ scale: 0.98 }}>
                     <DropdownMenuItem
                       onClick={handleSettings}
-                      className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 font-medium text-gray-700 transition-all duration-300 hover:bg-purple-50 hover:text-purple-700"
+                      className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 font-medium text-gray-700 transition-all duration-300 hover:bg-[var(--brand-50)] hover:text-[var(--brand-700)]"
                     >
                       <Settings className="h-4 w-4 flex-shrink-0 transition-transform duration-300 hover:rotate-90" />
                       <span className="flex-1">{t('settings.account')}</span>
@@ -340,7 +340,7 @@ export function Navbar({ session }: NavbarProps) {
                         e.preventDefault()
                         setShowLogoutConfirm(true)
                       }}
-                      className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 font-medium text-red-600 transition-all duration-300 hover:bg-red-50 hover:text-red-700"
+                      className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 font-medium text-[var(--error-500)] transition-all duration-300 hover:bg-[var(--error-50)] hover:text-[var(--error-500)]"
                     >
                       <LogOut className="h-4 w-4 flex-shrink-0" />
                       <span className="flex-1">{t('logout')}</span>
@@ -351,7 +351,7 @@ export function Navbar({ session }: NavbarProps) {
                 {/* Footer info */}
                 <div className="rounded-b-lg border-t border-gray-100 bg-gradient-to-b from-transparent to-gray-50 p-3">
                   <div className="flex items-center gap-2">
-                    <Zap className="h-3.5 w-3.5 text-amber-500" />
+                    <Zap className="h-3.5 w-3.5 text-[var(--warning-500)]" />
                     <p className="text-xs text-gray-600">
                       <span className="font-bold text-gray-800">{t('footer.version')}</span> • ©
                       2025
@@ -372,7 +372,10 @@ export function Navbar({ session }: NavbarProps) {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
-            <AlertDialogAction onClick={performLogout} className="bg-red-600 hover:bg-red-700">
+            <AlertDialogAction
+              onClick={performLogout}
+              className="bg-[var(--color-error-600)] hover:bg-[var(--color-error-600)]/90"
+            >
               {t('logout')}
             </AlertDialogAction>
           </AlertDialogFooter>

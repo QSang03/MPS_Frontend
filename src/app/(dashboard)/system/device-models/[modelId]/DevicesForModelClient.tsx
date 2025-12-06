@@ -159,7 +159,7 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
   return (
     <div className="space-y-6">
       {/* Header with Gradient */}
-      <div className="rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-6 text-white shadow-lg">
+      <div className="rounded-2xl bg-gradient-to-r from-[var(--brand-500)] via-[var(--brand-600)] to-[var(--brand-700)] p-6 text-white shadow-lg">
         <div className="flex items-center justify-between">
           <div className="space-y-2">
             <Link href="/system/device-models">
@@ -265,7 +265,7 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
                     <tr key={d.id} className="transition-colors hover:bg-blue-50/50">
                       <td className="text-muted-foreground px-4 py-3 text-sm">{idx + 1}</td>
                       <td className="px-4 py-3">
-                        <code className="rounded bg-blue-100 px-2 py-1 text-sm font-semibold text-blue-700">
+                        <code className="rounded bg-[var(--brand-50)] px-2 py-1 text-sm font-semibold text-[var(--brand-700)]">
                           {d.serialNumber}
                         </code>
                       </td>
@@ -336,7 +336,7 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
               <Button
                 onClick={() => void handleCreate()}
                 disabled={creating}
-                className="min-w-[120px] bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+                className="min-w-[120px] bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
               >
                 {creating ? (
                   <>

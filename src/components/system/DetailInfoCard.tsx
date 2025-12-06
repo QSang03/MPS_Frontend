@@ -42,8 +42,10 @@ export function DetailInfoCard({
 }: DetailInfoCardProps) {
   if (error) {
     return (
-      <Card className={cn('border-red-200 bg-red-50/60', className)}>
-        <CardContent className="p-4 text-sm text-red-700">{error}</CardContent>
+      <Card
+        className={cn('border-[var(--color-error-200)] bg-[var(--color-error-50)]/60', className)}
+      >
+        <CardContent className="p-4 text-sm text-[var(--color-error-500)]">{error}</CardContent>
       </Card>
     )
   }

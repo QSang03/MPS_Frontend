@@ -51,8 +51,8 @@ export function DeleteDialog({ title, description, onConfirm, trigger }: DeleteD
         <div className="border-b px-6 py-5">
           <div className="flex items-start gap-4">
             <div className="flex-shrink-0">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100">
-                <AlertTriangle className="h-5 w-5 text-red-600" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-error-50)]">
+                <AlertTriangle className="h-5 w-5 text-[var(--color-error-500)]" />
               </div>
             </div>
 
@@ -71,13 +71,13 @@ export function DeleteDialog({ title, description, onConfirm, trigger }: DeleteD
 
         {/* Content */}
         <div className="bg-background px-6 py-5">
-          <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4">
-            <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600" />
+          <div className="flex items-start gap-3 rounded-lg border border-[var(--color-error-200)] bg-[var(--color-error-50)] p-4">
+            <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-[var(--color-error-500)]" />
             <div>
-              <p className="text-sm font-semibold text-red-900">
+              <p className="text-sm font-semibold text-[var(--color-error-600)]">
                 Cảnh báo: Hành động không thể hoàn tác
               </p>
-              <p className="mt-1 text-xs text-red-700">
+              <p className="mt-1 text-xs text-[var(--color-error-500)]">
                 Dữ liệu sẽ bị xóa vĩnh viễn và không thể khôi phục.
               </p>
             </div>

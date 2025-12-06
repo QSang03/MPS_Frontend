@@ -181,9 +181,9 @@ export default function TokenTestPage() {
                 variant={result.status === 'error' ? 'destructive' : 'default'}
                 className={
                   result.status === 'success'
-                    ? 'border-green-200 bg-green-50 text-green-900'
+                    ? 'border-[var(--color-success-200)] bg-[var(--color-success-50)] text-[var(--color-success-600)]'
                     : result.status === 'pending'
-                      ? 'border-blue-200 bg-blue-50 text-blue-900'
+                      ? 'border-[var(--brand-200)] bg-[var(--brand-50)] text-[var(--brand-900)]'
                       : ''
                 }
               >
@@ -222,7 +222,7 @@ export default function TokenTestPage() {
               </li>
             </ul>
 
-            <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
+            <div className="mt-4 rounded-lg border border-[var(--brand-200)] bg-[var(--brand-50)] p-4">
               <p className="text-sm">
                 <strong>Expected behavior:</strong> When your access token expires (after 15
                 minutes), any API request that receives a 401 response will automatically attempt to

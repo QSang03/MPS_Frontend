@@ -65,7 +65,7 @@ export default function RequestsPage() {
                 <Wrench className="h-4 w-4" />
                 {t('page.requests.tab.service')}
               </span>
-              <Badge className="ml-1 h-5 rounded-full border border-red-200 bg-red-100 px-1.5 text-[10px] font-normal text-red-700">
+              <Badge className="ml-1 h-5 rounded-full border border-[var(--error-200)] bg-[var(--error-50)] px-1.5 text-[10px] font-normal text-[var(--error-500)]">
                 {loadingService ? <Loader2 className="h-3 w-3 animate-spin" /> : serviceCount}
               </Badge>
             </TabsTrigger>
@@ -78,7 +78,7 @@ export default function RequestsPage() {
                 <ShoppingCart className="h-4 w-4" />
                 {t('page.requests.tab.purchase')}
               </span>
-              <Badge className="ml-1 h-5 rounded-full border border-blue-200 bg-blue-100 px-1.5 text-[10px] font-normal text-blue-700">
+              <Badge className="ml-1 h-5 rounded-full border border-[var(--brand-200)] bg-[var(--brand-50)] px-1.5 text-[10px] font-normal text-[var(--brand-700)]">
                 {loadingPurchase ? <Loader2 className="h-3 w-3 animate-spin" /> : purchaseCount}
               </Badge>
             </TabsTrigger>
@@ -91,7 +91,7 @@ export default function RequestsPage() {
                 <Clock className="h-4 w-4" />
                 {t('page.requests.tab.sla')}
               </span>
-              <Badge className="ml-1 h-5 rounded-full border border-amber-200 bg-amber-100 px-1.5 text-[10px] font-normal text-amber-700">
+              <Badge className="ml-1 h-5 rounded-full border border-[var(--warning-200)] bg-[var(--warning-50)] px-1.5 text-[10px] font-normal text-[var(--warning-500)]">
                 {slaCount}
               </Badge>
             </TabsTrigger>

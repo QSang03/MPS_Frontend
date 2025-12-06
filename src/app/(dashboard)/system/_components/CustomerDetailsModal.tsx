@@ -27,6 +27,7 @@ interface CustomerDetailsModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   month: string
+  baseCurrency?: CurrencyDataDto | null
 }
 
 interface CustomerOverview {
@@ -62,19 +63,27 @@ interface CustomerOverview {
   }>
 }
 
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 2,
-  }).format(amount)
+import type { CurrencyDataDto } from '@/types/models/currency'
+import { formatCurrencyWithSymbol } from '@/lib/utils/formatters'
+
+function formatCurrency(amount: number, currency?: CurrencyDataDto | null): string {
+  if (currency) {
+    return formatCurrencyWithSymbol(amount, currency)
+  }
+  // Fallback to USD if no currency provided
+  return formatCurrencyWithSymbol(amount, { code: 'USD', symbol: '$' } as CurrencyDataDto)
 }
 
 function formatNumber(num: number): string {
   return new Intl.NumberFormat('en-US').format(num)
 }
 
-export function CustomerDetailsModal({ open, onOpenChange, month }: CustomerDetailsModalProps) {
+export function CustomerDetailsModal({
+  open,
+  onOpenChange,
+  month,
+  baseCurrency,
+}: CustomerDetailsModalProps) {
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null)
   // Fetch top customers when modal is opened. Use React Query to manage cache.
   const { data: topCustomers } = useQuery({
@@ -128,12 +137,41 @@ export function CustomerDetailsModal({ open, onOpenChange, month }: CustomerDeta
             >
               <div className="mt-6 space-y-3">
                 {(topCustomers ?? []).map((customer, index) => {
+                  // Helper to get display value (converted if available, else original)
+                  const getDisplayValue = (
+                    original: number,
+                    converted: number | undefined,
+                    useConverted: boolean
+                  ): number => {
+                    if (useConverted && converted !== undefined) return converted
+                    return original
+                  }
+
+                  // Use converted values if baseCurrency is available (System Admin context)
+                  const useConverted = !!baseCurrency
+
+                  const revenue = getDisplayValue(
+                    customer.totalRevenue,
+                    customer.totalRevenueConverted,
+                    useConverted
+                  )
+                  const cogs = getDisplayValue(
+                    customer.totalCogs,
+                    customer.totalCogsConverted,
+                    useConverted
+                  )
+                  const profit = getDisplayValue(
+                    customer.grossProfit,
+                    customer.grossProfitConverted,
+                    useConverted
+                  )
+
                   const totalRevenue = (topCustomers ?? []).reduce(
-                    (sum, c) => sum + c.totalRevenue,
+                    (sum, c) =>
+                      sum + getDisplayValue(c.totalRevenue, c.totalRevenueConverted, useConverted),
                     0
                   )
-                  const percentage =
-                    totalRevenue > 0 ? (customer.totalRevenue / totalRevenue) * 100 : 0
+                  const percentage = totalRevenue > 0 ? (revenue / totalRevenue) * 100 : 0
 
                   return (
                     <motion.div
@@ -152,7 +190,7 @@ export function CustomerDetailsModal({ open, onOpenChange, month }: CustomerDeta
                       )}
                     >
                       <div className="flex items-center gap-4">
-                        <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 text-lg font-bold text-white">
+                        <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[var(--brand-500)] to-[var(--brand-600)] text-lg font-bold text-white">
                           #{index + 1}
                         </div>
                         <div className="flex-1">
@@ -174,18 +212,21 @@ export function CustomerDetailsModal({ open, onOpenChange, month }: CustomerDeta
                         </div>
                         <div className="text-right">
                           <p className="text-lg font-bold text-gray-900">
-                            {formatCurrency(customer.totalRevenue)}
+                            {formatCurrency(revenue, baseCurrency || customer.baseCurrency)}
                           </p>
                           <p className="text-xs text-gray-500">
-                            Chi phí: {formatCurrency(customer.totalCogs)}
+                            Chi phí: {formatCurrency(cogs, baseCurrency || customer.baseCurrency)}
                           </p>
                           <p
                             className={cn(
                               'text-xs font-semibold',
-                              customer.grossProfit >= 0 ? 'text-green-600' : 'text-red-600'
+                              profit >= 0
+                                ? 'text-[var(--color-success-600)]'
+                                : 'text-[var(--error-600)]'
                             )}
                           >
-                            Lợi nhuận: {formatCurrency(customer.grossProfit)}
+                            Lợi nhuận:{' '}
+                            {formatCurrency(profit, baseCurrency || customer.baseCurrency)}
                           </p>
                           <p className="mt-1 text-xs text-gray-400">
                             {percentage.toFixed(1)}% tổng doanh thu
@@ -242,7 +283,7 @@ export function CustomerDetailsModal({ open, onOpenChange, month }: CustomerDeta
                       </CardHeader>
                       <CardContent>
                         <p className="text-2xl font-bold">
-                          {formatCurrency(customerDetails.kpis.totalCost)}
+                          {formatCurrency(customerDetails.kpis.totalCost, baseCurrency)}
                         </p>
                         {customerDetails.kpis.costChangePercent !== undefined &&
                         customerDetails.kpis.costChangePercent !== null &&
@@ -252,7 +293,7 @@ export function CustomerDetailsModal({ open, onOpenChange, month }: CustomerDeta
                               'mt-1 flex items-center gap-1 text-sm',
                               customerDetails.kpis.costChangePercent > 0
                                 ? 'text-red-600'
-                                : 'text-green-600'
+                                : 'text-[var(--color-success-600)]'
                             )}
                           >
                             {customerDetails.kpis.costChangePercent > 0 ? (
@@ -308,7 +349,7 @@ export function CustomerDetailsModal({ open, onOpenChange, month }: CustomerDeta
                           </div>
                           <div className="h-2 overflow-hidden rounded-full bg-gray-200">
                             <div
-                              className="h-full bg-blue-500"
+                              className="h-full bg-[var(--brand-500)]"
                               style={{ width: `${customerDetails.costBreakdown.rentalPercent}%` }}
                             />
                           </div>
@@ -322,7 +363,7 @@ export function CustomerDetailsModal({ open, onOpenChange, month }: CustomerDeta
                           </div>
                           <div className="h-2 overflow-hidden rounded-full bg-gray-200">
                             <div
-                              className="h-full bg-orange-500"
+                              className="h-full bg-[var(--warning-500)]"
                               style={{ width: `${customerDetails.costBreakdown.repairPercent}%` }}
                             />
                           </div>
@@ -350,7 +391,7 @@ export function CustomerDetailsModal({ open, onOpenChange, month }: CustomerDeta
                           </div>
                           <div className="h-2 overflow-hidden rounded-full bg-gray-200">
                             <div
-                              className="h-full bg-purple-500"
+                              className="h-full bg-[var(--brand-600)]"
                               style={{
                                 width: `${customerDetails.costBreakdown.pageColorPercent}%`,
                               }}

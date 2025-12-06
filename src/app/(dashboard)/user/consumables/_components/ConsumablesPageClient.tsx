@@ -350,7 +350,7 @@ export default function ConsumablesPageClient() {
             <ActionGuard pageId="consumables" actionId="create">
               <BulkAssignModal
                 trigger={
-                  <Button className="bg-white text-blue-600 hover:bg-blue-50">
+                  <Button className="bg-white text-[var(--brand-600)] hover:bg-[var(--brand-50)]">
                     <Plus className="mr-2 h-4 w-4" />
                     {t('page.consumables.create')}
                   </Button>
@@ -400,7 +400,7 @@ export default function ConsumablesPageClient() {
               onClick={() => setShowColumnMenu((v) => !v)}
               className="border-gray-300 bg-white text-gray-700 shadow-sm transition-transform duration-150 ease-in-out hover:scale-105 hover:bg-gray-50 focus:ring-2 focus:ring-blue-200 focus:outline-none"
             >
-              <span className="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-blue-50 text-xs font-semibold text-blue-600">
+              <span className="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[var(--brand-50)] text-xs font-semibold text-[var(--brand-600)]">
                 C
               </span>
               {t('user_consumables.columns')}
@@ -449,7 +449,7 @@ export default function ConsumablesPageClient() {
           <div className="flex items-start justify-between">
             <div>
               <div className="flex items-center gap-3">
-                <div className="inline-flex h-8 w-8 items-center justify-center rounded bg-blue-50 text-blue-600">
+                <div className="inline-flex h-8 w-8 items-center justify-center rounded bg-[var(--brand-50)] text-[var(--brand-600)]">
                   <Filter className="h-4 w-4" />
                 </div>
                 <div>
@@ -522,7 +522,7 @@ export default function ConsumablesPageClient() {
                     onClick={() => setShowColumnMenu((v) => !v)}
                     className="border-gray-300 bg-white text-gray-700 shadow-sm transition-transform duration-150 ease-in-out hover:scale-105 hover:bg-gray-50 focus:ring-2 focus:ring-blue-200 focus:outline-none"
                   >
-                    <span className="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-blue-50 text-xs font-semibold text-blue-600">
+                    <span className="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[var(--brand-50)] text-xs font-semibold text-[var(--brand-600)]">
                       C
                     </span>
                     Cột
@@ -620,7 +620,7 @@ export default function ConsumablesPageClient() {
                 <TableRow>
                   <TableCell colSpan={7} className="h-24 text-center">
                     <div className="flex items-center justify-center gap-2">
-                      <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+                      <Loader2 className="h-6 w-6 animate-spin text-[var(--brand-600)]" />
                       <span>{t('loading.default')}</span>
                     </div>
                   </TableCell>
@@ -728,7 +728,7 @@ export default function ConsumablesPageClient() {
                           </Badge>
                           <Badge
                             variant="outline"
-                            className="border-blue-300 bg-blue-100 text-xs text-blue-700"
+                            className="border-[var(--brand-200)] bg-[var(--brand-50)] text-xs text-[var(--brand-700)]"
                           >
                             {t('user_consumables.stats.available')}: {group.available}
                           </Badge>

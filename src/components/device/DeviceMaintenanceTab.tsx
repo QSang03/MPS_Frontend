@@ -45,22 +45,24 @@ interface DeviceMaintenanceTabProps {
 
 // Status badge styling
 const statusColorMap: Record<ServiceRequestStatus, string> = {
-  [ServiceRequestStatus.OPEN]: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
+  [ServiceRequestStatus.OPEN]:
+    'bg-[var(--brand-100)] text-[var(--brand-800)] dark:bg-[var(--brand-900)] dark:text-[var(--brand-400)]',
   [ServiceRequestStatus.IN_PROGRESS]:
-    'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
+    'bg-[var(--warning-50)] text-[var(--warning-500)] dark:bg-yellow-900 dark:text-yellow-300',
   [ServiceRequestStatus.APPROVED]:
-    'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300',
+    'bg-[var(--color-success-50)] text-[var(--color-success-600)] dark:bg-emerald-900 dark:text-emerald-300',
   [ServiceRequestStatus.RESOLVED]:
-    'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
+    'bg-[var(--color-success-50)] text-[var(--color-success-600)] dark:bg-green-900 dark:text-green-300',
   [ServiceRequestStatus.CLOSED]: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300',
-  [ServiceRequestStatus.CANCELLED]: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
+  [ServiceRequestStatus.CANCELLED]:
+    'bg-[var(--color-error-50)] text-[var(--color-error-500)] dark:bg-red-900 dark:text-red-300',
 }
 
 const priorityColorMap: Record<Priority, string> = {
-  [Priority.LOW]: 'bg-gray-100 text-gray-800',
-  [Priority.NORMAL]: 'bg-blue-100 text-blue-800',
-  [Priority.HIGH]: 'bg-orange-100 text-orange-800',
-  [Priority.URGENT]: 'bg-red-100 text-red-800',
+  [Priority.LOW]: 'bg-[var(--color-neutral-100)] text-[var(--color-neutral-700)]',
+  [Priority.NORMAL]: 'bg-[var(--brand-100)] text-[var(--brand-800)]',
+  [Priority.HIGH]: 'bg-[var(--warning-50)] text-[var(--warning-500)]',
+  [Priority.URGENT]: 'bg-[var(--color-error-50)] text-[var(--color-error-500)]',
 }
 
 export function DeviceMaintenanceTab({
@@ -158,7 +160,7 @@ export function DeviceMaintenanceTab({
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Wrench className="h-5 w-5 text-rose-600" />
+            <Wrench className="h-5 w-5 text-[var(--error-500)]" />
             Lịch bảo trì
           </CardTitle>
           <CardDescription>Thông tin bảo trì và bảo dưỡng thiết bị</CardDescription>
@@ -171,30 +173,30 @@ export function DeviceMaintenanceTab({
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              <div className="rounded-xl border border-rose-200 bg-gradient-to-br from-rose-50 to-pink-50 p-6">
+              <div className="rounded-xl border border-[var(--error-200)] bg-gradient-to-br from-[var(--color-error-50)] to-[var(--destructive)] p-6">
                 <div className="mb-3 flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-rose-100">
-                    <Calendar className="h-5 w-5 text-rose-600" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--color-error-50)]">
+                    <Calendar className="h-5 w-5 text-[var(--error-500)]" />
                   </div>
                   <span className="text-muted-foreground text-sm font-medium">
                     Bảo trì gần nhất
                   </span>
                 </div>
-                <p className="text-2xl font-bold text-rose-700">
+                <p className="text-2xl font-bold text-[var(--color-error-500)]">
                   {formatDate(lastMaintenanceDate)}
                 </p>
               </div>
 
-              <div className="rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50 to-cyan-50 p-6">
+              <div className="rounded-xl border border-[var(--brand-200)] bg-gradient-to-br from-[var(--brand-50)] to-[var(--secondary)] p-6">
                 <div className="mb-3 flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
-                    <Calendar className="h-5 w-5 text-blue-600" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--brand-100)]">
+                    <Calendar className="h-5 w-5 text-[var(--brand-600)]" />
                   </div>
                   <span className="text-muted-foreground text-sm font-medium">
                     Bảo trì tiếp theo
                   </span>
                 </div>
-                <p className="text-2xl font-bold text-blue-700">
+                <p className="text-2xl font-bold text-[var(--brand-700)]">
                   {formatDate(nextMaintenanceDate)}
                 </p>
               </div>
@@ -209,7 +211,7 @@ export function DeviceMaintenanceTab({
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="flex items-center gap-2">
-                <Wrench className="h-5 w-5 text-amber-600" />
+                <Wrench className="h-5 w-5 text-[var(--warning-500)]" />
                 Yêu cầu bảo trì
               </CardTitle>
               <CardDescription className="mt-1">
@@ -309,12 +311,12 @@ export function DeviceMaintenanceTab({
           {/* Service Requests Table */}
           {isLoading ? (
             <div className="flex items-center justify-center p-8">
-              <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+              <Loader2 className="h-8 w-8 animate-spin text-[var(--brand-600)]" />
             </div>
           ) : isError ? (
             <div className="text-muted-foreground p-8 text-center">
-              <AlertCircle className="mx-auto mb-3 h-12 w-12 text-red-500 opacity-20" />
-              <p className="text-red-600">Đã xảy ra lỗi khi tải dữ liệu</p>
+              <AlertCircle className="mx-auto mb-3 h-12 w-12 text-[var(--color-error-500)] opacity-20" />
+              <p className="text-[var(--color-error-500)]">Đã xảy ra lỗi khi tải dữ liệu</p>
               <Button variant="outline" size="sm" onClick={() => refetch()} className="mt-4">
                 Thử lại
               </Button>
@@ -345,7 +347,7 @@ export function DeviceMaintenanceTab({
                         <td className="px-4 py-3">
                           <Link
                             href={`/system/service-requests/${sr.id}`}
-                            className="font-mono text-sm font-medium text-blue-600 hover:underline"
+                            className="font-mono text-sm font-medium text-[var(--brand-600)] hover:underline"
                           >
                             {sr.requestNumber ?? `#${sr.id.slice(0, 8)}`}
                           </Link>

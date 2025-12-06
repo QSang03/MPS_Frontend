@@ -93,7 +93,7 @@ export function DepartmentFormModal({
               type="submit"
               form="department-form"
               disabled={isLoading}
-              className="min-w-[120px] bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+              className="min-w-[120px] bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
             >
               {isLoading ? (
                 <>
@@ -120,14 +120,14 @@ export function DepartmentFormModal({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center gap-2 text-sm font-bold text-gray-800">
-                    <Building2 className="h-4 w-4 text-blue-600" />
+                    <Building2 className="h-4 w-4 text-[var(--brand-600)]" />
                     Tên bộ phận *
                   </FormLabel>
                   <FormControl>
                     <Input
                       placeholder="VD: Phòng Kinh doanh, Phòng IT..."
                       {...field}
-                      className="h-10 rounded-lg border-2 border-gray-200 text-base transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                      className="h-10 rounded-lg border-2 border-gray-200 text-base transition-all focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)]"
                     />
                   </FormControl>
                   <FormMessage className="mt-1 text-xs text-red-600" />
@@ -212,10 +212,10 @@ export function DepartmentFormModal({
             />
 
             {/* Info card */}
-            <div className="rounded-lg border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-cyan-50 p-4">
+            <div className="rounded-lg border-2 border-[var(--brand-200)] bg-gradient-to-r from-[var(--brand-50)] to-[var(--brand-100)] p-4">
               <p className="text-xs text-gray-700">
-                <span className="font-bold text-blue-700">💡 Tip:</span> Mã bộ phận được dùng để xác
-                định duy nhất mỗi bộ phận trong hệ thống. Hãy sử dụng mã ngắn gọn.
+                <span className="font-bold text-[var(--brand-700)]">💡 Tip:</span> Mã bộ phận được
+                dùng để xác định duy nhất mỗi bộ phận trong hệ thống. Hãy sử dụng mã ngắn gọn.
               </p>
             </div>
           </form>

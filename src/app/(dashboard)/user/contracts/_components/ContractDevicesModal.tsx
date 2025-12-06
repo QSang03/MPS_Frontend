@@ -207,7 +207,7 @@ export default function ContractDevicesModal({
         className={`${hideOuter ? 'hidden' : '!max-w-[75vw]'} rounded-2xl border-0 p-0 shadow-2xl`}
       >
         {/* Gradient header */}
-        <DialogHeader className="relative overflow-hidden bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-0">
+        <DialogHeader className="relative overflow-hidden bg-gradient-to-r from-[var(--brand-600)] via-[var(--brand-500)] to-[var(--brand-400)] p-0">
           <div className="absolute inset-0 bg-black/10"></div>
           <div className="absolute inset-0 opacity-20">
             <div className="absolute top-0 right-0 h-32 w-32 translate-x-1/2 -translate-y-1/2 rounded-full bg-white"></div>
@@ -236,7 +236,7 @@ export default function ContractDevicesModal({
         </DialogHeader>
 
         {/* Content section */}
-        <div className="bg-gradient-to-br from-white via-indigo-50/30 to-white px-8 py-6">
+        <div className="bg-gradient-to-br from-white via-[var(--brand-50)]/30 to-white px-8 py-6">
           <ContractDevicesSection
             contractId={contractId}
             onRequestOpenAttach={() => {
@@ -264,7 +264,7 @@ export default function ContractDevicesModal({
           }}
         >
           <DialogContent className="!max-w-[75vw] rounded-xl border-0 p-0 shadow-xl">
-            <DialogHeader className="relative overflow-hidden bg-gradient-to-r from-indigo-700 via-blue-500 to-cyan-500 p-0">
+            <DialogHeader className="relative overflow-hidden bg-gradient-to-r from-[var(--brand-700)] via-[var(--brand-600)] to-[var(--brand-500)] p-0">
               <div className="absolute inset-0 bg-black/10"></div>
               <div className="absolute inset-0 opacity-20">
                 <div className="absolute top-0 right-0 h-24 w-24 translate-x-1/2 -translate-y-1/2 rounded-full bg-white"></div>
@@ -293,7 +293,7 @@ export default function ContractDevicesModal({
               </div>
               <div className="max-h-64 overflow-y-auto rounded border border-indigo-100">
                 <table className="w-full">
-                  <thead className="bg-gradient-to-r from-indigo-50 to-cyan-50 text-indigo-700">
+                  <thead className="bg-gradient-to-r from-[var(--brand-50)] to-[var(--brand-50)] text-[var(--brand-700)]">
                     <tr>
                       <th className="px-3 py-2 text-left text-sm font-bold"> </th>
                       <th className="px-3 py-2 text-left text-sm font-bold">Serial</th>
@@ -304,7 +304,7 @@ export default function ContractDevicesModal({
                   <tbody>
                     {allDevices.length === 0 ? (
                       <tr>
-                        <td colSpan={4} className="px-5 py-7 text-center text-indigo-400">
+                        <td colSpan={4} className="px-5 py-7 text-center text-[var(--brand-400)]">
                           Không có thiết bị
                         </td>
                       </tr>
@@ -316,11 +316,11 @@ export default function ContractDevicesModal({
                         return (
                           <tr
                             key={ad.id}
-                            className={`transition even:bg-indigo-50/40 ${isDisabled ? 'cursor-not-allowed opacity-60' : 'hover:bg-indigo-100'} ${
+                            className={`transition even:bg-[var(--brand-50)]/40 ${isDisabled ? 'cursor-not-allowed opacity-60' : 'hover:bg-[var(--brand-100)]'} ${
                               isAttached
                                 ? 'border-l-4 border-l-amber-400 bg-amber-50/60'
                                 : otherContract
-                                  ? 'border-l-4 border-l-blue-400 bg-blue-50/60'
+                                  ? 'border-l-4 border-l-[var(--brand-400)] bg-[var(--brand-50)]/60'
                                   : ''
                             }`}
                           >
@@ -334,7 +334,7 @@ export default function ContractDevicesModal({
                                   }
                                 }}
                                 disabled={isDisabled}
-                                className={`h-4 w-4 accent-indigo-600 ${isDisabled ? 'cursor-not-allowed opacity-50' : ''}`}
+                                className={`h-4 w-4 accent-[var(--brand-600)] ${isDisabled ? 'cursor-not-allowed opacity-50' : ''}`}
                                 title={
                                   isDisabled
                                     ? `Thiết bị đã được gán cho hợp đồng ${otherContract?.contractNumber}`
@@ -347,7 +347,7 @@ export default function ContractDevicesModal({
                                 {isAttached ? (
                                   <CheckCircle2 className="h-4 w-4 text-amber-600" />
                                 ) : otherContract ? (
-                                  <CheckCircle2 className="h-4 w-4 text-blue-600" />
+                                  <CheckCircle2 className="h-4 w-4 text-[var(--brand-600)]" />
                                 ) : (
                                   <Circle className="h-4 w-4 text-slate-300" />
                                 )}
@@ -356,7 +356,7 @@ export default function ContractDevicesModal({
                                     isAttached
                                       ? 'font-medium text-amber-700'
                                       : otherContract
-                                        ? 'font-medium text-blue-700'
+                                        ? 'font-medium text-[var(--brand-700)]'
                                         : 'text-slate-800'
                                   }
                                 >
@@ -379,7 +379,7 @@ export default function ContractDevicesModal({
                               ) : otherContract ? (
                                 <Badge
                                   variant="outline"
-                                  className="border-blue-300 bg-blue-100 text-xs font-semibold text-blue-700"
+                                  className="border-[var(--brand-200)] bg-[var(--brand-50)] text-xs font-semibold text-[var(--brand-700)]"
                                 >
                                   <CheckCircle2 className="mr-1 h-3 w-3" />
                                   Đã gán cho {otherContract.contractNumber}
@@ -425,7 +425,7 @@ export default function ContractDevicesModal({
               <Button
                 onClick={handleAttach}
                 disabled={attachMutation.status === 'pending'}
-                className="bg-gradient-to-r from-indigo-600 to-cyan-600 px-6 font-bold text-white shadow"
+                className="bg-[var(--btn-primary)] px-6 font-bold text-[var(--btn-primary-foreground)] shadow"
               >
                 {attachMutation.status === 'pending'
                   ? t('common.sending')

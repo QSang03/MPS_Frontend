@@ -74,6 +74,20 @@ type Overview = {
     cogsRepair?: number
     totalCogs?: number
     grossProfit?: number
+    // Converted values (only for System Admin context)
+    revenueRentalConverted?: number
+    revenueRepairConverted?: number
+    revenuePageBWConverted?: number
+    revenuePageColorConverted?: number
+    totalRevenueConverted?: number
+    cogsConsumableConverted?: number
+    cogsRepairConverted?: number
+    totalCogsConverted?: number
+    grossProfitConverted?: number
+    // Currency information (only for System Admin context)
+    currency?: import('@/types/models/currency').CurrencyDataDto | null
+    baseCurrency?: import('@/types/models/currency').CurrencyDataDto | null
+    exchangeRate?: number | null
   }>
   usage?: {
     items?: Array<{
@@ -83,6 +97,8 @@ type Overview = {
       cost: number
     }>
   }
+  // Currency information (only for System Admin context)
+  baseCurrency?: import('@/types/models/currency').CurrencyDataDto | null
 }
 
 // COLORS removed — not used in this component
@@ -176,6 +192,19 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
 
   const k = overview.kpis || {}
 
+  // Helper to get display value (converted if available, else original)
+  const getDisplayValue = (
+    original: number | undefined,
+    converted: number | undefined,
+    useConverted: boolean
+  ): number => {
+    if (useConverted && converted !== undefined) return converted
+    return original ?? 0
+  }
+
+  // Check if baseCurrency exists (System Admin context)
+  const useConverted = !!overview.baseCurrency
+
   // Prepare data for charts
   const usageData =
     overview.usage?.items?.map((item) => {
@@ -219,7 +248,7 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
     overview.topDevices
       ?.map((d, index) => ({
         name: d.deviceModelName || d.serialNumber || 'Unknown',
-        value: d.totalRevenue || 0,
+        value: getDisplayValue(d.totalRevenue, d.totalRevenueConverted, useConverted),
         fullData: d,
         rank: index + 1,
       }))
@@ -254,14 +283,14 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
             <MonthPicker value={month} onChange={handleMonthChange} />
             <Button
               variant="secondary"
-              className="h-10 rounded-full border-white/30 bg-white/10 px-5 text-sm font-semibold text-[#0066CC] backdrop-blur hover:bg-white/20"
+              className="h-10 rounded-full border-white/30 bg-white/10 px-5 text-sm font-semibold text-[var(--brand-500)] backdrop-blur hover:bg-white/20"
               onClick={() => router.push(ROUTES.USER_MY_DEVICES)}
             >
               <FileBarChart className="mr-2 h-4 w-4" />
               Thiết bị
             </Button>
             <ServiceRequestFormModal customerId={overview.customerId}>
-              <Button className="h-10 rounded-full border-0 bg-white px-5 text-sm font-semibold text-[#0066CC] shadow-sm hover:bg-blue-50">
+              <Button className="h-10 rounded-full border-0 bg-white px-5 text-sm font-semibold text-[var(--brand-500)] shadow-sm hover:bg-[var(--brand-50)]">
                 <Send className="mr-2 h-4 w-4" />
                 Gửi yêu cầu
               </Button>
@@ -274,27 +303,27 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 lg:gap-6">
         {/* Cost Card */}
         <Card
-          className="group relative cursor-pointer overflow-hidden rounded-2xl border border-l-[4px] border-slate-100/80 border-l-[#0066CC] bg-white/90 backdrop-blur-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_12px_30px_rgba(15,23,42,0.12)]"
+          className="group relative cursor-pointer overflow-hidden rounded-2xl border border-l-[4px] border-slate-100/80 border-l-[var(--brand-500)] bg-white/90 backdrop-blur-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_12px_30px_rgba(15,23,42,0.12)]"
           onClick={() => scrollToSection('cost-breakdown')}
         >
           <CardContent className="p-4 md:p-5">
             <div className="flex items-start gap-4">
               <div>
-                <p className="text-[11px] font-medium tracking-wider text-[#6B7280] uppercase md:text-xs">
+                <p className="text-[11px] font-medium tracking-wider text-[var(--neutral-500)] uppercase md:text-xs">
                   Chi phí trong tháng
                 </p>
                 <div className="mt-2 flex items-baseline gap-2">
-                  <div className="text-2xl font-bold text-[#1F2937] md:text-[28px] lg:text-[32px]">
+                  <div className="text-2xl font-bold text-[var(--foreground)] md:text-[28px] lg:text-[32px]">
                     {formatCurrency(k.totalCost ?? 0)}
                   </div>
                 </div>
-                <div className="mt-1 flex items-center text-xs font-medium text-[#10B981]">
+                <div className="mt-1 flex items-center text-xs font-medium text-[var(--color-success-500)]">
                   <TrendingUp className="mr-1 h-3 w-3" />
-                  12% <span className="ml-1 text-[#6B7280]">so với tháng trước</span>
+                  12% <span className="ml-1 text-[var(--neutral-500)]">so với tháng trước</span>
                 </div>
               </div>
               <div className="ml-auto flex flex-col items-end gap-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-transparent bg-[#EBF2FF] text-[#0066CC] md:h-12 md:w-12">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-transparent bg-[var(--brand-50)] text-[var(--brand-500)] md:h-12 md:w-12">
                   <DollarSign className="h-5 w-5 md:h-6 md:w-6" />
                 </div>
                 <ChevronRight className="h-4 w-4 text-slate-400 transition-transform group-hover:translate-x-1" />
@@ -311,21 +340,21 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
           <CardContent className="p-4 md:p-5">
             <div className="flex items-start gap-4">
               <div>
-                <p className="text-[11px] font-medium tracking-wider text-[#6B7280] uppercase md:text-xs">
+                <p className="text-[11px] font-medium tracking-wider text-[var(--neutral-500)] uppercase md:text-xs">
                   Trang in đen trắng
                 </p>
                 <div className="mt-2 flex items-baseline gap-2">
-                  <div className="text-2xl font-bold text-[#1F2937] md:text-[28px] lg:text-[32px]">
+                  <div className="text-2xl font-bold text-[var(--foreground)] md:text-[28px] lg:text-[32px]">
                     {formatNumber(k.totalBWPages ?? 0)}
                   </div>
                 </div>
-                <div className="mt-1 flex items-center text-xs font-medium text-[#10B981]">
+                <div className="mt-1 flex items-center text-xs font-medium text-[var(--color-success-500)]">
                   <TrendingUp className="mr-1 h-3 w-3" />
-                  5.2% <span className="ml-1 text-[#6B7280]">so với tháng trước</span>
+                  5.2% <span className="ml-1 text-[var(--neutral-500)]">so với tháng trước</span>
                 </div>
               </div>
               <div className="ml-auto flex flex-col items-end gap-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-transparent bg-[#ECFDF5] text-[#22C55E] md:h-12 md:w-12">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-transparent bg-[var(--color-success-50)] text-[var(--color-success-500)] md:h-12 md:w-12">
                   <FileText className="h-5 w-5 md:h-6 md:w-6" />
                 </div>
                 <ChevronRight className="h-4 w-4 text-slate-400 transition-transform group-hover:translate-x-1" />
@@ -342,17 +371,17 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
           <CardContent className="p-4 md:p-5">
             <div className="flex items-start gap-4">
               <div>
-                <p className="text-[11px] font-medium tracking-wider text-[#6B7280] uppercase md:text-xs">
+                <p className="text-[11px] font-medium tracking-wider text-[var(--neutral-500)] uppercase md:text-xs">
                   Trang in màu sắc
                 </p>
                 <div className="mt-2 flex items-baseline gap-2">
-                  <div className="text-2xl font-bold text-[#1F2937] md:text-[28px] lg:text-[32px]">
+                  <div className="text-2xl font-bold text-[var(--foreground)] md:text-[28px] lg:text-[32px]">
                     {formatNumber(k.totalColorPages ?? 0)}
                   </div>
                 </div>
-                <div className="mt-1 flex items-center text-xs font-medium text-[#EF4444]">
+                <div className="mt-1 flex items-center text-xs font-medium text-[var(--error-500)]">
                   <TrendingDown className="mr-1 h-3 w-3" />
-                  1.8% <span className="ml-1 text-[#6B7280]">so với tháng trước</span>
+                  1.8% <span className="ml-1 text-[var(--neutral-500)]">so với tháng trước</span>
                 </div>
               </div>
               <div className="ml-auto flex flex-col items-end gap-4">
@@ -389,20 +418,20 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
                 <AreaChart data={usageData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorBw" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10B981" stopOpacity={0.8} />
-                      <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
+                      <stop offset="5%" stopColor="var(--color-success-500)" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="var(--color-success-500)" stopOpacity={0} />
                     </linearGradient>
                     <linearGradient id="colorColor" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.8} />
-                      <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0} />
+                      <stop offset="5%" stopColor="var(--brand-500)" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="var(--brand-500)" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
                   <XAxis
                     dataKey="name"
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fontSize: 12, fill: '#6b7280' }}
+                    tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }}
                     dy={10}
                     height={60}
                     label={{
@@ -410,13 +439,13 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
                       position: 'insideBottomRight',
                       offset: -5,
                       fontSize: 12,
-                      fill: '#9ca3af',
+                      fill: 'var(--muted-foreground)',
                     }}
                   />
                   <YAxis
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fontSize: 12, fill: '#6b7280' }}
+                    tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }}
                     tickFormatter={(value) => (value >= 1000 ? `${value / 1000}k` : value)}
                     ticks={[0, 200000, 400000, 600000, 800000]}
                     domain={[0, 800000]}
@@ -425,7 +454,7 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
                       angle: -90,
                       position: 'insideLeft',
                       fontSize: 12,
-                      fill: '#9ca3af',
+                      fill: 'var(--muted-foreground)',
                     }}
                   />
                   <Tooltip
@@ -438,7 +467,7 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
                       formatNumber(value),
                       name === 'bw' ? 'B/W' : name === 'color' ? 'Màu' : name,
                     ]}
-                    labelStyle={{ fontWeight: 'bold', color: '#374151' }}
+                    labelStyle={{ fontWeight: 'bold', color: 'var(--foreground)' }}
                   />
                   <Legend
                     verticalAlign="top"
@@ -450,7 +479,7 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
                     type="monotone"
                     dataKey="bw"
                     name="B/W"
-                    stroke="#10B981"
+                    stroke="var(--color-success-500)"
                     strokeWidth={2}
                     fillOpacity={1}
                     fill="url(#colorBw)"
@@ -460,7 +489,7 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
                     type="monotone"
                     dataKey="color"
                     name="Màu"
-                    stroke="#8B5CF6"
+                    stroke="var(--brand-500)"
                     strokeWidth={2}
                     fillOpacity={1}
                     fill="url(#colorColor)"
@@ -492,14 +521,14 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
                     strokeDasharray="3 3"
                     horizontal={true}
                     vertical={false}
-                    stroke="#e5e7eb"
+                    stroke="var(--border)"
                   />
                   <XAxis type="number" hide />
                   <YAxis
                     dataKey="name"
                     type="category"
                     width={120}
-                    tick={{ fontSize: 12, fill: '#374151', fontWeight: 500 }}
+                    tick={{ fontSize: 12, fill: 'var(--foreground)', fontWeight: 500 }}
                     axisLine={false}
                     tickLine={false}
                     tickFormatter={(value) =>
@@ -507,7 +536,7 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
                     }
                   />
                   <Tooltip
-                    cursor={{ fill: '#f3f4f6' }}
+                    cursor={{ fill: 'var(--muted)' }}
                     contentStyle={{
                       borderRadius: '8px',
                       border: 'none',
@@ -567,7 +596,7 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
                   >
                     <div className="mb-4 flex items-start justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--brand-50)] text-[var(--brand-600)]">
                           <Printer className="h-5 w-5" />
                         </div>
                         <div>
@@ -601,8 +630,10 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
                       <div className="flex items-end justify-between">
                         <div>
                           <p className="text-muted-foreground text-xs">Tổng chi phí</p>
-                          <p className="text-lg font-bold text-blue-600">
-                            {formatCurrency(d.totalRevenue ?? 0)}
+                          <p className="text-lg font-bold text-[var(--brand-600)]">
+                            {formatCurrency(
+                              getDisplayValue(d.totalRevenue, d.totalRevenueConverted, useConverted)
+                            )}
                           </p>
                         </div>
                         <Button
@@ -630,7 +661,18 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
                             </div>
                             <div className="font-medium">
                               {d.revenueRental || d.revenueRepair
-                                ? formatCurrency((d.revenueRental || 0) + (d.revenueRepair || 0))
+                                ? formatCurrency(
+                                    getDisplayValue(
+                                      d.revenueRental,
+                                      d.revenueRentalConverted,
+                                      useConverted
+                                    ) +
+                                      getDisplayValue(
+                                        d.revenueRepair,
+                                        d.revenueRepairConverted,
+                                        useConverted
+                                      )
+                                  )
                                 : '—'}
                             </div>
                           </div>
@@ -641,7 +683,15 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
                               Trang B/W
                             </div>
                             <div className="font-medium">
-                              {d.revenuePageBW ? formatCurrency(d.revenuePageBW) : '—'}
+                              {d.revenuePageBW
+                                ? formatCurrency(
+                                    getDisplayValue(
+                                      d.revenuePageBW,
+                                      d.revenuePageBWConverted,
+                                      useConverted
+                                    )
+                                  )
+                                : '—'}
                             </div>
                           </div>
 
@@ -651,7 +701,15 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
                               Trang Màu
                             </div>
                             <div className="font-medium">
-                              {d.revenuePageColor ? formatCurrency(d.revenuePageColor) : '—'}
+                              {d.revenuePageColor
+                                ? formatCurrency(
+                                    getDisplayValue(
+                                      d.revenuePageColor,
+                                      d.revenuePageColorConverted,
+                                      useConverted
+                                    )
+                                  )
+                                : '—'}
                             </div>
                           </div>
 
@@ -661,8 +719,14 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
                                 <DollarSign className="mr-1.5 h-4 w-4" />
                                 Tổng Chi phí
                               </div>
-                              <div className="text-base font-bold text-blue-700">
-                                {formatCurrency(d.totalRevenue ?? 0)}
+                              <div className="text-base font-bold text-[var(--brand-700)]">
+                                {formatCurrency(
+                                  getDisplayValue(
+                                    d.totalRevenue,
+                                    d.totalRevenueConverted,
+                                    useConverted
+                                  )
+                                )}
                               </div>
                             </div>
                           </div>

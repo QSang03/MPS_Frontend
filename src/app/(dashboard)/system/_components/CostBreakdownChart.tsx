@@ -22,10 +22,10 @@ interface CostBreakdownChartProps {
 }
 
 const COLORS = {
-  rental: '#0066CC', // Primary Blue
-  repair: '#F59E0B', // Warning Orange
-  pageBW: '#64748B', // Slate
-  pageColor: '#10B981', // Success Green
+  rental: 'var(--brand-600)', // Primary brand
+  repair: 'var(--warning-500)', // Warning
+  pageBW: 'var(--muted-foreground)', // Slate-ish (uses muted foreground)
+  pageColor: 'var(--color-success-500)', // Success
 }
 
 const LABELS = {
@@ -45,11 +45,11 @@ export function CostBreakdownChart({
     return (
       <Card className="border-0 shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base font-semibold text-[#1F2937]">
-            <DollarSign className="h-5 w-5 text-[#0066CC]" />
+          <CardTitle className="flex items-center gap-2 text-base font-semibold text-[var(--foreground)]">
+            <DollarSign className="h-5 w-5 text-[var(--brand-500)]" />
             Doanh thu
           </CardTitle>
-          <CardDescription className="text-[13px] text-[#6B7280]">
+          <CardDescription className="text-[13px] text-[var(--neutral-500)]">
             Tỷ lệ phần trăm theo doanh thu
           </CardDescription>
         </CardHeader>
@@ -94,10 +94,10 @@ export function CostBreakdownChart({
       <Card className="flex h-full flex-col border-0 shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-base font-semibold text-[#1F2937]">
-            <DollarSign className="h-5 w-5 text-[#0066CC]" />
+            <DollarSign className="h-5 w-5 text-[var(--brand-500)]" />
             Doanh thu
           </CardTitle>
-          <CardDescription className="text-[13px] text-[#6B7280]">
+          <CardDescription className="text-[13px] text-[var(--neutral-500)]">
             Tỷ lệ phần trăm theo doanh thu trong tháng
           </CardDescription>
         </CardHeader>
@@ -121,13 +121,13 @@ export function CostBreakdownChart({
               </Pie>
               <Tooltip
                 contentStyle={{
-                  backgroundColor: '#1F2937',
+                  backgroundColor: 'var(--popover)',
                   border: 'none',
                   borderRadius: '8px',
-                  color: '#fff',
+                  color: 'var(--popover-foreground)',
                   boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
                 }}
-                itemStyle={{ color: '#fff', fontSize: '13px' }}
+                itemStyle={{ color: 'var(--popover-foreground)', fontSize: '13px' }}
                 formatter={(value: number) => [`${value.toFixed(2)}%`, 'Tỷ lệ']}
               />
               <Legend
@@ -140,7 +140,9 @@ export function CostBreakdownChart({
                   color: '#6B7280',
                   paddingTop: '20px',
                 }}
-                formatter={(value: string) => <span className="ml-1 text-[#6B7280]">{value}</span>}
+                formatter={(value: string) => (
+                  <span className="ml-1 text-[var(--neutral-500)]">{value}</span>
+                )}
               />
             </PieChart>
           </ResponsiveContainer>
@@ -154,7 +156,7 @@ export function CostBreakdownChart({
                   style={{ backgroundColor: item.color }}
                 />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs text-[#6B7280]">{item.name}</p>
+                  <p className="truncate text-xs text-[var(--neutral-500)]">{item.name}</p>
                   <p className="text-sm font-semibold text-[#1F2937]">{item.value.toFixed(2)}%</p>
                 </div>
               </div>
@@ -166,7 +168,7 @@ export function CostBreakdownChart({
             <Button
               variant="outline"
               size="sm"
-              className="flex-1 border-gray-200 text-[#6B7280] hover:bg-white hover:text-[#1F2937]"
+              className="flex-1 border-gray-200 text-[var(--neutral-500)] hover:bg-white hover:text-[var(--foreground)]"
               onClick={onViewDetails}
             >
               <ExternalLink className="mr-2 h-4 w-4" />

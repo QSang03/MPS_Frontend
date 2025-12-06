@@ -85,13 +85,14 @@ type TimelineEntry = TimelineEvent & { time: string }
 
 const priorityBadgeMap: Record<Priority, string> = {
   [Priority.LOW]: 'bg-slate-100 text-slate-700 border-slate-200',
-  [Priority.NORMAL]: 'bg-blue-50 text-blue-700 border-blue-200',
+  [Priority.NORMAL]: 'bg-[var(--brand-50)] text-[var(--brand-700)] border-[var(--brand-200)]',
   [Priority.HIGH]: 'bg-orange-50 text-orange-700 border-orange-200',
   [Priority.URGENT]: 'bg-red-50 text-red-700 border-red-200',
 }
 
 const statusBadgeMap: Record<ServiceRequestStatus, string> = {
-  [ServiceRequestStatus.OPEN]: 'bg-blue-50 text-blue-700 border-blue-200',
+  [ServiceRequestStatus.OPEN]:
+    'bg-[var(--brand-50)] text-[var(--brand-700)] border-[var(--brand-200)]',
   [ServiceRequestStatus.IN_PROGRESS]: 'bg-amber-50 text-amber-700 border-amber-200',
   [ServiceRequestStatus.APPROVED]: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   [ServiceRequestStatus.RESOLVED]: 'bg-emerald-50 text-emerald-700 border-emerald-200',
@@ -280,7 +281,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
         time: data.respondedAt,
         by: data.respondedByName ?? data.respondedBy,
         icon: Wrench,
-        color: 'text-blue-600',
+        color: 'text-[var(--brand-600)]',
       },
       {
         label: 'Đã xử lý',
@@ -737,7 +738,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                     />
                     <Button
                       variant="default"
-                      className="w-full bg-blue-600 font-medium text-white hover:bg-blue-700"
+                      className="w-full bg-[var(--brand-600)] font-medium text-white hover:bg-[var(--brand-700)]"
                       size="sm"
                       onClick={() => {
                         if (!selectedAssignee) {
@@ -984,6 +985,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                 }}
                 optional
                 placeholder="Chọn tiền tệ (mặc định: USD)"
+                customerId={data?.customerId}
               />
             </div>
 
@@ -1059,7 +1061,12 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                 <div className="text-muted-foreground bg-muted/10 flex h-32 flex-col items-center justify-center rounded-lg border-2 border-dashed">
                   <FileText className="mb-2 h-8 w-8 opacity-50" />
                   <span className="text-sm">Chưa có mục chi phí nào</span>
-                  <Button variant="link" size="sm" onClick={addItem} className="text-blue-600">
+                  <Button
+                    variant="link"
+                    size="sm"
+                    onClick={addItem}
+                    className="text-[var(--brand-500)]"
+                  >
                     Thêm ngay
                   </Button>
                 </div>
@@ -1068,7 +1075,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
 
             <div className="-mx-6 mt-4 -mb-4 flex items-center justify-between rounded-b-lg border-t bg-slate-50/80 px-6 pt-4 pb-4 dark:bg-slate-900/50">
               <div className="text-muted-foreground text-sm font-medium">Tổng chi phí dự kiến</div>
-              <div className="text-2xl font-bold text-blue-600">
+              <div className="text-2xl font-bold text-[var(--brand-600)]">
                 {totalAmountForDraft.toLocaleString('vi-VN')}{' '}
                 <span className="text-muted-foreground text-sm font-normal">VND</span>
               </div>

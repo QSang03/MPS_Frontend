@@ -21,7 +21,7 @@ export function OwnershipBadge({ device, className }: OwnershipBadgeProps) {
     <Badge
       variant="outline"
       className={cn(
-        'inline-flex w-fit items-center gap-1.5 border-amber-200 bg-amber-50 text-amber-700',
+        'inline-flex w-fit items-center gap-1.5 border-[var(--warning-200)] bg-[var(--warning-50)] text-[var(--warning-500)]',
         className
       )}
     >

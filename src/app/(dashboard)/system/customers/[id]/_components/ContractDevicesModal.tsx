@@ -301,7 +301,7 @@ export default function ContractDevicesModal({
                 <Button
                   onClick={handleAttach}
                   disabled={attachMutation.status === 'pending' || selectedToAttach.length === 0}
-                  className="gap-2 bg-gradient-to-r from-blue-600 to-cyan-600 shadow-sm hover:from-blue-700 hover:to-cyan-700 hover:shadow-md"
+                  className="gap-2 bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] shadow-sm hover:bg-[var(--btn-primary-hover)] hover:shadow-md"
                 >
                   {attachMutation.status === 'pending' ? (
                     <>

@@ -26,58 +26,61 @@ import {
 import type { MonthlySeries } from '@/types/dashboard'
 import { TrendingUp, FileText, ArrowRight } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
+import type { CurrencyDataDto } from '@/types/models/currency'
+import { formatCurrencyWithSymbol } from '@/lib/utils/formatters'
 
 interface MonthlySeriesChartProps {
   monthlySeries: MonthlySeries | undefined
   isLoading?: boolean
   onViewDetails?: () => void
   onExport?: () => void
+  baseCurrency?: CurrencyDataDto | null
 }
 
 const METRIC_CONFIG = {
   totalRevenue: {
     label: 'Tổng doanh thu',
-    color: '#10b981',
+    color: 'var(--color-success-500)',
     strokeWidth: 3,
   },
   revenueRental: {
     label: 'Doanh thu thuê máy',
-    color: '#3b82f6',
+    color: 'var(--brand-600)',
     strokeWidth: 2,
   },
   revenueRepair: {
     label: 'Doanh thu sửa chữa',
-    color: '#f59e0b',
+    color: 'var(--warning-500)',
     strokeWidth: 2,
   },
   revenuePageBW: {
     label: 'Doanh thu trang BW',
-    color: '#6b7280',
+    color: 'var(--muted-foreground)',
     strokeWidth: 2,
   },
   revenuePageColor: {
     label: 'Doanh thu trang màu',
-    color: '#ec4899',
+    color: 'var(--brand-500)',
     strokeWidth: 2,
   },
   totalCogs: {
     label: 'Tổng chi phí',
-    color: '#ef4444',
+    color: 'var(--error-500)',
     strokeWidth: 2,
   },
   cogsConsumable: {
     label: 'Chi phí vật tư',
-    color: '#dc2626',
+    color: 'var(--error-500)',
     strokeWidth: 2,
   },
   cogsRepair: {
     label: 'Chi phí sửa chữa',
-    color: '#b91c1c',
+    color: 'var(--error-500)',
     strokeWidth: 2,
   },
   grossProfit: {
     label: 'Lợi nhuận gộp',
-    color: '#059669',
+    color: 'var(--color-success-500)',
     strokeWidth: 3,
   },
 }
@@ -96,10 +99,15 @@ interface CustomTooltipProps {
   label?: string
 }
 
-const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
+const CustomTooltip = ({
+  active,
+  payload,
+  label,
+  baseCurrency,
+}: CustomTooltipProps & { baseCurrency?: CurrencyDataDto | null }) => {
   if (active && payload && payload.length) {
     return (
-      <div className="rounded-lg border-0 bg-[#1F2937] p-3 text-white shadow-[0_4px_12px_rgba(0,0,0,0.15)]">
+      <div className="rounded-lg border-0 bg-[var(--popover)] p-3 text-[var(--popover-foreground)] shadow-[0_4px_12px_rgba(0,0,0,0.15)]">
         <p className="mb-2 font-semibold text-white">{label}</p>
         {payload.map((entry) => {
           const config = METRIC_CONFIG[entry.dataKey as keyof typeof METRIC_CONFIG]
@@ -107,18 +115,18 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
 
           const formatValue = (value: number) => {
             // Format all metrics as currency since they're all monetary values
-            return new Intl.NumberFormat('en-US', {
-              style: 'currency',
-              currency: 'USD',
-              maximumFractionDigits: 2,
-            }).format(value)
+            if (baseCurrency) {
+              return formatCurrencyWithSymbol(value, baseCurrency)
+            }
+            // Fallback to USD if no currency provided
+            return formatCurrencyWithSymbol(value, { code: 'USD', symbol: '$' } as CurrencyDataDto)
           }
 
           return (
             <div key={entry.dataKey} className="flex items-center gap-2 text-sm">
               <div className="h-3 w-3 rounded-full" style={{ backgroundColor: entry.color }} />
-              <span className="text-gray-300">{config.label}:</span>
-              <span className="font-semibold text-white">
+              <span className="text-[var(--muted-foreground)]">{config.label}:</span>
+              <span className="font-semibold text-[var(--popover-foreground)]">
                 {formatValue(
                   typeof entry.value === 'number' ? entry.value : Number(entry.value) || 0
                 )}
@@ -137,6 +145,7 @@ export function MonthlySeriesChart({
   isLoading,
   onViewDetails,
   onExport,
+  baseCurrency,
 }: MonthlySeriesChartProps) {
   const [chartType, setChartType] = useState<ChartType>('area')
   const [visibleMetrics, setVisibleMetrics] = useState<string[]>([
@@ -164,19 +173,40 @@ export function MonthlySeriesChart({
     )
   }
 
+  // Helper to get display value (converted if available, else original)
+  const getDisplayValue = (
+    original: number,
+    converted: number | undefined,
+    useConverted: boolean
+  ): number => {
+    if (useConverted && converted !== undefined) return converted
+    return original
+  }
+
+  // Use converted values if baseCurrency is available (System Admin context)
+  const useConverted = !!baseCurrency
+
   // Transform data for recharts
   // monthlySeries has structure: { points: [{month, revenueRental, revenueRepair, ...}] }
   const transformedData = monthlySeries.points.map((point) => ({
     month: point.month,
-    revenueRental: point.revenueRental,
-    revenueRepair: point.revenueRepair,
-    revenuePageBW: point.revenuePageBW,
-    revenuePageColor: point.revenuePageColor,
-    totalRevenue: point.totalRevenue,
-    cogsConsumable: point.cogsConsumable,
-    cogsRepair: point.cogsRepair,
-    totalCogs: point.totalCogs,
-    grossProfit: point.grossProfit,
+    revenueRental: getDisplayValue(point.revenueRental, point.revenueRentalConverted, useConverted),
+    revenueRepair: getDisplayValue(point.revenueRepair, point.revenueRepairConverted, useConverted),
+    revenuePageBW: getDisplayValue(point.revenuePageBW, point.revenuePageBWConverted, useConverted),
+    revenuePageColor: getDisplayValue(
+      point.revenuePageColor,
+      point.revenuePageColorConverted,
+      useConverted
+    ),
+    totalRevenue: getDisplayValue(point.totalRevenue, point.totalRevenueConverted, useConverted),
+    cogsConsumable: getDisplayValue(
+      point.cogsConsumable,
+      point.cogsConsumableConverted,
+      useConverted
+    ),
+    cogsRepair: getDisplayValue(point.cogsRepair, point.cogsRepairConverted, useConverted),
+    totalCogs: getDisplayValue(point.totalCogs, point.totalCogsConverted, useConverted),
+    grossProfit: getDisplayValue(point.grossProfit, point.grossProfitConverted, useConverted),
   }))
 
   // Toggle metric visibility
@@ -198,11 +228,11 @@ export function MonthlySeriesChart({
         <CardHeader className="pb-2">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <CardTitle className="flex items-center gap-2 text-base font-semibold text-[#1F2937]">
-                <TrendingUp className="h-5 w-5 text-[#0066CC]" />
+              <CardTitle className="flex items-center gap-2 text-base font-semibold text-[var(--foreground)]">
+                <TrendingUp className="h-5 w-5 text-[var(--brand-500)]" />
                 Xu hướng theo tháng
               </CardTitle>
-              <CardDescription className="text-[13px] text-[#6B7280]">
+              <CardDescription className="text-[13px] text-[var(--neutral-500)]">
                 Biểu đồ thống kê các chỉ số theo thời gian
               </CardDescription>
             </div>
@@ -213,7 +243,11 @@ export function MonthlySeriesChart({
                 variant={chartType === 'area' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setChartType('area')}
-                className={cn(chartType === 'area' ? 'bg-[#0066CC] hover:bg-[#0052a3]' : '')}
+                className={cn(
+                  chartType === 'area'
+                    ? 'bg-[var(--btn-primary)] hover:bg-[var(--btn-primary-hover)]'
+                    : ''
+                )}
               >
                 Area
               </Button>
@@ -221,7 +255,11 @@ export function MonthlySeriesChart({
                 variant={chartType === 'line' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setChartType('line')}
-                className={cn(chartType === 'line' ? 'bg-[#0066CC] hover:bg-[#0052a3]' : '')}
+                className={cn(
+                  chartType === 'line'
+                    ? 'bg-[var(--btn-primary)] hover:bg-[var(--btn-primary-hover)]'
+                    : ''
+                )}
               >
                 Line
               </Button>
@@ -260,17 +298,17 @@ export function MonthlySeriesChart({
           {/* Chart */}
           <ResponsiveContainer width="100%" height={400}>
             <Chart data={transformedData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
               <XAxis
                 dataKey="month"
-                stroke="#6b7280"
+                stroke="var(--muted-foreground)"
                 fontSize={12}
                 tickLine={false}
                 axisLine={false}
                 dy={10}
               />
               <YAxis
-                stroke="#6b7280"
+                stroke="var(--muted-foreground)"
                 fontSize={12}
                 tickLine={false}
                 axisLine={false}
@@ -281,7 +319,7 @@ export function MonthlySeriesChart({
                   }).format(value)
                 }
               />
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip content={<CustomTooltip baseCurrency={baseCurrency} />} />
               <Legend
                 verticalAlign="top"
                 height={36}
@@ -289,7 +327,9 @@ export function MonthlySeriesChart({
                 formatter={(value) => {
                   const config = METRIC_CONFIG[value as keyof typeof METRIC_CONFIG]
                   return (
-                    <span className="text-[13px] text-[#6B7280]">{config?.label || value}</span>
+                    <span className="text-[13px] text-[var(--neutral-500)]">
+                      {config?.label || value}
+                    </span>
                   )
                 }}
               />
@@ -333,7 +373,7 @@ export function MonthlySeriesChart({
             variant="outline"
             size="sm"
             onClick={onExport}
-            className="gap-2 border-gray-200 text-[#6B7280] hover:bg-white hover:text-[#1F2937]"
+            className="gap-2 border-gray-200 text-[var(--neutral-500)] hover:bg-white hover:text-[var(--foreground)]"
           >
             <FileText className="h-4 w-4" />
             Xuất báo cáo
@@ -341,7 +381,7 @@ export function MonthlySeriesChart({
           <Button
             size="sm"
             onClick={onViewDetails}
-            className="gap-2 bg-[#0066CC] hover:bg-[#0052a3]"
+            className="gap-2 bg-[var(--btn-primary)] hover:bg-[var(--btn-primary-hover)]"
           >
             Chi tiết
             <ArrowRight className="h-4 w-4" />

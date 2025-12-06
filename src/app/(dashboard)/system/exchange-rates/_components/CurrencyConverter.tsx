@@ -155,7 +155,7 @@ export function CurrencyConverter({ currencies }: CurrencyConverterProps) {
           <Button
             onClick={handleConvert}
             disabled={isLoading || !amount || !fromCurrencyId || !toCurrencyId}
-            className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+            className="w-full bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
           >
             {isLoading ? (
               <>
@@ -171,7 +171,7 @@ export function CurrencyConverter({ currencies }: CurrencyConverterProps) {
           </Button>
 
           {convertResult && (
-            <div className="rounded-lg border bg-blue-50 p-4">
+            <div className="rounded-lg border bg-[var(--brand-50)] p-4">
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">Số tiền gốc:</span>
@@ -184,7 +184,7 @@ export function CurrencyConverter({ currencies }: CurrencyConverterProps) {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">Số tiền sau chuyển đổi:</span>
-                  <span className="text-lg font-bold text-blue-600">
+                  <span className="text-lg font-bold text-[var(--brand-600)]">
                     {convertResult.convertedAmount.toLocaleString()} {convertResult.toCurrency.code}
                   </span>
                 </div>

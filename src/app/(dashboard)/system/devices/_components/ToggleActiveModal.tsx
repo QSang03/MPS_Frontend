@@ -122,7 +122,7 @@ export default function ToggleActiveModal({
               type="submit"
               form="toggle-active-form"
               disabled={submitting}
-              className="min-w-[120px] bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+              className="min-w-[120px] bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
             >
               {submitting
                 ? t('toggle_active.modal.button.processing')

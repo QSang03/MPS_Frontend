@@ -36,7 +36,7 @@ export default function ContractDevicesSection({ contractId, attachedDevices }: 
 
   if (!canManage) {
     return (
-      <div className="rounded-lg border bg-gradient-to-br from-indigo-50/80 to-white p-6">
+      <div className="rounded-lg border bg-gradient-to-br from-[var(--brand-50)]/80 to-white p-6">
         <div className="text-muted-foreground flex items-center gap-2 text-base">
           <Plug2 className="h-5 w-5" />
           Lưu hợp đồng trước khi quản lý thiết bị.
@@ -64,7 +64,7 @@ export default function ContractDevicesSection({ contractId, attachedDevices }: 
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-        <div className="flex items-center gap-2 text-lg font-bold text-indigo-700">
+        <div className="flex items-center gap-2 text-lg font-bold text-[var(--brand-700)]">
           <MonitorSmartphone className="h-5 w-5" />
           Thiết bị của hợp đồng
         </div>
@@ -73,9 +73,9 @@ export default function ContractDevicesSection({ contractId, attachedDevices }: 
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-xl border-2 border-indigo-100 shadow">
+      <div className="overflow-x-auto rounded-xl border-2 border-[var(--brand-100)] shadow">
         <table className="w-full">
-          <thead className="bg-gradient-to-r from-indigo-50 via-blue-50 to-white text-indigo-700">
+          <thead className="bg-gradient-to-r from-[var(--brand-50)] via-[var(--brand-50)] to-white text-[var(--brand-700)]">
             <tr>
               <th className="px-3 py-2 text-left text-sm font-bold">Serial</th>
               <th className="px-3 py-2 text-left text-sm font-bold">Model</th>
@@ -89,20 +89,23 @@ export default function ContractDevicesSection({ contractId, attachedDevices }: 
           <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan={7} className="px-4 py-7 text-center text-base text-indigo-400">
+                <td colSpan={7} className="px-4 py-7 text-center text-base text-[var(--brand-400)]">
                   Đang tải...
                 </td>
               </tr>
             ) : devices.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-base text-indigo-400">
+                <td colSpan={7} className="px-4 py-8 text-center text-base text-[var(--brand-400)]">
                   Chưa có thiết bị nào được gắn
                 </td>
               </tr>
             ) : (
               devices.map((d) => (
-                <tr key={d.id} className="transition even:bg-indigo-50/30 hover:bg-indigo-100">
-                  <td className="px-3 py-2 font-mono text-base text-indigo-900">
+                <tr
+                  key={d.id}
+                  className="transition even:bg-[var(--brand-50)]/30 hover:bg-[var(--brand-100)]"
+                >
+                  <td className="px-3 py-2 font-mono text-base text-[var(--brand-900)]">
                     {d.device?.serialNumber ?? d.deviceId}
                   </td>
                   <td className="px-3 py-2">

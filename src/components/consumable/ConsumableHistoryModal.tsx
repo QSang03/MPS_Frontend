@@ -204,7 +204,7 @@ export function ConsumableUsageHistory({
               <TableRow>
                 <TableCell colSpan={8} className="h-32 text-center">
                   <div className="flex flex-col items-center justify-center gap-2 text-slate-500">
-                    <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+                    <Loader2 className="h-6 w-6 animate-spin text-[var(--brand-600)]" />
                     <p className="text-sm">Đang tải dữ liệu...</p>
                   </div>
                 </TableCell>
@@ -230,7 +230,7 @@ export function ConsumableUsageHistory({
                           r.percentage < 20
                             ? 'text-red-600'
                             : r.percentage < 50
-                              ? 'text-amber-600'
+                              ? 'text-[var(--warning-500)]'
                               : 'text-emerald-600'
                         }
                       >

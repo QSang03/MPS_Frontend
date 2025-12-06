@@ -29,7 +29,7 @@ export default function DevicesPage() {
                 }
               }}
               trigger={
-                <Button className="border-0 bg-white text-[#0066CC] hover:bg-blue-50">
+                <Button className="border-0 bg-white text-[var(--brand-500)] hover:bg-[var(--brand-50)]">
                   <Plus className="mr-2 h-4 w-4" />
                   {t('devices.add')}
                 </Button>

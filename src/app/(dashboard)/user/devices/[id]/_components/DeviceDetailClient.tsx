@@ -278,7 +278,7 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
     }
     const colorClass =
       display.color === 'green'
-        ? 'bg-green-500 hover:bg-green-600'
+        ? 'bg-[var(--color-success-500)] hover:bg-[var(--color-success-600)]'
         : display.color === 'blue'
           ? 'bg-blue-500 hover:bg-blue-600'
           : display.color === 'red'
@@ -303,7 +303,9 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
         variant={isActive ? 'default' : 'secondary'}
         className={cn(
           'flex items-center gap-1.5 px-3 py-1',
-          isActive ? 'bg-green-500 hover:bg-green-600' : 'bg-gray-400 hover:bg-gray-500'
+          isActive
+            ? 'bg-[var(--color-success-500)] hover:bg-[var(--color-success-600)]'
+            : 'bg-[var(--color-neutral-300)] hover:bg-[var(--color-neutral-400)]'
         )}
       >
         {isActive ? <svg className="h-3.5 w-3.5" /> : <AlertCircle className="h-3.5 w-3.5" />}
@@ -1127,7 +1129,7 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
                                   const statusText = cons?.status ?? 'EMPTY'
                                   const statusClass =
                                     statusText === 'ACTIVE'
-                                      ? 'bg-green-500 hover:bg-green-600'
+                                      ? 'bg-[var(--color-success-500)] hover:bg-[var(--color-success-600)]'
                                       : statusText === 'LOW'
                                         ? 'bg-yellow-500 hover:bg-yellow-600'
                                         : statusText === 'EMPTY'
@@ -1159,7 +1161,7 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
                                       className={cn(
                                         'h-full rounded-full transition-all',
                                         usagePercent > 50
-                                          ? 'bg-green-500'
+                                          ? 'bg-[var(--color-success-500)]'
                                           : usagePercent > 20
                                             ? 'bg-yellow-500'
                                             : 'bg-red-500'
@@ -1300,7 +1302,7 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
 
                   <div className="rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50 to-cyan-50 p-6">
                     <div className="mb-3 flex items-center gap-3">
-                      <div className="rounded-lg bg-blue-100 p-2">
+                      <div className="rounded-lg bg-[var(--brand-50)] p-2">
                         <Calendar className="h-5 w-5 text-black dark:text-white" />
                       </div>
                       <h4 className="font-semibold text-blue-900">
@@ -1427,7 +1429,7 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
                 }
               }}
               disabled={editing}
-              className="min-w-[100px] bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+              className="min-w-[100px] bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
             >
               {editing ? (
                 <>

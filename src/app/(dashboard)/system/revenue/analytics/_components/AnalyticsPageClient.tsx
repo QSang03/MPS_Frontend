@@ -58,6 +58,8 @@ import {
 } from '@/components/ui/chart'
 import type { ChartConfig } from '@/components/ui/chart'
 import { useLocale } from '@/components/providers/LocaleProvider'
+import type { CurrencyDataDto } from '@/types/models/currency'
+import { formatCurrencyWithSymbol } from '@/lib/utils/formatters'
 
 type TimeRangeMode = 'period' | 'range' | 'year'
 type TimeFilter = { period?: string; from?: string; to?: string; year?: string }
@@ -65,13 +67,25 @@ type ConsumableParams = TimeFilter & { consumableTypeId?: string; customerId?: s
 
 export default function AnalyticsPageClient() {
   const { t } = useLocale()
-  const formatCurrency = (n?: number | null) => {
+  const formatCurrency = (n?: number | null, currency?: CurrencyDataDto | null) => {
     if (n === undefined || n === null || Number.isNaN(Number(n))) return '-'
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND',
-      maximumFractionDigits: 0,
-    }).format(Number(n))
+    // Use provided currency, or fallback to enterprise baseCurrency, or default to USD
+    const currencyToUse = currency || enterpriseBaseCurrency || customerDetailBaseCurrency
+    if (currencyToUse) {
+      return formatCurrencyWithSymbol(Number(n), currencyToUse)
+    }
+    // Fallback to USD if no currency available
+    return formatCurrencyWithSymbol(Number(n), { code: 'USD', symbol: '$' } as CurrencyDataDto)
+  }
+
+  // Helper to get display value (converted if available, else original)
+  const getDisplayValue = (
+    original: number,
+    converted: number | undefined,
+    useConverted: boolean
+  ): number => {
+    if (useConverted && converted !== undefined) return converted
+    return original
   }
   // Active tab state
   const [activeTab, setActiveTab] = useState('profit')
@@ -101,10 +115,15 @@ export default function AnalyticsPageClient() {
     grossMargin: number
     devicesCount: number
     customersCount: number
+    // Converted values (only for System Admin context)
+    totalRevenueConverted?: number
+    totalCogsConverted?: number
+    grossProfitConverted?: number
   } | null>(null)
   const [enterpriseProfitability, setEnterpriseProfitability] = useState<
     ProfitabilityTrendItem[] | null
   >(null)
+  const [enterpriseBaseCurrency, setEnterpriseBaseCurrency] = useState<CurrencyDataDto | null>(null)
 
   // Customers Profit State
   const [customersPeriod, setCustomersPeriod] = useState('')
@@ -127,10 +146,16 @@ export default function AnalyticsPageClient() {
       totalRevenue: number
       totalCogs: number
       grossProfit: number
+      // Converted values (only for System Admin context)
+      totalRevenueConverted?: number
+      totalCogsConverted?: number
+      grossProfitConverted?: number
     }
     devices: DeviceProfitItem[]
     profitability?: ProfitabilityTrendItem[]
   } | null>(null)
+  const [customerDetailBaseCurrency, setCustomerDetailBaseCurrency] =
+    useState<CurrencyDataDto | null>(null)
   const [showCustomerChart, setShowCustomerChart] = useState(false)
 
   // Device Profitability State
@@ -214,6 +239,10 @@ export default function AnalyticsPageClient() {
             (res.data as unknown as { profitability?: ProfitabilityTrendItem[] }).profitability ??
               null
           )
+          // Save baseCurrency from API response
+          if (res.data.baseCurrency) {
+            setEnterpriseBaseCurrency(res.data.baseCurrency)
+          }
         } else {
           const msg = res.message || t('analytics.error.load_enterprise')
           if (msg.toLowerCase().includes('no data')) {
@@ -396,6 +425,10 @@ export default function AnalyticsPageClient() {
           else if (params.from && params.to)
             setCustomerDetailPeriod(`${params.from} to ${params.to}`)
           else if (params.year) setCustomerDetailPeriod(String(params.year))
+          // Save baseCurrency from API response
+          if (res.data.baseCurrency) {
+            setCustomerDetailBaseCurrency(res.data.baseCurrency)
+          }
         } else {
           const msg = res.message || t('analytics.error.load_customer_detail')
           // If backend indicates a "no data" condition, don't mark it as a
@@ -962,70 +995,91 @@ export default function AnalyticsPageClient() {
                 </Button>
               </div>
 
-              {enterpriseData && (
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                  <Card className="border-blue-200 bg-blue-50">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium text-blue-700">
-                        {t('analytics.total_revenue')}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold text-blue-900">
-                        {formatCurrency(enterpriseData.totalRevenue)}
-                      </div>
-                      <p className="text-muted-foreground mt-1 text-xs">
-                        {t('analytics.devices_count', { count: enterpriseData.devicesCount })} •{' '}
-                        {t('analytics.customers_count', { count: enterpriseData.customersCount })}
-                      </p>
-                    </CardContent>
-                  </Card>
+              {enterpriseData &&
+                (() => {
+                  const useConverted = !!enterpriseBaseCurrency
+                  const revenue = getDisplayValue(
+                    enterpriseData.totalRevenue,
+                    enterpriseData.totalRevenueConverted,
+                    useConverted
+                  )
+                  const cogs = getDisplayValue(
+                    enterpriseData.totalCogs,
+                    enterpriseData.totalCogsConverted,
+                    useConverted
+                  )
+                  const profit = getDisplayValue(
+                    enterpriseData.grossProfit,
+                    enterpriseData.grossProfitConverted,
+                    useConverted
+                  )
+                  return (
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                      <Card className="border-blue-200 bg-blue-50">
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-sm font-medium text-blue-700">
+                            {t('analytics.total_revenue')}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="text-2xl font-bold text-blue-900">
+                            {formatCurrency(revenue, enterpriseBaseCurrency)}
+                          </div>
+                          <p className="text-muted-foreground mt-1 text-xs">
+                            {t('analytics.devices_count', { count: enterpriseData.devicesCount })} •{' '}
+                            {t('analytics.customers_count', {
+                              count: enterpriseData.customersCount,
+                            })}
+                          </p>
+                        </CardContent>
+                      </Card>
 
-                  <Card className="border-orange-200 bg-orange-50">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium text-orange-700">
-                        {t('analytics.total_cogs')}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold text-orange-900">
-                        {formatCurrency(enterpriseData.totalCogs)}
-                      </div>
-                    </CardContent>
-                  </Card>
+                      <Card className="border-orange-200 bg-orange-50">
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-sm font-medium text-orange-700">
+                            {t('analytics.total_cogs')}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="text-2xl font-bold text-orange-900">
+                            {formatCurrency(cogs, enterpriseBaseCurrency)}
+                          </div>
+                        </CardContent>
+                      </Card>
 
-                  <Card
-                    className={
-                      enterpriseData.grossProfit >= 0
-                        ? 'border-emerald-200 bg-emerald-50'
-                        : 'border-red-200 bg-red-50'
-                    }
-                  >
-                    <CardHeader className="pb-2">
-                      <CardTitle
-                        className={`text-sm font-medium ${enterpriseData.grossProfit >= 0 ? 'text-emerald-700' : 'text-red-700'}`}
+                      <Card
+                        className={
+                          profit >= 0
+                            ? 'border-emerald-200 bg-emerald-50'
+                            : 'border-red-200 bg-red-50'
+                        }
                       >
-                        {t('analytics.gross_profit')}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div
-                        className={`flex items-center gap-2 text-2xl font-bold ${enterpriseData.grossProfit >= 0 ? 'text-emerald-900' : 'text-red-900'}`}
-                      >
-                        {enterpriseData.grossProfit >= 0 ? (
-                          <TrendingUp className="h-5 w-5" />
-                        ) : (
-                          <TrendingDown className="h-5 w-5" />
-                        )}
-                        {formatCurrency(enterpriseData.grossProfit)}
-                      </div>
-                      <p className="text-muted-foreground mt-1 text-xs">
-                        {t('analytics.gross_margin')}: {enterpriseData.grossMargin.toFixed(1)}%
-                      </p>
-                    </CardContent>
-                  </Card>
-                </div>
-              )}
+                        <CardHeader className="pb-2">
+                          <CardTitle
+                            className={`text-sm font-medium ${profit >= 0 ? 'text-emerald-700' : 'text-red-700'}`}
+                          >
+                            {t('analytics.gross_profit')}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div
+                            className={`flex items-center gap-2 text-2xl font-bold ${profit >= 0 ? 'text-emerald-900' : 'text-red-900'}`}
+                          >
+                            {profit >= 0 ? (
+                              <TrendingUp className="h-5 w-5" />
+                            ) : (
+                              <TrendingDown className="h-5 w-5" />
+                            )}
+                            {formatCurrency(profit, enterpriseBaseCurrency)}
+                          </div>
+                          <p className="text-muted-foreground mt-1 text-xs">
+                            {t('analytics.gross_margin')}: {enterpriseData.grossMargin.toFixed(1)}%
+                          </p>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  )
+                })()}
 
               {/* Unified Chart controls: Customer select + global date */}
               <div className="mt-4 mb-2 flex items-center gap-3">
@@ -1099,9 +1153,32 @@ export default function AnalyticsPageClient() {
                         ? (customerDetailData?.profitability ?? [])
                         : (enterpriseProfitability ?? [])
                       if (!data || data.length === 0) return null
+                      const currentCurrency = selectedCustomerId
+                        ? customerDetailBaseCurrency
+                        : enterpriseBaseCurrency
+                      const useConverted = !!currentCurrency
                       if (globalMode === 'period') {
                         // Render as a bar chart with totals for single period
-                        const single = data[0]
+                        const row = data[0]
+                        if (!row) return null
+                        const single = {
+                          month: row.month,
+                          totalRevenue: getDisplayValue(
+                            row.totalRevenue,
+                            row.totalRevenueConverted,
+                            useConverted
+                          ),
+                          totalCogs: getDisplayValue(
+                            row.totalCogs,
+                            row.totalCogsConverted,
+                            useConverted
+                          ),
+                          grossProfit: getDisplayValue(
+                            row.grossProfit,
+                            row.grossProfitConverted,
+                            useConverted
+                          ),
+                        }
                         // Local chart config used to theme the chart
                         const chartConfig: ChartConfig = {
                           totalRevenue: { label: t('analytics.total_revenue'), color: '#3b82f6' },
@@ -1110,14 +1187,10 @@ export default function AnalyticsPageClient() {
                         }
                         const formatter = (v: unknown) =>
                           typeof v === 'number'
-                            ? Intl.NumberFormat('vi-VN', {
-                                style: 'currency',
-                                currency: 'VND',
-                                maximumFractionDigits: 0,
-                              }).format(Number(v))
+                            ? formatCurrency(Number(v), currentCurrency)
                             : String(v ?? '-')
                         return (
-                          <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
+                          <ChartContainer config={chartConfig} className="h-[300px] w-full">
                             <ResponsiveContainer width="100%" height={300}>
                               <BarChart accessibilityLayer data={[single]}>
                                 <CartesianGrid
@@ -1196,7 +1269,33 @@ export default function AnalyticsPageClient() {
                           </ChartContainer>
                         )
                       }
-                      return <TrendChart data={data} height={300} showMargin />
+                      // Transform data to use converted values if available
+                      const transformedData = data.map((row) => ({
+                        month: row.month,
+                        totalRevenue: getDisplayValue(
+                          row.totalRevenue,
+                          row.totalRevenueConverted,
+                          useConverted
+                        ),
+                        totalCogs: getDisplayValue(
+                          row.totalCogs,
+                          row.totalCogsConverted,
+                          useConverted
+                        ),
+                        grossProfit: getDisplayValue(
+                          row.grossProfit,
+                          row.grossProfitConverted,
+                          useConverted
+                        ),
+                      }))
+                      return (
+                        <TrendChart
+                          data={transformedData}
+                          height={300}
+                          showMargin
+                          baseCurrency={currentCurrency}
+                        />
+                      )
                     })()}
                   </Suspense>
                 </div>
@@ -1240,37 +1339,78 @@ export default function AnalyticsPageClient() {
                     {(selectedCustomerId
                       ? (customerDetailData?.profitability ?? [])
                       : (enterpriseProfitability ?? [])
-                    ).map((row) => (
-                      <tr key={row.month}>
-                        <td className="px-4 py-2 text-sm">{row.month}</td>
-                        <td className="px-4 py-2 text-right text-sm">
-                          {Number(row.revenueRental || 0).toLocaleString()}
-                        </td>
-                        <td className="px-4 py-2 text-right text-sm">
-                          {Number(row.revenueRepair || 0).toLocaleString()}
-                        </td>
-                        <td className="px-4 py-2 text-right text-sm">
-                          {Number(row.revenuePageBW || 0).toLocaleString()}
-                        </td>
-                        <td className="px-4 py-2 text-right text-sm">
-                          {Number(row.revenuePageColor || 0).toLocaleString()}
-                        </td>
-                        <td className="px-4 py-2 text-right text-sm font-semibold">
-                          {formatCurrency(Number(row.totalRevenue || 0))}
-                        </td>
-                        <td className="px-4 py-2 text-right text-sm">
-                          {formatCurrency(Number(row.totalCogs || 0))}
-                        </td>
-                        <td className="px-4 py-2 text-right text-sm font-semibold">
-                          {formatCurrency(Number(row.grossProfit || 0))}
-                        </td>
-                        <td className="px-4 py-2 text-right text-sm">
-                          {typeof row.grossMargin === 'number'
-                            ? `${row.grossMargin.toFixed(1)}%`
-                            : '-'}
-                        </td>
-                      </tr>
-                    ))}
+                    ).map((row) => {
+                      const currentCurrency = selectedCustomerId
+                        ? customerDetailBaseCurrency
+                        : enterpriseBaseCurrency
+                      const useConverted = !!currentCurrency
+                      const revenue = getDisplayValue(
+                        row.totalRevenue,
+                        row.totalRevenueConverted,
+                        useConverted
+                      )
+                      const cogs = getDisplayValue(
+                        row.totalCogs,
+                        row.totalCogsConverted,
+                        useConverted
+                      )
+                      const profit = getDisplayValue(
+                        row.grossProfit,
+                        row.grossProfitConverted,
+                        useConverted
+                      )
+                      const revenueRental = getDisplayValue(
+                        row.revenueRental,
+                        row.revenueRentalConverted,
+                        useConverted
+                      )
+                      const revenueRepair = getDisplayValue(
+                        row.revenueRepair,
+                        row.revenueRepairConverted,
+                        useConverted
+                      )
+                      const revenuePageBW = getDisplayValue(
+                        row.revenuePageBW,
+                        row.revenuePageBWConverted,
+                        useConverted
+                      )
+                      const revenuePageColor = getDisplayValue(
+                        row.revenuePageColor,
+                        row.revenuePageColorConverted,
+                        useConverted
+                      )
+                      return (
+                        <tr key={row.month}>
+                          <td className="px-4 py-2 text-sm">{row.month}</td>
+                          <td className="px-4 py-2 text-right text-sm">
+                            {formatCurrency(revenueRental, currentCurrency)}
+                          </td>
+                          <td className="px-4 py-2 text-right text-sm">
+                            {formatCurrency(revenueRepair, currentCurrency)}
+                          </td>
+                          <td className="px-4 py-2 text-right text-sm">
+                            {formatCurrency(revenuePageBW, currentCurrency)}
+                          </td>
+                          <td className="px-4 py-2 text-right text-sm">
+                            {formatCurrency(revenuePageColor, currentCurrency)}
+                          </td>
+                          <td className="px-4 py-2 text-right text-sm font-semibold">
+                            {formatCurrency(revenue, currentCurrency)}
+                          </td>
+                          <td className="px-4 py-2 text-right text-sm">
+                            {formatCurrency(cogs, currentCurrency)}
+                          </td>
+                          <td className="px-4 py-2 text-right text-sm font-semibold">
+                            {formatCurrency(profit, currentCurrency)}
+                          </td>
+                          <td className="px-4 py-2 text-right text-sm">
+                            {typeof row.grossMargin === 'number'
+                              ? `${row.grossMargin.toFixed(1)}%`
+                              : '-'}
+                          </td>
+                        </tr>
+                      )
+                    })}
                     {(selectedCustomerId
                       ? (customerDetailData?.profitability ?? [])
                       : (enterpriseProfitability ?? [])
@@ -1363,213 +1503,301 @@ export default function AnalyticsPageClient() {
                   </div>
                 </div>
 
-                {customerDetailData && (
-                  <div className="space-y-4">
-                    <Card className="bg-sky-50">
-                      <CardContent className="pt-4">
-                        <h3 className="mb-2 text-lg font-semibold">
-                          {customerDetailData.customer.name}
-                        </h3>
-                        <div className="grid grid-cols-3 gap-4 text-sm">
-                          <div>
-                            <span className="text-muted-foreground">
-                              {t('analytics.customer_detail.revenue')}
-                            </span>
-                            <p className="font-semibold">
-                              {formatCurrency(customerDetailData.customer.totalRevenue)}
-                            </p>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">
-                              {t('analytics.customer_detail.cost')}
-                            </span>
-                            <p className="font-semibold">
-                              {formatCurrency(customerDetailData.customer.totalCogs)}
-                            </p>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">
-                              {t('analytics.customer_detail.profit')}
-                            </span>
-                            <p
-                              className={`font-semibold ${customerDetailData.customer.grossProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}
-                            >
-                              {formatCurrency(customerDetailData.customer.grossProfit)}
-                            </p>
+                {customerDetailData &&
+                  (() => {
+                    const useConverted = !!customerDetailBaseCurrency
+                    const revenue = getDisplayValue(
+                      customerDetailData.customer.totalRevenue,
+                      customerDetailData.customer.totalRevenueConverted,
+                      useConverted
+                    )
+                    const cogs = getDisplayValue(
+                      customerDetailData.customer.totalCogs,
+                      customerDetailData.customer.totalCogsConverted,
+                      useConverted
+                    )
+                    const profit = getDisplayValue(
+                      customerDetailData.customer.grossProfit,
+                      customerDetailData.customer.grossProfitConverted,
+                      useConverted
+                    )
+                    return (
+                      <>
+                        <div className="space-y-4">
+                          <Card className="bg-sky-50">
+                            <CardContent className="pt-4">
+                              <h3 className="mb-2 text-lg font-semibold">
+                                {customerDetailData.customer.name}
+                              </h3>
+                              <div className="grid grid-cols-3 gap-4 text-sm">
+                                <div>
+                                  <span className="text-muted-foreground">
+                                    {t('analytics.customer_detail.revenue')}
+                                  </span>
+                                  <p className="font-semibold">
+                                    {formatCurrency(revenue, customerDetailBaseCurrency)}
+                                  </p>
+                                </div>
+                                <div>
+                                  <span className="text-muted-foreground">
+                                    {t('analytics.customer_detail.cost')}
+                                  </span>
+                                  <p className="font-semibold">
+                                    {formatCurrency(cogs, customerDetailBaseCurrency)}
+                                  </p>
+                                </div>
+                                <div>
+                                  <span className="text-muted-foreground">
+                                    {t('analytics.customer_detail.profit')}
+                                  </span>
+                                  <p
+                                    className={`font-semibold ${profit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}
+                                  >
+                                    {formatCurrency(profit, customerDetailBaseCurrency)}
+                                  </p>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+
+                          {showCustomerChart && customerDetailData?.profitability && (
+                            <div className="mb-4">
+                              {(() => {
+                                const d = customerDetailData.profitability
+                                if (!d || d.length === 0) return null
+                                const data = d
+                                if (globalMode === 'period' && data.length === 1) {
+                                  const row = data[0]
+                                  if (!row) return null
+                                  const single = {
+                                    month: row.month,
+                                    totalRevenue: getDisplayValue(
+                                      row.totalRevenue,
+                                      row.totalRevenueConverted,
+                                      useConverted
+                                    ),
+                                    totalCogs: getDisplayValue(
+                                      row.totalCogs,
+                                      row.totalCogsConverted,
+                                      useConverted
+                                    ),
+                                    grossProfit: getDisplayValue(
+                                      row.grossProfit,
+                                      row.grossProfitConverted,
+                                      useConverted
+                                    ),
+                                  }
+                                  const chartConfig: ChartConfig = {
+                                    totalRevenue: {
+                                      label: t('analytics.total_revenue'),
+                                      color: '#3b82f6',
+                                    },
+                                    totalCogs: {
+                                      label: t('analytics.table.total_cogs'),
+                                      color: '#f59e0b',
+                                    },
+                                    grossProfit: {
+                                      label: t('analytics.gross_profit'),
+                                      color: '#10b981',
+                                    },
+                                  }
+                                  const formatter = (v: unknown) =>
+                                    typeof v === 'number'
+                                      ? formatCurrency(Number(v), customerDetailBaseCurrency)
+                                      : String(v ?? '-')
+                                  return (
+                                    <ChartContainer
+                                      config={chartConfig}
+                                      className="h-[300px] w-full"
+                                    >
+                                      <ResponsiveContainer width="100%" height={300}>
+                                        <BarChart accessibilityLayer data={[single]}>
+                                          <CartesianGrid
+                                            vertical={false}
+                                            strokeDasharray="3 3"
+                                            className="stroke-border/40"
+                                          />
+                                          <XAxis
+                                            dataKey="month"
+                                            tickLine={false}
+                                            axisLine={false}
+                                            tickMargin={10}
+                                            tick={{ fill: 'hsl(var(--foreground))' }}
+                                          />
+                                          <YAxis
+                                            tickLine={false}
+                                            axisLine={false}
+                                            tickMargin={10}
+                                            tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                                            tickFormatter={(v) => {
+                                              const num = Number(v)
+                                              if (num >= 1000000)
+                                                return `${(num / 1000000).toFixed(1)}M`
+                                              if (num >= 1000) return `${(num / 1000).toFixed(1)}K`
+                                              return Intl.NumberFormat('vi-VN').format(num)
+                                            }}
+                                          />
+                                          <ChartTooltip
+                                            content={
+                                              <ChartTooltipContent
+                                                indicator="dot"
+                                                formatter={(v) =>
+                                                  typeof v === 'number'
+                                                    ? formatter(v)
+                                                    : String(v ?? '-')
+                                                }
+                                              />
+                                            }
+                                          />
+                                          <ChartLegend content={<ChartLegendContent />} />
+                                          <Bar
+                                            dataKey="totalRevenue"
+                                            fill="var(--color-totalRevenue)"
+                                            radius={[6, 6, 0, 0]}
+                                          >
+                                            <LabelList
+                                              dataKey="totalRevenue"
+                                              position="top"
+                                              formatter={(v) => formatter(v)}
+                                              className="fill-foreground text-xs font-medium"
+                                            />
+                                          </Bar>
+                                          <Bar
+                                            dataKey="totalCogs"
+                                            fill="var(--color-totalCogs)"
+                                            radius={[6, 6, 0, 0]}
+                                          >
+                                            <LabelList
+                                              dataKey="totalCogs"
+                                              position="top"
+                                              formatter={(v) => formatter(v)}
+                                              className="fill-foreground text-xs font-medium"
+                                            />
+                                          </Bar>
+                                          <Bar
+                                            dataKey="grossProfit"
+                                            fill="var(--color-grossProfit)"
+                                            radius={[6, 6, 0, 0]}
+                                          >
+                                            <LabelList
+                                              dataKey="grossProfit"
+                                              position="top"
+                                              formatter={(v) => formatter(v)}
+                                              className="fill-foreground text-xs font-medium"
+                                            />
+                                          </Bar>
+                                        </BarChart>
+                                      </ResponsiveContainer>
+                                    </ChartContainer>
+                                  )
+                                }
+                                // Transform data to use converted values if available
+                                const transformedData = data.map((row) => ({
+                                  month: row.month,
+                                  totalRevenue: getDisplayValue(
+                                    row.totalRevenue,
+                                    row.totalRevenueConverted,
+                                    useConverted
+                                  ),
+                                  totalCogs: getDisplayValue(
+                                    row.totalCogs,
+                                    row.totalCogsConverted,
+                                    useConverted
+                                  ),
+                                  grossProfit: getDisplayValue(
+                                    row.grossProfit,
+                                    row.grossProfitConverted,
+                                    useConverted
+                                  ),
+                                }))
+                                return (
+                                  <TrendChart
+                                    data={transformedData}
+                                    height={300}
+                                    showMargin
+                                    baseCurrency={customerDetailBaseCurrency}
+                                  />
+                                )
+                              })()}
+                            </div>
+                          )}
+                          <div className="overflow-x-auto rounded-lg border">
+                            <table className="min-w-full divide-y">
+                              <thead className="bg-gray-50">
+                                <tr>
+                                  <th className="px-4 py-3 text-left text-sm font-semibold">
+                                    {t('analytics.customer_detail.table.model')}
+                                  </th>
+                                  <th className="px-4 py-3 text-left text-sm font-semibold">
+                                    {t('analytics.customer_detail.table.serial')}
+                                  </th>
+                                  <th className="px-4 py-3 text-right text-sm font-semibold">
+                                    {t('analytics.customer_detail.table.revenue')}
+                                  </th>
+                                  <th className="px-4 py-3 text-right text-sm font-semibold">
+                                    {t('analytics.customer_detail.table.cost')}
+                                  </th>
+                                  <th className="px-4 py-3 text-right text-sm font-semibold">
+                                    {t('analytics.customer_detail.table.profit')}
+                                  </th>
+                                  <th className="px-4 py-3 text-center text-sm font-semibold">
+                                    {t('analytics.customer_detail.table.actions')}
+                                  </th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y">
+                                {customerDetailData.devices.map((d) => {
+                                  const deviceRevenue = getDisplayValue(
+                                    d.revenue,
+                                    d.revenueConverted,
+                                    useConverted
+                                  )
+                                  const deviceCogs = getDisplayValue(
+                                    d.cogs,
+                                    d.cogsConverted,
+                                    useConverted
+                                  )
+                                  const deviceProfit = getDisplayValue(
+                                    d.profit,
+                                    d.profitConverted,
+                                    useConverted
+                                  )
+                                  return (
+                                    <tr key={d.deviceId} className="hover:bg-gray-50">
+                                      <td className="px-4 py-3 text-sm">{d.model}</td>
+                                      <td className="px-4 py-3 text-sm">{d.serialNumber}</td>
+                                      <td className="px-4 py-3 text-right text-sm">
+                                        {formatCurrency(deviceRevenue, customerDetailBaseCurrency)}
+                                      </td>
+                                      <td className="px-4 py-3 text-right text-sm">
+                                        {formatCurrency(deviceCogs, customerDetailBaseCurrency)}
+                                      </td>
+                                      <td
+                                        className={`px-4 py-3 text-right text-sm font-semibold ${deviceProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}
+                                      >
+                                        {formatCurrency(deviceProfit, customerDetailBaseCurrency)}
+                                      </td>
+                                      <td className="px-4 py-3 text-center">
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() => {
+                                            setSelectedDeviceId(d.deviceId)
+                                          }}
+                                        >
+                                          {t('analytics.customer_detail.view_series')}
+                                        </Button>
+                                      </td>
+                                    </tr>
+                                  )
+                                })}
+                              </tbody>
+                            </table>
                           </div>
                         </div>
-                      </CardContent>
-                    </Card>
-
-                    {showCustomerChart && customerDetailData?.profitability && (
-                      <div className="mb-4">
-                        {(() => {
-                          const d = customerDetailData.profitability
-                          if (!d || d.length === 0) return null
-                          const data = d
-                          if (globalMode === 'period' && data.length === 1) {
-                            const single = data[0]
-                            const chartConfig: ChartConfig = {
-                              totalRevenue: {
-                                label: t('analytics.total_revenue'),
-                                color: '#3b82f6',
-                              },
-                              totalCogs: {
-                                label: t('analytics.table.total_cogs'),
-                                color: '#f59e0b',
-                              },
-                              grossProfit: { label: t('analytics.gross_profit'), color: '#10b981' },
-                            }
-                            const formatter = (v: unknown) =>
-                              typeof v === 'number'
-                                ? Intl.NumberFormat('vi-VN', {
-                                    style: 'currency',
-                                    currency: 'VND',
-                                    maximumFractionDigits: 0,
-                                  }).format(Number(v))
-                                : String(v ?? '-')
-                            return (
-                              <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
-                                <ResponsiveContainer width="100%" height={300}>
-                                  <BarChart accessibilityLayer data={[single]}>
-                                    <CartesianGrid
-                                      vertical={false}
-                                      strokeDasharray="3 3"
-                                      className="stroke-border/40"
-                                    />
-                                    <XAxis
-                                      dataKey="month"
-                                      tickLine={false}
-                                      axisLine={false}
-                                      tickMargin={10}
-                                      tick={{ fill: 'hsl(var(--foreground))' }}
-                                    />
-                                    <YAxis
-                                      tickLine={false}
-                                      axisLine={false}
-                                      tickMargin={10}
-                                      tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                                      tickFormatter={(v) => {
-                                        const num = Number(v)
-                                        if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`
-                                        if (num >= 1000) return `${(num / 1000).toFixed(1)}K`
-                                        return Intl.NumberFormat('vi-VN').format(num)
-                                      }}
-                                    />
-                                    <ChartTooltip
-                                      content={
-                                        <ChartTooltipContent
-                                          indicator="dot"
-                                          formatter={(v) =>
-                                            typeof v === 'number' ? formatter(v) : String(v ?? '-')
-                                          }
-                                        />
-                                      }
-                                    />
-                                    <ChartLegend content={<ChartLegendContent />} />
-                                    <Bar
-                                      dataKey="totalRevenue"
-                                      fill="var(--color-totalRevenue)"
-                                      radius={[6, 6, 0, 0]}
-                                    >
-                                      <LabelList
-                                        dataKey="totalRevenue"
-                                        position="top"
-                                        formatter={(v) => formatter(v)}
-                                        className="fill-foreground text-xs font-medium"
-                                      />
-                                    </Bar>
-                                    <Bar
-                                      dataKey="totalCogs"
-                                      fill="var(--color-totalCogs)"
-                                      radius={[6, 6, 0, 0]}
-                                    >
-                                      <LabelList
-                                        dataKey="totalCogs"
-                                        position="top"
-                                        formatter={(v) => formatter(v)}
-                                        className="fill-foreground text-xs font-medium"
-                                      />
-                                    </Bar>
-                                    <Bar
-                                      dataKey="grossProfit"
-                                      fill="var(--color-grossProfit)"
-                                      radius={[6, 6, 0, 0]}
-                                    >
-                                      <LabelList
-                                        dataKey="grossProfit"
-                                        position="top"
-                                        formatter={(v) => formatter(v)}
-                                        className="fill-foreground text-xs font-medium"
-                                      />
-                                    </Bar>
-                                  </BarChart>
-                                </ResponsiveContainer>
-                              </ChartContainer>
-                            )
-                          }
-                          return <TrendChart data={data} height={300} showMargin />
-                        })()}
-                      </div>
-                    )}
-                    <div className="overflow-x-auto rounded-lg border">
-                      <table className="min-w-full divide-y">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th className="px-4 py-3 text-left text-sm font-semibold">
-                              {t('analytics.customer_detail.table.model')}
-                            </th>
-                            <th className="px-4 py-3 text-left text-sm font-semibold">
-                              {t('analytics.customer_detail.table.serial')}
-                            </th>
-                            <th className="px-4 py-3 text-right text-sm font-semibold">
-                              {t('analytics.customer_detail.table.revenue')}
-                            </th>
-                            <th className="px-4 py-3 text-right text-sm font-semibold">
-                              {t('analytics.customer_detail.table.cost')}
-                            </th>
-                            <th className="px-4 py-3 text-right text-sm font-semibold">
-                              {t('analytics.customer_detail.table.profit')}
-                            </th>
-                            <th className="px-4 py-3 text-center text-sm font-semibold">
-                              {t('analytics.customer_detail.table.actions')}
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y">
-                          {customerDetailData.devices.map((d) => (
-                            <tr key={d.deviceId} className="hover:bg-gray-50">
-                              <td className="px-4 py-3 text-sm">{d.model}</td>
-                              <td className="px-4 py-3 text-sm">{d.serialNumber}</td>
-                              <td className="px-4 py-3 text-right text-sm">
-                                {formatCurrency(d.revenue)}
-                              </td>
-                              <td className="px-4 py-3 text-right text-sm">
-                                {formatCurrency(d.cogs)}
-                              </td>
-                              <td
-                                className={`px-4 py-3 text-right text-sm font-semibold ${d.profit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}
-                              >
-                                {formatCurrency(d.profit)}
-                              </td>
-                              <td className="px-4 py-3 text-center">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => {
-                                    setSelectedDeviceId(d.deviceId)
-                                  }}
-                                >
-                                  {t('analytics.customer_detail.view_series')}
-                                </Button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
+                      </>
+                    )
+                  })()}
                 {!customerDetailLoading && !customerDetailData && (
                   <div className="flex items-center justify-center p-6 text-sm text-gray-500">
                     {t('empty.no_data')}
@@ -1654,11 +1882,10 @@ export default function AnalyticsPageClient() {
                                 }
                                 const formatter = (v: unknown) =>
                                   typeof v === 'number'
-                                    ? Intl.NumberFormat('vi-VN', {
-                                        style: 'currency',
-                                        currency: 'VND',
-                                        maximumFractionDigits: 0,
-                                      }).format(Number(v))
+                                    ? formatCurrency(
+                                        Number(v),
+                                        enterpriseBaseCurrency || customerDetailBaseCurrency
+                                      )
                                     : String(v ?? '-')
                                 return (
                                   <ChartContainer config={chartConfig} className="h-full w-full">
@@ -1757,11 +1984,10 @@ export default function AnalyticsPageClient() {
                                 }
                                 const formatter = (v: unknown) =>
                                   typeof v === 'number'
-                                    ? Intl.NumberFormat('vi-VN', {
-                                        style: 'currency',
-                                        currency: 'VND',
-                                        maximumFractionDigits: 0,
-                                      }).format(Number(v))
+                                    ? formatCurrency(
+                                        Number(v),
+                                        enterpriseBaseCurrency || customerDetailBaseCurrency
+                                      )
                                     : String(v ?? '-')
                                 return (
                                   <ChartContainer config={chartConfig} className="h-full w-full">

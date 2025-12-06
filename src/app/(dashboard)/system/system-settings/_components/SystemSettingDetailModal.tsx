@@ -26,17 +26,17 @@ export default function SystemSettingDetailModal({ setting, open, onOpenChange }
   const getTypeColor = (type: SystemSettingType) => {
     switch (type) {
       case SystemSettingType.STRING:
-        return 'bg-blue-500/10 text-blue-700 border-blue-200'
+        return 'bg-[var(--brand-50)] text-[var(--brand-700)] border-[var(--brand-200)]'
       case SystemSettingType.NUMBER:
-        return 'bg-purple-500/10 text-purple-700 border-purple-200'
+        return 'bg-[var(--brand-100)] text-[var(--brand-600)] border-[var(--brand-200)]'
       case SystemSettingType.BOOLEAN:
-        return 'bg-green-500/10 text-green-700 border-green-200'
+        return 'bg-[var(--color-success-50)] text-[var(--color-success-500)] border-[var(--color-success-200)]'
       case SystemSettingType.JSON:
-        return 'bg-orange-500/10 text-orange-700 border-orange-200'
+        return 'bg-[var(--warning-50)] text-[var(--warning-500)] border-[var(--warning-200)]'
       case SystemSettingType.SECRET:
-        return 'bg-red-500/10 text-red-700 border-red-200'
+        return 'bg-[var(--error-50)] text-[var(--error-500)] border-[var(--error-200)]'
       default:
-        return 'bg-gray-500/10 text-gray-700 border-gray-200'
+        return 'bg-[var(--neutral-100)] text-[var(--neutral-700)] border-[var(--neutral-200)]'
     }
   }
 
@@ -93,12 +93,12 @@ export default function SystemSettingDetailModal({ setting, open, onOpenChange }
       return (
         <div className="flex items-center gap-2">
           {boolValue === 'true' ? (
-            <Badge className="border-green-200 bg-green-500/10 text-green-700">
+            <Badge className="border-[var(--color-success-200)] bg-[var(--color-success-50)] text-[var(--color-success-600)]">
               <CheckCircle2 className="mr-1 h-3 w-3" />
               true
             </Badge>
           ) : (
-            <Badge className="border-red-200 bg-red-500/10 text-red-700">
+            <Badge className="border-[var(--color-error-200)] bg-[var(--color-error-50)] text-[var(--color-error-500)]">
               <XCircle className="mr-1 h-3 w-3" />
               false
             </Badge>
@@ -178,7 +178,7 @@ export default function SystemSettingDetailModal({ setting, open, onOpenChange }
                 Trạng thái
               </div>
               {setting.isEditable ? (
-                <Badge className="border-green-200 bg-green-500/10 text-green-700">
+                <Badge className="border-[var(--color-success-200)] bg-[var(--color-success-50)] text-[var(--color-success-600)]">
                   <CheckCircle2 className="mr-1 h-3 w-3" />
                   Có thể chỉnh sửa
                 </Badge>

@@ -12,7 +12,7 @@ import type { WarehouseDocumentType } from '@/types/models/warehouse-document'
 const statusColorMap: Record<WarehouseDocumentStatus, string> = {
   ['DRAFT']: 'bg-amber-100 text-amber-800',
   ['CONFIRMED']: 'bg-green-100 text-green-800',
-  ['CANCELLED']: 'bg-rose-100 text-rose-800',
+  ['CANCELLED']: 'bg-[var(--color-error-50)] text-[var(--color-error-600)]',
 }
 
 export const getColumns = (type?: WarehouseDocumentType) => {

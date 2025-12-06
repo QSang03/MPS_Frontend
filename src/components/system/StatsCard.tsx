@@ -23,42 +23,42 @@ export function StatsCard({
 }: StatsCardProps) {
   const borderColorClass =
     {
-      blue: 'border-l-blue-500',
-      green: 'border-l-green-500',
-      purple: 'border-l-purple-500',
-      violet: 'border-l-violet-500',
-      emerald: 'border-l-emerald-500',
-      gray: 'border-l-gray-500',
-      red: 'border-l-red-500',
-      orange: 'border-l-orange-500',
-      yellow: 'border-l-yellow-500',
-    }[borderColor] || 'border-l-blue-500'
+      blue: 'border-l-[var(--brand-500)]',
+      green: 'border-l-[var(--color-success-500)]',
+      purple: 'border-l-[var(--brand-500)]',
+      violet: 'border-l-[var(--brand-500)]',
+      emerald: 'border-l-[var(--color-success-500)]',
+      gray: 'border-l-[var(--neutral-500)]',
+      red: 'border-l-[var(--error-500)]',
+      orange: 'border-l-[var(--warning-500)]',
+      yellow: 'border-l-[var(--warning-500)]',
+    }[borderColor] || 'border-l-[var(--brand-500)]'
 
   const defaultIconBgColor =
     {
-      blue: 'bg-blue-100',
-      green: 'bg-green-100',
-      purple: 'bg-purple-100',
-      violet: 'bg-violet-100',
-      emerald: 'bg-emerald-100',
-      gray: 'bg-gray-100',
-      red: 'bg-red-100',
-      orange: 'bg-orange-100',
-      yellow: 'bg-yellow-100',
-    }[borderColor] || 'bg-blue-100'
+      blue: 'bg-[var(--brand-100)]',
+      green: 'bg-[var(--color-success-50)]',
+      purple: 'bg-[var(--brand-100)]',
+      violet: 'bg-[var(--brand-100)]',
+      emerald: 'bg-[var(--color-success-50)]',
+      gray: 'bg-[var(--neutral-100)]',
+      red: 'bg-[var(--error-50)]',
+      orange: 'bg-[var(--warning-50)]',
+      yellow: 'bg-[var(--warning-50)]',
+    }[borderColor] || 'bg-[var(--brand-100)]'
 
   const defaultIconColor =
     {
-      blue: 'text-blue-600',
-      green: 'text-green-600',
-      purple: 'text-purple-600',
-      violet: 'text-violet-600',
-      emerald: 'text-emerald-600',
-      gray: 'text-gray-600',
-      red: 'text-red-600',
-      orange: 'text-orange-600',
-      yellow: 'text-yellow-600',
-    }[borderColor] || 'text-blue-600'
+      blue: 'text-[var(--brand-600)]',
+      green: 'text-[var(--color-success-500)]',
+      purple: 'text-[var(--brand-600)]',
+      violet: 'text-[var(--brand-600)]',
+      emerald: 'text-[var(--color-success-500)]',
+      gray: 'text-[var(--neutral-600)]',
+      red: 'text-[var(--error-500)]',
+      orange: 'text-[var(--warning-500)]',
+      yellow: 'text-[var(--warning-500)]',
+    }[borderColor] || 'text-[var(--brand-600)]'
 
   return (
     <Card className={cn('!gap-0 border-l-4 !py-0', borderColorClass, className)}>

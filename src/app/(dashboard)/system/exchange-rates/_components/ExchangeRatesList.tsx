@@ -217,7 +217,7 @@ export function ExchangeRatesList({
         accessorKey: 'rate',
         header: 'Tỷ giá',
         cell: ({ row }) => (
-          <div className="font-mono font-semibold text-blue-600">
+          <div className="font-mono font-semibold text-[var(--brand-600)]">
             1 {row.original.fromCurrency.code} = {row.original.rate.toLocaleString()}{' '}
             {row.original.toCurrency.code}
           </div>
@@ -256,8 +256,8 @@ export function ExchangeRatesList({
             <Badge
               className={
                 isActive
-                  ? 'border-green-200 bg-green-500/10 text-green-700'
-                  : 'border-gray-200 bg-gray-500/10 text-gray-700'
+                  ? 'border-[var(--color-success-200)] bg-[var(--color-success-50)] text-[var(--color-success-600)]'
+                  : 'border-[var(--color-neutral-200)] bg-[var(--color-neutral-100)] text-[var(--color-neutral-600)]'
               }
             >
               {isActive ? (
@@ -295,7 +295,7 @@ export function ExchangeRatesList({
               <Button
                 variant="outline"
                 size="sm"
-                className="gap-2 text-red-600 hover:text-red-700"
+                className="gap-2 text-[var(--color-error-500)] hover:text-[var(--color-error-600)]"
                 onClick={() => handleDelete(row.original)}
               >
                 <Trash2 className="h-4 w-4" />

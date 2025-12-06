@@ -187,7 +187,7 @@ export function PoliciesTable() {
   return (
     <div className="overflow-hidden rounded-2xl border-0 bg-white shadow-2xl">
       {/* PREMIUM HEADER */}
-      <div className="relative overflow-hidden border-0 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 p-0">
+      <div className="relative overflow-hidden border-0 bg-gradient-to-r from-[var(--brand-500)] via-[var(--brand-600)] to-[var(--brand-700)] p-0">
         {/* Animated background shapes */}
         <div className="absolute inset-0 opacity-20">
           <div className="absolute top-0 left-0 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white"></div>
@@ -210,7 +210,7 @@ export function PoliciesTable() {
           <ActionGuard pageId="policies" actionId="create">
             <Button
               onClick={openCreate}
-              className="transform rounded-xl bg-white px-6 py-2 text-base font-bold text-blue-600 shadow-lg transition-all duration-300 hover:scale-105 hover:bg-blue-50 hover:shadow-2xl"
+              className="transform rounded-xl bg-white px-6 py-2 text-base font-bold text-[var(--brand-600)] shadow-lg transition-all duration-300 hover:scale-105 hover:bg-[var(--brand-50)] hover:shadow-2xl"
             >
               <Plus className="mr-2 h-5 w-5" />
               Tạo Policy
@@ -232,7 +232,7 @@ export function PoliciesTable() {
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             {/* Search Input */}
             <div className="group relative">
-              <Search className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-blue-400 transition-colors group-focus-within:text-blue-600" />
+              <Search className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-[var(--brand-400)] transition-colors group-focus-within:text-[var(--brand-600)]" />
               <Input
                 placeholder="🔍 Tìm kiếm policy..."
                 value={search}
@@ -367,7 +367,7 @@ export function PoliciesTable() {
               </p>
               <Button
                 onClick={openCreate}
-                className="transform rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 px-8 py-3 font-bold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:from-blue-700 hover:to-purple-700 hover:shadow-xl"
+                className="transform rounded-xl bg-[var(--btn-primary)] px-8 py-3 font-bold text-[var(--btn-primary-foreground)] shadow-lg transition-all duration-300 hover:scale-105 hover:bg-[var(--btn-primary-hover)] hover:shadow-xl"
               >
                 <Plus className="mr-2 h-5 w-5" />
                 Tạo Policy Đầu Tiên
@@ -435,7 +435,7 @@ export function PoliciesTable() {
                       </TableCell>
                       <TableCell>
                         {p.effect === 'ALLOW' ? (
-                          <Badge className="bg-green-500 text-white">
+                          <Badge className="bg-[var(--color-success-500)] text-white">
                             <CheckCircle2 className="mr-1 h-3 w-3" />
                             Hoạt động
                           </Badge>
@@ -537,13 +537,13 @@ export function PoliciesTable() {
 
         {/* PAGINATION - Premium */}
         {policies.length > 0 && (
-          <div className="border-gradient-to-r flex items-center justify-between rounded-2xl border-2 bg-gradient-to-r from-blue-200 from-white via-blue-50 to-purple-50 to-purple-200 p-5 shadow-lg transition-all duration-300 hover:shadow-xl">
+          <div className="border-gradient-to-r flex items-center justify-between rounded-2xl border-2 bg-gradient-to-r from-[var(--brand-200)] from-white via-[var(--brand-50)] to-[var(--brand-50)] to-[var(--brand-200)] p-5 shadow-lg transition-all duration-300 hover:shadow-xl">
             <div className="flex items-center gap-3">
               <span className="text-xs font-bold tracking-widest text-gray-600 uppercase">
                 Hiển thị
               </span>
-              <div className="rounded-xl border-2 border-blue-300 bg-gradient-to-r from-blue-100 to-purple-100 px-4 py-2">
-                <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-sm font-bold text-transparent">
+              <div className="rounded-xl border-2 border-[var(--brand-200)] bg-gradient-to-r from-[var(--brand-50)] to-[var(--brand-100)] px-4 py-2">
+                <span className="bg-gradient-to-r from-[var(--brand-500)] to-[var(--brand-600)] bg-clip-text text-sm font-bold text-transparent">
                   {policies.length}
                 </span>
                 <span className="text-sm text-gray-500"> / </span>
@@ -558,14 +558,14 @@ export function PoliciesTable() {
                 size="sm"
                 onClick={() => setPage(page - 1)}
                 disabled={page <= 1}
-                className="transform rounded-lg border-2 border-gray-300 font-bold transition-all duration-300 hover:scale-105 hover:border-blue-400 hover:bg-blue-100 hover:text-blue-700 disabled:opacity-50"
+                className="transform rounded-lg border-2 border-gray-300 font-bold transition-all duration-300 hover:scale-105 hover:border-[var(--brand-400)] hover:bg-[var(--brand-50)] hover:text-[var(--brand-700)] disabled:opacity-50"
               >
                 ← Trước
               </Button>
 
               <div className="flex items-center gap-2 rounded-xl border-2 border-blue-300 bg-white px-5 py-2 shadow-md">
                 <span className="text-xs font-bold text-gray-600">Trang</span>
-                <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-base font-bold text-transparent">
+                <span className="bg-gradient-to-r from-[var(--brand-500)] to-[var(--brand-600)] bg-clip-text text-base font-bold text-transparent">
                   {pagination.page}
                 </span>
                 <span className="text-xs text-gray-400">/</span>
@@ -577,7 +577,7 @@ export function PoliciesTable() {
                 size="sm"
                 onClick={() => setPage(page + 1)}
                 disabled={page >= pagination.totalPages}
-                className="transform rounded-lg border-2 border-gray-300 font-bold transition-all duration-300 hover:scale-105 hover:border-purple-400 hover:bg-purple-100 hover:text-purple-700 disabled:opacity-50"
+                className="transform rounded-lg border-2 border-gray-300 font-bold transition-all duration-300 hover:scale-105 hover:border-[var(--brand-400)] hover:bg-[var(--brand-50)] hover:text-[var(--brand-700)] disabled:opacity-50"
               >
                 Sau →
               </Button>

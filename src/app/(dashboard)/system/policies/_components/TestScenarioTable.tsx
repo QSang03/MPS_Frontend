@@ -59,8 +59,8 @@ export function TestScenarioTable({ scenarios }: TestScenarioTableProps) {
                 <Badge
                   className={
                     scenario.expected === 'ALLOW'
-                      ? 'bg-green-500 text-white'
-                      : 'bg-gray-400 text-white'
+                      ? 'bg-[var(--color-success-500)] text-white'
+                      : 'bg-[var(--color-neutral-300)] text-white'
                   }
                 >
                   {scenario.expected}

@@ -53,7 +53,7 @@ const mockUsers = [
 
 const roleColors: Record<string, string> = {
   SystemAdmin: 'bg-purple-100 text-purple-800',
-  CustomerAdmin: 'bg-blue-100 text-blue-800',
+  CustomerAdmin: 'bg-[var(--brand-50)] text-[var(--brand-800)]',
   User: 'bg-gray-100 text-gray-800',
 }
 
@@ -85,7 +85,7 @@ export function UserList({}: UserListProps) {
                         {user.role}
                       </Badge>
                       {user.isActive ? (
-                        <Badge variant="outline" className="text-green-600">
+                        <Badge variant="outline" className="text-[var(--color-success-600)]">
                           <CheckCircle2 className="mr-1 h-3 w-3" />
                           Active
                         </Badge>

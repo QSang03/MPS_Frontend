@@ -300,7 +300,7 @@ export function ModernSidebar({ session }: SidebarProps) {
                     whileTap={{ scale: 0.95 }}
                     aria-label={t('settings.open')}
                   >
-                    <Printer className="h-6 w-6 text-blue-600" />
+                    <Printer className="h-6 w-6 text-[var(--brand-600)]" />
                   </motion.button>
                 </DialogTrigger>
 
@@ -491,7 +491,7 @@ export function ModernSidebar({ session }: SidebarProps) {
           {/* Logout Button */}
           <motion.button
             onClick={handleLogout}
-            className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-slate-600 transition-all duration-200 hover:bg-slate-50 hover:text-red-600"
+            className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-slate-600 transition-all duration-200 hover:bg-slate-50 hover:text-[var(--color-error-500)]"
             whileHover={{ scale: 1.01, x: 2 }}
             whileTap={{ scale: 0.99 }}
           >
@@ -502,7 +502,7 @@ export function ModernSidebar({ session }: SidebarProps) {
           {/* Footer Info - Minimal Card */}
           <div className="rounded-lg border border-slate-100 bg-slate-50/50 p-3">
             <div className="flex items-start gap-2">
-              <Zap className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-500" />
+              <Zap className="mt-0.5 h-4 w-4 flex-shrink-0 text-[var(--warning-500)]" />
               <div>
                 <p className="text-xs font-bold text-slate-800">{t('footer.version')}</p>
                 <p className="mt-0.5 text-xs text-slate-500">{t('footer.copyright')}</p>

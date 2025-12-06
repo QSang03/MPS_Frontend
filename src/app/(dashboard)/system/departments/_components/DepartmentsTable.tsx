@@ -203,7 +203,7 @@ export function DepartmentsTable({
           <div>
             <label className="mb-2 block text-sm font-medium">Tìm kiếm</label>
             <div className="group relative">
-              <Search className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-blue-400 transition-colors group-focus-within:text-blue-600" />
+              <Search className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-[var(--brand-400)] transition-colors group-focus-within:text-[var(--brand-600)]" />
               <Input
                 placeholder="🔍 Tìm kiếm tên hoặc mã bộ phận..."
                 value={search}
@@ -214,7 +214,7 @@ export function DepartmentsTable({
                     setPage(1)
                   }
                 }}
-                className="rounded-xl border-2 border-gray-200 bg-gradient-to-r from-gray-50 to-white pr-4 pl-12 text-base transition-all duration-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                className="rounded-xl border-2 border-gray-200 bg-gradient-to-r from-gray-50 to-white pr-4 pl-12 text-base transition-all duration-300 focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)]"
               />
             </div>
           </div>
@@ -233,7 +233,7 @@ export function DepartmentsTable({
                 </SelectItem>
                 <SelectItem value="true">
                   <span className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-blue-600" />
+                    <CheckCircle2 className="h-4 w-4 text-[var(--brand-600)]" />
                     Hoạt động
                   </span>
                 </SelectItem>
@@ -249,7 +249,7 @@ export function DepartmentsTable({
               variant="outline"
               size="icon"
               onClick={() => queryClient.invalidateQueries({ queryKey: ['departments'] })}
-              className="h-10 w-10 cursor-pointer rounded-xl border-2 border-gray-200 transition-all duration-300 hover:border-blue-400 hover:bg-blue-50"
+              className="h-10 w-10 cursor-pointer rounded-xl border-2 border-gray-200 transition-all duration-300 hover:border-[var(--brand-400)] hover:bg-[var(--brand-50)]"
               title="Làm mới dữ liệu"
             >
               <RefreshCw className="h-5 w-5" />
@@ -258,7 +258,7 @@ export function DepartmentsTable({
               variant="outline"
               size="icon"
               onClick={handleOpenCreate}
-              className="h-10 w-10 rounded-xl border-2 border-gray-200 transition-all hover:border-blue-400 hover:bg-blue-50"
+              className="h-10 w-10 rounded-xl border-2 border-gray-200 transition-all hover:border-[var(--brand-400)] hover:bg-[var(--brand-50)]"
               title="Tạo bộ phận"
             >
               <Plus className="h-5 w-5" />
@@ -493,7 +493,7 @@ function DepartmentsTableContent({
                 size="sm"
                 variant="ghost"
                 onClick={() => onEditDepartment(row.original)}
-                className="transition-all hover:bg-blue-100 hover:text-blue-700"
+                className="transition-all hover:bg-[var(--brand-100)] hover:text-[var(--brand-700)]"
                 title="Chỉnh sửa"
               >
                 <Edit className="h-4 w-4" />
@@ -559,7 +559,7 @@ function DepartmentsTableContent({
             </p>
             <Button
               onClick={onCreateDepartment}
-              className="rounded-lg bg-blue-600 px-6 py-2 text-white transition-all hover:bg-blue-700"
+              className="rounded-lg bg-[var(--brand-600)] px-6 py-2 text-white transition-all hover:bg-[var(--brand-700)]"
             >
               <Plus className="mr-2 h-4 w-4" />
               Tạo Bộ phận

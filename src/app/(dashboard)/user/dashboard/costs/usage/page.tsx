@@ -331,37 +331,37 @@ export default function UsagePage() {
                         barCategoryGap="50%"
                         barSize={60}
                       >
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                        <XAxis dataKey="month" stroke="#64748b" />
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                        <XAxis dataKey="month" stroke="var(--muted-foreground)" />
                         <YAxis
-                          stroke="#64748b"
+                          stroke="var(--muted-foreground)"
                           width={60}
                           tickFormatter={(v) => formatNumber(Number(v))}
                         />
                         <RechartsTooltip
                           formatter={(value: number) => [formatNumber(value), 'Trang']}
                           contentStyle={{
-                            backgroundColor: '#1e293b',
+                            backgroundColor: 'var(--popover)',
                             border: 'none',
                             borderRadius: '8px',
                             boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                            color: '#fff',
+                            color: 'var(--popover-foreground)',
                           }}
-                          itemStyle={{ color: '#fff' }}
-                          labelStyle={{ color: '#94a3b8', marginBottom: '0.5rem' }}
+                          itemStyle={{ color: 'var(--popover-foreground)' }}
+                          labelStyle={{ color: 'var(--muted-foreground)', marginBottom: '0.5rem' }}
                         />
                         <Legend />
                         <Bar
                           dataKey="bwPages"
                           stackId="pages"
-                          fill="#10b981"
+                          fill="var(--color-success-500)"
                           name="Đen trắng"
                           radius={[4, 4, 0, 0]}
                         />
                         <Bar
                           dataKey="colorPages"
                           stackId="pages"
-                          fill="#8b5cf6"
+                          fill="var(--brand-500)"
                           name="Màu"
                           radius={[0, 0, 4, 4]}
                         >
@@ -404,37 +404,37 @@ export default function UsagePage() {
                         barCategoryGap="50%"
                         barSize={60}
                       >
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                        <XAxis dataKey="name" stroke="#64748b" />
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                        <XAxis dataKey="name" stroke="var(--muted-foreground)" />
                         <YAxis
-                          stroke="#64748b"
+                          stroke="var(--muted-foreground)"
                           width={60}
                           tickFormatter={(v) => formatNumber(Number(v))}
                         />
                         <RechartsTooltip
                           formatter={(value: number) => [formatNumber(value), 'Trang']}
                           contentStyle={{
-                            backgroundColor: '#1e293b',
+                            backgroundColor: 'var(--popover)',
                             border: 'none',
                             borderRadius: '8px',
                             boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                            color: '#fff',
+                            color: 'var(--popover-foreground)',
                           }}
-                          itemStyle={{ color: '#fff' }}
-                          labelStyle={{ color: '#94a3b8', marginBottom: '0.5rem' }}
+                          itemStyle={{ color: 'var(--popover-foreground)' }}
+                          labelStyle={{ color: 'var(--muted-foreground)', marginBottom: '0.5rem' }}
                         />
                         <Legend />
                         <Bar
                           dataKey="bwPages"
                           stackId="pages"
-                          fill="#10b981"
+                          fill="var(--color-success-500)"
                           name="Đen trắng"
                           radius={[4, 4, 0, 0]}
                         />
                         <Bar
                           dataKey="colorPages"
                           stackId="pages"
-                          fill="#8b5cf6"
+                          fill="var(--brand-500)"
                           name="Màu"
                           radius={[0, 0, 4, 4]}
                         >

@@ -195,8 +195,8 @@ export function ConsumablesTable({
               variant={status === 'ACTIVE' ? 'default' : 'secondary'}
               className={
                 status === 'ACTIVE'
-                  ? 'bg-green-500 text-white hover:bg-green-600'
-                  : 'bg-gray-400 text-white hover:bg-gray-500'
+                  ? 'bg-[var(--color-success-500)] text-white hover:bg-[var(--color-success-600)]'
+                  : 'bg-[var(--color-neutral-300)] text-white hover:bg-[var(--color-neutral-400)]'
               }
             >
               {status}

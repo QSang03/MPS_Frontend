@@ -849,7 +849,7 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
           <Button
             type="submit"
             disabled={isPending}
-            className="group relative h-14 flex-1 overflow-hidden bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-base font-bold shadow-xl transition-all hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 hover:shadow-2xl"
+            className="group relative h-14 flex-1 overflow-hidden bg-[var(--btn-primary)] text-base font-bold text-[var(--btn-primary-foreground)] shadow-xl transition-all hover:bg-[var(--btn-primary-hover)] hover:shadow-2xl"
           >
             <motion.div
               className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/25 to-white/0"

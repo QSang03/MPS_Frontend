@@ -138,8 +138,8 @@ export function DateRangeSelector({ defaultMonth, onChange }: DateRangeSelectorP
                   className={cn(
                     'h-9 rounded-full border border-transparent px-4 text-sm font-semibold transition-all',
                     isActive
-                      ? 'bg-[#0066CC] text-white shadow-sm hover:bg-[#005BB5]'
-                      : 'border-slate-200 bg-white text-slate-600 hover:border-[#0066CC]/30 hover:text-[#0066CC]'
+                      ? 'bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] shadow-sm hover:bg-[var(--btn-primary-hover)]'
+                      : 'border-slate-200 bg-white text-slate-600 hover:border-[var(--brand-500)] hover:text-[var(--brand-500)]'
                   )}
                 >
                   {option.label}

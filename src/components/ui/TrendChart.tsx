@@ -11,6 +11,8 @@ import {
   ChartTooltipContent,
 } from './chart'
 import type { ChartConfig } from './chart'
+import type { CurrencyDataDto } from '@/types/models/currency'
+import { formatCurrencyWithSymbol } from '@/lib/utils/formatters'
 
 type TrendPoint = {
   month: string
@@ -25,6 +27,7 @@ type Props = {
   data: TrendPoint[]
   height?: number
   showMargin?: boolean
+  baseCurrency?: CurrencyDataDto | null
 }
 
 // currency/percent formatting helpers removed — chart uses Recharts default tooltip
@@ -33,7 +36,7 @@ type Props = {
 
 // We'll use the built-in Legend (from recharts) to match dashboard appearance.
 
-export default function TrendChart({ data, height = 280, showMargin = true }: Props) {
+export default function TrendChart({ data, height = 280, showMargin = true, baseCurrency }: Props) {
   const sorted = useMemo(() => [...data].sort((a, b) => (a.month > b.month ? 1 : -1)), [data])
   const { t } = useLocale()
 
@@ -82,10 +85,11 @@ export default function TrendChart({ data, height = 280, showMargin = true }: Pr
 
   // Local chart configuration (Option A: local)
   const chartConfig: ChartConfig = {
-    totalRevenue: { label: t('charts.total_revenue'), color: '#3b82f6' },
-    totalCogs: { label: t('charts.total_cogs'), color: '#f59e0b' },
-    grossProfit: { label: t('charts.gross_profit'), color: '#10b981' },
-    __grossMargin: { label: t('charts.gross_margin'), color: '#f97316' },
+    // Use theme CSS variables so charts update with the selected theme
+    totalRevenue: { label: t('charts.total_revenue'), color: 'var(--brand-600)' },
+    totalCogs: { label: t('charts.total_cogs'), color: 'var(--warning-500)' },
+    grossProfit: { label: t('charts.gross_profit'), color: 'var(--color-success-500)' },
+    __grossMargin: { label: t('charts.gross_margin'), color: 'var(--warning-500)' },
   }
 
   return (
@@ -140,11 +144,14 @@ export default function TrendChart({ data, height = 280, showMargin = true }: Pr
                     return `${Number(value).toFixed(2)}%`
                   }
                   if (typeof value === 'number') {
-                    return Intl.NumberFormat('vi-VN', {
-                      style: 'currency',
-                      currency: 'VND',
-                      maximumFractionDigits: 0,
-                    }).format(value)
+                    if (baseCurrency) {
+                      return formatCurrencyWithSymbol(value, baseCurrency)
+                    }
+                    // Fallback to USD if no currency provided
+                    return formatCurrencyWithSymbol(value, {
+                      code: 'USD',
+                      symbol: '$',
+                    } as CurrencyDataDto)
                   }
                   return String(value ?? '-')
                 }}

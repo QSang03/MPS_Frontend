@@ -65,19 +65,19 @@ const getStatusOptions = (t: (key: string) => string) => [
 ]
 
 const statusBadgeMap: Record<PurchaseRequestStatus, string> = {
-  [PurchaseRequestStatus.PENDING]: 'bg-amber-100 text-amber-700',
-  [PurchaseRequestStatus.APPROVED]: 'bg-emerald-100 text-emerald-700',
-  [PurchaseRequestStatus.ORDERED]: 'bg-blue-100 text-blue-700',
-  [PurchaseRequestStatus.IN_TRANSIT]: 'bg-purple-100 text-purple-700',
-  [PurchaseRequestStatus.RECEIVED]: 'bg-green-100 text-green-700',
-  [PurchaseRequestStatus.CANCELLED]: 'bg-rose-100 text-rose-700',
+  [PurchaseRequestStatus.PENDING]: 'bg-[var(--warning-50)] text-[var(--warning-500)]',
+  [PurchaseRequestStatus.APPROVED]: 'bg-[var(--color-success-50)] text-[var(--color-success-500)]',
+  [PurchaseRequestStatus.ORDERED]: 'bg-[var(--brand-50)] text-[var(--brand-700)]',
+  [PurchaseRequestStatus.IN_TRANSIT]: 'bg-[var(--brand-50)] text-[var(--brand-700)]',
+  [PurchaseRequestStatus.RECEIVED]: 'bg-[var(--color-success-50)] text-[var(--color-success-500)]',
+  [PurchaseRequestStatus.CANCELLED]: 'bg-[var(--error-50)] text-[var(--error-500)]',
 }
 
 const priorityBadgeMap: Record<Priority, string> = {
-  [Priority.LOW]: 'bg-slate-100 text-slate-700',
-  [Priority.NORMAL]: 'bg-blue-100 text-blue-700',
-  [Priority.HIGH]: 'bg-orange-100 text-orange-700',
-  [Priority.URGENT]: 'bg-red-100 text-red-700',
+  [Priority.LOW]: 'bg-[var(--neutral-100)] text-[var(--neutral-700)]',
+  [Priority.NORMAL]: 'bg-[var(--brand-50)] text-[var(--brand-700)]',
+  [Priority.HIGH]: 'bg-[var(--warning-50)] text-[var(--warning-500)]',
+  [Priority.URGENT]: 'bg-[var(--error-50)] text-[var(--error-500)]',
 }
 
 type TimelineStep = {

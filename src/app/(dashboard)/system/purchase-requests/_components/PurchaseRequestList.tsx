@@ -77,7 +77,7 @@ const statusConfig = {
     label: 'Đã duyệt',
   },
   [PurchaseRequestStatus.ORDERED]: {
-    color: 'text-blue-600 bg-blue-50 border-blue-200',
+    color: 'text-[var(--brand-600)] bg-[var(--brand-50)] border-[var(--brand-200)]',
     icon: Truck,
     label: 'Đã đặt hàng',
   },
@@ -100,7 +100,7 @@ const statusConfig = {
 
 const priorityConfig = {
   [Priority.LOW]: { color: 'text-slate-600', label: 'Thấp' },
-  [Priority.NORMAL]: { color: 'text-blue-600', label: 'Thường' },
+  [Priority.NORMAL]: { color: 'text-[var(--brand-600)]', label: 'Thường' },
   [Priority.HIGH]: { color: 'text-orange-600', label: 'Cao' },
   [Priority.URGENT]: { color: 'text-red-600', label: 'Khẩn cấp' },
 }
@@ -248,7 +248,7 @@ export function PurchaseRequestList({ status: initialStatus }: PurchaseRequestLi
                                 <Button
                                   size="icon"
                                   variant="outline"
-                                  className="h-7 w-7 border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                                  className="h-7 w-7 border-[var(--color-error-200)] text-[var(--color-error-500)] hover:bg-[var(--color-error-50)] hover:text-[var(--color-error-600)]"
                                 >
                                   <X className="h-3.5 w-3.5" />
                                 </Button>

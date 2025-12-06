@@ -23,7 +23,7 @@ export function StatusStepper({ current }: Props) {
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
             <div className="flex flex-col items-center">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-rose-600 text-xs font-medium text-white">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--destructive)] text-xs font-medium text-white">
                 ✕
               </div>
               <div className="text-muted-foreground mt-1 max-w-[70px] truncate text-center text-[10px]">
@@ -53,7 +53,7 @@ export function StatusStepper({ current }: Props) {
                   className={cn(
                     'flex h-10 w-10 items-center justify-center rounded-full text-xs font-medium transition-all',
                     isActive
-                      ? 'bg-green-500 text-white shadow-lg ring-2 shadow-green-500/50 ring-green-500 ring-offset-2'
+                      ? 'bg-[var(--color-success-500)] text-white shadow-lg ring-2 ring-[var(--color-success-500)] ring-offset-2'
                       : isPast
                         ? 'border-2 border-gray-300 bg-gray-200 text-gray-500'
                         : 'border-2 border-gray-200 bg-white text-gray-400'
@@ -79,7 +79,11 @@ export function StatusStepper({ current }: Props) {
                 <div
                   className={cn(
                     'mt-2 max-w-[80px] truncate text-center text-[11px] font-medium',
-                    isActive ? 'text-green-600' : isPast ? 'text-gray-500' : 'text-gray-400'
+                    isActive
+                      ? 'text-[var(--color-success-600)]'
+                      : isPast
+                        ? 'text-[var(--neutral-500)]'
+                        : 'text-[var(--neutral-400)]'
                   )}
                 >
                   {disp.label}

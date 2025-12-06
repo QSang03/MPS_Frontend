@@ -154,7 +154,7 @@ export function CustomerSelectDialog({
             <Button
               onClick={handleConfirm}
               disabled={!selectedCustomer || (!!requiresLocation && !customerLocation.trim())}
-              className="min-w-[120px] bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+              className="min-w-[120px] bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
             >
               <CheckCircle2 className="mr-2 h-4 w-4" />
               {t('customer.select.confirm')}
@@ -180,7 +180,7 @@ export function CustomerSelectDialog({
         <div className="max-h-[400px] space-y-2 overflow-y-auto">
           {loading ? (
             <div className="flex items-center justify-center p-8">
-              <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+              <Loader2 className="h-8 w-8 animate-spin text-[var(--brand-600)]" />
             </div>
           ) : filteredCustomers.length === 0 ? (
             <div className="text-muted-foreground p-8 text-center">
@@ -197,9 +197,10 @@ export function CustomerSelectDialog({
                   key={customer.id}
                   onClick={() => setSelectedCustomer(customer)}
                   className={cn(
-                    'w-full rounded-lg border p-4 text-left transition-all hover:border-blue-500 hover:bg-blue-50',
-                    isSelected && 'border-blue-500 bg-blue-50 ring-2 ring-blue-500',
-                    isCurrent && 'border-green-500 bg-green-50'
+                    'w-full rounded-lg border p-4 text-left transition-all hover:border-[var(--brand-500)] hover:bg-[var(--brand-50)]',
+                    isSelected &&
+                      'border-[var(--brand-500)] bg-[var(--brand-50)] ring-2 ring-[var(--brand-500)]',
+                    isCurrent && 'border-[var(--color-success-500)] bg-[var(--color-success-50)]'
                   )}
                 >
                   <div className="flex items-start justify-between">
@@ -208,7 +209,7 @@ export function CustomerSelectDialog({
                         <Building2 className="h-4 w-4 text-rose-600" />
                         <span className="font-semibold">{customer.name}</span>
                         {isCurrent && (
-                          <span className="rounded bg-green-500 px-2 py-0.5 text-xs text-white">
+                          <span className="rounded bg-[var(--color-success-500)] px-2 py-0.5 text-xs text-white">
                             {t('customer.select.current')}
                           </span>
                         )}
@@ -226,7 +227,7 @@ export function CustomerSelectDialog({
                         </div>
                       )}
                     </div>
-                    {isSelected && <CheckCircle2 className="h-5 w-5 text-blue-600" />}
+                    {isSelected && <CheckCircle2 className="h-5 w-5 text-[var(--brand-600)]" />}
                   </div>
                 </button>
               )
@@ -236,9 +237,9 @@ export function CustomerSelectDialog({
 
         {/* Customer Location Input - Show when customer is not warehouse */}
         {requiresLocation && (
-          <div className="space-y-2 rounded-lg border border-blue-200 bg-blue-50/50 p-4">
+          <div className="space-y-2 rounded-lg border border-[var(--brand-200)] bg-[var(--brand-50)]/50 p-4">
             <Label className="flex items-center gap-2 text-base font-semibold text-blue-900">
-              <MapPin className="h-4 w-4 text-blue-600" />
+              <MapPin className="h-4 w-4 text-[var(--brand-600)]" />
               {t('customer.select.location.label')}
               <span className="text-red-500">*</span>
             </Label>
@@ -270,7 +271,7 @@ export function CustomerSelectDialog({
                 autoFocus
               />
             )}
-            <p className="text-xs text-blue-700">
+            <p className="text-xs text-[var(--brand-700)]">
               {customerAddresses.length > 0
                 ? t('customer.select.location.hint.with_addresses')
                 : t('customer.select.location.hint.no_addresses')}

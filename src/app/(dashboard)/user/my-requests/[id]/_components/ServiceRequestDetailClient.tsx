@@ -62,7 +62,8 @@ type TimelineEvent = {
 type TimelineEntry = TimelineEvent & { time: string }
 
 const statusBadgeMap: Record<ServiceRequestStatus, string> = {
-  [ServiceRequestStatus.IN_PROGRESS]: 'bg-blue-50 text-blue-700 border-blue-200',
+  [ServiceRequestStatus.IN_PROGRESS]:
+    'bg-[var(--brand-50)] text-[var(--brand-700)] border-[var(--brand-200)]',
   [ServiceRequestStatus.RESOLVED]: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   [ServiceRequestStatus.CLOSED]: 'bg-slate-100 text-slate-700 border-slate-200',
   [ServiceRequestStatus.OPEN]: 'bg-sky-50 text-sky-700 border-sky-200',
@@ -72,7 +73,7 @@ const statusBadgeMap: Record<ServiceRequestStatus, string> = {
 
 const priorityBadgeMap: Record<Priority, string> = {
   [Priority.LOW]: 'bg-slate-100 text-slate-700 border-slate-200',
-  [Priority.NORMAL]: 'bg-blue-50 text-blue-700 border-blue-200',
+  [Priority.NORMAL]: 'bg-[var(--brand-50)] text-[var(--brand-700)] border-[var(--brand-200)]',
   [Priority.HIGH]: 'bg-orange-50 text-orange-700 border-orange-200',
   [Priority.URGENT]: 'bg-red-50 text-red-700 border-red-200',
 }
@@ -155,7 +156,7 @@ export function ServiceRequestDetailClient({ id }: Props) {
         time: detail.respondedAt,
         by: detail.respondedByName ?? detail.respondedBy,
         icon: Activity,
-        color: 'text-blue-600',
+        color: 'text-[var(--brand-600)]',
       },
       {
         label: 'Đã giải quyết',
@@ -259,7 +260,7 @@ export function ServiceRequestDetailClient({ id }: Props) {
                   <p className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
                     Tổng chi phí
                   </p>
-                  <p className="text-xl font-bold text-blue-600">
+                  <p className="text-xl font-bold text-[var(--brand-600)]">
                     {costsQuery.data?.data && costsQuery.data.data.length > 0
                       ? costsQuery.data.data
                           .map((cost) =>

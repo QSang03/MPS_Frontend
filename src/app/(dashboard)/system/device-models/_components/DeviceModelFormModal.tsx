@@ -169,7 +169,7 @@ export function DeviceModelFormModal({ mode = 'create', model = null, onSaved, t
             <Button
               type="submit"
               form="device-model-form"
-              className="min-w-[120px] bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+              className="min-w-[120px] bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
               disabled={submitting}
             >
               {submitting ? (
@@ -342,7 +342,7 @@ export function DeviceModelFormModal({ mode = 'create', model = null, onSaved, t
                 <div className="space-y-0.5">
                   <label className="flex items-center gap-2 text-base font-semibold">
                     {form.useA4Counter ? (
-                      <FileText className="h-4 w-4 text-blue-600" />
+                      <FileText className="h-4 w-4 text-[var(--brand-600)]" />
                     ) : (
                       <Settings className="h-4 w-4 text-gray-600" />
                     )}

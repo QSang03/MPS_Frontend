@@ -170,7 +170,7 @@ export default function DevicesPageClient() {
             onClick={() => setShowColumnMenu((v) => !v)}
             className="border-gray-300 bg-white text-gray-700 shadow-sm transition-transform duration-150 ease-in-out hover:scale-105 hover:bg-gray-50 focus:ring-2 focus:ring-blue-200 focus:outline-none"
           >
-            <span className="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-blue-50 text-xs font-semibold text-blue-600">
+            <span className="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[var(--brand-50)] text-xs font-semibold text-[var(--brand-600)]">
               C
             </span>
             Cột
@@ -486,7 +486,7 @@ export default function DevicesPageClient() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Card className="shadow-card">
           <CardContent className="flex items-center gap-4 p-6">
-            <div className="rounded-full bg-blue-100 p-3 dark:bg-blue-900/30">
+            <div className="rounded-full bg-[var(--brand-50)] p-3 dark:bg-[var(--brand-900)]/30">
               <Monitor className="h-6 w-6 text-black dark:text-white" />
             </div>
             <div>
@@ -747,7 +747,7 @@ export default function DevicesPageClient() {
                             role="button"
                             title={t('user_devices.action.view_detail')}
                             onClick={() => router.push(`/user/devices/${d.id}`)}
-                            className="cursor-pointer rounded bg-blue-100 px-2 py-1 text-sm font-semibold text-blue-700 hover:bg-blue-200"
+                            className="cursor-pointer rounded bg-[var(--brand-50)] px-2 py-1 text-sm font-semibold text-[var(--brand-700)] hover:bg-[var(--brand-100)]"
                           >
                             {d.serialNumber || '—'}
                           </code>
@@ -781,7 +781,7 @@ export default function DevicesPageClient() {
                                     <Button
                                       variant="ghost"
                                       size="sm"
-                                      className="h-7 w-7 p-0 hover:bg-rose-100"
+                                      className="h-7 w-7 p-0 hover:bg-[var(--warning-50)]"
                                       onClick={() => {
                                         setEditingDeviceId(d.id)
                                         setShowCustomerSelect(true)
@@ -813,7 +813,7 @@ export default function DevicesPageClient() {
                                           <Button
                                             variant="ghost"
                                             size="sm"
-                                            className="h-7 w-7 p-0 hover:bg-red-100"
+                                            className="h-7 w-7 p-0 hover:bg-[var(--error-50)]"
                                             disabled={updatingCustomer}
                                             title={t('user_devices.remove_customer.button')}
                                           >
@@ -853,7 +853,7 @@ export default function DevicesPageClient() {
                           if (d.isCustomerOwned === true) {
                             // Đã mua đứt (sở hữu vĩnh viễn)
                             badgeContent = (
-                              <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-200">
+                              <Badge className="bg-[var(--brand-50)] text-[var(--brand-700)] hover:bg-[var(--brand-100)]">
                                 Đã mua đứt
                               </Badge>
                             )
@@ -866,7 +866,7 @@ export default function DevicesPageClient() {
                           } else if (d.ownershipStatus === 'current') {
                             // Đang sở hữu (có thể là thuê)
                             badgeContent = (
-                              <Badge className="bg-green-100 text-green-700 hover:bg-green-200">
+                              <Badge className="bg-[var(--color-success-50)] text-[var(--color-success-500)] hover:bg-[var(--color-success-100)]">
                                 Đang sở hữu
                               </Badge>
                             )
@@ -964,7 +964,7 @@ export default function DevicesPageClient() {
                                 type="button"
                                 aria-label="On"
                                 title={t('status.active')}
-                                className="inline-flex items-center justify-center rounded-full bg-green-500 p-1.5 text-white hover:bg-green-600"
+                                className="inline-flex items-center justify-center rounded-full bg-[var(--color-success-500)] p-1.5 text-white hover:bg-[var(--color-success-600)]"
                                 onClick={() => {
                                   setToggleTargetDevice(d)
                                   setToggleTargetActive(false)
@@ -1011,7 +1011,7 @@ export default function DevicesPageClient() {
                                   <Button
                                     variant="ghost"
                                     size="sm"
-                                    className="h-8 w-8 p-0 text-black hover:bg-indigo-50 dark:text-white"
+                                    className="h-8 w-8 p-0 text-black hover:bg-[var(--brand-50)] dark:text-white"
                                     disabled
                                     title={t('device.historical_cannot_edit')}
                                   >
@@ -1047,7 +1047,7 @@ export default function DevicesPageClient() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="h-8 w-8 p-0 text-black hover:bg-indigo-50 dark:text-white"
+                                className="h-8 w-8 p-0 text-black hover:bg-[var(--brand-50)] dark:text-white"
                                 title={t('user_devices.action.create_request')}
                                 disabled={isHistoricalDevice(d)}
                               >
@@ -1057,7 +1057,7 @@ export default function DevicesPageClient() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-8 w-8 p-0 text-black hover:bg-indigo-50 dark:text-white"
+                              className="h-8 w-8 p-0 text-black hover:bg-[var(--brand-50)] dark:text-white"
                               title={t('user_devices.action.view_a4_history')}
                               onClick={() => {
                                 setA4HistoryDevice(d)

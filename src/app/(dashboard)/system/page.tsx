@@ -257,7 +257,7 @@ export default function CustomerAdminDashboard() {
         icon={<LayoutDashboard className="h-7 w-7" />}
         actions={
           <>
-            <Button className="h-10 rounded-full border-0 bg-white px-5 text-sm font-semibold text-[#0066CC] shadow-sm hover:bg-blue-50">
+            <Button className="h-10 rounded-full border-0 bg-white px-5 text-sm font-semibold text-[var(--brand-500)] shadow-sm hover:bg-[var(--brand-50)]">
               <FileText className="mr-2 h-4 w-4" />
               Xem báo cáo chi tiết
             </Button>
@@ -272,7 +272,7 @@ export default function CustomerAdminDashboard() {
         <Button
           onClick={handleMonthlyAggregation}
           disabled={isAggregating}
-          className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+          className="bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
         >
           <PlayCircle className="mr-2 h-4 w-4" />
           {isAggregating ? 'Đang tổng hợp...' : 'Tổng hợp dữ liệu tháng'}
@@ -292,6 +292,7 @@ export default function CustomerAdminDashboard() {
         open={showCustomersModal}
         onOpenChange={setShowCustomersModal}
         month={selectedMonth}
+        baseCurrency={overviewData?.baseCurrency}
       />
 
       {/* Contracts Modal */}
@@ -343,6 +344,7 @@ export default function CustomerAdminDashboard() {
         isLoading={isLoading}
         onViewDetails={() => router.push('/system/reports')}
         onExport={handleExportMonthlySeries}
+        baseCurrency={overviewData?.baseCurrency}
       />
 
       {/* Row 3: Top Customers + Recent Activity */}
@@ -352,6 +354,7 @@ export default function CustomerAdminDashboard() {
           isLoading={isLoading}
           onViewAll={() => router.push('/system/customers')}
           onExport={handleExportTopCustomers}
+          baseCurrency={overviewData?.baseCurrency}
         />
         <RecentActivity
           onViewAll={() => router.push('/system/requests')}

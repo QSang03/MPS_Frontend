@@ -192,7 +192,7 @@ export default function ContractsPageClient() {
   const getTypeColor = (type?: string) => {
     switch (type) {
       case 'MPS':
-        return 'bg-blue-100 text-blue-700 border-blue-300'
+        return 'bg-[var(--brand-50)] text-[var(--brand-700)] border-[var(--brand-200)]'
       case 'CONSUMABLE_ONLY':
         return 'bg-purple-100 text-purple-700 border-purple-300'
       case 'REPAIR':
@@ -231,7 +231,7 @@ export default function ContractsPageClient() {
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
               <div className="flex items-center gap-2">
-                <LayoutDashboard className="h-6 w-6 text-blue-600" />
+                <LayoutDashboard className="h-6 w-6 text-[var(--brand-600)]" />
                 <h1 className="text-2xl font-bold tracking-tight text-gray-900">
                   {t('page.contracts.title')}
                 </h1>
@@ -253,7 +253,7 @@ export default function ContractsPageClient() {
                   trigger={
                     <Button
                       size="sm"
-                      className="gap-2 bg-blue-600 text-white shadow-sm hover:bg-blue-700"
+                      className="gap-2 bg-[var(--brand-600)] text-white shadow-sm hover:bg-[var(--brand-700)]"
                     >
                       <Plus className="h-4 w-4" />
                       {t('page.contracts.create')}
@@ -272,8 +272,8 @@ export default function ContractsPageClient() {
         <Card className="border-none bg-white shadow-sm">
           <CardContent className="p-6">
             <div className="flex items-start gap-4">
-              <div className="rounded-lg bg-blue-50 p-2">
-                <Package className="h-6 w-6 text-blue-600" />
+              <div className="rounded-lg bg-[var(--brand-50)] p-2">
+                <Package className="h-6 w-6 text-[var(--brand-600)]" />
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-500">
@@ -323,7 +323,7 @@ export default function ContractsPageClient() {
         <CardHeader className="border-b bg-gray-50/50 px-6 py-4">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-2">
-              <Search className="h-5 w-5 text-blue-600" />
+              <Search className="h-5 w-5 text-[var(--brand-600)]" />
               <h3 className="font-semibold text-gray-900">{t('filters.general')}</h3>
             </div>
 
@@ -461,7 +461,7 @@ export default function ContractsPageClient() {
                       onMouseLeave={() => setHoveredRowId(null)}
                       className={cn(
                         'cursor-pointer transition-colors',
-                        hoveredRowId === c.id ? 'bg-blue-50/50' : 'hover:bg-gray-50'
+                        hoveredRowId === c.id ? 'bg-[var(--brand-50)]/50' : 'hover:bg-gray-50'
                       )}
                     >
                       <td className="px-6 py-4 text-sm text-gray-500">{idx + 1}</td>
@@ -469,7 +469,7 @@ export default function ContractsPageClient() {
                         <Link
                           href={`/user/contracts/${c.id}`}
                           onClick={(e) => e.stopPropagation()}
-                          className="font-medium text-blue-600 hover:underline"
+                          className="font-medium text-[var(--brand-600)] hover:underline"
                         >
                           {c.contractNumber}
                         </Link>
@@ -498,7 +498,7 @@ export default function ContractsPageClient() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-gray-500 hover:text-blue-600"
+                            className="h-8 w-8 text-gray-500 hover:text-[var(--brand-600)]"
                             onClick={() => router.push(`/user/contracts/${c.id}`)}
                             title={t('button.view')}
                           >
@@ -577,7 +577,7 @@ export default function ContractsPageClient() {
                                     }}
                                     trigger={
                                       <DropdownMenuItem
-                                        className="flex cursor-pointer items-center gap-2 py-2 text-red-600 transition-all hover:bg-red-50"
+                                        className="flex cursor-pointer items-center gap-2 py-2 text-[var(--color-error-500)] transition-all hover:bg-[var(--color-error-50)]"
                                         onSelect={(e) => e.preventDefault()}
                                       >
                                         <Trash2 className="h-4 w-4" />

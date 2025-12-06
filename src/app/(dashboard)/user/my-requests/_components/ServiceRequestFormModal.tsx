@@ -94,8 +94,8 @@ export function ServiceRequestFormModal({
     [Priority.NORMAL]: {
       label: t('priority.normal'),
       icon: '→',
-      color: 'text-blue-600 dark:text-blue-400',
-      bgColor: 'bg-blue-100 dark:bg-blue-900/30',
+      color: 'text-[var(--brand-600)] dark:text-[var(--brand-400)]',
+      bgColor: 'bg-[var(--brand-50)] dark:bg-[var(--brand-900)]/30',
       description: t('priority.normal.description'),
     },
     [Priority.HIGH]: {
@@ -108,8 +108,8 @@ export function ServiceRequestFormModal({
     [Priority.URGENT]: {
       label: t('priority.urgent'),
       icon: '🔴',
-      color: 'text-red-600 dark:text-red-400',
-      bgColor: 'bg-red-100 dark:bg-red-900/30',
+      color: 'text-[var(--color-error-500)] dark:text-[var(--color-error-500)]',
+      bgColor: 'bg-[var(--color-error-50)] dark:bg-[var(--color-error-600)]/30',
       description: t('priority.urgent.description'),
     },
   }
@@ -344,7 +344,7 @@ export function ServiceRequestFormModal({
         <DialogTrigger asChild>{children}</DialogTrigger>
       ) : (
         <DialogTrigger asChild>
-          <Button className="gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30 transition-all duration-300 hover:scale-105 hover:from-blue-700 hover:to-indigo-700 hover:shadow-xl hover:shadow-blue-500/40">
+          <Button className="gap-2 bg-gradient-to-r from-[var(--brand-500)] to-[var(--brand-600)] text-white shadow-lg transition-all duration-300 hover:scale-105 hover:from-[var(--brand-600)] hover:to-[var(--brand-700)] hover:shadow-xl">
             <Plus className="h-5 w-5" />
             {t('user_service_request.create_new')}
           </Button>
@@ -362,11 +362,11 @@ export function ServiceRequestFormModal({
             >
               <DialogHeader className="space-y-4 border-b border-slate-200/50 pb-6 dark:border-slate-700/50">
                 <div className="flex items-center gap-4">
-                  <div className="rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-500 p-3 shadow-lg shadow-blue-500/30">
+                  <div className="rounded-2xl bg-gradient-to-br from-[var(--brand-500)] to-[var(--brand-600)] p-3 shadow-lg">
                     <FileText className="h-7 w-7 text-black dark:text-white" />
                   </div>
                   <div>
-                    <DialogTitle className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-3xl font-bold text-transparent dark:from-blue-400 dark:via-indigo-400 dark:to-purple-400">
+                    <DialogTitle className="bg-gradient-to-r from-[var(--brand-500)] via-[var(--brand-600)] to-[var(--brand-700)] bg-clip-text text-3xl font-bold text-transparent dark:from-[var(--brand-400)] dark:via-[var(--brand-500)] dark:to-[var(--brand-600)]">
                       {t('user_service_request.modal.title')}
                     </DialogTitle>
                     <DialogDescription className="mt-1 text-base text-slate-600 dark:text-slate-400">
@@ -473,7 +473,7 @@ export function ServiceRequestFormModal({
                       onClick={() => setMode('SERVICE')}
                       className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
                         mode === 'SERVICE'
-                          ? 'bg-white text-blue-600 shadow dark:bg-slate-800 dark:text-blue-400'
+                          ? 'bg-white text-[var(--brand-600)] shadow dark:bg-slate-800 dark:text-[var(--brand-400)]'
                           : 'text-slate-600 hover:text-slate-800 dark:text-slate-300 dark:hover:text-white'
                       }`}
                     >
@@ -836,7 +836,7 @@ export function ServiceRequestFormModal({
                         // If creating SERVICE and SLAs are loaded but none are available, disable
                         (mode === 'SERVICE' && !slasLoading && availableSlas.length === 0)
                       }
-                      className="h-12 flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 font-semibold text-white shadow-lg shadow-blue-500/30 transition-all duration-300 hover:scale-105 hover:from-blue-700 hover:to-indigo-700 hover:shadow-xl hover:shadow-blue-500/40"
+                      className="h-12 flex-1 bg-[var(--btn-primary)] font-semibold text-[var(--btn-primary-foreground)] shadow-[var(--btn-primary)]/30 shadow-lg transition-all duration-300 hover:scale-105 hover:bg-[var(--btn-primary-hover)] hover:shadow-xl"
                     >
                       {createServiceMutation.isPending || createPurchaseMutation.isPending ? (
                         <>

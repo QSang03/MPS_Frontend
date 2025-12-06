@@ -815,7 +815,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="flex items-center gap-2">
-                    <BarChart3 className="h-5 w-5 text-indigo-600" />
+                    <BarChart3 className="h-5 w-5 text-[var(--brand-600)]" />
                     {t('user_device_detail.monthly_usage.title')}
                   </CardTitle>
                   <CardDescription>
@@ -2409,6 +2409,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                   }}
                   optional
                   placeholder="Chọn tiền tệ (mặc định: USD)"
+                  customerId={customerId}
                 />
               </div>
             </div>
@@ -3112,6 +3113,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                       onChange={(value) => setEditCurrencyId(value)}
                       optional
                       placeholder="Chọn tiền tệ (mặc định: USD)"
+                      customerId={customerId}
                     />
                   </div>
                 </>

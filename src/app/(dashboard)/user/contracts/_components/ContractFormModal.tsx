@@ -29,7 +29,7 @@ export function ContractFormModal({ initial, onCreated, trigger }: ContractFormM
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger || (
-          <Button className="gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 shadow-lg transition-all hover:from-blue-700 hover:to-indigo-700 hover:shadow-xl">
+          <Button className="gap-2 bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] shadow-lg transition-all hover:bg-[var(--btn-primary-hover)] hover:shadow-xl">
             <Plus className="h-4 w-4" />
             Tạo hợp đồng
           </Button>
@@ -47,7 +47,7 @@ export function ContractFormModal({ initial, onCreated, trigger }: ContractFormM
               className="flex h-full flex-col"
             >
               {/* Header with Gradient Background */}
-              <DialogHeader className="relative overflow-hidden bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-0">
+              <DialogHeader className="relative overflow-hidden bg-gradient-to-r from-[var(--brand-600)] via-[var(--brand-500)] to-[var(--brand-400)] p-0">
                 <div className="absolute inset-0 bg-black/10"></div>
                 <div className="absolute inset-0 opacity-20">
                   <div className="absolute top-0 right-0 h-40 w-40 translate-x-1/2 -translate-y-1/2 rounded-full bg-white"></div>
@@ -85,13 +85,13 @@ export function ContractFormModal({ initial, onCreated, trigger }: ContractFormM
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.2, duration: 0.3 }}
-                className="flex-1 overflow-y-auto bg-gradient-to-b from-white via-blue-50/30 to-white"
+                className="flex-1 overflow-y-auto bg-gradient-to-b from-white via-[var(--brand-50)]/30 to-white"
               >
                 <div className="p-6">
                   {/* Progress indicator */}
                   <div className="mb-6 flex items-center gap-3 text-xs font-semibold text-gray-600">
                     <div className="flex items-center gap-2">
-                      <div className="h-2 w-2 rounded-full bg-blue-600"></div>
+                      <div className="h-2 w-2 rounded-full bg-[var(--brand-600)]"></div>
                       Thông tin cơ bản
                     </div>
                     <ArrowRight className="h-4 w-4 text-gray-400" />

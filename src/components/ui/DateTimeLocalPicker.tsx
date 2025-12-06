@@ -13,10 +13,11 @@ import {
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Calendar } from '@/components/ui/calendar'
-import { Calendar as CalendarIcon, Clock, X } from 'lucide-react'
+import { Calendar as CalendarIcon, Clock, X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
 import { vi } from 'date-fns/locale'
+import type { CalendarMonth } from 'react-day-picker'
 
 export interface DateTimeLocalPickerProps {
   id?: string
@@ -28,9 +29,25 @@ export interface DateTimeLocalPickerProps {
   placeholder?: string
   ariaDescribedBy?: string | undefined
   disabled?: boolean
+  autoFillCurrentDateTime?: boolean // Auto-fill current date/time when opening popover for the first time if value is empty
 }
 
 const pad = (n: number) => String(n).padStart(2, '0')
+
+const MONTH_NAMES = [
+  'Tháng 1',
+  'Tháng 2',
+  'Tháng 3',
+  'Tháng 4',
+  'Tháng 5',
+  'Tháng 6',
+  'Tháng 7',
+  'Tháng 8',
+  'Tháng 9',
+  'Tháng 10',
+  'Tháng 11',
+  'Tháng 12',
+]
 
 export default function DateTimeLocalPicker({
   id,
@@ -42,10 +59,13 @@ export default function DateTimeLocalPicker({
   placeholder,
   ariaDescribedBy,
   disabled,
+  autoFillCurrentDateTime = true,
 }: DateTimeLocalPickerProps) {
   const [mounted, setMounted] = useState(false)
   const [open, setOpen] = useState(false)
+  const [hasAutoFilled, setHasAutoFilled] = useState(false)
   const [date, setDate] = useState<Date | undefined>(undefined)
+  const [month, setMonth] = useState<Date>(() => date || new Date())
   const [hour, setHour] = useState('')
   const [minute, setMinute] = useState('')
   const popoverContentId = useId()
@@ -69,8 +89,10 @@ export default function DateTimeLocalPicker({
         if (!isNaN(d.getTime())) {
           t = window.setTimeout(() => {
             setDate(d)
+            setMonth(d) // Update month view to match selected date
             setHour(String(d.getHours()))
             setMinute(String(d.getMinutes()))
+            setHasAutoFilled(true) // Mark as filled if value exists
           }, 0)
         }
       } catch {
@@ -81,12 +103,46 @@ export default function DateTimeLocalPicker({
         setDate(undefined)
         setHour('')
         setMinute('')
+        setHasAutoFilled(false) // Reset when value is cleared to allow auto-fill again
       }, 0)
     }
     return () => {
       if (t !== undefined) window.clearTimeout(t)
     }
   }, [value])
+
+  // Auto-fill current date/time when opening popover for the first time if value is empty
+  useEffect(() => {
+    if (open && autoFillCurrentDateTime && !hasAutoFilled && !value) {
+      const now = new Date()
+      const currentDate = now
+      const currentHour = String(now.getHours())
+      const currentMinute = String(now.getMinutes())
+
+      // Commit the value immediately
+      const year = currentDate.getFullYear()
+      const month = pad(currentDate.getMonth() + 1)
+      const day = pad(currentDate.getDate())
+      const localValue = `${year}-${month}-${day}T${pad(Number(currentHour))}:${pad(Number(currentMinute))}`
+
+      // Update state via commitValue which will trigger onChange/onISOChange
+      // Use setTimeout to avoid cascading renders warning
+      const timeoutId = setTimeout(() => {
+        setDate(currentDate)
+        setHour(currentHour)
+        setMinute(currentMinute)
+        setHasAutoFilled(true)
+        if (onChange) onChange(localValue)
+        if (onISOChange) {
+          const dateObj = new Date(localValue)
+          onISOChange(isNaN(dateObj.getTime()) ? null : dateObj.toISOString())
+        }
+      }, 0)
+
+      return () => clearTimeout(timeoutId)
+    }
+    return undefined
+  }, [open, autoFillCurrentDateTime, hasAutoFilled, value, onChange, onISOChange])
 
   const handleDateSelect = (selectedDate: Date | undefined) => {
     setDate(selectedDate)
@@ -147,6 +203,104 @@ export default function DateTimeLocalPicker({
   }
 
   const display = displayValue()
+
+  // Custom Caption component with year input and month select
+  const CustomCaption = (
+    props: {
+      calendarMonth: CalendarMonth
+      displayIndex?: number
+    } & React.HTMLAttributes<HTMLDivElement>
+  ) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { calendarMonth, displayIndex: _displayIndex, ...htmlProps } = props
+    const monthDate = (calendarMonth as unknown as { date: Date }).date || new Date()
+    const currentYear = monthDate.getFullYear()
+    const currentMonth = monthDate.getMonth()
+    const [yearInput, setYearInput] = useState(String(currentYear))
+
+    useEffect(() => setYearInput(String(currentYear)), [currentYear])
+
+    const changeYear = (year: number) => {
+      if (year > 1999 && year <= 2100) setMonth(new Date(year, currentMonth, 1))
+    }
+
+    const changeMonth = (monthIndex: string) =>
+      setMonth(new Date(currentYear, parseInt(monthIndex, 10), 1))
+
+    return (
+      <div
+        {...htmlProps}
+        className={cn(
+          'relative z-50 mb-2 flex items-center justify-center gap-2',
+          htmlProps.className
+        )}
+      >
+        <button
+          type="button"
+          onClick={() => setMonth(new Date(currentYear, currentMonth - 1, 1))}
+          disabled={disabled}
+          className="hover:bg-accent absolute left-0 z-50 flex h-8 w-8 items-center justify-center rounded-md disabled:opacity-50"
+          aria-label="Tháng trước"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+
+        <div className="relative z-50">
+          <Select value={String(currentMonth)} onValueChange={changeMonth}>
+            <SelectTrigger className="relative z-50 h-8 w-32 text-sm">
+              <SelectValue>{MONTH_NAMES[currentMonth]}</SelectValue>
+            </SelectTrigger>
+            <SelectContent className="z-[999999]">
+              {MONTH_NAMES.map((month, i) => (
+                <SelectItem key={i} value={String(i)}>
+                  {month}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <Input
+          type="text"
+          inputMode="numeric"
+          value={yearInput}
+          onChange={(e) => {
+            const value = e.target.value.replace(/\D/g, '')
+            if (value.length <= 4) {
+              setYearInput(value)
+            }
+          }}
+          onBlur={() => {
+            const year = parseInt(yearInput, 10)
+            if (!isNaN(year) && yearInput.length === 4 && year > 1999) {
+              changeYear(year)
+            } else {
+              setYearInput(String(currentYear))
+            }
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.currentTarget.blur()
+            }
+          }}
+          className="relative z-50 h-8 w-20 text-center text-sm font-medium"
+          placeholder="Năm"
+          disabled={disabled}
+          maxLength={4}
+        />
+
+        <button
+          type="button"
+          onClick={() => setMonth(new Date(currentYear, currentMonth + 1, 1))}
+          disabled={disabled}
+          className="hover:bg-accent absolute right-0 z-50 flex h-8 w-8 items-center justify-center rounded-md disabled:opacity-50"
+          aria-label="Tháng sau"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      </div>
+    )
+  }
 
   // Render simple input on server, full component on client
   if (!mounted) {
@@ -233,9 +387,14 @@ export default function DateTimeLocalPicker({
                 mode="single"
                 selected={date}
                 onSelect={handleDateSelect}
+                month={month}
+                onMonthChange={setMonth}
                 disabled={disabled}
-                initialFocus
                 locale={vi}
+                captionLayout="label"
+                components={{
+                  MonthCaption: CustomCaption,
+                }}
               />
             </div>
 

@@ -20,10 +20,10 @@ const getPriorityLabel = (t: (key: string) => string): Record<Priority, string> 
 })
 
 const priorityTone: Record<Priority, string> = {
-  [Priority.LOW]: 'bg-slate-100 text-slate-700',
-  [Priority.NORMAL]: 'bg-blue-100 text-blue-700',
-  [Priority.HIGH]: 'bg-amber-100 text-amber-700',
-  [Priority.URGENT]: 'bg-red-100 text-red-700',
+  [Priority.LOW]: 'bg-[var(--neutral-100)] text-[var(--neutral-700)]',
+  [Priority.NORMAL]: 'bg-[var(--brand-50)] text-[var(--brand-700)]',
+  [Priority.HIGH]: 'bg-[var(--warning-50)] text-[var(--warning-500)]',
+  [Priority.URGENT]: 'bg-[var(--error-50)] text-[var(--error-500)]',
 }
 
 export function SlaQuickPanel() {
@@ -78,7 +78,7 @@ export function SlaQuickPanel() {
       ) : listQuery.isError ? (
         <Card>
           <CardHeader className="flex flex-row items-center gap-3">
-            <AlertTriangle className="h-5 w-5 text-red-500" />
+            <AlertTriangle className="h-5 w-5 text-[var(--error-500)]" />
             <div>
               <CardTitle>{t('requests.sla.error.title')}</CardTitle>
               <CardDescription>

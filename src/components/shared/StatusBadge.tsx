@@ -50,11 +50,16 @@ export function StatusBadge(props: StatusBadgeProps) {
       <span
         className={cn(
           'inline-flex w-fit items-center rounded-[20px] border px-3 py-1.5 text-[12px] font-semibold',
-          cfg.color === 'blue' && 'border-blue-200 bg-blue-50 text-blue-600',
-          cfg.color === 'amber' && 'border-amber-200 bg-amber-50 text-amber-600',
-          cfg.color === 'green' && 'border-emerald-200 bg-emerald-100 text-emerald-800',
-          cfg.color === 'red' && 'border-red-200 bg-red-50 text-red-600',
-          cfg.color === 'gray' && 'border-gray-200 bg-gray-100 text-gray-600',
+          cfg.color === 'blue' &&
+            'border-[var(--brand-200)] bg-[var(--brand-50)] text-[var(--brand-700)]',
+          cfg.color === 'amber' &&
+            'border-[var(--color-warning-200)] bg-[var(--color-warning-50)] text-[var(--color-warning-500)]',
+          cfg.color === 'green' &&
+            'border-[var(--color-success-200)] bg-[var(--color-success-50)] text-[var(--color-success-500)]',
+          cfg.color === 'red' &&
+            'border-[var(--error-200)] bg-[var(--color-error-50)] text-[var(--error-500)]',
+          cfg.color === 'gray' &&
+            'border-[var(--border)] bg-[var(--neutral-100)] text-[var(--neutral-700)]',
           className
         )}
       >
@@ -70,10 +75,14 @@ export function StatusBadge(props: StatusBadgeProps) {
       <span
         className={cn(
           'inline-flex w-fit items-center rounded-[20px] border px-3 py-1.5 text-[12px] font-semibold',
-          cfg.color === 'orange' && 'border-orange-200 bg-orange-100 text-orange-700',
-          cfg.color === 'gray' && 'border-gray-200 bg-gray-100 text-gray-600',
-          cfg.color === 'blue' && 'border-blue-200 bg-blue-50 text-blue-600',
-          cfg.color === 'red' && 'border-red-200 bg-red-100 text-red-800',
+          cfg.color === 'orange' &&
+            'border-[var(--warning-200)] bg-[var(--color-warning-50)] text-[var(--warning-500)]',
+          cfg.color === 'gray' &&
+            'border-[var(--border)] bg-[var(--neutral-100)] text-[var(--neutral-700)]',
+          cfg.color === 'blue' &&
+            'border-[var(--brand-200)] bg-[var(--brand-50)] text-[var(--brand-700)]',
+          cfg.color === 'red' &&
+            'border-[var(--error-200)] bg-[var(--color-error-50)] text-[var(--error-500)]',
           className
         )}
       >
@@ -112,9 +121,9 @@ export function StatusBadge(props: StatusBadgeProps) {
       case 'success':
         return 'bg-emerald-100 text-emerald-700 border-emerald-200'
       case 'warning':
-        return 'bg-amber-100 text-amber-700 border-amber-200'
+        return 'bg-[var(--warning-50)] text-[var(--warning-500)] border-[var(--warning-200)]'
       case 'error':
-        return 'bg-red-100 text-red-700 border-red-200'
+        return 'bg-[var(--color-error-50)] text-[var(--color-error-500)] border-[var(--color-error-200)]'
       case 'neutral':
         return 'bg-gray-100 text-gray-700 border-gray-200'
       default:

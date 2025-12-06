@@ -344,7 +344,7 @@ export default function BulkAssignModal({ trigger }: BulkAssignModalProps) {
                 <Button
                   onClick={submit}
                   disabled={submitting}
-                  className="min-w-[150px] bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+                  className="min-w-[150px] bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
                 >
                   {submitting ? (
                     <>

@@ -228,6 +228,7 @@ export function PurchaseRequestForm({
                   disabled={isPending}
                   optional
                   placeholder="Chọn tiền tệ (mặc định: USD)"
+                  customerId={customerId}
                 />
               </FormControl>
               <FormDescription>Tiền tệ cho chi phí ước tính</FormDescription>

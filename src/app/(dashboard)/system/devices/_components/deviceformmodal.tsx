@@ -422,7 +422,7 @@ export default function DeviceFormModal({
         <DialogTrigger asChild>{trigger}</DialogTrigger>
       ) : mode === 'create' ? (
         <DialogTrigger asChild>
-          <Button className="gap-2 bg-white text-blue-600 hover:bg-white/90">
+          <Button className="gap-2 bg-white text-[var(--brand-500)] hover:bg-[var(--brand-50)]">
             <Plus className="h-4 w-4" />
             {t('devices.add')}
           </Button>
@@ -475,7 +475,7 @@ export default function DeviceFormModal({
               type="submit"
               form="device-form"
               disabled={submitting}
-              className="min-w-[120px] bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+              className="min-w-[120px] bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
             >
               {submitting ? (
                 <>
@@ -500,14 +500,14 @@ export default function DeviceFormModal({
         <form id="device-form" onSubmit={handleSubmit} className="space-y-6">
           {/* Device Model Section */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2 text-sm font-semibold text-blue-700">
+            <div className="flex items-center gap-2 text-sm font-semibold text-[var(--brand-700)]">
               <Package className="h-4 w-4" />
               {t('device.model_info')}
             </div>
 
             <div className="space-y-2">
               <Label className="flex items-center gap-2 text-base font-semibold">
-                <Monitor className="h-4 w-4 text-blue-600" />
+                <Monitor className="h-4 w-4 text-[var(--brand-600)]" />
                 {t('device.form.device_model')}
               </Label>
               <Select
@@ -551,14 +551,14 @@ export default function DeviceFormModal({
           {mode === 'create' && (
             <>
               <div className="space-y-4">
-                <div className="flex items-center gap-2 text-sm font-semibold text-rose-700">
+                <div className="flex items-center gap-2 text-sm font-semibold text-[var(--color-error-500)]">
                   <Package className="h-4 w-4" />
                   Thông tin Khách hàng
                 </div>
 
                 <div className="space-y-2">
                   <Label className="flex items-center gap-2 text-base font-semibold">
-                    <Package className="h-4 w-4 text-rose-600" />
+                    <Package className="h-4 w-4 text-[var(--color-error-500)]" />
                     Khách hàng
                   </Label>
                   <Select
@@ -930,7 +930,7 @@ export default function DeviceFormModal({
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label className="flex items-center gap-2 text-base font-semibold">
-                  <Wifi className="h-4 w-4 text-blue-600" />
+                  <Wifi className="h-4 w-4 text-[var(--brand-600)]" />
                   {t('device.ip')}
                 </Label>
                 <Input

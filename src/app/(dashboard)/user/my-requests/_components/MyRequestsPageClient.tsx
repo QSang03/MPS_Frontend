@@ -82,7 +82,7 @@ export default function MyRequestsPageClient() {
   if (!customerId) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4 dark:bg-slate-950">
-        <Loader2 className="h-10 w-10 animate-spin text-blue-600 dark:text-blue-400" />
+        <Loader2 className="h-10 w-10 animate-spin text-[var(--brand-600)] dark:text-[var(--brand-400)]" />
       </div>
     )
   }
@@ -98,7 +98,7 @@ export default function MyRequestsPageClient() {
           actions={
             <div className="flex items-center gap-3">
               <ServiceRequestFormModal customerId={customerId} onSuccess={handleRefresh}>
-                <Button className="bg-blue-600 text-white shadow-sm hover:bg-blue-700">
+                <Button className="shadow-sm">
                   <Plus className="mr-2 h-4 w-4" />
                   Tạo Yêu Cầu
                 </Button>

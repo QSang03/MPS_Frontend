@@ -118,7 +118,7 @@ export function AlertsSummary({
       icon: AlertTriangle,
       color: 'from-red-500 to-red-600',
       bgColor: 'bg-red-50',
-      iconColor: 'text-red-600',
+      iconColor: 'text-[var(--color-error-500)]',
       description: 'Thiết bị cần sửa chữa',
     },
     {
@@ -183,11 +183,11 @@ export function AlertsSummary({
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="flex items-center gap-2 text-base font-semibold text-[#1F2937]">
-                <Bell className="h-5 w-5 text-[#DC2626]" />
+              <CardTitle className="flex items-center gap-2 text-base font-semibold text-[var(--foreground)]">
+                <Bell className="h-5 w-5 text-[var(--error-500)]" />
                 Cảnh báo hệ thống
               </CardTitle>
-              <CardDescription className="text-[13px] text-[#6B7280]">
+              <CardDescription className="text-[13px] text-[var(--neutral-500)]">
                 {totalAlerts > 0 ? `${totalAlerts} cảnh báo cần xử lý` : 'Không có cảnh báo'}
               </CardDescription>
             </div>
@@ -203,7 +203,9 @@ export function AlertsSummary({
             <div className="flex h-40 items-center justify-center text-gray-500">
               <div className="text-center">
                 <Bell className="mx-auto mb-2 h-12 w-12 text-green-300" />
-                <p className="font-medium text-green-600">Hệ thống hoạt động bình thường</p>
+                <p className="font-medium text-[var(--color-success-600)]">
+                  Hệ thống hoạt động bình thường
+                </p>
                 <p className="text-sm text-gray-500">Không có cảnh báo nào</p>
               </div>
             </div>
@@ -368,7 +370,7 @@ export function AlertsSummary({
         {totalAlerts > 0 && (
           <CardFooter className="flex justify-end border-t border-gray-100 bg-gray-50/50 p-4">
             <Button
-              className="w-full border-gray-200 text-[#6B7280] hover:bg-white hover:text-[#1F2937] sm:w-auto"
+              className="w-full border-gray-200 text-[var(--neutral-500)] hover:bg-white hover:text-[var(--foreground)] sm:w-auto"
               variant="outline"
               onClick={onViewAll}
             >

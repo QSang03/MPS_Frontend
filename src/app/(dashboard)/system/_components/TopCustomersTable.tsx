@@ -14,20 +14,23 @@ import { Button } from '@/components/ui/button'
 import type { TopCustomer } from '@/types/dashboard'
 import { Building2, Crown, Medal, Award, Users, Download } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
+import type { CurrencyDataDto } from '@/types/models/currency'
+import { formatCurrencyWithSymbol } from '@/lib/utils/formatters'
 
 interface TopCustomersTableProps {
   topCustomers: TopCustomer[] | undefined
   isLoading?: boolean
   onViewAll?: () => void
   onExport?: () => void
+  baseCurrency?: CurrencyDataDto | null
 }
 
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 2,
-  }).format(amount)
+function formatCurrency(amount: number, currency?: CurrencyDataDto | null): string {
+  if (currency) {
+    return formatCurrencyWithSymbol(amount, currency)
+  }
+  // Fallback to USD if no currency provided
+  return formatCurrencyWithSymbol(amount, { code: 'USD', symbol: '$' } as CurrencyDataDto)
 }
 
 const RANK_ICONS = [
@@ -41,6 +44,7 @@ export function TopCustomersTable({
   isLoading,
   onViewAll,
   onExport,
+  baseCurrency,
 }: TopCustomersTableProps) {
   if (isLoading || !topCustomers) {
     return (
@@ -91,8 +95,25 @@ export function TopCustomersTable({
     )
   }
 
-  // Calculate total revenue for percentage
-  const totalRevenue = topCustomers.reduce((sum, customer) => sum + customer.totalRevenue, 0)
+  // Helper to get display value (converted if available, else original)
+  const getDisplayValue = (
+    original: number,
+    converted: number | undefined,
+    useConverted: boolean
+  ): number => {
+    if (useConverted && converted !== undefined) return converted
+    return original
+  }
+
+  // Use converted values if baseCurrency is available (System Admin context)
+  const useConverted = !!baseCurrency
+
+  // Calculate total revenue for percentage (use converted if available)
+  const totalRevenue = topCustomers.reduce(
+    (sum, customer) =>
+      sum + getDisplayValue(customer.totalRevenue, customer.totalRevenueConverted, useConverted),
+    0
+  )
 
   return (
     <motion.div
@@ -102,7 +123,7 @@ export function TopCustomersTable({
     >
       <Card className="border-0 shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
         <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-base font-semibold text-[#1F2937]">
+          <CardTitle className="flex items-center gap-2 text-base font-semibold text-[var(--foreground)]">
             <Building2 className="h-5 w-5 text-[#0066CC]" />
             Top khách hàng
           </CardTitle>
@@ -113,7 +134,22 @@ export function TopCustomersTable({
         <CardContent>
           <div className="space-y-3">
             {topCustomers.map((customer, index) => {
-              const percentage = totalRevenue > 0 ? (customer.totalRevenue / totalRevenue) * 100 : 0
+              const revenue = getDisplayValue(
+                customer.totalRevenue,
+                customer.totalRevenueConverted,
+                useConverted
+              )
+              const cogs = getDisplayValue(
+                customer.totalCogs,
+                customer.totalCogsConverted,
+                useConverted
+              )
+              const profit = getDisplayValue(
+                customer.grossProfit,
+                customer.grossProfitConverted,
+                useConverted
+              )
+              const percentage = totalRevenue > 0 ? (revenue / totalRevenue) * 100 : 0
               const rankConfig = RANK_ICONS[index]
 
               return (
@@ -134,7 +170,7 @@ export function TopCustomersTable({
                   <div
                     className={cn(
                       'flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full',
-                      rankConfig?.bgColor || 'bg-blue-50'
+                      rankConfig?.bgColor || 'bg-[var(--brand-50)]'
                     )}
                   >
                     {rankConfig ? (
@@ -177,7 +213,8 @@ export function TopCustomersTable({
                           index === 0 && 'bg-gradient-to-r from-yellow-400 to-yellow-600',
                           index === 1 && 'bg-gradient-to-r from-gray-400 to-gray-600',
                           index === 2 && 'bg-gradient-to-r from-orange-400 to-orange-600',
-                          index >= 3 && 'bg-gradient-to-r from-blue-400 to-blue-600'
+                          index >= 3 &&
+                            'bg-gradient-to-r from-[var(--brand-400)] to-[var(--brand-600)]'
                         )}
                       />
                     </div>
@@ -186,18 +223,18 @@ export function TopCustomersTable({
                   {/* Revenue, COGS, Profit & Percentage */}
                   <div className="text-right">
                     <p className="font-bold text-gray-900">
-                      {formatCurrency(customer.totalRevenue)}
+                      {formatCurrency(revenue, baseCurrency || customer.baseCurrency)}
                     </p>
                     <p className="text-xs text-gray-500">
-                      Chi phí: {formatCurrency(customer.totalCogs)}
+                      Chi phí: {formatCurrency(cogs, baseCurrency || customer.baseCurrency)}
                     </p>
                     <p
                       className={cn(
                         'text-xs font-semibold',
-                        customer.grossProfit >= 0 ? 'text-green-600' : 'text-red-600'
+                        profit >= 0 ? 'text-[var(--color-success-600)]' : 'text-[var(--error-600)]'
                       )}
                     >
-                      Lợi nhuận: {formatCurrency(customer.grossProfit)}
+                      Lợi nhuận: {formatCurrency(profit, baseCurrency || customer.baseCurrency)}
                     </p>
                     <p className="mt-1 text-xs text-gray-400">
                       {percentage.toFixed(1)}% tổng doanh thu
@@ -215,14 +252,24 @@ export function TopCustomersTable({
                 <div className="flex items-center justify-between text-sm">
                   <span className="font-medium text-gray-600">Tổng doanh thu:</span>
                   <span className="text-lg font-bold text-gray-900">
-                    {formatCurrency(totalRevenue)}
+                    {formatCurrency(totalRevenue, baseCurrency)}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="font-medium text-gray-600">Tổng chi phí:</span>
                   <span className="text-lg font-bold text-gray-900">
                     {formatCurrency(
-                      topCustomers.reduce((sum, customer) => sum + customer.totalCogs, 0)
+                      topCustomers.reduce(
+                        (sum, customer) =>
+                          sum +
+                          getDisplayValue(
+                            customer.totalCogs,
+                            customer.totalCogsConverted,
+                            useConverted
+                          ),
+                        0
+                      ),
+                      baseCurrency
                     )}
                   </span>
                 </div>
@@ -231,13 +278,32 @@ export function TopCustomersTable({
                   <span
                     className={cn(
                       'text-lg font-bold',
-                      topCustomers.reduce((sum, customer) => sum + customer.grossProfit, 0) >= 0
+                      topCustomers.reduce(
+                        (sum, customer) =>
+                          sum +
+                          getDisplayValue(
+                            customer.grossProfit,
+                            customer.grossProfitConverted,
+                            useConverted
+                          ),
+                        0
+                      ) >= 0
                         ? 'text-green-600'
                         : 'text-red-600'
                     )}
                   >
                     {formatCurrency(
-                      topCustomers.reduce((sum, customer) => sum + customer.grossProfit, 0)
+                      topCustomers.reduce(
+                        (sum, customer) =>
+                          sum +
+                          getDisplayValue(
+                            customer.grossProfit,
+                            customer.grossProfitConverted,
+                            useConverted
+                          ),
+                        0
+                      ),
+                      baseCurrency
                     )}
                   </span>
                 </div>
@@ -250,12 +316,16 @@ export function TopCustomersTable({
             variant="outline"
             size="sm"
             onClick={onExport}
-            className="gap-2 border-gray-200 text-[#6B7280] hover:bg-white hover:text-[#1F2937]"
+            className="gap-2 border-gray-200 text-[#6B7280] hover:bg-white hover:text-[var(--brand-700)]"
           >
             <Download className="h-4 w-4" />
             Xuất danh sách
           </Button>
-          <Button size="sm" onClick={onViewAll} className="gap-2 bg-[#0066CC] hover:bg-[#0052a3]">
+          <Button
+            size="sm"
+            onClick={onViewAll}
+            className="gap-2 bg-[var(--btn-primary)] hover:bg-[var(--btn-primary-hover)]"
+          >
             <Users className="h-4 w-4" />
             Xem tất cả
           </Button>

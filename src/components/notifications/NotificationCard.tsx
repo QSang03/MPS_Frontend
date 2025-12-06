@@ -29,9 +29,9 @@ export function NotificationCard({ notification }: NotificationCardProps) {
 
   const getIcon = () => {
     const t = local.metadata?.type ?? notification.metadata?.type
-    if (t === 'SERVICE') return <Bell className="h-4 w-4 text-blue-600" />
-    if (t === 'PURCHASE') return <Package className="h-4 w-4 text-green-600" />
-    return <AlertTriangle className="h-4 w-4 text-red-600" />
+    if (t === 'SERVICE') return <Bell className="h-4 w-4 text-[var(--brand-600)]" />
+    if (t === 'PURCHASE') return <Package className="h-4 w-4 text-[var(--color-success-600)]" />
+    return <AlertTriangle className="h-4 w-4 text-[var(--color-error-500)]" />
   }
 
   const isUnread = (local.status ?? notification.status) !== 'READ'
@@ -50,7 +50,7 @@ export function NotificationCard({ notification }: NotificationCardProps) {
         <div
           className={cn(
             'flex h-9 w-9 items-center justify-center rounded',
-            isUnread ? 'bg-red-50' : 'bg-gray-100'
+            isUnread ? 'bg-[var(--color-error-50)]' : 'bg-gray-100'
           )}
         >
           {getIcon()}

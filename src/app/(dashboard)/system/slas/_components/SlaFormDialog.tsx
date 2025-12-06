@@ -133,7 +133,7 @@ export function SlaFormDialog({
               type="submit"
               form="sla-form"
               disabled={isSubmitting}
-              className="min-w-[120px] bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+              className="min-w-[120px] bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
             >
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {initialData ? 'Lưu thay đổi' : 'Tạo SLA'}

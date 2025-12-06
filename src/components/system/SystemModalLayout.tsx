@@ -35,7 +35,7 @@ export function SystemModalLayout({
   const headerColors = {
     create: 'from-green-600 via-emerald-600 to-teal-600',
     edit: 'from-orange-600 via-amber-600 to-yellow-600',
-    view: 'from-blue-600 via-cyan-600 to-teal-600',
+    view: 'from-[var(--brand-600)] via-[var(--brand-500)] to-[var(--brand-400)]',
   }
   return (
     <DialogContent

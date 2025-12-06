@@ -39,7 +39,9 @@ export function CurrencyDetailModal({ currency, open, onOpenChange }: CurrencyDe
             <div className="flex items-center justify-between rounded-lg border p-4">
               <div className="space-y-1">
                 <p className="text-sm text-gray-500">Mã tiền tệ</p>
-                <p className="font-mono text-2xl font-bold text-blue-600">{currency.code}</p>
+                <p className="font-mono text-2xl font-bold text-[var(--brand-600)]">
+                  {currency.code}
+                </p>
               </div>
               <div className="text-4xl font-semibold text-gray-700">{currency.symbol}</div>
             </div>

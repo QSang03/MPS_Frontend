@@ -133,11 +133,11 @@ export function ProfileClient({ initialProfile }: ProfileClientProps) {
               </div>
 
               {/* Department */}
-              <div className="flex items-center gap-3 rounded-2xl border border-blue-200 bg-gradient-to-r from-blue-50 to-blue-100 p-3">
+              <div className="flex items-center gap-3 rounded-2xl border border-[var(--brand-200)] bg-gradient-to-r from-[var(--brand-50)] to-[var(--brand-100)] p-3">
                 <Building className="h-5 w-5 flex-shrink-0 text-black dark:text-white" />
                 <div>
                   <p className="text-xs font-bold text-gray-600">BỘ PHẬN</p>
-                  <p className="text-sm font-bold text-blue-700">{departmentName}</p>
+                  <p className="text-sm font-bold text-[var(--brand-700)]">{departmentName}</p>
                 </div>
               </div>
 
@@ -263,7 +263,7 @@ export function ProfileClient({ initialProfile }: ProfileClientProps) {
                   {/* Role */}
                   <div className="space-y-2">
                     <Label className="text-sm font-bold text-gray-700">🎭 Vai trò</Label>
-                    <Badge className="w-full justify-center rounded-2xl border-2 border-blue-300 bg-gradient-to-r from-blue-100 to-blue-50 py-2 font-bold text-blue-700">
+                    <Badge className="w-full justify-center rounded-2xl border-2 border-[var(--brand-200)] bg-gradient-to-r from-[var(--brand-50)] to-[var(--brand-100)] py-2 font-bold text-[var(--brand-700)]">
                       {user.role?.name || 'User'}
                     </Badge>
                   </div>

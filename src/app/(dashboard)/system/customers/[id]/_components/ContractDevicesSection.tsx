@@ -108,7 +108,7 @@ export default function ContractDevicesSection({
     if (value === undefined || value === null) return '—'
     const currencySymbol = currency?.symbol || (currency?.code ? currency.code : '$')
     if (typeof value === 'number') {
-      const formatted = new Intl.NumberFormat('vi-VN').format(value)
+      const formatted = new Intl.NumberFormat('en-US').format(value)
       // Use non-breaking space to prevent line break between currency symbol and value
       return `${currencySymbol}\u00A0${formatted}`
     }

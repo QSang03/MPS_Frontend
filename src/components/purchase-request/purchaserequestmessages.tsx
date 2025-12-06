@@ -95,7 +95,9 @@ export default function PurchaseRequestMessages({ purchaseRequestId, currentUser
                   <AvatarFallback
                     className={cn(
                       'text-xs font-medium',
-                      isMe ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-700'
+                      isMe
+                        ? 'bg-[var(--brand-50)] text-[var(--brand-700)]'
+                        : 'bg-[var(--neutral-100)] text-[var(--neutral-700)]'
                     )}
                   >
                     {m.authorName
@@ -128,7 +130,7 @@ export default function PurchaseRequestMessages({ purchaseRequestId, currentUser
                     className={cn(
                       'rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap shadow-sm',
                       isMe
-                        ? 'rounded-tr-none bg-blue-600 text-white'
+                        ? 'rounded-tr-none bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)]'
                         : 'rounded-tl-none border border-slate-100 bg-white text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200'
                     )}
                   >
@@ -165,7 +167,7 @@ export default function PurchaseRequestMessages({ purchaseRequestId, currentUser
             className={cn(
               'absolute right-1 bottom-1 h-9 w-9 transition-all',
               draft.trim().length > 0
-                ? 'bg-blue-600 hover:bg-blue-700'
+                ? 'bg-[var(--btn-primary)] hover:bg-[var(--btn-primary-hover)]'
                 : 'bg-slate-200 text-slate-400 hover:bg-slate-200 dark:bg-slate-800'
             )}
           >

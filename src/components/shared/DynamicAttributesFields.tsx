@@ -175,7 +175,7 @@ export function DynamicAttributesFields({
   }
 
   return (
-    <div className="space-y-4 rounded-lg border border-sky-200 bg-sky-50/30 p-4">
+    <div className="space-y-4 rounded-lg border border-[var(--brand-200)] bg-[var(--brand-50)]/30 p-4">
       <div className="mb-4">
         <h3 className="text-sm font-semibold text-sky-900">Thuộc tính bổ sung</h3>
         <p className="text-muted-foreground text-xs">

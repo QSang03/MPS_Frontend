@@ -1002,7 +1002,7 @@ export function PolicyFormModal({
                 }}
                 style={{ pointerEvents: 'auto' }}
                 aria-disabled={false}
-                className="min-w-[120px] bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+                className="min-w-[120px] bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
               >
                 <Settings className="mr-2 h-4 w-4" />
                 Chỉnh sửa
@@ -1013,7 +1013,7 @@ export function PolicyFormModal({
                 form="policy-form"
                 disabled={isLoading}
                 onClick={form.handleSubmit(handleSubmit)}
-                className="min-w-[120px] bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+                className="min-w-[120px] bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
               >
                 {isLoading ? (
                   <>
@@ -1038,9 +1038,9 @@ export function PolicyFormModal({
           >
             <fieldset disabled={localViewOnly} className="space-y-8">
               {/* SECTION: Thông tin cơ bản */}
-              <div className="space-y-5 rounded-xl border-2 border-blue-100 bg-gradient-to-br from-blue-50/50 to-purple-50/30 p-6">
+              <div className="space-y-5 rounded-xl border-2 border-[var(--brand-100)] bg-gradient-to-br from-[var(--brand-50)]/50 to-[var(--brand-50)]/30 p-6">
                 <div className="mb-4 flex items-center gap-2">
-                  <FileCode className="h-5 w-5 text-blue-600" />
+                  <FileCode className="h-5 w-5 text-[var(--brand-600)]" />
                   <h3 className="text-lg font-semibold text-gray-800">Thông tin cơ bản</h3>
                 </div>
 

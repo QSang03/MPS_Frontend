@@ -204,10 +204,14 @@ export default function DeviceUsageHistory({ deviceId, device }: DeviceUsageHist
   }, [hasDataPerType])
 
   const chartConfig = useMemo<ChartConfig>(() => {
-    // Use explicit hex palette as a reliable fallback for SVG stroke colors.
-    // CSS variable values may not always resolve correctly for SVG stroke in some
-    // embedding contexts, so prefer hex literals here for visibility.
-    const palette = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
+    // Use theme CSS variables for chart colors so charts reflect the active theme.
+    const palette = [
+      'var(--brand-600)',
+      'var(--color-success-500)',
+      'var(--warning-500)',
+      'var(--error-500)',
+      'var(--brand-500)',
+    ]
 
     return consumables.reduce<ChartConfig>((acc, c, idx) => {
       acc[`c${idx}`] = {
@@ -247,12 +251,14 @@ export default function DeviceUsageHistory({ deviceId, device }: DeviceUsageHist
         </CardHeader>
         <CardContent>
           {device && isHistoricalDevice(device) && device.ownershipPeriod && (
-            <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 px-4 py-3">
+            <div className="mb-4 rounded-md border border-[var(--warning-200)] bg-[var(--warning-50)] px-4 py-3">
               <div className="flex items-start gap-2">
-                <AlertTriangle className="mt-0.5 h-5 w-5 text-amber-600" />
+                <AlertTriangle className="mt-0.5 h-5 w-5 text-[var(--warning-500)]" />
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-amber-800">Thiết bị đã được chuyển giao</p>
-                  <p className="mt-1 text-xs text-amber-700">
+                  <p className="text-sm font-medium text-[var(--warning-600)]">
+                    Thiết bị đã được chuyển giao
+                  </p>
+                  <p className="mt-1 text-xs text-[var(--warning-500)]">
                     Bạn chỉ có thể xem dữ liệu từ{' '}
                     {new Date(device.ownershipPeriod.fromDate).toLocaleDateString('vi-VN')} đến{' '}
                     {device.ownershipPeriod.toDate
@@ -306,11 +312,11 @@ export default function DeviceUsageHistory({ deviceId, device }: DeviceUsageHist
           <div className="mt-4">
             {loading ? (
               <div className="flex items-center gap-2">
-                <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
+                <Loader2 className="h-5 w-5 animate-spin text-[var(--brand-600)]" />
                 <div className="text-sm">Đang tải dữ liệu...</div>
               </div>
             ) : error ? (
-              <div className="text-sm text-red-600">{error}</div>
+              <div className="text-sm text-[var(--color-error-500)]">{error}</div>
             ) : consumables.length === 0 ? (
               <div className="text-muted-foreground text-sm">Không có dữ liệu</div>
             ) : (
@@ -323,7 +329,9 @@ export default function DeviceUsageHistory({ deviceId, device }: DeviceUsageHist
                       <button
                         key={c.consumableTypeId ?? i}
                         className={`rounded-md border px-3 py-1 text-sm shadow-sm ${
-                          visibleTypes[i] ? 'border-blue-300 bg-blue-50' : 'bg-white'
+                          visibleTypes[i]
+                            ? 'border-[var(--brand-300)] bg-[var(--brand-50)]'
+                            : 'bg-white'
                         }`}
                         onClick={() =>
                           setVisibleTypes((prev) => {

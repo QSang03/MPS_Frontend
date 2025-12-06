@@ -78,6 +78,7 @@ export function WarehouseDocumentForm({ initialData, onSuccess }: Props) {
   const { control, handleSubmit, setValue } = form
   const { fields, append, remove } = useFieldArray({ control, name: 'items' })
   const watchType = useWatch({ control, name: 'type' })
+  const watchCustomerId = useWatch({ control, name: 'customerId' })
 
   // Tự động clear giá trị không phù hợp khi type thay đổi
   useEffect(() => {
@@ -353,6 +354,7 @@ export function WarehouseDocumentForm({ initialData, onSuccess }: Props) {
                             disabled={isPending}
                             optional
                             placeholder="Chọn tiền tệ"
+                            customerId={watchCustomerId}
                           />
                         </FormControl>
                         <FormMessage />

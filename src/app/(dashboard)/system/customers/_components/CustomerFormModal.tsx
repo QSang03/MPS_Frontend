@@ -414,7 +414,7 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
             <Button
               type="submit"
               form="customer-form"
-              className="min-w-[140px] bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+              className="min-w-[140px] bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
               disabled={submitting}
             >
               {submitting ? (
@@ -589,6 +589,7 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
                   }}
                   optional
                   placeholder="Chọn tiền tệ mặc định"
+                  customerId={customer?.id}
                 />
               </div>
             </div>

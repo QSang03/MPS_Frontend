@@ -104,7 +104,7 @@ export function NotificationItem({ notification, onMarkAsRead }: NotificationIte
     <div
       className={cn(
         'hover:bg-accent flex cursor-pointer items-start gap-3 rounded-lg p-3 transition-colors',
-        !isRead && 'bg-blue-50/50 dark:bg-blue-950/20'
+        !isRead && 'bg-[var(--brand-50)]/50 dark:bg-[var(--brand-900)]/20'
       )}
       onClick={handleClick}
     >
@@ -112,7 +112,7 @@ export function NotificationItem({ notification, onMarkAsRead }: NotificationIte
         {isRead ? (
           <CheckCircle2 className="text-muted-foreground h-4 w-4" />
         ) : (
-          <Circle className="h-4 w-4 fill-blue-600 text-blue-600" />
+          <Circle className="h-4 w-4 fill-[var(--brand-600)] text-[var(--brand-600)]" />
         )}
       </div>
       <div className="min-w-0 flex-1 space-y-1">

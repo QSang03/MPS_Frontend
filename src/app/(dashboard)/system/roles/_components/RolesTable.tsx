@@ -436,7 +436,11 @@ function RolesTableContent({
         cell: ({ row }) => (
           <Badge
             variant={row.original.isActive ? 'default' : 'secondary'}
-            className={row.original.isActive ? 'bg-green-500 text-white' : 'bg-gray-400 text-white'}
+            className={
+              row.original.isActive
+                ? 'bg-[var(--color-success-500)] text-white'
+                : 'bg-[var(--color-neutral-300)] text-white'
+            }
           >
             {row.original.isActive ? (
               <>
@@ -490,7 +494,7 @@ function RolesTableContent({
                   size="sm"
                   variant="ghost"
                   onClick={() => !isProtectedRole && onEditRole(row.original)}
-                  className="transition-all hover:bg-blue-100 hover:text-blue-700"
+                  className="transition-all hover:bg-[var(--brand-50)] hover:text-[var(--brand-700)]"
                   title={isProtectedRole ? t('roles.table.protected_edit') : t('roles.table.edit')}
                   disabled={isProtectedRole}
                 >
@@ -508,7 +512,7 @@ function RolesTableContent({
                     <Button
                       size="sm"
                       variant="ghost"
-                      className="transition-all hover:bg-red-100 hover:text-red-700"
+                      className="transition-all hover:bg-[var(--error-50)] hover:text-[var(--error-500)]"
                       title={
                         isProtectedRole
                           ? t('roles.table.protected_delete')
@@ -566,7 +570,7 @@ function RolesTableContent({
             </p>
             <Button
               onClick={onCreateRole}
-              className="rounded-lg bg-blue-600 px-6 py-2 text-white transition-all hover:bg-blue-700"
+              className="rounded-lg bg-[var(--btn-primary)] px-6 py-2 text-[var(--btn-primary-foreground)] transition-all hover:bg-[var(--btn-primary-hover)]"
             >
               <Plus className="mr-2 h-4 w-4" />
               {t('roles.empty.create_button')}

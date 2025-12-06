@@ -346,7 +346,7 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
               type="submit"
               form="a4-form"
               disabled={submitting}
-              className="min-w-[120px] bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+              className="min-w-[120px] bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
             >
               {submitting ? t('button.saving') : t('button.update')}
             </Button>

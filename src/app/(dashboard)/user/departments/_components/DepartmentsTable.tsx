@@ -281,7 +281,7 @@ export function DepartmentsTable() {
               </p>
               <Button
                 onClick={openCreate}
-                className="transform rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 px-8 py-3 font-bold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:from-blue-700 hover:to-cyan-700 hover:shadow-xl"
+                className="transform rounded-xl bg-[var(--btn-primary)] px-8 py-3 font-bold text-[var(--btn-primary-foreground)] shadow-lg transition-all duration-300 hover:scale-105 hover:bg-[var(--btn-primary-hover)] hover:shadow-xl"
               >
                 <Plus className="mr-2 h-5 w-5" />
                 Tạo Bộ phận Đầu Tiên
@@ -290,14 +290,14 @@ export function DepartmentsTable() {
           ) : (
             <div className="overflow-x-auto">
               <Table className="min-w-full">
-                <TableHeader className="border-b-2 border-gray-200 bg-gradient-to-r from-blue-100 via-cyan-50 to-sky-50">
+                <TableHeader className="border-b-2 border-gray-200 bg-gradient-to-r from-[var(--brand-100)] via-[var(--brand-50)] to-[var(--brand-50)]">
                   <TableRow>
                     <TableHead className="w-[80px] text-center font-bold text-gray-700">
                       STT
                     </TableHead>
                     <TableHead className="min-w-[200px] font-bold text-gray-700">
                       <div className="flex items-center gap-2">
-                        <Building2 className="h-5 w-5 text-blue-600" />
+                        <Building2 className="h-5 w-5 text-[var(--brand-600)]" />
                         Bộ phận
                       </div>
                     </TableHead>
@@ -384,7 +384,7 @@ export function DepartmentsTable() {
                               size="sm"
                               variant="ghost"
                               onClick={() => openEdit(dept)}
-                              className="transform rounded-lg transition-all duration-300 hover:scale-110 hover:bg-blue-100 hover:text-blue-700"
+                              className="transform rounded-lg transition-all duration-300 hover:scale-110 hover:bg-[var(--brand-50)] hover:text-[var(--brand-700)]"
                               title="Chỉnh sửa"
                             >
                               <Edit className="h-4 w-4" />
@@ -399,7 +399,7 @@ export function DepartmentsTable() {
                                 <Button
                                   size="sm"
                                   variant="ghost"
-                                  className="transform rounded-lg transition-all duration-300 hover:scale-110 hover:bg-red-100 hover:text-red-700"
+                                  className="transform rounded-lg transition-all duration-300 hover:scale-110 hover:bg-[var(--error-50)] hover:text-[var(--error-500)]"
                                   title="Xóa"
                                 >
                                   <Trash2 className="h-4 w-4" />
@@ -419,12 +419,12 @@ export function DepartmentsTable() {
 
         {/* PAGINATION */}
         {departments.length > 0 && (
-          <div className="border-gradient-to-r flex items-center justify-between rounded-2xl border-2 bg-gradient-to-r from-blue-200 from-white via-blue-50 to-cyan-50 to-cyan-200 p-5 shadow-lg transition-all duration-300 hover:shadow-xl">
+          <div className="border-gradient-to-r flex items-center justify-between rounded-2xl border-2 bg-gradient-to-r from-[var(--brand-200)] from-white via-[var(--brand-50)] to-[var(--brand-50)] to-[var(--brand-200)] p-5 shadow-lg transition-all duration-300 hover:shadow-xl">
             <div className="flex items-center gap-3">
               <span className="text-xs font-bold tracking-widest text-gray-600 uppercase">
                 Hiển thị
               </span>
-              <div className="rounded-xl border-2 border-blue-300 bg-gradient-to-r from-blue-100 to-cyan-100 px-4 py-2">
+              <div className="rounded-xl border-2 border-[var(--brand-200)] bg-gradient-to-r from-[var(--brand-50)] to-[var(--brand-100)] px-4 py-2">
                 <span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-sm font-bold text-transparent">
                   {departments.length}
                 </span>
@@ -440,14 +440,14 @@ export function DepartmentsTable() {
                 size="sm"
                 onClick={() => setPage(page - 1)}
                 disabled={page <= 1}
-                className="transform rounded-lg border-2 border-gray-300 font-bold transition-all duration-300 hover:scale-105 hover:border-blue-400 hover:bg-blue-100 hover:text-blue-700 disabled:opacity-50"
+                className="transform rounded-lg border-2 border-gray-300 font-bold transition-all duration-300 hover:scale-105 hover:border-[var(--brand-400)] hover:bg-[var(--brand-50)] hover:text-[var(--brand-700)] disabled:opacity-50"
               >
                 ← Trước
               </Button>
 
               <div className="flex items-center gap-2 rounded-xl border-2 border-blue-300 bg-white px-5 py-2 shadow-md">
                 <span className="text-xs font-bold text-gray-600">Trang</span>
-                <span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-base font-bold text-transparent">
+                <span className="bg-gradient-to-r from-[var(--brand-500)] to-[var(--brand-600)] bg-clip-text text-base font-bold text-transparent">
                   {pagination.page}
                 </span>
                 <span className="text-xs text-gray-400">/</span>

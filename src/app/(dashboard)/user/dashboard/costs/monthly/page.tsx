@@ -49,7 +49,7 @@ import {
 } from '@/components/ui/table'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { toast } from 'sonner'
-import { CurrencySelector } from '@/components/currency/CurrencySelector'
+// Note: CurrencySelector removed - Customer Cost Analytics does NOT use conversion
 import type { CurrencyDataDto } from '@/types/models/currency'
 import { formatCurrencyWithSymbol } from '@/lib/utils/formatters'
 
@@ -57,26 +57,17 @@ type TimeRangeMode = 'period' | 'range' | 'year'
 type TimeFilter = { period?: string; from?: string; to?: string; year?: string }
 
 export default function MonthlyCostsPage() {
-  const [baseCurrencyId, setBaseCurrencyId] = useState<string | null>(null) // ⭐ MỚI
-  const [baseCurrency, setBaseCurrency] = useState<CurrencyDataDto | null>(null) // ⭐ MỚI
-  const [showConverted, setShowConverted] = useState(false) // ⭐ MỚI
-
   const formatCurrency = (n?: number | null, currency?: CurrencyDataDto | null) => {
     if (n === undefined || n === null || Number.isNaN(Number(n))) return '-'
     if (currency) {
       return formatCurrencyWithSymbol(n, currency)
     }
+    // Fallback to VND if no currency provided
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
       currency: 'VND',
       maximumFractionDigits: 0,
     }).format(Number(n))
-  }
-
-  // Helper to get value (original or converted)
-  const getValue = (original: number | undefined, converted: number | undefined) => {
-    if (showConverted && converted !== undefined) return converted
-    return original ?? 0
   }
 
   const [mode, setMode] = useState<TimeRangeMode>('period')
@@ -96,9 +87,7 @@ export default function MonthlyCostsPage() {
       cogsConsumable: number
       cogsRepair: number
       totalCogs: number
-      cogsConsumableConverted?: number
-      cogsRepairConverted?: number
-      totalCogsConverted?: number
+      // Note: Customer Cost Analytics does NOT have converted values
     }
     devices: DeviceCostItem[]
   } | null>(null)
@@ -164,7 +153,7 @@ export default function MonthlyCostsPage() {
     : []
 
   const loadAggregatedCostSeries = useCallback(
-    async (devices: DeviceCostItem[], params: TimeFilter & { baseCurrencyId?: string }) => {
+    async (devices: DeviceCostItem[], params: TimeFilter) => {
       try {
         const allSeries: DeviceCostTrendItem[][] = []
         for (const device of devices) {
@@ -178,7 +167,7 @@ export default function MonthlyCostsPage() {
           }
         }
 
-        // Aggregate by month
+        // Aggregate by month (using original values only - no conversion)
         const monthMap = new Map<
           string,
           { cogsConsumable: number; cogsRepair: number; totalCogs: number }
@@ -191,17 +180,9 @@ export default function MonthlyCostsPage() {
               totalCogs: 0,
             }
             monthMap.set(item.month, {
-              cogsConsumable:
-                existing.cogsConsumable +
-                (showConverted
-                  ? (item.cogsConsumableConverted ?? item.cogsConsumable)
-                  : item.cogsConsumable),
-              cogsRepair:
-                existing.cogsRepair +
-                (showConverted ? (item.cogsRepairConverted ?? item.cogsRepair) : item.cogsRepair),
-              totalCogs:
-                existing.totalCogs +
-                (showConverted ? (item.totalCogsConverted ?? item.totalCogs) : item.totalCogs),
+              cogsConsumable: existing.cogsConsumable + item.cogsConsumable,
+              cogsRepair: existing.cogsRepair + item.cogsRepair,
+              totalCogs: existing.totalCogs + item.totalCogs,
             })
           })
         })
@@ -219,7 +200,7 @@ export default function MonthlyCostsPage() {
         setAggregatedCostSeries(null)
       }
     },
-    [showConverted]
+    []
   )
 
   const loadCost = useCallback(async () => {
@@ -242,20 +223,15 @@ export default function MonthlyCostsPage() {
     try {
       const res = await reportsAnalyticsService.getCustomerCost({
         ...params,
-        baseCurrencyId: baseCurrencyId || undefined, // ⭐ MỚI
+        // Note: Customer Cost Analytics does NOT use baseCurrencyId
       })
       if (res.success && res.data) {
         setCostData(res.data)
-        if (res.data.baseCurrency) {
-          setBaseCurrency(res.data.baseCurrency) // ⭐ MỚI
-        }
+        // Note: Customer Cost Analytics does NOT have baseCurrency in response
 
         // Load aggregated cost series for range/year modes
         if ((mode === 'range' || mode === 'year') && res.data.devices.length > 0) {
-          await loadAggregatedCostSeries(res.data.devices, {
-            ...params,
-            baseCurrencyId: baseCurrencyId || undefined, // ⭐ MỚI
-          })
+          await loadAggregatedCostSeries(res.data.devices, params)
         } else {
           setAggregatedCostSeries(null)
         }
@@ -278,7 +254,7 @@ export default function MonthlyCostsPage() {
     } finally {
       setLoading(false)
     }
-  }, [buildTimeForMode, mode, baseCurrencyId, loadAggregatedCostSeries])
+  }, [buildTimeForMode, mode, loadAggregatedCostSeries])
 
   const loadDeviceCost = useCallback(
     async (deviceId: string) => {
@@ -286,7 +262,7 @@ export default function MonthlyCostsPage() {
       try {
         const res = await reportsAnalyticsService.getDeviceCost(deviceId, {
           ...params,
-          baseCurrencyId: baseCurrencyId || undefined, // ⭐ MỚI
+          // Note: Customer Cost Analytics does NOT use baseCurrencyId
         })
         if (res.success && res.data) {
           setDeviceCostSeries(res.data.cost)
@@ -298,7 +274,7 @@ export default function MonthlyCostsPage() {
         setDeviceCostSeries(null)
       }
     },
-    [buildTimeForMode, baseCurrencyId]
+    [buildTimeForMode]
   )
 
   useEffect(() => {
@@ -385,32 +361,6 @@ export default function MonthlyCostsPage() {
                   </Button>
                 </div>
               </Card>
-              <div className="flex items-center gap-3">
-                <CurrencySelector
-                  value={baseCurrencyId}
-                  onChange={(id) => {
-                    setBaseCurrencyId(id)
-                    setBaseCurrency(null)
-                  }}
-                  onSelect={(currency) => {
-                    setBaseCurrency(currency)
-                  }}
-                  label="Tiền tệ chuẩn"
-                  placeholder="Chọn tiền tệ để convert"
-                  optional
-                  className="w-64"
-                />
-                {baseCurrencyId && (
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowConverted(!showConverted)}
-                    className="gap-2"
-                  >
-                    <DollarSign className="h-4 w-4" />
-                    {showConverted ? 'Hiển thị giá trị gốc' : 'Hiển thị giá trị đã convert'}
-                  </Button>
-                )}
-              </div>
             </div>
           </div>
         </div>
@@ -470,13 +420,7 @@ export default function MonthlyCostsPage() {
                         </TooltipProvider>
                       </div>
                       <h3 className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
-                        {formatCurrency(
-                          getValue(
-                            costData.customer.totalCogs,
-                            costData.customer.totalCogsConverted
-                          ),
-                          baseCurrency
-                        )}
+                        {formatCurrency(costData.customer.totalCogs)}
                       </h3>
                     </div>
                     <div className="rounded-lg bg-blue-100 p-3 dark:bg-blue-900/30">
@@ -510,13 +454,7 @@ export default function MonthlyCostsPage() {
                         </TooltipProvider>
                       </div>
                       <h3 className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
-                        {formatCurrency(
-                          getValue(
-                            costData.customer.cogsConsumable,
-                            costData.customer.cogsConsumableConverted
-                          ),
-                          baseCurrency
-                        )}
+                        {formatCurrency(costData.customer.cogsConsumable)}
                       </h3>
                     </div>
                     <div className="rounded-lg bg-green-100 p-3 dark:bg-green-900/30">
@@ -555,13 +493,7 @@ export default function MonthlyCostsPage() {
                         </TooltipProvider>
                       </div>
                       <h3 className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
-                        {formatCurrency(
-                          getValue(
-                            costData.customer.cogsRepair,
-                            costData.customer.cogsRepairConverted
-                          ),
-                          baseCurrency
-                        )}
+                        {formatCurrency(costData.customer.cogsRepair)}
                       </h3>
                     </div>
                     <div className="rounded-lg bg-orange-100 p-3 dark:bg-orange-900/30">
@@ -601,12 +533,12 @@ export default function MonthlyCostsPage() {
                               {
                                 name: 'Vật tư',
                                 value: costData.customer.cogsConsumable,
-                                color: '#10b981',
+                                color: 'var(--color-success-500)',
                               },
                               {
                                 name: 'Sửa chữa',
                                 value: costData.customer.cogsRepair,
-                                color: '#f59e0b',
+                                color: 'var(--warning-500)',
                               },
                             ]}
                             cx="50%"
@@ -616,19 +548,19 @@ export default function MonthlyCostsPage() {
                               `${props.name ?? ''}: ${((props.percent ?? 0) * 100).toFixed(1)}%`
                             }
                             outerRadius={100}
-                            fill="#8884d8"
+                            fill="var(--brand-500)"
                             dataKey="value"
                           >
-                            <Cell fill="#10b981" />
-                            <Cell fill="#f59e0b" />
+                            <Cell fill="var(--color-success-500)" />
+                            <Cell fill="var(--warning-500)" />
                           </Pie>
                           <RechartsTooltip
                             formatter={(value: number) => [formatCurrency(value), 'Chi phí']}
                             contentStyle={{
-                              backgroundColor: '#1e293b',
+                              backgroundColor: 'var(--popover)',
                               border: 'none',
                               borderRadius: '8px',
-                              color: '#fff',
+                              color: 'var(--popover-foreground)',
                             }}
                           />
                         </PieChart>
@@ -637,7 +569,7 @@ export default function MonthlyCostsPage() {
                   </div>
                   <div className="mt-4 flex justify-center gap-6">
                     <div className="flex items-center gap-2">
-                      <div className="h-4 w-4 rounded bg-green-500"></div>
+                      <div className="h-4 w-4 rounded bg-[var(--color-success-500)]"></div>
                       <span className="text-sm">
                         Vật tư: {formatCurrency(costData.customer.cogsConsumable)} (
                         {(
@@ -710,22 +642,13 @@ export default function MonthlyCostsPage() {
                             </TableCell>
                             <TableCell>{d.serialNumber ?? '—'}</TableCell>
                             <TableCell className="text-right font-bold">
-                              {formatCurrency(
-                                getValue(d.totalCogs, d.totalCogsConverted),
-                                baseCurrency
-                              )}
+                              {formatCurrency(d.totalCogs)}
                             </TableCell>
                             <TableCell className="text-right">
-                              {formatCurrency(
-                                getValue(d.cogsConsumable, d.cogsConsumableConverted),
-                                baseCurrency
-                              )}
+                              {formatCurrency(d.cogsConsumable)}
                             </TableCell>
                             <TableCell className="text-right">
-                              {formatCurrency(
-                                getValue(d.cogsRepair, d.cogsRepairConverted),
-                                baseCurrency
-                              )}
+                              {formatCurrency(d.cogsRepair)}
                             </TableCell>
                             <TableCell className="text-right">
                               {costData.customer.totalCogs > 0
@@ -777,50 +700,50 @@ export default function MonthlyCostsPage() {
                         data={aggregatedCostSeries}
                         margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                       >
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                        <XAxis dataKey="month" stroke="#64748b" />
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                        <XAxis dataKey="month" stroke="var(--muted-foreground)" />
                         <YAxis
-                          stroke="#64748b"
+                          stroke="var(--muted-foreground)"
                           width={80}
                           tickFormatter={(v) => formatCurrency(Number(v))}
                         />
                         <RechartsTooltip
                           formatter={(value: number) => [formatCurrency(value), 'Chi phí']}
                           contentStyle={{
-                            backgroundColor: '#1e293b',
+                            backgroundColor: 'var(--popover)',
                             border: 'none',
                             borderRadius: '8px',
                             boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                            color: '#fff',
+                            color: 'var(--popover-foreground)',
                           }}
-                          itemStyle={{ color: '#fff' }}
-                          labelStyle={{ color: '#94a3b8', marginBottom: '0.5rem' }}
+                          itemStyle={{ color: 'var(--popover-foreground)' }}
+                          labelStyle={{ color: 'var(--muted-foreground)', marginBottom: '0.5rem' }}
                         />
                         <Legend />
                         <Line
                           type="monotone"
                           dataKey="totalCogs"
-                          stroke="#3b82f6"
+                          stroke="var(--brand-600)"
                           strokeWidth={3}
-                          dot={{ fill: '#3b82f6', r: 4 }}
+                          dot={{ fill: 'var(--brand-600)', r: 4 }}
                           activeDot={{ r: 6 }}
                           name="Tổng chi phí"
                         />
                         <Line
                           type="monotone"
                           dataKey="cogsConsumable"
-                          stroke="#10b981"
+                          stroke="var(--color-success-500)"
                           strokeWidth={3}
-                          dot={{ fill: '#10b981', r: 4 }}
+                          dot={{ fill: 'var(--color-success-500)', r: 4 }}
                           activeDot={{ r: 6 }}
                           name="Vật tư"
                         />
                         <Line
                           type="monotone"
                           dataKey="cogsRepair"
-                          stroke="#f59e0b"
+                          stroke="var(--warning-500)"
                           strokeWidth={3}
-                          dot={{ fill: '#f59e0b', r: 4 }}
+                          dot={{ fill: 'var(--warning-500)', r: 4 }}
                           activeDot={{ r: 6 }}
                           name="Sửa chữa"
                         />
@@ -850,50 +773,50 @@ export default function MonthlyCostsPage() {
                         data={deviceCostSeries}
                         margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                       >
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                        <XAxis dataKey="month" stroke="#64748b" />
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                        <XAxis dataKey="month" stroke="var(--muted-foreground)" />
                         <YAxis
-                          stroke="#64748b"
+                          stroke="var(--muted-foreground)"
                           width={80}
                           tickFormatter={(v) => formatCurrency(Number(v))}
                         />
                         <RechartsTooltip
                           formatter={(value: number) => [formatCurrency(value), 'Chi phí']}
                           contentStyle={{
-                            backgroundColor: '#1e293b',
+                            backgroundColor: 'var(--popover)',
                             border: 'none',
                             borderRadius: '8px',
                             boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                            color: '#fff',
+                            color: 'var(--popover-foreground)',
                           }}
-                          itemStyle={{ color: '#fff' }}
-                          labelStyle={{ color: '#94a3b8', marginBottom: '0.5rem' }}
+                          itemStyle={{ color: 'var(--popover-foreground)' }}
+                          labelStyle={{ color: 'var(--muted-foreground)', marginBottom: '0.5rem' }}
                         />
                         <Legend />
                         <Line
                           type="monotone"
                           dataKey="totalCogs"
-                          stroke="#3b82f6"
+                          stroke="var(--brand-600)"
                           strokeWidth={3}
-                          dot={{ fill: '#3b82f6', r: 4 }}
+                          dot={{ fill: 'var(--brand-600)', r: 4 }}
                           activeDot={{ r: 6 }}
                           name="Tổng chi phí"
                         />
                         <Line
                           type="monotone"
                           dataKey="cogsConsumable"
-                          stroke="#10b981"
+                          stroke="var(--color-success-500)"
                           strokeWidth={3}
-                          dot={{ fill: '#10b981', r: 4 }}
+                          dot={{ fill: 'var(--color-success-500)', r: 4 }}
                           activeDot={{ r: 6 }}
                           name="Vật tư"
                         />
                         <Line
                           type="monotone"
                           dataKey="cogsRepair"
-                          stroke="#f59e0b"
+                          stroke="var(--warning-500)"
                           strokeWidth={3}
-                          dot={{ fill: '#f59e0b', r: 4 }}
+                          dot={{ fill: 'var(--warning-500)', r: 4 }}
                           activeDot={{ r: 6 }}
                           name="Sửa chữa"
                         />

@@ -14,28 +14,28 @@ interface StatsCardProps {
 export function StatsCard({ label, value, icon, variant = 'default', className }: StatsCardProps) {
   const variantStyles = {
     default: {
-      bg: 'bg-blue-50',
-      text: 'text-blue-600',
+      bg: 'bg-[var(--brand-50)]',
+      text: 'text-[var(--brand-600)]',
     },
     success: {
       bg: 'bg-emerald-50',
       text: 'text-emerald-600',
     },
     warning: {
-      bg: 'bg-amber-50',
-      text: 'text-amber-600',
+      bg: 'bg-[var(--warning-50)]',
+      text: 'text-[var(--warning-500)]',
     },
     danger: {
       bg: 'bg-red-50',
-      text: 'text-red-600',
+      text: 'text-[var(--color-error-500)]',
     },
     neutral: {
       bg: 'bg-gray-100',
       text: 'text-gray-600',
     },
     info: {
-      bg: 'bg-sky-50',
-      text: 'text-sky-600',
+      bg: 'bg-[var(--brand-50)]',
+      text: 'text-[var(--brand-600)]',
     },
   }
 

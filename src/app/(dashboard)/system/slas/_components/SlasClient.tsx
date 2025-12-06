@@ -89,15 +89,15 @@ const getStatusOptions = (t: (key: string) => string) => [
 ]
 
 const priorityBadgeMap: Record<Priority, string> = {
-  [Priority.LOW]: 'bg-slate-100 text-slate-700',
-  [Priority.NORMAL]: 'bg-blue-100 text-blue-700',
-  [Priority.HIGH]: 'bg-amber-100 text-amber-700',
-  [Priority.URGENT]: 'bg-red-100 text-red-700',
+  [Priority.LOW]: 'bg-[var(--neutral-100)] text-[var(--neutral-700)]',
+  [Priority.NORMAL]: 'bg-[var(--brand-50)] text-[var(--brand-700)]',
+  [Priority.HIGH]: 'bg-[var(--warning-50)] text-[var(--warning-500)]',
+  [Priority.URGENT]: 'bg-[var(--error-50)] text-[var(--error-500)]',
 }
 
 const statusBadgeMap = {
-  active: 'bg-emerald-100 text-emerald-700',
-  inactive: 'bg-slate-100 text-slate-600',
+  active: 'bg-[var(--color-success-50)] text-[var(--color-success-500)]',
+  inactive: 'bg-[var(--neutral-100)] text-[var(--neutral-600)]',
 }
 
 function useDebouncedValue<T>(value: T, delay = 400) {
@@ -293,7 +293,7 @@ export default function SlasClient({ session }: SlasClientProps) {
             <Link href="/system/requests">
               <Button
                 variant="outline"
-                className="border-white/20 bg-white/10 text-[#0066CC] hover:bg-blue-50"
+                className="border-white/20 bg-white/10 text-[var(--brand-500)] hover:bg-[var(--brand-50)]"
               >
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Quay lại
@@ -302,7 +302,7 @@ export default function SlasClient({ session }: SlasClientProps) {
             {canCreate && (
               <Button
                 onClick={handleCreateClick}
-                className="min-w-[120px] bg-gradient-to-r from-blue-600 to-cyan-600 text-white hover:from-blue-700 hover:to-cyan-700"
+                className="min-w-[120px] bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
               >
                 <Plus className="mr-2 h-4 w-4" />
                 {t('sla.create_new')}
@@ -679,7 +679,7 @@ function SlasTableContent({
                 variant="ghost"
                 size="sm"
                 onClick={() => onEdit(row.original)}
-                className="transition-all hover:bg-blue-100 hover:text-blue-700"
+                className="transition-all hover:bg-[var(--brand-100)] hover:text-[var(--brand-700)]"
                 title={t('sla.table.action.edit')}
               >
                 <Edit3 className="h-4 w-4" />
@@ -696,7 +696,7 @@ function SlasTableContent({
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="transition-all hover:bg-red-100 hover:text-red-700"
+                    className="transition-all hover:bg-[var(--color-error-50)] hover:text-[var(--color-error-600)]"
                     title={t('sla.table.action.delete')}
                   >
                     <Trash2 className="h-4 w-4" />

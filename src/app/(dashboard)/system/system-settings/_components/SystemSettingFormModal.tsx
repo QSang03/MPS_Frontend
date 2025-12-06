@@ -74,17 +74,17 @@ export default function SystemSettingFormModal({ setting, onSaved }: Props) {
   const getTypeColor = (type: SystemSettingType) => {
     switch (type) {
       case SystemSettingType.STRING:
-        return 'bg-blue-500/10 text-blue-700 border-blue-200'
+        return 'bg-[var(--brand-50)] text-[var(--brand-700)] border-[var(--brand-200)]'
       case SystemSettingType.NUMBER:
-        return 'bg-purple-500/10 text-purple-700 border-purple-200'
+        return 'bg-[var(--brand-100)] text-[var(--brand-600)] border-[var(--brand-200)]'
       case SystemSettingType.BOOLEAN:
-        return 'bg-green-500/10 text-green-700 border-green-200'
+        return 'bg-[var(--color-success-50)] text-[var(--color-success-500)] border-[var(--color-success-200)]'
       case SystemSettingType.JSON:
-        return 'bg-orange-500/10 text-orange-700 border-orange-200'
+        return 'bg-[var(--warning-50)] text-[var(--warning-500)] border-[var(--warning-200)]'
       case SystemSettingType.SECRET:
-        return 'bg-red-500/10 text-red-700 border-red-200'
+        return 'bg-[var(--error-50)] text-[var(--error-500)] border-[var(--error-200)]'
       default:
-        return 'bg-gray-500/10 text-gray-700 border-gray-200'
+        return 'bg-[var(--neutral-100)] text-[var(--neutral-700)] border-[var(--neutral-200)]'
     }
   }
 
@@ -107,7 +107,7 @@ export default function SystemSettingFormModal({ setting, onSaved }: Props) {
             id="value"
             value={form.value}
             onChange={(e) => setForm({ ...form, value: e.target.value })}
-            className="border-input bg-background ring-offset-background flex h-10 w-full rounded-md border px-3 py-2 text-sm transition-all focus:ring-2 focus:ring-blue-500"
+            className="border-input bg-background ring-offset-background flex h-10 w-full rounded-md border px-3 py-2 text-sm transition-all focus:ring-2 focus:ring-[var(--ring)]"
           >
             <option value="true">true</option>
             <option value="false">false</option>
@@ -121,7 +121,7 @@ export default function SystemSettingFormModal({ setting, onSaved }: Props) {
             onChange={(e) => setForm({ ...form, value: e.target.value })}
             placeholder='{"key": "value"}'
             rows={6}
-            className="font-mono text-sm transition-all focus:ring-2 focus:ring-blue-500"
+            className="font-mono text-sm transition-all focus:ring-2 focus:ring-[var(--ring)]"
           />
         )
       case SystemSettingType.SECRET:
@@ -132,7 +132,7 @@ export default function SystemSettingFormModal({ setting, onSaved }: Props) {
             value={form.value}
             onChange={(e) => setForm({ ...form, value: e.target.value })}
             placeholder="Nhập giá trị bảo mật"
-            className="transition-all focus:ring-2 focus:ring-red-500"
+            className="transition-all focus:ring-2 focus:ring-[var(--error-500)]"
           />
         )
       default:
@@ -143,7 +143,7 @@ export default function SystemSettingFormModal({ setting, onSaved }: Props) {
             value={form.value}
             onChange={(e) => setForm({ ...form, value: e.target.value })}
             placeholder="Nhập giá trị"
-            className="transition-all focus:ring-2 focus:ring-blue-500"
+            className="transition-all focus:ring-2 focus:ring-[var(--ring)]"
           />
         )
     }
@@ -156,7 +156,7 @@ export default function SystemSettingFormModal({ setting, onSaved }: Props) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2 hover:bg-blue-50">
+        <Button variant="outline" size="sm" className="gap-2 hover:bg-[var(--brand-50)]">
           <Edit className="h-4 w-4" />
           Chỉnh sửa
         </Button>
@@ -182,7 +182,7 @@ export default function SystemSettingFormModal({ setting, onSaved }: Props) {
               type="submit"
               form="system-setting-form"
               disabled={mutation.isPending || !form.value}
-              className="min-w-[120px] bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+              className="min-w-[120px] bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
             >
               {mutation.isPending ? (
                 <>

@@ -21,7 +21,7 @@ export default function ConsumableTypesPage() {
           <>
             <ImportExcelModal
               trigger={
-                <Button className="border-0 bg-white text-[#0066CC] hover:bg-blue-50">
+                <Button className="border-0 bg-white text-[var(--brand-500)] hover:bg-[var(--brand-50)]">
                   <Upload className="mr-2 h-4 w-4" />
                   Import Excel
                 </Button>
@@ -29,7 +29,7 @@ export default function ConsumableTypesPage() {
             />
             <BulkAssignModal
               trigger={
-                <Button className="border-0 bg-white text-[#0066CC] hover:bg-blue-50">
+                <Button className="border-0 bg-white text-[var(--brand-500)] hover:bg-[var(--brand-50)]">
                   <Link2 className="mr-2 h-4 w-4" />
                   Gán vật tư cho khách hàng
                 </Button>
@@ -44,7 +44,7 @@ export default function ConsumableTypesPage() {
                   }
                 }}
                 trigger={
-                  <Button className="border-0 bg-white text-[#0066CC] hover:bg-blue-50">
+                  <Button className="border-0 bg-white text-[var(--brand-500)] hover:bg-[var(--brand-50)]">
                     <Plus className="mr-2 h-4 w-4" />
                     Thêm loại vật tư
                   </Button>

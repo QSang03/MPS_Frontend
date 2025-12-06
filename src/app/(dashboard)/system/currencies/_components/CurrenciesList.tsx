@@ -105,7 +105,7 @@ export function CurrenciesList() {
         accessorKey: 'code',
         header: 'Mã',
         cell: ({ row }) => (
-          <div className="font-mono font-semibold text-blue-600">{row.original.code}</div>
+          <div className="font-mono font-semibold text-[var(--brand-600)]">{row.original.code}</div>
         ),
       },
       {

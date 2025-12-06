@@ -94,7 +94,7 @@ export function RoleFormModal({ isOpen, onClose, onSubmit, initialData }: RoleFo
               type="submit"
               form="role-form"
               disabled={isLoading}
-              className="min-w-[120px] bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+              className="min-w-[120px] bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
             >
               {isLoading ? (
                 <>
@@ -139,14 +139,14 @@ export function RoleFormModal({ isOpen, onClose, onSubmit, initialData }: RoleFo
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center gap-2 text-sm font-bold text-gray-800">
-                    <AlertCircle className="h-4 w-4 text-blue-600" />
+                    <AlertCircle className="h-4 w-4 text-[var(--brand-600)]" />
                     Mô tả vai trò
                   </FormLabel>
                   <FormControl>
                     <Input
                       placeholder="Mô tả chi tiết về vai trò này..."
                       {...field}
-                      className="h-10 rounded-lg border-2 border-gray-200 text-base transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                      className="h-10 rounded-lg border-2 border-gray-200 text-base transition-all focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)]"
                     />
                   </FormControl>
                   <FormMessage className="mt-1 text-xs text-red-600" />
@@ -190,7 +190,7 @@ export function RoleFormModal({ isOpen, onClose, onSubmit, initialData }: RoleFo
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center gap-2 text-sm font-bold text-gray-800">
-                      <CheckCircle2 className="h-4 w-4 text-green-600" />
+                      <CheckCircle2 className="h-4 w-4 text-[var(--color-success-600)]" />
                       Trạng thái
                     </FormLabel>
                     <FormControl>
@@ -199,7 +199,7 @@ export function RoleFormModal({ isOpen, onClose, onSubmit, initialData }: RoleFo
                         value={String(field.value)}
                         onChange={(e) => field.onChange(e.target.value === 'true')}
                       >
-                        <option value="true" className="bg-green-50">
+                        <option value="true" className="bg-[var(--color-success-50)]">
                           ✓ Hoạt động
                         </option>
                         <option value="false" className="bg-red-50">

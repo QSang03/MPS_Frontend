@@ -73,6 +73,14 @@ export interface TopCustomer {
   totalRevenue: number // doanh thu
   totalCogs: number // chi phí
   grossProfit: number // lợi nhuận gộp
+  // Converted values (only for System Admin context)
+  totalRevenueConverted?: number
+  totalCogsConverted?: number
+  grossProfitConverted?: number
+  // Currency information (only for System Admin context)
+  currency?: import('@/types/models/currency').CurrencyDataDto | null
+  baseCurrency?: import('@/types/models/currency').CurrencyDataDto | null
+  exchangeRate?: number | null
 }
 
 /**
@@ -91,6 +99,20 @@ export interface MonthlySeries {
     cogsRepair: number
     totalCogs: number // chi phí
     grossProfit: number // lợi nhuận gộp
+    // Converted values (only for System Admin context)
+    revenueRentalConverted?: number
+    revenueRepairConverted?: number
+    revenuePageBWConverted?: number
+    revenuePageColorConverted?: number
+    totalRevenueConverted?: number
+    cogsConsumableConverted?: number
+    cogsRepairConverted?: number
+    totalCogsConverted?: number
+    grossProfitConverted?: number
+    // Currency information (only for System Admin context)
+    currency?: import('@/types/models/currency').CurrencyDataDto | null
+    baseCurrency?: import('@/types/models/currency').CurrencyDataDto | null
+    exchangeRate?: number | null
   }>
 }
 
@@ -103,6 +125,8 @@ export interface AdminOverviewData {
   costBreakdown: CostBreakdown
   topCustomers: TopCustomer[]
   monthlySeries: MonthlySeries
+  // Currency information (only for System Admin context)
+  baseCurrency?: import('@/types/models/currency').CurrencyDataDto | null
   // Optional detailed alerts structure (for Admin Overview API)
   alerts?: {
     consumableWarnings?: {

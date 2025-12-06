@@ -169,7 +169,7 @@ export default function ChangePasswordPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50 p-4">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[var(--brand-50)] via-[var(--brand-50)] to-[var(--brand-50)] p-4">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -178,7 +178,7 @@ export default function ChangePasswordPage() {
       >
         <Card className="relative overflow-hidden border-0 shadow-2xl">
           {/* Gradient Background */}
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-blue-500 via-cyan-600 to-teal-700 opacity-5" />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[var(--brand-600)] via-[var(--brand-600)] to-[var(--brand-700)] opacity-5" />
 
           <CardHeader className="relative space-y-4">
             <motion.div
@@ -187,7 +187,7 @@ export default function ChangePasswordPage() {
               animate={{ scale: 1 }}
               transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
             >
-              <div className="relative flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-600 shadow-lg">
+              <div className="relative flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--brand-600)] to-[var(--brand-500)] shadow-lg">
                 <Lock className="h-10 w-10 text-white" />
               </div>
             </motion.div>
@@ -219,7 +219,10 @@ export default function ChangePasswordPage() {
 
               {/* Success message */}
               {success && (
-                <Alert variant="default" className="border-green-200 bg-green-50 text-green-800">
+                <Alert
+                  variant="default"
+                  className="border-[var(--color-success-200)] bg-[var(--color-success-50)] text-[var(--color-success-600)]"
+                >
                   <CheckCircle className="h-4 w-4" />
                   <AlertDescription>Đổi mật khẩu thành công! Đang chuyển hướng...</AlertDescription>
                 </Alert>
@@ -304,7 +307,7 @@ export default function ChangePasswordPage() {
               {/* Submit button */}
               <Button
                 type="submit"
-                className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+                className="w-full bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
                 disabled={isSubmitting || success}
               >
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

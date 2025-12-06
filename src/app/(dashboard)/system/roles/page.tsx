@@ -21,7 +21,7 @@ export default function RolesPage() {
           <ActionGuard pageId="roles" actionId="create">
             <Button
               onClick={() => setShowCreateModal(true)}
-              className="border-0 bg-white text-[#0066CC] hover:bg-blue-50"
+              className="border-0 bg-white text-[var(--brand-500)] hover:bg-[var(--brand-50)]"
             >
               <Plus className="mr-2 h-4 w-4" />
               Tạo Vai trò

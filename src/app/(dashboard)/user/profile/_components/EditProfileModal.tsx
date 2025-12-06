@@ -251,10 +251,10 @@ export function EditProfileModal({
               </div>
 
               {/* Info card */}
-              <div className="rounded-lg border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-purple-50 p-4">
+              <div className="rounded-lg border-2 border-[var(--brand-200)] bg-gradient-to-r from-[var(--brand-50)] to-[var(--brand-100)] p-4">
                 <p className="text-xs text-gray-700">
-                  <span className="font-bold text-blue-700">💡 Tip:</span> Các thay đổi sẽ được lưu
-                  ngay khi bạn nhấn "Cập nhật".
+                  <span className="font-bold text-[var(--brand-700)]">💡 Tip:</span> Các thay đổi sẽ
+                  được lưu ngay khi bạn nhấn "Cập nhật".
                 </p>
               </div>
 

@@ -132,10 +132,10 @@ export default function ConsumableDetailModal({
               <div
                 className={`flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium ${
                   isExpired
-                    ? 'bg-red-100 text-red-700'
+                    ? 'bg-[var(--color-error-50)] text-[var(--color-error-500)]'
                     : isNear
-                      ? 'bg-amber-100 text-amber-700'
-                      : 'bg-blue-50 text-blue-700'
+                      ? 'bg-[var(--warning-50)] text-[var(--warning-500)]'
+                      : 'bg-[var(--brand-50)] text-[var(--brand-700)]'
                 }`}
               >
                 <Clock className="h-3.5 w-3.5" />
@@ -228,7 +228,7 @@ export default function ConsumableDetailModal({
                 {/* General Info */}
                 <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
                   <div className="mb-3 flex items-center gap-2 border-b border-slate-100 pb-2">
-                    <Info className="h-4 w-4 text-blue-500" />
+                    <Info className="h-4 w-4 text-[var(--brand-500)]" />
                     <h4 className="font-semibold text-slate-900">Thông tin chung</h4>
                   </div>
                   <div className="space-y-3 text-sm">
@@ -263,7 +263,7 @@ export default function ConsumableDetailModal({
                         <span className="text-slate-500">Giá</span>
                         <span className="font-medium text-slate-900">
                           {typedItem.currency?.symbol || typedItem.currency?.code || 'USD'}{' '}
-                          {Number(typedItem.price).toLocaleString('vi-VN')}
+                          {Number(typedItem.price).toLocaleString('en-US')}
                         </span>
                       </div>
                     )}

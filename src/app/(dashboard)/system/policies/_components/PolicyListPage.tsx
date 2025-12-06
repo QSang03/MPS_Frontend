@@ -333,7 +333,7 @@ function PolicyTable({
         cell: ({ row, table }) => {
           const index = table.getSortedRowModel().rows.findIndex((r) => r.id === row.id)
           return (
-            <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-100 to-purple-100 text-sm font-bold text-indigo-700 shadow-sm">
+            <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-[var(--brand-50)] to-[var(--brand-100)] text-sm font-bold text-[var(--brand-700)] shadow-sm">
               {(pagination.page - 1) * pagination.limit + index + 1}
             </span>
           )
@@ -345,7 +345,7 @@ function PolicyTable({
         enableSorting: true,
         header: () => (
           <div className="flex items-center gap-2">
-            <FileText className="h-5 w-5 text-indigo-600" />
+            <FileText className="h-5 w-5 text-[var(--brand-600)]" />
             Tên Policy
           </div>
         ),
@@ -391,7 +391,7 @@ function PolicyTable({
             {(row.original.actions || []).slice(0, 3).map((act, i) => (
               <span
                 key={i}
-                className="rounded-lg border border-blue-200 bg-gradient-to-r from-blue-50 to-cyan-50 px-2.5 py-1 text-xs font-bold text-blue-700 shadow-sm"
+                className="rounded-lg border border-[var(--brand-200)] bg-gradient-to-r from-[var(--brand-50)] to-[var(--brand-50)] px-2.5 py-1 text-xs font-bold text-[var(--brand-700)] shadow-sm"
               >
                 {act}
               </span>
@@ -409,7 +409,7 @@ function PolicyTable({
         accessorKey: 'subjectDescription',
         header: () => (
           <div className="flex items-center gap-2">
-            <User className="h-5 w-5 text-indigo-600" />
+            <User className="h-5 w-5 text-[var(--brand-600)]" />
             Subject
           </div>
         ),
@@ -452,7 +452,7 @@ function PolicyTable({
                 variant="ghost"
                 onClick={() => onEdit(row.original as Policy)}
                 title="Sửa"
-                className="h-8 w-8 rounded-lg text-indigo-600 transition-all duration-300 hover:bg-indigo-100 hover:text-indigo-700"
+                className="h-8 w-8 rounded-lg text-[var(--brand-600)] transition-all duration-300 hover:bg-[var(--brand-100)] hover:text-[var(--brand-700)]"
               >
                 <Edit className="h-4 w-4" />
               </Button>

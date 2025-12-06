@@ -207,7 +207,7 @@ export function ContractsModal({
               >
                 <div className="flex items-start gap-4">
                   {/* Icon */}
-                  <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
+                  <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[var(--brand-600)] to-[var(--brand-500)] text-white">
                     <FileText className="h-6 w-6" />
                   </div>
 

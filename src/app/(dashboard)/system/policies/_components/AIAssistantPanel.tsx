@@ -83,7 +83,7 @@ export function AIAssistantPanel({ onUseSuggestion, onAutoAnalyze }: AIAssistant
     <Card className="flex h-full flex-col rounded-2xl border-2 border-slate-100 p-5 shadow-xl">
       <div className="mb-4">
         <div className="flex items-center gap-2">
-          <Bot className="h-5 w-5 text-indigo-600" />
+          <Bot className="h-5 w-5 text-[var(--brand-600)]" />
           <h3 className="text-lg font-semibold text-slate-900">AI Assistant</h3>
         </div>
         <p className="mt-1 text-sm text-slate-500">Hỏi AI để nhận gợi ý tạo policy dễ dàng hơn</p>
@@ -106,8 +106,8 @@ export function AIAssistantPanel({ onUseSuggestion, onAutoAnalyze }: AIAssistant
               className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               {message.role === 'assistant' && (
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-100">
-                  <Bot className="h-4 w-4 text-indigo-600" />
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--brand-50)]">
+                  <Bot className="h-4 w-4 text-[var(--brand-600)]" />
                 </div>
               )}
               <div
@@ -156,8 +156,8 @@ export function AIAssistantPanel({ onUseSuggestion, onAutoAnalyze }: AIAssistant
         )}
         {isLoading && (
           <div className="flex gap-3">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-100">
-              <Bot className="h-4 w-4 text-indigo-600" />
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--brand-50)]">
+              <Bot className="h-4 w-4 text-[var(--brand-600)]" />
             </div>
             <div className="rounded-lg bg-white p-3 shadow-sm">
               <Loader2 className="h-4 w-4 animate-spin text-gray-400" />

@@ -378,8 +378,8 @@ export function EditUserModal({
               )}
 
               {/* Info card */}
-              <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-                <p className="text-xs text-blue-700">
+              <div className="rounded-lg border border-[var(--brand-200)] bg-[var(--brand-50)] p-4">
+                <p className="text-xs text-[var(--brand-700)]">
                   <span className="font-bold">💡 {t('hint')}:</span> {t('user.update_tip')}
                 </p>
               </div>

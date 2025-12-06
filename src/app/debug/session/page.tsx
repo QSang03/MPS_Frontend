@@ -34,7 +34,7 @@ export default function DebugSessionPage() {
         </CardHeader>
         <CardContent>
           {error && (
-            <div className="mb-4 text-red-600">
+            <div className="mb-4 text-[var(--color-error-500)]">
               <strong>Error:</strong> {error}
             </div>
           )}

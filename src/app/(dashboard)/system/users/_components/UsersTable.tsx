@@ -599,7 +599,7 @@ function UsersTableContent({
                     String(row.original.email || '').toLowerCase() === 'duongnvq@nguyenkimvn.vn'
                   if (!isProtectedUser) onEditUser(row.original)
                 }}
-                className="transition-all hover:bg-blue-100 hover:text-blue-700"
+                className="transition-all hover:bg-[var(--brand-100)] hover:text-[var(--brand-700)]"
                 title={
                   String(row.original.email || '').toLowerCase() === 'duongnvq@nguyenkimvn.vn'
                     ? t('user.protected_edit')
@@ -627,7 +627,7 @@ function UsersTableContent({
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="transition-all hover:bg-blue-100 hover:text-blue-700"
+                  className="transition-all hover:bg-[var(--brand-100)] hover:text-[var(--brand-700)]"
                   title={t('user.reset_password')}
                 >
                   <RotateCcw className="h-4 w-4" />
@@ -645,7 +645,7 @@ function UsersTableContent({
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="transition-all hover:bg-red-100 hover:text-red-700"
+                    className="transition-all hover:bg-[var(--error-50)] hover:text-[var(--error-500)]"
                     title={
                       String(row.original.email || '').toLowerCase() === 'duongnvq@nguyenkimvn.vn'
                         ? t('user.protected_delete')
@@ -734,7 +734,7 @@ function getRoleBadgeColor(roleName?: string) {
     case 'admin':
       return 'bg-orange-100 text-orange-800'
     case 'manager':
-      return 'bg-blue-100 text-blue-800'
+      return 'bg-[var(--brand-50)] text-[var(--brand-800)]'
     case 'developer':
       return 'bg-emerald-100 text-emerald-800'
     default:

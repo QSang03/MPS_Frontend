@@ -185,7 +185,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => router.push('/forgot-password')}
-                  className="text-sm text-blue-600 hover:underline"
+                  className="text-sm text-[var(--brand-600)] hover:underline"
                 >
                   Quên mật khẩu?
                 </button>

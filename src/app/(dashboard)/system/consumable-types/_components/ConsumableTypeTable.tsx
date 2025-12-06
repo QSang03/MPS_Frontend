@@ -247,7 +247,11 @@ export function ConsumableTypeTable({
         cell: ({ row }) => (
           <Badge
             variant={row.original.isActive ? 'default' : 'secondary'}
-            className={row.original.isActive ? 'bg-green-500 text-white' : 'bg-gray-400 text-white'}
+            className={
+              row.original.isActive
+                ? 'bg-[var(--color-success-500)] text-white'
+                : 'bg-[var(--color-neutral-300)] text-white'
+            }
           >
             {row.original.isActive ? 'Hoạt động' : 'Tạm dừng'}
           </Badge>

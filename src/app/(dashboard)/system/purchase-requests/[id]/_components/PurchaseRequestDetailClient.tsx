@@ -73,15 +73,17 @@ type TimelineEntry = TimelineEvent & { time: string }
 const statusBadgeMap: Record<PurchaseRequestStatus, string> = {
   [PurchaseRequestStatus.PENDING]: 'bg-amber-50 text-amber-700 border-amber-200',
   [PurchaseRequestStatus.APPROVED]: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  [PurchaseRequestStatus.ORDERED]: 'bg-blue-50 text-blue-700 border-blue-200',
+  [PurchaseRequestStatus.ORDERED]:
+    'bg-[var(--brand-50)] text-[var(--brand-700)] border-[var(--brand-200)]',
   [PurchaseRequestStatus.IN_TRANSIT]: 'bg-purple-50 text-purple-700 border-purple-200',
   [PurchaseRequestStatus.RECEIVED]: 'bg-green-50 text-green-700 border-green-200',
-  [PurchaseRequestStatus.CANCELLED]: 'bg-rose-50 text-rose-700 border-rose-200',
+  [PurchaseRequestStatus.CANCELLED]:
+    'bg-[var(--color-error-50)] text-[var(--color-error-500)] border-[var(--color-error-200)]',
 }
 
 const priorityBadgeMap: Record<Priority, string> = {
   [Priority.LOW]: 'bg-slate-100 text-slate-700 border-slate-200',
-  [Priority.NORMAL]: 'bg-blue-50 text-blue-700 border-blue-200',
+  [Priority.NORMAL]: 'bg-[var(--brand-50)] text-[var(--brand-700)] border-[var(--brand-200)]',
   [Priority.HIGH]: 'bg-orange-50 text-orange-700 border-orange-200',
   [Priority.URGENT]: 'bg-red-50 text-red-700 border-red-200',
 }
@@ -210,7 +212,7 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
         time: detail.orderedAt,
         by: detail.orderedBy,
         icon: CalendarCheck,
-        color: 'text-blue-600',
+        color: 'text-[var(--brand-600)]',
       },
       {
         label: 'Đang vận chuyển',
@@ -231,7 +233,7 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
         time: detail.cancelledAt,
         by: detail.cancelledBy,
         icon: XCircle,
-        color: 'text-rose-600',
+        color: 'text-[var(--color-error-500)]',
       },
       {
         label: 'Khách hàng hủy',
@@ -321,7 +323,7 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
                   <p className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
                     Tổng giá trị (ước tính)
                   </p>
-                  <p className="text-xl font-bold text-blue-600">
+                  <p className="text-xl font-bold text-[var(--brand-600)]">
                     {formatCurrency(totalAmount, detail.currency)}
                   </p>
                 </div>
@@ -582,7 +584,7 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
                   <div className="flex justify-center">
                     <Button
                       variant="destructive"
-                      className="h-auto px-2 py-2 text-white hover:bg-rose-50 hover:text-rose-700"
+                      className="h-auto px-2 py-2 text-white hover:bg-[var(--color-error-50)] hover:text-[var(--color-error-500)]"
                       onClick={() => setShowDeleteConfirm(true)}
                       disabled={deleteMutation.isPending}
                     >
@@ -713,7 +715,7 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
                             </span>
                           )}
                           {event.reason && (
-                            <span className="mt-1 rounded bg-rose-50 p-1 text-xs text-rose-600 italic">
+                            <span className="mt-1 rounded bg-[var(--color-error-50)] p-1 text-xs text-[var(--color-error-500)] italic">
                               Lý do: {event.reason}
                             </span>
                           )}

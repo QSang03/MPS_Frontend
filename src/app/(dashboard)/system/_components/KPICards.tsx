@@ -81,9 +81,9 @@ export function KPICards({ kpis, isLoading, onRevenueClick, onContractsClick }: 
       }),
       icon: Bell,
       status: alerts > 0 ? 'warning' : 'normal',
-      borderColor: 'border-[#F59E0B]', // Warning
-      iconBg: 'bg-[#FFFBEB]',
-      iconColor: 'text-[#F59E0B]',
+      borderColor: 'border-[var(--color-warning-500)]', // Warning
+      iconBg: 'bg-[var(--color-warning-50)]',
+      iconColor: 'text-[var(--color-warning-500)]',
     },
     {
       id: 'requests',
@@ -94,9 +94,9 @@ export function KPICards({ kpis, isLoading, onRevenueClick, onContractsClick }: 
       }),
       icon: AlertCircle,
       status: requests > 5 ? 'critical' : requests > 0 ? 'warning' : 'normal',
-      borderColor: 'border-[#F59E0B]', // Warning
-      iconBg: 'bg-[#FFFBEB]',
-      iconColor: 'text-[#F59E0B]',
+      borderColor: 'border-[var(--color-warning-500)]', // Warning
+      iconBg: 'bg-[var(--color-warning-50)]',
+      iconColor: 'text-[var(--color-warning-500)]',
     },
     {
       id: 'devices_status',
@@ -106,9 +106,10 @@ export function KPICards({ kpis, isLoading, onRevenueClick, onContractsClick }: 
       subtitle: t('dashboard.kpi.devices_status.subtitle', { active: kpis.activeDevices ?? 0 }),
       icon: Activity,
       status: errorDevices > 0 ? 'critical' : 'normal',
-      borderColor: errorDevices > 0 ? 'border-[#DC2626]' : 'border-[#10B981]', // Error or Success
-      iconBg: errorDevices > 0 ? 'bg-[#FEF2F2]' : 'bg-[#ECFDF5]',
-      iconColor: errorDevices > 0 ? 'text-[#DC2626]' : 'text-[#10B981]',
+      borderColor:
+        errorDevices > 0 ? 'border-[var(--error-500)]' : 'border-[var(--color-success-500)]', // Error or Success
+      iconBg: errorDevices > 0 ? 'bg-[var(--color-error-50)]' : 'bg-[var(--color-success-50)]',
+      iconColor: errorDevices > 0 ? 'text-[var(--error-500)]' : 'text-[var(--color-success-500)]',
     },
     {
       id: 'revenue',
@@ -120,9 +121,9 @@ export function KPICards({ kpis, isLoading, onRevenueClick, onContractsClick }: 
       }),
       icon: DollarSign,
       status: costChangePercent < 0 ? 'warning' : 'normal',
-      borderColor: 'border-[#0066CC]', // Primary
-      iconBg: 'bg-[#EBF2FF]',
-      iconColor: 'text-[#0066CC]',
+      borderColor: 'border-[var(--brand-500)]', // Primary
+      iconBg: 'bg-[var(--brand-50)]',
+      iconColor: 'text-[var(--brand-500)]',
       trend: costChangePercent > 0 ? 'up' : costChangePercent < 0 ? 'down' : 'neutral',
       onClick: onRevenueClick,
     },
@@ -140,9 +141,9 @@ export function KPICards({ kpis, isLoading, onRevenueClick, onContractsClick }: 
         color: formatNumber(kpis.totalColorPages ?? 0),
       }),
       icon: FileText,
-      borderColor: 'border-[#0066CC]',
-      iconBg: 'bg-[#EBF2FF]',
-      iconColor: 'text-[#0066CC]',
+      borderColor: 'border-[var(--brand-500)]',
+      iconBg: 'bg-[var(--brand-50)]',
+      iconColor: 'text-[var(--brand-500)]',
     },
     {
       id: 'contracts',
@@ -153,9 +154,9 @@ export function KPICards({ kpis, isLoading, onRevenueClick, onContractsClick }: 
         expired: kpis.expiredContracts ?? 0,
       }),
       icon: FileText,
-      borderColor: 'border-[#0066CC]',
-      iconBg: 'bg-[#EBF2FF]',
-      iconColor: 'text-[#0066CC]',
+      borderColor: 'border-[var(--brand-500)]',
+      iconBg: 'bg-[var(--brand-50)]',
+      iconColor: 'text-[var(--brand-500)]',
       onClick: onContractsClick,
     },
     {
@@ -164,9 +165,9 @@ export function KPICards({ kpis, isLoading, onRevenueClick, onContractsClick }: 
       value: kpis.totalCustomers ?? 0,
       subtitle: t('dashboard.kpi.customers.subtitle', { active: kpis.activeCustomers ?? 0 }),
       icon: Building2,
-      borderColor: 'border-[#0066CC]',
-      iconBg: 'bg-[#EBF2FF]',
-      iconColor: 'text-[#0066CC]',
+      borderColor: 'border-[var(--brand-500)]',
+      iconBg: 'bg-[var(--brand-50)]',
+      iconColor: 'text-[var(--brand-500)]',
     },
     {
       id: 'users',
@@ -185,7 +186,7 @@ export function KPICards({ kpis, isLoading, onRevenueClick, onContractsClick }: 
       {/* Critical Metrics Section */}
       <div>
         <div className="mb-4 flex items-center justify-between">
-          <h3 className="flex items-center gap-2 text-lg font-semibold text-[#1F2937]">
+          <h3 className="flex items-center gap-2 text-lg font-semibold text-[var(--foreground)]">
             <Activity className="h-5 w-5 text-[#0066CC]" />
             {t('dashboard.kpi.critical_metrics')}
           </h3>
@@ -193,7 +194,7 @@ export function KPICards({ kpis, isLoading, onRevenueClick, onContractsClick }: 
             variant="ghost"
             size="sm"
             onClick={() => setShowAllMetrics(!showAllMetrics)}
-            className="text-[#6B7280] hover:text-[#1F2937]"
+            className="text-[var(--neutral-500)] hover:text-[var(--foreground)]"
           >
             {showAllMetrics ? (
               <>
@@ -227,11 +228,11 @@ export function KPICards({ kpis, isLoading, onRevenueClick, onContractsClick }: 
                 <CardContent className="p-5">
                   <div className="flex items-start gap-4">
                     <div>
-                      <p className="text-xs font-medium tracking-wider text-[#6B7280] uppercase">
+                      <p className="text-xs font-medium tracking-wider text-[var(--neutral-500)] uppercase">
                         {metric.title}
                       </p>
                       <div className="mt-2 flex items-baseline gap-2">
-                        <div className="text-[28px] font-bold text-[#1F2937]">
+                        <div className="text-[28px] font-bold text-[var(--foreground)]">
                           {metric.displayValue || metric.value}
                         </div>
                       </div>
@@ -243,7 +244,7 @@ export function KPICards({ kpis, isLoading, onRevenueClick, onContractsClick }: 
                               metric.trend === 'up'
                                 ? 'text-[#10B981]'
                                 : metric.trend === 'down'
-                                  ? 'text-[#DC2626]'
+                                  ? 'text-[var(--error-500)]'
                                   : 'text-[#6B7280]'
                             )}
                           >
@@ -254,13 +255,13 @@ export function KPICards({ kpis, isLoading, onRevenueClick, onContractsClick }: 
                             )}
                             {Math.abs(costChangePercent).toFixed(1)}%
                           </span>
-                          <span className="ml-1 text-[#6B7280]">
+                          <span className="ml-1 text-[var(--neutral-500)]">
                             {t('dashboard.kpi.compared_to_last_month')}
                           </span>
                         </div>
                       )}
                       {!metric.trend && (
-                        <p className="mt-1 text-xs text-[#6B7280]">{metric.subtitle}</p>
+                        <p className="mt-1 text-xs text-[var(--neutral-500)]">{metric.subtitle}</p>
                       )}
                     </div>
                     <div className="ml-auto flex flex-col items-end gap-4">
@@ -314,13 +315,15 @@ export function KPICards({ kpis, isLoading, onRevenueClick, onContractsClick }: 
                     <CardContent className="p-5">
                       <div className="flex items-start gap-4">
                         <div>
-                          <p className="text-xs font-medium tracking-wider text-[#6B7280] uppercase">
+                          <p className="text-xs font-medium tracking-wider text-[var(--neutral-500)] uppercase">
                             {metric.title}
                           </p>
-                          <div className="mt-2 text-[28px] font-bold text-[#1F2937]">
+                          <div className="mt-2 text-[28px] font-bold text-[var(--foreground)]">
                             {metric.displayValue || metric.value}
                           </div>
-                          <p className="mt-1 text-xs text-[#6B7280]">{metric.subtitle}</p>
+                          <p className="mt-1 text-xs text-[var(--neutral-500)]">
+                            {metric.subtitle}
+                          </p>
                         </div>
                         <div
                           className={cn(

@@ -194,7 +194,7 @@ export function ContractFormModal({
                                   animate={{ scale: 1 }}
                                   exit={{ scale: 0 }}
                                 >
-                                  <Icon className="h-5 w-5 text-blue-600" />
+                                  <Icon className="h-5 w-5 text-[var(--brand-600)]" />
                                 </motion.div>
                               ) : (
                                 <motion.div

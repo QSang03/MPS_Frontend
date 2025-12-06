@@ -64,8 +64,7 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
     effectiveFrom: '',
     effectiveFromISO: undefined,
   })
-  const [pricingCurrencyId, setPricingCurrencyId] = useState<string | null>(null)
-  const [monthlyRentCurrencyId, setMonthlyRentCurrencyId] = useState<string | null>(null)
+  const [currencyId, setCurrencyId] = useState<string | null>(null)
   // store current effectiveFrom from backend (ISO) to enforce new > old
   const [currentEffectiveFromISO, setCurrentEffectiveFromISO] = useState<string | null>(null)
   const [canEditMonthlyRent, setCanEditMonthlyRent] = useState(false)
@@ -110,7 +109,7 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
           })
           // Set currency from response if available
           if (data.currencyId || (data as { currency?: { id?: string } }).currency?.id) {
-            setPricingCurrencyId(
+            setCurrencyId(
               data.currencyId || (data as { currency?: { id?: string } }).currency?.id || null
             )
           }
@@ -119,7 +118,7 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
           setCurrentEffectiveFromISO(pricingData?.effectiveFrom ?? null)
         } else {
           setForm({ pricePerBWPage: '', pricePerColorPage: '', monthlyRent: '', effectiveFrom: '' })
-          setPricingCurrencyId(null)
+          setCurrencyId(null)
           setCurrentEffectiveFromISO(null)
         }
 
@@ -151,10 +150,9 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
           setCanEditMonthlyRent(true)
           setContractRentError(null)
           // Set currency from response
-          if (contractRentRes.currencyId || contractRentRes.currency?.id) {
-            setMonthlyRentCurrencyId(
-              contractRentRes.currencyId || contractRentRes.currency?.id || null
-            )
+          // Use contract rent currency if pricing currency is not set
+          if ((contractRentRes.currencyId || contractRentRes.currency?.id) && !currencyId) {
+            setCurrencyId(contractRentRes.currencyId || contractRentRes.currency?.id || null)
           }
         } else {
           setForm((prev) => ({ ...prev, monthlyRent: '' }))
@@ -174,6 +172,7 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
     return () => {
       cancelled = true
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, device])
 
   const parseNum = (v: string): number => {
@@ -211,7 +210,7 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
           return
         }
         payload.pricePerBWPage = parsed
-        if (pricingCurrencyId) payload.currencyId = pricingCurrencyId
+        if (currencyId) payload.currencyId = currencyId
       }
 
       // Validate and set Color price
@@ -229,7 +228,7 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
           return
         }
         payload.pricePerColorPage = parsed
-        if (pricingCurrencyId) payload.currencyId = pricingCurrencyId
+        if (currencyId) payload.currencyId = currencyId
       }
 
       // Validate and set monthlyRent if provided
@@ -283,8 +282,8 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
           } = {
             monthlyRent: monthlyRentValue,
           }
-          if (monthlyRentCurrencyId) {
-            updatePayload.currencyId = monthlyRentCurrencyId
+          if (currencyId) {
+            updatePayload.currencyId = currencyId
             // Try to get currency code from currency selector if available
             // (This is optional, backend can resolve from currencyId)
           }
@@ -367,7 +366,7 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
               type="submit"
               form="device-pricing-form"
               disabled={submitting}
-              className="min-w-[120px] bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+              className="min-w-[120px] bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
             >
               {submitting ? (
                 <>
@@ -438,24 +437,14 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
               <Separator />
               <div className="space-y-2">
                 <CurrencySelector
-                  label="Tiền tệ cho giá in"
-                  value={pricingCurrencyId}
-                  onChange={(value) => setPricingCurrencyId(value)}
+                  label="Tiền tệ"
+                  value={currencyId}
+                  onChange={(value) => setCurrencyId(value)}
                   optional
                   placeholder="Chọn tiền tệ (mặc định: USD)"
+                  customerId={device?.customerId}
                 />
               </div>
-              {canEditMonthlyRent && (
-                <div className="space-y-2">
-                  <CurrencySelector
-                    label="Tiền tệ cho giá thuê hàng tháng"
-                    value={monthlyRentCurrencyId}
-                    onChange={(value) => setMonthlyRentCurrencyId(value)}
-                    optional
-                    placeholder="Chọn tiền tệ (mặc định: USD)"
-                  />
-                </div>
-              )}
               <div className="space-y-2">
                 <Label>{t('devices.pricing.effective_from')}</Label>
                 <DateTimeLocalPicker
