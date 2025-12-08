@@ -39,7 +39,7 @@ export function StatusStepper({ current }: Props) {
   return (
     <div className="space-y-3">
       <div className="text-sm font-semibold text-gray-700">Quy trình xử lý</div>
-      <div className="flex items-center gap-1 overflow-x-auto pb-2">
+      <div className="flex items-center gap-1 overflow-x-auto pt-1 pb-4">
         {steps.map((s, i) => {
           const disp = SERVICE_REQUEST_STATUS_DISPLAY[s]
           const isActive = i === currentIndex
@@ -51,7 +51,7 @@ export function StatusStepper({ current }: Props) {
                 <div
                   aria-current={isActive ? 'step' : undefined}
                   className={cn(
-                    'flex h-10 w-10 items-center justify-center rounded-full text-xs font-medium transition-all',
+                    'flex h-8 w-8 items-center justify-center rounded-full text-xs font-medium transition-all',
                     isActive
                       ? 'bg-[var(--color-success-500)] text-white shadow-lg ring-2 ring-[var(--color-success-500)] ring-offset-2'
                       : isPast
@@ -61,7 +61,7 @@ export function StatusStepper({ current }: Props) {
                 >
                   {/* Only show checkmark for active state */}
                   {isActive ? (
-                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none">
+                    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none">
                       <path
                         d="M5 13l4 4L19 7"
                         stroke="currentColor"
@@ -72,7 +72,7 @@ export function StatusStepper({ current }: Props) {
                     </svg>
                   ) : (
                     <div
-                      className={cn('h-3 w-3 rounded-full', isPast ? 'bg-gray-400' : 'bg-gray-300')}
+                      className={cn('h-2 w-2 rounded-full', isPast ? 'bg-gray-400' : 'bg-gray-300')}
                     />
                   )}
                 </div>

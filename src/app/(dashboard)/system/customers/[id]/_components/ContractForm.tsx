@@ -203,6 +203,73 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
     }
   }
 
+  // Normalize date ISO formats and compute durationYears for edit flows
+  useEffect(() => {
+    try {
+      const normalizeDateToYYYYMMDD = (date?: string | null) => {
+        if (!date) return undefined
+        try {
+          const d = new Date(date)
+          if (Number.isNaN(d.getTime())) return undefined
+          return d.toISOString().slice(0, 10)
+        } catch {
+          return undefined
+        }
+      }
+
+      const calcDurationYears = (start?: string, end?: string): number | undefined => {
+        const sNorm = normalizeDateToYYYYMMDD(start)
+        const eNorm = normalizeDateToYYYYMMDD(end)
+        if (!sNorm || !eNorm) return undefined
+        const s = new Date(sNorm)
+        const e = new Date(eNorm)
+        if (Number.isNaN(s.getTime()) || Number.isNaN(e.getTime())) return undefined
+        const sy = s.getUTCFullYear()
+        const sm = s.getUTCMonth()
+        const sd = s.getUTCDate()
+        for (let years = 1; years <= 5; years++) {
+          // expectedExclusive is how the create flow sets endDate (start + years, -1 day)
+          const expectedExclusive = new Date(Date.UTC(sy + years, sm, sd))
+          expectedExclusive.setUTCDate(expectedExclusive.getUTCDate() - 1)
+
+          // expectedInclusive is sometimes used by APIs (end may equal start + years)
+          const expectedInclusive = new Date(Date.UTC(sy + years, sm, sd))
+
+          const eIso = e.toISOString().slice(0, 10)
+          if (
+            expectedExclusive.toISOString().slice(0, 10) === eIso ||
+            expectedInclusive.toISOString().slice(0, 10) === eIso
+          ) {
+            return years
+          }
+        }
+        return undefined
+      }
+
+      if (initial?.startDate) {
+        const sNorm = normalizeDateToYYYYMMDD(initial.startDate)
+        if (sNorm) form.setValue('startDate', sNorm)
+      }
+      if (initial?.endDate) {
+        const eNorm = normalizeDateToYYYYMMDD(initial.endDate)
+        if (eNorm) form.setValue('endDate', eNorm)
+      }
+
+      // Compute durationYears for edit mode when both start & end are present.
+      // Sometimes API provides start/end but not durationYears, or the incoming
+      // initial object contains ISO timestamps — compute the matching years and
+      // set it so the duration select is pre-filled when editing a contract.
+      if (isEdit && initial?.startDate && initial?.endDate) {
+        const years = calcDurationYears(initial.startDate, initial.endDate)
+        if (years) form.setValue('durationYears', years)
+      }
+    } catch {
+      // ignore
+    }
+    // We only want to run this once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const isPending =
     (createMutation as unknown as { isLoading?: boolean }).isLoading ||
     (updateMutation as unknown as { isLoading?: boolean }).isLoading

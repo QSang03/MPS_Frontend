@@ -157,6 +157,7 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
     (createMutation as unknown as { isLoading?: boolean }).isLoading ||
     (updateMutation as unknown as { isLoading?: boolean }).isLoading
   const id = (initial as unknown as { id?: string })?.id
+  const isEdit = Boolean(initial?.contractNumber)
   const watched = useWatch({ control: form.control }) as ContractFormData
   const selectedFile = (watched?.pdfFile as File | undefined) || undefined
   const documentUrlValue =
@@ -211,6 +212,61 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
   // form state errors are available via `form.formState.errors` when needed
 
   // keep the hidden endDate form value in sync with startDate + durationYears - 1 day
+  // Normalize initial ISO timestamps and compute durationYears when editing so
+  // the duration select and computed end date UI are pre-filled for edit flows.
+  useEffect(() => {
+    try {
+      const normalizeDateToYYYYMMDD = (date?: string | null) => {
+        if (!date) return undefined
+        try {
+          const d = new Date(date)
+          if (Number.isNaN(d.getTime())) return undefined
+          return d.toISOString().slice(0, 10)
+        } catch {
+          return undefined
+        }
+      }
+
+      const calcDurationYears = (start?: string, end?: string): number | undefined => {
+        const sNorm = normalizeDateToYYYYMMDD(start)
+        const eNorm = normalizeDateToYYYYMMDD(end)
+        if (!sNorm || !eNorm) return undefined
+        const s = new Date(sNorm)
+        const e = new Date(eNorm)
+        if (Number.isNaN(s.getTime()) || Number.isNaN(e.getTime())) return undefined
+        const sy = s.getUTCFullYear()
+        const sm = s.getUTCMonth()
+        const sd = s.getUTCDate()
+        for (let years = 1; years <= 5; years++) {
+          const expected = new Date(Date.UTC(sy + years, sm, sd))
+          expected.setUTCDate(expected.getUTCDate() - 1)
+          if (expected.toISOString().slice(0, 10) === e.toISOString().slice(0, 10)) {
+            return years
+          }
+        }
+        return undefined
+      }
+
+      if (initial?.startDate) {
+        const sNorm = normalizeDateToYYYYMMDD(initial.startDate)
+        if (sNorm) form.setValue('startDate', sNorm)
+      }
+      if (initial?.endDate) {
+        const eNorm = normalizeDateToYYYYMMDD(initial.endDate)
+        if (eNorm) form.setValue('endDate', eNorm)
+      }
+
+      // Compute durationYears for edit flows when start + end present
+      if (isEdit && initial?.startDate && initial?.endDate) {
+        const years = calcDurationYears(initial.startDate, initial.endDate)
+        if (years) form.setValue('durationYears', years)
+      }
+    } catch {
+      // ignore
+    }
+    // run once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   useEffect(() => {
     try {
       const s = watched.startDate
