@@ -264,14 +264,14 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
       // Compute durationYears for edit flows when start + end present
       if (isEdit && initial?.startDate && initial?.endDate) {
         const years = calcDurationYears(initial.startDate, initial.endDate)
-        if (years) form.setValue('durationYears', years)
+        if (typeof years === 'number') form.setValue('durationYears', years)
       }
     } catch {
       // ignore
     }
-    // run once on mount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+    // re-run when incoming initial dates or edit-mode change so the values stay
+    // in sync when the component receives new initial props
+  }, [initial?.startDate, initial?.endDate, isEdit, form])
   useEffect(() => {
     try {
       const s = watched.startDate

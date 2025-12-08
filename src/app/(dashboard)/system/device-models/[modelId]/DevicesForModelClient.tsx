@@ -198,7 +198,7 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
             <p className="text-sm text-white/80">{t('device_model.stats.active_label')}</p>
             <p className="mt-1 text-2xl font-bold">{devices.filter((d) => d.isActive).length}</p>
           </div>
-          <div className="rounded-lg border border-[var(--brand-200)] bg-gradient-to-br from-[var(--brand-50)] to-[var(--brand-50)] p-3">
+          <div className="rounded-lg border border-white/20 bg-white/10 p-3 backdrop-blur-sm">
             <p className="text-sm text-white/80">{t('device_model.stats.counter_type')}</p>
             <p className="mt-1 text-lg font-bold text-white/90">
               {modelUseA4 === undefined ? 'N/A' : modelUseA4 ? 'A4 Counter' : 'Standard Counter'}

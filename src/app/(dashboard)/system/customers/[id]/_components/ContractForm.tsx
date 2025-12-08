@@ -261,14 +261,14 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
       // set it so the duration select is pre-filled when editing a contract.
       if (isEdit && initial?.startDate && initial?.endDate) {
         const years = calcDurationYears(initial.startDate, initial.endDate)
-        if (years) form.setValue('durationYears', years)
+        if (typeof years === 'number') form.setValue('durationYears', years)
       }
     } catch {
       // ignore
     }
-    // We only want to run this once on mount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+    // Re-run whenever the incoming initial dates or edit mode change so the
+    // form stays in sync when the component receives new initial props.
+  }, [initial?.startDate, initial?.endDate, isEdit, form])
 
   const isPending =
     (createMutation as unknown as { isLoading?: boolean }).isLoading ||
