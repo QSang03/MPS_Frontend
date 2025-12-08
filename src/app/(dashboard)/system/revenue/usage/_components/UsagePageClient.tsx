@@ -20,6 +20,7 @@ import type {
   UsageTrendItem,
 } from '@/lib/api/services/reports-analytics.service'
 import { Skeleton } from '@/components/ui/skeleton'
+import { cn } from '@/lib/utils/cn'
 import { toast } from 'sonner'
 import {
   ResponsiveContainer,
@@ -767,13 +768,23 @@ export default function UsagePageClient() {
                   {customersData.map((c) => (
                     <tr
                       key={c.customerId}
-                      className="cursor-pointer hover:bg-gray-50"
+                      className={cn(
+                        'cursor-pointer hover:bg-gray-50',
+                        selectedCustomerId === c.customerId && 'bg-[var(--brand-50)]'
+                      )}
                       onClick={() => {
                         setSelectedCustomerId(c.customerId)
                         void loadCustomerDetail(c.customerId)
                       }}
                     >
-                      <td className="px-4 py-3 text-sm font-medium">{c.name}</td>
+                      <td
+                        className={cn(
+                          'px-4 py-3 text-sm font-medium underline',
+                          selectedCustomerId === c.customerId && 'text-[var(--brand-600)]'
+                        )}
+                      >
+                        {c.name}
+                      </td>
                       <td className="px-4 py-3 text-right text-sm">{formatNumber(c.totalPages)}</td>
                       <td className="px-4 py-3 text-right text-sm">
                         {formatNumber(c.totalBwPages)}
