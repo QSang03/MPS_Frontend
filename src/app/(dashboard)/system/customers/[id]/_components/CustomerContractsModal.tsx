@@ -149,7 +149,7 @@ export default function CustomerContractsModal({
         return 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100'
       case 'CMPS_CLICK_CHARGE':
       case 'CMPS_CONSUMABLE':
-        return 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100'
+        return 'bg-[var(--brand-50)] text-[var(--brand-700)] border-[var(--brand-200)] hover:bg-[var(--brand-100)]'
       case 'PARTS_REPAIR_SERVICE':
         return 'bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100'
       default:
