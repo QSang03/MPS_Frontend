@@ -25,15 +25,6 @@ export function Sidebar({ session }: SidebarProps) {
   const pathname = usePathname()
   const { sidebarOpen, toggleSidebar } = useUIStore()
 
-  // Icon mapping helper - map our string icon names to lucide-react components
-  type IconComp = ComponentType<Record<string, unknown>>
-  const getIconComponent = (name?: string): IconComp => {
-    if (!name) return Icons.LayoutDashboard as unknown as IconComp
-    const comp = (Icons as unknown as Record<string, IconComp>)[name]
-    if (comp) return comp
-    return Icons.LayoutDashboard as unknown as IconComp
-  }
-
   const isUserRole = String(session.role ?? '').toLowerCase() === 'user'
   const payload = isUserRole ? USER_NAVIGATION_PAYLOAD : NAVIGATION_PAYLOAD
   const navigationFromConfig = (payload || []).map((it: Record<string, unknown>) => ({
@@ -45,6 +36,15 @@ export function Sidebar({ session }: SidebarProps) {
   }))
   // Try to use navigation items computed by the backend (permission-checked)
   const { items: navItems, loading: navLoading } = useNavigation()
+
+  // Icon mapping helper - map our string icon names to lucide-react components
+  type IconComp = ComponentType<Record<string, unknown>>
+  const getIconComponent = (name?: string): IconComp => {
+    if (!name) return Icons.LayoutDashboard as unknown as IconComp
+    const comp = (Icons as unknown as Record<string, IconComp>)[name]
+    if (comp) return comp
+    return Icons.LayoutDashboard as unknown as IconComp
+  }
 
   // Build navigation list; prefer backend-provided `navItems` when available
   type SidebarNavItem = {
@@ -163,28 +163,23 @@ export function Sidebar({ session }: SidebarProps) {
           {/* Navigation */}
           <nav className="flex-1 space-y-1 overflow-y-auto p-4">
             {(() => {
-              // Choose only one active item: pick the first item with the highest score.
+              // Choose the single best-matching item to mark as active to avoid duplicate highlights.
+              // We'll compute a simple "score" for each item: exact match gets a high score,
+              // otherwise prefix matches get score equal to the length of the href. Then pick
+              // the item(s) with the highest score only.
               const normalize = (s?: string) => (s ? s.replace(/\/$/, '') : '')
               const currentPath = normalize(pathname)
-
               const scores = navigation.map((it) => {
                 const href = normalize(it.href)
                 if (!href) return 0
                 if (currentPath === href) return 10000 + href.length
-                return currentPath.startsWith(`${href}/`) ? href.length : 0
+                return currentPath.startsWith(href + '/') ? href.length : 0
               })
-
-              let bestIndex = -1
-              let bestScore = 0
-              scores.forEach((score, idx) => {
-                if (score > bestScore) {
-                  bestScore = score
-                  bestIndex = idx
-                }
-              })
+              const maxScore = scores.length > 0 ? Math.max(...scores) : 0
 
               return navigation.map((item, i) => {
-                const isActive = i === bestIndex && bestScore > 0
+                const thisScore = scores[i] ?? 0
+                const isActive = thisScore > 0 && thisScore === maxScore
                 return (
                   <Link
                     key={item.href}

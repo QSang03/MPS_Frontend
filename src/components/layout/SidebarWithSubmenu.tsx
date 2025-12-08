@@ -39,7 +39,9 @@ export function SidebarNavItem({ item, index }: SidebarNavItemProps) {
   // 3. For dynamic routes: check if pathname matches the base route pattern
   // Special case: /system only matches exactly to avoid highlighting on all /system/* routes
   const isParentActive =
-    normalizedHref === '/system'
+    // Special-case certain top-level containers so they only match exactly
+    // (avoid marking parent like /system or /user/dashboard active for all child pages)
+    normalizedHref === '/system' || normalizedHref === '/user/dashboard'
       ? normalizedPathname === normalizedHref
       : normalizedPathname === normalizedHref ||
         normalizedPathname.startsWith(normalizedHref + '/') ||
