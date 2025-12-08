@@ -296,11 +296,11 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="overflow-hidden rounded-2xl border-2 border-indigo-100 bg-gradient-to-br from-white via-indigo-50/30 to-blue-50/30 p-5 shadow-lg"
+          className="overflow-hidden rounded-2xl border-2 border-[var(--brand-100)] bg-gradient-to-br from-white via-[var(--brand-50)]/30 to-[var(--brand-50)]/30 p-5 shadow-lg"
         >
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="rounded-full bg-gradient-to-br from-indigo-500 to-blue-600 p-2 shadow-md">
+              <div className="rounded-full bg-gradient-to-br from-[var(--brand-500)] to-[var(--brand-600)] p-2 shadow-md">
                 <Sparkles className="h-5 w-5 text-white" />
               </div>
               <div>
@@ -312,7 +312,7 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
               <span
                 className={cn(
                   'text-2xl font-bold',
-                  isFormComplete ? 'text-emerald-600' : 'text-indigo-600'
+                  isFormComplete ? 'text-emerald-600' : 'text-[var(--brand-600)]'
                 )}
               >
                 {completionPercentage}%
@@ -334,7 +334,7 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
                 'h-full transition-colors',
                 isFormComplete
                   ? 'bg-gradient-to-r from-emerald-500 to-green-600'
-                  : 'bg-gradient-to-r from-indigo-500 to-blue-600'
+                  : 'bg-gradient-to-r from-[var(--brand-500)] to-[var(--brand-600)]'
               )}
               initial={{ width: 0 }}
               animate={{ width: `${completionPercentage}%` }}
@@ -382,10 +382,10 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.1 }}
-          className="space-y-5 rounded-2xl border-2 border-blue-200 bg-gradient-to-br from-blue-50/80 via-indigo-50/50 to-white p-6 shadow-lg"
+          className="space-y-5 rounded-2xl border-2 border-[var(--brand-200)] bg-gradient-to-br from-[var(--brand-50)]/80 via-[var(--brand-50)]/50 to-white p-6 shadow-lg"
         >
           <div className="flex items-center gap-3 pb-2">
-            <div className="rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 p-3 shadow-lg">
+            <div className="rounded-xl bg-gradient-to-br from-[var(--brand-600)] to-[var(--brand-700)] p-3 shadow-lg">
               <Tag className="h-6 w-6 text-white" />
             </div>
             <div className="flex-1">
@@ -404,7 +404,7 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center gap-2 text-sm font-bold text-slate-800">
-                    <FileText className="h-4 w-4 text-blue-600" />
+                    <FileText className="h-4 w-4 text-[var(--brand-600)]" />
                     Mã hợp đồng
                     <span className="text-rose-500">*</span>
                   </FormLabel>
@@ -427,7 +427,7 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center gap-2 text-sm font-bold text-slate-800">
-                    <Tag className="h-4 w-4 text-indigo-600" />
+                    <Tag className="h-4 w-4 text-[var(--brand-600)]" />
                     Loại hợp đồng
                     <span className="text-rose-500">*</span>
                   </FormLabel>
@@ -459,7 +459,7 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
               render={({ field }) => (
                 <FormItem className="md:col-span-2">
                   <FormLabel className="flex items-center gap-2 text-sm font-bold text-slate-800">
-                    <CheckCircle2 className="h-4 w-4 text-indigo-600" />
+                    <CheckCircle2 className="h-4 w-4 text-[var(--brand-600)]" />
                     Trạng thái
                   </FormLabel>
                   <FormControl>
@@ -753,7 +753,7 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
                   <Button
                     asChild
                     variant="ghost"
-                    className="mt-2 h-8 w-fit gap-1 rounded-full border border-blue-200 bg-blue-50 px-3 text-sm font-medium text-blue-700 hover:bg-blue-100"
+                    className="mt-2 h-8 w-fit gap-1 rounded-full border border-[var(--brand-200)] bg-[var(--brand-50)] px-3 text-sm font-medium text-[var(--brand-700)] hover:bg-[var(--brand-100)]"
                   >
                     <a
                       href={getPublicUrl(documentUrlValue) ?? documentUrlValue}

@@ -93,8 +93,8 @@ export default function DeviceModelDevicesModal({
         maxWidth="!max-w-[75vw]"
       >
         {/* Quick Stats */}
-        <div className="mb-4 grid grid-cols-3 gap-3 rounded-lg border border-gray-200 bg-gradient-to-r from-blue-50 to-cyan-50 p-4">
-          <div className="rounded-lg border border-blue-200 bg-white p-2.5">
+        <div className="mb-4 grid grid-cols-3 gap-3 rounded-lg border border-gray-200 bg-gradient-to-r from-[var(--brand-50)] to-[var(--brand-50)] p-4">
+          <div className="rounded-lg border border-[var(--brand-200)] bg-white p-2.5">
             <p className="text-xs text-gray-600">Tổng thiết bị</p>
             <p className="mt-1 text-xl font-bold text-[var(--brand-600)]">{devices.length}</p>
           </div>
@@ -132,7 +132,7 @@ export default function DeviceModelDevicesModal({
               {/* Table */}
               <div className="overflow-hidden rounded-lg border">
                 <table className="w-full">
-                  <thead className="bg-gradient-to-r from-blue-50 to-cyan-50">
+                  <thead className="bg-gradient-to-r from-[var(--brand-50)] to-[var(--brand-50)]">
                     <tr>
                       <th className="px-4 py-3 text-left text-sm font-semibold">#</th>
                       <th className="px-4 py-3 text-left text-sm font-semibold">
@@ -144,7 +144,7 @@ export default function DeviceModelDevicesModal({
                       <th className="px-4 py-3 text-left text-sm font-semibold">Model</th>
                       <th className="px-4 py-3 text-left text-sm font-semibold">
                         <div className="flex items-center gap-2">
-                          <MapPin className="h-4 w-4 text-cyan-600" />
+                          <MapPin className="h-4 w-4 text-[var(--brand-600)]" />
                           Vị trí
                         </div>
                       </th>
@@ -175,7 +175,7 @@ export default function DeviceModelDevicesModal({
                       filteredDevices.map((d, idx) => (
                         <tr
                           key={d.id}
-                          className="transition-colors hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-cyan-50/50"
+                          className="transition-colors hover:bg-gradient-to-r hover:from-[var(--brand-50)]/50 hover:to-[var(--brand-50)]/50"
                         >
                           <td className="text-muted-foreground px-4 py-3 text-sm">{idx + 1}</td>
                           <td className="px-4 py-3">

@@ -135,7 +135,7 @@ export function EditProfileModal({
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-[550px] overflow-hidden rounded-2xl border-0 p-0 shadow-2xl">
         {/* Premium Header */}
-        <DialogHeader className="relative overflow-hidden bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 p-0">
+        <DialogHeader className="relative overflow-hidden bg-gradient-to-r from-[var(--brand-600)] via-[var(--brand-700)] to-[var(--brand-700)] p-0">
           {/* Animated background shapes */}
           <div className="absolute inset-0 opacity-20">
             <div className="absolute top-0 right-0 h-40 w-40 translate-x-1/2 -translate-y-1/2 rounded-full bg-white"></div>
@@ -165,7 +165,7 @@ export function EditProfileModal({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center gap-2 text-sm font-bold text-gray-800">
-                      <Mail className="h-4 w-4 text-purple-600" />
+                      <Mail className="h-4 w-4 text-[var(--brand-600)]" />
                       Email *
                     </FormLabel>
                     <FormControl>
@@ -173,7 +173,7 @@ export function EditProfileModal({
                         placeholder="Nhập email"
                         type="email"
                         {...field}
-                        className="h-10 rounded-lg border-2 border-gray-200 text-base transition-all focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                        className="h-10 rounded-lg border-2 border-gray-200 text-base transition-all focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)]"
                       />
                     </FormControl>
                     <FormMessage className="mt-1 text-xs text-red-600" />
@@ -271,7 +271,7 @@ export function EditProfileModal({
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="min-w-[120px] flex-1 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 font-bold text-white shadow-lg transition-all hover:from-purple-700 hover:to-pink-700 hover:shadow-xl disabled:opacity-50"
+                  className="min-w-[120px] flex-1 rounded-lg bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] font-bold text-white shadow-lg transition-all hover:from-[var(--brand-700)] hover:to-[var(--brand-700)] hover:shadow-xl disabled:opacity-50"
                 >
                   {isLoading ? (
                     <>

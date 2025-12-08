@@ -361,7 +361,7 @@ function PolicyTable({
         enableSorting: true,
         header: () => (
           <div className="flex items-center gap-2">
-            <Shield className="h-5 w-5 text-purple-600" />
+            <Shield className="h-5 w-5 text-[var(--brand-600)]" />
             Effect
           </div>
         ),
@@ -427,7 +427,7 @@ function PolicyTable({
         accessorKey: 'resourceDescription',
         header: () => (
           <div className="flex items-center gap-2">
-            <Folder className="h-5 w-5 text-purple-600" />
+            <Folder className="h-5 w-5 text-[var(--brand-600)]" />
             Resource
           </div>
         ),
@@ -523,7 +523,7 @@ function PolicyTable({
             {onCreate && (
               <Button
                 onClick={onCreate}
-                className="transform rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-8 py-3 font-bold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:from-indigo-700 hover:to-purple-700 hover:shadow-xl"
+                className="transform rounded-xl bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] px-8 py-3 font-bold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:from-[var(--brand-700)] hover:to-[var(--brand-700)] hover:shadow-xl"
               >
                 <Plus className="mr-2 h-5 w-5" />
                 Tạo Policy Đầu Tiên

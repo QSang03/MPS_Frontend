@@ -201,7 +201,7 @@ export function PoliciesTable() {
             </div>
             <div className="text-white">
               <h2 className="text-3xl font-bold tracking-tight">Quản lý Policies</h2>
-              <p className="mt-1 text-sm font-medium text-blue-100">
+              <p className="mt-1 text-sm font-medium text-[var(--brand-100)]">
                 ⚡ {pagination.total} policies đang hoạt động
               </p>
             </div>
@@ -221,9 +221,9 @@ export function PoliciesTable() {
 
       <CardContent className="space-y-6 bg-gradient-to-b from-gray-50 to-white p-8">
         {/* FILTER SECTION - Premium Design */}
-        <div className="border-gradient-to-r space-y-4 rounded-2xl border-2 bg-white from-blue-200 to-purple-200 p-6 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl">
+        <div className="border-gradient-to-r space-y-4 rounded-2xl border-2 bg-white from-[var(--brand-200)] to-[var(--brand-200)] p-6 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl">
           <div className="mb-5 flex items-center gap-2">
-            <div className="rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 p-2">
+            <div className="rounded-lg bg-gradient-to-r from-[var(--brand-500)] to-[var(--brand-700)] p-2">
               <Filter className="h-5 w-5 text-white" />
             </div>
             <h3 className="text-lg font-bold text-gray-800">Bộ lọc & Tìm kiếm</h3>
@@ -244,14 +244,14 @@ export function PoliciesTable() {
                     setPage(1)
                   }
                 }}
-                className="rounded-xl border-2 border-gray-200 bg-gradient-to-r from-gray-50 to-white pr-4 pl-12 text-base transition-all duration-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                className="rounded-xl border-2 border-gray-200 bg-gradient-to-r from-gray-50 to-white pr-4 pl-12 text-base transition-all duration-300 focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)]"
               />
             </div>
 
             {/* Effect Filter */}
             <div className="group relative">
               <Select value={effect} onValueChange={setEffect}>
-                <SelectTrigger className="h-10 rounded-xl border-2 border-gray-200 bg-gradient-to-r from-gray-50 to-white text-base focus:border-purple-500 focus:ring-2 focus:ring-purple-200">
+                <SelectTrigger className="h-10 rounded-xl border-2 border-gray-200 bg-gradient-to-r from-gray-50 to-white text-base focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)]">
                   <SelectValue placeholder="Chọn Effect" />
                 </SelectTrigger>
                 <SelectContent>
@@ -289,7 +289,7 @@ export function PoliciesTable() {
                 variant="outline"
                 size="icon"
                 onClick={() => refetch()}
-                className="h-10 w-10 cursor-pointer rounded-xl border-2 border-gray-200 transition-all duration-300 hover:border-blue-400 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50"
+                className="h-10 w-10 cursor-pointer rounded-xl border-2 border-gray-200 transition-all duration-300 hover:border-[var(--brand-400)] hover:bg-gradient-to-r hover:from-[var(--brand-50)] hover:to-[var(--brand-50)]"
                 title="Làm mới dữ liệu"
               >
                 {/* Hiện animation xoay khi đang fetch (kể cả refetch); đổi con trỏ thành tay khi hover */}
@@ -305,7 +305,7 @@ export function PoliciesTable() {
                 Bộ lọc:
               </span>
               {search && (
-                <span className="inline-flex items-center gap-2 rounded-full border border-blue-300 bg-gradient-to-r from-blue-100 to-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700 shadow-sm">
+                <span className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-300)] bg-gradient-to-r from-[var(--brand-100)] to-[var(--brand-50)] px-3 py-1.5 text-xs font-bold text-[var(--brand-700)] shadow-sm">
                   🔍 "{search}"
                   <button
                     onClick={() => {
@@ -313,18 +313,18 @@ export function PoliciesTable() {
                       setDebouncedSearch('')
                       setPage(1)
                     }}
-                    className="transition-transform hover:scale-110 hover:text-blue-900"
+                    className="transition-transform hover:scale-110 hover:text-[var(--brand-900)]"
                   >
                     <XCircle className="h-3.5 w-3.5" />
                   </button>
                 </span>
               )}
               {effect !== 'all' && (
-                <span className="inline-flex items-center gap-2 rounded-full border border-purple-300 bg-gradient-to-r from-purple-100 to-purple-50 px-3 py-1.5 text-xs font-bold text-purple-700 shadow-sm">
+                <span className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-300)] bg-gradient-to-r from-[var(--brand-100)] to-[var(--brand-50)] px-3 py-1.5 text-xs font-bold text-[var(--brand-700)] shadow-sm">
                   {effect === 'ALLOW' ? '✓' : '✗'} {effect}
                   <button
                     onClick={() => setEffect('all')}
-                    className="transition-transform hover:scale-110 hover:text-purple-900"
+                    className="transition-transform hover:scale-110 hover:text-[var(--brand-900)]"
                   >
                     <XCircle className="h-3.5 w-3.5" />
                   </button>
@@ -376,7 +376,7 @@ export function PoliciesTable() {
           ) : (
             <div className="overflow-x-auto">
               <Table className="min-w-full">
-                <TableHeader className="border-b-2 border-gray-200 bg-gradient-to-r from-gray-100 via-blue-50 to-purple-50">
+                <TableHeader className="border-b-2 border-gray-200 bg-gradient-to-r from-gray-100 via-[var(--brand-50)] to-[var(--brand-50)]">
                   <TableRow>
                     <TableHead className="w-[80px] text-center font-bold text-gray-700">
                       STT
@@ -421,7 +421,7 @@ export function PoliciesTable() {
                       onMouseLeave={() => setHoveredRowId(null)}
                       className={`border-b border-gray-100 transition-all duration-300 ${
                         hoveredRowId === p.id
-                          ? 'bg-gradient-to-r from-blue-50/80 via-purple-50/50 to-pink-50/30 shadow-md'
+                          ? 'bg-gradient-to-r from-[var(--brand-50)]/80 via-[var(--brand-50)]/50 to-[var(--brand-50)]/30 shadow-md'
                           : 'hover:bg-gray-50'
                       }`}
                     >
@@ -453,7 +453,7 @@ export function PoliciesTable() {
                               {(p.actions || []).slice(0, 3).map((act, i) => (
                                 <span
                                   key={i}
-                                  className="inline-flex items-center rounded-lg border-2 border-blue-300 bg-gradient-to-r from-blue-100 to-blue-50 px-3 py-1.5 text-xs font-bold whitespace-nowrap text-blue-700 shadow-sm transition-all duration-300 hover:scale-105 hover:shadow-md"
+                                  className="inline-flex items-center rounded-lg border-2 border-[var(--brand-300)] bg-gradient-to-r from-[var(--brand-100)] to-[var(--brand-50)] px-3 py-1.5 text-xs font-bold whitespace-nowrap text-[var(--brand-700)] shadow-sm transition-all duration-300 hover:scale-105 hover:shadow-md"
                                 >
                                   {act}
                                 </span>
@@ -492,7 +492,7 @@ export function PoliciesTable() {
                                 const isProtectedPolicy = p.name === 'SystemAdminFullAccess'
                                 if (!isProtectedPolicy) openEdit(p)
                               }}
-                              className="transition-all hover:bg-blue-100 hover:text-blue-700"
+                              className="transition-all hover:bg-[var(--brand-100)] hover:text-[var(--brand-700)]"
                               title={
                                 p.name === 'SystemAdminFullAccess'
                                   ? 'Policy hệ thống không thể chỉnh sửa'
@@ -563,7 +563,7 @@ export function PoliciesTable() {
                 ← Trước
               </Button>
 
-              <div className="flex items-center gap-2 rounded-xl border-2 border-blue-300 bg-white px-5 py-2 shadow-md">
+              <div className="flex items-center gap-2 rounded-xl border-2 border-[var(--brand-300)] bg-white px-5 py-2 shadow-md">
                 <span className="text-xs font-bold text-gray-600">Trang</span>
                 <span className="bg-gradient-to-r from-[var(--brand-500)] to-[var(--brand-600)] bg-clip-text text-base font-bold text-transparent">
                   {pagination.page}

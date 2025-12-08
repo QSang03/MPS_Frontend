@@ -140,7 +140,7 @@ export default function UsagePage() {
   }, [loadUsage])
 
   return (
-    <div className="min-h-screen from-slate-50 via-blue-50 to-indigo-50 px-4 py-8 sm:px-6 lg:px-8 dark:from-slate-950 dark:via-blue-950 dark:to-indigo-950">
+    <div className="min-h-screen from-slate-50 via-[var(--brand-50)] to-[var(--brand-50)] px-4 py-8 sm:px-6 lg:px-8 dark:from-slate-950 dark:via-[var(--brand-950)] dark:to-[var(--brand-950)]">
       <div className="w-full">
         {/* Header Section */}
         <div className="mb-8">

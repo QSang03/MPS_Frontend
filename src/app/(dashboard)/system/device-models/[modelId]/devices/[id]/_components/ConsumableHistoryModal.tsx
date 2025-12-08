@@ -125,10 +125,10 @@ export function ConsumableUsageHistory({
   return (
     <div className="space-y-6">
       {/* Modern Header with Glassmorphism */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6 backdrop-blur-xl dark:from-blue-950/50 dark:via-indigo-950/50 dark:to-purple-950/50">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[var(--brand-50)] via-[var(--brand-50)] to-[var(--brand-50)] p-6 backdrop-blur-xl dark:from-blue-950/50 dark:via-indigo-950/50 dark:to-purple-950/50">
         <div className="absolute inset-0 bg-white/40 backdrop-blur-sm dark:bg-black/20"></div>
         <div className="relative z-10">
-          <h3 className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-2xl font-bold text-transparent">
+          <h3 className="bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] bg-clip-text text-2xl font-bold text-transparent">
             Lịch sử Sử dụng Vật tư
           </h3>
           <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
@@ -142,7 +142,7 @@ export function ConsumableUsageHistory({
         {/* Main Search Bar */}
         <div className="group relative overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg transition-all hover:shadow-xl dark:border-slate-800 dark:bg-slate-900">
           <div className="flex items-center gap-3 p-4">
-            <Search className="h-5 w-5 text-slate-400 transition-colors group-hover:text-blue-500" />
+            <Search className="h-5 w-5 text-slate-400 transition-colors group-hover:text-[var(--brand-600)]" />
             <Input
               placeholder="Tìm kiếm theo ID hoặc tên vật tư..."
               value={search}
@@ -165,7 +165,7 @@ export function ConsumableUsageHistory({
             </Button>
             <Button
               onClick={() => handleSearch()}
-              className="rounded-full bg-gradient-to-r from-blue-600 to-purple-600 px-6 text-white shadow-md transition-all hover:scale-105 hover:shadow-lg"
+              className="rounded-full bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] px-6 text-white shadow-md transition-all hover:scale-105 hover:shadow-lg"
             >
               Tìm kiếm
             </Button>
@@ -219,7 +219,7 @@ export function ConsumableUsageHistory({
                 <select
                   value={String(limit)}
                   onChange={(e) => setLimit(Number(e.target.value))}
-                  className="h-10 w-full rounded-lg border border-slate-300 bg-white px-3 shadow-sm transition-all hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none dark:border-slate-700 dark:bg-slate-900"
+                  className="h-10 w-full rounded-lg border border-slate-300 bg-white px-3 shadow-sm transition-all hover:border-[var(--brand-400)] focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)]/20 focus:outline-none dark:border-slate-700 dark:bg-slate-900"
                 >
                   <option value="10">10 bản ghi</option>
                   <option value="20">20 bản ghi</option>
@@ -245,8 +245,8 @@ export function ConsumableUsageHistory({
         {loading ? (
           <div className="flex flex-col items-center justify-center space-y-4 p-16">
             <div className="relative">
-              <Loader2 className="h-12 w-12 animate-spin text-blue-600" />
-              <div className="absolute inset-0 h-12 w-12 animate-ping rounded-full bg-blue-400 opacity-20"></div>
+              <Loader2 className="h-12 w-12 animate-spin text-[var(--brand-600)]" />
+              <div className="absolute inset-0 h-12 w-12 animate-ping rounded-full bg-[var(--brand-400)] opacity-20"></div>
             </div>
             <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
               Đang tải dữ liệu...
@@ -299,7 +299,7 @@ export function ConsumableUsageHistory({
                 {items.map((r) => (
                   <tr
                     key={r.id}
-                    className="group transition-all hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 dark:hover:from-blue-950/30 dark:hover:to-purple-950/30"
+                    className="group transition-all hover:bg-gradient-to-r hover:from-[var(--brand-50)] hover:to-[var(--brand-50)] dark:hover:from-blue-950/30 dark:hover:to-purple-950/30"
                   >
                     <td className="px-6 py-4">
                       <code
@@ -360,7 +360,7 @@ export function ConsumableUsageHistory({
       {/* Modern Pagination */}
       <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-md dark:border-slate-800 dark:bg-slate-900">
         <div className="flex items-center gap-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-500 text-sm font-bold text-white shadow-lg">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[var(--brand-500)] to-[var(--brand-700)] text-sm font-bold text-white shadow-lg">
             {page}
           </div>
           <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
@@ -384,7 +384,7 @@ export function ConsumableUsageHistory({
             size="sm"
             disabled={loading}
             onClick={() => setPage((p) => p + 1)}
-            className="gap-2 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 text-white transition-all hover:scale-105 hover:shadow-lg disabled:opacity-50"
+            className="gap-2 rounded-full bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] text-white transition-all hover:scale-105 hover:shadow-lg disabled:opacity-50"
           >
             Sau
             <ChevronRight className="h-4 w-4" />
@@ -446,7 +446,7 @@ export default function ConsumableHistoryModal({
             </Button>
             <Button
               onClick={() => onOpenChange(false)}
-              className="min-w-[100px] bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+              className="min-w-[100px] bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] hover:from-[var(--brand-700)] hover:to-[var(--brand-700)]"
             >
               Đóng
             </Button>

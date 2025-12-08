@@ -343,7 +343,7 @@ export default function ContractDevicesModal({
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 }}
-                  className="rounded-lg border border-blue-200 bg-gradient-to-br from-blue-50 to-cyan-50 p-3 shadow-sm"
+                  className="rounded-lg border border-[var(--brand-200)] bg-gradient-to-br from-[var(--brand-50)] to-[var(--brand-50)] p-3 shadow-sm"
                 >
                   <div className="text-xs font-medium text-blue-700">HĐ khác</div>
                   <div className="mt-1 text-2xl font-bold text-blue-900">{stats.other}</div>
@@ -650,7 +650,7 @@ export default function ContractDevicesModal({
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="rounded-lg border border-blue-200 bg-gradient-to-br from-blue-50 to-cyan-50 p-3 text-center"
+                  className="rounded-lg border border-[var(--brand-200)] bg-gradient-to-br from-[var(--brand-50)] to-[var(--brand-50)] p-3 text-center"
                 >
                   <p className="text-sm font-medium text-blue-900">
                     Đã chọn <span className="text-lg font-bold">{selectedToAttach.length}</span>{' '}

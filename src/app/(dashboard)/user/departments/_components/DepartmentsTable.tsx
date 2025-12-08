@@ -122,7 +122,7 @@ export function DepartmentsTable() {
   return (
     <div className="overflow-hidden rounded-2xl border-0 bg-white shadow-2xl">
       {/* Premium Header */}
-      <div className="relative overflow-hidden border-0 bg-gradient-to-r from-blue-600 via-cyan-600 to-sky-600 p-0">
+      <div className="relative overflow-hidden border-0 bg-gradient-to-r from-[var(--brand-600)] via-[var(--brand-600)] to-[var(--brand-700)] p-0">
         {/* Animated background shapes */}
         <div className="absolute inset-0 opacity-20">
           <div className="absolute top-0 left-0 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white"></div>
@@ -138,7 +138,7 @@ export function DepartmentsTable() {
               <CardTitle className="text-3xl font-bold tracking-tight">
                 {t('page.departments.title')}
               </CardTitle>
-              <p className="mt-1 text-sm font-medium text-cyan-100">
+              <p className="mt-1 text-sm font-medium text-white">
                 {t('page.departments.status_active').replace('{count}', String(pagination.total))}
               </p>
             </div>
@@ -147,7 +147,7 @@ export function DepartmentsTable() {
           <ActionGuard pageId="departments" actionId="create">
             <Button
               onClick={openCreate}
-              className="transform rounded-xl bg-white px-6 py-2 text-base font-bold text-blue-600 shadow-lg transition-all duration-300 hover:scale-105 hover:bg-cyan-50 hover:shadow-2xl"
+              className="transform rounded-xl bg-white px-6 py-2 text-base font-bold text-[var(--brand-600)] shadow-lg transition-all duration-300 hover:scale-105 hover:bg-[var(--brand-50)] hover:shadow-2xl"
             >
               <Plus className="mr-2 h-5 w-5" />
               {t('page.departments.create')}
@@ -158,9 +158,9 @@ export function DepartmentsTable() {
 
       <CardContent className="space-y-6 bg-gradient-to-b from-gray-50 to-white p-8">
         {/* FILTER SECTION */}
-        <div className="border-gradient-to-r space-y-4 rounded-2xl border-2 bg-white from-blue-200 to-cyan-200 p-6 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl">
+        <div className="border-gradient-to-r space-y-4 rounded-2xl border-2 bg-white from-[var(--brand-200)] to-[var(--brand-200)] p-6 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl">
           <div className="mb-5 flex items-center gap-2">
-            <div className="rounded-lg bg-gradient-to-r from-blue-500 to-cyan-500 p-2">
+            <div className="rounded-lg bg-gradient-to-r from-[var(--brand-500)] to-[var(--brand-600)] p-2">
               <Filter className="h-5 w-5 text-white" />
             </div>
             <h3 className="text-lg font-bold text-gray-800">{t('filters.general')}</h3>
@@ -169,7 +169,7 @@ export function DepartmentsTable() {
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {/* Search Input */}
             <div className="group relative">
-              <Search className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-blue-400 transition-colors group-focus-within:text-blue-600" />
+              <Search className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-[var(--brand-400)] transition-colors group-focus-within:text-[var(--brand-600)]" />
               <Input
                 placeholder={t('filters.search_placeholder')}
                 value={search}
@@ -180,7 +180,7 @@ export function DepartmentsTable() {
                     setPage(1)
                   }
                 }}
-                className="rounded-xl border-2 border-gray-200 bg-gradient-to-r from-gray-50 to-white py-2.5 pr-4 pl-12 text-base transition-all duration-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                className="rounded-xl border-2 border-gray-200 bg-gradient-to-r from-gray-50 to-white py-2.5 pr-4 pl-12 text-base transition-all duration-300 focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)]"
               />
             </div>
 
@@ -199,7 +199,7 @@ export function DepartmentsTable() {
                   </SelectItem>
                   <SelectItem value="true">
                     <span className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-blue-600" />
+                      <CheckCircle2 className="h-4 w-4 text-[var(--brand-600)]" />
                       {t('filters.status_active')}
                     </span>
                   </SelectItem>
@@ -215,7 +215,7 @@ export function DepartmentsTable() {
                 variant="outline"
                 size="icon"
                 onClick={() => refetch()}
-                className="h-10 w-10 cursor-pointer rounded-xl border-2 border-gray-200 transition-all duration-300 hover:border-blue-400 hover:bg-blue-50"
+                className="h-10 w-10 cursor-pointer rounded-xl border-2 border-gray-200 transition-all duration-300 hover:border-[var(--brand-400)] hover:bg-[var(--brand-50)]"
                 title={t('button.refresh')}
               >
                 <RefreshCw className={`${isFetching ? 'animate-spin' : ''} h-5 w-5`} />
@@ -230,7 +230,7 @@ export function DepartmentsTable() {
                 Bộ lọc:
               </span>
               {search && (
-                <span className="inline-flex items-center gap-2 rounded-full border border-blue-300 bg-gradient-to-r from-blue-100 to-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700 shadow-sm">
+                <span className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-200)] bg-gradient-to-r from-[var(--brand-50)] to-[var(--brand-50)] px-3 py-1.5 text-xs font-bold text-[var(--brand-700)] shadow-sm">
                   🔍 "{search}"
                   <button
                     onClick={() => {
@@ -338,12 +338,12 @@ export function DepartmentsTable() {
                       onMouseLeave={() => setHoveredRowId(null)}
                       className={`border-b border-gray-100 transition-all duration-300 ${
                         hoveredRowId === dept.id
-                          ? 'bg-gradient-to-r from-blue-50/80 via-cyan-50/50 to-sky-50/30 shadow-md'
+                          ? 'bg-gradient-to-r from-[var(--brand-50)]/80 via-[var(--brand-50)]/50 to-[var(--brand-50)]/30 shadow-md'
                           : 'hover:bg-gray-50'
                       }`}
                     >
                       <TableCell className="text-center text-base font-bold text-gray-600">
-                        <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-700">
+                        <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-r from-[var(--brand-100)] to-[var(--brand-100)] text-[var(--brand-700)]">
                           {(pagination.page - 1) * pagination.limit + idx + 1}
                         </span>
                       </TableCell>
@@ -362,7 +362,7 @@ export function DepartmentsTable() {
                       </TableCell>
                       <TableCell>
                         {dept.isActive ? (
-                          <span className="inline-flex transform items-center gap-2 rounded-xl border-2 border-blue-300 bg-gradient-to-r from-blue-100 to-blue-50 px-4 py-2 text-xs font-bold whitespace-nowrap text-blue-700 shadow-sm transition-all duration-300 hover:scale-105 hover:shadow-md">
+                          <span className="inline-flex transform items-center gap-2 rounded-xl border-2 border-[var(--brand-300)] bg-gradient-to-r from-[var(--brand-100)] to-[var(--brand-50)] px-4 py-2 text-xs font-bold whitespace-nowrap text-[var(--brand-700)] shadow-sm transition-all duration-300 hover:scale-105 hover:shadow-md">
                             <CheckCircle2 className="h-4 w-4" />
                             Hoạt động
                           </span>

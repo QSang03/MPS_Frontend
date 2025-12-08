@@ -207,7 +207,7 @@ export function DeviceModelFormModal({ mode = 'create', model = null, onSaved, t
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label className="flex items-center gap-2 text-base font-semibold">
-                  <Hash className="h-4 w-4 text-purple-600" />
+                  <Hash className="h-4 w-4 text-[var(--brand-600)]" />
                   Part Number *
                 </Label>
                 <Input
@@ -262,7 +262,7 @@ export function DeviceModelFormModal({ mode = 'create', model = null, onSaved, t
                   <SelectContent>
                     <SelectItem value="PRINTER">
                       <div className="flex items-center gap-2">
-                        <div className="h-2 w-2 rounded-full bg-blue-500"></div>
+                        <div className="h-2 w-2 rounded-full bg-[var(--brand-500)]"></div>
                         Máy in (Printer)
                       </div>
                     </SelectItem>
@@ -280,7 +280,7 @@ export function DeviceModelFormModal({ mode = 'create', model = null, onSaved, t
                     </SelectItem>
                     <SelectItem value="FAX">
                       <div className="flex items-center gap-2">
-                        <div className="h-2 w-2 rounded-full bg-purple-500"></div>
+                        <div className="h-2 w-2 rounded-full bg-[var(--brand-500)]"></div>
                         Máy fax (Fax)
                       </div>
                     </SelectItem>
@@ -336,7 +336,9 @@ export function DeviceModelFormModal({ mode = 'create', model = null, onSaved, t
               <div
                 className={cn(
                   'flex items-center justify-between rounded-lg border-2 p-4 transition-colors',
-                  form.useA4Counter ? 'border-blue-200 bg-blue-50' : 'border-gray-200 bg-gray-50'
+                  form.useA4Counter
+                    ? 'border-[var(--brand-200)] bg-[var(--brand-50)]'
+                    : 'border-gray-200 bg-gray-50'
                 )}
               >
                 <div className="space-y-0.5">

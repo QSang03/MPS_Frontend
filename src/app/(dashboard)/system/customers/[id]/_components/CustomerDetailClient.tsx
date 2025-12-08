@@ -333,7 +333,7 @@ export default function CustomerDetailClient({ customerId }: Props) {
         return 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100'
       case 'CMPS_CLICK_CHARGE':
       case 'CMPS_CONSUMABLE':
-        return 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100'
+        return 'bg-[var(--brand-50)] text-[var(--brand-700)] border-[var(--brand-200)] hover:bg-[var(--brand-100)]'
       case 'PARTS_REPAIR_SERVICE':
         return 'bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100'
       default:
@@ -779,7 +779,7 @@ export default function CustomerDetailClient({ customerId }: Props) {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="h-8 w-8 border-sky-200 bg-sky-50 p-0 text-sky-600 transition-colors hover:border-sky-300 hover:bg-sky-100"
+                    className="h-8 w-8 border-[var(--brand-200)] bg-[var(--brand-50)] p-0 text-[var(--brand-600)] transition-colors hover:border-[var(--brand-300)] hover:bg-[var(--brand-100)]"
                     onClick={() => {
                       setA4ModalDevice(device)
                       setA4ModalOpen(true)
@@ -1038,7 +1038,7 @@ export default function CustomerDetailClient({ customerId }: Props) {
             {
               label: customerInfo.tier,
               variant: 'outline' as const,
-              className: 'border-sky-200 bg-sky-50 text-sky-700',
+              className: 'border-[var(--brand-200)] bg-[var(--brand-50)] text-[var(--brand-700)]',
             },
           ]
         : []),
@@ -1185,7 +1185,7 @@ export default function CustomerDetailClient({ customerId }: Props) {
                       <Button
                         size="sm"
                         onClick={() => setCreateContractOpen(true)}
-                        className="gap-2 bg-gradient-to-r from-sky-600 to-blue-600 shadow-sm hover:from-sky-700 hover:to-blue-700"
+                        className="gap-2 bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] shadow-sm hover:from-[var(--brand-700)] hover:to-[var(--brand-700)]"
                       >
                         <Plus className="h-4 w-4" />
                         {t('customer.detail.contracts.create')}
@@ -1426,7 +1426,7 @@ export default function CustomerDetailClient({ customerId }: Props) {
                               initial={{ opacity: 0, y: -10 }}
                               animate={{ opacity: 1, y: 0 }}
                               transition={{ delay: idx * 0.05 }}
-                              className="border-t border-slate-200 bg-gradient-to-r from-sky-50/50 via-blue-50/30 to-indigo-50/50"
+                              className="border-t border-slate-200 bg-gradient-to-r from-[var(--brand-50)]/50 via-[var(--brand-50)]/30 to-[var(--brand-50)]/50"
                             >
                               <td className="px-4 py-5 align-top">
                                 <Checkbox

@@ -312,7 +312,7 @@ export function UsersTable() {
                 placeholder={t('placeholder.search_email')}
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
-                className="w-full rounded-lg border-2 border-gray-200 pl-10 transition-all focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                className="w-full rounded-lg border-2 border-gray-200 pl-10 transition-all focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)]"
               />
             </div>
           </div>
@@ -323,7 +323,7 @@ export function UsersTable() {
               value={filters.roleId}
               onValueChange={(value) => setFilters((prev) => ({ ...prev, roleId: value }))}
             >
-              <SelectTrigger className="w-full rounded-lg border-2 border-gray-200 transition-all focus:border-purple-500 focus:ring-2 focus:ring-purple-200">
+              <SelectTrigger className="w-full rounded-lg border-2 border-gray-200 transition-all focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)]">
                 <SelectValue placeholder={t('placeholder.select_role')} />
               </SelectTrigger>
               <SelectContent>
@@ -343,7 +343,7 @@ export function UsersTable() {
               value={filters.customerId}
               onValueChange={(value) => setFilters((prev) => ({ ...prev, customerId: value }))}
             >
-              <SelectTrigger className="w-full rounded-lg border-2 border-gray-200 transition-all focus:border-purple-500 focus:ring-2 focus:ring-purple-200">
+              <SelectTrigger className="w-full rounded-lg border-2 border-gray-200 transition-all focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)]">
                 <SelectValue placeholder={t('placeholder.select_customer_code')} />
               </SelectTrigger>
               <SelectContent>

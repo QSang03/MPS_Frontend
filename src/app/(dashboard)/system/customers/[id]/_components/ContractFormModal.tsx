@@ -257,7 +257,7 @@ export function ContractFormModal({
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className="rounded-lg border border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-4"
+                className="rounded-lg border border-[var(--brand-200)] bg-gradient-to-br from-[var(--brand-50)] to-[var(--brand-50)] p-4"
               >
                 <div className="flex items-start gap-3">
                   <div className="rounded-lg bg-blue-100 p-2">

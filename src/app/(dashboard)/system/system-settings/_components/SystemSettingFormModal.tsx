@@ -98,7 +98,7 @@ export default function SystemSettingFormModal({ setting, onSaved }: Props) {
             value={form.value}
             onChange={(e) => setForm({ ...form, value: e.target.value })}
             placeholder="Nhập giá trị số"
-            className="transition-all focus:ring-2 focus:ring-blue-500"
+            className="transition-all focus:ring-2 focus:ring-[var(--brand-500)]"
           />
         )
       case SystemSettingType.BOOLEAN:
@@ -257,7 +257,7 @@ export default function SystemSettingFormModal({ setting, onSaved }: Props) {
               onChange={(e) => setForm({ ...form, description: e.target.value })}
               placeholder="Nhập mô tả chi tiết cho cấu hình này"
               rows={3}
-              className="transition-all focus:ring-2 focus:ring-blue-500"
+              className="transition-all focus:ring-2 focus:ring-[var(--brand-500)]"
             />
           </div>
 

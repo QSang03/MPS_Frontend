@@ -280,13 +280,13 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
       display.color === 'green'
         ? 'bg-[var(--color-success-500)] hover:bg-[var(--color-success-600)]'
         : display.color === 'blue'
-          ? 'bg-blue-500 hover:bg-blue-600'
+          ? 'bg-[var(--brand-500)] hover:bg-[var(--brand-600)]'
           : display.color === 'red'
             ? 'bg-red-500 hover:bg-red-600'
             : display.color === 'orange'
               ? 'bg-orange-500 hover:bg-orange-600'
               : display.color === 'purple'
-                ? 'bg-purple-500 hover:bg-purple-600'
+                ? 'bg-[var(--brand-500)] hover:bg-[var(--brand-600)]'
                 : 'bg-gray-400 hover:bg-gray-500'
 
     return (
@@ -503,7 +503,7 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <InfoCard
               title={t('user_device_detail.info.network')}
-              titleIcon={<Wifi className="h-4 w-4 text-blue-600" />}
+              titleIcon={<Wifi className="h-4 w-4 text-[var(--brand-600)]" />}
               items={[
                 {
                   label: t('user_device_detail.info.ip'),
@@ -546,18 +546,18 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="h-5 w-5 text-cyan-600" />
+                <BarChart3 className="h-5 w-5 text-[var(--brand-600)]" />
                 {t('user_device_detail.usage_stats.title')}
               </CardTitle>
               <CardDescription>{t('user_device_detail.usage_stats.description')}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                <div className="rounded-xl border border-cyan-200 bg-gradient-to-br from-cyan-50 to-blue-50 p-4">
+                <div className="rounded-xl border border-[var(--brand-200)] bg-gradient-to-br from-[var(--brand-50)] to-[var(--brand-50)] p-4">
                   <p className="text-muted-foreground mb-2 text-sm font-medium">
                     {t('user_device_detail.usage_stats.total_pages')}
                   </p>
-                  <p className="text-3xl font-bold text-cyan-700">
+                  <p className="text-3xl font-bold text-[var(--brand-700)]">
                     {
                       formatPageCount(
                         device.totalPagesUsed,
@@ -582,11 +582,11 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
                   </p>
                 </div>
 
-                <div className="rounded-xl border border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50 p-4">
+                <div className="rounded-xl border border-[var(--brand-200)] bg-gradient-to-br from-[var(--brand-50)] to-[var(--brand-50)] p-4">
                   <p className="text-muted-foreground mb-2 text-sm font-medium">
                     {t('table.model')}
                   </p>
-                  <p className="text-lg font-bold text-purple-700">
+                  <p className="text-lg font-bold text-[var(--brand-700)]">
                     {device.deviceModel?.name || 'N/A'}
                   </p>
                   <p className="text-muted-foreground mt-1 text-xs">
@@ -603,7 +603,7 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="flex items-center gap-2">
-                    <BarChart3 className="h-5 w-5 text-indigo-600" />
+                    <BarChart3 className="h-5 w-5 text-[var(--brand-600)]" />
                     {t('user_device_detail.monthly_usage.title')}
                   </CardTitle>
                   <CardDescription>
@@ -664,7 +664,7 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
               {/* Bảng dữ liệu sử dụng theo tháng */}
               {monthlyUsageLoading ? (
                 <div className="flex items-center justify-center p-8">
-                  <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                  <Loader2 className="h-8 w-8 animate-spin text-[var(--brand-600)]" />
                 </div>
               ) : monthlyUsageError ? (
                 <div className="text-muted-foreground p-8 text-center">
@@ -833,7 +833,10 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
                             ]
 
                             const a4Cells: React.ReactNode[] = [
-                              <td key="bwA4" className="px-4 py-3 text-right text-sm text-blue-600">
+                              <td
+                                key="bwA4"
+                                className="px-4 py-3 text-right text-sm text-[var(--brand-600)]"
+                              >
                                 {(() => {
                                   const hasUsageData =
                                     item &&
@@ -862,7 +865,7 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
                               </td>,
                               <td
                                 key="colorA4"
-                                className="px-4 py-3 text-right text-sm text-blue-600"
+                                className="px-4 py-3 text-right text-sm text-[var(--brand-600)]"
                               >
                                 {(() => {
                                   const hasUsageData =
@@ -892,7 +895,7 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
                               </td>,
                               <td
                                 key="totalA4"
-                                className="px-4 py-3 text-right text-sm font-semibold text-blue-600"
+                                className="px-4 py-3 text-right text-sm font-semibold text-[var(--brand-600)]"
                               >
                                 {(() => {
                                   const hasUsageData =
@@ -1300,7 +1303,7 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
                     </p>
                   </div>
 
-                  <div className="rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50 to-cyan-50 p-6">
+                  <div className="rounded-xl border border-[var(--brand-200)] bg-gradient-to-br from-[var(--brand-50)] to-[var(--brand-50)] p-6">
                     <div className="mb-3 flex items-center gap-3">
                       <div className="rounded-lg bg-[var(--brand-50)] p-2">
                         <Calendar className="h-5 w-5 text-black dark:text-white" />

@@ -25,13 +25,13 @@ import {
   Calendar,
   Package,
 } from 'lucide-react'
-import { reportsAnalyticsService } from '@/lib/api/services/reports-analytics.service'
-import type {
+import {
   CustomerProfitItem,
   DeviceProfitItem,
   DeviceProfitabilityItem,
   ConsumableLifecycleItem,
   ProfitabilityTrendItem,
+  reportsAnalyticsService,
 } from '@/lib/api/services/reports-analytics.service'
 import dynamic from 'next/dynamic'
 import { Suspense } from 'react'
@@ -82,15 +82,39 @@ export default function AnalyticsPageClient() {
     original: number,
     converted: number | undefined,
     baseCurrency: CurrencyDataDto | null,
+    originalCurrency?: CurrencyDataDto | null,
     align: 'left' | 'right' = 'right'
   ) => {
     if (original === undefined || original === null) return '-'
+
+    // If converted is missing, or if currencies are the same (and original ~= converted), just show one
+    // Note: checking code equality. If originalCurrency is missing, we assume it's NOT the base currency (unless base is USD perhaps, but safer to show both if unsure)
+    // Actually, user issue is: API returns VND for both base and original.
+    const isSameCurrency =
+      baseCurrency && originalCurrency && baseCurrency.code === originalCurrency.code
+
+    // If values are same (close enough) and currency is same, don't show dual
+    // If converted is null/undefined, we just show original formatted with base (or originalCurrency if we strictly followed logic, but existing logic fell back to formatCurrency which uses baseCurrency as fallback)
+    if (
+      converted === undefined ||
+      converted === null ||
+      (isSameCurrency && Math.abs(original - converted) < 0.01)
+    ) {
+      // If we have originalCurrency and it's same as base, or if we don't have converted, use what we have
+      return formatCurrency(original, originalCurrency || baseCurrency)
+    }
+
     if (converted !== undefined && converted !== null && baseCurrency) {
       const valConverted = formatCurrencyWithSymbol(converted, baseCurrency)
-      const valOriginal = formatCurrencyWithSymbol(original, {
-        code: 'USD',
-        symbol: '$',
-      } as CurrencyDataDto)
+
+      // If originalCurrency is missing (e.g. mixed currencies in aggregation),
+      // we only show the converted value to avoid confusion.
+      if (!originalCurrency) {
+        return <span>{valConverted}</span>
+      }
+
+      const valOriginal = formatCurrencyWithSymbol(original, originalCurrency)
+
       return (
         <div className={`flex flex-col ${align === 'right' ? 'items-end' : 'items-start'}`}>
           <span>{valConverted}</span>
@@ -173,6 +197,7 @@ export default function AnalyticsPageClient() {
       totalRevenueConverted?: number
       totalCogsConverted?: number
       grossProfitConverted?: number
+      currency?: CurrencyDataDto | null
     }
     devices: DeviceProfitItem[]
     profitability?: ProfitabilityTrendItem[]
@@ -974,7 +999,7 @@ export default function AnalyticsPageClient() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <DollarSign className="h-5 w-5 text-emerald-600" />
+                <DollarSign className="h-5 w-5 text-[var(--color-success-600)]" />
                 {t('analytics.enterprise.title')}
               </CardTitle>
               <CardDescription>{t('analytics.enterprise.description')}</CardDescription>
@@ -1038,14 +1063,14 @@ export default function AnalyticsPageClient() {
                   )
                   return (
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                      <Card className="border-blue-200 bg-blue-50">
+                      <Card className="border-[var(--brand-200)] bg-[var(--brand-50)]">
                         <CardHeader className="pb-2">
-                          <CardTitle className="text-sm font-medium text-blue-700">
+                          <CardTitle className="text-sm font-medium text-[var(--brand-700)]">
                             {t('analytics.total_revenue')}
                           </CardTitle>
                         </CardHeader>
                         <CardContent>
-                          <div className="text-2xl font-bold text-blue-900">
+                          <div className="text-2xl font-bold text-[var(--brand-900)]">
                             {formatCurrency(revenue, enterpriseBaseCurrency)}
                           </div>
                           <p className="text-muted-foreground mt-1 text-xs">
@@ -1179,34 +1204,30 @@ export default function AnalyticsPageClient() {
                       const currentCurrency = selectedCustomerId
                         ? customerDetailBaseCurrency
                         : enterpriseBaseCurrency
-                      const useConverted = !!currentCurrency
                       if (globalMode === 'period') {
                         // Render as a bar chart with totals for single period
                         const row = data[0]
                         if (!row) return null
                         const single = {
                           month: row.month,
-                          totalRevenue: getDisplayValue(
-                            row.totalRevenue,
-                            row.totalRevenueConverted,
-                            useConverted
-                          ),
-                          totalCogs: getDisplayValue(
-                            row.totalCogs,
-                            row.totalCogsConverted,
-                            useConverted
-                          ),
-                          grossProfit: getDisplayValue(
-                            row.grossProfit,
-                            row.grossProfitConverted,
-                            useConverted
-                          ),
+                          totalRevenueConverted: row.totalRevenueConverted ?? row.totalRevenue, // Fallback if needed, though API guarantees converted
+                          totalCogsConverted: row.totalCogsConverted ?? row.totalCogs,
+                          grossProfitConverted: row.grossProfitConverted ?? row.grossProfit,
                         }
                         // Local chart config used to theme the chart
                         const chartConfig: ChartConfig = {
-                          totalRevenue: { label: t('analytics.total_revenue'), color: '#3b82f6' },
-                          totalCogs: { label: t('analytics.table.total_cogs'), color: '#f59e0b' },
-                          grossProfit: { label: t('analytics.gross_profit'), color: '#10b981' },
+                          totalRevenueConverted: {
+                            label: t('analytics.total_revenue'),
+                            color: '#3b82f6',
+                          },
+                          totalCogsConverted: {
+                            label: t('analytics.table.total_cogs'),
+                            color: '#f59e0b',
+                          },
+                          grossProfitConverted: {
+                            label: t('analytics.gross_profit'),
+                            color: '#10b981',
+                          },
                         }
                         const formatter = (v: unknown) =>
                           typeof v === 'number'
@@ -1252,36 +1273,36 @@ export default function AnalyticsPageClient() {
                                 />
                                 <ChartLegend content={<ChartLegendContent />} />
                                 <Bar
-                                  dataKey="totalRevenue"
-                                  fill="var(--color-totalRevenue)"
+                                  dataKey="totalRevenueConverted"
+                                  fill="var(--color-totalRevenueConverted)"
                                   radius={[6, 6, 0, 0]}
                                 >
                                   <LabelList
-                                    dataKey="totalRevenue"
+                                    dataKey="totalRevenueConverted"
                                     position="top"
                                     formatter={(v) => formatter(v)}
                                     className="fill-foreground text-xs font-medium"
                                   />
                                 </Bar>
                                 <Bar
-                                  dataKey="totalCogs"
-                                  fill="var(--color-totalCogs)"
+                                  dataKey="totalCogsConverted"
+                                  fill="var(--color-totalCogsConverted)"
                                   radius={[6, 6, 0, 0]}
                                 >
                                   <LabelList
-                                    dataKey="totalCogs"
+                                    dataKey="totalCogsConverted"
                                     position="top"
                                     formatter={(v) => formatter(v)}
                                     className="fill-foreground text-xs font-medium"
                                   />
                                 </Bar>
                                 <Bar
-                                  dataKey="grossProfit"
-                                  fill="var(--color-grossProfit)"
+                                  dataKey="grossProfitConverted"
+                                  fill="var(--color-grossProfitConverted)"
                                   radius={[6, 6, 0, 0]}
                                 >
                                   <LabelList
-                                    dataKey="grossProfit"
+                                    dataKey="grossProfitConverted"
                                     position="top"
                                     formatter={(v) => formatter(v)}
                                     className="fill-foreground text-xs font-medium"
@@ -1295,21 +1316,9 @@ export default function AnalyticsPageClient() {
                       // Transform data to use converted values if available
                       const transformedData = data.map((row) => ({
                         month: row.month,
-                        totalRevenue: getDisplayValue(
-                          row.totalRevenue,
-                          row.totalRevenueConverted,
-                          useConverted
-                        ),
-                        totalCogs: getDisplayValue(
-                          row.totalCogs,
-                          row.totalCogsConverted,
-                          useConverted
-                        ),
-                        grossProfit: getDisplayValue(
-                          row.grossProfit,
-                          row.grossProfitConverted,
-                          useConverted
-                        ),
+                        totalRevenue: row.totalRevenueConverted ?? row.totalRevenue,
+                        totalCogs: row.totalCogsConverted ?? row.totalCogs,
+                        grossProfit: row.grossProfitConverted ?? row.grossProfit,
                       }))
                       return (
                         <TrendChart
@@ -1366,65 +1375,77 @@ export default function AnalyticsPageClient() {
                       const currentCurrency = selectedCustomerId
                         ? customerDetailBaseCurrency
                         : enterpriseBaseCurrency
-                      const useConverted = !!currentCurrency
-                      const revenue = getDisplayValue(
-                        row.totalRevenue,
-                        row.totalRevenueConverted,
-                        useConverted
-                      )
-                      const cogs = getDisplayValue(
-                        row.totalCogs,
-                        row.totalCogsConverted,
-                        useConverted
-                      )
-                      const profit = getDisplayValue(
-                        row.grossProfit,
-                        row.grossProfitConverted,
-                        useConverted
-                      )
-                      const revenueRental = getDisplayValue(
-                        row.revenueRental,
-                        row.revenueRentalConverted,
-                        useConverted
-                      )
-                      const revenueRepair = getDisplayValue(
-                        row.revenueRepair,
-                        row.revenueRepairConverted,
-                        useConverted
-                      )
-                      const revenuePageBW = getDisplayValue(
-                        row.revenuePageBW,
-                        row.revenuePageBWConverted,
-                        useConverted
-                      )
-                      const revenuePageColor = getDisplayValue(
-                        row.revenuePageColor,
-                        row.revenuePageColorConverted,
-                        useConverted
-                      )
                       return (
                         <tr key={row.month}>
                           <td className="px-4 py-2 text-sm">{row.month}</td>
                           <td className="px-4 py-2 text-right text-sm">
-                            {formatCurrency(revenueRental, currentCurrency)}
+                            {formatDual(
+                              row.revenueRental,
+                              row.revenueRentalConverted,
+                              currentCurrency,
+                              row.currency,
+                              'right'
+                            )}
                           </td>
                           <td className="px-4 py-2 text-right text-sm">
-                            {formatCurrency(revenueRepair, currentCurrency)}
+                            {formatDual(
+                              row.revenueRepair,
+                              row.revenueRepairConverted,
+                              currentCurrency,
+                              row.currency,
+                              'right'
+                            )}
                           </td>
                           <td className="px-4 py-2 text-right text-sm">
-                            {formatCurrency(revenuePageBW, currentCurrency)}
+                            {formatDual(
+                              row.revenuePageBW,
+                              row.revenuePageBWConverted,
+                              currentCurrency,
+                              row.currency,
+                              'right'
+                            )}
                           </td>
                           <td className="px-4 py-2 text-right text-sm">
-                            {formatCurrency(revenuePageColor, currentCurrency)}
+                            {formatDual(
+                              row.revenuePageColor,
+                              row.revenuePageColorConverted,
+                              currentCurrency,
+                              row.currency,
+                              'right'
+                            )}
                           </td>
                           <td className="px-4 py-2 text-right text-sm font-semibold">
-                            {formatCurrency(revenue, currentCurrency)}
+                            {formatDual(
+                              row.totalRevenue,
+                              row.totalRevenueConverted,
+                              currentCurrency,
+                              row.currency,
+                              'right'
+                            )}
                           </td>
                           <td className="px-4 py-2 text-right text-sm">
-                            {formatCurrency(cogs, currentCurrency)}
+                            {formatDual(
+                              row.totalCogs,
+                              row.totalCogsConverted,
+                              currentCurrency,
+                              row.currency,
+                              'right'
+                            )}
                           </td>
-                          <td className="px-4 py-2 text-right text-sm font-semibold">
-                            {formatCurrency(profit, currentCurrency)}
+                          <td
+                            className={`px-4 py-2 text-right text-sm font-semibold ${
+                              (row.grossProfitConverted ?? row.grossProfit) >= 0
+                                ? 'text-[var(--color-success-600)]'
+                                : 'text-[var(--color-error-600)]'
+                            }`}
+                          >
+                            {formatDual(
+                              row.grossProfit,
+                              row.grossProfitConverted,
+                              currentCurrency,
+                              row.currency,
+                              'right'
+                            )}
                           </td>
                           <td className="px-4 py-2 text-right text-sm">
                             {typeof row.grossMargin === 'number'
@@ -1454,10 +1475,10 @@ export default function AnalyticsPageClient() {
 
           {/* 3. Customer Detail Profit */}
           {selectedCustomerId && (
-            <Card className="border-sky-200">
+            <Card className="border-[var(--brand-200)]">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5 text-sky-600" />
+                  <Users className="h-5 w-5 text-[var(--brand-600)]" />
                   {t('analytics.customer_detail.title')}
                 </CardTitle>
                 <CardDescription>{t('analytics.customer_detail.description')}</CardDescription>
@@ -1532,7 +1553,7 @@ export default function AnalyticsPageClient() {
                     return (
                       <>
                         <div className="space-y-4">
-                          <Card className="bg-sky-50">
+                          <Card className="bg-[var(--brand-50)]">
                             <CardContent className="pt-4">
                               <h3 className="mb-2 text-lg font-semibold">
                                 {customerDetailData.customer.name}
@@ -1547,6 +1568,7 @@ export default function AnalyticsPageClient() {
                                       customerDetailData.customer.totalRevenue,
                                       customerDetailData.customer.totalRevenueConverted,
                                       customerDetailBaseCurrency,
+                                      customerDetailData.customer.currency,
                                       'left'
                                     )}
                                   </p>
@@ -1560,6 +1582,7 @@ export default function AnalyticsPageClient() {
                                       customerDetailData.customer.totalCogs,
                                       customerDetailData.customer.totalCogsConverted,
                                       customerDetailBaseCurrency,
+                                      customerDetailData.customer.currency,
                                       'left'
                                     )}
                                   </p>
@@ -1569,12 +1592,13 @@ export default function AnalyticsPageClient() {
                                     {t('analytics.customer_detail.profit')}
                                   </span>
                                   <p
-                                    className={`font-semibold ${customerDetailData.customer.grossProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}
+                                    className={`font-semibold ${customerDetailData.customer.grossProfit >= 0 ? 'text-[var(--color-success-600)]' : 'text-[var(--color-error-600)]'}`}
                                   >
                                     {formatDual(
                                       customerDetailData.customer.grossProfit,
                                       customerDetailData.customer.grossProfitConverted,
                                       customerDetailBaseCurrency,
+                                      customerDetailData.customer.currency,
                                       'left'
                                     )}
                                   </p>
@@ -1784,6 +1808,7 @@ export default function AnalyticsPageClient() {
                                           d.revenue,
                                           d.revenueConverted,
                                           customerDetailBaseCurrency,
+                                          d.currency,
                                           'right'
                                         )}
                                       </td>
@@ -1792,16 +1817,18 @@ export default function AnalyticsPageClient() {
                                           d.cogs,
                                           d.cogsConverted,
                                           customerDetailBaseCurrency,
+                                          d.currency,
                                           'right'
                                         )}
                                       </td>
                                       <td
-                                        className={`px-4 py-3 text-right text-sm font-semibold ${deviceProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}
+                                        className={`px-4 py-3 text-right text-sm font-semibold ${deviceProfit >= 0 ? 'text-[var(--color-success-600)]' : 'text-[var(--color-error-600)]'}`}
                                       >
                                         {formatDual(
                                           d.profit,
                                           d.profitConverted,
                                           customerDetailBaseCurrency,
+                                          d.currency,
                                           'right'
                                         )}
                                       </td>
@@ -1898,12 +1925,15 @@ export default function AnalyticsPageClient() {
                             ? (() => {
                                 const single = deviceData.profitability[0]
                                 const chartConfig: ChartConfig = {
-                                  totalRevenue: {
+                                  totalRevenueConverted: {
                                     label: t('analytics.total_revenue'),
                                     color: '#3b82f6',
                                   },
-                                  totalCogs: { label: t('analytics.total_cogs'), color: '#f59e0b' },
-                                  grossProfit: {
+                                  totalCogsConverted: {
+                                    label: t('analytics.total_cogs'),
+                                    color: '#f59e0b',
+                                  },
+                                  grossProfitConverted: {
                                     label: t('analytics.gross_profit'),
                                     color: '#10b981',
                                   },
@@ -1958,36 +1988,36 @@ export default function AnalyticsPageClient() {
                                         />
                                         <ChartLegend content={<ChartLegendContent />} />
                                         <Bar
-                                          dataKey="totalRevenue"
-                                          fill="var(--color-totalRevenue)"
+                                          dataKey="totalRevenueConverted"
+                                          fill="var(--color-totalRevenueConverted)"
                                           radius={[6, 6, 0, 0]}
                                         >
                                           <LabelList
-                                            dataKey="totalRevenue"
+                                            dataKey="totalRevenueConverted"
                                             position="top"
                                             formatter={(v) => formatter(v)}
                                             className="fill-foreground text-xs font-medium"
                                           />
                                         </Bar>
                                         <Bar
-                                          dataKey="totalCogs"
-                                          fill="var(--color-totalCogs)"
+                                          dataKey="totalCogsConverted"
+                                          fill="var(--color-totalCogsConverted)"
                                           radius={[6, 6, 0, 0]}
                                         >
                                           <LabelList
-                                            dataKey="totalCogs"
+                                            dataKey="totalCogsConverted"
                                             position="top"
                                             formatter={(v) => formatter(v)}
                                             className="fill-foreground text-xs font-medium"
                                           />
                                         </Bar>
                                         <Bar
-                                          dataKey="grossProfit"
-                                          fill="var(--color-grossProfit)"
+                                          dataKey="grossProfitConverted"
+                                          fill="var(--color-grossProfitConverted)"
                                           radius={[6, 6, 0, 0]}
                                         >
                                           <LabelList
-                                            dataKey="grossProfit"
+                                            dataKey="grossProfitConverted"
                                             position="top"
                                             formatter={(v) => formatter(v)}
                                             className="fill-foreground text-xs font-medium"
@@ -2000,12 +2030,15 @@ export default function AnalyticsPageClient() {
                               })()
                             : (() => {
                                 const chartConfig: ChartConfig = {
-                                  totalRevenue: {
+                                  totalRevenueConverted: {
                                     label: t('analytics.total_revenue'),
                                     color: '#3b82f6',
                                   },
-                                  totalCogs: { label: t('analytics.total_cogs'), color: '#f59e0b' },
-                                  grossProfit: {
+                                  totalCogsConverted: {
+                                    label: t('analytics.total_cogs'),
+                                    color: '#f59e0b',
+                                  },
+                                  grossProfitConverted: {
                                     label: t('analytics.gross_profit'),
                                     color: '#10b981',
                                   },
@@ -2061,42 +2094,42 @@ export default function AnalyticsPageClient() {
                                         <ChartLegend content={<ChartLegendContent />} />
                                         <Line
                                           type="monotone"
-                                          dataKey="totalRevenue"
-                                          stroke="var(--color-totalRevenue)"
+                                          dataKey="totalRevenueConverted"
+                                          stroke="var(--color-totalRevenueConverted)"
                                           name={t('analytics.total_revenue')}
                                           strokeWidth={3}
                                           dot={false}
                                           activeDot={{
                                             r: 5,
-                                            fill: 'var(--color-totalRevenue)',
+                                            fill: 'var(--color-totalRevenueConverted)',
                                             strokeWidth: 2,
                                             stroke: 'hsl(var(--background))',
                                           }}
                                         />
                                         <Line
                                           type="monotone"
-                                          dataKey="totalCogs"
-                                          stroke="var(--color-totalCogs)"
+                                          dataKey="totalCogsConverted"
+                                          stroke="var(--color-totalCogsConverted)"
                                           name={t('analytics.total_cogs')}
                                           strokeWidth={3}
                                           dot={false}
                                           activeDot={{
                                             r: 5,
-                                            fill: 'var(--color-totalCogs)',
+                                            fill: 'var(--color-totalCogsConverted)',
                                             strokeWidth: 2,
                                             stroke: 'hsl(var(--background))',
                                           }}
                                         />
                                         <Line
                                           type="monotone"
-                                          dataKey="grossProfit"
-                                          stroke="var(--color-grossProfit)"
+                                          dataKey="grossProfitConverted"
+                                          stroke="var(--color-grossProfitConverted)"
                                           name={t('analytics.gross_profit')}
                                           strokeWidth={3}
                                           dot={false}
                                           activeDot={{
                                             r: 5,
-                                            fill: 'var(--color-grossProfit)',
+                                            fill: 'var(--color-grossProfitConverted)',
                                             strokeWidth: 2,
                                             stroke: 'hsl(var(--background))',
                                           }}
@@ -2152,6 +2185,7 @@ export default function AnalyticsPageClient() {
                                   p.revenueRental,
                                   p.revenueRentalConverted,
                                   enterpriseBaseCurrency || customerDetailBaseCurrency,
+                                  p.currency,
                                   'right'
                                 )}
                               </td>
@@ -2160,6 +2194,7 @@ export default function AnalyticsPageClient() {
                                   p.revenueRepair,
                                   p.revenueRepairConverted,
                                   enterpriseBaseCurrency || customerDetailBaseCurrency,
+                                  p.currency,
                                   'right'
                                 )}
                               </td>
@@ -2168,6 +2203,7 @@ export default function AnalyticsPageClient() {
                                   p.revenuePageBW,
                                   p.revenuePageBWConverted,
                                   enterpriseBaseCurrency || customerDetailBaseCurrency,
+                                  p.currency,
                                   'right'
                                 )}
                               </td>
@@ -2176,6 +2212,7 @@ export default function AnalyticsPageClient() {
                                   p.revenuePageColor,
                                   p.revenuePageColorConverted,
                                   enterpriseBaseCurrency || customerDetailBaseCurrency,
+                                  p.currency,
                                   'right'
                                 )}
                               </td>
@@ -2184,6 +2221,7 @@ export default function AnalyticsPageClient() {
                                   p.totalRevenue,
                                   p.totalRevenueConverted,
                                   enterpriseBaseCurrency || customerDetailBaseCurrency,
+                                  p.currency,
                                   'right'
                                 )}
                               </td>
@@ -2192,6 +2230,7 @@ export default function AnalyticsPageClient() {
                                   p.cogsConsumable,
                                   p.cogsConsumableConverted,
                                   enterpriseBaseCurrency || customerDetailBaseCurrency,
+                                  p.currency,
                                   'right'
                                 )}
                               </td>
@@ -2200,16 +2239,18 @@ export default function AnalyticsPageClient() {
                                   p.cogsRepair,
                                   p.cogsRepairConverted,
                                   enterpriseBaseCurrency || customerDetailBaseCurrency,
+                                  p.currency,
                                   'right'
                                 )}
                               </td>
                               <td
-                                className={`px-3 py-2 text-right font-semibold ${p.grossProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}
+                                className={`px-3 py-2 text-right font-semibold ${p.grossProfit >= 0 ? 'text-[var(--color-success-600)]' : 'text-[var(--color-error-600)]'}`}
                               >
                                 {formatDual(
                                   p.grossProfit,
                                   p.grossProfitConverted,
                                   enterpriseBaseCurrency || customerDetailBaseCurrency,
+                                  p.currency,
                                   'right'
                                 )}
                               </td>
@@ -2415,7 +2456,7 @@ export default function AnalyticsPageClient() {
                             {item.avgActualCostPerPage.toFixed(4)}
                           </td>
                           <td
-                            className={`px-3 py-2 text-right font-semibold ${item.variance >= 0 ? 'text-red-600' : 'text-emerald-600'}`}
+                            className={`px-3 py-2 text-right font-semibold ${item.variance >= 0 ? 'text-[var(--color-error-600)]' : 'text-[var(--color-success-600)]'}`}
                           >
                             {item.variance.toFixed(4)}
                           </td>

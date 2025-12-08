@@ -90,7 +90,7 @@ export function ProfileClient({ initialProfile }: ProfileClientProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-4xl font-bold text-transparent">
+          <h1 className="bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] bg-clip-text text-4xl font-bold text-transparent">
             👤 Hồ sơ cá nhân
           </h1>
           <p className="mt-2 text-gray-500">Quản lý thông tin tài khoản và bảo mật</p>
@@ -103,13 +103,13 @@ export function ProfileClient({ initialProfile }: ProfileClientProps) {
         <div className="lg:col-span-1">
           <div className="h-full overflow-hidden rounded-3xl border-0 shadow-xl">
             {/* ✅ BỎ rounded-t-3xl - để gradient trải ra không bo tròn phía trên */}
-            <CardHeader className="relative overflow-hidden bg-gradient-to-br from-purple-500 via-pink-500 to-rose-500 p-6 text-center">
+            <CardHeader className="relative overflow-hidden bg-gradient-to-br from-[var(--brand-500)] via-[var(--brand-700)] to-[var(--brand-700)] p-6 text-center">
               <div className="absolute inset-0 opacity-20">
                 <div className="absolute top-0 right-0 h-32 w-32 translate-x-1/2 -translate-y-1/2 rounded-full bg-white"></div>
               </div>
               <div className="relative">
                 <Avatar className="mx-auto h-24 w-24 rounded-full border-4 border-white shadow-lg">
-                  <AvatarFallback className="rounded-full bg-gradient-to-br from-purple-600 to-pink-600 text-2xl font-bold text-white">
+                  <AvatarFallback className="rounded-full bg-gradient-to-br from-[var(--brand-600)] to-[var(--brand-700)] text-2xl font-bold text-white">
                     {initials}
                   </AvatarFallback>
                 </Avatar>
@@ -124,11 +124,13 @@ export function ProfileClient({ initialProfile }: ProfileClientProps) {
 
             <CardContent className="space-y-4 bg-gradient-to-b from-gray-50 to-white p-6">
               {/* Role Level */}
-              <div className="flex items-center gap-3 rounded-2xl border border-purple-200 bg-gradient-to-r from-purple-50 to-purple-100 p-3">
+              <div className="flex items-center gap-3 rounded-2xl border border-[var(--brand-200)] bg-gradient-to-r from-[var(--brand-50)] to-[var(--brand-100)] p-3">
                 <Shield className="h-5 w-5 flex-shrink-0 text-black dark:text-white" />
                 <div>
                   <p className="text-xs font-bold text-gray-600">CẤP ĐỘ</p>
-                  <p className="text-sm font-bold text-purple-700">Level {user.role?.level || 0}</p>
+                  <p className="text-sm font-bold text-[var(--brand-700)]">
+                    Level {user.role?.level || 0}
+                  </p>
                 </div>
               </div>
 
@@ -172,7 +174,7 @@ export function ProfileClient({ initialProfile }: ProfileClientProps) {
         <div className="lg:col-span-2">
           <div className="overflow-hidden rounded-3xl border-0 shadow-xl">
             {/* ✅ BỎ rounded-t-3xl - để gradient trải ra không bo tròn phía trên */}
-            <div className="relative overflow-hidden bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 p-0">
+            <div className="relative overflow-hidden bg-gradient-to-r from-[var(--brand-600)] via-[var(--brand-700)] to-[var(--brand-700)] p-0">
               <div className="absolute inset-0 opacity-20">
                 <div className="absolute top-0 left-0 h-40 w-40 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white"></div>
               </div>
@@ -251,7 +253,7 @@ export function ProfileClient({ initialProfile }: ProfileClientProps) {
                 </div>
               </div>
 
-              <Separator className="my-6 h-1 bg-gradient-to-r from-purple-200 to-pink-200" />
+              <Separator className="my-6 h-1 bg-gradient-to-r from-[var(--brand-200)] to-[var(--brand-200)]" />
 
               {/* Role Information */}
               <div>

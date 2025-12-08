@@ -1056,7 +1056,7 @@ export function PolicyFormModal({
                         <Input
                           {...field}
                           placeholder="Nhập tên policy (VD: allow-admin-access)"
-                          className="border-gray-300 transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                          className="border-gray-300 transition-all focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)]"
                         />
                       </FormControl>
                       <FormMessage />
@@ -1074,7 +1074,7 @@ export function PolicyFormModal({
                         <FormControl>
                           <select
                             {...field}
-                            className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                            className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm transition-all focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)]"
                           >
                             <option value="ALLOW">✓ ALLOW (Cho phép)</option>
                             <option value="DENY">✗ DENY (Từ chối)</option>
@@ -1095,7 +1095,7 @@ export function PolicyFormModal({
                           <Input
                             {...field}
                             placeholder="read, write, delete (ngăn cách bởi dấu phẩy)"
-                            className="border-gray-300 transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                            className="border-gray-300 transition-all focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)]"
                           />
                         </FormControl>
                         <FormMessage />
@@ -1898,9 +1898,9 @@ export function PolicyFormModal({
               </div>
 
               {/* SECTION: Conditions */}
-              <div className="space-y-4 rounded-xl border-2 border-purple-100 bg-gradient-to-br from-purple-50/50 to-pink-50/30 p-6">
+              <div className="space-y-4 rounded-xl border-2 border-[var(--brand-100)] bg-gradient-to-br from-[var(--brand-50)]/50 to-[var(--brand-50)]/30 p-6">
                 <div className="mb-4 flex items-center gap-2">
-                  <Filter className="h-5 w-5 text-purple-600" />
+                  <Filter className="h-5 w-5 text-[var(--brand-600)]" />
                   <h3 className="text-lg font-semibold text-gray-800">
                     Conditions (Điều kiện bổ sung)
                   </h3>
@@ -1939,13 +1939,13 @@ export function PolicyFormModal({
                     return (
                       <div
                         key={cid}
-                        className="space-y-3 rounded-lg border border-purple-200 bg-white/60 p-4"
+                        className="space-y-3 rounded-lg border border-[var(--brand-200)] bg-white/60 p-4"
                       >
                         <div className="flex items-start gap-3">
                           <Checkbox
                             checked={cid in selectedConditions}
                             onCheckedChange={() => toggleCondition(cid)}
-                            className="mt-1 data-[state=checked]:bg-purple-600"
+                            className="mt-1 data-[state=checked]:bg-[var(--brand-600)]"
                           />
                           <div className="flex-1">
                             <label className="cursor-pointer font-medium text-gray-800">

@@ -341,7 +341,7 @@ export function EditUserModal({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center gap-2 text-sm font-bold text-gray-800">
-                    <Mail className="h-4 w-4 text-purple-600" />
+                    <Mail className="h-4 w-4 text-[var(--brand-600)]" />
                     {t('user.email')} <span className="text-muted-foreground">*</span>
                   </FormLabel>
                   <FormControl>
@@ -349,7 +349,7 @@ export function EditUserModal({
                       placeholder={t('user.email_placeholder')}
                       type="email"
                       {...field}
-                      className="h-10 rounded-lg border-2 border-gray-200 text-base transition-all focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                      className="h-10 rounded-lg border-2 border-gray-200 text-base transition-all focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)]"
                     />
                   </FormControl>
                   <FormMessage className="mt-1 text-xs text-[var(--color-error-500)]" />

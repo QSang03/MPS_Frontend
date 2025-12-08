@@ -82,7 +82,7 @@ const statusConfig = {
     label: 'Đã đặt hàng',
   },
   [PurchaseRequestStatus.IN_TRANSIT]: {
-    color: 'text-purple-600 bg-purple-50 border-purple-200',
+    color: 'text-[var(--brand-600)] bg-[var(--brand-50)] border-[var(--brand-200)]',
     icon: Truck,
     label: 'Đang vận chuyển',
   },

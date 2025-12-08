@@ -183,7 +183,7 @@ export function PolicyWorkspace({ initialPolicy, onPolicyCreated }: PolicyWorksp
             <Button
               variant="outline"
               size="lg"
-              className="rounded-xl border-indigo-300 bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-700 shadow-md hover:from-indigo-100 hover:to-purple-100"
+              className="rounded-xl border-[var(--brand-300)] bg-gradient-to-r from-[var(--brand-50)] to-[var(--brand-50)] text-[var(--brand-700)] shadow-md hover:from-[var(--brand-100)] hover:to-[var(--brand-100)]"
             >
               <Bot className="mr-2 h-5 w-5" />
               AI Assistant

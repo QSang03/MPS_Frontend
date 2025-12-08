@@ -315,7 +315,7 @@ export function CustomerTable({
                     setEditingAddressFor(customer.id)
                     setEditingAddressValue(first === '—' ? '' : String(first))
                   }}
-                  className="transition-all hover:bg-blue-100 hover:text-blue-700"
+                  className="transition-all hover:bg-[var(--brand-100)] hover:text-[var(--brand-700)]"
                   aria-label="Chỉnh sửa địa chỉ"
                 >
                   <Edit className="h-4 w-4" />

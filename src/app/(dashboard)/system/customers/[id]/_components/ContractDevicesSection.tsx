@@ -60,15 +60,15 @@ export default function ContractDevicesSection({
 
   if (!canManage) {
     return (
-      <div className="rounded-xl border-2 border-dashed border-indigo-200 bg-gradient-to-br from-indigo-50/60 via-blue-50/40 to-white p-8 shadow-sm">
+      <div className="rounded-xl border-2 border-dashed border-[var(--brand-200)] bg-gradient-to-br from-[var(--brand-50)]/60 via-[var(--brand-50)]/40 to-white p-8 shadow-sm">
         <div className="flex flex-col items-center gap-3 text-center">
           <div className="rounded-full bg-indigo-100 p-3">
-            <Plug2 className="h-6 w-6 text-indigo-600" />
+            <Plug2 className="h-6 w-6 text-[var(--brand-600)]" />
           </div>
-          <p className="text-base font-medium text-indigo-700">
+          <p className="text-base font-medium text-[var(--brand-700)]">
             Lưu hợp đồng trước khi quản lý thiết bị
           </p>
-          <p className="text-sm text-indigo-500">
+          <p className="text-sm text-[var(--brand-500)]">
             Bạn cần lưu thông tin hợp đồng trước để có thể thêm và quản lý thiết bị
           </p>
         </div>
@@ -127,14 +127,14 @@ export default function ContractDevicesSection({
   return (
     <div className="space-y-6">
       {/* Header Section */}
-      <div className="flex flex-col gap-4 rounded-xl bg-gradient-to-r from-indigo-50 via-blue-50 to-indigo-50 p-5 shadow-sm md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-col gap-4 rounded-xl bg-gradient-to-r from-[var(--brand-50)] via-[var(--brand-50)] to-[var(--brand-50)] p-5 shadow-sm md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-3">
           <div className="rounded-lg bg-indigo-100 p-2">
-            <MonitorSmartphone className="h-5 w-5 text-indigo-700" />
+            <MonitorSmartphone className="h-5 w-5 text-[var(--brand-700)]" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-indigo-900">Thiết bị của hợp đồng</h3>
-            <p className="text-sm text-indigo-600">
+            <h3 className="text-lg font-bold text-[var(--brand-900)]">Thiết bị của hợp đồng</h3>
+            <p className="text-sm text-[var(--brand-600)]">
               {devices.length > 0 ? `${devices.length} thiết bị` : 'Chưa có thiết bị'}
             </p>
           </div>
@@ -145,7 +145,7 @@ export default function ContractDevicesSection({
             <Button
               size="sm"
               onClick={openAttachDialog}
-              className="gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 font-semibold text-white shadow-md transition-all hover:from-blue-600 hover:to-indigo-700 hover:shadow-lg"
+              className="gap-2 bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] font-semibold text-white shadow-md transition-all hover:from-[var(--brand-700)] hover:to-[var(--brand-700)] hover:shadow-lg"
             >
               <Plus className="h-4 w-4" />
               Thêm thiết bị

@@ -220,7 +220,7 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
         time: detail.inTransitAt,
         by: detail.inTransitBy,
         icon: Truck,
-        color: 'text-purple-600',
+        color: 'text-[var(--brand-600)]',
       },
       {
         label: 'Đã nhận',
@@ -475,7 +475,7 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
           <Card className="flex h-[600px] flex-col border-none shadow-sm ring-1 ring-slate-200 dark:ring-slate-800">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base font-medium">
-                <Activity className="h-4 w-4 text-blue-500" />
+                <Activity className="h-4 w-4 text-[var(--brand-500)]" />
                 Trao đổi & Thảo luận
               </CardTitle>
               <CardDescription>Lịch sử trao đổi liên quan tới đơn mua hàng</CardDescription>
@@ -658,7 +658,7 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
                   {detail.customer?.tier && (
                     <Badge
                       variant="secondary"
-                      className="h-5 bg-blue-50 px-1 py-0 text-[10px] text-blue-700"
+                      className="h-5 bg-[var(--brand-50)] px-1 py-0 text-[10px] text-[var(--brand-700)]"
                     >
                       {detail.customer.tier}
                     </Badge>

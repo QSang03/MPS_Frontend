@@ -250,7 +250,7 @@ export default function SystemSettingsPage() {
               {data.data.map((setting) => (
                 <div
                   key={setting.id}
-                  className="group rounded-lg border border-gray-200 bg-white p-4 transition-all hover:border-blue-300 hover:shadow-md"
+                  className="group rounded-lg border border-gray-200 bg-white p-4 transition-all hover:border-[var(--brand-300)] hover:shadow-md"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 space-y-2">

@@ -1867,7 +1867,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                   }
                 }}
                 disabled={editing}
-                className="min-w-[100px] bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+                className="min-w-[100px] bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] hover:from-[var(--brand-700)] hover:to-[var(--brand-700)]"
               >
                 {editing ? (
                   <>
@@ -2935,7 +2935,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                   }
                 }}
                 disabled={updatingConsumable || editRemainingInvalid}
-                className="min-w-[120px] bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+                className="min-w-[120px] bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] hover:from-[var(--brand-700)] hover:to-[var(--brand-700)]"
               >
                 {updatingConsumable ? (
                   <>
@@ -2953,11 +2953,11 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
           }
         >
           <div className="space-y-5">
-            <div className="rounded-lg border border-blue-200 bg-gradient-to-r from-blue-50 to-cyan-50 p-4">
+            <div className="rounded-lg border border-[var(--brand-200)] bg-gradient-to-r from-[var(--brand-50)] to-[var(--brand-50)] p-4">
               <p className="text-muted-foreground mb-1 text-sm font-medium">
                 {t('system_device_detail.consumables.type_label')}
               </p>
-              <p className="text-lg font-bold text-blue-700">
+              <p className="text-lg font-bold text-[var(--brand-700)]">
                 {editingConsumable?.consumableType?.name ?? '—'}
               </p>
               {editingConsumable?.consumableType?.description && (

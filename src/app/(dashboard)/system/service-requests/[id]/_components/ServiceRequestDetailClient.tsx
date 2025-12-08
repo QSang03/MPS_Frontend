@@ -732,7 +732,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                     />
                     <textarea
                       placeholder="Ghi chú phân công (tùy chọn)..."
-                      className="flex min-h-[80px] w-full resize-y rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm shadow-sm transition-colors placeholder:text-gray-400 focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                      className="flex min-h-[80px] w-full resize-y rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm shadow-sm transition-colors placeholder:text-gray-400 focus-visible:border-[var(--brand-500)] focus-visible:ring-2 focus-visible:ring-[var(--brand-500)] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                       value={assignNote}
                       onChange={(e) => setAssignNote(e.target.value)}
                     />

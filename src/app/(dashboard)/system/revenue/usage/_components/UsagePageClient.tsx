@@ -605,10 +605,12 @@ export default function UsagePageClient() {
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <Card className="border-[var(--brand-200)] bg-[var(--brand-50)]">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-blue-700">Tổng số trang</CardTitle>
+                  <CardTitle className="text-sm font-medium text-[var(--brand-700)]">
+                    Tổng số trang
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-blue-900">
+                  <div className="text-2xl font-bold text-[var(--brand-900)]">
                     {formatNumber(enterpriseData.totalPages)}
                   </div>
                   <p className="text-muted-foreground mt-1 text-xs">
@@ -634,12 +636,14 @@ export default function UsagePageClient() {
                 </CardContent>
               </Card>
 
-              <Card className="border-purple-200 bg-purple-50">
+              <Card className="border-[var(--brand-200)] bg-[var(--brand-50)]">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-purple-700">Trang màu</CardTitle>
+                  <CardTitle className="text-sm font-medium text-[var(--brand-700)]">
+                    Trang màu
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-purple-900">
+                  <div className="text-2xl font-bold text-[var(--brand-900)]">
                     {formatNumber(enterpriseData.totalColorPages)}
                   </div>
                   <p className="text-muted-foreground mt-1 text-xs">

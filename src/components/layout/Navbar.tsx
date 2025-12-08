@@ -257,7 +257,7 @@ export function Navbar({ session }: NavbarProps) {
                   >
                     {/* Avatar with gradient border */}
                     <div className="relative">
-                      <Avatar className="h-8 w-8 border-2 border-transparent transition-all duration-300 group-hover:border-blue-400">
+                      <Avatar className="h-8 w-8 border-2 border-transparent transition-all duration-300 group-hover:border-[var(--brand-400)]">
                         <AvatarFallback className="bg-gradient-to-br from-[var(--brand-500)] to-[var(--brand-700)] text-xs font-bold text-white">
                           {initials}
                         </AvatarFallback>

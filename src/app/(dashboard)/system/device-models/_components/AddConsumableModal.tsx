@@ -122,10 +122,10 @@ export function AddConsumableModal({
         maxWidth="!max-w-[75vw]"
       >
         {/* Quick Stats */}
-        <div className="mb-4 grid grid-cols-2 gap-3 rounded-lg border border-gray-200 bg-gradient-to-r from-cyan-50 to-blue-50 p-4">
-          <div className="rounded-lg border border-cyan-200 bg-white p-2.5">
+        <div className="mb-4 grid grid-cols-2 gap-3 rounded-lg border border-gray-200 bg-gradient-to-r from-[var(--brand-50)] to-[var(--brand-50)] p-4">
+          <div className="rounded-lg border border-[var(--brand-200)] bg-white p-2.5">
             <p className="text-xs text-gray-600">Có sẵn</p>
-            <p className="mt-1 text-xl font-bold text-cyan-600">{consumables.length}</p>
+            <p className="mt-1 text-xl font-bold text-[var(--brand-600)]">{consumables.length}</p>
           </div>
           <div className="rounded-lg border border-green-200 bg-white p-2.5">
             <p className="text-xs text-gray-600">Hoạt động</p>
@@ -149,7 +149,7 @@ export function AddConsumableModal({
 
           {loading ? (
             <div className="py-12 text-center">
-              <Loader2 className="mx-auto mb-3 h-8 w-8 animate-spin text-cyan-600" />
+              <Loader2 className="mx-auto mb-3 h-8 w-8 animate-spin text-[var(--brand-600)]" />
               <p className="text-muted-foreground">Đang tải...</p>
             </div>
           ) : (
@@ -157,12 +157,12 @@ export function AddConsumableModal({
               {/* Table */}
               <div className="overflow-hidden rounded-lg border">
                 <table className="w-full text-sm">
-                  <thead className="bg-gradient-to-r from-cyan-50 to-blue-50">
+                  <thead className="bg-gradient-to-r from-[var(--brand-50)] to-[var(--brand-50)]">
                     <tr>
                       <th className="w-12 px-4 py-3 text-left font-semibold">#</th>
                       <th className="px-4 py-3 text-left font-semibold">
                         <div className="flex items-center gap-2">
-                          <Package className="h-4 w-4 text-cyan-600" />
+                          <Package className="h-4 w-4 text-[var(--brand-600)]" />
                           Tên
                         </div>
                       </th>
@@ -184,12 +184,14 @@ export function AddConsumableModal({
                       consumables.map((c, index) => (
                         <tr
                           key={c.id}
-                          className="transition-colors hover:bg-gradient-to-r hover:from-cyan-50/50 hover:to-blue-50/50"
+                          className="transition-colors hover:bg-gradient-to-r hover:from-[var(--brand-50)]/50 hover:to-[var(--brand-50)]/50"
                         >
                           <td className="text-muted-foreground px-4 py-3">
                             {(page - 1) * limit + index + 1}
                           </td>
-                          <td className="px-4 py-3 font-semibold text-cyan-700">{c.name || '—'}</td>
+                          <td className="px-4 py-3 font-semibold text-[var(--brand-700)]">
+                            {c.name || '—'}
+                          </td>
                           <td className="px-4 py-3">
                             <Badge variant="outline" className="font-mono text-xs">
                               {c.unit || '—'}
@@ -221,7 +223,7 @@ export function AddConsumableModal({
                               size="sm"
                               onClick={() => handleAdd(c.id)}
                               disabled={addingId === c.id}
-                              className="gap-2 bg-gradient-to-r from-cyan-600 to-blue-600 whitespace-nowrap hover:from-cyan-700 hover:to-blue-700"
+                              className="gap-2 bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] whitespace-nowrap hover:from-[var(--brand-700)] hover:to-[var(--brand-700)]"
                             >
                               {addingId === c.id ? (
                                 <>

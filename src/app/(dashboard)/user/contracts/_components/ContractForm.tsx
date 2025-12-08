@@ -377,7 +377,7 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center gap-2 text-base font-semibold">
-                    <Calendar className="h-4 w-4 text-cyan-600" />
+                    <Calendar className="h-4 w-4 text-[var(--brand-600)]" />
                     Ngày bắt đầu *
                   </FormLabel>
                   <FormControl>
@@ -394,7 +394,7 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center gap-2 text-base font-semibold">
-                    <Clock className="h-4 w-4 text-purple-600" />
+                    <Clock className="h-4 w-4 text-[var(--brand-600)]" />
                     Thời hạn (năm) *
                   </FormLabel>
                   <FormControl>

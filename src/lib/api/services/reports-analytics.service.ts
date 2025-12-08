@@ -47,6 +47,7 @@ export type ProfitabilityTrendItem = {
   totalCogs: number
   grossProfit: number
   grossMargin?: number
+  currency?: CurrencyDataDto | null // ⭐ MỚI
   // Currency conversion fields - ⭐ MỚI
   revenueRentalConverted?: number
   revenueRepairConverted?: number
@@ -82,6 +83,7 @@ export type CustomerProfitItem = {
   totalCogs: number
   grossProfit: number
   devicesCount: number
+  currency?: CurrencyDataDto | null // ⭐ MỚI
   // Currency conversion fields - ⭐ MỚI
   totalRevenueConverted?: number
   totalCogsConverted?: number
@@ -106,6 +108,7 @@ export type DeviceProfitItem = {
   revenue: number
   cogs: number
   profit: number
+  currency?: CurrencyDataDto | null // ⭐ MỚI
   // Currency conversion fields - ⭐ MỚI
   revenueConverted?: number
   cogsConverted?: number
@@ -122,6 +125,7 @@ export type CustomerDetailProfitResponse = {
       totalRevenue: number
       totalCogs: number
       grossProfit: number
+      currency?: CurrencyDataDto | null // ⭐ MỚI
       // Currency conversion fields - ⭐ MỚI
       totalRevenueConverted?: number
       totalCogsConverted?: number
@@ -146,6 +150,7 @@ export type DeviceProfitabilityItem = {
   cogsRepair: number
   totalCogs: number
   grossProfit: number
+  currency?: CurrencyDataDto | null // ⭐ MỚI
   // Currency conversion fields - ⭐ MỚI
   revenueRentalConverted?: number
   revenueRepairConverted?: number

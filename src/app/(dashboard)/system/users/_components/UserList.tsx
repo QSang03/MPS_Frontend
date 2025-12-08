@@ -52,7 +52,7 @@ const mockUsers = [
 ]
 
 const roleColors: Record<string, string> = {
-  SystemAdmin: 'bg-purple-100 text-purple-800',
+  SystemAdmin: 'bg-[var(--brand-100)] text-[var(--brand-800)]',
   CustomerAdmin: 'bg-[var(--brand-50)] text-[var(--brand-800)]',
   User: 'bg-gray-100 text-gray-800',
 }

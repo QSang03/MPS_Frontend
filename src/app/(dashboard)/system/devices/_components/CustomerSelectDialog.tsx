@@ -238,20 +238,20 @@ export function CustomerSelectDialog({
         {/* Customer Location Input - Show when customer is not warehouse */}
         {requiresLocation && (
           <div className="space-y-2 rounded-lg border border-[var(--brand-200)] bg-[var(--brand-50)]/50 p-4">
-            <Label className="flex items-center gap-2 text-base font-semibold text-blue-900">
+            <Label className="flex items-center gap-2 text-base font-semibold text-[var(--brand-900)]">
               <MapPin className="h-4 w-4 text-[var(--brand-600)]" />
               {t('customer.select.location.label')}
               <span className="text-red-500">*</span>
             </Label>
             {loadingAddresses ? (
               <Select disabled>
-                <SelectTrigger className="h-11 border-blue-200 bg-white">
+                <SelectTrigger className="h-11 border-[var(--brand-200)] bg-white">
                   <SelectValue placeholder={t('customer.select.location.loading')} />
                 </SelectTrigger>
               </Select>
             ) : customerAddresses.length > 0 ? (
               <Select value={customerLocation} onValueChange={setCustomerLocation}>
-                <SelectTrigger className="h-11 border-blue-200 bg-white">
+                <SelectTrigger className="h-11 border-[var(--brand-200)] bg-white">
                   <SelectValue placeholder={t('customer.select.location.select_placeholder')} />
                 </SelectTrigger>
                 <SelectContent>
@@ -267,7 +267,7 @@ export function CustomerSelectDialog({
                 value={customerLocation}
                 onChange={(e) => setCustomerLocation(e.target.value)}
                 placeholder={t('customer.select.location.input_placeholder')}
-                className="h-11 border-blue-200 bg-white"
+                className="h-11 border-[var(--brand-200)] bg-white"
                 autoFocus
               />
             )}

@@ -181,7 +181,7 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
 
           <Button
             onClick={() => setShowCreate(true)}
-            className="gap-2 bg-white text-blue-600 hover:bg-white/90"
+            className="gap-2 bg-white text-[var(--brand-600)] hover:bg-white/90"
           >
             <Plus className="h-4 w-4" />
             {t('devices.add')}
@@ -198,7 +198,7 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
             <p className="text-sm text-white/80">{t('device_model.stats.active_label')}</p>
             <p className="mt-1 text-2xl font-bold">{devices.filter((d) => d.isActive).length}</p>
           </div>
-          <div className="rounded-lg border border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-3">
+          <div className="rounded-lg border border-[var(--brand-200)] bg-gradient-to-br from-[var(--brand-50)] to-[var(--brand-50)] p-3">
             <p className="text-sm text-white/80">{t('device_model.stats.counter_type')}</p>
             <p className="mt-1 text-lg font-bold text-white/90">
               {modelUseA4 === undefined ? 'N/A' : modelUseA4 ? 'A4 Counter' : 'Standard Counter'}
@@ -226,19 +226,19 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
         ) : (
           <div className="overflow-hidden rounded-lg border">
             <table className="w-full">
-              <thead className="bg-gradient-to-r from-blue-50 to-indigo-50">
+              <thead className="bg-gradient-to-r from-[var(--brand-50)] to-[var(--brand-50)]">
                 <tr>
                   <th className="px-4 py-3 text-left text-sm font-semibold">#</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold">
                     <div className="flex items-center gap-2">
-                      <Monitor className="h-4 w-4 text-blue-600" />
+                      <Monitor className="h-4 w-4 text-[var(--brand-600)]" />
                       Serial
                     </div>
                   </th>
                   <th className="px-4 py-3 text-left text-sm font-semibold">{t('table.model')}</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold">
                     <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-indigo-600" />
+                      <MapPin className="h-4 w-4 text-[var(--brand-600)]" />
                       {t('table.location')}
                     </div>
                   </th>
@@ -262,7 +262,7 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
                   </tr>
                 ) : (
                   devices.map((d, idx) => (
-                    <tr key={d.id} className="transition-colors hover:bg-blue-50/50">
+                    <tr key={d.id} className="transition-colors hover:bg-[var(--brand-50)]/50">
                       <td className="text-muted-foreground px-4 py-3 text-sm">{idx + 1}</td>
                       <td className="px-4 py-3">
                         <code className="rounded bg-[var(--brand-50)] px-2 py-1 text-sm font-semibold text-[var(--brand-700)]">
@@ -354,7 +354,7 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
           }
         >
           <div className="space-y-5">
-            <div className="rounded-lg border border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-4">
+            <div className="rounded-lg border border-[var(--brand-200)] bg-gradient-to-r from-[var(--brand-50)] to-[var(--brand-50)] p-4">
               <p className="text-muted-foreground mb-1 text-sm font-medium">Model</p>
               <p className="text-lg font-bold text-blue-700">{modelName}</p>
             </div>
@@ -362,7 +362,7 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="md:col-span-2">
                 <Label className="flex items-center gap-2 text-base font-semibold">
-                  <Monitor className="h-4 w-4 text-blue-600" />
+                  <Monitor className="h-4 w-4 text-[var(--brand-600)]" />
                   Serial Number *
                 </Label>
                 <Input
@@ -375,7 +375,7 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
 
               <div>
                 <Label className="flex items-center gap-2 text-base font-semibold">
-                  <MapPin className="h-4 w-4 text-indigo-600" />
+                  <MapPin className="h-4 w-4 text-[var(--brand-600)]" />
                   Vị trí
                 </Label>
                 <Input
@@ -388,7 +388,7 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
 
               <div>
                 <Label className="flex items-center gap-2 text-base font-semibold">
-                  <Wifi className="h-4 w-4 text-blue-600" />
+                  <Wifi className="h-4 w-4 text-[var(--brand-600)]" />
                   Địa chỉ IP
                 </Label>
                 <Input
@@ -401,7 +401,7 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
 
               <div>
                 <Label className="flex items-center gap-2 text-base font-semibold">
-                  <HardDrive className="h-4 w-4 text-purple-600" />
+                  <HardDrive className="h-4 w-4 text-[var(--brand-600)]" />
                   Địa chỉ MAC
                 </Label>
                 <Input

@@ -520,7 +520,7 @@ function DeviceModelsTableContent({
               className={cn(
                 'flex w-fit items-center gap-1 px-2 py-0.5 text-xs',
                 m.useA4Counter
-                  ? 'bg-blue-500 text-white hover:bg-blue-600'
+                  ? 'bg-[var(--brand-500)] text-white hover:bg-[var(--brand-600)]'
                   : 'bg-gray-400 text-white hover:bg-gray-500'
               )}
             >

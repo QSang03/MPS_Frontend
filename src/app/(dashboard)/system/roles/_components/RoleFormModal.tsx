@@ -124,7 +124,7 @@ export function RoleFormModal({ isOpen, onClose, onSubmit, initialData }: RoleFo
                     <Input
                       placeholder="VD: Manager, Admin, Supervisor..."
                       {...field}
-                      className="h-10 rounded-lg border-2 border-gray-200 text-base transition-all focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+                      className="h-10 rounded-lg border-2 border-gray-200 text-base transition-all focus:border-[var(--color-success-500)] focus:ring-2 focus:ring-[var(--color-success-200)]"
                     />
                   </FormControl>
                   <FormMessage className="mt-1 text-xs text-red-600" />
@@ -175,7 +175,7 @@ export function RoleFormModal({ isOpen, onClose, onSubmit, initialData }: RoleFo
                           const v = e.target.value
                           field.onChange(v === '' ? undefined : Number(v))
                         }}
-                        className="h-10 rounded-lg border-2 border-gray-200 text-base transition-all focus:border-amber-500 focus:ring-2 focus:ring-amber-200"
+                        className="h-10 rounded-lg border-2 border-gray-200 text-base transition-all focus:border-[var(--warning-500)] focus:ring-2 focus:ring-[var(--warning-200)]"
                       />
                     </FormControl>
                     <FormMessage className="mt-1 text-xs text-red-600" />
@@ -214,10 +214,10 @@ export function RoleFormModal({ isOpen, onClose, onSubmit, initialData }: RoleFo
             </div>
 
             {/* Info card */}
-            <div className="rounded-lg border-2 border-emerald-200 bg-gradient-to-r from-emerald-50 to-cyan-50 p-4">
+            <div className="rounded-lg border-2 border-[var(--color-success-200)] bg-gradient-to-r from-[var(--color-success-50)] to-[var(--brand-50)] p-4">
               <p className="text-xs text-gray-700">
-                <span className="font-bold text-emerald-700">💡 Tip:</span> Mỗi vai trò có thể quản
-                lý các quyền hạn khác nhau dựa trên level.
+                <span className="font-bold text-[var(--color-success-700)]">💡 Tip:</span> Mỗi vai
+                trò có thể quản lý các quyền hạn khác nhau dựa trên level.
               </p>
             </div>
           </form>
