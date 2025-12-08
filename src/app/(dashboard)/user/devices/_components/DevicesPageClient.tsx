@@ -854,7 +854,7 @@ export default function DevicesPageClient() {
                             // Đã mua đứt (sở hữu vĩnh viễn)
                             badgeContent = (
                               <Badge className="bg-[var(--brand-50)] text-[var(--brand-700)] hover:bg-[var(--brand-100)]">
-                                Đã mua đứt
+                                Đã sở hữu
                               </Badge>
                             )
                             if (ownershipPeriod) {
@@ -867,7 +867,7 @@ export default function DevicesPageClient() {
                             // Đang sở hữu (có thể là thuê)
                             badgeContent = (
                               <Badge className="bg-[var(--color-success-50)] text-[var(--color-success-500)] hover:bg-[var(--color-success-100)]">
-                                Đang sở hữu
+                                Đang thuê
                               </Badge>
                             )
                             if (ownershipPeriod) {
@@ -883,7 +883,7 @@ export default function DevicesPageClient() {
                                 variant="outline"
                                 className="border-amber-200 bg-amber-50 text-amber-700"
                               >
-                                Đã từng sở hữu
+                                Đã từng thuê
                               </Badge>
                             )
                             if (ownershipPeriod) {

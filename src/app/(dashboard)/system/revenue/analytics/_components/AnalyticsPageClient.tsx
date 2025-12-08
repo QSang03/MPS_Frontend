@@ -78,6 +78,29 @@ export default function AnalyticsPageClient() {
     return formatCurrencyWithSymbol(Number(n), { code: 'USD', symbol: '$' } as CurrencyDataDto)
   }
 
+  const formatDual = (
+    original: number,
+    converted: number | undefined,
+    baseCurrency: CurrencyDataDto | null,
+    align: 'left' | 'right' = 'right'
+  ) => {
+    if (original === undefined || original === null) return '-'
+    if (converted !== undefined && converted !== null && baseCurrency) {
+      const valConverted = formatCurrencyWithSymbol(converted, baseCurrency)
+      const valOriginal = formatCurrencyWithSymbol(original, {
+        code: 'USD',
+        symbol: '$',
+      } as CurrencyDataDto)
+      return (
+        <div className={`flex flex-col ${align === 'right' ? 'items-end' : 'items-start'}`}>
+          <span>{valConverted}</span>
+          <span className="text-muted-foreground text-xs whitespace-nowrap">({valOriginal})</span>
+        </div>
+      )
+    }
+    return formatCurrency(original, baseCurrency)
+  }
+
   // Helper to get display value (converted if available, else original)
   const getDisplayValue = (
     original: number,
@@ -1506,21 +1529,6 @@ export default function AnalyticsPageClient() {
                 {customerDetailData &&
                   (() => {
                     const useConverted = !!customerDetailBaseCurrency
-                    const revenue = getDisplayValue(
-                      customerDetailData.customer.totalRevenue,
-                      customerDetailData.customer.totalRevenueConverted,
-                      useConverted
-                    )
-                    const cogs = getDisplayValue(
-                      customerDetailData.customer.totalCogs,
-                      customerDetailData.customer.totalCogsConverted,
-                      useConverted
-                    )
-                    const profit = getDisplayValue(
-                      customerDetailData.customer.grossProfit,
-                      customerDetailData.customer.grossProfitConverted,
-                      useConverted
-                    )
                     return (
                       <>
                         <div className="space-y-4">
@@ -1535,7 +1543,12 @@ export default function AnalyticsPageClient() {
                                     {t('analytics.customer_detail.revenue')}
                                   </span>
                                   <p className="font-semibold">
-                                    {formatCurrency(revenue, customerDetailBaseCurrency)}
+                                    {formatDual(
+                                      customerDetailData.customer.totalRevenue,
+                                      customerDetailData.customer.totalRevenueConverted,
+                                      customerDetailBaseCurrency,
+                                      'left'
+                                    )}
                                   </p>
                                 </div>
                                 <div>
@@ -1543,7 +1556,12 @@ export default function AnalyticsPageClient() {
                                     {t('analytics.customer_detail.cost')}
                                   </span>
                                   <p className="font-semibold">
-                                    {formatCurrency(cogs, customerDetailBaseCurrency)}
+                                    {formatDual(
+                                      customerDetailData.customer.totalCogs,
+                                      customerDetailData.customer.totalCogsConverted,
+                                      customerDetailBaseCurrency,
+                                      'left'
+                                    )}
                                   </p>
                                 </div>
                                 <div>
@@ -1551,9 +1569,14 @@ export default function AnalyticsPageClient() {
                                     {t('analytics.customer_detail.profit')}
                                   </span>
                                   <p
-                                    className={`font-semibold ${profit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}
+                                    className={`font-semibold ${customerDetailData.customer.grossProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}
                                   >
-                                    {formatCurrency(profit, customerDetailBaseCurrency)}
+                                    {formatDual(
+                                      customerDetailData.customer.grossProfit,
+                                      customerDetailData.customer.grossProfitConverted,
+                                      customerDetailBaseCurrency,
+                                      'left'
+                                    )}
                                   </p>
                                 </div>
                               </div>
@@ -1747,16 +1770,6 @@ export default function AnalyticsPageClient() {
                               </thead>
                               <tbody className="divide-y">
                                 {customerDetailData.devices.map((d) => {
-                                  const deviceRevenue = getDisplayValue(
-                                    d.revenue,
-                                    d.revenueConverted,
-                                    useConverted
-                                  )
-                                  const deviceCogs = getDisplayValue(
-                                    d.cogs,
-                                    d.cogsConverted,
-                                    useConverted
-                                  )
                                   const deviceProfit = getDisplayValue(
                                     d.profit,
                                     d.profitConverted,
@@ -1767,15 +1780,30 @@ export default function AnalyticsPageClient() {
                                       <td className="px-4 py-3 text-sm">{d.model}</td>
                                       <td className="px-4 py-3 text-sm">{d.serialNumber}</td>
                                       <td className="px-4 py-3 text-right text-sm">
-                                        {formatCurrency(deviceRevenue, customerDetailBaseCurrency)}
+                                        {formatDual(
+                                          d.revenue,
+                                          d.revenueConverted,
+                                          customerDetailBaseCurrency,
+                                          'right'
+                                        )}
                                       </td>
                                       <td className="px-4 py-3 text-right text-sm">
-                                        {formatCurrency(deviceCogs, customerDetailBaseCurrency)}
+                                        {formatDual(
+                                          d.cogs,
+                                          d.cogsConverted,
+                                          customerDetailBaseCurrency,
+                                          'right'
+                                        )}
                                       </td>
                                       <td
                                         className={`px-4 py-3 text-right text-sm font-semibold ${deviceProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}
                                       >
-                                        {formatCurrency(deviceProfit, customerDetailBaseCurrency)}
+                                        {formatDual(
+                                          d.profit,
+                                          d.profitConverted,
+                                          customerDetailBaseCurrency,
+                                          'right'
+                                        )}
                                       </td>
                                       <td className="px-4 py-3 text-center">
                                         <Button
@@ -2120,30 +2148,70 @@ export default function AnalyticsPageClient() {
                             <tr key={p.month}>
                               <td className="px-3 py-2">{p.month}</td>
                               <td className="px-3 py-2 text-right">
-                                {formatCurrency(p.revenueRental)}
+                                {formatDual(
+                                  p.revenueRental,
+                                  p.revenueRentalConverted,
+                                  enterpriseBaseCurrency || customerDetailBaseCurrency,
+                                  'right'
+                                )}
                               </td>
                               <td className="px-3 py-2 text-right">
-                                {formatCurrency(p.revenueRepair)}
+                                {formatDual(
+                                  p.revenueRepair,
+                                  p.revenueRepairConverted,
+                                  enterpriseBaseCurrency || customerDetailBaseCurrency,
+                                  'right'
+                                )}
                               </td>
                               <td className="px-3 py-2 text-right">
-                                {formatCurrency(p.revenuePageBW)}
+                                {formatDual(
+                                  p.revenuePageBW,
+                                  p.revenuePageBWConverted,
+                                  enterpriseBaseCurrency || customerDetailBaseCurrency,
+                                  'right'
+                                )}
                               </td>
                               <td className="px-3 py-2 text-right">
-                                {formatCurrency(p.revenuePageColor)}
+                                {formatDual(
+                                  p.revenuePageColor,
+                                  p.revenuePageColorConverted,
+                                  enterpriseBaseCurrency || customerDetailBaseCurrency,
+                                  'right'
+                                )}
                               </td>
                               <td className="px-3 py-2 text-right font-semibold">
-                                {formatCurrency(p.totalRevenue)}
+                                {formatDual(
+                                  p.totalRevenue,
+                                  p.totalRevenueConverted,
+                                  enterpriseBaseCurrency || customerDetailBaseCurrency,
+                                  'right'
+                                )}
                               </td>
                               <td className="px-3 py-2 text-right">
-                                {formatCurrency(p.cogsConsumable)}
+                                {formatDual(
+                                  p.cogsConsumable,
+                                  p.cogsConsumableConverted,
+                                  enterpriseBaseCurrency || customerDetailBaseCurrency,
+                                  'right'
+                                )}
                               </td>
                               <td className="px-3 py-2 text-right">
-                                {formatCurrency(p.cogsRepair)}
+                                {formatDual(
+                                  p.cogsRepair,
+                                  p.cogsRepairConverted,
+                                  enterpriseBaseCurrency || customerDetailBaseCurrency,
+                                  'right'
+                                )}
                               </td>
                               <td
                                 className={`px-3 py-2 text-right font-semibold ${p.grossProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}
                               >
-                                {formatCurrency(p.grossProfit)}
+                                {formatDual(
+                                  p.grossProfit,
+                                  p.grossProfitConverted,
+                                  enterpriseBaseCurrency || customerDetailBaseCurrency,
+                                  'right'
+                                )}
                               </td>
                             </tr>
                           ))}

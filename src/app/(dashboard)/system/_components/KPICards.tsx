@@ -22,12 +22,15 @@ import {
 import { cn } from '@/lib/utils/cn'
 import type { AdminOverviewKPIs } from '@/types/dashboard'
 import { useLocale } from '@/components/providers/LocaleProvider'
+import type { CurrencyDataDto } from '@/types/models/currency'
+import { formatCurrencyWithSymbol } from '@/lib/utils/formatters'
 
 interface KPICardsProps {
   kpis: AdminOverviewKPIs | undefined
   isLoading: boolean
   onRevenueClick?: () => void
   onContractsClick?: () => void
+  baseCurrency?: CurrencyDataDto | null
 }
 
 function formatNumber(num: number): string {
@@ -40,7 +43,10 @@ function formatNumber(num: number): string {
   return num.toString()
 }
 
-function formatCurrency(amount: number): string {
+function formatCurrency(amount: number, currency?: CurrencyDataDto | null): string {
+  if (currency) {
+    return formatCurrencyWithSymbol(amount, currency)
+  }
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
@@ -48,7 +54,13 @@ function formatCurrency(amount: number): string {
   }).format(amount)
 }
 
-export function KPICards({ kpis, isLoading, onRevenueClick, onContractsClick }: KPICardsProps) {
+export function KPICards({
+  kpis,
+  isLoading,
+  onRevenueClick,
+  onContractsClick,
+  baseCurrency,
+}: KPICardsProps) {
   const { t } = useLocale()
   const [showAllMetrics, setShowAllMetrics] = useState(false)
 
@@ -115,7 +127,7 @@ export function KPICards({ kpis, isLoading, onRevenueClick, onContractsClick }: 
       id: 'revenue',
       title: t('dashboard.kpi.revenue.title'),
       value: kpis.totalCost ?? 0,
-      displayValue: formatCurrency(kpis.totalCost ?? 0),
+      displayValue: formatCurrency(kpis.totalCost ?? 0, baseCurrency),
       subtitle: t('dashboard.kpi.revenue.subtitle', {
         percent: `${costChangePercent > 0 ? '+' : ''}${costChangePercent.toFixed(1)}`,
       }),

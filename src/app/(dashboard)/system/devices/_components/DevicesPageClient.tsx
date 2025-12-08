@@ -768,7 +768,7 @@ function DevicesTableContent({
             // Đã mua đứt (sở hữu vĩnh viễn)
             badgeContent = (
               <Badge className="bg-[var(--brand-50)] text-[var(--brand-700)] hover:bg-[var(--brand-100)]">
-                Đã mua đứt
+                Đã sở hữu
               </Badge>
             )
             if (ownershipPeriod) {
@@ -777,7 +777,7 @@ function DevicesTableContent({
           } else if (device.ownershipStatus === 'current') {
             // Đang sở hữu (có thể là thuê)
             badgeContent = (
-              <Badge className="bg-green-100 text-green-700 hover:bg-green-200">Đang sở hữu</Badge>
+              <Badge className="bg-green-100 text-green-700 hover:bg-green-200">Đang thuê</Badge>
             )
             if (ownershipPeriod) {
               tooltipText = formatOwnershipPeriod(ownershipPeriod.fromDate, ownershipPeriod.toDate)
@@ -786,7 +786,7 @@ function DevicesTableContent({
             // Đã từng sở hữu
             badgeContent = (
               <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700">
-                Đã từng sở hữu
+                Đã từng thuê
               </Badge>
             )
             if (ownershipPeriod) {

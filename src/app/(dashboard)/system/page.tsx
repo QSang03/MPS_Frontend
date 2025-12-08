@@ -285,6 +285,7 @@ export default function CustomerAdminDashboard() {
         isLoading={isLoading}
         onRevenueClick={() => setShowCustomersModal(true)}
         onContractsClick={() => setShowContractsModal(true)}
+        baseCurrency={overviewData?.baseCurrency}
       />
 
       {/* Customer Details Modal */}
