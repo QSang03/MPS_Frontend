@@ -382,7 +382,7 @@ export function CustomerTable({
                 variant="outline"
                 size="sm"
                 onClick={() => void loadConsumablesForCustomer(customer)}
-                className="transition-all hover:bg-blue-100 hover:text-blue-700"
+                className="transition-all hover:bg-[var(--brand-100)] hover:text-[var(--brand-700)]"
               >
                 <Package className="mr-2 h-4 w-4" />
                 Vật tư
@@ -398,7 +398,7 @@ export function CustomerTable({
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="transition-all hover:bg-sky-50 hover:text-sky-700"
+                      className="transition-all hover:bg-[var(--brand-50)] hover:text-[var(--brand-700)]"
                       aria-label={t('devices.add')}
                     >
                       <Plus className="h-4 w-4" />

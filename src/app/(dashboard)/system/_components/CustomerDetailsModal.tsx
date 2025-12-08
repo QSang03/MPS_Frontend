@@ -186,7 +186,8 @@ export function CustomerDetailsModal({
                         index === 0 && 'border-yellow-300 bg-yellow-50/70 hover:bg-yellow-50',
                         index === 1 && 'border-gray-300 bg-gray-50/70 hover:bg-gray-50',
                         index === 2 && 'border-orange-300 bg-orange-50/70 hover:bg-orange-50',
-                        index >= 3 && 'border-gray-200 hover:border-cyan-300 hover:bg-cyan-50/30'
+                        index >= 3 &&
+                          'border-gray-200 hover:border-[var(--brand-300)] hover:bg-[var(--brand-50)]/30'
                       )}
                     >
                       <div className="flex items-center gap-4">

@@ -404,7 +404,7 @@ export function ServiceRequestFormModal({
                             }
                           >
                             <FormControl>
-                              <SelectTrigger className="h-12 justify-start rounded-xl border-slate-300/50 bg-white/60 pl-4 backdrop-blur-xl transition-all duration-300 hover:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-600/50 dark:bg-slate-700/60 dark:hover:border-indigo-500">
+                              <SelectTrigger className="h-12 justify-start rounded-xl border-slate-300/50 bg-white/60 pl-4 backdrop-blur-xl transition-all duration-300 hover:border-[var(--brand-400)] focus:ring-2 focus:ring-[var(--brand-500)]/20 dark:border-slate-600/50 dark:bg-slate-700/60 dark:hover:border-[var(--brand-500)]">
                                 <SelectValue
                                   className="w-full text-left"
                                   placeholder={
@@ -438,7 +438,7 @@ export function ServiceRequestFormModal({
                                 <SelectItem
                                   key={device.id}
                                   value={device.id}
-                                  className="cursor-pointer transition-colors hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
+                                  className="cursor-pointer transition-colors hover:bg-[var(--brand-50)] dark:hover:bg-[var(--brand-900)]/20"
                                 >
                                   <div className="flex items-center gap-2">
                                     <Monitor className="h-4 w-4 text-black dark:text-white" />
@@ -484,7 +484,7 @@ export function ServiceRequestFormModal({
                       onClick={() => setMode('PURCHASE')}
                       className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
                         mode === 'PURCHASE'
-                          ? 'bg-white text-indigo-600 shadow dark:bg-slate-800 dark:text-indigo-400'
+                          ? 'bg-white text-[var(--brand-600)] shadow dark:bg-slate-800 dark:text-[var(--brand-400)]'
                           : 'text-slate-600 hover:text-slate-800 dark:text-slate-300 dark:hover:text-white'
                       }`}
                     >
@@ -512,7 +512,7 @@ export function ServiceRequestFormModal({
                               placeholder={t('user_service_request.title_placeholder')}
                               {...field}
                               disabled={createServiceMutation.isPending}
-                              className="h-12 rounded-xl border-slate-300/50 bg-white/60 backdrop-blur-xl transition-all duration-300 hover:border-indigo-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-600/50 dark:bg-slate-700/60 dark:hover:border-indigo-500 dark:focus:border-indigo-400"
+                              className="h-12 rounded-xl border-slate-300/50 bg-white/60 backdrop-blur-xl transition-all duration-300 hover:border-[var(--brand-400)] focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-500)]/20 dark:border-slate-600/50 dark:bg-slate-700/60 dark:hover:border-[var(--brand-500)] dark:focus:border-[var(--brand-400)]"
                             />
                           </FormControl>
                           <FormDescription className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
@@ -545,7 +545,7 @@ export function ServiceRequestFormModal({
                               rows={6}
                               {...field}
                               disabled={createServiceMutation.isPending}
-                              className="resize-none rounded-xl border-slate-300/50 bg-white/60 backdrop-blur-xl transition-all duration-300 hover:border-indigo-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-600/50 dark:bg-slate-700/60 dark:hover:border-indigo-500 dark:focus:border-indigo-400"
+                              className="resize-none rounded-xl border-slate-300/50 bg-white/60 backdrop-blur-xl transition-all duration-300 hover:border-[var(--brand-400)] focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-500)]/20 dark:border-slate-600/50 dark:bg-slate-700/60 dark:hover:border-[var(--brand-500)] dark:focus:border-[var(--brand-400)]"
                             />
                           </FormControl>
                           <FormDescription className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">

@@ -1346,7 +1346,7 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
       {/* Edit Modal (basic subset of system) */}
       <Dialog open={showEdit} onOpenChange={setShowEdit}>
         <DialogContent className="max-w-[640px] overflow-hidden rounded-2xl border-0 p-0 shadow-2xl">
-          <DialogHeader className="relative overflow-hidden bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600 p-0">
+          <DialogHeader className="relative overflow-hidden bg-gradient-to-r from-[var(--brand-700)] via-[var(--brand-600)] to-[var(--brand-500)] p-0">
             <div className="absolute inset-0 bg-black/10"></div>
             <div className="relative z-10 px-6 py-5">
               <div className="flex items-center gap-3">

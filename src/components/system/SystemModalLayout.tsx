@@ -33,8 +33,8 @@ export function SystemModalLayout({
   className,
 }: SystemModalLayoutProps) {
   const headerColors = {
-    create: 'from-green-600 via-emerald-600 to-teal-600',
-    edit: 'from-orange-600 via-amber-600 to-yellow-600',
+    create: 'from-[var(--brand-700)] via-[var(--brand-600)] to-[var(--brand-500)]',
+    edit: 'from-[var(--brand-600)] via-[var(--brand-500)] to-[var(--brand-400)]',
     view: 'from-[var(--brand-600)] via-[var(--brand-500)] to-[var(--brand-400)]',
   }
   return (

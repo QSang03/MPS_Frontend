@@ -62,7 +62,7 @@ export default function ContractDevicesSection({
     return (
       <div className="rounded-xl border-2 border-dashed border-[var(--brand-200)] bg-gradient-to-br from-[var(--brand-50)]/60 via-[var(--brand-50)]/40 to-white p-8 shadow-sm">
         <div className="flex flex-col items-center gap-3 text-center">
-          <div className="rounded-full bg-indigo-100 p-3">
+          <div className="rounded-full bg-[var(--brand-50)] p-3">
             <Plug2 className="h-6 w-6 text-[var(--brand-600)]" />
           </div>
           <p className="text-base font-medium text-[var(--brand-700)]">
@@ -129,7 +129,7 @@ export default function ContractDevicesSection({
       {/* Header Section */}
       <div className="flex flex-col gap-4 rounded-xl bg-gradient-to-r from-[var(--brand-50)] via-[var(--brand-50)] to-[var(--brand-50)] p-5 shadow-sm md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-3">
-          <div className="rounded-lg bg-indigo-100 p-2">
+          <div className="rounded-lg bg-[var(--brand-50)] p-2">
             <MonitorSmartphone className="h-5 w-5 text-[var(--brand-700)]" />
           </div>
           <div>
@@ -166,10 +166,10 @@ export default function ContractDevicesSection({
       </div>
 
       {/* Table Section */}
-      <div className="overflow-hidden rounded-xl border border-indigo-100 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-xl border border-[var(--brand-100)] bg-white shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gradient-to-r from-indigo-100 via-blue-100 to-indigo-100">
+            <thead className="bg-gradient-to-r from-[var(--brand-50)] via-[var(--brand-50)] to-[var(--brand-50)]">
               <tr>
                 <th className="px-4 py-3 text-left">
                   {devices.length > 0 && (
@@ -177,14 +177,14 @@ export default function ContractDevicesSection({
                       type="checkbox"
                       checked={selectedIds.length === devices.length && devices.length > 0}
                       onChange={toggleSelectAll}
-                      className="h-4 w-4 cursor-pointer rounded border-indigo-300 text-indigo-600 focus:ring-2 focus:ring-indigo-500"
+                      className="h-4 w-4 cursor-pointer rounded border-[var(--brand-300)] text-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-500)]"
                     />
                   )}
                 </th>
-                <th className="px-4 py-3 text-left text-sm font-bold tracking-wide text-indigo-900 uppercase">
+                <th className="px-4 py-3 text-left text-sm font-bold tracking-wide text-[var(--brand-900)] uppercase">
                   Serial
                 </th>
-                <th className="px-4 py-3 text-left text-sm font-bold tracking-wide text-indigo-900 uppercase">
+                <th className="px-4 py-3 text-left text-sm font-bold tracking-wide text-[var(--brand-900)] uppercase">
                   Model
                 </th>
                 <th className="px-4 py-3 text-left text-sm font-bold tracking-wide text-indigo-900 uppercase">
@@ -213,13 +213,15 @@ export default function ContractDevicesSection({
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-indigo-50">
+            <tbody className="divide-y divide-[var(--brand-50)]">
               {isLoading ? (
                 <tr>
                   <td colSpan={8} className="px-4 py-12 text-center">
                     <div className="flex flex-col items-center gap-3">
-                      <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-200 border-t-indigo-600"></div>
-                      <p className="text-sm text-indigo-500">Đang tải danh sách thiết bị...</p>
+                      <div className="h-8 w-8 animate-spin rounded-full border-4 border-[var(--brand-200)] border-t-[var(--brand-600)]"></div>
+                      <p className="text-sm text-[var(--brand-500)]">
+                        Đang tải danh sách thiết bị...
+                      </p>
                     </div>
                   </td>
                 </tr>
@@ -227,13 +229,13 @@ export default function ContractDevicesSection({
                 <tr>
                   <td colSpan={8} className="px-4 py-12 text-center">
                     <div className="flex flex-col items-center gap-3">
-                      <div className="rounded-full bg-indigo-50 p-4">
-                        <MonitorSmartphone className="h-8 w-8 text-indigo-300" />
+                      <div className="rounded-full bg-[var(--brand-50)] p-4">
+                        <MonitorSmartphone className="h-8 w-8 text-[var(--brand-300)]" />
                       </div>
-                      <p className="text-sm font-medium text-indigo-700">
+                      <p className="text-sm font-medium text-[var(--brand-700)]">
                         Chưa có thiết bị nào được gắn
                       </p>
-                      <p className="text-xs text-indigo-500">
+                      <p className="text-xs text-[var(--brand-500)]">
                         Nhấn "Thêm thiết bị" để bắt đầu gắn thiết bị vào hợp đồng
                       </p>
                     </div>
@@ -241,17 +243,17 @@ export default function ContractDevicesSection({
                 </tr>
               ) : (
                 devices.map((d) => (
-                  <tr key={d.id} className="group transition-colors hover:bg-indigo-50/50">
+                  <tr key={d.id} className="group transition-colors hover:bg-[var(--brand-50)]/50">
                     <td className="px-4 py-3">
                       <input
                         type="checkbox"
                         checked={selectedIds.includes(d.deviceId)}
                         onChange={() => toggleSelect(d.deviceId)}
-                        className="h-4 w-4 cursor-pointer rounded border-indigo-300 text-indigo-600 focus:ring-2 focus:ring-indigo-500"
+                        className="h-4 w-4 cursor-pointer rounded border-[var(--brand-200)] text-[var(--brand-600)] focus:ring-2 focus:ring-[var(--brand-500)]"
                       />
                     </td>
                     <td className="px-4 py-3">
-                      <span className="inline-flex items-center gap-2 rounded-md bg-indigo-50 px-2.5 py-1 font-mono text-sm font-medium text-indigo-900 group-hover:bg-indigo-100">
+                      <span className="inline-flex items-center gap-2 rounded-md bg-[var(--brand-50)] px-2.5 py-1 font-mono text-sm font-medium text-[var(--brand-900)] group-hover:bg-[var(--brand-100)]">
                         {d.device?.serialNumber ?? d.deviceId}
                       </span>
                     </td>
@@ -260,7 +262,7 @@ export default function ContractDevicesSection({
                         {d.device?.id ? (
                           <Link
                             href={`/system/devices/${d.device.id}`}
-                            className="text-sky-600 hover:underline"
+                            className="text-[var(--brand-600)] hover:underline"
                           >
                             {d.device?.deviceModel?.name ?? d.device?.model ?? '—'}
                           </Link>
@@ -270,7 +272,7 @@ export default function ContractDevicesSection({
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="text-sm font-semibold whitespace-nowrap text-indigo-700">
+                      <span className="text-sm font-semibold whitespace-nowrap text-[var(--brand-700)]">
                         {formatPrice(d.monthlyRent, d.currency)}
                       </span>
                     </td>
@@ -300,12 +302,12 @@ export default function ContractDevicesSection({
 
       {/* Footer Info */}
       {devices.length > 0 && (
-        <div className="flex items-center justify-between rounded-lg bg-indigo-50/50 px-4 py-3">
-          <p className="text-sm text-indigo-700">
+        <div className="flex items-center justify-between rounded-lg bg-[var(--brand-50)]/50 px-4 py-3">
+          <p className="text-sm text-[var(--brand-700)]">
             Tổng số: <span className="font-bold">{devices.length}</span> thiết bị
           </p>
           {selectedIds.length > 0 && (
-            <p className="text-sm text-indigo-600">
+            <p className="text-sm text-[var(--brand-600)]">
               Đã chọn: <span className="font-bold">{selectedIds.length}</span> thiết bị
             </p>
           )}

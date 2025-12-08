@@ -28,6 +28,52 @@ export function ContractFormModal({
   triggerText = 'Tạo hợp đồng',
   compact = false,
 }: ContractFormModalProps) {
+  // Normalize date string (ISO or YYYY-MM-DD) to YYYY-MM-DD or undefined
+  const normalizeDateToYYYYMMDD = (date?: string | null): string | undefined => {
+    if (!date) return undefined
+    try {
+      const d = new Date(date)
+      if (Number.isNaN(d.getTime())) return undefined
+      return d.toISOString().slice(0, 10)
+    } catch {
+      return undefined
+    }
+  }
+
+  // Compute duration years using the same logic that ContractForm uses when creating
+  // (endDate is calculated as: start + years, then subtract 1 day). This function
+  // tries 1..5 years and returns the matching number or undefined.
+  const calcDurationYears = (start?: string, end?: string): number | undefined => {
+    const sNorm = normalizeDateToYYYYMMDD(start)
+    const eNorm = normalizeDateToYYYYMMDD(end)
+    if (!sNorm || !eNorm) return undefined
+    const s = new Date(sNorm)
+    const e = new Date(eNorm)
+    if (Number.isNaN(s.getTime()) || Number.isNaN(e.getTime())) return undefined
+    const sy = s.getUTCFullYear()
+    const sm = s.getUTCMonth()
+    const sd = s.getUTCDate()
+    for (let years = 1; years <= 5; years++) {
+      const expected = new Date(Date.UTC(sy + years, sm, sd))
+      expected.setUTCDate(expected.getUTCDate() - 1)
+      // Compare date parts only (ignoring ms/time)
+      if (expected.toISOString().slice(0, 10) === e.toISOString().slice(0, 10)) {
+        return years
+      }
+    }
+    return undefined
+  }
+
+  // Normalize incoming start/end and compute durationYears so form shows proper values
+  const modalInitial = {
+    ...initial,
+    startDate: normalizeDateToYYYYMMDD(initial?.startDate) ?? initial?.startDate,
+    endDate: normalizeDateToYYYYMMDD(initial?.endDate) ?? initial?.endDate,
+    ...(initial?.startDate && initial?.endDate
+      ? { durationYears: calcDurationYears(initial.startDate, initial.endDate) }
+      : {}),
+  }
+
   const [open, setOpen] = useState(false)
   const [currentStep, setCurrentStep] = useState(1)
   const [completedSteps, setCompletedSteps] = useState<number[]>([])
@@ -280,7 +326,7 @@ export function ContractFormModal({
                 className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
               >
                 <ContractForm
-                  initial={initial}
+                  initial={modalInitial}
                   onSuccess={(created) => {
                     // Animate completion
                     setCompletedSteps([1, 2, 3])

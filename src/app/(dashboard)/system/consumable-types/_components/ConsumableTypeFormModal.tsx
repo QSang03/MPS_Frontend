@@ -181,7 +181,7 @@ export default function ConsumableTypeFormModal({
 
             <div className="space-y-2">
               <Label className="flex items-center gap-2 text-base font-semibold">
-                <FileText className="h-4 w-4 text-cyan-600" />
+                <FileText className="h-4 w-4 text-[var(--brand-600)]" />
                 Mã/Part Number
               </Label>
               <Input
@@ -194,7 +194,7 @@ export default function ConsumableTypeFormModal({
 
             <div className="space-y-2">
               <Label className="flex items-center gap-2 text-base font-semibold">
-                <FileText className="h-4 w-4 text-cyan-600" />
+                <FileText className="h-4 w-4 text-[var(--brand-600)]" />
                 compatibleMachineLine
               </Label>
               <Input
@@ -248,7 +248,7 @@ export default function ConsumableTypeFormModal({
 
           {/* Status Section */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2 text-sm font-semibold text-cyan-700">
+            <div className="flex items-center gap-2 text-sm font-semibold text-[var(--brand-700)]">
               <CheckCircle2 className="h-4 w-4" />
               Trạng thái
             </div>

@@ -554,7 +554,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
       display.color === 'green'
         ? 'bg-green-500 hover:bg-green-600'
         : display.color === 'blue'
-          ? 'bg-blue-500 hover:bg-blue-600'
+          ? 'bg-[var(--brand-500)] hover:bg-[var(--brand-600)]'
           : display.color === 'red'
             ? 'bg-red-500 hover:bg-red-600'
             : display.color === 'orange'
@@ -769,7 +769,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <InfoCard
               title={t('user_device_detail.info.network')}
-              titleIcon={<Wifi className="h-4 w-4 text-blue-600" />}
+              titleIcon={<Wifi className="h-4 w-4 text-[var(--brand-600)]" />}
               items={[
                 {
                   label: t('user_device_detail.info.ip'),
@@ -896,7 +896,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
               {/* Monthly Usage Table */}
               {monthlyUsageLoading ? (
                 <div className="flex items-center justify-center p-8">
-                  <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                  <Loader2 className="h-8 w-8 animate-spin text-[var(--brand-600)]" />
                 </div>
               ) : monthlyUsageError ? (
                 <div className="text-muted-foreground p-8 text-center">
@@ -1076,7 +1076,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                                 {(() => {
                                   if (!showA4Columns) return null
                                   return (
-                                    <td className="px-4 py-3 text-right text-sm text-blue-600">
+                                    <td className="px-4 py-3 text-right text-sm text-[var(--brand-600)]">
                                       {(() => {
                                         const hasUsageData =
                                           item &&
@@ -1114,7 +1114,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                                 {(() => {
                                   if (!showA4Columns) return null
                                   return (
-                                    <td className="px-4 py-3 text-right text-sm text-blue-600">
+                                    <td className="px-4 py-3 text-right text-sm text-[var(--brand-600)]">
                                       {(() => {
                                         const hasUsageData =
                                           item &&
@@ -1152,7 +1152,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                                 {(() => {
                                   if (!showA4Columns) return null
                                   return (
-                                    <td className="px-4 py-3 text-right text-sm font-semibold text-blue-600">
+                                    <td className="px-4 py-3 text-right text-sm font-semibold text-[var(--brand-600)]">
                                       {(() => {
                                         const hasUsageData =
                                           item &&
@@ -1257,7 +1257,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
             <CardContent>
               {consumablesLoading ? (
                 <div className="flex items-center justify-center p-8">
-                  <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                  <Loader2 className="h-8 w-8 animate-spin text-[var(--brand-600)]" />
                 </div>
               ) : installedConsumables.length === 0 ? (
                 <div className="text-muted-foreground p-8 text-center">

@@ -199,7 +199,7 @@ export function ContractsModal({
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
-                className="group cursor-pointer rounded-lg border-2 border-gray-200 bg-white p-4 transition-all hover:border-indigo-300 hover:shadow-lg"
+                className="group cursor-pointer rounded-lg border-2 border-gray-200 bg-white p-4 transition-all hover:border-[var(--brand-300)] hover:shadow-lg"
                 onClick={() => {
                   // delegate opening detail to parent so parent can close this modal
                   if (typeof onOpenContractDetail === 'function') onOpenContractDetail(contract.id)

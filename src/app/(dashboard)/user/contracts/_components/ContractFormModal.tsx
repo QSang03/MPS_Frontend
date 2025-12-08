@@ -25,6 +25,45 @@ interface ContractFormModalProps {
 export function ContractFormModal({ initial, onCreated, trigger }: ContractFormModalProps) {
   const [open, setOpen] = useState(false)
 
+  const normalizeDateToYYYYMMDD = (date?: string | null): string | undefined => {
+    if (!date) return undefined
+    try {
+      const d = new Date(date)
+      if (Number.isNaN(d.getTime())) return undefined
+      return d.toISOString().slice(0, 10)
+    } catch {
+      return undefined
+    }
+  }
+
+  const calcDurationYears = (start?: string, end?: string): number | undefined => {
+    const sNorm = normalizeDateToYYYYMMDD(start)
+    const eNorm = normalizeDateToYYYYMMDD(end)
+    if (!sNorm || !eNorm) return undefined
+    const s = new Date(sNorm)
+    const e = new Date(eNorm)
+    if (Number.isNaN(s.getTime()) || Number.isNaN(e.getTime())) return undefined
+    const sy = s.getUTCFullYear()
+    const sm = s.getUTCMonth()
+    const sd = s.getUTCDate()
+    for (let years = 1; years <= 5; years++) {
+      const expected = new Date(Date.UTC(sy + years, sm, sd))
+      expected.setUTCDate(expected.getUTCDate() - 1)
+      if (expected.toISOString().slice(0, 10) === e.toISOString().slice(0, 10)) {
+        return years
+      }
+    }
+    return undefined
+  }
+  const modalInitial = {
+    ...initial,
+    startDate: normalizeDateToYYYYMMDD(initial?.startDate) ?? initial?.startDate,
+    endDate: normalizeDateToYYYYMMDD(initial?.endDate) ?? initial?.endDate,
+    ...(initial?.startDate && initial?.endDate
+      ? { durationYears: calcDurationYears(initial.startDate, initial.endDate) }
+      : {}),
+  }
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -107,7 +146,7 @@ export function ContractFormModal({ initial, onCreated, trigger }: ContractFormM
                   </div>
 
                   <ContractForm
-                    initial={initial}
+                    initial={modalInitial}
                     onSuccess={(created) => {
                       setOpen(false)
                       if (created) onCreated?.(created)

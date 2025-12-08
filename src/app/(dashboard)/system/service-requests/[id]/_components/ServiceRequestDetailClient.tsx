@@ -443,7 +443,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
           <Card className="flex h-[600px] flex-col border-none shadow-sm ring-1 ring-slate-200 dark:ring-slate-800">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base font-medium">
-                <Activity className="h-4 w-4 text-blue-500" />
+                <Activity className="h-4 w-4 text-[var(--brand-600)]" />
                 Trao đổi & Thảo luận
               </CardTitle>
               <CardDescription>Lịch sử trao đổi giữa kỹ thuật viên và khách hàng</CardDescription>

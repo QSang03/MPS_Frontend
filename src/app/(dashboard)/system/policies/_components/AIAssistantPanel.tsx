@@ -113,7 +113,7 @@ export function AIAssistantPanel({ onUseSuggestion, onAutoAnalyze }: AIAssistant
               <div
                 className={`max-w-[80%] rounded-lg p-3 ${
                   message.role === 'user'
-                    ? 'bg-indigo-600 text-white'
+                    ? 'bg-[var(--brand-600)] text-white'
                     : 'bg-white text-gray-900 shadow-sm'
                 }`}
               >

@@ -398,7 +398,7 @@ export default function ConsumablesPageClient() {
               variant="outline"
               size="sm"
               onClick={() => setShowColumnMenu((v) => !v)}
-              className="border-gray-300 bg-white text-gray-700 shadow-sm transition-transform duration-150 ease-in-out hover:scale-105 hover:bg-gray-50 focus:ring-2 focus:ring-blue-200 focus:outline-none"
+              className="border-gray-300 bg-white text-gray-700 shadow-sm transition-transform duration-150 ease-in-out hover:scale-105 hover:bg-gray-50 focus:ring-2 focus:ring-[var(--brand-200)] focus:outline-none"
             >
               <span className="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[var(--brand-50)] text-xs font-semibold text-[var(--brand-600)]">
                 C
@@ -520,7 +520,7 @@ export default function ConsumablesPageClient() {
                     variant="outline"
                     size="sm"
                     onClick={() => setShowColumnMenu((v) => !v)}
-                    className="border-gray-300 bg-white text-gray-700 shadow-sm transition-transform duration-150 ease-in-out hover:scale-105 hover:bg-gray-50 focus:ring-2 focus:ring-blue-200 focus:outline-none"
+                    className="border-gray-300 bg-white text-gray-700 shadow-sm transition-transform duration-150 ease-in-out hover:scale-105 hover:bg-gray-50 focus:ring-2 focus:ring-[var(--brand-200)] focus:outline-none"
                   >
                     <span className="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[var(--brand-50)] text-xs font-semibold text-[var(--brand-600)]">
                       C

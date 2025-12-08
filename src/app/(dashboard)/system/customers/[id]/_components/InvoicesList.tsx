@@ -282,7 +282,7 @@ export function InvoicesList({ customerId, contractId }: InvoicesListProps) {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-8 w-8 p-0 text-sky-600 hover:bg-sky-50 hover:text-sky-700"
+                            className="h-8 w-8 p-0 text-[var(--brand-600)] hover:bg-[var(--brand-50)] hover:text-[var(--brand-700)]"
                             onClick={() => {
                               // TODO: Open invoice detail modal
                               console.log('View invoice:', invoice.invoiceId)

@@ -383,7 +383,7 @@ export function PolicyDraftPanel({
           <section className="rounded-2xl border border-slate-100 bg-white/80 p-5 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold tracking-widest text-blue-500 uppercase">
+                <p className="text-xs font-semibold tracking-widest text-[var(--brand-600)] uppercase">
                   {t('policies.draft.metadata.title')}
                 </p>
                 <h3 className="text-lg font-semibold text-slate-900">
@@ -629,7 +629,7 @@ export function PolicyDraftPanel({
           <section className="rounded-2xl border border-slate-100 bg-white/90 p-5 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold tracking-widest text-indigo-500 uppercase">
+                <p className="text-xs font-semibold tracking-widest text-[var(--brand-600)] uppercase">
                   {t('policies.draft.blueprint.title')}
                 </p>
                 <h3 className="text-lg font-semibold text-slate-900">

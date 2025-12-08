@@ -125,7 +125,7 @@ export function ConsumableUsageHistory({
   return (
     <div className="space-y-6">
       {/* Modern Header with Glassmorphism */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[var(--brand-50)] via-[var(--brand-50)] to-[var(--brand-50)] p-6 backdrop-blur-xl dark:from-blue-950/50 dark:via-indigo-950/50 dark:to-purple-950/50">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[var(--brand-50)] via-[var(--brand-50)] to-[var(--brand-50)] p-6 backdrop-blur-xl dark:from-[var(--brand-900)] dark:via-[var(--brand-800)] dark:to-[var(--brand-700)]/50">
         <div className="absolute inset-0 bg-white/40 backdrop-blur-sm dark:bg-black/20"></div>
         <div className="relative z-10">
           <h3 className="bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] bg-clip-text text-2xl font-bold text-transparent">
@@ -190,7 +190,7 @@ export function ConsumableUsageHistory({
               {/* Date Range */}
               <div className="space-y-2">
                 <Label className="flex items-center gap-2 text-sm font-medium">
-                  <Calendar className="h-4 w-4 text-blue-500" />
+                  <Calendar className="h-4 w-4 text-[var(--brand-600)]" />
                   Từ ngày
                 </Label>
                 <Input
@@ -202,7 +202,7 @@ export function ConsumableUsageHistory({
               </div>
               <div className="space-y-2">
                 <Label className="flex items-center gap-2 text-sm font-medium">
-                  <Calendar className="h-4 w-4 text-purple-500" />
+                  <Calendar className="h-4 w-4 text-[var(--brand-600)]" />
                   Đến ngày
                 </Label>
                 <Input
@@ -299,7 +299,7 @@ export function ConsumableUsageHistory({
                 {items.map((r) => (
                   <tr
                     key={r.id}
-                    className="group transition-all hover:bg-gradient-to-r hover:from-[var(--brand-50)] hover:to-[var(--brand-50)] dark:hover:from-blue-950/30 dark:hover:to-purple-950/30"
+                    className="group transition-all hover:bg-gradient-to-r hover:from-[var(--brand-50)] hover:to-[var(--brand-50)] dark:hover:from-[var(--brand-900)]/30 dark:hover:to-[var(--brand-700)]/30"
                   >
                     <td className="px-6 py-4">
                       <code

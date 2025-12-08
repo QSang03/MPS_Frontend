@@ -423,8 +423,8 @@ export default function MonthlyCostsPage() {
                         {formatCurrency(costData.customer.totalCogs)}
                       </h3>
                     </div>
-                    <div className="rounded-lg bg-blue-100 p-3 dark:bg-blue-900/30">
-                      <DollarSign className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                    <div className="rounded-lg bg-[var(--brand-50)] p-3 dark:bg-[var(--brand-900)]/30">
+                      <DollarSign className="h-6 w-6 text-[var(--brand-600)] dark:text-[var(--brand-400)]" />
                     </div>
                   </div>
                   <p className="mt-4 text-xs text-slate-500 dark:text-slate-500">

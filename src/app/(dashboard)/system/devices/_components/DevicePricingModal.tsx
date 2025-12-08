@@ -381,7 +381,7 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
       >
         <form id="device-pricing-form" onSubmit={handleSubmit} className="space-y-4">
           {loading ? (
-            <div className="flex items-center gap-2 font-medium text-indigo-700">
+            <div className="flex items-center gap-2 font-medium text-[var(--brand-700)]">
               <Loader2 className="h-4 w-4 animate-spin" /> {t('devices.pricing.loading')}
             </div>
           ) : (

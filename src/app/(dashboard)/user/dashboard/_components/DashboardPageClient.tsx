@@ -592,7 +592,7 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
                 return (
                   <div
                     key={idKey}
-                    className={`group relative flex flex-col rounded-xl border bg-white p-4 transition-all hover:shadow-md ${expanded ? 'col-span-full ring-2 ring-blue-500 ring-offset-2 sm:col-span-2 lg:col-span-2' : ''} ${idx >= 3 ? 'hidden sm:flex' : 'flex'}`}
+                    className={`group relative flex flex-col rounded-xl border bg-white p-4 transition-all hover:shadow-md ${expanded ? 'col-span-full ring-2 ring-[var(--brand-500)] ring-offset-2 sm:col-span-2 lg:col-span-2' : ''} ${idx >= 3 ? 'hidden sm:flex' : 'flex'}`}
                   >
                     <div className="mb-4 flex items-start justify-between">
                       <div className="flex items-center gap-3">
@@ -713,7 +713,7 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
                             </div>
                           </div>
 
-                          <div className="col-span-2 mt-2 rounded-r-md border-t border-l-4 border-l-blue-500 bg-slate-50 pt-2 pl-3">
+                          <div className="col-span-2 mt-2 rounded-r-md border-t border-l-4 border-l-[var(--brand-500)] bg-slate-50 pt-2 pl-3">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center text-sm font-semibold text-gray-700">
                                 <DollarSign className="mr-1.5 h-4 w-4" />

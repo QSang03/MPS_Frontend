@@ -29,7 +29,7 @@ export function InlineGuardrailWarning({ warning, onAutoFix }: InlineGuardrailWa
       case 'warning':
         return 'border-amber-200 bg-amber-50/60 text-amber-900'
       case 'suggestion':
-        return 'border-blue-200 bg-blue-50/60 text-blue-900'
+        return 'border-[var(--brand-200)] bg-[var(--brand-50)]/60 text-[var(--brand-900)]'
       default:
         return 'border-gray-200 bg-gray-50/60 text-gray-900'
     }

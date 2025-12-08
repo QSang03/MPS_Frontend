@@ -949,7 +949,7 @@ function DevicesTableContent({
                   <Button
                     variant="outline"
                     size="sm"
-                    className="h-7 w-7 bg-sky-50 p-0 text-sky-600 hover:bg-sky-100"
+                    className="h-7 w-7 bg-[var(--brand-50)] p-0 text-[var(--brand-600)] hover:bg-[var(--brand-100)]"
                     onClick={() => {
                       setA4ModalDevice(device)
                       setA4ModalOpen(true)

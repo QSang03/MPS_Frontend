@@ -279,9 +279,9 @@ export default function ContractDevicesModal({
               </div>
             </DialogHeader>
 
-            <div className="space-y-4 rounded-b-xl bg-gradient-to-br from-white via-indigo-50 to-white p-4">
+            <div className="space-y-4 rounded-b-xl bg-gradient-to-br from-white via-[var(--brand-50)] to-white p-4">
               <div className="mb-2 space-y-1">
-                <div className="text-sm font-semibold text-indigo-700">
+                <div className="text-sm font-semibold text-[var(--brand-700)]">
                   Chọn các thiết bị để đính kèm
                 </div>
                 {hasAttachedDevicesSelected && (
@@ -291,7 +291,7 @@ export default function ContractDevicesModal({
                   </div>
                 )}
               </div>
-              <div className="max-h-64 overflow-y-auto rounded border border-indigo-100">
+              <div className="max-h-64 overflow-y-auto rounded border border-[var(--brand-100)]">
                 <table className="w-full">
                   <thead className="bg-gradient-to-r from-[var(--brand-50)] to-[var(--brand-50)] text-[var(--brand-700)]">
                     <tr>

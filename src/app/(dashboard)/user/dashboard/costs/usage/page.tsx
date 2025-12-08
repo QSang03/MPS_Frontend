@@ -260,8 +260,8 @@ export default function UsagePage() {
                         A4: {formatNumber(usageData.customer.totalPagesA4)}
                       </p>
                     </div>
-                    <div className="rounded-lg bg-blue-100 p-3 dark:bg-blue-900/30">
-                      <FileText className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                    <div className="rounded-lg bg-[var(--brand-100)] p-3 dark:bg-[var(--brand-950)]/30">
+                      <FileText className="h-6 w-6 text-[var(--brand-600)] dark:text-[var(--brand-400)]" />
                     </div>
                   </div>
                 </CardContent>
@@ -298,8 +298,8 @@ export default function UsagePage() {
                         {formatNumber(usageData.customer.totalColorPages)}
                       </h3>
                     </div>
-                    <div className="rounded-lg bg-purple-100 p-3 dark:bg-purple-900/30">
-                      <FileText className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                    <div className="rounded-lg bg-[var(--brand-100)] p-3 dark:bg-[var(--brand-950)]/30">
+                      <FileText className="h-6 w-6 text-[var(--brand-600)] dark:text-[var(--brand-400)]" />
                     </div>
                   </div>
                 </CardContent>

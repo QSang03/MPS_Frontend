@@ -108,6 +108,7 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
     },
   })
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const isEdit = Boolean(initial?.contractNumber)
 
   const createMutation = useMutation({
     mutationFn: (payload: ContractFormData) => contractsClientService.create(payload),
@@ -254,8 +255,9 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
     return true
   }
 
-  // Auto-calculate end date
+  // Auto-calculate end date (only when creating)
   useEffect(() => {
+    if (isEdit) return
     try {
       const s = watched.startDate
       const years = watched.durationYears
@@ -274,7 +276,7 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
     } catch {
       // ignore
     }
-  }, [watched.startDate, watched.durationYears, form])
+  }, [watched.startDate, watched.durationYears, form, isEdit])
 
   // Calculate form completion
   const formCompletion = () => {
@@ -666,17 +668,17 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.3 }}
-          className="space-y-5 rounded-2xl border-2 border-pink-200 bg-gradient-to-br from-pink-50/80 via-rose-50/50 to-white p-6 shadow-lg"
+          className="space-y-5 rounded-2xl border-2 border-[var(--brand-200)] bg-gradient-to-br from-[var(--brand-50)] via-[var(--brand-50)] to-white p-6 shadow-lg"
         >
           <div className="flex items-center gap-3 pb-2">
-            <div className="rounded-xl bg-gradient-to-br from-pink-500 to-rose-600 p-3 shadow-lg">
+            <div className="rounded-xl bg-gradient-to-br from-[var(--brand-600)] to-[var(--brand-700)] p-3 shadow-lg">
               <FileText className="h-6 w-6 text-white" />
             </div>
             <div className="flex-1">
               <h3 className="text-xl font-bold text-slate-900">Chi tiết hợp đồng</h3>
               <p className="text-sm text-slate-600">Thêm mô tả và thông tin bổ sung</p>
             </div>
-            <div className="rounded-full bg-pink-100 px-3 py-1 text-xs font-semibold text-pink-700">
+            <div className="rounded-full bg-[var(--brand-50)] px-3 py-1 text-xs font-semibold text-[var(--brand-700)]">
               Bước 3/3
             </div>
           </div>
@@ -687,7 +689,7 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="flex items-center gap-2 text-sm font-bold text-slate-800">
-                  <FileText className="h-4 w-4 text-pink-600" />
+                  <FileText className="h-4 w-4 text-[var(--brand-600)]" />
                   Mô tả hợp đồng
                 </FormLabel>
                 <FormControl>
@@ -696,7 +698,7 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
                     placeholder="Nhập mô tả chi tiết về hợp đồng, điều khoản đặc biệt, ghi chú..."
                     rows={6}
                     disabled={isPending}
-                    className="resize-none border-2 border-slate-300 bg-white transition-all focus:border-pink-500 focus:ring-4 focus:ring-pink-100"
+                    className="resize-none border-2 border-slate-300 bg-white transition-all focus:border-[var(--brand-500)] focus:ring-4 focus:ring-[var(--brand-100)]"
                   />
                 </FormControl>
                 <FormDescription className="flex items-center gap-1.5 text-xs text-slate-600">

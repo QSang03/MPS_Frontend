@@ -146,7 +146,7 @@ export default function CustomerContractsModal({
     switch (type) {
       case 'MPS_CLICK_CHARGE':
       case 'MPS_CONSUMABLE':
-        return 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100'
+        return 'bg-[var(--brand-50)] text-[var(--brand-700)] border-[var(--brand-200)] hover:bg-[var(--brand-100)]'
       case 'CMPS_CLICK_CHARGE':
       case 'CMPS_CONSUMABLE':
         return 'bg-[var(--brand-50)] text-[var(--brand-700)] border-[var(--brand-200)] hover:bg-[var(--brand-100)]'
@@ -201,8 +201,8 @@ export default function CustomerContractsModal({
             className="flex flex-col items-center justify-center space-y-4 p-20"
           >
             <div className="relative">
-              <Loader2 className="h-14 w-14 animate-spin text-sky-500" />
-              <div className="absolute inset-0 h-14 w-14 animate-ping rounded-full bg-sky-400 opacity-20" />
+              <Loader2 className="h-14 w-14 animate-spin text-[var(--brand-600)]" />
+              <div className="absolute inset-0 h-14 w-14 animate-ping rounded-full bg-[var(--brand-400)] opacity-20" />
             </div>
             <p className="text-sm font-medium text-slate-600">{t('loading.default')}</p>
           </motion.div>
@@ -235,8 +235,8 @@ export default function CustomerContractsModal({
                     <p className="text-xs font-medium text-slate-500">Tổng hợp đồng</p>
                     <p className="mt-1 text-2xl font-bold text-slate-900">{contracts.length}</p>
                   </div>
-                  <div className="rounded-lg bg-blue-100 p-2">
-                    <FileText className="h-5 w-5 text-blue-600" />
+                  <div className="rounded-lg bg-[var(--brand-50)] p-2">
+                    <FileText className="h-5 w-5 text-[var(--brand-600)]" />
                   </div>
                 </div>
               </motion.div>

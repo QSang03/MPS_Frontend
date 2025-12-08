@@ -795,16 +795,16 @@ export default function UsagePageClient() {
 
       {/* Customer Detail */}
       {selectedCustomerId && customerDetailData && (
-        <Card className="border-sky-200">
+        <Card className="border-[var(--brand-200)]">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-sky-600" />
+              <Users className="h-5 w-5 text-[var(--brand-600)]" />
               Chi tiết khách hàng
             </CardTitle>
             <CardDescription>{customerDetailData.customer.name}</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="mb-4 rounded-lg bg-sky-50 p-4">
+            <div className="mb-4 rounded-lg bg-[var(--brand-50)] p-4">
               <h3 className="mb-2 text-lg font-semibold">{customerDetailData.customer.name}</h3>
               <div className="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
                 <div>
