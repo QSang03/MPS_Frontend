@@ -163,11 +163,12 @@ export function Sidebar({ session }: SidebarProps) {
           {/* Navigation */}
           <nav className="flex-1 space-y-1 overflow-y-auto p-4">
             {navigation.map((item) => {
-              // Fix: Only exact match, except for dashboard which should only be active when exactly on that route
-              const isActive =
-                item.href === '/system'
-                  ? pathname === item.href
-                  : pathname === item.href || pathname.startsWith(item.href + '/')
+              // When an item must be matched exactly (e.g. /system, /user/dashboard), treat it as
+              // exact-only. Most routes remain prefix-matched to handle nested subroutes.
+              const exactMatchRoutes = new Set(['/system', '/user/dashboard'])
+              const isActive = exactMatchRoutes.has(item.href)
+                ? pathname === item.href
+                : pathname === item.href || pathname.startsWith(item.href + '/')
               return (
                 <Link
                   key={item.href}
