@@ -162,55 +162,67 @@ export function Sidebar({ session }: SidebarProps) {
 
           {/* Navigation */}
           <nav className="flex-1 space-y-1 overflow-y-auto p-4">
-            {navigation.map((item) => {
-              // When an item must be matched exactly (e.g. /system, /user/dashboard), treat it as
-              // exact-only. Most routes remain prefix-matched to handle nested subroutes.
-              const exactMatchRoutes = new Set(['/system', '/user/dashboard'])
-              const isActive = exactMatchRoutes.has(item.href)
-                ? pathname === item.href
-                : pathname === item.href || pathname.startsWith(item.href + '/')
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    'group flex items-center gap-3 rounded-full px-3 py-2 text-sm font-semibold transition-all duration-150',
-                    isActive
-                      ? 'bg-[var(--brand-50)] text-[var(--brand-700)] shadow-sm ring-1 ring-[var(--brand-200)]'
-                      : 'hover:bg-slate-100'
-                  )}
-                >
-                  <item.icon
+            {(() => {
+              // Choose the single best-matching item to mark as active to avoid duplicate highlights.
+              // We'll compute a simple "score" for each item: exact match gets a high score,
+              // otherwise prefix matches get score equal to the length of the href. Then pick
+              // the item(s) with the highest score only.
+              const normalize = (s?: string) => (s ? s.replace(/\/$/, '') : '')
+              const currentPath = normalize(pathname)
+              const scores = navigation.map((it) => {
+                const href = normalize(it.href)
+                if (!href) return 0
+                if (currentPath === href) return 10000 + href.length
+                return currentPath.startsWith(href + '/') ? href.length : 0
+              })
+              const maxScore = scores.length > 0 ? Math.max(...scores) : 0
+
+              return navigation.map((item, i) => {
+                const thisScore = scores[i] ?? 0
+                const isActive = thisScore > 0 && thisScore === maxScore
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
                     className={cn(
-                      'h-5 w-5 shrink-0',
+                      'group flex items-center gap-3 rounded-full px-3 py-2 text-sm font-semibold transition-all duration-150',
                       isActive
-                        ? 'text-[var(--brand-700)]'
-                        : 'text-[var(--sidebar-foreground)] group-hover:text-[var(--brand-700)] dark:text-[var(--sidebar-foreground)]'
+                        ? 'bg-[var(--brand-50)] text-[var(--brand-700)] shadow-sm ring-1 ring-[var(--brand-200)]'
+                        : 'hover:bg-slate-100'
                     )}
-                  />
-                  <span className="flex-1">
-                    {(() => {
-                      const navId = item.raw?.id as string
-                      const navName = item.raw?.name as string
-                      const navLabel = item.raw?.label as string
-                      // Try to get translation by id first, then by name, then fallback to label
-                      if (navId && t(`nav.${navId}`) !== `nav.${navId}`) {
-                        return t(`nav.${navId}`)
-                      }
-                      if (navName && t(`nav.${navName}`) !== `nav.${navName}`) {
-                        return t(`nav.${navName}`)
-                      }
-                      return typeof navLabel === 'string' ? navLabel : ''
-                    })()}
-                  </span>
-                  {item.badge !== undefined && item.badge > 0 && (
-                    <span className="bg-destructive flex h-5 min-w-[1.25rem] items-center justify-center rounded-full px-1.5 text-xs text-white">
-                      {item.badge}
+                  >
+                    <item.icon
+                      className={cn(
+                        'h-5 w-5 shrink-0',
+                        isActive
+                          ? 'text-[var(--brand-700)]'
+                          : 'text-[var(--sidebar-foreground)] group-hover:text-[var(--brand-700)] dark:text-[var(--sidebar-foreground)]'
+                      )}
+                    />
+                    <span className="flex-1">
+                      {(() => {
+                        const navId = item.raw?.id as string
+                        const navName = item.raw?.name as string
+                        const navLabel = item.raw?.label as string
+                        // Try to get translation by id first, then by name, then fallback to label
+                        if (navId && t(`nav.${navId}`) !== `nav.${navId}`) {
+                          return t(`nav.${navId}`)
+                        }
+                        if (navName && t(`nav.${navName}`) !== `nav.${navName}`) {
+                          return t(`nav.${navName}`)
+                        }
+                        return typeof navLabel === 'string' ? navLabel : ''
+                      })()}
                     </span>
-                  )}
-                </Link>
-              )
-            })}
+                    {item.badge !== undefined && item.badge > 0 && (
+                      <span className="bg-destructive flex h-5 min-w-[1.25rem] items-center justify-center rounded-full px-1.5 text-xs text-white">
+                        {item.badge}
+                      </span>
+                    )}
+                  </Link>
+                )
+              })
+            })()}
           </nav>
 
           {/* Footer */}
