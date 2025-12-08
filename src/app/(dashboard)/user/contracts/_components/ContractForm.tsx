@@ -51,6 +51,49 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
   const queryClient = useQueryClient()
   const { t } = useLocale()
 
+  const normalizeDateToYYYYMMDD = (date?: string | null) => {
+    if (!date) return undefined
+    try {
+      const d = new Date(date)
+      if (Number.isNaN(d.getTime())) return undefined
+      return d.toISOString().slice(0, 10)
+    } catch {
+      return undefined
+    }
+  }
+
+  const calcDurationYears = (start?: string, end?: string): number | undefined => {
+    const sNorm = normalizeDateToYYYYMMDD(start)
+    const eNorm = normalizeDateToYYYYMMDD(end)
+    if (!sNorm || !eNorm) return undefined
+    const s = new Date(sNorm)
+    const e = new Date(eNorm)
+    if (Number.isNaN(s.getTime()) || Number.isNaN(e.getTime())) return undefined
+    const sy = s.getUTCFullYear()
+    const sm = s.getUTCMonth()
+    const sd = s.getUTCDate()
+    for (let years = 1; years <= 5; years++) {
+      const expectedExclusive = new Date(Date.UTC(sy + years, sm, sd))
+      expectedExclusive.setUTCDate(expectedExclusive.getUTCDate() - 1)
+      const expectedInclusive = new Date(Date.UTC(sy + years, sm, sd))
+      const eIso = e.toISOString().slice(0, 10)
+      if (
+        expectedExclusive.toISOString().slice(0, 10) === eIso ||
+        expectedInclusive.toISOString().slice(0, 10) === eIso
+      ) {
+        return years
+      }
+    }
+    return undefined
+  }
+
+  const initialStartNorm = normalizeDateToYYYYMMDD(initial?.startDate) ?? initial?.startDate
+  const initialEndNorm = normalizeDateToYYYYMMDD(initial?.endDate) ?? initial?.endDate
+  const initialComputedYears =
+    typeof initial?.durationYears === 'number'
+      ? initial.durationYears
+      : calcDurationYears(initial?.startDate, initial?.endDate)
+
   const form = useForm<ContractFormData>({
     resolver: zodResolver(contractFormSchema),
     defaultValues: {
@@ -58,9 +101,12 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
       contractNumber: initial?.contractNumber || '',
       type: initial?.type ?? 'MPS_CLICK_CHARGE',
       status: initial?.status ?? 'PENDING',
-      startDate: initial?.startDate || new Date().toISOString().slice(0, 10),
-      endDate: initial?.endDate || new Date().toISOString().slice(0, 10),
-      durationYears: initial?.durationYears ?? undefined,
+      startDate: initialStartNorm || new Date().toISOString().slice(0, 10),
+      endDate: initialEndNorm || new Date().toISOString().slice(0, 10),
+      durationYears:
+        typeof initial?.durationYears === 'number'
+          ? initial.durationYears
+          : (initialComputedYears ?? undefined),
       description: initial?.description || '',
       documentUrl: initial?.documentUrl || '',
       pdfFile: undefined,
@@ -180,6 +226,16 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
     return `${formatted} ${units[unit]}`
   }
 
+  // Watch for changes to durationYears and log them to help track why
+  // the field sometimes flips back to undefined at runtime.
+  useEffect(() => {
+    try {
+      console.debug('[ContractForm.watch] durationYears changed ->', watched.durationYears)
+    } catch {
+      // ignore
+    }
+  }, [watched.durationYears])
+
   const setPdfFileValue = (file?: File | null) => {
     if (!file) {
       form.setValue('pdfFile', undefined, { shouldDirty: true })
@@ -261,17 +317,41 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
         if (eNorm) form.setValue('endDate', eNorm)
       }
 
-      // Compute durationYears for edit flows when start + end present
+      // Compute durationYears for edit flows when start + end present. Only set
+      // the value if the form doesn't already have a value to avoid overwriting
+      // interactive changes or causing oscillation during mounts/re-renders.
       if (isEdit && initial?.startDate && initial?.endDate) {
         const years = calcDurationYears(initial.startDate, initial.endDate)
-        if (typeof years === 'number') form.setValue('durationYears', years)
+        // debug: log input and computed value to browser console to help QA
+        // (temporary — remove after we verify)
+        console.info('[ContractForm] edit init:', {
+          contractNumber: initial?.contractNumber,
+          startDate: initial?.startDate,
+          endDate: initial?.endDate,
+          computedYears: years,
+        })
+        if (typeof years === 'number') {
+          const current = form.getValues('durationYears')
+          if (typeof current === 'undefined') {
+            form.setValue('durationYears', years)
+            // debug: confirm setValue took effect
+            try {
+              console.info(
+                '[ContractForm] after set durationYears:',
+                form.getValues('durationYears')
+              )
+            } catch {
+              // ignore
+            }
+          }
+        }
       }
     } catch {
       // ignore
     }
     // re-run when incoming initial dates or edit-mode change so the values stay
     // in sync when the component receives new initial props
-  }, [initial?.startDate, initial?.endDate, isEdit, form])
+  }, [initial, initial?.startDate, initial?.endDate, isEdit, form])
   useEffect(() => {
     try {
       const s = watched.startDate
@@ -458,6 +538,13 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
                     <Clock className="h-4 w-4 text-[var(--brand-600)]" />
                     Thời hạn (năm) *
                   </FormLabel>
+                  {/* debug: render-time field.value (safe place before Slot child) */}
+                  {(() => {
+                    try {
+                      console.debug('[ContractForm.render] durationYears field.value:', field.value)
+                    } catch {}
+                    return null
+                  })()}
                   <FormControl>
                     <Select
                       value={field.value ? String(field.value) : ''}
