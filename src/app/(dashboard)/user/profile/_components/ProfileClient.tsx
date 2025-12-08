@@ -231,23 +231,23 @@ export function ProfileClient({ initialProfile }: ProfileClientProps) {
                     </div>
                   </div>
 
-                  {/* First Name */}
+                  {/* Name (attributes.name) */}
                   <div className="space-y-2">
-                    <Label htmlFor="firstName" className="text-sm font-bold text-gray-700">
+                    <Label htmlFor="name" className="text-sm font-bold text-gray-700">
                       📝 Tên
                     </Label>
                     <div className="flex-1 rounded-2xl border-2 border-gray-200 bg-gray-50 px-3 py-2 text-gray-700">
-                      {user.firstName || 'Chưa cập nhật'}
+                      {(attributes && (attributes.name as string)) || 'Chưa cập nhật'}
                     </div>
                   </div>
 
-                  {/* Last Name */}
+                  {/* Phone (attributes.phone) */}
                   <div className="space-y-2">
-                    <Label htmlFor="lastName" className="text-sm font-bold text-gray-700">
-                      📝 Họ
+                    <Label htmlFor="phone" className="text-sm font-bold text-gray-700">
+                      📞 Điện thoại
                     </Label>
                     <div className="flex-1 rounded-2xl border-2 border-gray-200 bg-gray-50 px-3 py-2 text-gray-700">
-                      {user.lastName || 'Chưa cập nhật'}
+                      {(attributes && (attributes.phone as string)) || 'Chưa cập nhật'}
                     </div>
                   </div>
                 </div>

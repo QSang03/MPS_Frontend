@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { changePasswordForClient } from '@/lib/auth/server-actions'
-import { getUserProfileForClient } from '@/lib/auth/server-actions'
+import { changePasswordForClient, getUserProfileForClient } from '@/lib/auth/server-actions'
+import internalApiClient from '@/lib/api/internal-client'
 import { Card, CardContent, CardDescription, CardTitle, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Key, User, Mail, Bell, Save, Eye, EyeOff, CheckCircle, AlertCircle } from 'lucide-react'
+import { Key, User, Bell, Save, Eye, EyeOff, CheckCircle, AlertCircle } from 'lucide-react'
 import type { UserProfile } from '@/types/auth'
 import { useLocale } from '@/components/providers/LocaleProvider'
 
@@ -60,10 +60,10 @@ export function SettingsClient({ initialProfile, initialTab = 'account' }: Setti
     }
   }, [profile, router])
 
-  // Form states
-  const [firstName, setFirstName] = useState('')
-  const [lastName, setLastName] = useState('')
-  const [username, setUsername] = useState('')
+  // Form states — only show fields supported by API (/profile)
+  // Use `attributes.name` and `attributes.phone` from the profile
+  const [attrName, setAttrName] = useState('')
+  const [attrPhone, setAttrPhone] = useState('')
 
   // Password states
   const [currentPassword, setCurrentPassword] = useState('')
@@ -89,9 +89,9 @@ export function SettingsClient({ initialProfile, initialTab = 'account' }: Setti
 
   useEffect(() => {
     if (profile) {
-      setFirstName(profile.user.firstName || '')
-      setLastName(profile.user.lastName || '')
-      setUsername(profile.user.username || '')
+      const attrs = (profile.user.attributes as Record<string, unknown> | undefined) || {}
+      setAttrName((attrs.name as string) || '')
+      setAttrPhone((attrs.phone as string) || '')
     }
   }, [profile])
 
@@ -111,10 +111,49 @@ export function SettingsClient({ initialProfile, initialTab = 'account' }: Setti
     setIsLoading(true)
     setMessage(null)
 
+    const payload: Partial<UserProfile['user']> = {
+      // Only send attributes supported by the API
+      attributes: {
+        name: attrName || undefined,
+        phone: attrPhone || undefined,
+      } as unknown as UserProfile['user']['attributes'],
+    }
+
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      const response = await internalApiClient.patch('/api/profile', payload)
+      const respData = response.data as unknown
+
+      // respData may be: { success: true, data: { user } } or the user profile directly
+      if (respData && typeof respData === 'object') {
+        const obj = respData as Record<string, unknown>
+        if (Object.prototype.hasOwnProperty.call(obj, 'success')) {
+          const success = Boolean(obj.success)
+          if (success) {
+            const maybeData = obj.data as Record<string, unknown> | undefined
+            if (maybeData && Object.prototype.hasOwnProperty.call(maybeData, 'user')) {
+              setProfile(maybeData as unknown as UserProfile)
+            }
+            setMessage({
+              success: true,
+              text: String(obj.message || t('settings.account.update_success')),
+            })
+            return
+          }
+          setMessage({
+            success: false,
+            text: String(obj.message || t('settings.account.update_error')),
+          })
+          return
+        }
+        if (Object.prototype.hasOwnProperty.call(obj, 'user')) {
+          setProfile(respData as UserProfile)
+          setMessage({ success: true, text: t('settings.account.update_success') })
+          return
+        }
+      }
       setMessage({ success: true, text: t('settings.account.update_success') })
-    } catch {
+    } catch (err) {
+      console.error('Update profile failed:', err)
       setMessage({ success: false, text: t('settings.account.update_error') })
     } finally {
       setIsLoading(false)
@@ -329,48 +368,38 @@ export function SettingsClient({ initialProfile, initialTab = 'account' }: Setti
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid gap-4 md:grid-cols-2">
-                {/* Email */}
-                <div className="space-y-2">
-                  <Label htmlFor="email">{t('settings.account.email')}</Label>
-                  <div className="flex items-center gap-2">
-                    <Mail className="text-muted-foreground h-4 w-4" />
-                    <Input id="email" value={profile.user.email} disabled className="bg-muted" />
-                  </div>
-                  <p className="text-muted-foreground text-xs">
-                    {t('settings.account.email_readonly')}
-                  </p>
-                </div>
+                {/* Email removed: email is not editable and will not be shown here */}
 
-                {/* Username */}
+                {/* Username (readonly) */}
                 <div className="space-y-2">
                   <Label htmlFor="username">{t('settings.account.username')}</Label>
                   <Input
                     id="username"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder={t('settings.account.username_placeholder')}
+                    value={profile.user.username || profile.user.email}
+                    disabled
+                    className="bg-muted"
                   />
                 </div>
 
-                {/* First Name */}
+                {/* Name (attributes.name) */}
                 <div className="space-y-2">
-                  <Label htmlFor="firstName">{t('settings.account.first_name')}</Label>
+                  <Label htmlFor="name">{t('settings.account.first_name')}</Label>
                   <Input
-                    id="firstName"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
+                    id="name"
+                    value={attrName}
+                    onChange={(e) => setAttrName(e.target.value)}
                     placeholder={t('settings.account.first_name_placeholder')}
                   />
                 </div>
 
-                {/* Last Name */}
+                {/* Phone (attributes.phone) */}
                 <div className="space-y-2">
-                  <Label htmlFor="lastName">{t('settings.account.last_name')}</Label>
+                  <Label htmlFor="phone">{t('customer.detail.info.phone')}</Label>
                   <Input
-                    id="lastName"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    placeholder={t('settings.account.last_name_placeholder')}
+                    id="phone"
+                    value={attrPhone}
+                    onChange={(e) => setAttrPhone(e.target.value)}
+                    placeholder={t('customer.detail.info.phone')}
                   />
                 </div>
               </div>

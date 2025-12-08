@@ -94,3 +94,25 @@ export async function changePasswordForClient(payload: {
     throw error
   }
 }
+
+/**
+ * Server action to update user profile (for client usage)
+ */
+export async function updateProfileForClient(profileData: Partial<UserProfile['user']>) {
+  try {
+    const res = await withRefreshRetry(() => authServerService.updateProfileServer(profileData))
+    return res
+  } catch (error) {
+    if (error instanceof AuthExpiredError) {
+      return { authExpired: true }
+    }
+
+    const err = error as unknown
+    const data = (err as { response?: { data?: unknown } })?.response?.data
+    if (data) {
+      return data
+    }
+    console.error('Failed to update profile:', error)
+    throw error
+  }
+}

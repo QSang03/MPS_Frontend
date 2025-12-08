@@ -37,4 +37,20 @@ export const authServerService = {
     )
     return response.data
   },
+  /**
+   * Update user profile (server-side)
+   */
+  async updateProfileServer(profileData: Partial<UserProfile['user']>) {
+    const response = await withRefreshRetry(() =>
+      serverApiClient.patch<UserProfile | { success: boolean; data: UserProfile }>(
+        API_ENDPOINTS.AUTH.PROFILE,
+        profileData
+      )
+    )
+    const data = response.data
+    if ('data' in data && data.data) {
+      return data.data
+    }
+    return data as UserProfile
+  },
 }

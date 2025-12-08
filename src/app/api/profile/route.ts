@@ -61,7 +61,7 @@ export async function PATCH(request: NextRequest) {
     })
 
     // Call backend API to update current user profile
-    // Backend endpoint: PATCH /auth/profile
+    // Backend endpoint for updating is /auth/profile (PATCH)
     const response = await backendApiClient.patch('/auth/profile', body, {
       params,
       headers: {

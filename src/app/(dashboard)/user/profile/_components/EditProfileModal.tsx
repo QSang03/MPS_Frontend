@@ -21,18 +21,16 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Loader2, User, Mail, Edit } from 'lucide-react'
+import { Loader2, User, Edit, Phone } from 'lucide-react'
 import type { UserProfile } from '@/types/auth'
-import { authClientService } from '@/lib/api/services/auth-client.service'
+import internalApiClient from '@/lib/api/internal-client'
 import { toast } from 'sonner'
 import { useLocale } from '@/components/providers/LocaleProvider'
 
 // Validation schema for editing profile
 const editProfileSchema = z.object({
-  email: z.string().min(1, 'Email là bắt buộc').email('Email không hợp lệ'),
-  username: z.string().optional(),
-  firstName: z.string().optional(),
-  lastName: z.string().optional(),
+  name: z.string().optional(),
+  phone: z.string().optional(),
 })
 
 type EditProfileFormData = z.infer<typeof editProfileSchema>
@@ -56,21 +54,18 @@ export function EditProfileModal({
   const form = useForm<EditProfileFormData>({
     resolver: zodResolver(editProfileSchema),
     defaultValues: {
-      email: '',
-      username: '',
-      firstName: '',
-      lastName: '',
+      name: '',
+      phone: '',
     },
   })
 
   // Update form when profile changes
   useEffect(() => {
     if (profile?.user) {
+      const attrs = (profile.user.attributes as Record<string, unknown> | undefined) || {}
       form.reset({
-        email: profile.user.email || '',
-        username: profile.user.username || '',
-        firstName: (profile.user.firstName as string) || '',
-        lastName: (profile.user.lastName as string) || '',
+        name: (attrs.name as string) || '',
+        phone: (attrs.phone as string) || '',
       })
     }
   }, [profile, form])
@@ -81,18 +76,25 @@ export function EditProfileModal({
     setIsLoading(true)
     try {
       const payload = {
-        email: data.email.trim(),
-        username: data.username?.trim() || undefined,
-        firstName: data.firstName?.trim() || undefined,
-        lastName: data.lastName?.trim() || undefined,
+        attributes: {
+          name: data.name?.trim() || undefined,
+          phone: data.phone?.trim() || undefined,
+        },
       }
 
-      // Remove undefined fields
-      const cleanedPayload = Object.fromEntries(
-        Object.entries(payload).filter(([, value]) => value !== undefined)
+      // Remove undefined attributes and omit attributes if empty
+      const attrs = payload.attributes as Record<string, unknown>
+      const cleanedAttrs = Object.fromEntries(
+        Object.entries(attrs).filter(
+          ([, value]) => value !== undefined && String(value).trim() !== ''
+        )
       )
+      const cleanedPayload: Record<string, unknown> = {}
+      if (Object.keys(cleanedAttrs).length) cleanedPayload.attributes = cleanedAttrs
 
-      const updatedProfile = await authClientService.updateProfile(cleanedPayload)
+      // Call internal API via Next.js route so cookies (httpOnly) are included
+      const resp = await internalApiClient.patch('/api/profile', cleanedPayload)
+      const updatedProfile = resp.data && resp.data.data ? resp.data.data : resp.data
 
       toast.success(t('user.update_success'))
       onProfileUpdated(updatedProfile)
@@ -111,7 +113,7 @@ export function EditProfileModal({
         if (errorData.errors && typeof errorData.errors === 'object') {
           Object.entries(errorData.errors).forEach(([field, messages]) => {
             const message = Array.isArray(messages) ? String(messages[0]) : String(messages)
-            if (['email', 'username', 'firstName', 'lastName'].includes(field)) {
+            if (['name', 'phone'].includes(field)) {
               form.setError(field as keyof EditProfileFormData, { type: 'server', message })
             }
           })
@@ -158,20 +160,41 @@ export function EditProfileModal({
         <div className="space-y-5 bg-gradient-to-b from-gray-50 to-white px-8 py-6">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-              {/* Email Field */}
+              {/* Name Field (attributes.name) */}
               <FormField
                 control={form.control}
-                name="email"
+                name="name"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center gap-2 text-sm font-bold text-gray-800">
-                      <Mail className="h-4 w-4 text-[var(--brand-600)]" />
-                      Email *
+                      <User className="h-4 w-4 text-rose-600" />
+                      Tên
                     </FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Nhập email"
-                        type="email"
+                        placeholder="Nhập tên"
+                        {...field}
+                        className="h-10 rounded-lg border-2 border-gray-200 text-base transition-all focus:border-rose-500 focus:ring-2 focus:ring-rose-200"
+                      />
+                    </FormControl>
+                    <FormMessage className="mt-1 text-xs text-red-600" />
+                  </FormItem>
+                )}
+              />
+
+              {/* Phone Field (attributes.phone) */}
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2 text-sm font-bold text-gray-800">
+                      <Phone className="h-4 w-4 text-[var(--brand-600)]" />
+                      Điện thoại
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Nhập số điện thoại"
                         {...field}
                         className="h-10 rounded-lg border-2 border-gray-200 text-base transition-all focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)]"
                       />
@@ -180,75 +203,6 @@ export function EditProfileModal({
                   </FormItem>
                 )}
               />
-
-              {/* Username Field */}
-              <FormField
-                control={form.control}
-                name="username"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2 text-sm font-bold text-gray-800">
-                      <User className="h-4 w-4 text-pink-600" />
-                      Tên đăng nhập
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Nhập tên đăng nhập"
-                        {...field}
-                        className="h-10 rounded-lg border-2 border-gray-200 text-base transition-all focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
-                      />
-                    </FormControl>
-                    <FormMessage className="mt-1 text-xs text-red-600" />
-                  </FormItem>
-                )}
-              />
-
-              {/* Grid: First Name + Last Name */}
-              <div className="grid grid-cols-2 gap-4">
-                {/* First Name Field */}
-                <FormField
-                  control={form.control}
-                  name="firstName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2 text-sm font-bold text-gray-800">
-                        <User className="h-4 w-4 text-rose-600" />
-                        Tên
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Nhập tên"
-                          {...field}
-                          className="h-10 rounded-lg border-2 border-gray-200 text-base transition-all focus:border-rose-500 focus:ring-2 focus:ring-rose-200"
-                        />
-                      </FormControl>
-                      <FormMessage className="mt-1 text-xs text-red-600" />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Last Name Field */}
-                <FormField
-                  control={form.control}
-                  name="lastName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2 text-sm font-bold text-gray-800">
-                        <User className="h-4 w-4 text-rose-600" />
-                        Họ
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Nhập họ"
-                          {...field}
-                          className="h-10 rounded-lg border-2 border-gray-200 text-base transition-all focus:border-rose-500 focus:ring-2 focus:ring-rose-200"
-                        />
-                      </FormControl>
-                      <FormMessage className="mt-1 text-xs text-red-600" />
-                    </FormItem>
-                  )}
-                />
-              </div>
 
               {/* Info card */}
               <div className="rounded-lg border-2 border-[var(--brand-200)] bg-gradient-to-r from-[var(--brand-50)] to-[var(--brand-100)] p-4">
