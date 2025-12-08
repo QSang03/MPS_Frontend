@@ -54,10 +54,15 @@ export function ContractFormModal({
     const sm = s.getUTCMonth()
     const sd = s.getUTCDate()
     for (let years = 1; years <= 5; years++) {
-      const expected = new Date(Date.UTC(sy + years, sm, sd))
-      expected.setUTCDate(expected.getUTCDate() - 1)
+      const expectedExclusive = new Date(Date.UTC(sy + years, sm, sd))
+      expectedExclusive.setUTCDate(expectedExclusive.getUTCDate() - 1)
+      const expectedInclusive = new Date(Date.UTC(sy + years, sm, sd))
       // Compare date parts only (ignoring ms/time)
-      if (expected.toISOString().slice(0, 10) === e.toISOString().slice(0, 10)) {
+      const eIso = e.toISOString().slice(0, 10)
+      if (
+        expectedExclusive.toISOString().slice(0, 10) === eIso ||
+        expectedInclusive.toISOString().slice(0, 10) === eIso
+      ) {
         return years
       }
     }
