@@ -9,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { policiesClientService } from '@/lib/api/services/policies-client.service'
 import type { PolicyOperator } from '@/lib/api/services/policies-client.service'
 
@@ -67,15 +68,17 @@ export function OperatorSelector({
     [availableOperators]
   )
 
+  const { t } = useLocale()
+
   return (
     <Select value={value} onValueChange={onChange} disabled={disabled || isLoading}>
       <SelectTrigger>
-        <SelectValue placeholder={isLoading ? 'Đang tải...' : placeholder} />
+        <SelectValue placeholder={isLoading ? t('loading.loading') : placeholder} />
       </SelectTrigger>
       <SelectContent>
         {filteredOperators.length === 0 ? (
           <SelectItem value="__no-operators" disabled>
-            {isLoading ? 'Đang tải operators...' : 'Không có operator phù hợp'}
+            {isLoading ? t('policies.operators.loading') : t('policies.operators.empty')}
           </SelectItem>
         ) : (
           filteredOperators.map((operator) => (

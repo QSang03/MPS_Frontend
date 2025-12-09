@@ -7,6 +7,7 @@ import { motion } from 'framer-motion'
 import { resetPassword } from '@/app/actions/auth'
 import type { AuthActionState } from '@/app/actions/auth'
 import { Button } from '@/components/ui/button'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -33,6 +34,7 @@ export default function ResetPasswordPage() {
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
+  const { t } = useLocale()
 
   // Handle success -> show toast and redirect to login
   useEffect(() => {
@@ -49,22 +51,22 @@ export default function ResetPasswordPage() {
     setError('')
 
     if (!token) {
-      setError('Token không hợp lệ')
+      setError(t('auth.errors.invalid_token'))
       return
     }
 
     if (!newPassword || !confirmPassword) {
-      setError('Vui lòng nhập đầy đủ thông tin')
+      setError(t('auth.errors.required_fields'))
       return
     }
 
     if (newPassword.length < 8) {
-      setError('Mật khẩu phải có ít nhất 8 ký tự')
+      setError(t('auth.errors.password_min'))
       return
     }
 
     if (newPassword !== confirmPassword) {
-      setError('Mật khẩu xác nhận không khớp')
+      setError(t('auth.errors.password_mismatch'))
       return
     }
 
@@ -138,7 +140,7 @@ export default function ResetPasswordPage() {
 
               <Button type="submit" className="w-full" disabled={isPending}>
                 {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isPending ? 'Đang gửi...' : 'Đặt lại mật khẩu'}
+                {isPending ? t('auth.sending') : t('auth.reset_password.action')}
               </Button>
 
               <Button
@@ -147,7 +149,7 @@ export default function ResetPasswordPage() {
                 className="w-full"
                 onClick={() => router.push(ROUTES.LOGIN)}
               >
-                Quay lại đăng nhập
+                {t('auth.back_to_login')}
               </Button>
             </form>
           </CardContent>

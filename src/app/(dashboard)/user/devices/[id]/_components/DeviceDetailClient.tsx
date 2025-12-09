@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { QueryProvider } from '@/components/providers/QueryProvider'
+import LocaleProvider from '@/components/providers/LocaleProvider'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import Link from 'next/link'
 import {
   ArrowLeft,
@@ -53,7 +55,6 @@ import {
 } from '@/components/ui/dialog'
 import { DeleteDialog } from '@/components/shared/DeleteDialog'
 import { toast } from 'sonner'
-import { useLocale } from '@/components/providers/LocaleProvider'
 import { useRouter } from 'next/navigation'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { ActionGuard } from '@/components/shared/ActionGuard'
@@ -231,7 +232,7 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
       <div className="space-y-6">
         <Link href={backHref ?? '/user/devices'}>
           <Button variant="ghost" className="gap-2">
-            <ArrowLeft className="h-4 w-4" /> Quay lại
+            <ArrowLeft className="h-4 w-4" /> {t('common.back')}
           </Button>
         </Link>
         <Card>
@@ -251,7 +252,7 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
       <div className="space-y-6">
         <Link href={backHref ?? '/user/devices'}>
           <Button variant="ghost" className="gap-2">
-            <ArrowLeft className="h-4 w-4" /> Quay lại
+            <ArrowLeft className="h-4 w-4" /> {t('common.back')}
           </Button>
         </Link>
         <Card>
@@ -1460,7 +1461,9 @@ export default function DeviceDetailClient(props: Props) {
   // provider is safe and avoids hook-time detection edge cases.
   return (
     <QueryProvider>
-      <DeviceDetailClientInner {...props} />
+      <LocaleProvider>
+        <DeviceDetailClientInner {...props} />
+      </LocaleProvider>
     </QueryProvider>
   )
 }

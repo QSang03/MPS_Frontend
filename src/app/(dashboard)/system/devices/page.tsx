@@ -15,8 +15,8 @@ export default function DevicesPage() {
   return (
     <SystemPageLayout fullWidth>
       <SystemPageHeader
-        title="Danh sách thiết bị"
-        subtitle="Quản lý tất cả thiết bị trong hệ thống"
+        title={t('page.devices.title')}
+        subtitle={t('page.devices.subtitle')}
         icon={<Monitor className="h-6 w-6" />}
         actions={
           <ActionGuard pageId="devices" actionId="create">

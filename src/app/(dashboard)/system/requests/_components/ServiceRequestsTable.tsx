@@ -703,7 +703,7 @@ function ServiceRequestsTableContent({
                   {isUpdating ? (
                     <>
                       <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                      <span>Đang cập nhật...</span>
+                      <span>{t('service_request.updating')}</span>
                     </>
                   ) : (
                     <>
@@ -719,7 +719,7 @@ function ServiceRequestsTableContent({
               <PopoverContent className="w-56 p-2" align="start">
                 <div className="space-y-1">
                   <div className="px-2 py-1.5 text-xs font-semibold text-gray-700">
-                    Chuyển trạng thái
+                    {t('service_request.change_state')}
                   </div>
                   <div className="grid grid-cols-1 gap-1">
                     {allowed.map((status) => {
@@ -733,7 +733,9 @@ function ServiceRequestsTableContent({
                           onClick={() => handleStatusChange(row.original.id, status)}
                         >
                           <div className="flex flex-col text-left">
-                            <span className="font-medium">→ {disp.label}</span>
+                            <span className="font-medium">
+                              → {disp.labelKey ? t(disp.labelKey) : disp.label}
+                            </span>
                             <span className="text-muted-foreground text-[10px]">{status}</span>
                           </div>
                         </Button>

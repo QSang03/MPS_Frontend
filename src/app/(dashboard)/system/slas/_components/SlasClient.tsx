@@ -285,8 +285,8 @@ export default function SlasClient({ session }: SlasClientProps) {
   return (
     <div className="space-y-6">
       <SystemPageHeader
-        title="Quản trị SLA"
-        subtitle="Theo dõi cam kết dịch vụ, chuẩn hóa phản hồi & xử lý theo từng khách hàng"
+        title={t('page.slas.title')}
+        subtitle={t('page.slas.subtitle')}
         icon={<ShieldCheck className="h-6 w-6" />}
         actions={
           <>
@@ -296,7 +296,7 @@ export default function SlasClient({ session }: SlasClientProps) {
                 className="border-white/20 bg-white/10 text-[var(--brand-500)] hover:bg-[var(--brand-50)]"
               >
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                Quay lại
+                {t('common.back')}
               </Button>
             </Link>
             {canCreate && (

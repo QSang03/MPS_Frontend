@@ -191,21 +191,21 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
         {/* Quick Stats */}
         <div className="mt-6 grid grid-cols-3 gap-4">
           <div className="rounded-lg border border-white/20 bg-white/10 p-3 backdrop-blur-sm">
-            <p className="text-sm text-white/80">{t('device_model.stats.total_label')}</p>
+            <p className="text-sm text-white/80">{t('devices.stats.total_label')}</p>
             <p className="mt-1 text-2xl font-bold">{devices.length}</p>
           </div>
           <div className="rounded-lg border border-white/20 bg-white/10 p-3 backdrop-blur-sm">
-            <p className="text-sm text-white/80">{t('device_model.stats.active_label')}</p>
+            <p className="text-sm text-white/80">{t('devices.stats.active_label')}</p>
             <p className="mt-1 text-2xl font-bold">{devices.filter((d) => d.isActive).length}</p>
           </div>
           <div className="rounded-lg border border-white/20 bg-white/10 p-3 backdrop-blur-sm">
-            <p className="text-sm text-white/80">{t('device_model.stats.counter_type')}</p>
+            <p className="text-sm text-white/80">{t('devices.stats.counter_type')}</p>
             <p className="mt-1 text-lg font-bold text-white/90">
               {modelUseA4 === undefined ? 'N/A' : modelUseA4 ? 'A4 Counter' : 'Standard Counter'}
             </p>
           </div>
           <div className="rounded-lg border border-white/20 bg-white/10 p-3 backdrop-blur-sm">
-            <p className="text-sm text-white/80">{t('device_model.stats.paused_label')}</p>
+            <p className="text-sm text-white/80">{t('devices.stats.paused_label')}</p>
             <p className="mt-1 text-2xl font-bold">{devices.filter((d) => !d.isActive).length}</p>
           </div>
         </div>

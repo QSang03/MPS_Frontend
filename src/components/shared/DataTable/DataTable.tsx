@@ -10,6 +10,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { DataTablePagination } from './DataTablePagination'
 
 interface DataTableProps<TData, TValue> {
@@ -31,6 +32,7 @@ export function DataTable<TData, TValue>({
   onPaginationChange,
   isLoading = false,
 }: DataTableProps<TData, TValue>) {
+  const { t } = useLocale()
   const table = useReactTable({
     data,
     columns,
@@ -96,7 +98,7 @@ export function DataTable<TData, TValue>({
               // Render Empty State khi không có dữ liệu
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                  Không có kết quả nào.
+                  {t('empty.generic.title')}
                 </TableCell>
               </TableRow>
             )}

@@ -25,6 +25,7 @@ import { ColumnVisibilityMenu } from './ColumnVisibilityMenu'
 import { PaginationControls } from './PaginationControls'
 import { cn } from '@/lib/utils'
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 interface TableWrapperProps<TData> {
   tableId: string
@@ -77,6 +78,7 @@ export function TableWrapper<TData>({
   isPending = false,
   selectedRowIds,
 }: TableWrapperProps<TData>) {
+  const { t } = useLocale()
   const [internalSorting, setInternalSorting] = useState<SortingState>(() => {
     if (externalSorting) {
       return [
@@ -349,8 +351,10 @@ export function TableWrapper<TData>({
                           <div className="py-10">
                             <Empty>
                               <EmptyHeader>
-                                <EmptyTitle>Không có dữ liệu</EmptyTitle>
-                                <EmptyDescription>Không tìm thấy bản ghi phù hợp</EmptyDescription>
+                                <EmptyTitle>{t('empty.generic.title')}</EmptyTitle>
+                                <EmptyDescription>
+                                  {t('empty.generic.description')}
+                                </EmptyDescription>
                               </EmptyHeader>
                             </Empty>
                           </div>

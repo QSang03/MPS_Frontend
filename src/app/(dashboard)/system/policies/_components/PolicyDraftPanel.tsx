@@ -340,12 +340,12 @@ export function PolicyDraftPanel({
     const next = actionInput.trim()
     if (!next) return
     if (draft.actions.includes(next)) {
-      toast.info('Action đã tồn tại')
+      toast.info(t('policies.form.action_exists'))
       return
     }
     updateDraft({ actions: [...draft.actions, next] })
     setActionInput('')
-  }, [actionInput, draft.actions, updateDraft])
+  }, [actionInput, draft.actions, updateDraft, t])
 
   const handleRemoveAction = useCallback(
     (action: string) => {
@@ -594,8 +594,8 @@ export function PolicyDraftPanel({
                     <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" />
                   )}
                   <div>
-                    <p className="font-medium">{item.label}</p>
-                    {item.hint && <p className="text-xs opacity-80">{item.hint}</p>}
+                    <p className="font-medium">{t(item.label)}</p>
+                    {item.hint && <p className="text-xs opacity-80">{t(item.hint)}</p>}
                   </div>
                 </div>
               ))}

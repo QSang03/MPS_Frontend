@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button'
 import { Loader2, Building2, CheckCircle2, AlertCircle } from 'lucide-react'
 // Checkbox removed: not used in this component
 import type { Department } from '@/types/users'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 const deptSchema = z.object({
   name: z.string().min(1, 'Tên bộ phận là bắt buộc'),
@@ -44,6 +45,7 @@ export function DepartmentFormModal({
   initialData,
 }: DepartmentFormModalProps) {
   const [isLoading, setIsLoading] = useState(false)
+  const { t } = useLocale()
 
   const form = useForm<DepartmentFormData>({
     resolver: zodResolver(deptSchema),
@@ -77,9 +79,11 @@ export function DepartmentFormModal({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <SystemModalLayout
-        title={initialData ? 'Chỉnh sửa bộ phận' : 'Thêm bộ phận mới'}
+        title={initialData ? t('department.form.title_edit') : t('department.form.title_create')}
         description={
-          initialData ? 'Cập nhật thông tin bộ phận' : 'Tạo một bộ phận mới cho hệ thống'
+          initialData
+            ? t('department.form.description_edit')
+            : t('department.form.description_create')
         }
         icon={Building2}
         variant={initialData ? 'edit' : 'create'}
@@ -87,7 +91,7 @@ export function DepartmentFormModal({
         footer={
           <>
             <Button type="button" variant="outline" onClick={onClose} className="min-w-[100px]">
-              Hủy
+              {t('cancel')}
             </Button>
             <Button
               type="submit"
@@ -98,10 +102,14 @@ export function DepartmentFormModal({
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Đang xử lý...
+                  {t('button.processing')}
                 </>
               ) : (
-                <>{initialData ? 'Lưu thay đổi' : 'Tạo bộ phận'}</>
+                <>
+                  {initialData
+                    ? t('department.button.save_changes')
+                    : t('department.button.create')}
+                </>
               )}
             </Button>
           </>
@@ -121,11 +129,11 @@ export function DepartmentFormModal({
                 <FormItem>
                   <FormLabel className="flex items-center gap-2 text-sm font-bold text-gray-800">
                     <Building2 className="h-4 w-4 text-[var(--brand-600)]" />
-                    Tên bộ phận *
+                    {t('department.field.name')} *
                   </FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="VD: Phòng Kinh doanh, Phòng IT..."
+                      placeholder={t('department.placeholder.name')}
                       {...field}
                       className="h-10 rounded-lg border-2 border-gray-200 text-base transition-all focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)]"
                     />
@@ -145,11 +153,11 @@ export function DepartmentFormModal({
                   <FormItem>
                     <FormLabel className="flex items-center gap-2 text-sm font-bold text-gray-800">
                       <span className="text-lg">🔖</span>
-                      Mã *
+                      {t('department.field.code')} *
                     </FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="VD: SALE, IT..."
+                        placeholder={t('department.placeholder.code')}
                         {...field}
                         className="h-10 rounded-lg border-2 border-gray-200 text-base uppercase transition-all focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200"
                       />
@@ -167,7 +175,7 @@ export function DepartmentFormModal({
                   <FormItem>
                     <FormLabel className="flex items-center gap-2 text-sm font-bold text-gray-800">
                       <CheckCircle2 className="h-4 w-4 text-green-600" />
-                      Trạng thái
+                      {t('department.field.status')}
                     </FormLabel>
                     <FormControl>
                       <select
@@ -176,10 +184,10 @@ export function DepartmentFormModal({
                         onChange={(e) => field.onChange(e.target.value === 'true')}
                       >
                         <option value="true" className="bg-green-50">
-                          ✓ Hoạt động
+                          {t('status.active')}
                         </option>
                         <option value="false" className="bg-red-50">
-                          ✗ Ngừng hoạt động
+                          {t('status.inactive')}
                         </option>
                       </select>
                     </FormControl>
@@ -197,11 +205,11 @@ export function DepartmentFormModal({
                 <FormItem>
                   <FormLabel className="flex items-center gap-2 text-sm font-bold text-gray-800">
                     <AlertCircle className="h-4 w-4 text-sky-600" />
-                    Mô tả
+                    {t('department.field.description')}
                   </FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="Mô tả chi tiết về bộ phận này..."
+                      placeholder={t('department.placeholder.description')}
                       {...field}
                       className="h-10 rounded-lg border-2 border-gray-200 text-base transition-all focus:border-sky-500 focus:ring-2 focus:ring-sky-200"
                     />
@@ -214,8 +222,8 @@ export function DepartmentFormModal({
             {/* Info card */}
             <div className="rounded-lg border-2 border-[var(--brand-200)] bg-gradient-to-r from-[var(--brand-50)] to-[var(--brand-100)] p-4">
               <p className="text-xs text-gray-700">
-                <span className="font-bold text-[var(--brand-700)]">💡 Tip:</span> Mã bộ phận được
-                dùng để xác định duy nhất mỗi bộ phận trong hệ thống. Hãy sử dụng mã ngắn gọn.
+                <span className="font-bold text-[var(--brand-700)]">💡 {t('hint')}:</span>{' '}
+                {t('department.tip.code_usage')}
               </p>
             </div>
           </form>

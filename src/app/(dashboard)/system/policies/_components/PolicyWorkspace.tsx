@@ -22,6 +22,7 @@ import type { Policy } from '@/types/policies'
 import { Bot } from 'lucide-react'
 import { useState } from 'react'
 import { usePolicyCatalogs } from '../_hooks/usePolicyCatalogs'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 const defaultDraft: PolicyDraftInput = {
   name: '',
@@ -48,6 +49,7 @@ export function PolicyWorkspace({ initialPolicy, onPolicyCreated }: PolicyWorksp
   const [draft, setDraft] = useState<PolicyDraftInput>(defaultDraft)
   const [isCreating, setIsCreating] = useState(false)
   const [isAssistantOpen, setIsAssistantOpen] = useState(false)
+  const { t } = useLocale()
 
   // Load initial policy if editing
   useEffect(() => {
@@ -93,21 +95,21 @@ export function PolicyWorkspace({ initialPolicy, onPolicyCreated }: PolicyWorksp
 
   const validateDraft = useCallback(() => {
     if (!draft.name.trim()) {
-      toast.error('Vui lòng nhập tên policy')
+      toast.error(t('policies.validation.name_required'))
       return false
     }
     if (draft.actions.length === 0) {
-      toast.error('Policy cần ít nhất một action')
+      toast.error(t('policies.validation.action_required'))
       return false
     }
     // Check if resource has type
     const resource = draft.rawResource || {}
     if (!resource.type) {
-      toast.error('Vui lòng chọn resource type')
+      toast.error(t('policies.validation.resource_type_required'))
       return false
     }
     return true
-  }, [draft])
+  }, [draft, t])
 
   const handleAnalyze = useCallback(async () => {
     if (!validateDraft()) return
@@ -122,10 +124,9 @@ export function PolicyWorkspace({ initialPolicy, onPolicyCreated }: PolicyWorksp
     const safe = analysis?.safeToCreate
     if (hasConflicts && safe === false) {
       // Hiển thị warning nhưng vẫn cho phép tạo
-      toast.warning(
-        `Có ${conflicts.length} conflict(s) được phát hiện. Bạn vẫn có thể tạo policy, nhưng hãy xem xét các conflicts trước.`,
-        { duration: 5000 }
-      )
+      toast.warning(t('policies.conflicts_warning', { count: conflicts.length }), {
+        duration: 5000,
+      })
     }
     setIsCreating(true)
     try {
@@ -135,11 +136,11 @@ export function PolicyWorkspace({ initialPolicy, onPolicyCreated }: PolicyWorksp
       if (initialPolicy?.id) {
         // Update existing policy
         await policiesClientService.updatePolicy(initialPolicy.id, payload)
-        toast.success('Cập nhật policy thành công')
+        toast.success(t('policies.update_success'))
       } else {
         // Create new policy
         await policiesClientService.createPolicy(payload)
-        toast.success('Tạo policy thành công')
+        toast.success(t('policies.create_success'))
       }
 
       setDraft(defaultDraft)
@@ -147,7 +148,7 @@ export function PolicyWorkspace({ initialPolicy, onPolicyCreated }: PolicyWorksp
       onPolicyCreated?.()
     } catch (error) {
       console.error('[PolicyWorkspace] create policy error', error)
-      toast.error(initialPolicy?.id ? 'Không thể cập nhật policy' : 'Không thể tạo policy')
+      toast.error(initialPolicy?.id ? t('policies.update_error') : t('policies.create_error'))
     } finally {
       setIsCreating(false)
     }
@@ -159,6 +160,7 @@ export function PolicyWorkspace({ initialPolicy, onPolicyCreated }: PolicyWorksp
     validateDraft,
     initialPolicy,
     onPolicyCreated,
+    t,
   ])
 
   const draftPreview = useMemo(() => draftInputToPolicy(draft), [draft])
@@ -176,7 +178,7 @@ export function PolicyWorkspace({ initialPolicy, onPolicyCreated }: PolicyWorksp
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Định nghĩa Policy</h1>
+          <h1 className="text-3xl font-bold text-gray-900">{t('page.policies.title')}</h1>
         </div>
         <Dialog open={isAssistantOpen} onOpenChange={setIsAssistantOpen}>
           <DialogTrigger asChild>
@@ -186,12 +188,12 @@ export function PolicyWorkspace({ initialPolicy, onPolicyCreated }: PolicyWorksp
               className="rounded-xl border-[var(--brand-300)] bg-gradient-to-r from-[var(--brand-50)] to-[var(--brand-50)] text-[var(--brand-700)] shadow-md hover:from-[var(--brand-100)] hover:to-[var(--brand-100)]"
             >
               <Bot className="mr-2 h-5 w-5" />
-              AI Assistant
+              {t('policies.ai.title')}
             </Button>
           </DialogTrigger>
           <SystemModalLayout
-            title="AI Assistant"
-            description="Hỗ trợ tạo và phân tích policy với AI"
+            title={t('policies.ai.title')}
+            description={t('policies.ai.description')}
             icon={Bot}
             variant="view"
             maxWidth="!max-w-[75vw]"
@@ -210,7 +212,7 @@ export function PolicyWorkspace({ initialPolicy, onPolicyCreated }: PolicyWorksp
                 // Convert suggested policy to draft
                 const suggestedDraft = policyToDraftInput(suggestedPolicy as Policy)
                 setDraft(suggestedDraft)
-                toast.success('Đã áp dụng gợi ý từ AI')
+                toast.success(t('policies.ai.applied'))
               }}
             />
           </SystemModalLayout>

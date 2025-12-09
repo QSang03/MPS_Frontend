@@ -58,13 +58,13 @@ import { Input } from '@/components/ui/input'
 import { serviceRequestsClientService } from '@/lib/api/services/service-requests-client.service'
 import { Priority, ServiceRequestStatus } from '@/constants/status'
 import { PermissionGuard } from '@/components/shared/PermissionGuard'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { SearchableSelect } from '@/app/(dashboard)/system/policies/_components/RuleBuilder/SearchableSelect'
 import { DeleteDialog } from '@/components/shared/DeleteDialog'
 import type { Session } from '@/lib/auth/session'
 import type { UpdateServiceRequestStatusDto } from '@/types/models/service-request'
 import { cn } from '@/lib/utils/cn'
 import { CurrencySelector } from '@/components/currency/CurrencySelector'
-import { useLocale } from '@/components/providers/LocaleProvider'
 
 interface Props {
   id: string
@@ -463,8 +463,10 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
           <Card className="border-none shadow-sm ring-1 ring-slate-200 dark:ring-slate-800">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
               <div className="space-y-1">
-                <CardTitle className="text-base font-medium">Chi phí & Vật tư</CardTitle>
-                <CardDescription>Tổng hợp các khoản chi phí liên quan</CardDescription>
+                <CardTitle className="text-base font-medium">
+                  {t('user_service_request.costs.title')}
+                </CardTitle>
+                <CardDescription>{t('user_service_request.costs.description')}</CardDescription>
               </div>
               <PermissionGuard
                 session={session}
@@ -473,18 +475,20 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                 fallback={null}
               >
                 <Button size="sm" variant="outline" onClick={() => setShowAddCost(true)}>
-                  + Thêm chi phí
+                  {`+ ${t('common.add')}`}
                 </Button>
               </PermissionGuard>
             </CardHeader>
             <CardContent>
               {costsQuery.isLoading ? (
                 <div className="text-muted-foreground py-8 text-center text-sm">
-                  Đang tải dữ liệu...
+                  {t('loading.default')}
                 </div>
               ) : costsQuery.data && costsQuery.data.data.length === 0 ? (
                 <div className="bg-muted/30 rounded-md border border-dashed py-8 text-center">
-                  <p className="text-muted-foreground text-sm">Chưa có phát sinh chi phí nào.</p>
+                  <p className="text-muted-foreground text-sm">
+                    {t('user_service_request.costs.empty')}
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -554,13 +558,17 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
           {/* 1. Control Panel (Actions) - Sticky top if needed */}
           <Card className="border-l-4 border-l-blue-500 shadow-lg">
             <CardHeader className="pb-4">
-              <CardTitle className="text-base font-bold text-gray-800">Quản lý & Tác vụ</CardTitle>
+              <CardTitle className="text-base font-bold text-gray-800">
+                {t('service_request.management.title')}
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Status Section */}
               <div className="space-y-4">
                 <div className="border-b border-gray-200 pb-3">
-                  <label className="text-sm font-semibold text-gray-700">Trạng thái xử lý</label>
+                  <label className="text-sm font-semibold text-gray-700">
+                    {t('service_request.management.status_label')}
+                  </label>
                 </div>
                 <PermissionGuard
                   session={session}
@@ -568,7 +576,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                   resource={{ type: 'serviceRequest', customerId: data.customerId }}
                   fallback={
                     <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
-                      Bạn không có quyền thay đổi.
+                      {t('error.forbidden.description')}
                     </div>
                   }
                 >
@@ -576,7 +584,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                     <StatusStepper current={data.status} />
                     <div className="border-t border-gray-100 pt-2">
                       <div className="mb-3 text-sm font-medium text-gray-600">
-                        Chuyển trạng thái
+                        {t('service_request.change_state')}
                       </div>
                       <StatusButtonGrid
                         current={data.status}
@@ -600,9 +608,9 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                 >
                   <DialogContent>
                     <DialogHeader>
-                      <DialogTitle>Cập nhật trạng thái</DialogTitle>
+                      <DialogTitle>{t('requests.service.update_status.title')}</DialogTitle>
                       <DialogDescription className="sr-only">
-                        Nhập ghi chú hành động (tùy chọn) để lưu cùng bản ghi cập nhật trạng thái
+                        {t('requests.service.update_status.description')}
                       </DialogDescription>
                     </DialogHeader>
                     <div className="mt-2">
@@ -610,7 +618,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                       <textarea
                         value={statusNote}
                         onChange={(e) => setStatusNote(e.target.value)}
-                        placeholder="Nhập ghi chú để lưu cùng cập nhật trạng thái"
+                        placeholder={t('requests.service.update_status.action_note_placeholder')}
                         className="mt-2 w-full rounded-md border px-3 py-2 text-sm"
                       />
 

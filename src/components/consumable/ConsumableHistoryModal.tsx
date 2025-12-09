@@ -31,6 +31,7 @@ import {
 import { toast } from 'sonner'
 import { format } from 'date-fns'
 import { vi } from 'date-fns/locale'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 export function ConsumableUsageHistory({
   deviceId,
@@ -58,6 +59,7 @@ export function ConsumableUsageHistory({
   const [search, setSearch] = useState('')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
+  const { t } = useLocale()
 
   const load = useCallback(async () => {
     if (!deviceId) return
@@ -118,11 +120,11 @@ export function ConsumableUsageHistory({
       <div className="flex flex-col gap-4 rounded-lg border bg-slate-50/50 p-4 md:flex-row md:items-end md:justify-between">
         <div className="flex flex-1 flex-col gap-4 md:flex-row md:items-end">
           <div className="w-full space-y-1.5 md:max-w-xs">
-            <Label className="text-xs text-slate-500">Tìm kiếm</Label>
+            <Label className="text-xs text-slate-500">{t('filters.search_label')}</Label>
             <div className="relative">
               <Search className="absolute top-2.5 left-2.5 h-4 w-4 text-slate-400" />
               <Input
-                placeholder="ID hoặc mã vật tư..."
+                placeholder={t('system_device_detail.consumable_history.search_placeholder')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 onKeyDown={(e) => {
@@ -162,9 +164,14 @@ export function ConsumableUsageHistory({
 
           <div className="flex gap-2">
             <Button variant="default" onClick={() => handleSearch()}>
-              Tìm kiếm
+              {t('devices.a4_history.search_button')}
             </Button>
-            <Button variant="outline" size="icon" onClick={() => load()} title="Làm mới">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => load()}
+              title={t('devices.a4_history.refresh')}
+            >
               <RefreshCw className="h-4 w-4" />
             </Button>
           </div>
@@ -190,13 +197,21 @@ export function ConsumableUsageHistory({
           <TableHeader>
             <TableRow className="bg-slate-50 hover:bg-slate-50">
               <TableHead className="w-[100px]">ID</TableHead>
-              <TableHead>Consumable</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead className="text-right">%</TableHead>
-              <TableHead className="text-right">Remaining</TableHead>
-              <TableHead className="text-right">Capacity</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Recorded At</TableHead>
+              <TableHead>
+                {t('system_device_detail.consumable_history.table.consumable_name')}
+              </TableHead>
+              <TableHead>{t('system_device_detail.consumable_history.table.type')}</TableHead>
+              <TableHead className="text-right">{t('device_usage.value.percentage')}</TableHead>
+              <TableHead className="text-right">
+                {t('system_device_detail.consumable_history.table.remaining')}
+              </TableHead>
+              <TableHead className="text-right">
+                {t('system_device_detail.consumable_history.table.capacity')}
+              </TableHead>
+              <TableHead>{t('table.status')}</TableHead>
+              <TableHead className="text-right">
+                {t('system_device_detail.consumable_history.table.recorded_at')}
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -205,14 +220,14 @@ export function ConsumableUsageHistory({
                 <TableCell colSpan={8} className="h-32 text-center">
                   <div className="flex flex-col items-center justify-center gap-2 text-slate-500">
                     <Loader2 className="h-6 w-6 animate-spin text-[var(--brand-600)]" />
-                    <p className="text-sm">Đang tải dữ liệu...</p>
+                    <p className="text-sm">{t('loading.default')}</p>
                   </div>
                 </TableCell>
               </TableRow>
             ) : items.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} className="h-32 text-center text-slate-500">
-                  Không có dữ liệu lịch sử
+                  {t('system_device_detail.consumable_history.empty')}
                 </TableCell>
               </TableRow>
             ) : (

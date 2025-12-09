@@ -1,6 +1,7 @@
 'use client'
 
 import { Suspense, useEffect, useMemo, useState } from 'react'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import type { ReactNode } from 'react'
 import { Input } from '@/components/ui/input'
 import { StatsCards } from '@/components/system/StatsCard'
@@ -24,6 +25,7 @@ interface ConsumableStats {
 }
 
 export default function ConsumablesList() {
+  const { t } = useLocale()
   const [searchTerm, setSearchTerm] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [page, setPage] = useState(1)
@@ -50,7 +52,7 @@ export default function ConsumablesList() {
     const filters: Array<{ label: string; value: string; onRemove: () => void }> = []
     if (searchTerm) {
       filters.push({
-        label: `Tìm kiếm: "${searchTerm}"`,
+        label: `${t('filters.search_label')}: "${searchTerm}"`,
         value: searchTerm,
         onRemove: () => {
           setSearchTerm('')
@@ -73,14 +75,16 @@ export default function ConsumablesList() {
 
     if (sorting.sortBy !== 'createdAt' || sorting.sortOrder !== 'desc') {
       filters.push({
-        label: `Sắp xếp: ${sorting.sortBy} (${sorting.sortOrder === 'asc' ? 'Tăng dần' : 'Giảm dần'})`,
+        label:
+          t('filters.sorted_by') +
+          `: ${sorting.sortBy} (${sorting.sortOrder === 'asc' ? t('filters.sort_direction_asc') : t('filters.sort_direction_desc')})`,
         value: `${sorting.sortBy}-${sorting.sortOrder}`,
         onRemove: () => setSorting({ sortBy: 'createdAt', sortOrder: 'desc' }),
       })
     }
 
     return filters
-  }, [searchTerm, sorting, consumableTypeFilter, consumableTypes])
+  }, [searchTerm, sorting, consumableTypeFilter, consumableTypes, t])
 
   const handleResetFilters = () => {
     setSearchTerm('')
@@ -94,19 +98,19 @@ export default function ConsumablesList() {
       <StatsCards
         cards={[
           {
-            label: 'Tổng vật tư',
+            label: t('consumable.stats.total_label'),
             value: stats.total,
             icon: <Package className="h-6 w-6" />,
             borderColor: 'emerald',
           },
           {
-            label: 'Hoạt động',
+            label: t('consumable.stats.active_label'),
             value: stats.active,
             icon: <CheckCircle2 className="h-6 w-6" />,
             borderColor: 'green',
           },
           {
-            label: 'Không hoạt động',
+            label: t('consumable.stats.inactive_label'),
             value: stats.inactive,
             icon: <AlertCircle className="h-6 w-6" />,
             borderColor: 'gray',
@@ -115,19 +119,19 @@ export default function ConsumablesList() {
       />
 
       <FilterSection
-        title="Bộ lọc & Tìm kiếm"
-        subtitle="Tìm kiếm vật tư theo tên, serial number, hoặc part number"
+        title={t('filters.title_consumables')}
+        subtitle={t('filters.subtitle_consumables')}
         onReset={handleResetFilters}
         activeFilters={activeFilters}
         columnVisibilityMenu={columnVisibilityMenu}
       >
         <div className="grid gap-4 md:grid-cols-2">
           <div>
-            <label className="mb-2 block text-sm font-medium">Tìm kiếm</label>
+            <label className="mb-2 block text-sm font-medium">{t('filters.search_label')}</label>
             <div className="relative">
               <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <Input
-                placeholder="Tìm kiếm vật tư..."
+                placeholder={t('filters.search_placeholder_consumables')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyDown={(e) => {

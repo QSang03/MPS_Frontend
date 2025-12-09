@@ -1,3 +1,7 @@
+'use client'
+
+import { useLocale } from '@/components/providers/LocaleProvider'
+
 import React from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -21,7 +25,7 @@ interface FilterSectionProps {
 }
 
 export function FilterSection({
-  title = 'Bộ lọc & Tìm kiếm',
+  title,
   subtitle,
   children,
   onReset,
@@ -29,6 +33,8 @@ export function FilterSection({
   className,
   columnVisibilityMenu,
 }: FilterSectionProps) {
+  const { t } = useLocale()
+  const titleText = title ?? t('filters.general')
   const hasActiveFilters = activeFilters.length > 0
 
   return (
@@ -46,7 +52,7 @@ export function FilterSection({
             </div>
             <div className="min-w-0 flex-1">
               <CardTitle className="text-base leading-tight font-semibold text-gray-900">
-                {title}
+                {titleText}
               </CardTitle>
               {subtitle && <p className="mt-1 text-xs leading-relaxed text-gray-500">{subtitle}</p>}
             </div>
@@ -63,7 +69,7 @@ export function FilterSection({
             {hasActiveFilters && (
               <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
                 <span className="text-[10px] font-semibold tracking-wider whitespace-nowrap text-gray-500 uppercase">
-                  Đang lọc:
+                  {t('filters.active_label')}
                 </span>
                 <div className="flex flex-wrap gap-1.5">
                   {activeFilters.map((filter, index) => (
@@ -75,7 +81,7 @@ export function FilterSection({
                       <button
                         onClick={filter.onRemove}
                         className="rounded-md p-0.5 transition-colors duration-150 group-hover:bg-[var(--brand-100)] hover:bg-[var(--brand-200)] hover:opacity-60"
-                        aria-label={`Xóa bộ lọc ${filter.label}`}
+                        aria-label={t('filters.remove_aria', { label: filter.label })}
                       >
                         <X className="h-3 w-3" />
                       </button>
@@ -92,7 +98,7 @@ export function FilterSection({
                 className="border border-gray-300 font-medium whitespace-nowrap text-gray-700 shadow-sm transition-all duration-150 hover:border-gray-400 hover:bg-gray-50 hover:shadow"
               >
                 <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
-                Đặt lại
+                {t('filters.reset')}
               </Button>
             )}
           </div>

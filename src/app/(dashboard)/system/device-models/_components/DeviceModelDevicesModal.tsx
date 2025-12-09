@@ -21,6 +21,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Input } from '@/components/ui/input'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 interface DeviceModelDevicesModalProps {
   deviceModelId: string
@@ -39,6 +40,7 @@ export default function DeviceModelDevicesModal({
   const [filteredDevices, setFilteredDevices] = useState<Device[]>([])
   const [loading, setLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
+  const { t } = useLocale()
 
   const load = useCallback(async () => {
     try {
@@ -52,11 +54,11 @@ export default function DeviceModelDevicesModal({
       setFilteredDevices(resp.data || [])
     } catch (err: unknown) {
       console.error('Load devices for model failed', err)
-      toast.error(String(err) || 'Không thể tải danh sách thiết bị cho model này')
+      toast.error(String(err) || t('device_model.devices.load_error'))
     } finally {
       setLoading(false)
     }
-  }, [deviceModelId])
+  }, [deviceModelId, t])
 
   useEffect(() => {
     if (open) load()
@@ -86,8 +88,8 @@ export default function DeviceModelDevicesModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <SystemModalLayout
-        title="Thiết bị thuộc model"
-        description={`Danh sách thiết bị thuộc model: ${deviceModelName}`}
+        title={t('device_model.devices.title')}
+        description={t('device_model.devices.description', { modelName: deviceModelName })}
         icon={Monitor}
         variant="view"
         maxWidth="!max-w-[75vw]"
@@ -95,15 +97,17 @@ export default function DeviceModelDevicesModal({
         {/* Quick Stats */}
         <div className="mb-4 grid grid-cols-3 gap-3 rounded-lg border border-gray-200 bg-gradient-to-r from-[var(--brand-50)] to-[var(--brand-50)] p-4">
           <div className="rounded-lg border border-[var(--brand-200)] bg-white p-2.5">
-            <p className="text-xs text-gray-600">Tổng thiết bị</p>
+            <p className="text-xs text-gray-600">{t('device_model.devices.stats.total_label')}</p>
             <p className="mt-1 text-xl font-bold text-[var(--brand-600)]">{devices.length}</p>
           </div>
           <div className="rounded-lg border border-green-200 bg-white p-2.5">
-            <p className="text-xs text-gray-600">Hoạt động</p>
+            <p className="text-xs text-gray-600">{t('device_model.devices.stats.active_label')}</p>
             <p className="mt-1 text-xl font-bold text-green-600">{activeCount}</p>
           </div>
           <div className="rounded-lg border border-gray-200 bg-white p-2.5">
-            <p className="text-xs text-gray-600">Tạm dừng</p>
+            <p className="text-xs text-gray-600">
+              {t('device_model.devices.stats.inactive_label')}
+            </p>
             <p className="mt-1 text-xl font-bold text-gray-600">{inactiveCount}</p>
           </div>
         </div>
@@ -112,7 +116,7 @@ export default function DeviceModelDevicesModal({
           {loading ? (
             <div className="py-12 text-center">
               <Loader2 className="mx-auto mb-3 h-8 w-8 animate-spin text-[var(--brand-600)]" />
-              <p className="text-muted-foreground">Đang tải...</p>
+              <p className="text-muted-foreground">{t('common.loading')}</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -121,7 +125,7 @@ export default function DeviceModelDevicesModal({
                 <div className="relative mb-4">
                   <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
                   <Input
-                    placeholder="Tìm kiếm theo serial, vị trí, IP..."
+                    placeholder={t('device_model.devices.search_placeholder')}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-9"
@@ -138,18 +142,24 @@ export default function DeviceModelDevicesModal({
                       <th className="px-4 py-3 text-left text-sm font-semibold">
                         <div className="flex items-center gap-2">
                           <Monitor className="h-4 w-4 text-[var(--brand-600)]" />
-                          Serial
+                          {t('device_model.devices.table.serial')}
                         </div>
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold">Model</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold">
+                        {t('device_model.devices.table.model')}
+                      </th>
                       <th className="px-4 py-3 text-left text-sm font-semibold">
                         <div className="flex items-center gap-2">
                           <MapPin className="h-4 w-4 text-[var(--brand-600)]" />
-                          Vị trí
+                          {t('device_model.devices.table.location')}
                         </div>
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold">Trạng thái</th>
-                      <th className="px-4 py-3 text-right text-sm font-semibold">Thao tác</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold">
+                        {t('device_model.devices.table.status')}
+                      </th>
+                      <th className="px-4 py-3 text-right text-sm font-semibold">
+                        {t('table.actions')}
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y">
@@ -160,12 +170,12 @@ export default function DeviceModelDevicesModal({
                             {searchTerm ? (
                               <>
                                 <Search className="h-12 w-12 opacity-20" />
-                                <p>Không tìm thấy thiết bị phù hợp</p>
+                                <p>{t('device_model.devices.empty_search')}</p>
                               </>
                             ) : (
                               <>
                                 <Monitor className="h-12 w-12 opacity-20" />
-                                <p>Không tìm thấy thiết bị nào cho model này</p>
+                                <p>{t('device_model.devices.empty_none')}</p>
                               </>
                             )}
                           </div>
@@ -213,7 +223,7 @@ export default function DeviceModelDevicesModal({
                               ) : (
                                 <AlertCircle className="h-3 w-3" />
                               )}
-                              {d.isActive ? 'Hoạt động' : 'Tạm dừng'}
+                              {d.isActive ? t('status.active') : t('status.inactive')}
                             </Badge>
                           </td>
                           <td className="px-4 py-3 text-right">
@@ -240,14 +250,12 @@ export default function DeviceModelDevicesModal({
                   <div className="flex items-center gap-2">
                     <BarChart3 className="h-4 w-4" />
                     <span>
-                      Hiển thị{' '}
-                      <span className="text-foreground font-semibold">
-                        {filteredDevices.length}
-                      </span>
+                      {t('device_model.devices.footer_showing', {
+                        count: String(filteredDevices.length),
+                      })}
                       {searchTerm && devices.length !== filteredDevices.length && (
                         <span> / {devices.length}</span>
-                      )}{' '}
-                      thiết bị
+                      )}
                     </span>
                   </div>
 
@@ -258,7 +266,7 @@ export default function DeviceModelDevicesModal({
                       onClick={() => setSearchTerm('')}
                       className="h-8"
                     >
-                      Xóa bộ lọc
+                      {t('device_model.devices.clear_filter')}
                     </Button>
                   )}
                 </div>

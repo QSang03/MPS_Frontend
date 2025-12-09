@@ -180,4 +180,10 @@ export const API_ENDPOINTS = {
     DELETE: (id: string) => `/exchange-rates/${id}`,
     CONVERT: '/exchange-rates/convert',
   },
+
+  // Cost Adjustments
+  COST_ADJUSTMENTS: {
+    LIST: '/cost-adjustments',
+    DETAIL: (id: string) => `/cost-adjustments/${id}`,
+  },
 } as const

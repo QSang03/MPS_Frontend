@@ -46,10 +46,12 @@ import { DeleteDialog } from '@/components/shared/DeleteDialog'
 import { PolicyFormModal } from './PolicyFormModal'
 import { useActionPermission } from '@/lib/hooks/useActionPermission'
 import { ActionGuard } from '@/components/shared/ActionGuard'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 export function PoliciesTable() {
   // Permission checks
   const { canUpdate, canDelete } = useActionPermission('policies')
+  const { t, locale } = useLocale()
 
   const [search, setSearch] = useState('')
   // debouncedSearch is the value actually used for querying the API.
@@ -200,9 +202,9 @@ export function PoliciesTable() {
               <Shield className="h-8 w-8 animate-pulse text-white" />
             </div>
             <div className="text-white">
-              <h2 className="text-3xl font-bold tracking-tight">Quản lý Policies</h2>
+              <h2 className="text-3xl font-bold tracking-tight">{t('page.policies.title')}</h2>
               <p className="mt-1 text-sm font-medium text-[var(--brand-100)]">
-                ⚡ {pagination.total} policies đang hoạt động
+                {t('policies.stats.active_line', { count: pagination.total })}
               </p>
             </div>
           </div>
@@ -213,7 +215,7 @@ export function PoliciesTable() {
               className="transform rounded-xl bg-white px-6 py-2 text-base font-bold text-[var(--brand-600)] shadow-lg transition-all duration-300 hover:scale-105 hover:bg-[var(--brand-50)] hover:shadow-2xl"
             >
               <Plus className="mr-2 h-5 w-5" />
-              Tạo Policy
+              {t('page.policies.create')}
             </Button>
           </ActionGuard>
         </div>
@@ -226,7 +228,7 @@ export function PoliciesTable() {
             <div className="rounded-lg bg-gradient-to-r from-[var(--brand-500)] to-[var(--brand-700)] p-2">
               <Filter className="h-5 w-5 text-white" />
             </div>
-            <h3 className="text-lg font-bold text-gray-800">Bộ lọc & Tìm kiếm</h3>
+            <h3 className="text-lg font-bold text-gray-800">{t('filters.general')}</h3>
           </div>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -234,7 +236,7 @@ export function PoliciesTable() {
             <div className="group relative">
               <Search className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-[var(--brand-400)] transition-colors group-focus-within:text-[var(--brand-600)]" />
               <Input
-                placeholder="🔍 Tìm kiếm policy..."
+                placeholder={t('filters.search_placeholder_policies')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 onKeyDown={(e) => {
@@ -252,13 +254,13 @@ export function PoliciesTable() {
             <div className="group relative">
               <Select value={effect} onValueChange={setEffect}>
                 <SelectTrigger className="h-10 rounded-xl border-2 border-gray-200 bg-gradient-to-r from-gray-50 to-white text-base focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)]">
-                  <SelectValue placeholder="Chọn Effect" />
+                  <SelectValue placeholder={t('policies.filter.select_effect')} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">
                     <span className="flex items-center gap-2">
                       <FileText className="h-4 w-4" />
-                      Tất cả
+                      {t('filters.status_all')}
                     </span>
                   </SelectItem>
                   <SelectItem value="ALLOW">
@@ -280,7 +282,7 @@ export function PoliciesTable() {
             {/* Action Filter */}
             <div className="relative flex gap-2">
               <Input
-                placeholder="🎯 Lọc theo action..."
+                placeholder={t('policies.filter.action_placeholder')}
                 value={action}
                 onChange={(e) => setAction(e.target.value)}
                 className="rounded-xl border-2 border-gray-200 bg-gradient-to-r from-gray-50 to-white pr-4 pl-4 text-base transition-all duration-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
@@ -290,7 +292,7 @@ export function PoliciesTable() {
                 size="icon"
                 onClick={() => refetch()}
                 className="h-10 w-10 cursor-pointer rounded-xl border-2 border-gray-200 transition-all duration-300 hover:border-[var(--brand-400)] hover:bg-gradient-to-r hover:from-[var(--brand-50)] hover:to-[var(--brand-50)]"
-                title="Làm mới dữ liệu"
+                title={t('devices.a4_history.refresh')}
               >
                 {/* Hiện animation xoay khi đang fetch (kể cả refetch); đổi con trỏ thành tay khi hover */}
                 <RefreshCw className={`${isFetching ? 'animate-spin' : ''} h-5 w-5`} />
@@ -302,7 +304,7 @@ export function PoliciesTable() {
           {(search || effect !== 'all' || action) && (
             <div className="flex items-center gap-3 border-t-2 border-gray-100 pt-4">
               <span className="text-xs font-bold tracking-wider text-gray-600 uppercase">
-                Bộ lọc:
+                {t('filters.active_label')}
               </span>
               {search && (
                 <span className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-300)] bg-gradient-to-r from-[var(--brand-100)] to-[var(--brand-50)] px-3 py-1.5 text-xs font-bold text-[var(--brand-700)] shadow-sm">
@@ -359,18 +361,18 @@ export function PoliciesTable() {
               <div className="mb-4 mb-6 inline-flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200">
                 <Lock className="h-10 w-10 text-gray-400" />
               </div>
-              <h3 className="mb-2 text-2xl font-bold text-gray-700">Không có policy nào</h3>
+              <h3 className="mb-2 text-2xl font-bold text-gray-700">{t('empty.policies.title')}</h3>
               <p className="mb-8 text-base text-gray-500">
                 {search || effect !== 'all' || action
-                  ? '🔍 Thử điều chỉnh bộ lọc hoặc tạo policy mới'
-                  : '🚀 Bắt đầu bằng cách tạo policy đầu tiên'}
+                  ? t('empty.policies.filter_description')
+                  : t('empty.policies.empty_description')}
               </p>
               <Button
                 onClick={openCreate}
                 className="transform rounded-xl bg-[var(--btn-primary)] px-8 py-3 font-bold text-[var(--btn-primary-foreground)] shadow-lg transition-all duration-300 hover:scale-105 hover:bg-[var(--btn-primary-hover)] hover:shadow-xl"
               >
                 <Plus className="mr-2 h-5 w-5" />
-                Tạo Policy Đầu Tiên
+                {t('policy.button.create_first')}
               </Button>
             </div>
           ) : (
@@ -379,24 +381,24 @@ export function PoliciesTable() {
                 <TableHeader className="border-b-2 border-gray-200 bg-gradient-to-r from-gray-100 via-[var(--brand-50)] to-[var(--brand-50)]">
                   <TableRow>
                     <TableHead className="w-[80px] text-center font-bold text-gray-700">
-                      STT
+                      {t('table.index')}
                     </TableHead>
                     <TableHead className="min-w-[250px] font-bold text-gray-700">
                       <div className="flex items-center gap-2">
                         <FileText className="h-4 w-4 text-gray-600" />
-                        Policy
+                        {t('table.name')}
                       </div>
                     </TableHead>
                     <TableHead className="w-[150px] font-bold text-gray-700">
                       <div className="flex items-center gap-2">
                         <Lock className="h-4 w-4 text-gray-600" />
-                        Tình trạng
+                        {t('table.status')}
                       </div>
                     </TableHead>
                     <TableHead className="min-w-[220px] font-bold text-gray-700">
                       <div className="flex items-center gap-2">
                         <Zap className="h-4 w-4 text-gray-600" />
-                        Quyền
+                        {t('table.actions')}
                       </div>
                     </TableHead>
                     <TableHead className="w-[160px] text-center font-bold text-gray-700">
@@ -437,12 +439,12 @@ export function PoliciesTable() {
                         {p.effect === 'ALLOW' ? (
                           <Badge className="bg-[var(--color-success-500)] text-white">
                             <CheckCircle2 className="mr-1 h-3 w-3" />
-                            Hoạt động
+                            {t('status.active')}
                           </Badge>
                         ) : (
                           <Badge className="bg-gray-400 text-white">
                             <XCircle className="mr-1 h-3 w-3" />
-                            Khóa
+                            {t('policy.status.locked')}
                           </Badge>
                         )}
                       </TableCell>
@@ -471,7 +473,11 @@ export function PoliciesTable() {
                       </TableCell>
                       <TableCell className="font-semibold whitespace-nowrap text-gray-600">
                         &nbsp;&nbsp;&nbsp;
-                        {p.createdAt ? new Date(p.createdAt).toLocaleDateString('vi-VN') : '—'}
+                        {p.createdAt
+                          ? new Date(p.createdAt).toLocaleDateString(
+                              locale === 'en' ? 'en-US' : 'vi-VN'
+                            )
+                          : '—'}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center justify-end gap-1.5">
@@ -480,7 +486,7 @@ export function PoliciesTable() {
                             variant="ghost"
                             onClick={() => openView(p)}
                             className="transition-all hover:bg-gray-100 hover:text-gray-700"
-                            title="Xem chi tiết"
+                            title={t('button.view')}
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
@@ -495,8 +501,8 @@ export function PoliciesTable() {
                               className="transition-all hover:bg-[var(--brand-100)] hover:text-[var(--brand-700)]"
                               title={
                                 p.name === 'SystemAdminFullAccess'
-                                  ? 'Policy hệ thống không thể chỉnh sửa'
-                                  : 'Chỉnh sửa'
+                                  ? t('policy.protected_edit_title')
+                                  : t('button.edit')
                               }
                               disabled={p.name === 'SystemAdminFullAccess'}
                             >
@@ -505,8 +511,10 @@ export function PoliciesTable() {
                           )}
                           {canDelete && (
                             <DeleteDialog
-                              title="Xóa policy"
-                              description={`Bạn có chắc chắn muốn xóa policy "${p.name}" không?\n\nHành động này không thể hoàn tác.`}
+                              title={t('policies.delete_confirm_title')}
+                              description={t('policies.delete_confirmation', {
+                                policyName: p.name,
+                              })}
                               onConfirm={() => handleDelete(p.id)}
                               trigger={
                                 <Button
@@ -515,8 +523,8 @@ export function PoliciesTable() {
                                   className="transition-all hover:bg-red-100 hover:text-red-700"
                                   title={
                                     p.name === 'SystemAdminFullAccess'
-                                      ? 'Policy hệ thống không thể xóa'
-                                      : 'Xóa'
+                                      ? t('policy.protected_delete_title')
+                                      : t('button.delete')
                                   }
                                   disabled={p.name === 'SystemAdminFullAccess'}
                                 >
@@ -560,7 +568,7 @@ export function PoliciesTable() {
                 disabled={page <= 1}
                 className="transform rounded-lg border-2 border-gray-300 font-bold transition-all duration-300 hover:scale-105 hover:border-[var(--brand-400)] hover:bg-[var(--brand-50)] hover:text-[var(--brand-700)] disabled:opacity-50"
               >
-                ← Trước
+                {t('pagination.previous')}
               </Button>
 
               <div className="flex items-center gap-2 rounded-xl border-2 border-[var(--brand-300)] bg-white px-5 py-2 shadow-md">
@@ -579,7 +587,7 @@ export function PoliciesTable() {
                 disabled={page >= pagination.totalPages}
                 className="transform rounded-lg border-2 border-gray-300 font-bold transition-all duration-300 hover:scale-105 hover:border-[var(--brand-400)] hover:bg-[var(--brand-50)] hover:text-[var(--brand-700)] disabled:opacity-50"
               >
-                Sau →
+                {t('pagination.next')}
               </Button>
             </div>
           </div>

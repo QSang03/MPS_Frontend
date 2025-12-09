@@ -43,7 +43,7 @@ import { useActionPermission } from '@/lib/hooks/useActionPermission'
 import { ActionGuard } from '@/components/shared/ActionGuard'
 
 export function DepartmentsTable() {
-  const { t } = useLocale()
+  const { t, locale } = useLocale()
   // Permission checks
   const { canUpdate, canDelete } = useActionPermission('departments')
 
@@ -227,7 +227,7 @@ export function DepartmentsTable() {
           {(search || isActive !== 'all') && (
             <div className="flex items-center gap-3 border-t-2 border-gray-100 pt-4">
               <span className="text-xs font-bold tracking-wider text-gray-600 uppercase">
-                Bộ lọc:
+                {t('filters.active_label')}
               </span>
               {search && (
                 <span className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-200)] bg-gradient-to-r from-[var(--brand-50)] to-[var(--brand-50)] px-3 py-1.5 text-xs font-bold text-[var(--brand-700)] shadow-sm">
@@ -247,7 +247,7 @@ export function DepartmentsTable() {
               {isActive !== 'all' && (
                 <span className="inline-flex items-center gap-2 rounded-full border border-cyan-300 bg-gradient-to-r from-cyan-100 to-cyan-50 px-3 py-1.5 text-xs font-bold text-cyan-700 shadow-sm">
                   {isActive === 'true' ? '✓' : '✗'}{' '}
-                  {isActive === 'true' ? 'Hoạt động' : 'Ngừng hoạt động'}
+                  {isActive === 'true' ? t('filters.status_active') : t('filters.status_inactive')}
                   <button
                     onClick={() => setIsActive('all')}
                     className="transition-transform hover:scale-110 hover:text-cyan-900"
@@ -273,18 +273,20 @@ export function DepartmentsTable() {
               <div className="mb-6 inline-flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200">
                 <Building2 className="h-10 w-10 text-gray-400" />
               </div>
-              <h3 className="mb-2 text-2xl font-bold text-gray-700">Không có bộ phận nào</h3>
+              <h3 className="mb-2 text-2xl font-bold text-gray-700">
+                {t('empty.departments.title')}
+              </h3>
               <p className="mb-8 text-base text-gray-500">
                 {search || isActive !== 'all'
-                  ? '🔍 Thử điều chỉnh bộ lọc hoặc tạo bộ phận mới'
-                  : '🚀 Bắt đầu bằng cách tạo bộ phận đầu tiên'}
+                  ? t('empty.departments.filter_description')
+                  : t('empty.departments.empty_description')}
               </p>
               <Button
                 onClick={openCreate}
                 className="transform rounded-xl bg-[var(--btn-primary)] px-8 py-3 font-bold text-[var(--btn-primary-foreground)] shadow-lg transition-all duration-300 hover:scale-105 hover:bg-[var(--btn-primary-hover)] hover:shadow-xl"
               >
                 <Plus className="mr-2 h-5 w-5" />
-                Tạo Bộ phận Đầu Tiên
+                {t('department.button.create')}
               </Button>
             </div>
           ) : (
@@ -293,40 +295,40 @@ export function DepartmentsTable() {
                 <TableHeader className="border-b-2 border-gray-200 bg-gradient-to-r from-[var(--brand-100)] via-[var(--brand-50)] to-[var(--brand-50)]">
                   <TableRow>
                     <TableHead className="w-[80px] text-center font-bold text-gray-700">
-                      STT
+                      {t('table.index')}
                     </TableHead>
                     <TableHead className="min-w-[200px] font-bold text-gray-700">
                       <div className="flex items-center gap-2">
                         <Building2 className="h-5 w-5 text-[var(--brand-600)]" />
-                        Bộ phận
+                        {t('table.name')}
                       </div>
                     </TableHead>
                     <TableHead className="w-[120px] font-bold text-gray-700">
                       <div className="flex items-center gap-2">
                         <span className="text-lg">🔖</span>
-                        Mã
+                        {t('table.code')}
                       </div>
                     </TableHead>
                     <TableHead className="min-w-[200px] font-bold text-gray-700">
                       <div className="flex items-center gap-2">
                         <span className="text-lg">📝</span>
-                        Mô tả
+                        {t('table.description')}
                       </div>
                     </TableHead>
                     <TableHead className="w-[140px] font-bold text-gray-700">
                       <div className="flex items-center gap-2">
                         <CheckCircle2 className="h-5 w-5 text-blue-600" />
-                        Trạng thái
+                        {t('table.status')}
                       </div>
                     </TableHead>
                     <TableHead className="w-[150px] font-bold text-gray-700">
                       <div className="flex items-center gap-2">
                         <Calendar className="h-5 w-5 text-pink-600" />
-                        Ngày tạo
+                        {t('table.created_at')}
                       </div>
                     </TableHead>
                     <TableHead className="w-[120px] text-right font-bold text-gray-700">
-                      ⚙️ Hành động
+                      {t('table.actions')}
                     </TableHead>
                   </TableRow>
                 </TableHeader>
@@ -375,7 +377,9 @@ export function DepartmentsTable() {
                       </TableCell>
                       <TableCell className="font-semibold whitespace-nowrap text-gray-600">
                         &nbsp;&nbsp;&nbsp;
-                        {new Date(dept.createdAt).toLocaleDateString('vi-VN')}
+                        {new Date(dept.createdAt).toLocaleDateString(
+                          locale === 'en' ? 'en-US' : 'vi-VN'
+                        )}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center justify-end gap-1.5">
@@ -385,22 +389,24 @@ export function DepartmentsTable() {
                               variant="ghost"
                               onClick={() => openEdit(dept)}
                               className="transform rounded-lg transition-all duration-300 hover:scale-110 hover:bg-[var(--brand-50)] hover:text-[var(--brand-700)]"
-                              title="Chỉnh sửa"
+                              title={t('button.edit')}
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
                           )}
                           {canDelete && (
                             <DeleteDialog
-                              title="Xóa bộ phận"
-                              description={`Bạn có chắc chắn muốn xóa bộ phận "${dept.name}" không?\n\nHành động này không thể hoàn tác.`}
+                              title={t('department.delete_confirm_title')}
+                              description={t('department.delete_confirmation', {
+                                departmentName: dept.name,
+                              })}
                               onConfirm={() => handleDelete(dept.id)}
                               trigger={
                                 <Button
                                   size="sm"
                                   variant="ghost"
                                   className="transform rounded-lg transition-all duration-300 hover:scale-110 hover:bg-[var(--error-50)] hover:text-[var(--error-500)]"
-                                  title="Xóa"
+                                  title={t('button.delete')}
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>

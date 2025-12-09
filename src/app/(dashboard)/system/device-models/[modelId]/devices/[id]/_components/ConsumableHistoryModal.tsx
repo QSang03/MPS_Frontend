@@ -22,6 +22,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 // Consumable usage history panel with modern glassmorphic design
 export function ConsumableUsageHistory({
@@ -51,6 +52,8 @@ export function ConsumableUsageHistory({
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [showFilters, setShowFilters] = useState(false)
+
+  const { t } = useLocale()
 
   const load = useCallback(async () => {
     if (!deviceId) return
@@ -87,11 +90,11 @@ export function ConsumableUsageHistory({
       setItems(Array.isArray(list) ? (list as HistoryRecord[]) : [])
     } catch (err) {
       console.error('Load consumable usage history failed', err)
-      toast.error('Không tải được lịch sử sử dụng vật tư')
+      toast.error(t('consumable_history.load_error'))
     } finally {
       setLoading(false)
     }
-  }, [deviceId, page, limit, search, startDate, endDate, consumableId])
+  }, [deviceId, page, limit, search, startDate, endDate, consumableId, t])
 
   const fmt = (v: unknown) => (typeof v === 'number' ? v.toLocaleString('vi-VN') : String(v ?? '-'))
   const shortId = (id?: string) => (id ? `${id.slice(0, 8)}…` : '-')
@@ -129,10 +132,10 @@ export function ConsumableUsageHistory({
         <div className="absolute inset-0 bg-white/40 backdrop-blur-sm dark:bg-black/20"></div>
         <div className="relative z-10">
           <h3 className="bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] bg-clip-text text-2xl font-bold text-transparent">
-            Lịch sử Sử dụng Vật tư
+            {t('consumable_history.title')}
           </h3>
           <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-            Theo dõi chi tiết quá trình sử dụng và thay thế vật tư
+            {t('consumable_history.description')}
           </p>
         </div>
       </div>
@@ -144,7 +147,7 @@ export function ConsumableUsageHistory({
           <div className="flex items-center gap-3 p-4">
             <Search className="h-5 w-5 text-slate-400 transition-colors group-hover:text-[var(--brand-600)]" />
             <Input
-              placeholder="Tìm kiếm theo ID hoặc tên vật tư..."
+              placeholder={t('filters.search_placeholder_consumables')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               onKeyDown={(e) => {
@@ -167,7 +170,7 @@ export function ConsumableUsageHistory({
               onClick={() => handleSearch()}
               className="rounded-full bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] px-6 text-white shadow-md transition-all hover:scale-105 hover:shadow-lg"
             >
-              Tìm kiếm
+              {t('button.search')}
             </Button>
           </div>
         </div>
@@ -180,7 +183,7 @@ export function ConsumableUsageHistory({
           className="gap-2 rounded-full border-dashed"
         >
           <Filter className="h-4 w-4" />
-          {showFilters ? 'Ẩn bộ lọc' : 'Hiển thị bộ lọc'}
+          {showFilters ? t('filters.hide_filters') : t('filters.show_filters')}
         </Button>
 
         {/* Filters Panel with Animation */}
@@ -249,7 +252,7 @@ export function ConsumableUsageHistory({
               <div className="absolute inset-0 h-12 w-12 animate-ping rounded-full bg-[var(--brand-400)] opacity-20"></div>
             </div>
             <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
-              Đang tải dữ liệu...
+              {t('loading.default')}
             </p>
           </div>
         ) : items.length === 0 ? (
@@ -258,11 +261,9 @@ export function ConsumableUsageHistory({
               <Eye className="h-12 w-12 text-slate-400" />
             </div>
             <p className="text-lg font-medium text-slate-600 dark:text-slate-400">
-              Chưa có bản ghi nào
+              {t('consumable_history.empty_title')}
             </p>
-            <p className="text-sm text-slate-500">
-              Không tìm thấy dữ liệu phù hợp với bộ lọc của bạn
-            </p>
+            <p className="text-sm text-slate-500">{t('consumable_history.empty_description')}</p>
           </div>
         ) : (
           <div className="w-full overflow-auto">
@@ -409,6 +410,7 @@ export default function ConsumableHistoryModal({
   open: boolean
   onOpenChange: (v: boolean) => void
 }) {
+  const { t } = useLocale()
   const selectedConsumableObj = consumableId
     ? ((installedConsumables ?? []).find((x) => {
         const o = x as Record<string, unknown>
@@ -433,8 +435,8 @@ export default function ConsumableHistoryModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <SystemModalLayout
-        title="Lịch sử Vật tư"
-        description={`Vật tư: ${title}`}
+        title={t('consumable_history.modal.title')}
+        description={t('consumable_history.modal.description', { title })}
         icon={FileText}
         variant="view"
         maxWidth="!max-w-[75vw]"
@@ -442,13 +444,13 @@ export default function ConsumableHistoryModal({
           <>
             <Button variant="outline" className="gap-2">
               <Download className="h-4 w-4" />
-              Xuất dữ liệu
+              {t('button.export')}
             </Button>
             <Button
               onClick={() => onOpenChange(false)}
               className="min-w-[100px] bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] hover:from-[var(--brand-700)] hover:to-[var(--brand-700)]"
             >
-              Đóng
+              {t('button.close')}
             </Button>
           </>
         }

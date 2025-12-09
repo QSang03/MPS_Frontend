@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/alert-dialog'
 // Removed unused AlertDialogAction import
 import { Button } from '@/components/ui/button'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 interface DeleteDialogProps {
   title: string
@@ -23,6 +24,7 @@ interface DeleteDialogProps {
 }
 
 export function DeleteDialog({ title, description, onConfirm, trigger }: DeleteDialogProps) {
+  const { t } = useLocale()
   const [isOpen, setIsOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
 
@@ -42,7 +44,7 @@ export function DeleteDialog({ title, description, onConfirm, trigger }: DeleteD
         {trigger || (
           <Button variant="destructive" size="sm" className="gap-2">
             <Trash2 className="h-4 w-4" />
-            Xóa
+            {t('dialog.delete.trigger')}
           </Button>
         )}
       </AlertDialogTrigger>
@@ -75,10 +77,10 @@ export function DeleteDialog({ title, description, onConfirm, trigger }: DeleteD
             <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-[var(--color-error-500)]" />
             <div>
               <p className="text-sm font-semibold text-[var(--color-error-600)]">
-                Cảnh báo: Hành động không thể hoàn tác
+                {t('dialog.delete.warning_title')}
               </p>
               <p className="mt-1 text-xs text-[var(--color-error-500)]">
-                Dữ liệu sẽ bị xóa vĩnh viễn và không thể khôi phục.
+                {t('dialog.delete.warning_description')}
               </p>
             </div>
           </div>
@@ -88,7 +90,7 @@ export function DeleteDialog({ title, description, onConfirm, trigger }: DeleteD
         <AlertDialogFooter className="bg-muted/50 border-t px-6 py-4">
           <AlertDialogCancel disabled={isDeleting} className="min-w-[100px]">
             <X className="mr-2 h-4 w-4" />
-            Hủy
+            {t('dialog.delete.cancel')}
           </AlertDialogCancel>
           <Button
             variant="destructive"
@@ -99,12 +101,12 @@ export function DeleteDialog({ title, description, onConfirm, trigger }: DeleteD
             {isDeleting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Đang xóa...
+                {t('dialog.delete.deleting')}
               </>
             ) : (
               <>
                 <Trash2 className="mr-2 h-4 w-4" />
-                Xác nhận xóa
+                {t('dialog.delete.confirm')}
               </>
             )}
           </Button>

@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { FileText, Loader2, Upload } from 'lucide-react'
 import ExcelJS from 'exceljs'
 import { toast } from 'sonner'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { useQueryClient } from '@tanstack/react-query'
 
 interface ImportExcelModalProps {
@@ -23,6 +24,7 @@ export default function ImportExcelModal({ trigger }: ImportExcelModalProps = {}
   >([])
   const [headerValid, setHeaderValid] = useState<boolean | null>(null)
   const queryClient = useQueryClient()
+  const { t } = useLocale()
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0] ?? null
@@ -212,7 +214,9 @@ export default function ImportExcelModal({ trigger }: ImportExcelModalProps = {}
           </div>
 
           <div>
-            <label className="block text-sm font-semibold">Xem trước (tối đa 10 dòng)</label>
+            <label className="block text-sm font-semibold">
+              {t('consumable_types.import.preview.title')}
+            </label>
             <div className="mt-2">
               {headerValid === false && (
                 <div className="text-sm text-red-600">
@@ -220,7 +224,9 @@ export default function ImportExcelModal({ trigger }: ImportExcelModalProps = {}
                 </div>
               )}
               {previewRows.length === 0 && headerValid !== false && (
-                <div className="text-muted-foreground text-sm">Chưa có dữ liệu để xem trước</div>
+                <div className="text-muted-foreground text-sm">
+                  {t('consumable_types.import.preview.empty')}
+                </div>
               )}
               {previewRows.length > 0 && (
                 <div className="mt-2 overflow-x-auto">

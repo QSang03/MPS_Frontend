@@ -8,6 +8,7 @@ import { Separator } from '@/components/ui/separator'
 import { contractsClientService } from '@/lib/api/services/contracts-client.service'
 import type { ContractDevice } from '@/types/models/contract-device'
 import { toast } from 'sonner'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { MonitorSmartphone, Plug2, Calendar, DollarSign, Trash2, Plus } from 'lucide-react'
 import { useActionPermission } from '@/lib/hooks/useActionPermission'
 
@@ -23,6 +24,7 @@ export default function ContractDevicesSection({
   attachedDevices,
 }: Props) {
   const queryClient = useQueryClient()
+  const { t } = useLocale()
   const [page] = useState(1)
   const [limit] = useState(50)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
@@ -48,13 +50,13 @@ export default function ContractDevicesSection({
     mutationFn: (deviceIds: string[]) =>
       contractsClientService.detachDevices(contractId as string, { deviceIds }),
     onSuccess: () => {
-      toast.success('Gỡ thiết bị thành công')
+      toast.success(t('contracts.detach_success'))
       queryClient.invalidateQueries({ queryKey: ['contract-devices', contractId] })
       setSelectedIds([])
     },
     onError: (err) => {
       console.error('detach error', err)
-      toast.error('Gỡ thiết bị thất bại')
+      toast.error(t('contracts.detach_error'))
     },
   })
 
@@ -91,7 +93,7 @@ export default function ContractDevicesSection({
   const handleDetach = async () => {
     if (!contractId) return
     if (selectedIds.length === 0) {
-      toast.error('Vui lòng chọn ít nhất 1 thiết bị để gỡ')
+      toast.error(t('contracts.detach.select_one'))
       return
     }
     await detachMutation.mutateAsync(selectedIds)
@@ -133,9 +135,13 @@ export default function ContractDevicesSection({
             <MonitorSmartphone className="h-5 w-5 text-[var(--brand-700)]" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-[var(--brand-900)]">Thiết bị của hợp đồng</h3>
+            <h3 className="text-lg font-bold text-[var(--brand-900)]">
+              {t('contracts.devices.title')}
+            </h3>
             <p className="text-sm text-[var(--brand-600)]">
-              {devices.length > 0 ? `${devices.length} thiết bị` : 'Chưa có thiết bị'}
+              {devices.length > 0
+                ? t('contracts.devices.count', { count: devices.length })
+                : t('contracts.devices.empty')}
             </p>
           </div>
         </div>

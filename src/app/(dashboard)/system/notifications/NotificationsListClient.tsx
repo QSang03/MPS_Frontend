@@ -4,12 +4,14 @@ import React from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
+import { useLocale } from '@/components/providers/LocaleProvider'
 // Use native list elements as there's no shared List component in UI library
 import { Badge } from '@/components/ui/badge'
 import { notificationsClientService } from '@/lib/api/services/notifications-client.service'
 import type { Notification } from '@/types/models/notification'
 
 export default function NotificationsListClient() {
+  const { t } = useLocale()
   const searchParams = useSearchParams()
   const router = useRouter()
   const queryClient = useQueryClient()
@@ -94,27 +96,27 @@ export default function NotificationsListClient() {
     <div>
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-medium">Danh sách thông báo</h3>
+          <h3 className="text-lg font-medium">{t('notifications.list.title')}</h3>
           {typeFilter ? (
             <p className="text-muted-foreground text-sm">Bộ lọc: {typeFilter}</p>
           ) : null}
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={handleBackToSystem}>
-            Quay lại
+            {t('common.back')}
           </Button>
           <Button size="sm" onClick={handleMarkAll} disabled={markAllMutation.isPending}>
-            Đánh dấu tất cả đã đọc
+            {t('notifications.mark_all')}
           </Button>
         </div>
       </div>
 
       {isLoading ? (
-        <div className="py-8 text-center text-gray-500">Đang tải thông báo...</div>
+        <div className="py-8 text-center text-gray-500">{t('notifications.loading')}</div>
       ) : error ? (
-        <div className="py-8 text-center text-red-500">Không thể load thông báo</div>
+        <div className="py-8 text-center text-red-500">{t('notifications.error.load')}</div>
       ) : filtered.length === 0 ? (
-        <div className="py-8 text-center text-gray-500">Không có thông báo.</div>
+        <div className="py-8 text-center text-gray-500">{t('notifications.empty')}</div>
       ) : (
         <ul className="divide-y">
           {filtered.map((n) => (
@@ -130,7 +132,9 @@ export default function NotificationsListClient() {
               <div className="flex-1">
                 <div className="flex items-center gap-2">
                   <strong>{n.title}</strong>
-                  {n.status !== 'READ' ? <Badge variant="secondary">Mới</Badge> : null}
+                  {n.status !== 'READ' ? (
+                    <Badge variant="secondary">{t('notifications.badge.new')}</Badge>
+                  ) : null}
                 </div>
                 <div className="text-muted-foreground text-sm">
                   {new Date(n.createdAt).toLocaleString('vi-VN')}
@@ -149,7 +153,7 @@ export default function NotificationsListClient() {
                         handleMarkAsRead(n.id)
                       }}
                     >
-                      Đánh dấu đã đọc
+                      {t('notifications.mark_read')}
                     </Button>
                   )}
                   {getNotificationTarget(n) && (
@@ -162,7 +166,7 @@ export default function NotificationsListClient() {
                         if (target) router.push(target)
                       }}
                     >
-                      Xem chi tiết
+                      {t('notifications.view_details')}
                     </Button>
                   )}
                 </div>

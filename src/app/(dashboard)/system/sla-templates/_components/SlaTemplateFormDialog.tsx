@@ -30,6 +30,7 @@ import createSlaTemplateSchema, {
 } from '@/lib/validations/sla-template.schema'
 import type { SLATemplateItem } from '@/types/models/sla-template'
 import { PRIORITY_DISPLAY, Priority } from '@/constants/status'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 export type SlaTemplateFormValues = CreateSlaTemplateForm
 
@@ -68,6 +69,7 @@ export function SlaTemplateFormDialog({
   })
 
   const { control, handleSubmit, reset } = form
+  const { t } = useLocale()
 
   const { fields, append, remove } = useFieldArray({ control, name: 'items' })
 
@@ -230,7 +232,13 @@ export function SlaTemplateFormDialog({
                                 <SelectContent>
                                   {Object.keys(PRIORITY_DISPLAY).map((k) => (
                                     <SelectItem key={k} value={k}>
-                                      {PRIORITY_DISPLAY[k as keyof typeof PRIORITY_DISPLAY].label}
+                                      {PRIORITY_DISPLAY[k as keyof typeof PRIORITY_DISPLAY].labelKey
+                                        ? t(
+                                            PRIORITY_DISPLAY[k as keyof typeof PRIORITY_DISPLAY]
+                                              .labelKey
+                                          )
+                                        : PRIORITY_DISPLAY[k as keyof typeof PRIORITY_DISPLAY]
+                                            .label}
                                     </SelectItem>
                                   ))}
                                 </SelectContent>

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState, useTransition } from 'react'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import type { ReactNode } from 'react'
 import Link from 'next/link'
 import type { ColumnDef } from '@tanstack/react-table'
@@ -37,6 +38,7 @@ export function ConsumablesTable({
   onSortingChange,
   consumableTypeFilter,
 }: ConsumablesTableProps) {
+  const { t } = useLocale()
   const [isPending, startTransition] = useTransition()
   // queryClient is not used in this component; omit to avoid lint errors
   const [sorting, setSortingState] = useState<{ sortBy?: string; sortOrder?: 'asc' | 'desc' }>(
@@ -112,7 +114,7 @@ export function ConsumablesTable({
     () => [
       {
         id: 'index',
-        header: 'STT',
+        header: t('table.index'),
         cell: ({ row, table }) => {
           const index = table.getSortedRowModel().rows.findIndex((r) => r.id === row.id)
           return (
@@ -125,7 +127,7 @@ export function ConsumablesTable({
       },
       {
         accessorKey: 'serialNumber',
-        header: 'Part (Serial)',
+        header: t('consumable.table.part_serial'),
         enableSorting: true,
         cell: ({ row }) => (
           <span className="font-mono text-xs">{String(row.original.serialNumber ?? '-')}</span>
@@ -134,7 +136,7 @@ export function ConsumablesTable({
       {
         id: 'consumableType.name',
         accessorKey: 'consumableType.name',
-        header: 'Tên',
+        header: t('consumable.table.name'),
         enableSorting: true,
         cell: ({ row }) => (
           <span className="font-medium">
@@ -144,7 +146,7 @@ export function ConsumablesTable({
       },
       {
         id: 'compatibleDeviceModels',
-        header: 'Dòng tương thích',
+        header: t('consumable.table.compatible_models'),
         enableSorting: false,
         cell: ({ row }) => {
           const ct = (row.original.consumableType as Record<string, unknown>) ?? {}
@@ -160,7 +162,7 @@ export function ConsumablesTable({
       },
       {
         accessorKey: 'capacity',
-        header: 'Dung lượng',
+        header: t('consumable.table.capacity'),
         enableSorting: true,
         cell: ({ row }) => (
           <span className="text-sm">
@@ -171,7 +173,7 @@ export function ConsumablesTable({
       {
         id: 'remaining',
         accessorKey: 'remaining',
-        header: 'Tồn kho',
+        header: t('consumable.table.remaining'),
         enableSorting: true,
         cell: ({ row }) => {
           const c = row.original
@@ -186,7 +188,7 @@ export function ConsumablesTable({
       },
       {
         accessorKey: 'status',
-        header: 'Trạng thái',
+        header: t('table.status'),
         enableSorting: true,
         cell: ({ row }) => {
           const status = String(row.original.status ?? '-')
@@ -209,7 +211,7 @@ export function ConsumablesTable({
         header: () => (
           <div className="flex items-center gap-2">
             <Settings className="h-4 w-4 text-gray-600" />
-            Hành động
+            {t('table.actions')}
           </div>
         ),
         cell: ({ row }) => (
@@ -225,7 +227,7 @@ export function ConsumablesTable({
         enableSorting: false,
       },
     ],
-    [page, pageSize]
+    [page, pageSize, t]
   )
 
   return (

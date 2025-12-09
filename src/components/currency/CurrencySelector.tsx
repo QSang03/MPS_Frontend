@@ -16,6 +16,7 @@ import { currenciesClientService } from '@/lib/api/services/currencies-client.se
 import { customersClientService } from '@/lib/api/services/customers-client.service'
 import type { CurrencyDataDto } from '@/types/models/currency'
 import { Loader2, Info, Star } from 'lucide-react'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 interface CurrencySelectorProps {
   value?: string | null
@@ -35,13 +36,15 @@ export function CurrencySelector({
   onChange,
   onSelect,
   disabled = false,
-  placeholder = 'Chọn tiền tệ',
+  placeholder = undefined,
   label,
   optional = true,
   className,
   isActive = true,
   customerId,
 }: CurrencySelectorProps) {
+  const { t } = useLocale()
+  const placeholderText = placeholder ?? t('currency.select.placeholder')
   const { data: currenciesData, isLoading } = useQuery({
     queryKey: ['currencies', { isActive, limit: 100 }],
     queryFn: () => currenciesClientService.list({ isActive, limit: 100 }),
@@ -121,8 +124,10 @@ export function CurrencySelector({
           disabled={disabled || isLoading || isLoadingCustomer}
         >
           <SelectTrigger className="h-11 flex-1">
-            <SelectValue placeholder={isLoading || isLoadingCustomer ? 'Đang tải...' : placeholder}>
-              {displayValue || placeholder}
+            <SelectValue
+              placeholder={isLoading || isLoadingCustomer ? t('loading.loading') : placeholderText}
+            >
+              {displayValue || placeholderText}
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
@@ -131,10 +136,10 @@ export function CurrencySelector({
                 <Loader2 className="h-4 w-4 animate-spin" />
               </div>
             ) : currencies.length === 0 ? (
-              <div className="text-muted-foreground p-4 text-sm">Không có tiền tệ nào</div>
+              <div className="text-muted-foreground p-4 text-sm">{t('currency.empty')}</div>
             ) : (
               <>
-                {optional && <SelectItem value="__none__">-- Không chọn --</SelectItem>}
+                {optional && <SelectItem value="__none__">{t('common.none_select')}</SelectItem>}
                 {currencies.map((currency) => {
                   const isDefault = currency.id === defaultCurrencyId
                   return (
@@ -146,7 +151,7 @@ export function CurrencySelector({
                         {isDefault && (
                           <Badge variant="secondary" className="ml-2 text-xs">
                             <Star className="mr-1 h-3 w-3" />
-                            Đơn vị gốc
+                            {t('currency.default_label')}
                           </Badge>
                         )}
                       </div>
@@ -160,7 +165,7 @@ export function CurrencySelector({
         {isUsingDefaultCurrency && defaultCurrency && (
           <Badge variant="secondary" className="text-xs whitespace-nowrap">
             <Star className="mr-1 h-3 w-3" />
-            Đơn vị gốc
+            {t('currency.default_label')}
           </Badge>
         )}
       </div>
@@ -170,25 +175,21 @@ export function CurrencySelector({
             <Alert className="bg-primary/5 border-primary/20">
               <Info className="h-4 w-4" />
               <AlertDescription className="text-xs break-words">
-                Đang sử dụng đơn vị tiền tệ gốc của khách hàng:{' '}
-                <strong className="inline whitespace-nowrap">{defaultCurrency.code}</strong>
+                {t('currency.using_default', { code: defaultCurrency.code })}
               </AlertDescription>
             </Alert>
           ) : isDifferentFromDefault ? (
             <Alert variant="destructive" className="bg-destructive/5">
               <Info className="h-4 w-4" />
               <AlertDescription className="text-xs break-words">
-                Khuyến khích sử dụng đơn vị gốc:{' '}
-                <strong className="inline whitespace-nowrap">{defaultCurrency.code}</strong> để đảm
-                bảo tính nhất quán
+                {t('currency.recommend_default', { code: defaultCurrency.code })}
               </AlertDescription>
             </Alert>
           ) : hasNoValueButHasDefault ? (
             <Alert className="bg-primary/5 border-primary/20">
               <Info className="h-4 w-4" />
               <AlertDescription className="text-xs break-words">
-                Khuyến khích sử dụng đơn vị gốc của khách hàng:{' '}
-                <strong className="inline whitespace-nowrap">{defaultCurrency.code}</strong>
+                {t('currency.recommend_default_customer', { code: defaultCurrency.code })}
               </AlertDescription>
             </Alert>
           ) : null}

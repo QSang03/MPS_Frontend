@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { AnimatePresence } from 'framer-motion'
 import { Plus, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import {
   Dialog,
   DialogContent,
@@ -25,12 +26,13 @@ interface UserFormModalProps {
 export function UserFormModal({ customerId = '' }: UserFormModalProps) {
   const [open, setOpen] = useState(false)
   const router = useRouter()
+  const { t } = useLocale()
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button className="gap-2 shadow-lg transition-all duration-300 hover:shadow-xl">
-          <Plus className="h-5 w-5" /> Thêm người dùng
+          <Plus className="h-5 w-5" /> {t('user.button.create')}
         </Button>
       </DialogTrigger>
 
@@ -44,9 +46,11 @@ export function UserFormModal({ customerId = '' }: UserFormModalProps) {
                     <Users className="text-primary h-6 w-6" />
                   </div>
                   <div>
-                    <DialogTitle className="text-xl font-bold">Tạo người dùng mới</DialogTitle>
+                    <DialogTitle className="text-xl font-bold">
+                      {t('user.form.title_create')}
+                    </DialogTitle>
                     <DialogDescription className="text-muted-foreground text-sm">
-                      Điền thông tin chi tiết để tạo tài khoản người dùng
+                      {t('user.form.description_create')}
                     </DialogDescription>
                   </div>
                 </div>

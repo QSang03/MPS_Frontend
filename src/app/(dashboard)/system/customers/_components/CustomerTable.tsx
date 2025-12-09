@@ -132,7 +132,7 @@ export function CustomerTable({
       setDeletingId(id)
       try {
         await customersClientService.delete(id)
-        toast.success('Xóa khách hàng thành công')
+        toast.success(t('customer.delete_success'))
         if (customers.length === 1 && page > 1) {
           onPageChange(page - 1)
         } else {
@@ -140,12 +140,12 @@ export function CustomerTable({
         }
       } catch (error) {
         console.error('Error deleting customer:', error)
-        toast.error((error as Error).message || 'Không thể xóa khách hàng')
+        toast.error((error as Error).message || t('customer.delete_error'))
       } finally {
         setDeletingId(null)
       }
     },
-    [customers.length, page, onPageChange, queryClient]
+    [customers.length, page, onPageChange, queryClient, t]
   )
 
   const loadConsumablesForCustomer = useCallback(
@@ -171,19 +171,19 @@ export function CustomerTable({
         setConsumablesForCustomer(items as Record<string, unknown>[])
       } catch (err) {
         console.error('Load consumables for customer failed', err)
-        toast.error('Không tải được vật tư tiêu hao của khách hàng')
+        toast.error(t('customer.consumables.load_error'))
       } finally {
         setConsumablesLoading(false)
       }
     },
-    [filterOrphaned]
+    [filterOrphaned, t]
   )
 
   const columns = useMemo<ColumnDef<Customer>[]>(
     () => [
       {
         id: 'index',
-        header: 'STT',
+        header: t('table.index'),
         cell: ({ row, table }) => {
           const index = table.getSortedRowModel().rows.findIndex((r) => r.id === row.id)
           return (
@@ -199,7 +199,7 @@ export function CustomerTable({
         header: () => (
           <div className="flex items-center gap-2">
             <User className="h-4 w-4 text-gray-600" />
-            Tên
+            {t('table.name')}
           </div>
         ),
         enableSorting: true,
@@ -217,7 +217,7 @@ export function CustomerTable({
         header: () => (
           <div className="flex items-center gap-2">
             <Hash className="h-4 w-4 text-gray-600" />
-            Mã
+            {t('table.code')}
           </div>
         ),
         enableSorting: true,
@@ -232,7 +232,7 @@ export function CustomerTable({
         header: () => (
           <div className="flex items-center gap-2">
             <MapPin className="h-4 w-4 text-gray-600" />
-            Địa chỉ
+            {t('table.address')}
           </div>
         ),
         enableSorting: false,
@@ -416,8 +416,10 @@ export function CustomerTable({
               {/* Service request creation moved to System Requests admin header */}
               <ActionGuard pageId="customers" actionId="delete">
                 <DeleteDialog
-                  title="Xác nhận xóa khách hàng"
-                  description={`Xác nhận xóa khách hàng "${customer.name || ''}"?`}
+                  title={t('customer.delete_confirm_title')}
+                  description={t('customer.delete_confirmation', {
+                    customerName: customer.name || '',
+                  })}
                   onConfirm={async () => handleDelete(customer.id)}
                   trigger={
                     <Button
@@ -425,7 +427,9 @@ export function CustomerTable({
                       size="sm"
                       disabled={deletingId === customer.id || isSysCustomer}
                       className="transition-all hover:bg-red-100 hover:text-red-700"
-                      title={isSysCustomer ? 'Khách hàng hệ thống không thể xóa' : 'Xóa'}
+                      title={
+                        isSysCustomer ? t('customer.delete_forbidden') : t('dialog.delete.trigger')
+                      }
                     >
                       {deletingId === customer.id ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
@@ -494,12 +498,12 @@ export function CustomerTable({
                   )}
                 </div>
                 <h3 className="mb-2 text-xl font-bold text-gray-700">
-                  {searchInput ? 'Không tìm thấy khách hàng phù hợp' : 'Chưa có khách hàng nào'}
+                  {searchInput
+                    ? t('empty.customers.search_result', { query: searchInput })
+                    : t('empty.customers.empty')}
                 </h3>
                 <p className="mb-6 text-gray-500">
-                  {searchInput
-                    ? 'Thử điều chỉnh bộ lọc hoặc tìm kiếm'
-                    : 'Hãy tạo khách hàng đầu tiên'}
+                  {searchInput ? t('empty.customers.try_filter') : t('empty.customers.first')}
                 </p>
                 {!searchInput && (
                   <ActionGuard pageId="customers" actionId="create">

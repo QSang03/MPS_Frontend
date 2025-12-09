@@ -433,7 +433,18 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
     },
     actions: [],
   },
-
+  {
+    id: 'cost-adjustments',
+    label: 'Điều chỉnh chi phí',
+    icon: 'Calculator',
+    route: '/system/cost-adjustments',
+    description: 'Quản lý phiếu cộng/trừ chi phí theo thiết bị',
+    requiredPermissions: {
+      strategy: 'all',
+      resources: [{ resource: 'cost-adjustments', action: 'read' }],
+    },
+    actions: [],
+  },
   {
     id: 'devices',
     name: 'devices',

@@ -36,6 +36,7 @@ import {
   PRIORITY_DISPLAY,
 } from '@/constants/status'
 import { cn } from '@/lib/utils'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 interface DeviceMaintenanceTabProps {
   deviceId: string
@@ -70,6 +71,7 @@ export function DeviceMaintenanceTab({
   lastMaintenanceDate,
   nextMaintenanceDate,
 }: DeviceMaintenanceTabProps) {
+  const { t } = useLocale()
   const [page, setPage] = useState(1)
   const [limit, setLimit] = useState(10)
   const [search, setSearch] = useState('')
@@ -130,8 +132,8 @@ export function DeviceMaintenanceTab({
   }
 
   const formatDate = (date?: string | null) => {
-    if (!date) return 'Chưa xác định'
-    return new Date(date).toLocaleDateString('vi-VN', {
+    if (!date) return t('common.unknown')
+    return new Date(date).toLocaleDateString(undefined, {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
@@ -148,9 +150,9 @@ export function DeviceMaintenanceTab({
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
 
-    if (diffMins < 60) return `${diffMins} phút trước`
-    if (diffHours < 24) return `${diffHours} giờ trước`
-    if (diffDays < 30) return `${diffDays} ngày trước`
+    if (diffMins < 60) return t('relative.minutes_ago', { count: diffMins })
+    if (diffHours < 24) return t('relative.hours_ago', { count: diffHours })
+    if (diffDays < 30) return t('relative.days_ago', { count: diffDays })
     return formatDate(date)
   }
 
@@ -161,15 +163,15 @@ export function DeviceMaintenanceTab({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Wrench className="h-5 w-5 text-[var(--error-500)]" />
-            Lịch bảo trì
+            {t('device_maintenance.schedule_title')}
           </CardTitle>
-          <CardDescription>Thông tin bảo trì và bảo dưỡng thiết bị</CardDescription>
+          <CardDescription>{t('device_maintenance.schedule_subtitle')}</CardDescription>
         </CardHeader>
         <CardContent>
           {!lastMaintenanceDate && !nextMaintenanceDate ? (
             <div className="text-muted-foreground p-8 text-center">
               <Calendar className="mx-auto mb-3 h-12 w-12 opacity-20" />
-              <p>Chưa có lịch bảo trì</p>
+              <p>{t('device_maintenance.no_schedule')}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -179,7 +181,7 @@ export function DeviceMaintenanceTab({
                     <Calendar className="h-5 w-5 text-[var(--error-500)]" />
                   </div>
                   <span className="text-muted-foreground text-sm font-medium">
-                    Bảo trì gần nhất
+                    {t('device_maintenance.last_maintenance')}
                   </span>
                 </div>
                 <p className="text-2xl font-bold text-[var(--color-error-500)]">
@@ -193,7 +195,7 @@ export function DeviceMaintenanceTab({
                     <Calendar className="h-5 w-5 text-[var(--brand-600)]" />
                   </div>
                   <span className="text-muted-foreground text-sm font-medium">
-                    Bảo trì tiếp theo
+                    {t('device_maintenance.next_maintenance')}
                   </span>
                 </div>
                 <p className="text-2xl font-bold text-[var(--brand-700)]">
@@ -211,11 +213,11 @@ export function DeviceMaintenanceTab({
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="flex items-center gap-2">
-                <Wrench className="h-5 w-5 text-[var(--warning-500)]" />
-                Yêu cầu bảo trì
+                <Wrench className="h-5 text-[var(--warning-500)]" />
+                {t('device_maintenance.requests_title')}
               </CardTitle>
               <CardDescription className="mt-1">
-                Danh sách các yêu cầu bảo trì liên quan đến thiết bị này
+                {t('device_maintenance.requests_subtitle')}
               </CardDescription>
             </div>
             <Button
@@ -226,7 +228,7 @@ export function DeviceMaintenanceTab({
               disabled={isLoading}
             >
               <RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin')} />
-              Làm mới
+              {t('button.refresh')}
             </Button>
           </div>
         </CardHeader>
@@ -237,7 +239,7 @@ export function DeviceMaintenanceTab({
               <div className="relative flex-1">
                 <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
                 <Input
-                  placeholder="Tìm kiếm theo tiêu đề, mô tả..."
+                  placeholder={t('device_maintenance.search_placeholder')}
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
                   onKeyDown={handleKeyDown}
@@ -245,7 +247,7 @@ export function DeviceMaintenanceTab({
                 />
               </div>
               <Button variant="outline" size="sm" onClick={handleSearch}>
-                Tìm kiếm
+                {t('button.search')}
               </Button>
             </div>
 
@@ -258,13 +260,13 @@ export function DeviceMaintenanceTab({
                 }}
               >
                 <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Trạng thái" />
+                  <SelectValue placeholder={t('filters.status_label')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ALL">Tất cả</SelectItem>
+                  <SelectItem value="ALL">{t('placeholder.all_statuses')}</SelectItem>
                   {Object.entries(SERVICE_REQUEST_STATUS_DISPLAY).map(([key, val]) => (
                     <SelectItem key={key} value={key}>
-                      {val.label}
+                      {val.labelKey ? t(val.labelKey) : val.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -278,13 +280,13 @@ export function DeviceMaintenanceTab({
                 }}
               >
                 <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Mức độ ưu tiên" />
+                  <SelectValue placeholder={t('filters.priority_label')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ALL">Tất cả</SelectItem>
+                  <SelectItem value="ALL">{t('placeholder.all_priorities')}</SelectItem>
                   {Object.entries(PRIORITY_DISPLAY).map(([key, val]) => (
                     <SelectItem key={key} value={key}>
-                      {val.label}
+                      {val.labelKey ? t(val.labelKey) : val.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -298,11 +300,11 @@ export function DeviceMaintenanceTab({
                 }}
               >
                 <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Sắp xếp" />
+                  <SelectValue placeholder={t('filters.sort_label')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="desc">Mới nhất</SelectItem>
-                  <SelectItem value="asc">Cũ nhất</SelectItem>
+                  <SelectItem value="desc">{t('sort.newest')}</SelectItem>
+                  <SelectItem value="asc">{t('sort.oldest')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -316,15 +318,15 @@ export function DeviceMaintenanceTab({
           ) : isError ? (
             <div className="text-muted-foreground p-8 text-center">
               <AlertCircle className="mx-auto mb-3 h-12 w-12 text-[var(--color-error-500)] opacity-20" />
-              <p className="text-[var(--color-error-500)]">Đã xảy ra lỗi khi tải dữ liệu</p>
+              <p className="text-[var(--color-error-500)]">{t('service_request.load_error')}</p>
               <Button variant="outline" size="sm" onClick={() => refetch()} className="mt-4">
-                Thử lại
+                {t('button.retry')}
               </Button>
             </div>
           ) : serviceRequests.length === 0 ? (
             <div className="text-muted-foreground p-8 text-center">
               <Wrench className="mx-auto mb-3 h-12 w-12 opacity-20" />
-              <p>Chưa có yêu cầu bảo trì nào cho thiết bị này</p>
+              <p>{t('service_request.empty')}</p>
             </div>
           ) : (
             <div className="overflow-hidden rounded-lg border">
@@ -332,13 +334,27 @@ export function DeviceMaintenanceTab({
                 <table className="w-full min-w-[800px]">
                   <thead className="bg-gray-100">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-semibold">Số yêu cầu</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold">Tiêu đề</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold">Mức độ ưu tiên</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold">Trạng thái</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold">Người phụ trách</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold">Ngày tạo</th>
-                      <th className="px-4 py-3 text-center text-xs font-semibold">Thao tác</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold">
+                        {t('requests.service.table.request_code')}
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold">
+                        {t('requests.service.table.title')}
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold">
+                        {t('requests.service.table.priority')}
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold">
+                        {t('requests.service.table.status')}
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold">
+                        {t('requests.service.table.assigned_to')}
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold">
+                        {t('requests.service.table.created_at')}
+                      </th>
+                      <th className="px-4 py-3 text-center text-xs font-semibold">
+                        {t('table.actions')}
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y">
@@ -369,7 +385,9 @@ export function DeviceMaintenanceTab({
                         </td>
                         <td className="px-4 py-3">
                           <Badge className={priorityColorMap[sr.priority]} variant="secondary">
-                            {PRIORITY_DISPLAY[sr.priority]?.label ?? sr.priority}
+                            {PRIORITY_DISPLAY[sr.priority]?.labelKey
+                              ? t(PRIORITY_DISPLAY[sr.priority].labelKey)
+                              : (PRIORITY_DISPLAY[sr.priority]?.label ?? sr.priority)}
                           </Badge>
                         </td>
                         <td className="px-4 py-3">
@@ -378,13 +396,17 @@ export function DeviceMaintenanceTab({
                             className="inline-block"
                           >
                             <Badge className={statusColorMap[sr.status]} variant="secondary">
-                              {SERVICE_REQUEST_STATUS_DISPLAY[sr.status]?.label ?? sr.status}
+                              {SERVICE_REQUEST_STATUS_DISPLAY[sr.status]?.labelKey
+                                ? t(SERVICE_REQUEST_STATUS_DISPLAY[sr.status].labelKey)
+                                : (SERVICE_REQUEST_STATUS_DISPLAY[sr.status]?.label ?? sr.status)}
                             </Badge>
                           </Link>
                         </td>
                         <td className="px-4 py-3 text-sm">
                           {sr.assignedToName ?? sr.assignedTo ?? (
-                            <span className="text-muted-foreground">Chưa phân công</span>
+                            <span className="text-muted-foreground">
+                              {t('service_request.unassigned')}
+                            </span>
                           )}
                         </td>
                         <td className="px-4 py-3">

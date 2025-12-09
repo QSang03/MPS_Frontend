@@ -99,7 +99,7 @@ export function RolesTable({ onCreateTrigger, onCreateTriggerReset }: RolesTable
     const filters: Array<{ label: string; value: string; onRemove: () => void }> = []
     if (search) {
       filters.push({
-        label: `Tìm kiếm: "${search}"`,
+        label: t('filters.search', { query: search }),
         value: search,
         onRemove: () => {
           setSearch('')
@@ -110,20 +110,24 @@ export function RolesTable({ onCreateTrigger, onCreateTriggerReset }: RolesTable
     }
     if (isActive !== 'all') {
       filters.push({
-        label: isActive === 'true' ? 'Hoạt động' : 'Ngừng hoạt động',
+        label:
+          isActive === 'true' ? t('roles.table.status.active') : t('roles.table.status.inactive'),
         value: isActive,
         onRemove: () => setIsActive('all'),
       })
     }
     if (sorting.sortBy !== 'createdAt' || sorting.sortOrder !== 'desc') {
       filters.push({
-        label: `Sắp xếp: ${sorting.sortBy} (${sorting.sortOrder === 'asc' ? 'Tăng dần' : 'Giảm dần'})`,
+        label: t('filters.sort', {
+          sortBy: sorting.sortBy || 'createdAt',
+          direction: t(sorting.sortOrder === 'asc' ? 'sort.asc' : 'sort.desc'),
+        }),
         value: `${sorting.sortBy}-${sorting.sortOrder}`,
         onRemove: () => setSorting({ sortBy: 'createdAt', sortOrder: 'desc' }),
       })
     }
     return filters
-  }, [search, isActive, sorting.sortBy, sorting.sortOrder])
+  }, [search, isActive, sorting.sortBy, sorting.sortOrder, t])
 
   const handleResetFilters = () => {
     setSearch('')
@@ -146,15 +150,15 @@ export function RolesTable({ onCreateTrigger, onCreateTriggerReset }: RolesTable
     try {
       if (editingRole) {
         await rolesClientService.updateRole(editingRole.id, formData as Record<string, unknown>)
-        toast.success('✅ Cập nhật vai trò thành công')
+        toast.success(t('role.update_success'))
       } else {
         await rolesClientService.createRole(formData as Record<string, unknown>)
-        toast.success('✅ Tạo vai trò thành công')
+        toast.success(t('role.create_success'))
       }
       queryClient.invalidateQueries({ queryKey: ['roles'] })
     } catch (err) {
       console.error('Role create/update error', err)
-      toast.error('❌ Có lỗi khi lưu vai trò')
+      toast.error(t('role.save_error'))
     } finally {
       setIsModalOpen(false)
     }
@@ -164,10 +168,10 @@ export function RolesTable({ onCreateTrigger, onCreateTriggerReset }: RolesTable
     try {
       await rolesClientService.deleteRole(roleId)
       queryClient.invalidateQueries({ queryKey: ['roles'] })
-      toast.success('✅ Xóa vai trò thành công')
+      toast.success(t('role.delete_success'))
     } catch (err) {
       console.error('Delete role error', err)
-      toast.error('❌ Có lỗi khi xóa vai trò')
+      toast.error(t('role.delete_error'))
     }
   }
 
@@ -329,7 +333,7 @@ function RolesTableContent({
   canDelete,
   searchValue,
 }: RolesTableContentProps) {
-  const { t } = useLocale()
+  const { t, locale } = useLocale()
   const [isPending, startTransition] = useTransition()
   const [sortVersion, setSortVersion] = useState(0)
 
@@ -415,7 +419,7 @@ function RolesTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <Hash className="h-4 w-4 text-gray-600" />
-            Level
+            {t('roles.table.level')}
           </div>
         ),
         cell: ({ row }) => (
@@ -467,7 +471,9 @@ function RolesTableContent({
         ),
         cell: ({ row }) => (
           <span className="font-semibold whitespace-nowrap text-gray-600">
-            {new Date(row.original.createdAt).toLocaleDateString('vi-VN')}
+            {new Date(row.original.createdAt).toLocaleDateString(
+              locale === 'en' ? 'en-US' : 'vi-VN'
+            )}
           </span>
         ),
       },
@@ -530,7 +536,7 @@ function RolesTableContent({
         },
       },
     ]
-  }, [pagination, canUpdate, canDelete, onEditRole, onDeleteRole, t])
+  }, [pagination, canUpdate, canDelete, onEditRole, onDeleteRole, t, locale])
 
   return (
     <TableWrapper<UserRole>

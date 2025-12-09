@@ -2,6 +2,7 @@
 
 import { Button } from '@/components/ui/button'
 import { SERVICE_REQUEST_STATUS_DISPLAY } from '@/constants/status'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { getAllowedTransitions } from '@/lib/utils/status-flow'
 import type { ServiceRequestStatus } from '@/constants/status'
 
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export function StatusButtonGrid({ current, assignedTo, hasPermission = true, onSelect }: Props) {
+  const { t } = useLocale()
   const allowed = getAllowedTransitions(current)
 
   return (
@@ -29,10 +31,15 @@ export function StatusButtonGrid({ current, assignedTo, hasPermission = true, on
             variant={enabled ? 'secondary' : 'ghost'}
             onClick={() => enabled && onSelect(s)}
             disabled={!enabled}
-            aria-label={`Chuyển sang ${disp.label}`}
+            aria-label={t('service_request.aria.change_to', {
+              label: disp.labelKey ? t(disp.labelKey) : disp.label,
+            })}
           >
             <div className="flex flex-col text-left">
-              <span className="text-xs font-semibold">Chuyển → {disp.label}</span>
+              <span className="text-xs font-semibold">
+                {t('service_request.change_to_arrow')}{' '}
+                {disp.labelKey ? t(disp.labelKey) : disp.label}
+              </span>
               <span className="text-muted-foreground text-xs">{s}</span>
             </div>
           </Button>

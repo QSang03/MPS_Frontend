@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { RolesTable } from './_components/RolesTable'
 import { SystemPageLayout } from '@/components/system/SystemPageLayout'
 import { SystemPageHeader } from '@/components/system/SystemPageHeader'
@@ -9,13 +10,14 @@ import { Button } from '@/components/ui/button'
 import { ActionGuard } from '@/components/shared/ActionGuard'
 
 export default function RolesPage() {
+  const { t } = useLocale()
   const [showCreateModal, setShowCreateModal] = useState(false)
 
   return (
     <SystemPageLayout fullWidth>
       <SystemPageHeader
-        title="Quản lý vai trò"
-        subtitle="Quản lý các vai trò và quyền hạn trong hệ thống"
+        title={t('page.roles.title')}
+        subtitle={t('page.roles.subtitle')}
         icon={<Layers className="h-6 w-6" />}
         actions={
           <ActionGuard pageId="roles" actionId="create">
@@ -24,7 +26,7 @@ export default function RolesPage() {
               className="border-0 bg-white text-[var(--brand-500)] hover:bg-[var(--brand-50)]"
             >
               <Plus className="mr-2 h-4 w-4" />
-              Tạo Vai trò
+              {t('role.create')}
             </Button>
           </ActionGuard>
         }

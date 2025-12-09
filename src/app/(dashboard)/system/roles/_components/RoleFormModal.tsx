@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -39,6 +40,7 @@ interface RoleFormModalProps {
 
 export function RoleFormModal({ isOpen, onClose, onSubmit, initialData }: RoleFormModalProps) {
   const [isLoading, setIsLoading] = useState(false)
+  const { t } = useLocale()
 
   const form = useForm<RoleFormData>({
     resolver: zodResolver(roleSchema),
@@ -78,9 +80,9 @@ export function RoleFormModal({ isOpen, onClose, onSubmit, initialData }: RoleFo
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <SystemModalLayout
-        title={initialData ? 'Chỉnh sửa vai trò' : 'Thêm vai trò mới'}
+        title={initialData ? t('role.form.title_edit') : t('role.form.title_create')}
         description={
-          initialData ? 'Cập nhật thông tin vai trò' : 'Tạo một vai trò mới cho hệ thống'
+          initialData ? t('role.form.description_edit') : t('role.form.description_create')
         }
         icon={Layers}
         variant={initialData ? 'edit' : 'create'}
@@ -88,7 +90,7 @@ export function RoleFormModal({ isOpen, onClose, onSubmit, initialData }: RoleFo
         footer={
           <>
             <Button type="button" variant="outline" onClick={onClose} className="min-w-[100px]">
-              Hủy
+              {t('cancel')}
             </Button>
             <Button
               type="submit"
@@ -99,10 +101,10 @@ export function RoleFormModal({ isOpen, onClose, onSubmit, initialData }: RoleFo
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Đang xử lý...
+                  {t('button.processing')}
                 </>
               ) : (
-                <>{initialData ? 'Lưu thay đổi' : 'Tạo vai trò'}</>
+                <>{initialData ? t('role.button.save_changes') : t('role.button.create')}</>
               )}
             </Button>
           </>
@@ -118,11 +120,11 @@ export function RoleFormModal({ isOpen, onClose, onSubmit, initialData }: RoleFo
                 <FormItem>
                   <FormLabel className="flex items-center gap-2 text-sm font-bold text-gray-800">
                     <Layers className="h-4 w-4 text-emerald-600" />
-                    Tên vai trò *
+                    {t('role.field.name')} *
                   </FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="VD: Manager, Admin, Supervisor..."
+                      placeholder={t('role.placeholder.name')}
                       {...field}
                       className="h-10 rounded-lg border-2 border-gray-200 text-base transition-all focus:border-[var(--color-success-500)] focus:ring-2 focus:ring-[var(--color-success-200)]"
                     />
@@ -140,11 +142,11 @@ export function RoleFormModal({ isOpen, onClose, onSubmit, initialData }: RoleFo
                 <FormItem>
                   <FormLabel className="flex items-center gap-2 text-sm font-bold text-gray-800">
                     <AlertCircle className="h-4 w-4 text-[var(--brand-600)]" />
-                    Mô tả vai trò
+                    {t('role.field.description')}
                   </FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="Mô tả chi tiết về vai trò này..."
+                      placeholder={t('role.placeholder.description')}
                       {...field}
                       className="h-10 rounded-lg border-2 border-gray-200 text-base transition-all focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)]"
                     />
@@ -164,12 +166,12 @@ export function RoleFormModal({ isOpen, onClose, onSubmit, initialData }: RoleFo
                   <FormItem>
                     <FormLabel className="flex items-center gap-2 text-sm font-bold text-gray-800">
                       <span className="text-lg">🔢</span>
-                      Level
+                      {t('role.field.level')}
                     </FormLabel>
                     <FormControl>
                       <Input
                         type="number"
-                        placeholder="0"
+                        placeholder={t('role.placeholder.level')}
                         value={field.value !== undefined ? String(field.value) : ''}
                         onChange={(e) => {
                           const v = e.target.value
@@ -191,7 +193,7 @@ export function RoleFormModal({ isOpen, onClose, onSubmit, initialData }: RoleFo
                   <FormItem>
                     <FormLabel className="flex items-center gap-2 text-sm font-bold text-gray-800">
                       <CheckCircle2 className="h-4 w-4 text-[var(--color-success-600)]" />
-                      Trạng thái
+                      {t('role.field.status')}
                     </FormLabel>
                     <FormControl>
                       <select
@@ -200,10 +202,10 @@ export function RoleFormModal({ isOpen, onClose, onSubmit, initialData }: RoleFo
                         onChange={(e) => field.onChange(e.target.value === 'true')}
                       >
                         <option value="true" className="bg-[var(--color-success-50)]">
-                          ✓ Hoạt động
+                          {t('status.active')}
                         </option>
                         <option value="false" className="bg-red-50">
-                          ✗ Ngừng hoạt động
+                          {t('status.inactive')}
                         </option>
                       </select>
                     </FormControl>
@@ -216,8 +218,8 @@ export function RoleFormModal({ isOpen, onClose, onSubmit, initialData }: RoleFo
             {/* Info card */}
             <div className="rounded-lg border-2 border-[var(--color-success-200)] bg-gradient-to-r from-[var(--color-success-50)] to-[var(--brand-50)] p-4">
               <p className="text-xs text-gray-700">
-                <span className="font-bold text-[var(--color-success-700)]">💡 Tip:</span> Mỗi vai
-                trò có thể quản lý các quyền hạn khác nhau dựa trên level.
+                <span className="font-bold text-[var(--color-success-700)]">💡 {t('hint')}:</span>{' '}
+                {t('role.tip.level_description')}
               </p>
             </div>
           </form>

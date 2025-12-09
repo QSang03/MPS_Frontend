@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { forgotPassword } from '@/app/actions/auth'
 import { Button } from '@/components/ui/button'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -15,6 +16,7 @@ import { toast } from 'sonner'
 import type { AuthActionState } from '@/app/actions/auth'
 
 export default function ForgotPasswordPage() {
+  const { t } = useLocale()
   const [state, formAction, isPending] = useActionState<AuthActionState, FormData>(
     forgotPassword,
     null
@@ -39,9 +41,11 @@ export default function ForgotPasswordPage() {
     >
       <Card className="shadow-soft-2xl relative overflow-hidden border-0">
         <CardHeader>
-          <CardTitle className="text-center text-2xl font-bold">Quên mật khẩu</CardTitle>
+          <CardTitle className="text-center text-2xl font-bold">
+            {t('auth.forgot_password.title')}
+          </CardTitle>
           <CardDescription className="text-center">
-            Nhập email để nhận hướng dẫn đặt lại mật khẩu
+            {t('auth.forgot_password.description')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -67,7 +71,7 @@ export default function ForgotPasswordPage() {
                   id="email"
                   name="email"
                   type="email"
-                  placeholder="Nhập email"
+                  placeholder={t('auth.forgot_password.email_placeholder')}
                   required
                   disabled={isPending}
                 />
@@ -76,7 +80,7 @@ export default function ForgotPasswordPage() {
 
             <Button type="submit" className="w-full" disabled={isPending}>
               {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isPending ? 'Đang gửi...' : 'Gửi hướng dẫn'}
+              {isPending ? t('auth.sending') : t('auth.forgot_password.submit')}
             </Button>
 
             <Button
@@ -85,7 +89,7 @@ export default function ForgotPasswordPage() {
               className="w-full"
               onClick={() => router.push('/login')}
             >
-              Quay lại đăng nhập
+              {t('auth.back_to_login')}
             </Button>
           </form>
         </CardContent>

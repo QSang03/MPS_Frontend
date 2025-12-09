@@ -48,7 +48,7 @@ export function validateTenantIsolation(
     warnings.push({
       id: 'tenant-isolation-missing',
       type: 'suggestion',
-      message: `Bạn nên thêm điều kiện \`customerId $eq '{{user.customerId}}'\` để đảm bảo người dùng chỉ truy cập tài nguyên trong Customer của họ.`,
+      message: `You should add condition \`customerId $eq '{{user.customerId}}'\` to ensure users only access resources within their Customer.`,
       field: 'resource.customerId',
     })
   }
@@ -68,7 +68,7 @@ export function validateWildcardResourceType(resourceValue: RuleBuilderValue): G
     warnings.push({
       id: 'wildcard-resource-type',
       type: 'warning',
-      message: `Bạn đang chọn \`*\` (Wildcard). Policy này sẽ áp dụng cho **TẤT CẢ** tài nguyên. Chỉ nên dùng cho admin hệ thống.`,
+      message: `You are selecting \`*\` (Wildcard). This policy will apply to ALL resources. Use only for system administrators.`,
       field: 'resource.type',
     })
   }
@@ -89,7 +89,7 @@ export function validateCustomerManagerPolicy(subjectValue: RuleBuilderValue): G
     warnings.push({
       id: 'customer-manager-missing-managed-customers',
       type: 'suggestion',
-      message: `Với role \`customer-manager\`, bạn nên thêm điều kiện \`user.attributes.managedCustomers\` để đảm bảo user chỉ quản lý customers được chỉ định.`,
+      message: `For role \`customer-manager\`, add condition \`user.attributes.managedCustomers\` to ensure the user only manages assigned customers.`,
       field: 'subject.user.attributes.managedCustomers',
     })
   }
@@ -108,7 +108,7 @@ export function validateDenyAllowConflicts(effect: 'ALLOW' | 'DENY'): GuardrailW
     warnings.push({
       id: 'deny-policy-warning',
       type: 'warning',
-      message: `Bạn đang tạo DENY policy. Hãy đảm bảo đã có ALLOW policy tương ứng để tránh deny nhầm. Sử dụng "Phân tích" để kiểm tra conflicts.`,
+      message: `You are creating a DENY policy. Make sure there is a corresponding ALLOW policy to avoid accidental denies. Use "Analyze" to check conflicts.`,
     })
   }
 

@@ -10,6 +10,7 @@ import { serviceRequestsClientService } from '@/lib/api/services/service-request
 import type { ServiceRequestMessage } from '@/types/models'
 import { toast } from 'sonner'
 import { Loader2, Send, MessageSquare } from 'lucide-react'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { cn } from '@/lib/utils/cn'
 
 interface Props {
@@ -76,6 +77,8 @@ export default function ServiceRequestMessages({ serviceRequestId, currentUserId
     return ta - tb
   })
 
+  const { t } = useLocale()
+
   return (
     <div className="relative flex h-full flex-col bg-slate-50/30 dark:bg-slate-900/10">
       {/* Messages Feed */}
@@ -83,7 +86,7 @@ export default function ServiceRequestMessages({ serviceRequestId, currentUserId
         {isLoading ? (
           <div className="text-muted-foreground flex h-full flex-col items-center justify-center space-y-2">
             <Loader2 className="h-5 w-5 animate-spin" />
-            <span className="text-xs">Đang tải hội thoại...</span>
+            <span className="text-xs">{t('service_request.messages.loading')}</span>
           </div>
         ) : messages.length > 0 ? (
           messages.map((m: ServiceRequestMessage) => {
@@ -122,7 +125,7 @@ export default function ServiceRequestMessages({ serviceRequestId, currentUserId
                 >
                   <div className="mb-1 flex items-baseline gap-2 px-1">
                     <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                      {isMe ? 'Bạn' : m.authorName}
+                      {isMe ? t('common.you') : m.authorName}
                     </span>
                     <span className="text-muted-foreground text-[10px]">
                       {formatDateTime(m.createdAt)}
@@ -146,8 +149,8 @@ export default function ServiceRequestMessages({ serviceRequestId, currentUserId
         ) : (
           <div className="text-muted-foreground flex h-full flex-col items-center justify-center opacity-60">
             <MessageSquare className="mb-2 h-8 w-8" />
-            <p className="text-sm">Chưa có tin nhắn nào.</p>
-            <p className="text-xs">Hãy bắt đầu cuộc trò chuyện.</p>
+            <p className="text-sm">{t('service_request.messages.no_messages')}</p>
+            <p className="text-xs">{t('service_request.messages.start')}</p>
           </div>
         )}
       </div>
@@ -159,7 +162,7 @@ export default function ServiceRequestMessages({ serviceRequestId, currentUserId
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={onKeyDown}
-            placeholder="Nhập tin nhắn... (Enter để gửi)"
+            placeholder={t('service_request.messages.placeholder')}
             className="bg-muted/30 max-h-[120px] min-h-[44px] resize-none py-3 pr-12 focus-visible:ring-1 focus-visible:ring-offset-0"
             rows={1}
           />
@@ -179,7 +182,7 @@ export default function ServiceRequestMessages({ serviceRequestId, currentUserId
             ) : (
               <Send className="h-4 w-4" />
             )}
-            <span className="sr-only">Gửi</span>
+            <span className="sr-only">{t('common.send')}</span>
           </Button>
         </div>
       </div>

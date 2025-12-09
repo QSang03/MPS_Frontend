@@ -21,6 +21,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Input } from '@/components/ui/input'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 interface AddConsumableModalProps {
   deviceModelId: string
@@ -48,6 +49,7 @@ export function AddConsumableModal({
   const [totalPages, setTotalPages] = useState(1)
   const [searchTerm, setSearchTerm] = useState('')
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
+  const { t } = useLocale()
 
   // Debounce search term
   useEffect(() => {
@@ -68,12 +70,12 @@ export function AddConsumableModal({
         setTotalPages(res.pagination?.totalPages ?? 1)
       } catch (error: unknown) {
         console.error('Error loading consumable types:', error)
-        toast.error(String(error) || 'Không thể tải danh sách vật tư tiêu hao')
+        toast.error(String(error) || t('device_model.add_consumable.load_error'))
       } finally {
         setLoading(false)
       }
     },
-    [page, limit, existingConsumableIds]
+    [page, limit, existingConsumableIds, t]
   )
 
   useEffect(() => {
@@ -115,8 +117,8 @@ export function AddConsumableModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <SystemModalLayout
-        title="Thêm Vật tư Tiêu hao Tương thích"
-        description={`Chọn vật tư tiêu hao để thêm vào model: ${deviceModelName}`}
+        title={t('device_model.add_consumable.title')}
+        description={t('device_model.add_consumable.description', { modelName: deviceModelName })}
         icon={Plus}
         variant="create"
         maxWidth="!max-w-[75vw]"
@@ -124,11 +126,13 @@ export function AddConsumableModal({
         {/* Quick Stats */}
         <div className="mb-4 grid grid-cols-2 gap-3 rounded-lg border border-gray-200 bg-gradient-to-r from-[var(--brand-50)] to-[var(--brand-50)] p-4">
           <div className="rounded-lg border border-[var(--brand-200)] bg-white p-2.5">
-            <p className="text-xs text-gray-600">Có sẵn</p>
+            <p className="text-xs text-gray-600">
+              {t('device_model.add_consumable.available_label')}
+            </p>
             <p className="mt-1 text-xl font-bold text-[var(--brand-600)]">{consumables.length}</p>
           </div>
           <div className="rounded-lg border border-green-200 bg-white p-2.5">
-            <p className="text-xs text-gray-600">Hoạt động</p>
+            <p className="text-xs text-gray-600">{t('device_model.add_consumable.active_label')}</p>
             <p className="mt-1 text-xl font-bold text-green-600">{activeCount}</p>
           </div>
         </div>
@@ -137,7 +141,7 @@ export function AddConsumableModal({
           <div className="relative">
             <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
             <Input
-              placeholder="Tìm kiếm theo tên, mã part, hoặc dòng máy tương thích..."
+              placeholder={t('device_model.add_consumable.search_placeholder')}
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value)
@@ -150,7 +154,7 @@ export function AddConsumableModal({
           {loading ? (
             <div className="py-12 text-center">
               <Loader2 className="mx-auto mb-3 h-8 w-8 animate-spin text-[var(--brand-600)]" />
-              <p className="text-muted-foreground">Đang tải...</p>
+              <p className="text-muted-foreground">{t('common.loading')}</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -163,13 +167,21 @@ export function AddConsumableModal({
                       <th className="px-4 py-3 text-left font-semibold">
                         <div className="flex items-center gap-2">
                           <Package className="h-4 w-4 text-[var(--brand-600)]" />
-                          Tên
+                          {t('device_model.add_consumable.table.name')}
                         </div>
                       </th>
-                      <th className="w-20 px-4 py-3 text-left font-semibold">Đơn vị</th>
-                      <th className="px-4 py-3 text-left font-semibold">Mô tả</th>
-                      <th className="w-24 px-4 py-3 text-left font-semibold">Trạng thái</th>
-                      <th className="w-24 px-4 py-3 text-right font-semibold">Thao tác</th>
+                      <th className="w-20 px-4 py-3 text-left font-semibold">
+                        {t('device_model.add_consumable.table.unit')}
+                      </th>
+                      <th className="px-4 py-3 text-left font-semibold">
+                        {t('device_model.add_consumable.table.description')}
+                      </th>
+                      <th className="w-24 px-4 py-3 text-left font-semibold">
+                        {t('device_model.add_consumable.table.status')}
+                      </th>
+                      <th className="w-24 px-4 py-3 text-right font-semibold">
+                        {t('table.actions')}
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y">
@@ -177,7 +189,7 @@ export function AddConsumableModal({
                       <tr>
                         <td colSpan={6} className="text-muted-foreground px-4 py-12 text-center">
                           <Package className="mx-auto mb-2 h-10 w-10 opacity-20" />
-                          <p>Không còn vật tư tiêu hao nào để thêm</p>
+                          <p>{t('device_model.add_consumable.empty')}</p>
                         </td>
                       </tr>
                     ) : (
@@ -228,12 +240,12 @@ export function AddConsumableModal({
                               {addingId === c.id ? (
                                 <>
                                   <Loader2 className="h-4 w-4 animate-spin" />
-                                  Đang thêm...
+                                  {t('device_model.add_consumable.adding')}
                                 </>
                               ) : (
                                 <>
                                   <Plus className="h-4 w-4" />
-                                  Thêm
+                                  {t('device_model.add_consumable.add_button')}
                                 </>
                               )}
                             </Button>
@@ -248,7 +260,12 @@ export function AddConsumableModal({
               {/* Pagination */}
               <div className="flex items-center justify-between border-t pt-4">
                 <div className="text-muted-foreground text-sm">
-                  Trang {page} / {totalPages} — Hiển thị {consumables.length} / {total}
+                  {t('device_model.add_consumable.pagination_info', {
+                    page: String(page),
+                    totalPages: String(totalPages),
+                    showCount: String(consumables.length),
+                    total: String(total),
+                  })}
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -260,7 +277,7 @@ export function AddConsumableModal({
                     className="gap-1"
                   >
                     <ChevronLeft className="h-4 w-4" />
-                    Trước
+                    {t('pagination.prev')}
                   </Button>
 
                   <span className="text-muted-foreground px-3 py-1 text-sm font-semibold">
@@ -274,7 +291,7 @@ export function AddConsumableModal({
                     disabled={page >= totalPages || loading}
                     className="gap-1"
                   >
-                    Sau
+                    {t('pagination.next')}
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>

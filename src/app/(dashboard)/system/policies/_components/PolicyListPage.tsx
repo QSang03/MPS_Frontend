@@ -37,6 +37,7 @@ import { TableSkeleton } from '@/components/system/TableSkeleton'
 import { StatsCards } from '@/components/system/StatsCard'
 import type { ColumnDef } from '@tanstack/react-table'
 import { usePoliciesQuery } from '@/lib/hooks/queries/usePoliciesQuery'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 interface PolicyListPageProps {
   onEdit?: (policy: Policy) => void | Promise<void>
@@ -44,6 +45,7 @@ interface PolicyListPageProps {
 }
 
 export function PolicyListPage({ onEdit, onCreate }: PolicyListPageProps) {
+  const { t } = useLocale()
   const { canUpdate, canDelete } = useActionPermission('policies')
 
   const [search, setSearch] = useState('')
@@ -78,11 +80,11 @@ export function PolicyListPage({ onEdit, onCreate }: PolicyListPageProps) {
     try {
       await policiesClientService.deletePolicy(id)
       queryClient.invalidateQueries({ queryKey: ['policies'] })
-      toast.success('Xóa policy thành công')
+      toast.success(t('policies.delete_success'))
       setDeletingPolicyId(null)
     } catch (err: unknown) {
       console.error('Delete policy error', err)
-      toast.error('Có lỗi khi xóa policy')
+      toast.error(t('policies.delete_error'))
       setDeletingPolicyId(null)
     }
   }
@@ -143,7 +145,7 @@ export function PolicyListPage({ onEdit, onCreate }: PolicyListPageProps) {
       <StatsCards
         cards={[
           {
-            label: 'Tổng policies',
+            label: t('policies.stats.total_label'),
             value: stats.total,
             icon: <Shield className="h-6 w-6" />,
             borderColor: 'indigo',
@@ -165,19 +167,19 @@ export function PolicyListPage({ onEdit, onCreate }: PolicyListPageProps) {
 
       {/* Filter Section */}
       <FilterSection
-        title="Bộ lọc & Tìm kiếm"
-        subtitle="Tìm kiếm và lọc policies theo tên, effect, hoặc action"
+        title={t('filters.general')}
+        subtitle={t('policies.filters.subtitle')}
         onReset={handleResetFilters}
         activeFilters={activeFilters}
         columnVisibilityMenu={columnVisibilityMenu}
       >
         <div className="grid gap-4 md:grid-cols-3">
           <div>
-            <label className="mb-2 block text-sm font-medium">Tìm kiếm</label>
+            <label className="mb-2 block text-sm font-medium">{t('filters.search_label')}</label>
             <div className="relative">
               <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <Input
-                placeholder="Tìm kiếm policy..."
+                placeholder={t('filters.search_placeholder_policies')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 onKeyDown={(e) => {
@@ -192,13 +194,15 @@ export function PolicyListPage({ onEdit, onCreate }: PolicyListPageProps) {
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium">Effect</label>
+            <label className="mb-2 block text-sm font-medium">
+              {t('policies.filter.effect_label')}
+            </label>
             <Select value={effect} onValueChange={setEffect}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Chọn Effect" />
+                <SelectValue placeholder={t('policies.filter.select_effect')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tất cả</SelectItem>
+                <SelectItem value="all">{t('filters.status_all')}</SelectItem>
                 <SelectItem value="ALLOW">
                   <span className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-emerald-600" />
@@ -216,9 +220,11 @@ export function PolicyListPage({ onEdit, onCreate }: PolicyListPageProps) {
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium">Action</label>
+            <label className="mb-2 block text-sm font-medium">
+              {t('policies.filter.action_label')}
+            </label>
             <Input
-              placeholder="Lọc theo action..."
+              placeholder={t('policies.filter.action_placeholder')}
               value={action}
               onChange={(e) => setAction(e.target.value)}
             />
@@ -289,7 +295,7 @@ function PolicyTable({
 }: PolicyTableProps) {
   const [isPending, startTransition] = useTransition()
   const [sortVersion, setSortVersion] = useState(0)
-
+  const { t } = useLocale()
   const queryParams = useMemo(
     () => ({
       page,
@@ -329,7 +335,7 @@ function PolicyTable({
     () => [
       {
         id: 'index',
-        header: 'STT',
+        header: t('table.index'),
         cell: ({ row, table }) => {
           const index = table.getSortedRowModel().rows.findIndex((r) => r.id === row.id)
           return (
@@ -346,7 +352,7 @@ function PolicyTable({
         header: () => (
           <div className="flex items-center gap-2">
             <FileText className="h-5 w-5 text-[var(--brand-600)]" />
-            Tên Policy
+            {t('table.name')}
           </div>
         ),
         cell: ({ row }) => (
@@ -362,7 +368,7 @@ function PolicyTable({
         header: () => (
           <div className="flex items-center gap-2">
             <Shield className="h-5 w-5 text-[var(--brand-600)]" />
-            Effect
+            {t('table.effect')}
           </div>
         ),
         cell: ({ row }) =>
@@ -383,7 +389,7 @@ function PolicyTable({
         header: () => (
           <div className="flex items-center gap-2">
             <Zap className="h-5 w-5 text-pink-600" />
-            Actions
+            {t('table.actions')}
           </div>
         ),
         cell: ({ row }) => (
@@ -410,7 +416,7 @@ function PolicyTable({
         header: () => (
           <div className="flex items-center gap-2">
             <User className="h-5 w-5 text-[var(--brand-600)]" />
-            Subject
+            {t('table.subject')}
           </div>
         ),
         cell: ({ row }) => (
@@ -428,7 +434,7 @@ function PolicyTable({
         header: () => (
           <div className="flex items-center gap-2">
             <Folder className="h-5 w-5 text-[var(--brand-600)]" />
-            Resource
+            {t('table.resource')}
           </div>
         ),
         cell: ({ row }) => (
@@ -443,7 +449,7 @@ function PolicyTable({
       },
       {
         id: 'table-actions',
-        header: '⚙️ Thao tác',
+        header: t('table.actions'),
         cell: ({ row }) => (
           <div className="flex items-center justify-center gap-2">
             {canUpdate && onEdit && (
@@ -451,7 +457,7 @@ function PolicyTable({
                 size="sm"
                 variant="ghost"
                 onClick={() => onEdit(row.original as Policy)}
-                title="Sửa"
+                title={t('button.edit')}
                 className="h-8 w-8 rounded-lg text-[var(--brand-600)] transition-all duration-300 hover:bg-[var(--brand-100)] hover:text-[var(--brand-700)]"
               >
                 <Edit className="h-4 w-4" />
@@ -459,8 +465,8 @@ function PolicyTable({
             )}
             {canDelete && (
               <DeleteDialog
-                title="Xóa policy"
-                description={`Bạn có chắc chắn muốn xóa policy "${row.original.name}" không?`}
+                title={t('policies.delete_confirm_title')}
+                description={t('policies.delete_confirmation', { policyName: row.original.name })}
                 onConfirm={async () => {
                   await onDelete(row.original.id)
                 }}
@@ -468,7 +474,7 @@ function PolicyTable({
                   <Button
                     size="sm"
                     variant="ghost"
-                    title="Xóa"
+                    title={t('button.delete')}
                     className="h-8 w-8 rounded-lg text-red-600 transition-all duration-300 hover:bg-red-100 hover:text-red-700"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -481,7 +487,7 @@ function PolicyTable({
         enableSorting: false,
       },
     ],
-    [pagination, canUpdate, canDelete, onEdit, onDelete]
+    [pagination, canUpdate, canDelete, onEdit, onDelete, t]
   )
 
   return (
@@ -514,11 +520,11 @@ function PolicyTable({
             <div className="mb-6 inline-flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200">
               <Shield className="h-10 w-10 text-gray-400" />
             </div>
-            <h3 className="mb-2 text-2xl font-bold text-gray-700">Không có policy nào</h3>
+            <h3 className="mb-2 text-2xl font-bold text-gray-700">{t('empty.policies.title')}</h3>
             <p className="mb-8 text-base text-gray-500">
               {searchInput || effectFilter !== 'all' || actionFilter
-                ? '🔍 Thử điều chỉnh bộ lọc hoặc tạo policy mới'
-                : '🚀 Bắt đầu bằng cách tạo policy đầu tiên'}
+                ? t('empty.policies.filter_description')
+                : t('empty.policies.empty_description')}
             </p>
             {onCreate && (
               <Button
@@ -526,7 +532,7 @@ function PolicyTable({
                 className="transform rounded-xl bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] px-8 py-3 font-bold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:from-[var(--brand-700)] hover:to-[var(--brand-700)] hover:shadow-xl"
               >
                 <Plus className="mr-2 h-5 w-5" />
-                Tạo Policy Đầu Tiên
+                {t('policy.button.create_first')}
               </Button>
             )}
           </div>

@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { TemplateVariablePicker, supportsTemplateVariables } from './TemplateVariablePicker'
 import { SearchableSelect } from './SearchableSelect'
 import type { RuleBuilderType } from '../../_types/rule-builder'
@@ -92,17 +93,19 @@ export function ValueInput({
   const supportsTemplate = supportsTemplateVariables(type, field)
 
   // Show resource type dropdown when field is 'type' and type is 'resource'
+  const { t } = useLocale()
+
   if (type === 'resource' && field === 'type') {
     const selectedValue = typeof value === 'string' ? value : ''
     return (
       <Select value={selectedValue} onValueChange={(val) => onChange(val)} disabled={disabled}>
         <SelectTrigger>
-          <SelectValue placeholder={placeholder || 'Chọn resource type'} />
+          <SelectValue placeholder={placeholder || t('rule_builder.resource_type.placeholder')} />
         </SelectTrigger>
         <SelectContent>
           {resourceTypes.length === 0 && (
             <SelectItem value="" disabled>
-              Đang tải resource types...
+              {t('rule_builder.resource_type.loading')}
             </SelectItem>
           )}
           {resourceTypes.map((rt) => (
@@ -142,7 +145,7 @@ export function ValueInput({
           value={value}
           onChange={onChange}
           disabled={disabled}
-          placeholder={placeholder || 'Chọn từ danh sách...'}
+          placeholder={placeholder || t('rule_builder.select_placeholder')}
         />
       )
     }

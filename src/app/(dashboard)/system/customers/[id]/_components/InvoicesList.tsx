@@ -20,6 +20,7 @@ import { invoicesClientService } from '@/lib/api/services/invoices-client.servic
 import type { InvoiceListItem, InvoiceStatus } from '@/types/models/invoice'
 import { cn } from '@/lib/utils'
 import { getPublicUrl } from '@/lib/utils/publicUrl'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 interface InvoicesListProps {
   customerId: string
@@ -27,6 +28,7 @@ interface InvoicesListProps {
 }
 
 export function InvoicesList({ customerId, contractId }: InvoicesListProps) {
+  const { t } = useLocale()
   const [invoices, setInvoices] = useState<InvoiceListItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -201,6 +203,8 @@ export function InvoicesList({ customerId, contractId }: InvoicesListProps) {
               <div className="absolute inset-0 h-12 w-12 animate-ping rounded-full bg-emerald-400 opacity-20" />
             </div>
             <p className="text-sm font-medium text-slate-600">Đang tải danh sách hóa đơn...</p>
+            <p className="text-sm font-medium text-slate-600">{t('invoices.loading')}</p>
+            <p className="font-semibold">{t('invoices.error.title')}</p>
           </div>
         ) : invoices.length === 0 ? (
           <motion.div
@@ -213,9 +217,11 @@ export function InvoicesList({ customerId, contractId }: InvoicesListProps) {
             </div>
             <div>
               <p className="text-lg font-semibold text-slate-700">Chưa có hóa đơn nào</p>
+              <p className="text-lg font-semibold text-slate-700">{t('invoices.empty.title')}</p>
               <p className="mt-1 text-sm text-slate-500">
                 Hãy tạo hóa đơn billing mới cho khách hàng này
               </p>
+              <p className="mt-1 text-sm text-slate-500">{t('invoices.empty.description')}</p>
             </div>
           </motion.div>
         ) : (

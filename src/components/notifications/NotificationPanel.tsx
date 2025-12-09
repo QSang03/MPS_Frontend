@@ -2,6 +2,7 @@
 
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Button } from '@/components/ui/button'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { Badge } from '@/components/ui/badge'
 import { NotificationItem } from './NotificationItem'
 import { NotificationStatus } from '@/types/models/notification'
@@ -25,6 +26,8 @@ export function NotificationPanel({ children }: NotificationPanelProps) {
     isMarkingAllAsRead,
   } = useNotifications()
 
+  const { t } = useLocale()
+
   const unreadNotifications = notifications.filter(
     (n) => n.status !== NotificationStatus.READ && !n.readAt
   )
@@ -35,7 +38,7 @@ export function NotificationPanel({ children }: NotificationPanelProps) {
       <PopoverContent className="w-80 p-0" align="end">
         <div className="flex items-center justify-between border-b px-4 py-3">
           <div className="flex items-center gap-2">
-            <h3 className="font-semibold">Thông báo</h3>
+            <h3 className="font-semibold">{t('notifications.list.title')}</h3>
             {!isUnreadCountLoading && unreadCount > 0 && (
               <Badge variant="destructive" className="h-5 min-w-5 px-1.5 text-xs">
                 {unreadCount > 99 ? '99+' : unreadCount}
@@ -55,7 +58,7 @@ export function NotificationPanel({ children }: NotificationPanelProps) {
               ) : (
                 <>
                   <CheckCheck className="mr-1 h-3 w-3" />
-                  Đánh dấu tất cả đã đọc
+                  {t('notifications.mark_all')}
                 </>
               )}
             </Button>
@@ -70,7 +73,7 @@ export function NotificationPanel({ children }: NotificationPanelProps) {
           ) : unreadNotifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center p-8 text-center">
               <Bell className="text-muted-foreground mb-2 h-8 w-8" />
-              <p className="text-muted-foreground text-sm">Không có thông báo mới</p>
+              <p className="text-muted-foreground text-sm">{t('notifications.empty')}</p>
             </div>
           ) : (
             <div className="divide-y">

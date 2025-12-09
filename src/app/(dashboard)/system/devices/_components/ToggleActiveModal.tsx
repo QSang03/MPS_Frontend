@@ -157,15 +157,17 @@ export default function ToggleActiveModal({
               <SelectContent>
                 {targetActive ? (
                   <>
-                    <SelectItem value="ACTIVE">Active</SelectItem>
-                    <SelectItem value="MAINTENANCE">Maintenance</SelectItem>
-                    <SelectItem value="ERROR">Error</SelectItem>
-                    <SelectItem value="OFFLINE">Offline</SelectItem>
+                    <SelectItem value="ACTIVE">{t('device.status.active')}</SelectItem>
+                    <SelectItem value="MAINTENANCE">{t('device.status.maintenance')}</SelectItem>
+                    <SelectItem value="ERROR">{t('device.status.error')}</SelectItem>
+                    <SelectItem value="OFFLINE">{t('device.status.offline')}</SelectItem>
                   </>
                 ) : (
                   <>
-                    <SelectItem value="DECOMMISSIONED">Decommissioned</SelectItem>
-                    <SelectItem value="SUSPENDED">Suspended</SelectItem>
+                    <SelectItem value="DECOMMISSIONED">
+                      {t('device.status.decommissioned')}
+                    </SelectItem>
+                    <SelectItem value="SUSPENDED">{t('device.status.suspended')}</SelectItem>
                   </>
                 )}
               </SelectContent>

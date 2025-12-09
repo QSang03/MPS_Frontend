@@ -28,6 +28,7 @@ import { SystemPageHeader } from '@/components/system/SystemPageHeader'
 import { FilterSection } from '@/components/system/FilterSection'
 import { PaginationControls } from '@/components/system/PaginationControls'
 import { StatsCards } from '@/components/system/StatsCard'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 export default function SystemSettingsPage() {
   const { can } = useActionPermission('system-settings')
@@ -38,6 +39,7 @@ export default function SystemSettingsPage() {
     type: undefined,
     isEditable: undefined,
   })
+  const { t } = useLocale()
 
   const [selectedSetting, setSelectedSetting] = useState<SystemSetting | null>(null)
   const [detailModalOpen, setDetailModalOpen] = useState(false)
@@ -92,21 +94,23 @@ export default function SystemSettingsPage() {
   const activeFilters = []
   if (query.key) {
     activeFilters.push({
-      label: `Tìm kiếm: "${query.key}"`,
+      label: `${t('filters.search_label')}: "${query.key}"`,
       value: query.key,
       onRemove: () => handleSearch(''),
     })
   }
   if (query.type) {
     activeFilters.push({
-      label: `Loại: ${query.type}`,
+      label: `${t('system_settings.type_label')}: ${query.type}`,
       value: query.type,
       onRemove: () => handleTypeFilter('all'),
     })
   }
   if (query.isEditable !== undefined) {
     activeFilters.push({
-      label: query.isEditable ? 'Có thể chỉnh sửa' : 'Chỉ đọc',
+      label: query.isEditable
+        ? t('system_settings.stats.editable')
+        : t('system_settings.stats.read_only'),
       value: String(query.isEditable),
       onRemove: () => handleEditableFilter('all'),
     })
@@ -130,8 +134,8 @@ export default function SystemSettingsPage() {
   return (
     <SystemPageLayout fullWidth>
       <SystemPageHeader
-        title="Cấu hình hệ thống"
-        subtitle="Quản lý các cấu hình và thiết lập hệ thống"
+        title={t('nav.system-settings')}
+        subtitle={t('page.system_settings.subtitle')}
         icon={<Settings className="h-6 w-6" />}
         actions={
           <Button
@@ -140,7 +144,7 @@ export default function SystemSettingsPage() {
             className="gap-2 border-white/20 bg-white/10 text-white hover:bg-white/20"
           >
             <RefreshCw className="h-4 w-4" />
-            Làm mới
+            {t('devices.a4_history.refresh')}
           </Button>
         }
       />
@@ -149,13 +153,13 @@ export default function SystemSettingsPage() {
       <StatsCards
         cards={[
           {
-            label: 'Tổng cấu hình',
+            label: t('system_settings.stats.total'),
             value: totalSettings,
             icon: <Settings className="h-6 w-6" />,
             borderColor: 'blue',
           },
           {
-            label: 'Có thể chỉnh sửa',
+            label: t('system_settings.stats.editable'),
             value: editableSettings,
             icon: <Edit className="h-6 w-6" />,
             borderColor: 'green',

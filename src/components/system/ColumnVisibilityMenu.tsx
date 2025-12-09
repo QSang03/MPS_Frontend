@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Columns3 } from 'lucide-react'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -20,6 +21,7 @@ interface ColumnVisibilityMenuProps<TData> {
 
 export function ColumnVisibilityMenu<TData>({ table, tableId }: ColumnVisibilityMenuProps<TData>) {
   // 1. Load initial state from localStorage
+  const { t } = useLocale()
   const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>(() => {
     if (typeof window === 'undefined') return {}
     try {
@@ -97,11 +99,11 @@ export function ColumnVisibilityMenu<TData>({ table, tableId }: ColumnVisibility
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm" className="ml-auto">
           <Columns3 className="mr-2 h-4 w-4" />
-          Cột
+          {t('table.columns')}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[200px]">
-        <DropdownMenuLabel>Hiển thị cột</DropdownMenuLabel>
+        <DropdownMenuLabel>{t('table.columns.label')}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {visibleColumns.map((column) => {
           // Use state if available, otherwise fallback to table state

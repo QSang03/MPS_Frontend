@@ -6,15 +6,17 @@ import { SystemPageLayout } from '@/components/system/SystemPageLayout'
 import { SystemPageHeader } from '@/components/system/SystemPageHeader'
 import { Package, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { ActionGuard } from '@/components/shared/ActionGuard'
 import { DeviceModelFormModal } from './_components/DeviceModelFormModal'
 
 export default function Page() {
+  const { t } = useLocale()
   return (
     <SystemPageLayout fullWidth>
       <SystemPageHeader
-        title="Quản lý Model Thiết bị"
-        subtitle="Quản lý các model thiết bị và tương thích vật tư"
+        title={t('page.device_models.title')}
+        subtitle={t('page.device_models.subtitle')}
         icon={<Package className="h-6 w-6" />}
         actions={
           <ActionGuard pageId="device-models" actionId="create">
@@ -27,7 +29,7 @@ export default function Page() {
               trigger={
                 <Button className="border-0 bg-white text-[var(--brand-500)] hover:bg-[var(--brand-50)]">
                   <Plus className="mr-2 h-4 w-4" />
-                  Thêm model
+                  {t('device_model.button.create')}
                 </Button>
               }
             />

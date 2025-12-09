@@ -2,6 +2,7 @@
 import React from 'react'
 import Image from 'next/image'
 import styles from './deviceHeader.module.css'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 type Device = {
   name?: string
@@ -19,6 +20,7 @@ type Props = {
 
 export default function DeviceHeader({ device = {}, onPrimaryAction, rightContent }: Props) {
   const { name = '---', model = '', iconUrl, active = false } = device
+  const { t } = useLocale()
 
   return (
     <header className={styles.header}>
@@ -50,7 +52,7 @@ export default function DeviceHeader({ device = {}, onPrimaryAction, rightConten
                 borderColor: active ? 'transparent' : '#e5e7eb',
               }}
             >
-              {active ? 'Active' : 'Inactive'}
+              {active ? t('device.status.active') : t('device.status.inactive')}
             </span>
 
             <button
@@ -58,7 +60,7 @@ export default function DeviceHeader({ device = {}, onPrimaryAction, rightConten
               className={styles.primaryBtn}
               onClick={() => onPrimaryAction && onPrimaryAction()}
             >
-              Tạo yêu cầu
+              {t('device.action.create_request')}
             </button>
           </>
         )}

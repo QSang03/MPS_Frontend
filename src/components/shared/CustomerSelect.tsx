@@ -10,6 +10,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Loader2 } from 'lucide-react'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { customersClientService } from '@/lib/api/services/customers-client.service'
 import type { Customer } from '@/types/models/customer'
 
@@ -25,6 +26,7 @@ interface Pagination {
 }
 
 export function CustomerSelect({ value, onChange, disabled, placeholder }: CustomerSelectProps) {
+  const { t } = useLocale()
   const [query, setQuery] = useState('')
   const [page, setPage] = useState(1)
   const [limit] = useState(10)
@@ -158,12 +160,14 @@ export function CustomerSelect({ value, onChange, disabled, placeholder }: Custo
         onOpenChange={(o) => setOpen(o)}
       >
         <SelectTrigger className="w-full">
-          <SelectValue placeholder={placeholder ?? 'Chọn khách hàng'}>{selectedLabel}</SelectValue>
+          <SelectValue placeholder={placeholder ?? t('customer.select.title')}>
+            {selectedLabel}
+          </SelectValue>
         </SelectTrigger>
         <SelectContent align="start" className="min-w-[var(--radix-select-trigger-width)]">
           <div className="p-2">
             <Input
-              placeholder="Tìm kiếm khách hàng..."
+              placeholder={t('customer.select.search_placeholder')}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onFocus={() => {
@@ -188,7 +192,7 @@ export function CustomerSelect({ value, onChange, disabled, placeholder }: Custo
                 <Loader2 className="h-4 w-4 animate-spin" /> Đang tải...
               </div>
             ) : items.length === 0 ? (
-              <div className="text-muted-foreground p-3 text-sm">Không tìm thấy khách hàng</div>
+              <div className="text-muted-foreground p-3 text-sm">{t('customer.select.empty')}</div>
             ) : (
               items.map((c) => (
                 <SelectItem key={c.id} value={c.id} className="flex flex-col items-start text-left">
@@ -199,7 +203,9 @@ export function CustomerSelect({ value, onChange, disabled, placeholder }: Custo
             )}
 
             {loading && items.length > 0 && (
-              <div className="text-muted-foreground p-2 text-center text-sm">Đang tải...</div>
+              <div className="text-muted-foreground p-2 text-center text-sm">
+                {t('loading.default')}
+              </div>
             )}
           </div>
         </SelectContent>

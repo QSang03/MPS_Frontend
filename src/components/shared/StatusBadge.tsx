@@ -1,3 +1,4 @@
+'use client'
 import type { SVGProps } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
@@ -9,6 +10,7 @@ import {
   ServiceRequestStatus,
   Priority,
 } from '@/constants/status'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 export type StatusType =
   | 'active'
@@ -41,11 +43,13 @@ type StatusBadgeProps =
   | (BaseProps & { priority: Priority; serviceStatus?: never; status?: never; label?: string })
 
 export function StatusBadge(props: StatusBadgeProps) {
+  const { t } = useLocale()
   const { className, label } = props
 
   // Service Request Status mode
   if ('serviceStatus' in props && props.serviceStatus) {
     const cfg = SERVICE_REQUEST_STATUS_DISPLAY[props.serviceStatus]
+    const text = label || (cfg.labelKey ? t(cfg.labelKey) : cfg.label)
     return (
       <span
         className={cn(
@@ -63,7 +67,7 @@ export function StatusBadge(props: StatusBadgeProps) {
           className
         )}
       >
-        {label || cfg.label}
+        {text}
       </span>
     )
   }
@@ -71,6 +75,7 @@ export function StatusBadge(props: StatusBadgeProps) {
   // Priority mode
   if ('priority' in props && props.priority) {
     const cfg = PRIORITY_DISPLAY[props.priority]
+    const text = label || (cfg.labelKey ? t(cfg.labelKey) : cfg.label)
     return (
       <span
         className={cn(
@@ -86,7 +91,7 @@ export function StatusBadge(props: StatusBadgeProps) {
           className
         )}
       >
-        {label || cfg.label}
+        {text}
       </span>
     )
   }

@@ -35,6 +35,7 @@ import { useQuery } from '@tanstack/react-query'
 import { rolesClientService } from '@/lib/api/services/roles-client.service'
 import { departmentsClientService } from '@/lib/api/services/departments-client.service'
 import { policiesClientService } from '@/lib/api/services/policies-client.service'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import type { PolicyOperator } from '@/lib/api/services/policies-client.service'
 import { policyConditionsClientService } from '@/lib/api/services/policy-conditions-client.service'
 import type { PolicyCondition } from '@/lib/api/services/policy-conditions-client.service'
@@ -88,6 +89,7 @@ export function PolicyFormModal({
 }: PolicyFormModalProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [localViewOnly, setLocalViewOnly] = useState(!!viewOnly)
+  const { t } = useLocale()
 
   useEffect(() => {
     setLocalViewOnly(!!viewOnly)
@@ -729,7 +731,7 @@ export function PolicyFormModal({
     setIsLoading(true)
     const firstErr = Object.values(conditionErrors || {}).find((e) => !!e)
     if (firstErr) {
-      setSubmitError('Vui lòng sửa lỗi trong điều kiện trước khi lưu')
+      setSubmitError(t('policies.form.errors.conditions_invalid'))
       setIsLoading(false)
       return
     }
@@ -975,10 +977,10 @@ export function PolicyFormModal({
         title={viewOnly ? 'Chi tiết Policy' : initialData ? 'Chỉnh sửa Policy' : 'Tạo Policy Mới'}
         description={
           viewOnly
-            ? 'Chế độ xem chi tiết'
+            ? t('policies.form.view_only_title')
             : initialData
               ? 'Cập nhật thông tin policy'
-              : 'Định nghĩa quy tắc truy cập và phân quyền'
+              : t('policies.form.edit_title')
         }
         icon={Shield}
         variant={viewOnly ? 'view' : initialData ? 'edit' : 'create'}
@@ -986,7 +988,7 @@ export function PolicyFormModal({
         footer={
           <>
             <Button type="button" variant="outline" onClick={onClose} className="min-w-[100px]">
-              {viewOnly ? 'Đóng' : 'Hủy'}
+              {viewOnly ? t('button.close') : t('button.cancel')}
             </Button>
 
             {localViewOnly ? (
@@ -1023,7 +1025,9 @@ export function PolicyFormModal({
                 ) : (
                   <>
                     <CheckCircle2 className="mr-2 h-4 w-4" />
-                    {initialData ? 'Lưu thay đổi' : 'Tạo Policy'}
+                    {initialData
+                      ? t('policy.button.save_changes')
+                      : t('policy.button.create_first')}
                   </>
                 )}
               </Button>
@@ -1110,12 +1114,10 @@ export function PolicyFormModal({
                 <div className="mb-4 flex items-center gap-2">
                   <Users className="h-5 w-5 text-emerald-600" />
                   <h3 className="text-lg font-semibold text-gray-800">
-                    Subject (Đối tượng áp dụng)
+                    {t('policies.form.field.subject')}
                   </h3>
                 </div>
-                <p className="mb-4 text-sm text-gray-600">
-                  Định nghĩa quy tắc dựa trên vai trò (role) hoặc phòng ban (department)
-                </p>
+                <p className="mb-4 text-sm text-gray-600">{t('policies.form.subject_helper')}</p>
 
                 {/* Toggle checkboxes */}
                 <div className="flex gap-6">
@@ -1301,7 +1303,7 @@ export function PolicyFormModal({
                                           </Button>
                                         </div>
                                         <Input
-                                          placeholder="Hoặc nhập thủ công (Enter để thêm)"
+                                          placeholder={t('policies.form.placeholder.enter_to_add')}
                                           value={roleArrayInput}
                                           onChange={(e) => setRoleArrayInput(e.target.value)}
                                           onKeyDown={(e) => {

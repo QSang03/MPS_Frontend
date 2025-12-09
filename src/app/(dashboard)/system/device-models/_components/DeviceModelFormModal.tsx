@@ -35,6 +35,7 @@ import {
   Settings,
   CheckCircle2,
 } from 'lucide-react'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { cn } from '@/lib/utils'
 
 interface Props {
@@ -45,6 +46,7 @@ interface Props {
 }
 
 export function DeviceModelFormModal({ mode = 'create', model = null, onSaved, trigger }: Props) {
+  const { t } = useLocale()
   const [open, setOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [form, setForm] = useState<Partial<CreateDeviceModelDto & UpdateDeviceModelDto>>({
@@ -87,14 +89,14 @@ export function DeviceModelFormModal({ mode = 'create', model = null, onSaved, t
 
       const ALLOWED_TYPES = ['PRINTER', 'SCANNER', 'COPIER', 'FAX', 'MULTIFUNCTION']
       if (payload.type && !ALLOWED_TYPES.includes(payload.type)) {
-        toast.error('Loại thiết bị không hợp lệ. Vui lòng chọn từ danh sách.')
+        toast.error(t('device_model.error.invalid_type'))
         setSubmitting(false)
         return
       }
 
       if (mode === 'create') {
         const created = await deviceModelsClientService.create(payload as CreateDeviceModelDto)
-        toast.success('Đã tạo mẫu thiết bị')
+        toast.success(t('device_model.create_success'))
         setOpen(false)
         onSaved?.(created || null)
       } else if (model) {
@@ -102,13 +104,13 @@ export function DeviceModelFormModal({ mode = 'create', model = null, onSaved, t
           model.id,
           payload as UpdateDeviceModelDto
         )
-        toast.success('Cập nhật mẫu thiết bị thành công')
+        toast.success(t('device_model.update_success'))
         setOpen(false)
         onSaved?.(updated || null)
       }
     } catch (err) {
       console.error('Device model save error', err)
-      let userMessage = 'Có lỗi khi lưu mẫu thiết bị'
+      let userMessage = t('device_model.save_error')
       try {
         const e = err as Error
         const msg = e.message || ''
@@ -136,7 +138,7 @@ export function DeviceModelFormModal({ mode = 'create', model = null, onSaved, t
           {mode === 'create' ? (
             <Button className="gap-2 bg-white text-violet-600 hover:bg-white/90">
               <Plus className="h-4 w-4" />
-              Thêm model
+              {t('device_model.button.create')}
             </Button>
           ) : (
             <Button variant="outline" size="sm" className="gap-2">
@@ -147,11 +149,11 @@ export function DeviceModelFormModal({ mode = 'create', model = null, onSaved, t
       )}
 
       <SystemModalLayout
-        title={mode === 'create' ? 'Tạo Device Model Mới' : 'Chỉnh sửa Device Model'}
+        title={mode === 'create' ? t('device_model.title_create') : t('device_model.title_edit')}
         description={
           mode === 'create'
-            ? 'Thêm mẫu thiết bị mới vào hệ thống'
-            : 'Cập nhật thông tin mẫu thiết bị'
+            ? t('device_model.description_create')
+            : t('device_model.description_edit')
         }
         icon={mode === 'create' ? Sparkles : Edit}
         variant={mode}
@@ -164,7 +166,7 @@ export function DeviceModelFormModal({ mode = 'create', model = null, onSaved, t
               className="min-w-[100px]"
               disabled={submitting}
             >
-              Hủy
+              {t('cancel')}
             </Button>
             <Button
               type="submit"
@@ -175,19 +177,21 @@ export function DeviceModelFormModal({ mode = 'create', model = null, onSaved, t
               {submitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {mode === 'create' ? 'Đang tạo...' : 'Đang lưu...'}
+                  {mode === 'create'
+                    ? t('device_model.button.creating')
+                    : t('device_model.button.saving')}
                 </>
               ) : (
                 <>
                   {mode === 'create' ? (
                     <>
                       <Plus className="mr-2 h-4 w-4" />
-                      Tạo mới
+                      {t('device_model.button.create_new')}
                     </>
                   ) : (
                     <>
                       <CheckCircle2 className="mr-2 h-4 w-4" />
-                      Cập nhật
+                      {t('device_model.button.update')}
                     </>
                   )}
                 </>
@@ -201,19 +205,19 @@ export function DeviceModelFormModal({ mode = 'create', model = null, onSaved, t
           <div className="space-y-4">
             <div className="flex items-center gap-2 text-sm font-semibold text-violet-700">
               <Package className="h-4 w-4" />
-              Thông tin cơ bản
+              {t('device_model.basic_info')}
             </div>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label className="flex items-center gap-2 text-base font-semibold">
                   <Hash className="h-4 w-4 text-[var(--brand-600)]" />
-                  Part Number *
+                  {t('device_model.part_number_label')}
                 </Label>
                 <Input
                   value={form.partNumber || ''}
                   onChange={(e) => setForm((s) => ({ ...s, partNumber: e.target.value }))}
-                  placeholder="Nhập mã số linh kiện"
+                  placeholder={t('device_model.placeholder.part_number')}
                   className="h-11"
                   required
                 />

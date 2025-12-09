@@ -2,6 +2,7 @@
 
 import type { ServiceRequestStatus } from '@/constants/status'
 import { SERVICE_REQUEST_STATUS_DISPLAY, ServiceRequestStatus as SRS } from '@/constants/status'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { cn } from '@/lib/utils/cn'
 
 interface Props {
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export function StatusStepper({ current }: Props) {
+  const { t } = useLocale()
   // Define the success path explicitly
   const steps = [SRS.OPEN, SRS.APPROVED, SRS.IN_PROGRESS, SRS.RESOLVED, SRS.CLOSED]
 
@@ -19,7 +21,7 @@ export function StatusStepper({ current }: Props) {
   if (current === SRS.CANCELLED) {
     return (
       <div className="space-y-2">
-        <div className="text-sm font-semibold">Quy trình xử lý</div>
+        <div className="text-sm font-semibold">{t('service_request.workflow_title')}</div>
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
             <div className="flex flex-col items-center">
@@ -27,7 +29,7 @@ export function StatusStepper({ current }: Props) {
                 ✕
               </div>
               <div className="text-muted-foreground mt-1 max-w-[70px] truncate text-center text-[10px]">
-                Đã hủy
+                {t('service_request.status.cancelled')}
               </div>
             </div>
           </div>
@@ -38,7 +40,9 @@ export function StatusStepper({ current }: Props) {
 
   return (
     <div className="space-y-3">
-      <div className="text-sm font-semibold text-gray-700">Quy trình xử lý</div>
+      <div className="text-sm font-semibold text-gray-700">
+        {t('service_request.workflow_title')}
+      </div>
       <div className="flex items-center gap-1 overflow-x-auto pt-1 pb-4">
         {steps.map((s, i) => {
           const disp = SERVICE_REQUEST_STATUS_DISPLAY[s]
@@ -86,7 +90,7 @@ export function StatusStepper({ current }: Props) {
                         : 'text-[var(--neutral-400)]'
                   )}
                 >
-                  {disp.label}
+                  {disp.labelKey ? t(disp.labelKey) : disp.label}
                 </div>
               </div>
 

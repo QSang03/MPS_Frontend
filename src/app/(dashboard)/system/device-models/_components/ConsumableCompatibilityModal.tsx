@@ -23,6 +23,7 @@ import {
 import { AddConsumableModal } from './AddConsumableModal'
 import { DeleteDialog } from '@/components/shared/DeleteDialog'
 import { cn } from '@/lib/utils'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 interface ConsumableCompatibilityModalProps {
   deviceModelId: string
@@ -45,6 +46,7 @@ export function ConsumableCompatibilityModal({
   const [addModalOpen, setAddModalOpen] = useState(false)
   const [hideOuter, setHideOuter] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
+  const { t } = useLocale()
 
   const loadCompatibleConsumables = useCallback(async () => {
     try {
@@ -54,11 +56,11 @@ export function ConsumableCompatibilityModal({
       setFilteredConsumables(compatible)
     } catch (error: unknown) {
       console.error('Error loading compatible consumables:', error)
-      toast.error(String(error) || 'Không thể tải danh sách vật tư tương thích')
+      toast.error(String(error) || t('device_model.compatibility.load_error'))
     } finally {
       setLoading(false)
     }
-  }, [deviceModelId])
+  }, [deviceModelId, t])
 
   useEffect(() => {
     if (open) {
@@ -100,11 +102,10 @@ export function ConsumableCompatibilityModal({
           payload.error === 'COMPATIBILITY_IN_USE' ||
           /compatibilit/i.test(String(payload.message))
         ) {
-          toast.error(
-            'Không thể xóa liên kết — hiện có thiết bị đang sử dụng vật tư này. Vui lòng gỡ vật tư khỏi các thiết bị trước khi xóa liên kết.'
-          )
+          toast.error(t('device_model.compatibility.remove_in_use'))
         } else {
-          const msg = payload.message || payload.error || 'Không thể xóa liên kết'
+          const msg =
+            payload.message || payload.error || t('device_model.compatibility.remove_error')
           toast.error(msg)
         }
 
@@ -112,7 +113,7 @@ export function ConsumableCompatibilityModal({
         return
       }
 
-      toast.success('Đã xóa liên kết vật tư tiêu hao')
+      toast.success(t('device_model.compatibility.remove_success'))
       await loadCompatibleConsumables()
     } catch (error: unknown) {
       console.error('Error removing compatibility:', error)
@@ -124,13 +125,11 @@ export function ConsumableCompatibilityModal({
         | { error?: string; code?: string; message?: string }
         | undefined
       const code = errPayload?.error || errPayload?.code
-      const msg = errPayload?.message || err?.message || 'Không thể xóa liên kết'
+      const msg =
+        errPayload?.message || err?.message || t('device_model.compatibility.remove_error')
 
       if (code === 'COMPATIBILITY_IN_USE' || /compatibilit/i.test(String(msg))) {
-        // Show Vietnamese message for this business case
-        toast.error(
-          'Không thể xóa liên kết — hiện có thiết bị đang sử dụng vật tư này. Vui lòng gỡ vật tư khỏi các thiết bị trước khi xóa liên kết.'
-        )
+        toast.error(t('device_model.compatibility.remove_in_use'))
       } else {
         toast.error(msg)
       }
@@ -153,8 +152,8 @@ export function ConsumableCompatibilityModal({
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <SystemModalLayout
-          title="Vật tư Tiêu hao Tương thích"
-          description={`Danh sách vật tư tiêu hao tương thích cho model: ${deviceModelName}`}
+          title={t('device_model.compatibility.title')}
+          description={t('device_model.compatibility.description', { modelName: deviceModelName })}
           icon={Zap}
           variant="view"
           maxWidth={`${hideOuter ? 'hidden' : '!max-w-[75vw]'}`}
@@ -162,24 +161,28 @@ export function ConsumableCompatibilityModal({
           {/* Quick Stats */}
           <div className="mb-4 grid grid-cols-3 gap-3 rounded-lg border border-gray-200 bg-gradient-to-r from-emerald-50 to-teal-50 p-4">
             <div className="rounded-lg border border-emerald-200 bg-white p-2.5">
-              <p className="text-xs text-gray-600">Tổng vật tư</p>
+              <p className="text-xs text-gray-600">{t('device_model.compatibility.total_label')}</p>
               <p className="mt-1 text-xl font-bold text-emerald-600">
                 {compatibleConsumables.length}
               </p>
             </div>
             <div className="rounded-lg border border-green-200 bg-white p-2.5">
-              <p className="text-xs text-gray-600">Hoạt động</p>
+              <p className="text-xs text-gray-600">
+                {t('device_model.compatibility.active_label')}
+              </p>
               <p className="mt-1 text-xl font-bold text-green-600">{activeCount}</p>
             </div>
             <div className="rounded-lg border border-gray-200 bg-white p-2.5">
-              <p className="text-xs text-gray-600">Không hoạt động</p>
+              <p className="text-xs text-gray-600">
+                {t('device_model.compatibility.inactive_label')}
+              </p>
               <p className="mt-1 text-xl font-bold text-gray-600">{inactiveCount}</p>
             </div>
           </div>
           {loading ? (
             <div className="py-12 text-center">
               <Loader2 className="mx-auto mb-3 h-8 w-8 animate-spin text-emerald-600" />
-              <p className="text-muted-foreground">Đang tải...</p>
+              <p className="text-muted-foreground">{t('common.loading')}</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -189,7 +192,7 @@ export function ConsumableCompatibilityModal({
                   <div className="relative max-w-xs flex-1">
                     <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
                     <Input
-                      placeholder="Tìm kiếm..."
+                      placeholder={t('device_model.compatibility.search_placeholder')}
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="pl-9"
@@ -207,7 +210,7 @@ export function ConsumableCompatibilityModal({
                   className="gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700"
                 >
                   <Plus className="h-4 w-4" />
-                  Thêm vật tư
+                  {t('device_model.compatibility.add_button')}
                 </Button>
               </div>
 
@@ -220,13 +223,21 @@ export function ConsumableCompatibilityModal({
                       <th className="px-4 py-3 text-left text-sm font-semibold">
                         <div className="flex items-center gap-2">
                           <Package className="h-4 w-4 text-emerald-600" />
-                          Tên vật tư
+                          {t('device_model.compatibility.table.name')}
                         </div>
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold">Đơn vị</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold">Mô tả</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold">Trạng thái</th>
-                      <th className="px-4 py-3 text-right text-sm font-semibold">Thao tác</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold">
+                        {t('device_model.compatibility.table.unit')}
+                      </th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold">
+                        {t('device_model.compatibility.table.description')}
+                      </th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold">
+                        {t('device_model.compatibility.table.status')}
+                      </th>
+                      <th className="px-4 py-3 text-right text-sm font-semibold">
+                        {t('table.actions')}
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y">
@@ -237,12 +248,12 @@ export function ConsumableCompatibilityModal({
                             {searchTerm ? (
                               <>
                                 <Search className="h-12 w-12 opacity-20" />
-                                <p>Không tìm thấy vật tư phù hợp</p>
+                                <p>{t('device_model.compatibility.empty_search')}</p>
                               </>
                             ) : (
                               <>
                                 <Package className="h-12 w-12 opacity-20" />
-                                <p>Chưa có vật tư tiêu hao tương thích nào</p>
+                                <p>{t('device_model.compatibility.empty_none')}</p>
                               </>
                             )}
                           </div>
@@ -281,13 +292,13 @@ export function ConsumableCompatibilityModal({
                               ) : (
                                 <AlertCircle className="h-3 w-3" />
                               )}
-                              {c.isActive ? 'Hoạt động' : 'Tạm dừng'}
+                              {c.isActive ? t('status.active') : t('status.inactive')}
                             </Badge>
                           </td>
                           <td className="px-4 py-3 text-right">
                             <DeleteDialog
-                              title="Xác nhận xóa"
-                              description="Bạn có chắc chắn muốn xóa liên kết vật tư tiêu hao này?"
+                              title={t('common.confirm_delete')}
+                              description={t('device_model.compatibility.delete_confirmation')}
                               onConfirm={() => removeCompatibility(c.id)}
                               trigger={
                                 <Button
@@ -313,15 +324,13 @@ export function ConsumableCompatibilityModal({
                   <div className="flex items-center gap-2">
                     <BarChart3 className="h-4 w-4" />
                     <span>
-                      Hiển thị{' '}
-                      <span className="text-foreground font-semibold">
-                        {filteredConsumables.length}
-                      </span>
+                      {t('device_model.compatibility.footer_showing', {
+                        count: String(filteredConsumables.length),
+                      })}
                       {searchTerm &&
                         compatibleConsumables.length !== filteredConsumables.length && (
                           <span> / {compatibleConsumables.length}</span>
-                        )}{' '}
-                      vật tư
+                        )}
                     </span>
                   </div>
 
@@ -332,7 +341,7 @@ export function ConsumableCompatibilityModal({
                       onClick={() => setSearchTerm('')}
                       className="h-8"
                     >
-                      Xóa bộ lọc
+                      {t('device_model.compatibility.clear_filter')}
                     </Button>
                   )}
                 </div>

@@ -553,13 +553,13 @@ export default function DeviceFormModal({
               <div className="space-y-4">
                 <div className="flex items-center gap-2 text-sm font-semibold text-[var(--color-error-500)]">
                   <Package className="h-4 w-4" />
-                  Thông tin Khách hàng
+                  {t('device.customer_info_title')}
                 </div>
 
                 <div className="space-y-2">
                   <Label className="flex items-center gap-2 text-base font-semibold">
                     <Package className="h-4 w-4 text-[var(--color-error-500)]" />
-                    Khách hàng
+                    {t('device.customer_label')}
                   </Label>
                   <Select
                     value={form.customerId}
@@ -581,7 +581,7 @@ export default function DeviceFormModal({
                         <SelectItem value="__loading" disabled>
                           <div className="flex items-center gap-2">
                             <Loader2 className="h-4 w-4 animate-spin" />
-                            Đang tải...
+                            {t('loading.loading')}
                           </div>
                         </SelectItem>
                       )}
@@ -612,7 +612,7 @@ export default function DeviceFormModal({
                     <div className="space-y-2">
                       <Label className="flex items-center gap-2 text-base font-semibold">
                         <MapPin className="h-4 w-4 text-rose-600" />
-                        Vị trí tại khách hàng
+                        {t('device.customer_location')}
                         <span className="text-red-500">*</span>
                       </Label>
                       {/* If customer has address as array, show a Select so user can pick an address.
@@ -660,10 +660,7 @@ export default function DeviceFormModal({
                         )
                       })()}
 
-                      <p className="text-xs text-gray-500">
-                        Chọn hoặc nhập vị trí cụ thể của thiết bị tại khách hàng (phòng, tầng, khu
-                        vực...)
-                      </p>
+                      <p className="text-xs text-gray-500">{t('device.customer_location_help')}</p>
                     </div>
                   ) : null
                 })()}
@@ -676,13 +673,13 @@ export default function DeviceFormModal({
           <div className="space-y-4">
             <div className="flex items-center gap-2 text-sm font-semibold text-cyan-700">
               <Hash className="h-4 w-4" />
-              Thông tin cơ bản
+              {t('device.basic_info')}
             </div>
 
             <div className="space-y-2">
               <Label className="flex items-center gap-2 text-base font-semibold">
                 <Hash className="h-4 w-4 text-cyan-600" />
-                Serial Number *
+                {t('device.serial_label')}
               </Label>
               <Input
                 value={form.serialNumber}
@@ -703,7 +700,7 @@ export default function DeviceFormModal({
               <div className="space-y-2">
                 <Label className="flex items-center gap-2 text-base font-semibold">
                   <Settings className="h-4 w-4 text-indigo-600" />
-                  Firmware
+                  {t('device.firmware')}
                 </Label>
                 <Input
                   value={form.firmware}
@@ -802,7 +799,7 @@ export default function DeviceFormModal({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-base font-semibold text-gray-700">
                   <Package className="h-4 w-4 text-gray-600" />
-                  Trạng thái hoạt động
+                  {t('device.active_status')}
                 </div>
                 <div>
                   <Switch
@@ -858,15 +855,19 @@ export default function DeviceFormModal({
                   <SelectContent>
                     {form.isActive ? (
                       <>
-                        <SelectItem value="ACTIVE">Active</SelectItem>
-                        <SelectItem value="MAINTENANCE">Maintenance</SelectItem>
-                        <SelectItem value="ERROR">Error</SelectItem>
-                        <SelectItem value="OFFLINE">Offline</SelectItem>
+                        <SelectItem value="ACTIVE">{t('device.status.active')}</SelectItem>
+                        <SelectItem value="MAINTENANCE">
+                          {t('device.status.maintenance')}
+                        </SelectItem>
+                        <SelectItem value="ERROR">{t('device.status.error')}</SelectItem>
+                        <SelectItem value="OFFLINE">{t('device.status.offline')}</SelectItem>
                       </>
                     ) : (
                       <>
-                        <SelectItem value="DECOMMISSIONED">Decommissioned</SelectItem>
-                        <SelectItem value="SUSPENDED">Suspended</SelectItem>
+                        <SelectItem value="DECOMMISSIONED">
+                          {t('device.status.decommissioned')}
+                        </SelectItem>
+                        <SelectItem value="SUSPENDED">{t('device.status.suspended')}</SelectItem>
                       </>
                     )}
                   </SelectContent>

@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Loader2, X } from 'lucide-react'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { customersClientService } from '@/lib/api/services/customers-client.service'
 import type { Customer } from '@/types/models/customer'
 
@@ -172,13 +173,15 @@ export function CustomerMultiSelect({
 
   const validationMessage = () => {
     if (min && value.length < min) {
-      return `Cần chọn ít nhất ${min} khách hàng`
+      return t('customer.select.validation.min', { min })
     }
     if (max && value.length > max) {
-      return `Chỉ được chọn tối đa ${max} khách hàng`
+      return t('customer.select.validation.max', { max })
     }
     return null
   }
+
+  const { t } = useLocale()
 
   return (
     <div className="space-y-2" ref={containerRef}>
@@ -212,7 +215,7 @@ export function CustomerMultiSelect({
             setQuery(e.target.value)
             setOpen(true)
           }}
-          placeholder={placeholder ?? 'Tìm và chọn khách hàng...'}
+          placeholder={placeholder ?? t('customer.select.search_placeholder')}
           disabled={disabled || (max !== undefined && value.length >= max)}
           onFocus={() => setOpen(true)}
         />
@@ -224,10 +227,10 @@ export function CustomerMultiSelect({
           >
             {loading && items.length === 0 ? (
               <div className="text-muted-foreground flex items-center gap-2 p-3 text-sm">
-                <Loader2 className="h-4 w-4 animate-spin" /> Đang tải...
+                <Loader2 className="h-4 w-4 animate-spin" /> {t('loading.default')}
               </div>
             ) : items.length === 0 ? (
-              <div className="text-muted-foreground p-3 text-sm">Không tìm thấy khách hàng</div>
+              <div className="text-muted-foreground p-3 text-sm">{t('customer.select.empty')}</div>
             ) : (
               items.map((c) => {
                 const isSelected = value.includes(c.id)
@@ -247,7 +250,7 @@ export function CustomerMultiSelect({
                       </div>
                       {isSelected && (
                         <Badge variant="secondary" className="text-xs">
-                          Đã chọn
+                          {t('customer.select.selected')}
                         </Badge>
                       )}
                     </div>
@@ -260,7 +263,9 @@ export function CustomerMultiSelect({
             <div ref={sentinelRef} className="h-2" />
 
             {loading && items.length > 0 && (
-              <div className="text-muted-foreground p-2 text-center text-sm">Đang tải...</div>
+              <div className="text-muted-foreground p-2 text-center text-sm">
+                {t('loading.default')}
+              </div>
             )}
           </div>
         )}
@@ -273,11 +278,11 @@ export function CustomerMultiSelect({
       {(min || max) && (
         <p className="text-muted-foreground text-xs">
           {min && max
-            ? `Chọn từ ${min} đến ${max} khách hàng`
+            ? t('customer.select.helper.range', { min: min!, max: max! })
             : min
-              ? `Chọn ít nhất ${min} khách hàng`
-              : `Chọn tối đa ${max} khách hàng`}
-          {value.length > 0 && ` (Đã chọn: ${value.length})`}
+              ? t('customer.select.helper.min', { min: min! })
+              : t('customer.select.helper.max', { max: max! })}
+          {value.length > 0 && ` (${t('customer.select.helper.chosen')}: ${value.length})`}
         </p>
       )}
     </div>

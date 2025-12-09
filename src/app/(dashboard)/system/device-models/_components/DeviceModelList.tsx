@@ -37,6 +37,7 @@ import {
 import { toast } from 'sonner'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import {
   Package,
   Search,
@@ -57,6 +58,7 @@ interface DeviceModelStats {
 }
 
 export default function DeviceModelList() {
+  const { t } = useLocale()
   const { can } = useActionPermission('device-models')
 
   const [searchInput, setSearchInput] = useState('')
@@ -144,19 +146,19 @@ export default function DeviceModelList() {
       <StatsCards
         cards={[
           {
-            label: 'Tổng models',
+            label: t('device_model.stats.total_label'),
             value: stats.total,
             icon: <Package className="h-6 w-6" />,
             borderColor: 'violet',
           },
           {
-            label: 'Đang hoạt động',
+            label: t('device_model.stats.active_label'),
             value: stats.active,
             icon: <CheckCircle2 className="h-6 w-6" />,
             borderColor: 'green',
           },
           {
-            label: 'Không hoạt động',
+            label: t('device_model.stats.paused_label'),
             value: stats.inactive,
             icon: <XCircle className="h-6 w-6" />,
             borderColor: 'gray',
@@ -173,11 +175,11 @@ export default function DeviceModelList() {
       >
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <div>
-            <label className="mb-2 block text-sm font-medium">Tìm kiếm</label>
+            <label className="mb-2 block text-sm font-medium">{t('filters.search_label')}</label>
             <div className="relative">
               <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <Input
-                placeholder="Tìm kiếm..."
+                placeholder={t('filters.search_placeholder')}
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 onKeyDown={(e) => {
@@ -191,7 +193,7 @@ export default function DeviceModelList() {
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium">Nhà sản xuất</label>
+            <label className="mb-2 block text-sm font-medium">{t('filters.manufacturer')}</label>
             <Select
               value={manufacturerFilter}
               onValueChange={(value) => setManufacturerFilter(value)}
@@ -213,7 +215,7 @@ export default function DeviceModelList() {
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium">Loại thiết bị</label>
+            <label className="mb-2 block text-sm font-medium">{t('filters.device_type')}</label>
             <Select
               value={typeFilter}
               onValueChange={(value) => setTypeFilter(value)}
@@ -234,7 +236,7 @@ export default function DeviceModelList() {
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium">Trạng thái</label>
+            <label className="mb-2 block text-sm font-medium">{t('filters.status')}</label>
             <Select value={isActiveFilter} onValueChange={(value) => setIsActiveFilter(value)}>
               <SelectTrigger className="w-full">
                 <SelectValue />

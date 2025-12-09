@@ -5,6 +5,7 @@ import { QueryProvider } from '@/components/providers/QueryProvider'
 import TokenRefreshProvider from '@/components/providers/TokenRefreshProvider'
 import { Toaster } from '@/components/ui/sonner'
 import ThemeApplier from '@/components/providers/ThemeApplier'
+import LocaleProvider from '@/components/providers/LocaleProvider'
 
 // Modern font stack for better Vietnamese support
 const inter = Inter({
@@ -46,9 +47,11 @@ export default function RootLayout({
       >
         <QueryProvider>
           <TokenRefreshProvider>
-            {children}
-            <ThemeApplier />
-            <Toaster />
+            <LocaleProvider>
+              {children}
+              <ThemeApplier />
+              <Toaster />
+            </LocaleProvider>
           </TokenRefreshProvider>
         </QueryProvider>
       </body>

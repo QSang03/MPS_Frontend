@@ -185,7 +185,7 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
 
     // name is required
     if (!form.name || String(form.name).trim().length === 0) {
-      errors.name = 'Tên khách hàng là bắt buộc'
+      errors.name = t('customer.validation.name_required')
     }
 
     // if email provided, basic email format check
@@ -194,26 +194,26 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
       // stricter email check: require at least one dot in domain and TLD of letters (2-63)
       // allows subdomains like a.b.example.com
       const emailRe = /^[^\s@]+@([^.\s@]+\.)+[A-Za-z]{2,63}$/
-      if (!emailRe.test(email)) errors.contactEmail = 'Email không hợp lệ'
+      if (!emailRe.test(email)) errors.contactEmail = t('customer.validation.email_invalid')
     }
 
     // if phone provided, basic check (digits, +, spaces, dashes)
     if (form.contactPhone && String(form.contactPhone).trim().length > 0) {
       const phone = String(form.contactPhone).trim()
       const phoneRe = /^[+\d][\d ()-]{6,}$/
-      if (!phoneRe.test(phone)) errors.contactPhone = 'Số điện thoại không hợp lệ'
+      if (!phoneRe.test(phone)) errors.contactPhone = t('customer.validation.phone_invalid')
     }
 
     // code: optional but if present, ensure no spaces
     if (form.code && String(form.code).includes(' ')) {
-      errors.code = 'Mã không được chứa dấu cách'
+      errors.code = t('customer.validation.code_no_spaces')
     }
 
     // billingDay: optional but if present, must be between 1-31
     if (form.billingDay !== undefined && form.billingDay !== null) {
       const day = Number(form.billingDay)
       if (isNaN(day) || day < 1 || day > 31) {
-        errors.billingDay = 'ngày lấy số liệu phải từ 1 đến 31'
+        errors.billingDay = t('customer.validation.billing_day_range')
       }
     }
 
@@ -255,7 +255,7 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
       }
     } catch (err) {
       console.error('Customer save error', err)
-      let userMessage = 'Có lỗi khi lưu khách hàng'
+      let userMessage = t('customer.save_error')
       try {
         type AxiosLikeError = {
           response?: { data?: unknown; status?: number }
@@ -383,7 +383,7 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
         ) : mode === 'create' ? (
           <Button className="gap-2 bg-white text-violet-600 hover:bg-white/90">
             <Plus className="h-4 w-4" />
-            Thêm khách hàng
+            {t('customer.button.add')}
           </Button>
         ) : (
           <Button variant="outline" size="sm" className="gap-2">
@@ -393,9 +393,11 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
       </DialogTrigger>
 
       <SystemModalLayout
-        title={mode === 'create' ? 'Tạo khách hàng mới' : 'Chỉnh sửa khách hàng'}
+        title={mode === 'create' ? t('customer.form.title_create') : t('customer.form.title_edit')}
         description={
-          mode === 'create' ? 'Thêm khách hàng vào hệ thống' : 'Cập nhật thông tin khách hàng'
+          mode === 'create'
+            ? t('customer.form.description_create')
+            : t('customer.form.description_edit')
         }
         icon={mode === 'create' ? Building2 : Edit}
         variant={mode}
@@ -409,7 +411,7 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
               disabled={submitting}
               className="min-w-[100px]"
             >
-              Hủy
+              {t('customer.button.cancel')}
             </Button>
             <Button
               type="submit"
@@ -420,19 +422,19 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
               {submitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {mode === 'create' ? 'Đang tạo...' : 'Đang lưu...'}
+                  {mode === 'create' ? t('customer.button.creating') : t('customer.button.saving')}
                 </>
               ) : (
                 <>
                   {mode === 'create' ? (
                     <>
                       <Plus className="mr-2 h-4 w-4" />
-                      Tạo khách hàng
+                      {t('customer.button.create')}
                     </>
                   ) : (
                     <>
                       <Edit className="mr-2 h-4 w-4" />
-                      Lưu thay đổi
+                      {t('customer.button.save_changes')}
                     </>
                   )}
                 </>
@@ -445,12 +447,12 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
           <div className="space-y-4">
             <div className="flex items-center gap-2 text-sm font-semibold text-violet-700">
               <User className="h-4 w-4" />
-              Thông tin cơ bản
+              {t('customer.section.basic_info')}
             </div>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label className="text-base font-semibold">Tên khách hàng *</Label>
+                <Label className="text-base font-semibold">{t('customer.field.name')} *</Label>
                 <Input
                   ref={nameRef}
                   value={form.name || ''}
@@ -458,7 +460,7 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
                     setForm((s) => ({ ...s, name: e.target.value }))
                     clearFieldError('name')
                   }}
-                  placeholder="Tên khách hàng"
+                  placeholder={t('customer.placeholder.name')}
                   className={`h-11 ${fieldErrors.name ? 'border-destructive focus-visible:ring-destructive/50' : ''}`}
                   required
                 />
@@ -468,7 +470,7 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
               </div>
 
               <div className="space-y-2">
-                <Label className="text-base font-semibold">Mã (code)</Label>
+                <Label className="text-base font-semibold">{t('customer.field.code')}</Label>
                 <Input
                   ref={codeRef}
                   value={form.code || ''}
@@ -477,7 +479,7 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
                     clearFieldError('code')
                   }}
                   disabled={mode === 'edit' && (customer?.code ?? '').toUpperCase() === 'SYS'}
-                  placeholder="Mã khách hàng (ví dụ ABC_CORP)"
+                  placeholder={t('customer.placeholder.code')}
                   className={`h-11 ${fieldErrors.code ? 'border-destructive focus-visible:ring-destructive/50' : ''}`}
                 />
                 {fieldErrors.code && (
@@ -486,7 +488,9 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
               </div>
 
               <div className="space-y-2">
-                <Label className="text-base font-semibold">Email liên hệ</Label>
+                <Label className="text-base font-semibold">
+                  {t('customer.field.contact_email')}
+                </Label>
                 <Input
                   ref={contactEmailRef}
                   value={form.contactEmail || ''}
@@ -494,7 +498,7 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
                     setForm((s) => ({ ...s, contactEmail: e.target.value }))
                     clearFieldError('contactEmail')
                   }}
-                  placeholder="contact@company.com"
+                  placeholder={t('customer.placeholder.contact_email')}
                   className={`h-11 ${fieldErrors.contactEmail ? 'border-destructive focus-visible:ring-destructive/50' : ''}`}
                   type="email"
                 />
@@ -504,7 +508,9 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
               </div>
 
               <div className="space-y-2">
-                <Label className="text-base font-semibold">Số điện thoại</Label>
+                <Label className="text-base font-semibold">
+                  {t('customer.field.contact_phone')}
+                </Label>
                 <Input
                   ref={contactPhoneRef}
                   value={form.contactPhone || ''}
@@ -512,7 +518,7 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
                     setForm((s) => ({ ...s, contactPhone: e.target.value }))
                     clearFieldError('contactPhone')
                   }}
-                  placeholder="+84123456789"
+                  placeholder={t('customer.placeholder.contact_phone')}
                   className={`h-11 ${fieldErrors.contactPhone ? 'border-destructive focus-visible:ring-destructive/50' : ''}`}
                 />
                 {fieldErrors.contactPhone && (
@@ -521,7 +527,9 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
               </div>
 
               <div className="space-y-2">
-                <Label className="text-base font-semibold">Người liên hệ</Label>
+                <Label className="text-base font-semibold">
+                  {t('customer.field.contact_person')}
+                </Label>
                 <Input
                   ref={contactPersonRef}
                   value={form.contactPerson || ''}
@@ -529,7 +537,7 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
                     setForm((s) => ({ ...s, contactPerson: e.target.value }))
                     clearFieldError('contactPerson')
                   }}
-                  placeholder="Tên người liên hệ"
+                  placeholder={t('customer.placeholder.contact_person')}
                   className={`h-11 ${fieldErrors.contactPerson ? 'border-destructive focus-visible:ring-destructive/50' : ''}`}
                 />
                 {fieldErrors.contactPerson && (
@@ -538,13 +546,13 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
               </div>
 
               <div className="space-y-2">
-                <Label className="text-base font-semibold">Cấp (Tier)</Label>
+                <Label className="text-base font-semibold">{t('customer.field.tier')}</Label>
                 <Select
                   value={(form.tier as string) || 'BASIC'}
                   onValueChange={(v) => setForm((s) => ({ ...s, tier: v }))}
                 >
                   <SelectTrigger className="h-11">
-                    <SelectValue placeholder="Chọn tier" />
+                    <SelectValue placeholder={t('customer.placeholder.tier')} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="BASIC">BASIC</SelectItem>
@@ -555,7 +563,7 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
               </div>
 
               <div className="space-y-2">
-                <Label className="text-base font-semibold">ngày lấy số liệu</Label>
+                <Label className="text-base font-semibold">{t('customer.field.billing_day')}</Label>
                 <Input
                   ref={billingDayRef}
                   type="number"
@@ -572,7 +580,7 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
                     }))
                     clearFieldError('billingDay')
                   }}
-                  placeholder="Nhập ngày (1-31)"
+                  placeholder={t('customer.placeholder.billing_day')}
                   className={`h-11 ${fieldErrors.billingDay ? 'border-destructive focus-visible:ring-destructive/50' : ''}`}
                 />
                 {fieldErrors.billingDay && (
@@ -582,13 +590,13 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
 
               <div className="space-y-2">
                 <CurrencySelector
-                  label="Tiền tệ mặc định"
+                  label={t('customer.field.default_currency')}
                   value={form.defaultCurrencyId ?? null}
                   onChange={(value) => {
                     setForm((s) => ({ ...s, defaultCurrencyId: value ?? null }))
                   }}
                   optional
-                  placeholder="Chọn tiền tệ mặc định"
+                  placeholder={t('customer.placeholder.default_currency')}
                   customerId={customer?.id}
                 />
               </div>
@@ -600,11 +608,11 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
           <div className="space-y-4">
             <div className="flex items-center gap-2 text-sm font-semibold text-violet-700">
               <MapPin className="h-4 w-4" />
-              Địa chỉ & mô tả
+              {t('customer.section.address_desc')}
             </div>
 
             <div className="space-y-2">
-              <Label className="text-base font-semibold">Địa chỉ</Label>
+              <Label className="text-base font-semibold">{t('customer.field.address')}</Label>
               {(Array.isArray(form.address) && form.address.length > 0 ? form.address : ['']).map(
                 (addr, idx) => (
                   <div key={idx} className="flex items-center gap-2">
@@ -619,7 +627,7 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
                         })
                         clearFieldError('address')
                       }}
-                      placeholder={`Địa chỉ ${idx + 1}`}
+                      placeholder={t('customer.placeholder.address_n', { n: idx + 1 })}
                       className={`h-11 ${fieldErrors.address ? 'border-destructive focus-visible:ring-destructive/50' : ''} flex-1`}
                     />
                     <Button
@@ -635,7 +643,7 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
                       disabled={!(Array.isArray(form.address) && form.address.length > 1)}
                       className="min-w-[64px]"
                     >
-                      Xóa
+                      {t('customer.button.delete')}
                     </Button>
                   </div>
                 )
@@ -653,7 +661,7 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
                     }))
                   }
                 >
-                  Thêm địa chỉ
+                  {t('customer.button.add_address')}
                 </Button>
               </div>
               {fieldErrors.address && (
@@ -662,7 +670,7 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
             </div>
 
             <div className="space-y-2">
-              <Label className="text-base font-semibold">Mô tả</Label>
+              <Label className="text-base font-semibold">{t('customer.field.description')}</Label>
               <Input
                 ref={descriptionRef}
                 value={form.description || ''}
@@ -670,7 +678,7 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
                   setForm((s) => ({ ...s, description: e.target.value }))
                   clearFieldError('description')
                 }}
-                placeholder="Ghi chú thêm về khách hàng"
+                placeholder={t('customer.placeholder.description')}
                 className={`h-11 ${fieldErrors.description ? 'border-destructive focus-visible:ring-destructive/50' : ''}`}
               />
               {fieldErrors.description && (
@@ -684,12 +692,12 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
           <div className="space-y-4">
             <div className="flex items-center gap-2 text-sm font-semibold text-violet-700">
               <FileText className="h-4 w-4" />
-              Thông tin hóa đơn
+              {t('customer.section.invoice_info')}
             </div>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label className="text-base font-semibold">Bill To</Label>
+                <Label className="text-base font-semibold">{t('customer.invoice.bill_to')}</Label>
                 <Input
                   value={form.invoiceInfo?.billTo || ''}
                   onChange={(e) =>
@@ -698,13 +706,13 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
                       invoiceInfo: { ...(s.invoiceInfo || {}), billTo: e.target.value },
                     }))
                   }
-                  placeholder="Tên người/đơn vị nhận hóa đơn"
+                  placeholder={t('customer.placeholder.invoice_bill_to')}
                   className="h-11"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label className="text-base font-semibold">Invoice Address</Label>
+                <Label className="text-base font-semibold">{t('customer.invoice.address')}</Label>
                 <Input
                   value={form.invoiceInfo?.address || ''}
                   onChange={(e) =>
@@ -713,13 +721,13 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
                       invoiceInfo: { ...(s.invoiceInfo || {}), address: e.target.value },
                     }))
                   }
-                  placeholder="Địa chỉ nhận hóa đơn"
+                  placeholder={t('customer.placeholder.invoice_address')}
                   className="h-11"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label className="text-base font-semibold">ATT</Label>
+                <Label className="text-base font-semibold">{t('customer.invoice.att')}</Label>
                 <Input
                   value={form.invoiceInfo?.att || ''}
                   onChange={(e) =>
@@ -728,13 +736,13 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
                       invoiceInfo: { ...(s.invoiceInfo || {}), att: e.target.value },
                     }))
                   }
-                  placeholder="Người nhận"
+                  placeholder={t('customer.placeholder.invoice_att')}
                   className="h-11"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label className="text-base font-semibold">HP / PO Ref</Label>
+                <Label className="text-base font-semibold">{t('customer.invoice.hp_po_ref')}</Label>
                 <Input
                   value={form.invoiceInfo?.hpPoRef || ''}
                   onChange={(e) =>
@@ -743,13 +751,13 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
                       invoiceInfo: { ...(s.invoiceInfo || {}), hpPoRef: e.target.value },
                     }))
                   }
-                  placeholder="Số PO/Ref"
+                  placeholder={t('customer.placeholder.invoice_hp_po_ref')}
                   className="h-11"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label className="text-base font-semibold">ERP ID</Label>
+                <Label className="text-base font-semibold">{t('customer.invoice.erp_id')}</Label>
                 <Input
                   value={form.invoiceInfo?.erpId || ''}
                   onChange={(e) =>
@@ -758,13 +766,13 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
                       invoiceInfo: { ...(s.invoiceInfo || {}), erpId: e.target.value },
                     }))
                   }
-                  placeholder="Mã ERP"
+                  placeholder={t('customer.placeholder.invoice_erp_id')}
                   className="h-11"
                 />
               </div>
 
               <div className="space-y-2 md:col-span-2">
-                <Label className="text-base font-semibold">Email hóa đơn</Label>
+                <Label className="text-base font-semibold">{t('customer.invoice.emails')}</Label>
                 {(Array.isArray(form.invoiceInfo?.emails) && form.invoiceInfo!.emails!.length > 0
                   ? form.invoiceInfo!.emails!
                   : ['']
@@ -781,7 +789,7 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
                           return { ...s, invoiceInfo: { ...(s.invoiceInfo || {}), emails } }
                         })
                       }
-                      placeholder={`invoice${idx + 1}@example.com`}
+                      placeholder={t('customer.placeholder.invoice_email_example', { n: idx + 1 })}
                       className="h-11 flex-1"
                       type="email"
                     />
@@ -805,7 +813,7 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
                       }
                       className="min-w-[64px]"
                     >
-                      Xóa
+                      {t('customer.button.delete')}
                     </Button>
                   </div>
                 ))}
@@ -828,7 +836,7 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
                       }))
                     }
                   >
-                    Thêm email
+                    {t('customer.button.add_email')}
                   </Button>
                 </div>
               </div>
@@ -838,17 +846,15 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
           <div className="space-y-4">
             <div className="flex items-center gap-2 text-sm font-semibold text-violet-700">
               <CheckCircle2 className="h-4 w-4" />
-              Trạng thái
+              {t('customer.section.status')}
             </div>
 
             <div className="flex items-center justify-between rounded-lg border-2 p-4">
               <div>
                 <label className="flex items-center gap-2 text-base font-semibold">
-                  Trạng thái hoạt động
+                  {t('customer.status.active_label')}
                 </label>
-                <p className="text-muted-foreground text-sm">
-                  Bật/tắt trạng thái hoạt động của khách hàng
-                </p>
+                <p className="text-muted-foreground text-sm">{t('customer.status.description')}</p>
               </div>
               <Switch
                 checked={!!form.isActive}

@@ -27,6 +27,7 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { consumablesClientService } from '@/lib/api/services/consumables-client.service'
 import { toast } from 'sonner'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { differenceInDays, format } from 'date-fns'
 import { vi } from 'date-fns/locale'
 
@@ -40,6 +41,7 @@ export default function ConsumableDetailModal({
   consumableId?: string
 }) {
   const [loading, setLoading] = useState(false)
+  const { t } = useLocale()
   const [item, setItem] = useState<Record<string, unknown> | null>(null)
 
   // Narrowed runtime view of the consumable item to satisfy TypeScript checks
@@ -176,12 +178,12 @@ export default function ConsumableDetailModal({
           {loading ? (
             <div className="flex flex-col items-center justify-center py-12">
               <Loader2 className="h-10 w-10 animate-spin text-emerald-600" />
-              <p className="mt-4 text-sm text-slate-500">Đang tải thông tin...</p>
+              <p className="mt-4 text-sm text-slate-500">{t('loading.default')}</p>
             </div>
           ) : !item ? (
             <div className="flex flex-col items-center justify-center py-12 text-slate-500">
               <Package className="mb-4 h-12 w-12 opacity-20" />
-              <p>Không tìm thấy dữ liệu vật tư</p>
+              <p>{t('consumable.detail.not_found')}</p>
             </div>
           ) : (
             <div className="space-y-6">

@@ -268,7 +268,7 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
       const validation = validateAttributes(attributes)
       if (!validation.valid) {
         setAttributeErrors(validation.errors)
-        toast.error('Vui lòng kiểm tra các thuộc tính bổ sung')
+        toast.error(t('error.check_attributes'))
         return
       }
       setAttributeErrors({})
@@ -307,16 +307,16 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Email</FormLabel>
+                <FormLabel>{t('user.email')}</FormLabel>
                 <FormControl>
                   <Input
                     type="email"
-                    placeholder="user@example.com"
+                    placeholder={t('user.email_placeholder')}
                     {...field}
                     disabled={isPending}
                   />
                 </FormControl>
-                <FormDescription>Địa chỉ email của người dùng</FormDescription>
+                <FormDescription>{t('user.field.email_description')}</FormDescription>
               </FormItem>
             )}
           />
@@ -327,11 +327,15 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
           name="fullName"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Họ tên</FormLabel>
+              <FormLabel>{t('user.field.fullName')}</FormLabel>
               <FormControl>
-                <Input placeholder="Nhập họ tên đầy đủ" {...field} disabled={isPending} />
+                <Input
+                  placeholder={t('user.placeholder.fullName')}
+                  {...field}
+                  disabled={isPending}
+                />
               </FormControl>
-              <FormDescription>Họ tên đầy đủ của người dùng</FormDescription>
+              <FormDescription>{t('user.field.fullName_description')}</FormDescription>
             </FormItem>
           )}
         />
@@ -340,20 +344,20 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
           name="roleId"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Vai trò</FormLabel>
+              <FormLabel>{t('user.field.role')}</FormLabel>
               <FormControl>
                 <Select onValueChange={field.onChange} value={(field.value as string) || ''}>
                   <SelectTrigger className="h-10 rounded-lg border-2 border-gray-200 transition-all focus:border-amber-500 focus:ring-2 focus:ring-amber-200">
-                    <SelectValue placeholder="Chọn vai trò" />
+                    <SelectValue placeholder={t('placeholder.select_role')} />
                   </SelectTrigger>
                   <SelectContent>
                     {isLoadingRoles ? (
                       <SelectItem value="__loading" disabled>
-                        Đang tải vai trò...
+                        {t('user.roles.loading')}
                       </SelectItem>
                     ) : roles.length === 0 ? (
                       <SelectItem value="__no_roles" disabled>
-                        Không có quyền xem vai trò
+                        {t('user.roles.no_roles')}
                       </SelectItem>
                     ) : (
                       roles.map((r: UserRole) => (
@@ -365,7 +369,7 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
                   </SelectContent>
                 </Select>
               </FormControl>
-              <FormDescription>Vai trò của người dùng (bắt buộc)</FormDescription>
+              <FormDescription>{t('user.field.role_description')}</FormDescription>
             </FormItem>
           )}
         />
@@ -384,10 +388,10 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
         <div className="flex gap-4">
           <Button type="submit" disabled={isPending}>
             {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {mode === 'create' ? 'Tạo người dùng' : 'Cập nhật người dùng'}
+            {mode === 'create' ? t('user.button.create') : t('button.update')}
           </Button>
           <Button type="button" variant="outline" onClick={onSuccess} disabled={isPending}>
-            Hủy
+            {t('cancel')}
           </Button>
         </div>
       </form>

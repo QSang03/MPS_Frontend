@@ -177,8 +177,11 @@ export default function DevicesPageClient() {
       })
     }
     if (sorting.sortBy !== 'createdAt' || sorting.sortOrder !== 'desc') {
+      const directionLabel = sorting.sortOrder === 'asc' ? t('sort.asc') : t('sort.desc')
       filters.push({
-        label: `Sắp xếp: ${sorting.sortBy} (${sorting.sortOrder === 'asc' ? 'Tăng dần' : 'Giảm dần'})`,
+        label: t('filters.sort')
+          .replace('{sortBy}', String(sorting.sortBy))
+          .replace('{direction}', directionLabel),
         value: `${sorting.sortBy}-${sorting.sortOrder}`,
         onRemove: () => setSorting({ sortBy: 'createdAt', sortOrder: 'desc' }),
       })
@@ -218,19 +221,19 @@ export default function DevicesPageClient() {
       <StatsCards
         cards={[
           {
-            label: 'Tổng thiết bị',
+            label: t('devices.stats.total_label'),
             value: stats.total,
             icon: <Monitor className="h-6 w-6" />,
             borderColor: 'blue',
           },
           {
-            label: 'Hoạt động',
+            label: t('devices.stats.active_label'),
             value: stats.active,
             icon: <CheckCircle2 className="h-6 w-6" />,
             borderColor: 'green',
           },
           {
-            label: 'Không hoạt động',
+            label: t('devices.stats.inactive_label'),
             value: stats.inactive,
             icon: <AlertCircle className="h-6 w-6" />,
             borderColor: 'gray',
@@ -752,7 +755,7 @@ function DevicesTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <Users className="h-4 w-4 text-gray-600" />
-            Sở hữu
+            {t('devices.table.ownership')}
           </div>
         ),
         enableSorting: true,
@@ -765,28 +768,30 @@ function DevicesTableContent({
           let tooltipText: string | null = null
 
           if (device.isCustomerOwned === true) {
-            // Đã mua đứt (sở hữu vĩnh viễn)
+            // Owned permanently
             badgeContent = (
               <Badge className="bg-[var(--brand-50)] text-[var(--brand-700)] hover:bg-[var(--brand-100)]">
-                Đã sở hữu
+                {t('devices.ownership.owned')}
               </Badge>
             )
             if (ownershipPeriod) {
               tooltipText = formatOwnershipPeriod(ownershipPeriod.fromDate, ownershipPeriod.toDate)
             }
           } else if (device.ownershipStatus === 'current') {
-            // Đang sở hữu (có thể là thuê)
+            // Currently owned (possibly rented)
             badgeContent = (
-              <Badge className="bg-green-100 text-green-700 hover:bg-green-200">Đang thuê</Badge>
+              <Badge className="bg-green-100 text-green-700 hover:bg-green-200">
+                {t('devices.ownership.rented')}
+              </Badge>
             )
             if (ownershipPeriod) {
               tooltipText = formatOwnershipPeriod(ownershipPeriod.fromDate, ownershipPeriod.toDate)
             }
           } else if (device.ownershipStatus === 'historical') {
-            // Đã từng sở hữu
+            // Historically owned
             badgeContent = (
               <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700">
-                Đã từng thuê
+                {t('devices.ownership.historical')}
               </Badge>
             )
             if (ownershipPeriod) {
@@ -796,7 +801,7 @@ function DevicesTableContent({
             // Không sở hữu
             badgeContent = (
               <Badge variant="outline" className="bg-gray-50 text-gray-600">
-                Không sở hữu
+                {t('devices.ownership.none')}
               </Badge>
             )
           }

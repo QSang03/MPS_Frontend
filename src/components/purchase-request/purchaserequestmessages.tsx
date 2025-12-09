@@ -11,6 +11,7 @@ import type { PurchaseRequestMessage } from '@/types/models/purchase-request'
 import { toast } from 'sonner'
 import { Loader2, Send, MessageSquare } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
+import { useLocale } from '../providers/LocaleProvider'
 
 interface Props {
   purchaseRequestId: string
@@ -22,6 +23,7 @@ interface Props {
  * Reusable conversation component for a purchase request
  */
 export default function PurchaseRequestMessages({ purchaseRequestId, currentUserId }: Props) {
+  const { t } = useLocale()
   const queryClient = useQueryClient()
   const [draft, setDraft] = useState('')
   const feedRef = useRef<HTMLDivElement | null>(null)
@@ -80,7 +82,7 @@ export default function PurchaseRequestMessages({ purchaseRequestId, currentUser
         {isLoading ? (
           <div className="text-muted-foreground flex h-full flex-col items-center justify-center space-y-2">
             <Loader2 className="h-5 w-5 animate-spin" />
-            <span className="text-xs">Đang tải hội thoại...</span>
+            <span className="text-xs">{t('purchase_request.messages.loading')}</span>
           </div>
         ) : messages.length > 0 ? (
           messages.map((m: PurchaseRequestMessage) => {
@@ -119,7 +121,7 @@ export default function PurchaseRequestMessages({ purchaseRequestId, currentUser
                 >
                   <div className="mb-1 flex items-baseline gap-2 px-1">
                     <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                      {isMe ? 'Bạn' : m.authorName}
+                      {isMe ? t('common.you') : m.authorName}
                     </span>
                     <span className="text-muted-foreground text-[10px]">
                       {formatRelativeTime(m.createdAt)}
@@ -143,8 +145,8 @@ export default function PurchaseRequestMessages({ purchaseRequestId, currentUser
         ) : (
           <div className="text-muted-foreground flex h-full flex-col items-center justify-center opacity-60">
             <MessageSquare className="mb-2 h-8 w-8" />
-            <p className="text-sm">Chưa có tin nhắn nào.</p>
-            <p className="text-xs">Hãy bắt đầu cuộc trò chuyện.</p>
+            <p className="text-sm">{t('purchase_request.messages.no_messages')}</p>
+            <p className="text-xs">{t('purchase_request.messages.start')}</p>
           </div>
         )}
       </div>
@@ -156,7 +158,7 @@ export default function PurchaseRequestMessages({ purchaseRequestId, currentUser
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={onKeyDown}
-            placeholder="Nhập tin nhắn... (Enter để gửi)"
+            placeholder={t('purchase_request.messages.placeholder')}
             className="bg-muted/30 max-h-[120px] min-h-[44px] resize-none py-3 pr-12 focus-visible:ring-1 focus-visible:ring-offset-0"
             rows={1}
           />
@@ -176,7 +178,7 @@ export default function PurchaseRequestMessages({ purchaseRequestId, currentUser
             ) : (
               <Send className="h-4 w-4" />
             )}
-            <span className="sr-only">Gửi</span>
+            <span className="sr-only">{t('common.send')}</span>
           </Button>
         </div>
       </div>

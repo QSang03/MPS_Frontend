@@ -9,6 +9,7 @@ import { Loader2, Send, Bot, User, CheckCircle2 } from 'lucide-react'
 import { policyAssistantService } from '@/lib/api/services/policy-assistant.service'
 import type { Policy } from '@/types/policies'
 import { toast } from 'sonner'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 interface ChatMessage {
   role: 'user' | 'assistant'
@@ -23,6 +24,7 @@ interface AIAssistantPanelProps {
 }
 
 export function AIAssistantPanel({ onUseSuggestion, onAutoAnalyze }: AIAssistantPanelProps) {
+  const { t } = useLocale()
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -64,7 +66,7 @@ export function AIAssistantPanel({ onUseSuggestion, onAutoAnalyze }: AIAssistant
       setMessages((prev) => [...prev, assistantMessage])
     } catch (error) {
       console.error('[AIAssistantPanel] chat error', error)
-      toast.error('Không thể gửi tin nhắn đến AI assistant')
+      toast.error(t('policies.ai.send_error'))
       setMessages((prev) => prev.slice(0, -1)) // Remove user message on error
     } finally {
       setIsLoading(false)
@@ -84,9 +86,9 @@ export function AIAssistantPanel({ onUseSuggestion, onAutoAnalyze }: AIAssistant
       <div className="mb-4">
         <div className="flex items-center gap-2">
           <Bot className="h-5 w-5 text-[var(--brand-600)]" />
-          <h3 className="text-lg font-semibold text-slate-900">AI Assistant</h3>
+          <h3 className="text-lg font-semibold text-slate-900">{t('policies.ai.title')}</h3>
         </div>
-        <p className="mt-1 text-sm text-slate-500">Hỏi AI để nhận gợi ý tạo policy dễ dàng hơn</p>
+        <p className="mt-1 text-sm text-slate-500">{t('policies.ai.subtitle')}</p>
       </div>
 
       {/* Messages */}
@@ -95,8 +97,8 @@ export function AIAssistantPanel({ onUseSuggestion, onAutoAnalyze }: AIAssistant
           <div className="flex h-full items-center justify-center text-center">
             <div className="text-gray-500">
               <Bot className="mx-auto mb-3 h-12 w-12 opacity-50" />
-              <p className="text-sm">Chào bạn! Tôi có thể giúp bạn tạo policy.</p>
-              <p className="mt-1 text-xs">Ví dụ: "Làm sao để cho phép user đọc department?"</p>
+              <p className="text-sm">{t('policies.ai.welcome')}</p>
+              <p className="mt-1 text-xs">{t('policies.ai.example_prompt')}</p>
             </div>
           </div>
         ) : (
@@ -122,7 +124,7 @@ export function AIAssistantPanel({ onUseSuggestion, onAutoAnalyze }: AIAssistant
                   <div className="mt-3 rounded border border-gray-200 bg-gray-50 p-3">
                     <div className="mb-2 flex items-center justify-between">
                       <Badge variant="outline" className="text-xs">
-                        Suggested Policy
+                        {t('policies.ai.suggested_policy')}
                       </Badge>
                       <Button
                         size="sm"
@@ -131,7 +133,7 @@ export function AIAssistantPanel({ onUseSuggestion, onAutoAnalyze }: AIAssistant
                         className="h-7 text-xs"
                       >
                         <CheckCircle2 className="mr-1 h-3 w-3" />
-                        Sử dụng gợi ý này
+                        {t('policies.ai.use_suggestion')}
                       </Button>
                     </div>
                     <pre className="max-h-40 overflow-auto text-xs">
@@ -178,7 +180,7 @@ export function AIAssistantPanel({ onUseSuggestion, onAutoAnalyze }: AIAssistant
               handleSend()
             }
           }}
-          placeholder="Nhập câu hỏi của bạn..."
+          placeholder={t('policies.ai.input_placeholder')}
           disabled={isLoading}
           className="flex-1"
         />

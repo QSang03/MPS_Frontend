@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { useQuery } from '@tanstack/react-query'
 import { currenciesClientService } from '@/lib/api/services/currencies-client.service'
 import type { CurrencyDataDto } from '@/types/models/currency'
@@ -99,30 +100,32 @@ export function CurrenciesList() {
     return { total, active: activeCount, inactive }
   }, [currencies, pagination])
 
+  const { t } = useLocale()
+
   const columns: ColumnDef<CurrencyDataDto>[] = useMemo(
     () => [
       {
         accessorKey: 'code',
-        header: 'Mã',
+        header: t('table.code'),
         cell: ({ row }) => (
           <div className="font-mono font-semibold text-[var(--brand-600)]">{row.original.code}</div>
         ),
       },
       {
         accessorKey: 'name',
-        header: 'Tên',
+        header: t('table.name'),
         cell: ({ row }) => <div className="font-medium">{row.original.name}</div>,
       },
       {
         accessorKey: 'symbol',
-        header: 'Ký hiệu',
+        header: t('currency.symbol'),
         cell: ({ row }) => (
           <div className="text-lg font-semibold text-gray-700">{row.original.symbol}</div>
         ),
       },
       {
         accessorKey: 'isActive',
-        header: 'Trạng thái',
+        header: t('filters.status_label'),
         cell: ({ row }) => (
           <Badge
             className={
@@ -134,12 +137,12 @@ export function CurrenciesList() {
             {row.original.isActive ? (
               <>
                 <CheckCircle2 className="mr-1 h-3 w-3" />
-                Đang hoạt động
+                {t('status.active')}
               </>
             ) : (
               <>
                 <XCircle className="mr-1 h-3 w-3" />
-                Không hoạt động
+                {t('status.inactive')}
               </>
             )}
           </Badge>
@@ -147,7 +150,7 @@ export function CurrenciesList() {
       },
       {
         id: 'actions',
-        header: 'Thao tác',
+        header: t('table.actions'),
         cell: ({ row }) => (
           <Button
             variant="outline"
@@ -156,12 +159,12 @@ export function CurrenciesList() {
             onClick={() => handleViewDetail(row.original)}
           >
             <Eye className="h-4 w-4" />
-            Xem chi tiết
+            {t('common.view_details')}
           </Button>
         ),
       },
     ],
-    []
+    [t]
   )
 
   return (
@@ -170,19 +173,19 @@ export function CurrenciesList() {
       <StatsCards
         cards={[
           {
-            label: 'Tổng số tiền tệ',
+            label: t('currencies.stats.total'),
             value: stats.total,
             icon: <Coins className="h-6 w-6" />,
             borderColor: 'blue',
           },
           {
-            label: 'Đang hoạt động',
+            label: t('currencies.stats.active'),
             value: stats.active,
             icon: <CheckCircle2 className="h-6 w-6" />,
             borderColor: 'green',
           },
           {
-            label: 'Không hoạt động',
+            label: t('currencies.stats.inactive'),
             value: stats.inactive,
             icon: <XCircle className="h-6 w-6" />,
             borderColor: 'gray',
@@ -194,11 +197,11 @@ export function CurrenciesList() {
       <FilterSection title="Bộ lọc" onReset={handleResetFilters} activeFilters={activeFilters}>
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Tìm kiếm</label>
+            <label className="text-sm font-medium">{t('filters.search_label')}</label>
             <div className="relative">
               <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <Input
-                placeholder="Tìm theo mã hoặc tên..."
+                placeholder={t('filters.search_placeholder')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-10"
@@ -207,15 +210,15 @@ export function CurrenciesList() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Trạng thái</label>
+            <label className="text-sm font-medium">{t('filters.status_label')}</label>
             <Select value={isActive} onValueChange={setIsActive}>
               <SelectTrigger>
-                <SelectValue placeholder="Tất cả" />
+                <SelectValue placeholder={t('placeholder.all_statuses')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tất cả</SelectItem>
-                <SelectItem value="true">Đang hoạt động</SelectItem>
-                <SelectItem value="false">Không hoạt động</SelectItem>
+                <SelectItem value="all">{t('placeholder.all_statuses')}</SelectItem>
+                <SelectItem value="true">{t('status.active')}</SelectItem>
+                <SelectItem value="false">{t('status.inactive')}</SelectItem>
               </SelectContent>
             </Select>
           </div>

@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import type { AdminOverviewKPIs } from '@/types/dashboard'
 import { Bell, Package, AlertTriangle, Clock, ArrowRight } from 'lucide-react'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { cn } from '@/lib/utils/cn'
@@ -51,6 +52,7 @@ export function AlertsSummary({
   alerts,
 }: AlertsSummaryProps) {
   const router = useRouter()
+  const { t } = useLocale()
   const [modalOpen, setModalOpen] = useState(false)
   const [selectedAlertType, setSelectedAlertType] = useState<
     null | 'low_consumable' | 'device_error' | 'sla_breach'
@@ -62,9 +64,9 @@ export function AlertsSummary({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Bell className="h-5 w-5" />
-            Cảnh báo hệ thống
+            {t('alerts.title')}
           </CardTitle>
-          <CardDescription>Các cảnh báo cần xử lý</CardDescription>
+          <CardDescription>{t('alerts.description')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
@@ -92,7 +94,7 @@ export function AlertsSummary({
     {
       id: 'low_consumable',
       type: 'low_consumable',
-      title: 'Vật tư tiêu hao sắp hết',
+      title: t('alerts.low_consumable.title'),
       count: lowConsumableCount,
       severity: (alerts?.consumableWarnings?.severity ?? 'MEDIUM').toLowerCase() as
         | 'low'
@@ -103,12 +105,12 @@ export function AlertsSummary({
       color: 'from-orange-500 to-orange-600',
       bgColor: 'bg-orange-50',
       iconColor: 'text-orange-600',
-      description: 'Vật tư cần bổ sung',
+      description: t('alerts.low_consumable.description'),
     },
     {
       id: 'device_error',
       type: 'device_error',
-      title: 'Lỗi thiết bị',
+      title: t('alerts.device_error.title'),
       count: deviceErrorCount,
       severity: (alerts?.deviceErrors?.severity ?? 'HIGH').toLowerCase() as
         | 'low'
@@ -119,12 +121,12 @@ export function AlertsSummary({
       color: 'from-red-500 to-red-600',
       bgColor: 'bg-red-50',
       iconColor: 'text-[var(--color-error-500)]',
-      description: 'Thiết bị cần sửa chữa',
+      description: t('alerts.device_error.description'),
     },
     {
       id: 'sla_breach',
       type: 'sla_breach',
-      title: 'Vi phạm SLA',
+      title: t('alerts.sla_breach.title'),
       count: slaCount,
       severity: (alerts?.slaViolations?.severity ?? 'CRITICAL').toLowerCase() as
         | 'low'
@@ -135,7 +137,7 @@ export function AlertsSummary({
       color: 'from-[var(--brand-600)] to-[var(--brand-500)]',
       bgColor: 'bg-[var(--brand-50)]',
       iconColor: 'text-[var(--brand-600)]',
-      description: 'Yêu cầu quá hạn xử lý',
+      description: t('alerts.sla_breach.description'),
     },
   ]
 
@@ -154,22 +156,24 @@ export function AlertsSummary({
 
   const getSeverityBadge = (severity: string, count: number) => {
     if (count === 0) {
-      return <Badge variant="secondary">Không có</Badge>
+      return <Badge variant="secondary">{t('common.none')}</Badge>
     }
 
     switch (severity) {
       case 'critical':
         return (
           <Badge variant="destructive" className="bg-[var(--warning-600)]">
-            Nghiêm trọng
+            {t('alert.severity.critical')}
           </Badge>
         )
       case 'high':
-        return <Badge variant="destructive">Cao</Badge>
+        return <Badge variant="destructive">{t('alert.severity.high')}</Badge>
       case 'medium':
-        return <Badge className="bg-orange-500 hover:bg-orange-600">Trung bình</Badge>
+        return (
+          <Badge className="bg-orange-500 hover:bg-orange-600">{t('alert.severity.medium')}</Badge>
+        )
       default:
-        return <Badge variant="secondary">Thấp</Badge>
+        return <Badge variant="secondary">{t('alert.severity.low')}</Badge>
     }
   }
 

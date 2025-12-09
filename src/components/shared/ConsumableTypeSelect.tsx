@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react'
 import { Input } from '@/components/ui/input'
 import { Loader2 } from 'lucide-react'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { consumableTypesClientService } from '@/lib/api/services/consumable-types-client.service'
 import type { ConsumableType } from '@/types/models/consumable-type'
 
@@ -26,6 +27,7 @@ export function ConsumableTypeSelect({ value, onChange, disabled, placeholder }:
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
   const [selectedLabel, setSelectedLabel] = useState<string>('')
+  const { t } = useLocale()
   const debounceRef = useRef<number | null>(null)
   const containerRef = useRef<HTMLDivElement | null>(null)
   const listRef = useRef<HTMLDivElement | null>(null)
@@ -138,7 +140,7 @@ export function ConsumableTypeSelect({ value, onChange, disabled, placeholder }:
           setOpen(true)
           if (onChange) onChange('')
         }}
-        placeholder={placeholder ?? 'Chọn loại vật tư'}
+        placeholder={placeholder ?? t('consumable_types.select.placeholder')}
         disabled={disabled}
         onFocus={() => setOpen(true)}
       />
@@ -150,10 +152,12 @@ export function ConsumableTypeSelect({ value, onChange, disabled, placeholder }:
         >
           {loading && items.length === 0 ? (
             <div className="text-muted-foreground flex items-center gap-2 p-3 text-sm">
-              <Loader2 className="h-4 w-4 animate-spin" /> Đang tải...
+              <Loader2 className="h-4 w-4 animate-spin" /> {t('loading.default')}
             </div>
           ) : items.length === 0 ? (
-            <div className="text-muted-foreground p-3 text-sm">Không tìm thấy loại vật tư</div>
+            <div className="text-muted-foreground p-3 text-sm">
+              {t('consumable_types.select.empty')}
+            </div>
           ) : (
             items.map((t) => (
               <button
@@ -171,7 +175,9 @@ export function ConsumableTypeSelect({ value, onChange, disabled, placeholder }:
           <div ref={sentinelRef} className="h-2" />
 
           {loading && items.length > 0 && (
-            <div className="text-muted-foreground p-2 text-center text-sm">Đang tải...</div>
+            <div className="text-muted-foreground p-2 text-center text-sm">
+              {t('loading.default')}
+            </div>
           )}
         </div>
       )}

@@ -241,7 +241,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
         return response.data
       } catch (err) {
         console.error('Failed to fetch monthly usage pages:', err)
-        toast.error('Không thể tải dữ liệu sử dụng theo tháng')
+        toast.error(t('system_device_detail.monthly_usage.load_error'))
         throw err
       }
     },
@@ -406,7 +406,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
         }
       } catch (err) {
         console.error('Error fetching device:', err)
-        setError(err instanceof Error ? err.message : 'Không thể tải thông tin thiết bị')
+        setError(err instanceof Error ? err.message : t('user_device_detail.error.load_data'))
       } finally {
         setLoading(false)
       }
@@ -415,7 +415,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
     if (deviceId) {
       fetchDevice()
     }
-  }, [deviceId, modelId])
+  }, [deviceId, modelId, t])
 
   // Fetch customer addresses when customer is selected or device has a customer
   useEffect(() => {
@@ -499,7 +499,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
         >
           <Button variant="ghost" className="gap-2">
             <ArrowLeft className="h-4 w-4" />
-            Quay lại
+            {t('common.back')}
           </Button>
         </Link>
         <Card>
@@ -524,13 +524,13 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
         >
           <Button variant="ghost" className="gap-2">
             <ArrowLeft className="h-4 w-4" />
-            Quay lại
+            {t('common.back')}
           </Button>
         </Link>
         <Card>
           <CardContent className="pt-6">
             <div className="text-muted-foreground text-center">
-              <p>Không tìm thấy thiết bị</p>
+              <p>{t('user_device_detail.not_found')}</p>
             </div>
           </CardContent>
         </Card>
@@ -585,7 +585,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
         ) : (
           <AlertCircle className="h-3.5 w-3.5" />
         )}
-        {isActive ? 'Hoạt động' : 'Không hoạt động'}
+        {isActive ? t('device.status.active') : t('device.status.inactive')}
       </Badge>
     )
   }
@@ -603,7 +603,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
             >
               <Button variant="ghost" className="gap-2">
                 <ArrowLeft className="h-4 w-4" />
-                Quay lại
+                {t('common.back')}
               </Button>
             </Link>
           </div>
@@ -631,7 +631,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                   size="sm"
                   onClick={() => setA4ModalOpen(true)}
                   className="gap-2 bg-white text-black"
-                  title="Ghi/Chỉnh sửa snapshot A4"
+                  title={t('system_device_detail.a4_snapshot.edit_tooltip')}
                 >
                   <BarChart3 className="h-4 w-4 text-black" />
                   A4
@@ -644,10 +644,10 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                   setA4HistoryOpen(true)
                 }}
                 className="ml-2 gap-2 bg-white text-black"
-                title="Xem lịch sử snapshot A4"
+                title={t('system_device_detail.a4_snapshot.history_tooltip')}
               >
                 <FileText className="h-4 w-4 text-black" />
-                Lịch sử
+                {t('common.history')}
               </Button>
               {Boolean(device?.isActive) ? (
                 <ActionGuard pageId="devices" actionId="update">
@@ -658,7 +658,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                     className="gap-2"
                   >
                     <Edit className="h-4 w-4" />
-                    Chỉnh sửa
+                    {t('common.edit')}
                   </Button>
                 </ActionGuard>
               ) : (
@@ -667,12 +667,14 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                     <div>
                       <Button variant="secondary" size="sm" disabled className="gap-2">
                         <Edit className="h-4 w-4" />
-                        Chỉnh sửa
+                        {t('common.edit')}
                       </Button>
                     </div>
                   </TooltipTrigger>
                   <TooltipContent sideOffset={4}>
-                    {`Thiết bị không hoạt động. Lý do: ${device?.inactiveReason ?? 'Không rõ'}`}
+                    {t('user_device_detail.inactive_reason', {
+                      reason: device?.inactiveReason ?? t('user_device_detail.reason_unknown'),
+                    })}
                   </TooltipContent>
                 </Tooltip>
               )}
@@ -680,8 +682,8 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
               {Boolean(device?.isActive) ? (
                 <ActionGuard pageId="devices" actionId="delete">
                   <DeleteDialog
-                    title="Xóa thiết bị"
-                    description="Bạn có chắc muốn xóa thiết bị này? Hành động không thể hoàn tác."
+                    title={t('user_device_detail.delete.title')}
+                    description={t('user_device_detail.delete.description')}
                     onConfirm={async () => {
                       try {
                         await devicesClientService.delete(deviceId)
@@ -697,7 +699,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                     trigger={
                       <Button variant="destructive" size="sm" className="gap-2">
                         <Trash2 className="h-4 w-4" />
-                        Xóa
+                        {t('common.delete')}
                       </Button>
                     }
                   />
@@ -708,12 +710,14 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                     <div>
                       <Button variant="destructive" size="sm" disabled className="gap-2">
                         <Trash2 className="h-4 w-4" />
-                        Xóa
+                        {t('common.delete')}
                       </Button>
                     </div>
                   </TooltipTrigger>
                   <TooltipContent sideOffset={4}>
-                    {`Thiết bị không hoạt động. Lý do: ${device?.inactiveReason ?? 'Không rõ'}`}
+                    {t('user_device_detail.inactive_reason', {
+                      reason: device?.inactiveReason ?? t('user_device_detail.reason_unknown'),
+                    })}
                   </TooltipContent>
                 </Tooltip>
               )}
@@ -731,35 +735,35 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
               className="ring-offset-background focus-visible:ring-ring data-[state=active]:bg-background data-[state=active]:text-foreground inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium whitespace-nowrap transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm"
             >
               <Info className="h-4 w-4" />
-              Tổng quan
+              {t('user_device_detail.tab.overview')}
             </TabsTrigger>
             <TabsTrigger
               value="consumables"
               className="ring-offset-background focus-visible:ring-ring data-[state=active]:bg-background data-[state=active]:text-foreground inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium whitespace-nowrap transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm"
             >
               <Package className="h-4 w-4" />
-              Vật tư
+              {t('user_device_detail.tab.consumables')}
             </TabsTrigger>
             <TabsTrigger
               value="maintenance"
               className="ring-offset-background focus-visible:ring-ring data-[state=active]:bg-background data-[state=active]:text-foreground inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium whitespace-nowrap transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm"
             >
               <Wrench className="h-4 w-4" />
-              Bảo trì
+              {t('user_device_detail.tab.maintenance')}
             </TabsTrigger>
             <TabsTrigger
               value="history"
               className="ring-offset-background focus-visible:ring-ring data-[state=active]:bg-background data-[state=active]:text-foreground inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium whitespace-nowrap transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm"
             >
               <BarChart3 className="h-4 w-4" />
-              Lịch sử vật tư
+              {t('user_device_detail.tab.consumable_history')}
             </TabsTrigger>
             <TabsTrigger
               value="usage-history"
               className="ring-offset-background focus-visible:ring-ring data-[state=active]:bg-background data-[state=active]:text-foreground inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium whitespace-nowrap transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm"
             >
               <BarChart3 className="h-4 w-4" />
-              Lịch sử sử dụng
+              {t('user_device_detail.tab.usage_history')}
             </TabsTrigger>
           </TabsList>
         </div>
@@ -1557,7 +1561,9 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                                       setEditActualPagesPrintedError(
                                         typeof prefilledPages === 'number' &&
                                           prefilledPages > MAX_ACTUAL_PAGES
-                                          ? `Số trang không được lớn hơn ${MAX_ACTUAL_PAGES.toLocaleString('en-US')}`
+                                          ? t('system_device_detail.consumables.pages_max_error', {
+                                              max: MAX_ACTUAL_PAGES.toLocaleString('en-US'),
+                                            })
                                           : null
                                       )
                                       // clear any edit price error so the UI focuses on the pages error
@@ -1621,10 +1627,10 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                 <div>
                   <CardTitle className="flex items-center gap-2">
                     <Sparkles className="h-5 w-5 text-amber-600" />
-                    Vật tư tương thích
+                    {t('system_device_detail.compatible.title')}
                   </CardTitle>
                   <CardDescription className="mt-1">
-                    Các loại vật tư có thể lắp vào thiết bị này
+                    {t('system_device_detail.compatible.description')}
                   </CardDescription>
                 </div>
               </div>
@@ -1637,7 +1643,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
               ) : compatibleConsumables.length === 0 ? (
                 <div className="text-muted-foreground p-8 text-center">
                   <AlertCircle className="mx-auto mb-3 h-12 w-12 opacity-20" />
-                  <p>Không tìm thấy vật tư tương thích</p>
+                  <p>{t('system_device_detail.compatible.empty')}</p>
                 </div>
               ) : (
                 <div className="overflow-hidden rounded-lg border">
@@ -1645,14 +1651,24 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                     <thead className="bg-gradient-to-r from-amber-50 to-orange-50">
                       <tr>
                         <th className="px-4 py-3 text-left text-sm font-semibold">#</th>
-                        <th className="px-4 py-3 text-left text-sm font-semibold">Tên</th>
-                        <th className="px-4 py-3 text-left text-sm font-semibold">Part</th>
-                        <th className="px-4 py-3 text-left text-sm font-semibold">Dòng máy</th>
-                        <th className="px-4 py-3 text-right text-sm font-semibold">
-                          Kho khách hàng
+                        <th className="px-4 py-3 text-left text-sm font-semibold">
+                          {t('system_device_detail.compatible.table.name')}
                         </th>
-                        <th className="px-4 py-3 text-right text-sm font-semibold">Kho hệ thống</th>
-                        <th className="px-4 py-3 text-right text-sm font-semibold">Thao tác</th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold">
+                          {t('system_device_detail.compatible.table.part')}
+                        </th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold">
+                          {t('system_device_detail.compatible.table.machine_line')}
+                        </th>
+                        <th className="px-4 py-3 text-right text-sm font-semibold">
+                          {t('system_device_detail.compatible.table.customer_stock')}
+                        </th>
+                        <th className="px-4 py-3 text-right text-sm font-semibold">
+                          {t('system_device_detail.compatible.table.system_stock')}
+                        </th>
+                        <th className="px-4 py-3 text-right text-sm font-semibold">
+                          {t('system_device_detail.compatible.table.actions')}
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y">
@@ -1715,7 +1731,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                                     className="gap-2"
                                   >
                                     <Plus className="h-4 w-4" />
-                                    Thêm
+                                    {t('common.add')}
                                   </Button>
                                 </ActionGuard>
                               ) : (
@@ -1724,12 +1740,16 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                                     <div>
                                       <Button size="sm" disabled className="gap-2">
                                         <Plus className="h-4 w-4" />
-                                        Thêm
+                                        {t('common.add')}
                                       </Button>
                                     </div>
                                   </TooltipTrigger>
                                   <TooltipContent sideOffset={4}>
-                                    {`Thiết bị không hoạt động. Lý do: ${device?.inactiveReason ?? 'Không rõ'}`}
+                                    {t('user_device_detail.inactive_reason', {
+                                      reason:
+                                        device?.inactiveReason ??
+                                        t('user_device_detail.reason_unknown'),
+                                    })}
                                   </TooltipContent>
                                 </Tooltip>
                               )}
@@ -1760,9 +1780,11 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <BarChart3 className="h-5 w-5 text-emerald-600" />
-                Lịch sử sử dụng vật tư
+                {t('system_device_detail.consumable_history.title')}
               </CardTitle>
-              <CardDescription>Lịch sử thay thế/tiêu hao vật tư theo thiết bị</CardDescription>
+              <CardDescription>
+                {t('system_device_detail.consumable_history.description')}
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <ConsumableUsageHistory

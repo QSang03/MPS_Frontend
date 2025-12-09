@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts'
 import { Button } from '@/components/ui/button'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -41,6 +42,7 @@ interface DeviceUsageHistoryProps {
 }
 
 export default function DeviceUsageHistory({ deviceId, device }: DeviceUsageHistoryProps) {
+  const { t } = useLocale()
   // Get date range constraints from ownership period if device is historical
   const ownershipDateRange = useMemo(() => {
     if (device?.ownershipPeriod && isHistoricalDevice(device)) {
@@ -72,7 +74,7 @@ export default function DeviceUsageHistory({ deviceId, device }: DeviceUsageHist
   const load = useCallback(async () => {
     if (!deviceId) return
     if (fromDate && toDate && fromDate > toDate) {
-      setError('Ngày bắt đầu phải nhỏ hơn hoặc bằng ngày kết thúc')
+      setError(t('device_usage.error.start_before_end'))
       return
     }
 
@@ -84,7 +86,7 @@ export default function DeviceUsageHistory({ deviceId, device }: DeviceUsageHist
         device.ownershipPeriod
       )
       if (!validation.isValid) {
-        setError(validation.error || 'Khoảng thời gian không hợp lệ')
+        setError(validation.error || t('device_usage.error.invalid_period'))
         return
       }
     }
@@ -121,12 +123,11 @@ export default function DeviceUsageHistory({ deviceId, device }: DeviceUsageHist
 
       if (axiosError.response?.status === 403) {
         const errorMessage =
-          axiosError.response.data?.message ||
-          'Bạn không có quyền xem dữ liệu trong khoảng thời gian này. Thiết bị đã được chuyển giao.'
+          axiosError.response.data?.message || t('device_usage.error.permission_denied')
         setError(errorMessage)
         toast.error(errorMessage)
       } else {
-        const msg = err instanceof Error ? err.message : 'Lỗi tải dữ liệu'
+        const msg = err instanceof Error ? err.message : t('device_usage.error.load_failed')
         toast.error(msg)
         setError(msg)
       }
@@ -238,13 +239,13 @@ export default function DeviceUsageHistory({ deviceId, device }: DeviceUsageHist
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Thống kê sử dụng vật tư</CardTitle>
-              <CardDescription>Biểu đồ sử dụng theo ngày / series</CardDescription>
+              <CardTitle>{t('device_usage.title')}</CardTitle>
+              <CardDescription>{t('device_usage.description')}</CardDescription>
             </div>
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" onClick={() => load()}>
                 <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-                Làm mới
+                {t('button.refresh')}
               </Button>
             </div>
           </div>
@@ -256,14 +257,15 @@ export default function DeviceUsageHistory({ deviceId, device }: DeviceUsageHist
                 <AlertTriangle className="mt-0.5 h-5 w-5 text-[var(--warning-500)]" />
                 <div className="flex-1">
                   <p className="text-sm font-medium text-[var(--warning-600)]">
-                    Thiết bị đã được chuyển giao
+                    {t('device_usage.ownership.title')}
                   </p>
                   <p className="mt-1 text-xs text-[var(--warning-500)]">
-                    Bạn chỉ có thể xem dữ liệu từ{' '}
-                    {new Date(device.ownershipPeriod.fromDate).toLocaleDateString('vi-VN')} đến{' '}
-                    {device.ownershipPeriod.toDate
-                      ? new Date(device.ownershipPeriod.toDate).toLocaleDateString('vi-VN')
-                      : 'ngày hiện tại'}
+                    {t('device_usage.ownership.description', {
+                      fromDate: new Date(device.ownershipPeriod.fromDate).toLocaleDateString(),
+                      toDate: device.ownershipPeriod.toDate
+                        ? new Date(device.ownershipPeriod.toDate).toLocaleDateString()
+                        : t('device_usage.ownership.now'),
+                    })}
                   </p>
                 </div>
               </div>
@@ -271,7 +273,7 @@ export default function DeviceUsageHistory({ deviceId, device }: DeviceUsageHist
           )}
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div>
-              <Label className="text-sm font-medium">Từ ngày</Label>
+              <Label className="text-sm font-medium">{t('device_usage.from_date')}</Label>
               <Input
                 type="date"
                 value={fromDate}
@@ -282,7 +284,7 @@ export default function DeviceUsageHistory({ deviceId, device }: DeviceUsageHist
               />
             </div>
             <div>
-              <Label className="text-sm font-medium">Đến ngày</Label>
+              <Label className="text-sm font-medium">{t('device_usage.to_date')}</Label>
               <Input
                 type="date"
                 value={toDate}
@@ -293,7 +295,7 @@ export default function DeviceUsageHistory({ deviceId, device }: DeviceUsageHist
               />
             </div>
             <div>
-              <Label className="text-sm font-medium">Giá trị</Label>
+              <Label className="text-sm font-medium">{t('device_usage.value')}</Label>
               <Select
                 value={valueMode}
                 onValueChange={(v) => setValueMode(v as 'percentage' | 'remaining')}
@@ -302,8 +304,8 @@ export default function DeviceUsageHistory({ deviceId, device }: DeviceUsageHist
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="percentage">Phần trăm (%)</SelectItem>
-                  <SelectItem value="remaining">Lượng còn lại</SelectItem>
+                  <SelectItem value="percentage">{t('device_usage.value.percentage')}</SelectItem>
+                  <SelectItem value="remaining">{t('device_usage.value.remaining')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -313,12 +315,12 @@ export default function DeviceUsageHistory({ deviceId, device }: DeviceUsageHist
             {loading ? (
               <div className="flex items-center gap-2">
                 <Loader2 className="h-5 w-5 animate-spin text-[var(--brand-600)]" />
-                <div className="text-sm">Đang tải dữ liệu...</div>
+                <div className="text-sm">{t('device_usage.loading')}</div>
               </div>
             ) : error ? (
               <div className="text-sm text-[var(--color-error-500)]">{error}</div>
             ) : consumables.length === 0 ? (
-              <div className="text-muted-foreground text-sm">Không có dữ liệu</div>
+              <div className="text-muted-foreground text-sm">{t('device_usage.empty')}</div>
             ) : (
               <div className="space-y-4">
                 <div className="flex gap-2 overflow-x-auto">
@@ -341,7 +343,7 @@ export default function DeviceUsageHistory({ deviceId, device }: DeviceUsageHist
                           })
                         }
                       >
-                        {c.consumableTypeName ?? 'Không tên'}
+                        {c.consumableTypeName ?? t('common.unknown')}
                       </button>
                     )
                   })}
@@ -349,7 +351,7 @@ export default function DeviceUsageHistory({ deviceId, device }: DeviceUsageHist
 
                 <div className="mt-4 h-[320px] rounded-md border bg-white p-2">
                   {chartData.length === 0 ? (
-                    <div className="p-6 text-sm text-slate-500">Chưa có dữ liệu</div>
+                    <div className="p-6 text-sm text-slate-500">{t('device_usage.empty')}</div>
                   ) : (
                     (() => {
                       const anyVisible = chartData.some((row) =>
@@ -358,7 +360,7 @@ export default function DeviceUsageHistory({ deviceId, device }: DeviceUsageHist
                       if (!anyVisible) {
                         return (
                           <div className="p-6 text-sm text-slate-500">
-                            Không có dữ liệu hiển thị
+                            {t('device_usage.no_visible_data')}
                           </div>
                         )
                       }

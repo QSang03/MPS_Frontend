@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { SystemPageHeader } from '@/components/system/SystemPageHeader'
 import { UserPageLayout } from '@/components/user/UserPageLayout'
 import { LoadingState } from '@/components/ui/LoadingState'
@@ -113,6 +114,8 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
   const [error, setError] = useState<string | null>(null)
   const [expandedDeviceId, setExpandedDeviceId] = useState<string | null>(null)
 
+  const { t } = useLocale()
+
   // Get month from URL searchParams or prop or default to current month
   const now = new Date()
   const defaultMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
@@ -168,13 +171,13 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
   }
 
   if (loading) {
-    return <LoadingState text="Đang tải dữ liệu tổng quan..." />
+    return <LoadingState text={t('dashboard.loading_overview')} />
   }
 
   if (error) {
     return (
       <EmptyState
-        title="Đã xảy ra lỗi"
+        title={t('dashboard.error.title')}
         description={error}
         action={{ label: 'Thử lại', onClick: () => window.location.reload() }}
       />
@@ -184,8 +187,8 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
   if (!overview) {
     return (
       <EmptyState
-        title="Không có dữ liệu"
-        description="Hiện tại chưa có dữ liệu tổng quan cho tháng này."
+        title={t('dashboard.empty.title')}
+        description={t('dashboard.empty.description')}
       />
     )
   }

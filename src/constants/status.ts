@@ -83,35 +83,86 @@ export enum Priority {
 // Unified Vietnamese display labels & color tokens for service request statuses (Phase 1 standardization)
 export const SERVICE_REQUEST_STATUS_DISPLAY: Record<
   ServiceRequestStatus,
-  { label: string; color: string }
+  { label: string; labelKey: string; color: string }
 > = {
-  [ServiceRequestStatus.OPEN]: { label: 'Mở', color: 'gray' },
-  [ServiceRequestStatus.IN_PROGRESS]: { label: 'Đang xử lý', color: 'gray' },
-  [ServiceRequestStatus.APPROVED]: { label: 'Đã duyệt', color: 'green' },
-  [ServiceRequestStatus.RESOLVED]: { label: 'Đã xử lý', color: 'green' },
-  [ServiceRequestStatus.CLOSED]: { label: 'Đóng', color: 'gray' },
-  [ServiceRequestStatus.CANCELLED]: { label: 'Đã hủy', color: 'red' },
+  [ServiceRequestStatus.OPEN]: {
+    label: 'Mở',
+    labelKey: 'service_request.status.open',
+    color: 'gray',
+  },
+  [ServiceRequestStatus.IN_PROGRESS]: {
+    label: 'Đang xử lý',
+    labelKey: 'service_request.status.in_progress',
+    color: 'gray',
+  },
+  [ServiceRequestStatus.APPROVED]: {
+    label: 'Đã duyệt',
+    labelKey: 'service_request.status.approved',
+    color: 'green',
+  },
+  [ServiceRequestStatus.RESOLVED]: {
+    label: 'Đã xử lý',
+    labelKey: 'service_request.status.resolved',
+    color: 'green',
+  },
+  [ServiceRequestStatus.CLOSED]: {
+    label: 'Đóng',
+    labelKey: 'service_request.status.closed',
+    color: 'gray',
+  },
+  [ServiceRequestStatus.CANCELLED]: {
+    label: 'Đã hủy',
+    labelKey: 'service_request.status.cancelled',
+    color: 'red',
+  },
 }
 
 // Unified Vietnamese display labels & color tokens for priorities (Phase 1 standardization)
-export const PRIORITY_DISPLAY: Record<Priority, { label: string; color: string }> = {
-  [Priority.HIGH]: { label: 'Cao', color: 'orange' },
-  [Priority.NORMAL]: { label: 'Bình thường', color: 'gray' },
-  [Priority.LOW]: { label: 'Thấp', color: 'gray' },
-  [Priority.URGENT]: { label: 'Khẩn cấp', color: 'red' },
+export const PRIORITY_DISPLAY: Record<
+  Priority,
+  { label: string; labelKey: string; color: string }
+> = {
+  [Priority.HIGH]: { label: 'Cao', labelKey: 'priority.high', color: 'orange' },
+  [Priority.NORMAL]: { label: 'Bình thường', labelKey: 'priority.normal', color: 'gray' },
+  [Priority.LOW]: { label: 'Thấp', labelKey: 'priority.low', color: 'gray' },
+  [Priority.URGENT]: { label: 'Khẩn cấp', labelKey: 'priority.urgent', color: 'red' },
 }
 
 // Unified Vietnamese display labels & color tokens for purchase request statuses
 export const PURCHASE_REQUEST_STATUS_DISPLAY: Record<
   PurchaseRequestStatus,
-  { label: string; color: string }
+  { label: string; labelKey?: string; color: string }
 > = {
-  [PurchaseRequestStatus.PENDING]: { label: 'Chờ duyệt', color: 'amber' },
-  [PurchaseRequestStatus.APPROVED]: { label: 'Đã duyệt', color: 'green' },
-  [PurchaseRequestStatus.ORDERED]: { label: 'Đã đặt hàng', color: 'blue' },
-  [PurchaseRequestStatus.IN_TRANSIT]: { label: 'Đang vận chuyển', color: 'purple' },
-  [PurchaseRequestStatus.RECEIVED]: { label: 'Đã nhận hàng', color: 'green' },
-  [PurchaseRequestStatus.CANCELLED]: { label: 'Đã hủy', color: 'red' },
+  [PurchaseRequestStatus.PENDING]: {
+    label: 'Chờ duyệt',
+    labelKey: 'purchase_request.status.pending',
+    color: 'amber',
+  },
+  [PurchaseRequestStatus.APPROVED]: {
+    label: 'Đã duyệt',
+    labelKey: 'purchase_request.status.approved',
+    color: 'green',
+  },
+  [PurchaseRequestStatus.ORDERED]: {
+    label: 'Đã đặt hàng',
+    labelKey: 'purchase_request.status.ordered',
+    color: 'blue',
+  },
+  [PurchaseRequestStatus.IN_TRANSIT]: {
+    label: 'Đang vận chuyển',
+    labelKey: 'purchase_request.status.in_transit',
+    color: 'purple',
+  },
+  [PurchaseRequestStatus.RECEIVED]: {
+    label: 'Đã nhận hàng',
+    labelKey: 'purchase_request.status.received',
+    color: 'green',
+  },
+  [PurchaseRequestStatus.CANCELLED]: {
+    label: 'Đã hủy',
+    labelKey: 'purchase_request.status.cancelled',
+    color: 'red',
+  },
 }
 
 export type ServiceRequestStatusValue = ServiceRequestStatus

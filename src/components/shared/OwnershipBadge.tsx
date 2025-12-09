@@ -1,7 +1,10 @@
+'use client'
+
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { History } from 'lucide-react'
 import type { Device } from '@/types/models/device'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 interface OwnershipBadgeProps {
   device: Device
@@ -13,6 +16,7 @@ interface OwnershipBadgeProps {
  * Chỉ hiển thị khi device có ownershipStatus === 'historical'
  */
 export function OwnershipBadge({ device, className }: OwnershipBadgeProps) {
+  const { t } = useLocale()
   if (device.ownershipStatus !== 'historical') {
     return null
   }
@@ -26,7 +30,7 @@ export function OwnershipBadge({ device, className }: OwnershipBadgeProps) {
       )}
     >
       <History className="h-3.5 w-3.5" />
-      <span>Thiết bị lịch sử</span>
+      <span>{t('devices.history_badge')}</span>
     </Badge>
   )
 }

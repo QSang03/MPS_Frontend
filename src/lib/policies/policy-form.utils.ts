@@ -198,20 +198,24 @@ export const buildDraftChecklist = (draft: PolicyDraftInput): DraftChecklistItem
   )
 
   return [
-    { id: 'role', label: 'Có role trong subject', passed: hasRole },
-    { id: 'actions', label: 'Có ít nhất một action', passed: hasActions },
-    { id: 'resource-type', label: 'Định nghĩa resource.type', passed: hasResourceType },
+    { id: 'role', label: 'policies.draft.checklist.items.role', passed: hasRole },
+    { id: 'actions', label: 'policies.draft.checklist.items.actions', passed: hasActions },
+    {
+      id: 'resource-type',
+      label: 'policies.draft.checklist.items.resource_type',
+      passed: hasResourceType,
+    },
     {
       id: 'tenant-isolation',
-      label: 'Tenant isolation',
+      label: 'policies.draft.checklist.items.tenant_isolation',
       passed: tenantIsolation,
-      hint: tenantIsolation ? undefined : 'Cần giới hạn customerId trong resource hoặc subject.',
+      hint: tenantIsolation ? undefined : 'policies.draft.checklist.hints.tenant_isolation_missing',
     },
     {
       id: 'conditions',
-      label: 'Các condition hợp lệ',
+      label: 'policies.draft.checklist.items.conditions',
       passed: conditionsValid,
-      hint: conditionsValid ? undefined : 'Không được để trống operator/value trong điều kiện.',
+      hint: conditionsValid ? undefined : 'policies.draft.checklist.hints.conditions_invalid',
     },
   ]
 }

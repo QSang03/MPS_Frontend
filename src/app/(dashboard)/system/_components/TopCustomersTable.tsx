@@ -1,43 +1,41 @@
 'use client'
 
 import { motion } from 'framer-motion'
+import { Award, Building2, Crown, Download, Medal, Users } from 'lucide-react'
+
+import { useLocale } from '@/components/providers/LocaleProvider'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
-  CardFooter,
 } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import type { TopCustomer } from '@/types/dashboard'
-import { Building2, Crown, Medal, Award, Users, Download } from 'lucide-react'
-import { cn } from '@/lib/utils/cn'
-import type { CurrencyDataDto } from '@/types/models/currency'
+import { cn } from '@/lib/utils'
 import { formatCurrencyWithSymbol } from '@/lib/utils/formatters'
+import type { TopCustomer } from '@/types/dashboard'
+import type { CurrencyDataDto } from '@/types/models/currency'
 
 interface TopCustomersTableProps {
-  topCustomers: TopCustomer[] | undefined
+  topCustomers?: TopCustomer[]
   isLoading?: boolean
   onViewAll?: () => void
   onExport?: () => void
   baseCurrency?: CurrencyDataDto | null
 }
 
-function formatCurrency(amount: number, currency?: CurrencyDataDto | null): string {
-  if (currency) {
-    return formatCurrencyWithSymbol(amount, currency)
-  }
-  // Fallback to USD if no currency provided
-  return formatCurrencyWithSymbol(amount, { code: 'USD', symbol: '$' } as CurrencyDataDto)
-}
-
 const RANK_ICONS = [
-  { icon: Crown, color: 'text-yellow-500', bgColor: 'bg-yellow-50', label: '#1' },
-  { icon: Medal, color: 'text-gray-400', bgColor: 'bg-gray-50', label: '#2' },
-  { icon: Award, color: 'text-orange-500', bgColor: 'bg-orange-50', label: '#3' },
+  { icon: Crown, color: 'text-yellow-500', bgColor: 'bg-yellow-50' },
+  { icon: Medal, color: 'text-gray-400', bgColor: 'bg-gray-50' },
+  { icon: Award, color: 'text-orange-500', bgColor: 'bg-orange-50' },
 ]
+
+function formatCurrency(amount: number, currency?: CurrencyDataDto | null): string {
+  return formatCurrencyWithSymbol(amount, currency)
+}
 
 export function TopCustomersTable({
   topCustomers,
@@ -46,15 +44,17 @@ export function TopCustomersTable({
   onExport,
   baseCurrency,
 }: TopCustomersTableProps) {
+  const { t } = useLocale()
+
   if (isLoading || !topCustomers) {
     return (
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Building2 className="h-5 w-5" />
-            Top khách hàng
+            {t('dashboard.top_customers.title')}
           </CardTitle>
-          <CardDescription>Khách hàng chi tiêu cao nhất trong tháng</CardDescription>
+          <CardDescription>{t('dashboard.top_customers.description')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
@@ -79,15 +79,15 @@ export function TopCustomersTable({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Building2 className="h-5 w-5" />
-            Top khách hàng
+            {t('dashboard.top_customers.title')}
           </CardTitle>
-          <CardDescription>Khách hàng chi tiêu cao nhất trong tháng</CardDescription>
+          <CardDescription>{t('dashboard.top_customers.description')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex h-40 items-center justify-center text-gray-500">
             <div className="text-center">
               <Building2 className="mx-auto mb-2 h-12 w-12 text-gray-300" />
-              <p>Chưa có dữ liệu khách hàng</p>
+              <p>{t('dashboard.top_customers.empty')}</p>
             </div>
           </div>
         </CardContent>
@@ -95,7 +95,6 @@ export function TopCustomersTable({
     )
   }
 
-  // Helper to get display value (converted if available, else original)
   const getDisplayValue = (
     original: number,
     converted: number | undefined,
@@ -105,10 +104,8 @@ export function TopCustomersTable({
     return original
   }
 
-  // Use converted values if baseCurrency is available (System Admin context)
   const useConverted = !!baseCurrency
 
-  // Calculate total revenue for percentage (use converted if available)
   const totalRevenue = topCustomers.reduce(
     (sum, customer) =>
       sum + getDisplayValue(customer.totalRevenue, customer.totalRevenueConverted, useConverted),
@@ -125,10 +122,10 @@ export function TopCustomersTable({
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-base font-semibold text-[var(--foreground)]">
             <Building2 className="h-5 w-5 text-[#0066CC]" />
-            Top khách hàng
+            {t('dashboard.top_customers.title')}
           </CardTitle>
           <CardDescription className="text-[13px] text-[#6B7280]">
-            Khách hàng chi tiêu cao nhất trong tháng (Top {topCustomers.length})
+            {t('dashboard.top_customers.description_with_count', { count: topCustomers.length })}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -166,7 +163,6 @@ export function TopCustomersTable({
                     index === 2 && 'border-orange-200 bg-orange-50/50'
                   )}
                 >
-                  {/* Rank Icon/Number */}
                   <div
                     className={cn(
                       'flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full',
@@ -180,7 +176,6 @@ export function TopCustomersTable({
                     )}
                   </div>
 
-                  {/* Customer Info */}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <p className="truncate font-semibold text-gray-900">
@@ -196,13 +191,14 @@ export function TopCustomersTable({
                             index === 2 && 'bg-orange-100 text-orange-700'
                           )}
                         >
-                          Top {index + 1}
+                          {t('dashboard.top_customers.rank', { rank: index + 1 })}
                         </Badge>
                       )}
                     </div>
-                    <p className="mt-1 text-xs text-gray-500">ID: {customer.customerId}</p>
+                    <p className="mt-1 text-xs text-gray-500">
+                      {t('dashboard.top_customers.id_label', { id: customer.customerId })}
+                    </p>
 
-                    {/* Progress Bar */}
                     <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-gray-200">
                       <motion.div
                         initial={{ width: 0 }}
@@ -220,13 +216,13 @@ export function TopCustomersTable({
                     </div>
                   </div>
 
-                  {/* Revenue, COGS, Profit & Percentage */}
                   <div className="text-right">
                     <p className="font-bold text-gray-900">
                       {formatCurrency(revenue, baseCurrency || customer.baseCurrency)}
                     </p>
                     <p className="text-xs text-gray-500">
-                      Chi phí: {formatCurrency(cogs, baseCurrency || customer.baseCurrency)}
+                      {t('dashboard.top_customers.cost_label')}:{' '}
+                      {formatCurrency(cogs, baseCurrency || customer.baseCurrency)}
                     </p>
                     <p
                       className={cn(
@@ -234,10 +230,13 @@ export function TopCustomersTable({
                         profit >= 0 ? 'text-[var(--color-success-600)]' : 'text-[var(--error-600)]'
                       )}
                     >
-                      Lợi nhuận: {formatCurrency(profit, baseCurrency || customer.baseCurrency)}
+                      {t('dashboard.top_customers.profit_label')}:{' '}
+                      {formatCurrency(profit, baseCurrency || customer.baseCurrency)}
                     </p>
                     <p className="mt-1 text-xs text-gray-400">
-                      {percentage.toFixed(1)}% tổng doanh thu
+                      {t('dashboard.top_customers.revenue_percentage', {
+                        value: percentage.toFixed(1),
+                      })}
                     </p>
                   </div>
                 </motion.div>
@@ -245,18 +244,21 @@ export function TopCustomersTable({
             })}
           </div>
 
-          {/* Summary Footer */}
           {topCustomers.length > 0 && (
             <div className="mt-4 border-t pt-4">
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="font-medium text-gray-600">Tổng doanh thu:</span>
+                  <span className="font-medium text-gray-600">
+                    {t('dashboard.top_customers.total_revenue')}
+                  </span>
                   <span className="text-lg font-bold text-gray-900">
                     {formatCurrency(totalRevenue, baseCurrency)}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="font-medium text-gray-600">Tổng chi phí:</span>
+                  <span className="font-medium text-gray-600">
+                    {t('dashboard.top_customers.total_cogs')}
+                  </span>
                   <span className="text-lg font-bold text-gray-900">
                     {formatCurrency(
                       topCustomers.reduce(
@@ -274,7 +276,9 @@ export function TopCustomersTable({
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="font-medium text-gray-600">Tổng lợi nhuận gộp:</span>
+                  <span className="font-medium text-gray-600">
+                    {t('dashboard.top_customers.total_gross_profit')}
+                  </span>
                   <span
                     className={cn(
                       'text-lg font-bold',
@@ -319,7 +323,7 @@ export function TopCustomersTable({
             className="gap-2 border-gray-200 text-[#6B7280] hover:bg-white hover:text-[var(--brand-700)]"
           >
             <Download className="h-4 w-4" />
-            Xuất danh sách
+            {t('dashboard.top_customers.export')}
           </Button>
           <Button
             size="sm"
@@ -327,7 +331,7 @@ export function TopCustomersTable({
             className="gap-2 bg-[var(--btn-primary)] hover:bg-[var(--btn-primary-hover)]"
           >
             <Users className="h-4 w-4" />
-            Xem tất cả
+            {t('dashboard.top_customers.view_all')}
           </Button>
         </CardFooter>
       </Card>

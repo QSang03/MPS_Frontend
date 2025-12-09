@@ -290,10 +290,15 @@ export type DeviceCostItem = {
   deviceId: string
   serialNumber: string
   model: string
+  revenueRental: number
+  revenueRepair: number
+  revenuePageBW: number
+  revenuePageColor: number
+  totalRevenue: number
   cogsConsumable: number
   cogsRepair: number
   totalCogs: number
-  // Note: Customer Cost Analytics does NOT have converted values
+  currency?: CurrencyDataDto | null
 }
 
 export type CustomerCostResponse = {
@@ -303,23 +308,33 @@ export type CustomerCostResponse = {
     customer: {
       customerId: string
       name: string
+      revenueRental: number
+      revenueRepair: number
+      revenuePageBW: number
+      revenuePageColor: number
+      totalRevenue: number
       cogsConsumable: number
       cogsRepair: number
       totalCogs: number
-      // Note: Customer Cost Analytics does NOT have converted values or baseCurrency
+      currency?: CurrencyDataDto | null
     }
     devices: DeviceCostItem[]
-    // Note: Customer Cost Analytics does NOT have baseCurrency (breaking change)
+    baseCurrency?: CurrencyDataDto | null
   }
   message?: string
 }
 
 export type DeviceCostTrendItem = {
   month: string
+  revenueRental: number
+  revenueRepair: number
+  revenuePageBW: number
+  revenuePageColor: number
+  totalRevenue: number
   cogsConsumable: number
   cogsRepair: number
   totalCogs: number
-  // Note: Customer Cost Analytics does NOT have converted values
+  currency?: CurrencyDataDto | null
 }
 
 export type DeviceCostResponse = {
@@ -331,7 +346,8 @@ export type DeviceCostResponse = {
       model: string
     }
     cost: DeviceCostTrendItem[]
-    // Note: Customer Cost Analytics does NOT have baseCurrency (breaking change)
+    currency?: CurrencyDataDto | null
+    baseCurrency?: CurrencyDataDto | null
   }
   message?: string
 }

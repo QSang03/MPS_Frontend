@@ -14,6 +14,7 @@ import type { UserRole } from '@/types/users'
 import type { Department } from '@/types/users'
 import type { Customer } from '@/types/models/customer'
 import type { User } from '@/types/users'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 type SelectableItem = UserRole | Department | Customer | User
 
@@ -193,13 +194,14 @@ export function SearchableSelect({
   }
 
   const selectedItems = items.filter((item) => selectedValues.includes(getItemValue(item)))
+  const { t } = useLocale()
   const displayText = isMultiSelect
     ? selectedItems.length > 0
-      ? `${selectedItems.length} mục đã chọn`
-      : placeholder || 'Chọn...'
+      ? t('policies.form.selected_items', { count: selectedItems.length })
+      : placeholder || t('policies.form.select_placeholder')
     : selectedItems.length > 0 && selectedItems[0]
       ? getDisplayValue(selectedItems[0])
-      : placeholder || 'Chọn...'
+      : placeholder || t('policies.form.select_placeholder')
 
   if (!config) return null
 
@@ -218,7 +220,7 @@ export function SearchableSelect({
       <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
         <div className="p-2">
           <Input
-            placeholder="Tìm kiếm..."
+            placeholder={t('policies.form.search_placeholder')}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="h-9"
@@ -230,7 +232,9 @@ export function SearchableSelect({
               <Loader2 className="h-4 w-4 animate-spin" />
             </div>
           ) : items.length === 0 ? (
-            <div className="p-4 text-center text-sm text-gray-500">Không tìm thấy kết quả</div>
+            <div className="p-4 text-center text-sm text-gray-500">
+              {t('policies.form.no_results')}
+            </div>
           ) : (
             <div className="p-1">
               {items.map((item) => {

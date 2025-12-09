@@ -5,6 +5,7 @@ import type { Contract } from '@/types/models/contract'
 import { useRouter } from 'next/navigation'
 import { contractsClientService } from '@/lib/api/services/contracts-client.service'
 import { Button } from '@/components/ui/button'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { FileText } from 'lucide-react'
 import ContractDevicesSection from '../../_components/ContractDevicesSection'
 import { toast } from 'sonner'
@@ -15,6 +16,7 @@ interface Props {
 
 export default function ContractDetailClient({ contractId }: Props) {
   const router = useRouter()
+  const { t } = useLocale()
   const [contract, setContract] = useState<Contract | null>(null)
   const [loading, setLoading] = useState(true)
   // edit / assign-device removed for user view
@@ -29,7 +31,7 @@ export default function ContractDetailClient({ contractId }: Props) {
         setContract(c || null)
       } catch (err) {
         console.error('Failed to load contract', err)
-        toast.error('Không thể tải hợp đồng')
+        toast.error(t('contracts.error.load'))
       } finally {
         if (mounted) setLoading(false)
       }
@@ -42,11 +44,11 @@ export default function ContractDetailClient({ contractId }: Props) {
   }, [contractId])
 
   if (loading) {
-    return <div className="p-6">Đang tải...</div>
+    return <div className="p-6">{t('loading.default')}</div>
   }
 
   if (!contract) {
-    return <div className="p-6">Không tìm thấy hợp đồng</div>
+    return <div className="p-6">{t('customer.detail.contract_not_found')}</div>
   }
 
   // initialForForm removed — edit/assign actions are not available in user view
@@ -55,21 +57,19 @@ export default function ContractDetailClient({ contractId }: Props) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-4xl font-bold text-sky-700">Thiết bị trong hợp đồng</h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            Các thiết bị đang gắn với hợp đồng này
-          </p>
+          <h1 className="text-4xl font-bold text-sky-700">{t('contracts.devices.title')}</h1>
+          <p className="text-muted-foreground mt-1 text-sm">{t('contracts.devices.description')}</p>
         </div>
 
         <div className="flex items-center gap-3">
           <Button variant="outline" onClick={() => router.back()} className="h-9">
-            Quay lại
+            {t('common.back')}
           </Button>
           {contract.documentUrl && (
             <Button variant="secondary" size="sm" asChild className="gap-1 text-sky-700">
               <a href={contract.documentUrl} target="_blank" rel="noopener noreferrer">
                 <FileText className="h-4 w-4" />
-                Xem tài liệu
+                {t('contracts.view_document')}
               </a>
             </Button>
           )}

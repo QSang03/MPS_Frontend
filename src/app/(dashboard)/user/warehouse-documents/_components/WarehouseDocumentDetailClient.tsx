@@ -18,6 +18,7 @@ import { formatDateTime, formatCurrency } from '@/lib/utils/formatters'
 import { warehouseDocumentsClientService } from '@/lib/api/services/warehouse-documents-client.service'
 import type { WarehouseDocument } from '@/types/models'
 import { ArrowLeft } from 'lucide-react'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 interface Props {
   id: string
@@ -32,6 +33,8 @@ export default function WarehouseDocumentDetailClient({ id }: Props) {
   const detail = useMemo(() => data ?? null, [data])
 
   // User-side: updates (confirm/cancel) are disabled for users
+
+  const { t } = useLocale()
 
   if (isLoading) {
     return (
@@ -57,7 +60,7 @@ export default function WarehouseDocumentDetailClient({ id }: Props) {
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" asChild>
               <Link href="/user/warehouse-documents">
-                <ArrowLeft className="mr-1 h-4 w-4" /> Quay lại
+                <ArrowLeft className="mr-1 h-4 w-4" /> {t('common.back')}
               </Link>
             </Button>
           </div>

@@ -42,6 +42,7 @@ import {
   Settings,
 } from 'lucide-react'
 import { DeleteDialog } from '@/components/shared/DeleteDialog'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { useActionPermission } from '@/lib/hooks/useActionPermission'
 import { FilterSection } from '@/components/system/FilterSection'
 import { StatsCards } from '@/components/system/StatsCard'
@@ -63,6 +64,7 @@ export function DepartmentsTable({
   onCreateTriggerReset,
 }: DepartmentsTableProps = {}) {
   const { canUpdate, canDelete } = useActionPermission('departments')
+  const { t } = useLocale()
   const queryClient = useQueryClient()
 
   const [search, setSearch] = useState('')
@@ -222,25 +224,25 @@ export function DepartmentsTable({
           <div className="relative flex gap-2">
             <Select value={isActive} onValueChange={setIsActive}>
               <SelectTrigger className="h-10 rounded-xl border-2 border-gray-200 bg-gradient-to-r from-gray-50 to-white text-base focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200">
-                <SelectValue placeholder="Chọn trạng thái" />
+                <SelectValue placeholder={t('filters.status_label')} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">
                   <span className="flex items-center gap-2">
                     <Building2 className="h-4 w-4" />
-                    Tất cả bộ phận
+                    {t('filters.status_all')}
                   </span>
                 </SelectItem>
                 <SelectItem value="true">
                   <span className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-[var(--brand-600)]" />
-                    Hoạt động
+                    {t('filters.status_active')}
                   </span>
                 </SelectItem>
                 <SelectItem value="false">
                   <span className="flex items-center gap-2">
                     <XCircle className="h-4 w-4 text-red-600" />
-                    Ngừng hoạt động
+                    {t('filters.status_inactive')}
                   </span>
                 </SelectItem>
               </SelectContent>
@@ -250,7 +252,7 @@ export function DepartmentsTable({
               size="icon"
               onClick={() => queryClient.invalidateQueries({ queryKey: ['departments'] })}
               className="h-10 w-10 cursor-pointer rounded-xl border-2 border-gray-200 transition-all duration-300 hover:border-[var(--brand-400)] hover:bg-[var(--brand-50)]"
-              title="Làm mới dữ liệu"
+              title={t('devices.a4_history.refresh')}
             >
               <RefreshCw className="h-5 w-5" />
             </Button>
@@ -259,7 +261,7 @@ export function DepartmentsTable({
               size="icon"
               onClick={handleOpenCreate}
               className="h-10 w-10 rounded-xl border-2 border-gray-200 transition-all hover:border-[var(--brand-400)] hover:bg-[var(--brand-50)]"
-              title="Tạo bộ phận"
+              title={t('department.button.create')}
             >
               <Plus className="h-5 w-5" />
             </Button>

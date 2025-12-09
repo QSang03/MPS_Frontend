@@ -1,6 +1,7 @@
 'use client'
 
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import type { ReactNode } from 'react'
 import { FilterSection } from '@/components/system/FilterSection'
 import { StatsCards } from '@/components/system/StatsCard'
@@ -10,6 +11,7 @@ import { Search, Users } from 'lucide-react'
 import { CustomerTable } from './CustomerTable'
 
 export function CustomerList() {
+  const { t } = useLocale()
   const [searchTerm, setSearchTerm] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [page, setPage] = useState(1)
@@ -33,7 +35,7 @@ export function CustomerList() {
     if (!searchTerm) return []
     return [
       {
-        label: `Tìm kiếm: "${searchTerm}"`,
+        label: `${t('filters.search_label')}: "${searchTerm}"`,
         value: searchTerm,
         onRemove: () => {
           setSearchTerm('')
@@ -42,20 +44,20 @@ export function CustomerList() {
         },
       },
     ]
-  }, [searchTerm])
+  }, [searchTerm, t])
 
   return (
     <div className="space-y-6">
       <StatsCards
         cards={[
           {
-            label: 'Tổng khách hàng',
+            label: t('customer.stats.total_label'),
             value: stats.total,
             icon: <Users className="h-6 w-6" />,
             borderColor: 'blue',
           },
           {
-            label: 'Hoạt động',
+            label: t('customer.stats.active_label'),
             value: stats.active,
             icon: <Users className="h-6 w-6" />,
             borderColor: 'green',
@@ -65,8 +67,8 @@ export function CustomerList() {
       />
 
       <FilterSection
-        title="Bộ lọc & Tìm kiếm"
-        subtitle="Tìm kiếm khách hàng theo tên, mã, hoặc địa chỉ"
+        title={t('filters.title_customers')}
+        subtitle={t('filters.subtitle_customers')}
         columnVisibilityMenu={columnVisibilityMenu}
         onReset={() => {
           setSearchTerm('')
@@ -77,11 +79,11 @@ export function CustomerList() {
       >
         <div className="grid gap-4 md:grid-cols-1">
           <div>
-            <label className="mb-2 block text-sm font-medium">Tìm kiếm</label>
+            <label className="mb-2 block text-sm font-medium">{t('filters.search_label')}</label>
             <div className="relative">
               <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <Input
-                placeholder="Tìm kiếm tên, mã, địa chỉ..."
+                placeholder={t('filters.search_placeholder_customers')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyDown={(e) => {

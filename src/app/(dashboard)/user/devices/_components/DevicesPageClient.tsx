@@ -491,7 +491,7 @@ export default function DevicesPageClient() {
             </div>
             <div>
               <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
-                {t('device_model.stats.total_label')}
+                {t('devices.stats.total_label')}
               </p>
               <p className="text-2xl font-bold text-slate-900 dark:text-white">{devices.length}</p>
             </div>
