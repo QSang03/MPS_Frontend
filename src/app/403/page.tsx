@@ -1,3 +1,5 @@
+'use client'
+
 import Link from 'next/link'
 import { useLocale } from '@/components/providers/LocaleProvider'
 import { Button } from '@/components/ui/button'
