@@ -1564,7 +1564,6 @@
   "user_service_request.management.status_label": "Processing Status",
   "service_request.management.title": "Management & Tasks",
   "service_request.management.status_label": "Processing Status",
-  "service_request.change_state": "Change status",
   "user_service_request.management.status_placeholder": "Select status",
   "user_service_request.management.close_request": "Close Request",
   "user_service_request.management.action_note_placeholder": "Action note (optional)",

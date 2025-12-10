@@ -41,7 +41,7 @@ export default function ContractDetailClient({ contractId }: Props) {
     return () => {
       mounted = false
     }
-  }, [contractId])
+  }, [contractId, t])
 
   if (loading) {
     return <div className="p-6">{t('loading.default')}</div>

@@ -134,7 +134,7 @@ export default function DeviceUsageHistory({ deviceId, device }: DeviceUsageHist
     } finally {
       setLoading(false)
     }
-  }, [deviceId, fromDate, toDate, device])
+  }, [deviceId, fromDate, toDate, device, t])
 
   useEffect(() => {
     void load()

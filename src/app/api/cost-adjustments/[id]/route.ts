@@ -3,11 +3,11 @@ import { cookies } from 'next/headers'
 import backendApiClient from '@/lib/api/backend-client'
 import { API_ENDPOINTS } from '@/lib/api/endpoints'
 
-type RouteParams = { params: { id: string } }
+type RouteParams = { params: Promise<{ id: string }> }
 
 export async function GET(_request: NextRequest, context: RouteParams) {
   try {
-    const id = context.params?.id
+    const { id } = await context.params
     const cookieStore = await cookies()
     const accessToken = cookieStore.get('access_token')?.value
     if (!accessToken) {
@@ -39,7 +39,7 @@ export async function GET(_request: NextRequest, context: RouteParams) {
 
 export async function PATCH(request: NextRequest, context: RouteParams) {
   try {
-    const id = context.params?.id
+    const { id } = await context.params
     const cookieStore = await cookies()
     const accessToken = cookieStore.get('access_token')?.value
     if (!accessToken) {
