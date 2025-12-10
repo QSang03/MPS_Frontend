@@ -26,7 +26,7 @@ export default function RolesPage() {
               className="border-0 bg-white text-[var(--brand-500)] hover:bg-[var(--brand-50)]"
             >
               <Plus className="mr-2 h-4 w-4" />
-              {t('role.create')}
+              {t('role.button.create')}
             </Button>
           </ActionGuard>
         }

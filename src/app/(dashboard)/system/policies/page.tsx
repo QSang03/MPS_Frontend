@@ -8,9 +8,11 @@ import type { Policy } from '@/types/policies'
 import { SystemPageLayout } from '@/components/system/SystemPageLayout'
 import { SystemPageHeader } from '@/components/system/SystemPageHeader'
 import { Shield, Plus } from 'lucide-react'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { Button } from '@/components/ui/button'
 
 export default function PoliciesPage() {
+  const { t } = useLocale()
   const [activeTab, setActiveTab] = useState('list')
   const [editingPolicy, setEditingPolicy] = useState<Policy | null>(null)
 
@@ -32,8 +34,8 @@ export default function PoliciesPage() {
   return (
     <SystemPageLayout fullWidth>
       <SystemPageHeader
-        title="Quản lý Policy"
-        subtitle="Tạo và quản lý các policy hệ thống"
+        title={t('page.policies.title')}
+        subtitle={t('policies.page.subtitle')}
         icon={<Shield className="h-6 w-6" />}
         actions={
           <Button
@@ -41,7 +43,7 @@ export default function PoliciesPage() {
             className="border-0 bg-white text-[var(--brand-500)] hover:bg-[var(--brand-50)]"
           >
             <Plus className="mr-2 h-4 w-4" />
-            Tạo mới Policy
+            {t('page.policies.create')}
           </Button>
         }
       />
@@ -52,13 +54,13 @@ export default function PoliciesPage() {
               value="list"
               className="ring-offset-background focus-visible:ring-ring data-[state=active]:bg-background data-[state=active]:text-foreground inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium whitespace-nowrap transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm"
             >
-              Danh sách Policy
+              {t('policies.tab.list')}
             </TabsTrigger>
             <TabsTrigger
               value="create"
               className="ring-offset-background focus-visible:ring-ring data-[state=active]:bg-background data-[state=active]:text-foreground inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium whitespace-nowrap transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm"
             >
-              Tạo mới Policy
+              {t('policies.tab.create')}
             </TabsTrigger>
           </TabsList>
         </div>

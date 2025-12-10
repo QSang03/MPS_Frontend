@@ -87,7 +87,12 @@ export function DeviceModelFormModal({ mode = 'create', model = null, onSaved, t
       // remove empty fields before sending to API
       payload = removeEmpty(payload) as typeof payload
 
-      const ALLOWED_TYPES = ['PRINTER', 'SCANNER', 'COPIER', 'FAX', 'MULTIFUNCTION']
+      const ALLOWED_TYPES = [
+        'SINGLE_FUNCTION_MONO',
+        'MULTIFUNCTION_MONO',
+        'SINGLE_FUNCTION_COLOR',
+        'MULTIFUNCTION_COLOR',
+      ]
       if (payload.type && !ALLOWED_TYPES.includes(payload.type)) {
         toast.error(t('device_model.error.invalid_type'))
         setSubmitting(false)
@@ -264,34 +269,28 @@ export function DeviceModelFormModal({ mode = 'create', model = null, onSaved, t
                     <SelectValue placeholder={t('device_model.placeholder.type')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="PRINTER">
+                    <SelectItem value="SINGLE_FUNCTION_MONO">
                       <div className="flex items-center gap-2">
                         <div className="h-2 w-2 rounded-full bg-[var(--brand-500)]"></div>
-                        Máy in (Printer)
+                        {t('device_model.type.SINGLE_FUNCTION_MONO')}
                       </div>
                     </SelectItem>
-                    <SelectItem value="SCANNER">
+                    <SelectItem value="MULTIFUNCTION_MONO">
                       <div className="flex items-center gap-2">
                         <div className="h-2 w-2 rounded-full bg-green-500"></div>
-                        Máy quét (Scanner)
+                        {t('device_model.type.MULTIFUNCTION_MONO')}
                       </div>
                     </SelectItem>
-                    <SelectItem value="COPIER">
+                    <SelectItem value="SINGLE_FUNCTION_COLOR">
                       <div className="flex items-center gap-2">
                         <div className="h-2 w-2 rounded-full bg-orange-500"></div>
-                        Máy photocopy (Copier)
+                        {t('device_model.type.SINGLE_FUNCTION_COLOR')}
                       </div>
                     </SelectItem>
-                    <SelectItem value="FAX">
-                      <div className="flex items-center gap-2">
-                        <div className="h-2 w-2 rounded-full bg-[var(--brand-500)]"></div>
-                        Máy fax (Fax)
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="MULTIFUNCTION">
+                    <SelectItem value="MULTIFUNCTION_COLOR">
                       <div className="flex items-center gap-2">
                         <div className="h-2 w-2 rounded-full bg-pink-500"></div>
-                        Đa chức năng (Multifunction)
+                        {t('device_model.type.MULTIFUNCTION_COLOR')}
                       </div>
                     </SelectItem>
                   </SelectContent>

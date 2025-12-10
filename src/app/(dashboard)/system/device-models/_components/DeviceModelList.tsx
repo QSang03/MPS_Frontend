@@ -236,16 +236,17 @@ export default function DeviceModelList() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t('common.all')}</SelectItem>
-                <SelectItem value="PRINTER">
-                  {t('device_model.type.PRINTER') || 'Printer'}
+                <SelectItem value="SINGLE_FUNCTION_MONO">
+                  {t('device_model.type.SINGLE_FUNCTION_MONO')}
                 </SelectItem>
-                <SelectItem value="SCANNER">
-                  {t('device_model.type.SCANNER') || 'Scanner'}
+                <SelectItem value="MULTIFUNCTION_MONO">
+                  {t('device_model.type.MULTIFUNCTION_MONO')}
                 </SelectItem>
-                <SelectItem value="COPIER">{t('device_model.type.COPIER') || 'Copier'}</SelectItem>
-                <SelectItem value="FAX">{t('device_model.type.FAX') || 'Fax'}</SelectItem>
-                <SelectItem value="MULTIFUNCTION">
-                  {t('device_model.type.MULTIFUNCTION') || 'Multifunction'}
+                <SelectItem value="SINGLE_FUNCTION_COLOR">
+                  {t('device_model.type.SINGLE_FUNCTION_COLOR')}
+                </SelectItem>
+                <SelectItem value="MULTIFUNCTION_COLOR">
+                  {t('device_model.type.MULTIFUNCTION_COLOR')}
                 </SelectItem>
               </SelectContent>
             </Select>
