@@ -157,14 +157,14 @@ export default function ThemeApplier() {
 
   useEffect(() => {
     // Map font selection to CSS variables defined by next/font in RootLayout
-    // --font-inter, --font-poppins, --font-mono are available; we swap which variable is used
+    // --font-inter, --font-roboto, --font-mono are available; we swap which variable is used
     // for both --font-sans (used in our layout) AND --font-inter (Tailwind compiled class
     // `.font-sans` uses var(--font-inter), so we also override that to ensure immediate UI update).
     const root = document.documentElement
     const body = document.body
-    if (fontFamily === 'poppins') {
+    if (fontFamily === 'roboto') {
       const computed = (
-        getComputedStyle(body).getPropertyValue('--font-poppins') || 'Poppins, sans-serif'
+        getComputedStyle(body).getPropertyValue('--font-roboto') || 'Roboto, sans-serif'
       ).trim()
       root.style.setProperty('--font-sans', computed)
       root.style.setProperty('--font-inter', computed)

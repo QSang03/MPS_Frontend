@@ -15,8 +15,8 @@ interface UIState {
   // Legacy themeColor - kept for compatibility but now derived from themeId
   themeColor?: string
   setThemeColor: (color: string) => void
-  fontFamily?: 'inter' | 'poppins' | 'mono'
-  setFontFamily: (font: 'inter' | 'poppins' | 'mono') => void
+  fontFamily?: 'inter' | 'roboto' | 'mono'
+  setFontFamily: (font: 'inter' | 'roboto' | 'mono') => void
 }
 
 /**
@@ -32,13 +32,13 @@ export const useUIStore = create<UIState>()(
       openSidebar: () => set({ sidebarOpen: true }),
       pageTitle: '',
       setPageTitle: (title: string) => set({ pageTitle: title }),
-      // default visual prefs - default to 'sky' theme
-      themeId: 'sky',
+      // default visual prefs - default to 'emerald' theme
+      themeId: 'emerald',
       setThemeId: (id: string) => set({ themeId: id }),
       themeColor: '',
       setThemeColor: (color: string) => set({ themeColor: color }),
       fontFamily: 'inter',
-      setFontFamily: (font: 'inter' | 'poppins' | 'mono') => set({ fontFamily: font }),
+      setFontFamily: (font: 'inter' | 'roboto' | 'mono') => set({ fontFamily: font }),
     }),
     {
       name: 'mps-ui-storage',

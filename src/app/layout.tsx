@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Inter, Poppins, JetBrains_Mono } from 'next/font/google'
+import { Inter, Roboto, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
 import { QueryProvider } from '@/components/providers/QueryProvider'
 import TokenRefreshProvider from '@/components/providers/TokenRefreshProvider'
@@ -15,10 +15,10 @@ const inter = Inter({
   weight: ['300', '400', '500', '600', '700', '800'],
 })
 
-const poppins = Poppins({
+const roboto = Roboto({
   weight: ['400', '500', '600', '700', '800'],
-  subsets: ['latin'],
-  variable: '--font-poppins',
+  subsets: ['latin', 'vietnamese'],
+  variable: '--font-roboto',
   display: 'swap',
 })
 
@@ -42,7 +42,7 @@ export default function RootLayout({
   return (
     <html lang="vi" suppressHydrationWarning>
       <body
-        className={`${inter.variable} ${poppins.variable} ${jetbrainsMono.variable} font-sans antialiased`}
+        className={`${inter.variable} ${roboto.variable} ${jetbrainsMono.variable} font-sans antialiased`}
         suppressHydrationWarning
       >
         <QueryProvider>

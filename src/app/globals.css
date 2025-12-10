@@ -81,7 +81,7 @@
 
   /* Fonts */
   --font-sans: var(--font-inter);
-  --font-display: var(--font-poppins);
+  --font-display: var(--font-roboto);
   --font-mono: var(--font-mono);
 
   /* Border radius */

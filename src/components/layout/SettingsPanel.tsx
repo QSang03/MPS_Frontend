@@ -121,11 +121,11 @@ export default function SettingsPanel() {
               <input
                 type="radio"
                 name="font"
-                checked={localFontFamily === 'poppins'}
-                onChange={() => setLocalFontFamily('poppins')}
+                checked={localFontFamily === 'roboto'}
+                onChange={() => setLocalFontFamily('roboto')}
                 className="h-4 w-4 accent-gray-900"
               />
-              <span style={{ fontFamily: 'Poppins, sans-serif' }}>Poppins</span>
+              <span style={{ fontFamily: 'Roboto, sans-serif' }}>Roboto</span>
             </label>
             <label className="inline-flex cursor-pointer items-center gap-2">
               <input
