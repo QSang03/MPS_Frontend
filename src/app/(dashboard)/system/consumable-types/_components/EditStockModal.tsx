@@ -58,8 +58,8 @@ export function EditStockModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <SystemModalLayout
-        title="Chỉnh sửa thông tin tồn kho"
-        description={`Cập nhật số lượng tồn và ngưỡng cảnh báo cho ${consumableName}`}
+        title={t('consumable_types.stock.edit_title')}
+        description={t('consumable_types.stock.edit_description', { name: consumableName })}
         icon={Package}
         variant="edit"
         maxWidth="!max-w-[60vw]"
@@ -94,7 +94,7 @@ export function EditStockModal({
       >
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="quantity">Số lượng tồn</Label>
+            <Label htmlFor="quantity">{t('consumable_types.stock.label.quantity')}</Label>
             <Input
               id="quantity"
               type="number"
@@ -106,7 +106,7 @@ export function EditStockModal({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="threshold">Ngưỡng cảnh báo thấp</Label>
+            <Label htmlFor="threshold">{t('consumable_types.stock.label.threshold')}</Label>
             <Input
               id="threshold"
               type="number"
@@ -116,7 +116,7 @@ export function EditStockModal({
               disabled={saving}
             />
             <p className="text-muted-foreground text-xs">
-              Khi số lượng tồn {'<='} ngưỡng này, sẽ hiển thị cảnh báo màu đỏ
+              {t('consumable_types.stock.helper.threshold_note')}
             </p>
           </div>
         </div>
