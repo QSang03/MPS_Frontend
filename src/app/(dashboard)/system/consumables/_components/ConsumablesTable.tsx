@@ -264,10 +264,10 @@ export function ConsumablesTable({
               <Package className="h-12 w-12 opacity-20" />
             </div>
             <h3 className="mb-2 text-xl font-bold text-gray-700">
-              {searchInput ? 'Không tìm thấy vật tư phù hợp' : 'Chưa có vật tư nào'}
+              {searchInput ? t('empty.consumables.search_result') : t('empty.consumables.empty')}
             </h3>
             <p className="mb-6 text-gray-500">
-              {searchInput ? 'Thử điều chỉnh bộ lọc hoặc tìm kiếm' : 'Hãy thêm vật tư đầu tiên'}
+              {searchInput ? t('empty.consumables.try_filter') : t('empty.consumables.first')}
             </p>
           </div>
         ) : undefined

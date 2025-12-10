@@ -131,14 +131,13 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
             message?: string
           }
           if (errObj?.response?.status === 404) {
-            contractRentErrMessage =
-              'Thiết bị chưa có hợp đồng hoạt động hoặc chưa cấu hình giá thuê.'
+            contractRentErrMessage = t('devices.pricing.contract_rent_missing')
           } else {
             contractRentErrMessage =
               errObj?.response?.data?.error ||
               errObj?.response?.data?.message ||
               errObj?.message ||
-              'Không thể tải giá thuê hàng tháng từ hợp đồng.'
+              t('devices.pricing.error.contract_rent_load_failed')
           }
         }
 
@@ -158,13 +157,12 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
           setForm((prev) => ({ ...prev, monthlyRent: '' }))
           setCanEditMonthlyRent(false)
           setContractRentError(
-            contractRentErrMessage ||
-              'Thiết bị chưa có hợp đồng hoạt động hoặc chưa cấu hình giá thuê. Không thể chỉnh sửa mục này.'
+            contractRentErrMessage || t('devices.pricing.contract_rent_missing_edit_blocked')
           )
         }
       } catch (err) {
         console.error('Failed to load active pricing', err)
-        toast.error('Không thể tải thông tin giá hiện hành')
+        toast.error(t('devices.pricing.error.load_failed'))
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -205,7 +203,7 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
         }
         const parsed = parseNum(form.pricePerBWPage)
         if (!Number.isFinite(parsed) || parsed < 0) {
-          toast.error('Giá không hợp lệ')
+          toast.error(t('devices.pricing.error.invalid_price'))
           setSubmitting(false)
           return
         }
@@ -223,7 +221,7 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
         }
         const parsed = parseNum(form.pricePerColorPage)
         if (!Number.isFinite(parsed) || parsed < 0) {
-          toast.error('Giá không hợp lệ')
+          toast.error(t('devices.pricing.error.invalid_price'))
           setSubmitting(false)
           return
         }
@@ -242,7 +240,7 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
         }
         const parsed = parseNum(form.monthlyRent)
         if (!Number.isFinite(parsed) || parsed < 0) {
-          toast.error('Giá thuê hàng tháng không hợp lệ')
+          toast.error(t('devices.pricing.error.invalid_monthly_rent'))
           setSubmitting(false)
           return
         }
@@ -252,7 +250,7 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
       // effectiveFrom validation: if backend had existing effectiveFrom, new one must be greater
       // Validate effectiveFrom if user provided a value - require full datetime
       if (form.effectiveFrom && !localInputToIso(form.effectiveFrom)) {
-        toast.error('Thời gian hiệu lực không hợp lệ hoặc thiếu giờ:phút')
+        toast.error(t('devices.pricing.error.invalid_effective_from'))
         return
       }
       const ef = localInputToIso(form.effectiveFrom)
@@ -261,7 +259,7 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
           const oldTs = new Date(currentEffectiveFromISO).getTime()
           const newTs = new Date(ef).getTime()
           if (isNaN(oldTs) || isNaN(newTs) || newTs <= oldTs) {
-            toast.error('Nếu đã có giá cũ thì effectiveFrom mới phải lớn hơn giá hiện tại')
+            toast.error(t('devices.pricing.error.effective_from_not_greater'))
             setSubmitting(false)
             return
           }
@@ -304,14 +302,14 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
         if (axios.isAxiosError(err)) {
           const body = err.response?.data as { message?: string } | undefined
           if (body?.message) toast.error(String(body.message))
-          else toast.error('Không thể cập nhật giá thiết bị')
+          else toast.error(t('devices.pricing.error.update_failed'))
         } else {
           const e = err as { message?: string } | undefined
           if (e?.message) toast.error(String(e.message))
-          else toast.error('Không thể cập nhật giá thiết bị')
+          else toast.error(t('devices.pricing.error.update_failed'))
         }
       } catch {
-        toast.error('Không thể cập nhật giá thiết bị')
+        toast.error(t('devices.pricing.error.update_failed'))
       }
     } finally {
       setSubmitting(false)
@@ -322,7 +320,7 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
     <Dialog open={open} onOpenChange={setOpen}>
       {compact ? (
         <Tooltip>
-          <TooltipContent sideOffset={4}>Gán giá</TooltipContent>
+          <TooltipContent sideOffset={4}>{t('devices.pricing.tooltip.assign')}</TooltipContent>
           <TooltipTrigger asChild>
             <DialogTrigger asChild>
               <div>
@@ -395,7 +393,7 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
                     inputMode="decimal"
                     value={form.pricePerBWPage}
                     onChange={(e) => setForm((s) => ({ ...s, pricePerBWPage: e.target.value }))}
-                    placeholder="Nhập giá"
+                    placeholder={t('devices.pricing.placeholder.price')}
                     className="h-11 text-base"
                   />
                 </div>
@@ -407,7 +405,7 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
                     inputMode="decimal"
                     value={form.pricePerColorPage}
                     onChange={(e) => setForm((s) => ({ ...s, pricePerColorPage: e.target.value }))}
-                    placeholder="Nhập giá"
+                    placeholder={t('devices.pricing.placeholder.price')}
                     className="h-11 text-base"
                   />
                 </div>
@@ -419,8 +417,7 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
                 </Label>
                 {!canEditMonthlyRent && (
                   <p className="text-xs text-amber-600">
-                    {contractRentError ||
-                      'Thiết bị chưa có hợp đồng hoạt động hoặc chưa cấu hình giá thuê. Không thể chỉnh sửa mục này.'}
+                    {contractRentError || t('devices.pricing.contract_rent_missing')}
                   </p>
                 )}
                 <Input
@@ -429,7 +426,7 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
                   inputMode="decimal"
                   value={form.monthlyRent}
                   onChange={(e) => setForm((s) => ({ ...s, monthlyRent: e.target.value }))}
-                  placeholder="Nhập giá thuê hàng tháng"
+                  placeholder={t('devices.pricing.placeholder.monthly_rent')}
                   className="h-11 text-base"
                   disabled={!canEditMonthlyRent}
                 />
@@ -437,11 +434,11 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
               <Separator />
               <div className="space-y-2">
                 <CurrencySelector
-                  label="Tiền tệ"
+                  label={t('currency.label')}
                   value={currencyId}
                   onChange={(value) => setCurrencyId(value)}
                   optional
-                  placeholder="Chọn tiền tệ (mặc định: USD)"
+                  placeholder={t('currency.select.placeholder_with_default')}
                   customerId={device?.customerId}
                 />
               </div>

@@ -1,0 +1,4 @@
+{
+  "missingInVi": ["button.creating", "button.saving"],
+  "missingInEn": ["purchase_request.status.change_to"]
+}

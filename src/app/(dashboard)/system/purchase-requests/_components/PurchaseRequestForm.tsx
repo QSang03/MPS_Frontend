@@ -212,7 +212,7 @@ export function PurchaseRequestForm({
           name="currencyId"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Tiền tệ</FormLabel>
+              <FormLabel>{t('currency.label')}</FormLabel>
               <FormControl>
                 <CurrencySelector
                   value={field.value || null}
@@ -227,7 +227,7 @@ export function PurchaseRequestForm({
                   }}
                   disabled={isPending}
                   optional
-                  placeholder="Chọn tiền tệ (mặc định: USD)"
+                  placeholder={t('currency.select.placeholder_with_default')}
                   customerId={customerId}
                 />
               </FormControl>
@@ -282,7 +282,11 @@ export function PurchaseRequestForm({
             <FormItem>
               <FormLabel>Người yêu cầu</FormLabel>
               <FormControl>
-                <Input placeholder="Nhập tên người yêu cầu" {...field} disabled={isPending} />
+                <Input
+                  placeholder={t('purchase_request.placeholder.requester')}
+                  {...field}
+                  disabled={isPending}
+                />
               </FormControl>
               <FormDescription>Tên người thực hiện yêu cầu mua hàng</FormDescription>
               <FormMessage />

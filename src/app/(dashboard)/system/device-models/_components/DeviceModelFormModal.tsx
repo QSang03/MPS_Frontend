@@ -226,12 +226,12 @@ export function DeviceModelFormModal({ mode = 'create', model = null, onSaved, t
               <div className="space-y-2">
                 <Label className="flex items-center gap-2 text-base font-semibold">
                   <Package className="h-4 w-4 text-violet-600" />
-                  Tên Model *
+                  {t('device_model.name_label')}
                 </Label>
                 <Input
                   value={form.name || ''}
                   onChange={(e) => setForm((s) => ({ ...s, name: e.target.value }))}
-                  placeholder="Nhập tên model"
+                  placeholder={t('device_model.placeholder.name')}
                   className="h-11"
                   required
                 />
@@ -240,12 +240,12 @@ export function DeviceModelFormModal({ mode = 'create', model = null, onSaved, t
               <div className="space-y-2">
                 <Label className="flex items-center gap-2 text-base font-semibold">
                   <Factory className="h-4 w-4 text-fuchsia-600" />
-                  Nhà sản xuất *
+                  {t('device_model.manufacturer_label')}
                 </Label>
                 <Input
                   value={form.manufacturer || ''}
                   onChange={(e) => setForm((s) => ({ ...s, manufacturer: e.target.value }))}
-                  placeholder="Nhập tên nhà sản xuất"
+                  placeholder={t('device_model.placeholder.manufacturer')}
                   className="h-11"
                   required
                 />
@@ -254,14 +254,14 @@ export function DeviceModelFormModal({ mode = 'create', model = null, onSaved, t
               <div className="space-y-2">
                 <Label className="flex items-center gap-2 text-base font-semibold">
                   <Settings className="h-4 w-4 text-indigo-600" />
-                  Loại thiết bị *
+                  {t('device_model.type_label')}
                 </Label>
                 <Select
                   value={(form.type as string) || ''}
                   onValueChange={(v) => setForm((s) => ({ ...s, type: v }))}
                 >
                   <SelectTrigger className="h-11">
-                    <SelectValue placeholder="Chọn loại thiết bị" />
+                    <SelectValue placeholder={t('device_model.placeholder.type')} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="PRINTER">
@@ -306,7 +306,7 @@ export function DeviceModelFormModal({ mode = 'create', model = null, onSaved, t
           <div className="space-y-4">
             <div className="flex items-center gap-2 text-sm font-semibold text-violet-700">
               <FileText className="h-4 w-4" />
-              Mô tả
+              {t('device_model.description_title')}
             </div>
 
             <div className="space-y-2">
@@ -314,7 +314,7 @@ export function DeviceModelFormModal({ mode = 'create', model = null, onSaved, t
               <Input
                 value={form.description || ''}
                 onChange={(e) => setForm((s) => ({ ...s, description: e.target.value }))}
-                placeholder="Nhập mô tả chi tiết về model..."
+                placeholder={t('device_model.placeholder.description')}
                 className="h-11"
               />
             </div>
@@ -352,11 +352,10 @@ export function DeviceModelFormModal({ mode = 'create', model = null, onSaved, t
                     ) : (
                       <Settings className="h-4 w-4 text-gray-600" />
                     )}
-                    Sử dụng A4 Counter
+                    {t('device_model.use_a4_counter_label')}
                   </label>
                   <p className="text-muted-foreground text-sm">
-                    Bật tùy chọn này cho máy in đời mới chỉ trả về số đếm A4. Máy in đời cũ sẽ sử
-                    dụng standard counter và tự động chuyển đổi sang A4.
+                    {t('device_model.use_a4_counter_description')}
                   </p>
                 </div>
                 <Switch
@@ -378,12 +377,12 @@ export function DeviceModelFormModal({ mode = 'create', model = null, onSaved, t
                   ) : (
                     <Settings className="h-4 w-4 text-gray-600" />
                   )}
-                  Trạng thái hoạt động
+                  {t('device_model.status_active_label')}
                 </label>
                 <p className="text-muted-foreground text-sm">
                   {form.isActive
-                    ? 'Model đang hoạt động và có thể sử dụng trong hệ thống'
-                    : 'Model đã bị tắt và không thể sử dụng'}
+                    ? t('device_model.status_description_active')
+                    : t('device_model.status_description_inactive')}
                 </p>
               </div>
               <Switch

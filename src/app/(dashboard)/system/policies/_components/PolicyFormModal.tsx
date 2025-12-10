@@ -1007,7 +1007,7 @@ export function PolicyFormModal({
                 className="min-w-[120px] bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
               >
                 <Settings className="mr-2 h-4 w-4" />
-                Chỉnh sửa
+                {t('button.edit')}
               </Button>
             ) : (
               <Button
@@ -1020,7 +1020,7 @@ export function PolicyFormModal({
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Đang xử lý...
+                    {t('button.processing')}
                   </>
                 ) : (
                   <>
@@ -1045,7 +1045,7 @@ export function PolicyFormModal({
               <div className="space-y-5 rounded-xl border-2 border-[var(--brand-100)] bg-gradient-to-br from-[var(--brand-50)]/50 to-[var(--brand-50)]/30 p-6">
                 <div className="mb-4 flex items-center gap-2">
                   <FileCode className="h-5 w-5 text-[var(--brand-600)]" />
-                  <h3 className="text-lg font-semibold text-gray-800">Thông tin cơ bản</h3>
+                  <h3 className="text-lg font-semibold text-gray-800">{t('policy.basic_info')}</h3>
                 </div>
 
                 <FormField
@@ -1054,12 +1054,12 @@ export function PolicyFormModal({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-sm font-medium text-gray-700">
-                        Tên Policy *
+                        {t('policy.name_label')}
                       </FormLabel>
                       <FormControl>
                         <Input
                           {...field}
-                          placeholder="Nhập tên policy (VD: allow-admin-access)"
+                          placeholder={t('policy.placeholder.name')}
                           className="border-gray-300 transition-all focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)]"
                         />
                       </FormControl>

@@ -174,15 +174,19 @@ export default function SystemSettingsPage() {
       />
 
       {/* Filters */}
-      <FilterSection title="Bộ lọc" onReset={handleResetFilters} activeFilters={activeFilters}>
+      <FilterSection
+        title={t('filters.general')}
+        onReset={handleResetFilters}
+        activeFilters={activeFilters}
+      >
         <div className="grid gap-4 md:grid-cols-3">
           {/* Search by key */}
           <div className="space-y-2">
-            <label className="text-sm font-medium">Tìm kiếm theo khóa</label>
+            <label className="text-sm font-medium">{t('system_settings.search_label')}</label>
             <div className="relative">
               <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <Input
-                placeholder="Nhập khóa cấu hình..."
+                placeholder={t('system_settings.placeholders.key')}
                 value={query.key}
                 onChange={(e) => handleSearch(e.target.value)}
                 className="pl-10"
@@ -193,13 +197,13 @@ export default function SystemSettingsPage() {
           {/* Filter by type */}
           {can('filter-by-type') && (
             <div className="space-y-2">
-              <label className="text-sm font-medium">Loại cấu hình</label>
+              <label className="text-sm font-medium">{t('system_settings.type_label')}</label>
               <Select value={query.type || 'all'} onValueChange={handleTypeFilter}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Tất cả" />
+                  <SelectValue placeholder={t('placeholder.all')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Tất cả</SelectItem>
+                  <SelectItem value="all">{t('placeholder.all')}</SelectItem>
                   <SelectItem value={SystemSettingType.STRING}>STRING</SelectItem>
                   <SelectItem value={SystemSettingType.NUMBER}>NUMBER</SelectItem>
                   <SelectItem value={SystemSettingType.BOOLEAN}>BOOLEAN</SelectItem>
@@ -213,18 +217,18 @@ export default function SystemSettingsPage() {
           {/* Filter by editable */}
           {can('filter-by-status') && (
             <div className="space-y-2">
-              <label className="text-sm font-medium">Trạng thái</label>
+              <label className="text-sm font-medium">{t('system_settings.status_label')}</label>
               <Select
                 value={query.isEditable === undefined ? 'all' : query.isEditable ? 'true' : 'false'}
                 onValueChange={handleEditableFilter}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Tất cả" />
+                  <SelectValue placeholder={t('placeholder.all')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Tất cả</SelectItem>
-                  <SelectItem value="true">Có thể chỉnh sửa</SelectItem>
-                  <SelectItem value="false">Chỉ đọc</SelectItem>
+                  <SelectItem value="all">{t('placeholder.all')}</SelectItem>
+                  <SelectItem value="true">{t('system_settings.stats.editable')}</SelectItem>
+                  <SelectItem value="false">{t('system_settings.stats.read_only')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -237,8 +241,10 @@ export default function SystemSettingsPage() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Danh sách cấu hình</CardTitle>
-              <CardDescription>{data?.pagination.total || 0} cấu hình</CardDescription>
+              <CardTitle>{t('system_settings.list_title')}</CardTitle>
+              <CardDescription>
+                {t('system_settings.list_description', { count: data?.pagination.total || 0 })}
+              </CardDescription>
             </div>
           </div>
         </CardHeader>

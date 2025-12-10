@@ -114,16 +114,16 @@ export function SlaTemplateFormDialog({
         footer={
           <>
             <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Hủy
+              {t('cancel')}
             </Button>
             <Button onClick={() => void handleSubmit(handleSave)()} disabled={submitting}>
               {submitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Đang lưu...
+                  {t('button.saving')}
                 </>
               ) : (
-                'Lưu'
+                t('policy.button.save_changes')
               )}
             </Button>
           </>

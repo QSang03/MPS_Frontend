@@ -28,7 +28,7 @@ interface InvoicesListProps {
 }
 
 export function InvoicesList({ customerId, contractId }: InvoicesListProps) {
-  const { t } = useLocale()
+  const { t, locale } = useLocale()
   const [invoices, setInvoices] = useState<InvoiceListItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -46,7 +46,7 @@ export function InvoicesList({ customerId, contractId }: InvoicesListProps) {
 
   const formatDate = (value?: string | null) => {
     if (!value) return '—'
-    return new Date(value).toLocaleDateString('vi-VN', {
+    return new Date(value).toLocaleDateString(locale === 'vi' ? 'vi-VN' : 'en-US', {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
@@ -55,7 +55,7 @@ export function InvoicesList({ customerId, contractId }: InvoicesListProps) {
 
   const formatPrice = (value?: number | null, currencyCode?: string) => {
     if (value === undefined || value === null) return '—'
-    return new Intl.NumberFormat('vi-VN', {
+    return new Intl.NumberFormat(locale === 'vi' ? 'vi-VN' : 'en-US', {
       style: 'currency',
       currency: currencyCode || 'USD',
       minimumFractionDigits: 2,
@@ -143,10 +143,10 @@ export function InvoicesList({ customerId, contractId }: InvoicesListProps) {
               <div className="rounded-lg bg-emerald-100 p-2">
                 <Receipt className="h-5 w-5 text-emerald-600" />
               </div>
-              Hóa đơn billing
+              {t('customer.detail.tab.invoices')}
             </CardTitle>
             <CardDescription className="mt-2">
-              Danh sách các hóa đơn billing đã được tạo cho khách hàng này
+              {t('customer.detail.invoices.description')}
             </CardDescription>
           </div>
         </div>
@@ -158,7 +158,7 @@ export function InvoicesList({ customerId, contractId }: InvoicesListProps) {
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Tìm số hóa đơn..."
+              placeholder={t('invoices.search_placeholder')}
               className="pl-9"
             />
           </div>
@@ -171,12 +171,12 @@ export function InvoicesList({ customerId, contractId }: InvoicesListProps) {
             }}
             className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm transition-colors focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 focus:outline-none"
           >
-            <option value="">Tất cả trạng thái</option>
-            <option value="DRAFT">Nháp</option>
-            <option value="GENERATED">Đã tạo</option>
-            <option value="SENT">Đã gửi</option>
-            <option value="PAID">Đã thanh toán</option>
-            <option value="VOID">Đã hủy</option>
+            <option value="">{t('invoices.filter.all')}</option>
+            <option value="DRAFT">{t('invoices.status.DRAFT')}</option>
+            <option value="GENERATED">{t('invoices.status.GENERATED')}</option>
+            <option value="SENT">{t('invoices.status.SENT')}</option>
+            <option value="PAID">{t('invoices.status.PAID')}</option>
+            <option value="VOID">{t('invoices.status.VOID')}</option>
           </select>
         </div>
       </CardHeader>
@@ -202,7 +202,7 @@ export function InvoicesList({ customerId, contractId }: InvoicesListProps) {
               <Loader2 className="h-12 w-12 animate-spin text-emerald-500" />
               <div className="absolute inset-0 h-12 w-12 animate-ping rounded-full bg-emerald-400 opacity-20" />
             </div>
-            <p className="text-sm font-medium text-slate-600">Đang tải danh sách hóa đơn...</p>
+            <p className="text-sm font-medium text-slate-600">{t('common.loading')}</p>
             <p className="text-sm font-medium text-slate-600">{t('invoices.loading')}</p>
             <p className="font-semibold">{t('invoices.error.title')}</p>
           </div>
@@ -216,11 +216,7 @@ export function InvoicesList({ customerId, contractId }: InvoicesListProps) {
               <Receipt className="h-10 w-10 text-slate-400" />
             </div>
             <div>
-              <p className="text-lg font-semibold text-slate-700">Chưa có hóa đơn nào</p>
               <p className="text-lg font-semibold text-slate-700">{t('invoices.empty.title')}</p>
-              <p className="mt-1 text-sm text-slate-500">
-                Hãy tạo hóa đơn billing mới cho khách hàng này
-              </p>
               <p className="mt-1 text-sm text-slate-500">{t('invoices.empty.description')}</p>
             </div>
           </motion.div>
@@ -231,22 +227,22 @@ export function InvoicesList({ customerId, contractId }: InvoicesListProps) {
                 <thead className="border-b border-slate-200 bg-gradient-to-r from-slate-50 to-slate-100/50">
                   <tr>
                     <th className="min-w-[180px] py-4 pr-4 pl-6 text-left text-xs font-semibold tracking-wide text-slate-600 uppercase">
-                      Số hóa đơn
+                      {t('invoices.table.number')}
                     </th>
                     <th className="min-w-[120px] px-4 py-4 text-left text-xs font-semibold tracking-wide text-slate-600 uppercase">
-                      Kỳ tính phí
+                      {t('invoices.table.period')}
                     </th>
                     <th className="min-w-[120px] px-4 py-4 text-left text-xs font-semibold tracking-wide text-slate-600 uppercase">
-                      Ngày billing
+                      {t('invoices.table.billing_date')}
                     </th>
                     <th className="w-28 px-4 py-4 text-left text-xs font-semibold tracking-wide text-slate-600 uppercase">
-                      Trạng thái
+                      {t('invoices.table.status')}
                     </th>
                     <th className="w-32 px-4 py-4 text-right text-xs font-semibold tracking-wide text-slate-600 uppercase">
-                      Tổng tiền
+                      {t('invoices.table.total')}
                     </th>
                     <th className="w-32 px-4 py-4 text-right text-xs font-semibold tracking-wide text-slate-600 uppercase">
-                      Hành động
+                      {t('invoices.table.actions')}
                     </th>
                   </tr>
                 </thead>
@@ -277,7 +273,8 @@ export function InvoicesList({ customerId, contractId }: InvoicesListProps) {
                             getStatusColor(invoice.status)
                           )}
                         >
-                          {getStatusLabel(invoice.status)}
+                          {t(`invoices.status.${invoice.status ?? 'DRAFT'}`) ||
+                            getStatusLabel(invoice.status)}
                         </Badge>
                       </td>
                       <td className="px-4 py-4 text-right text-sm font-semibold text-slate-800">
@@ -293,7 +290,7 @@ export function InvoicesList({ customerId, contractId }: InvoicesListProps) {
                               // TODO: Open invoice detail modal
                               console.log('View invoice:', invoice.invoiceId)
                             }}
-                            aria-label="Xem chi tiết"
+                            aria-label={t('invoices.action.view')}
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
@@ -309,7 +306,7 @@ export function InvoicesList({ customerId, contractId }: InvoicesListProps) {
                                   window.open(pdf, '_blank')
                                 }
                               }}
-                              aria-label="Tải PDF"
+                              aria-label={t('invoices.action.download_pdf')}
                             >
                               <Download className="h-4 w-4" />
                             </Button>
@@ -326,9 +323,11 @@ export function InvoicesList({ customerId, contractId }: InvoicesListProps) {
             {pagination && pagination.totalPages > 1 && (
               <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-6 py-4">
                 <div className="text-sm text-slate-600">
-                  Hiển thị {(pagination.page - 1) * pagination.limit + 1} -{' '}
-                  {Math.min(pagination.page * pagination.limit, pagination.total)} trong tổng số{' '}
-                  {pagination.total} hóa đơn
+                  {t('pagination.showing_range', {
+                    from: (pagination.page - 1) * pagination.limit + 1,
+                    to: Math.min(pagination.page * pagination.limit, pagination.total),
+                    total: pagination.total,
+                  })}
                 </div>
                 <div className="flex items-center gap-2">
                   <Button
@@ -339,10 +338,13 @@ export function InvoicesList({ customerId, contractId }: InvoicesListProps) {
                     className="gap-2"
                   >
                     <ChevronLeft className="h-4 w-4" />
-                    Trước
+                    {t('pagination.prev')}
                   </Button>
                   <div className="text-sm text-slate-600">
-                    Trang {pagination.page} / {pagination.totalPages}
+                    {t('pagination.page_of', {
+                      page: pagination.page,
+                      totalPages: pagination.totalPages,
+                    })}
                   </div>
                   <Button
                     variant="outline"
@@ -351,7 +353,7 @@ export function InvoicesList({ customerId, contractId }: InvoicesListProps) {
                     disabled={page === pagination.totalPages}
                     className="gap-2"
                   >
-                    Sau
+                    {t('pagination.next')}
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>

@@ -30,6 +30,7 @@ import {
 } from '@/lib/validations/invoice.schema'
 import type { Invoice } from '@/types/models/invoice'
 import { invoicesClientService } from '@/lib/api/services/invoices-client.service'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 interface CreateBillingModalProps {
   open: boolean
@@ -50,6 +51,7 @@ export function CreateBillingModal({
   contractNumber,
   onSuccess,
 }: CreateBillingModalProps) {
+  const { t } = useLocale()
   const [showAdvanced, setShowAdvanced] = useState(false)
 
   const form = useForm<CreateInvoiceFormData>({
@@ -71,11 +73,10 @@ export function CreateBillingModal({
   const createMutation = useMutation({
     mutationFn: (payload: CreateInvoiceFormData) => invoicesClientService.create(payload),
     onSuccess: (invoice: Invoice | null) => {
-      toast.success('✅ Tạo hóa đơn thành công', {
-        description: invoice
-          ? `Hóa đơn ${invoice.invoiceNumber} đã được tạo`
-          : 'Hóa đơn đã được tạo thành công',
-      })
+      toast.success(t('invoices.create_success'))
+      if (invoice) {
+        toast.success(t('invoices.create_success_with_number', { number: invoice.invoiceNumber }))
+      }
       if (onSuccess) onSuccess(invoice)
       onOpenChange(false)
       form.reset()
@@ -84,8 +85,8 @@ export function CreateBillingModal({
       const message =
         (error as { message?: string })?.message ||
         (error as { responseData?: { message?: string } })?.responseData?.message ||
-        'Tạo hóa đơn thất bại'
-      toast.error('❌ ' + message)
+        t('invoices.create_error')
+      toast.error(t('invoices.create_error') + (message ? `: ${message}` : ''))
     },
   })
 
@@ -117,13 +118,18 @@ export function CreateBillingModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <SystemModalLayout
-        title="Tạo hóa đơn billing"
+        title={t('customer.detail.contracts.create_billing')}
         description={
           customerName && contractNumber
-            ? `Khách hàng: ${customerName} • Hợp đồng: ${contractNumber}`
+            ? t('customer.detail.contracts.create_billing_description_with_contract', {
+                customerName,
+                contractNumber,
+              })
             : customerName
-              ? `Tạo hóa đơn billing cho khách hàng: ${customerName}`
-              : 'Tạo hóa đơn billing mới'
+              ? t('customer.detail.contracts.create_billing_description_for_customer', {
+                  customerName,
+                })
+              : t('customer.detail.contracts.create_billing_description_new')
         }
         icon={Receipt}
         variant="create"
@@ -136,7 +142,7 @@ export function CreateBillingModal({
               onClick={() => onOpenChange(false)}
               disabled={isLoading}
             >
-              Hủy
+              {t('cancel')}
             </Button>
             <Button
               type="button"
@@ -147,12 +153,12 @@ export function CreateBillingModal({
               {isLoading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Đang tạo...
+                  {t('button.creating')}
                 </>
               ) : (
                 <>
                   <Receipt className="h-4 w-4" />
-                  Tạo hóa đơn
+                  {t('customer.detail.contracts.create_billing')}
                 </>
               )}
             </Button>
@@ -172,7 +178,7 @@ export function CreateBillingModal({
                 <div className="flex items-center gap-2 rounded-lg bg-blue-50 p-3">
                   <Info className="h-5 w-5 text-blue-600" />
                   <p className="text-sm text-blue-700">
-                    Thông tin cơ bản để tạo hóa đơn billing cho khách hàng
+                    {t('customer.detail.create_billing_basic_info')}
                   </p>
                 </div>
 
@@ -183,12 +189,14 @@ export function CreateBillingModal({
                     <FormItem>
                       <FormLabel className="flex items-center gap-2">
                         <Calendar className="h-4 w-4" />
-                        Ngày billing <span className="text-red-500">*</span>
+                        {t('invoices.field.billing_date')} <span className="text-red-500">*</span>
                       </FormLabel>
                       <FormControl>
                         <Input type="date" {...field} />
                       </FormControl>
-                      <FormDescription>Ngày mà hóa đơn sẽ được tạo và gửi đi</FormDescription>
+                      <FormDescription>
+                        {t('invoices.field.billing_date_description')}
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -201,19 +209,12 @@ export function CreateBillingModal({
                     <FormItem>
                       <FormLabel className="flex items-center gap-2">
                         <FileText className="h-4 w-4" />
-                        Ghi chú
+                        {t('billing.note_label')}
                       </FormLabel>
                       <FormControl>
-                        <Textarea
-                          {...field}
-                          placeholder="Nhập ghi chú cho hóa đơn (tùy chọn)"
-                          rows={3}
-                        />
+                        <Textarea {...field} placeholder={t('billing.placeholder.note')} rows={3} />
                       </FormControl>
-                      <FormDescription>
-                        Ghi chú bổ sung cho hóa đơn này (ví dụ: "Manual run before official billing
-                        day")
-                      </FormDescription>
+                      <FormDescription>{t('billing.note_description')}</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -232,9 +233,11 @@ export function CreateBillingModal({
                 >
                   <span className="flex items-center gap-2">
                     <Clock className="h-4 w-4" />
-                    Tùy chọn nâng cao
+                    {t('billing.advanced_options')}
                   </span>
-                  <span className="text-xs text-slate-500">{showAdvanced ? 'Ẩn' : 'Hiển thị'}</span>
+                  <span className="text-xs text-slate-500">
+                    {showAdvanced ? t('hide') : t('show')}
+                  </span>
                 </Button>
 
                 {showAdvanced && (
@@ -246,9 +249,7 @@ export function CreateBillingModal({
                   >
                     <div className="flex items-center gap-2 rounded-lg bg-amber-50 p-2">
                       <AlertCircle className="h-4 w-4 text-amber-600" />
-                      <p className="text-xs text-amber-700">
-                        Các tùy chọn này sẽ ghi đè các giá trị mặc định từ cấu hình khách hàng
-                      </p>
+                      <p className="text-xs text-amber-700">{t('billing.override_notice')}</p>
                     </div>
 
                     <FormField
@@ -256,7 +257,7 @@ export function CreateBillingModal({
                       name="periodStartOverride"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Ngày bắt đầu kỳ (Override)</FormLabel>
+                          <FormLabel>{t('billing.field.period_start_override')}</FormLabel>
                           <FormControl>
                             <DateTimeLocalPicker
                               value={field.value || ''}
@@ -265,7 +266,7 @@ export function CreateBillingModal({
                             />
                           </FormControl>
                           <FormDescription>
-                            Ghi đè ngày bắt đầu kỳ tính phí (định dạng: YYYY-MM-DDTHH:mm)
+                            {t('billing.field.period_start_override_description')}
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -277,7 +278,7 @@ export function CreateBillingModal({
                       name="periodEndOverride"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Ngày kết thúc kỳ (Override)</FormLabel>
+                          <FormLabel>{t('billing.field.period_end_override')}</FormLabel>
                           <FormControl>
                             <DateTimeLocalPicker
                               value={field.value || ''}
@@ -286,7 +287,7 @@ export function CreateBillingModal({
                             />
                           </FormControl>
                           <FormDescription>
-                            Ghi đè ngày kết thúc kỳ tính phí (định dạng: YYYY-MM-DDTHH:mm)
+                            {t('billing.field.period_end_override_description')}
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -298,7 +299,7 @@ export function CreateBillingModal({
                       name="billingDayOverride"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Ngày billing (Override)</FormLabel>
+                          <FormLabel>{t('billing.field.billing_day_override')}</FormLabel>
                           <FormControl>
                             <Input
                               type="number"
@@ -312,7 +313,9 @@ export function CreateBillingModal({
                               }}
                             />
                           </FormControl>
-                          <FormDescription>Ghi đè ngày billing (1-31) cho kỳ này</FormDescription>
+                          <FormDescription>
+                            {t('billing.field.billing_day_override_description')}
+                          </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}

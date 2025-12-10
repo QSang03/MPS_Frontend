@@ -225,9 +225,7 @@ export default function ContractDevicesSection({
                   <td colSpan={8} className="px-4 py-12 text-center">
                     <div className="flex flex-col items-center gap-3">
                       <div className="h-8 w-8 animate-spin rounded-full border-4 border-[var(--brand-200)] border-t-[var(--brand-600)]"></div>
-                      <p className="text-sm text-[var(--brand-500)]">
-                        Đang tải danh sách thiết bị...
-                      </p>
+                      <p className="text-sm text-[var(--brand-500)]">{t('common.loading')}</p>
                     </div>
                   </td>
                 </tr>

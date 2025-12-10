@@ -104,11 +104,11 @@ export function ServiceRequestForm({ customerId, onSuccess }: ServiceRequestForm
               name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Tiêu đề</FormLabel>
+                  <FormLabel>{t('requests.service.field.title')}</FormLabel>
                   <FormControl>
-                    <Input placeholder="Tóm tắt vấn đề ngắn gọn..." {...field} />
+                    <Input placeholder={t('requests.service.placeholder.title')} {...field} />
                   </FormControl>
-                  <FormDescription>Tiêu đề tóm tắt vấn đề (ít nhất 3 ký tự)</FormDescription>
+                  <FormDescription>{t('requests.service.description.title')}</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -121,7 +121,7 @@ export function ServiceRequestForm({ customerId, onSuccess }: ServiceRequestForm
                 name="deviceId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Thiết bị</FormLabel>
+                    <FormLabel>{t('requests.service.field.device')}</FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
@@ -129,7 +129,7 @@ export function ServiceRequestForm({ customerId, onSuccess }: ServiceRequestForm
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Chọn thiết bị" />
+                          <SelectValue placeholder={t('requests.service.placeholder.device')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -141,7 +141,7 @@ export function ServiceRequestForm({ customerId, onSuccess }: ServiceRequestForm
                         ))}
                       </SelectContent>
                     </Select>
-                    <FormDescription>Chọn thiết bị cần bảo trì (nếu có)</FormDescription>
+                    <FormDescription>{t('requests.service.description.device')}</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -152,7 +152,7 @@ export function ServiceRequestForm({ customerId, onSuccess }: ServiceRequestForm
                 name="priority"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Độ ưu tiên</FormLabel>
+                    <FormLabel>{t('requests.service.field.priority')}</FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
@@ -160,7 +160,7 @@ export function ServiceRequestForm({ customerId, onSuccess }: ServiceRequestForm
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Chọn mức độ" />
+                          <SelectValue placeholder={t('requests.service.placeholder.priority')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -179,7 +179,7 @@ export function ServiceRequestForm({ customerId, onSuccess }: ServiceRequestForm
                         ))}
                       </SelectContent>
                     </Select>
-                    <FormDescription>Mức độ khẩn cấp của yêu cầu</FormDescription>
+                    <FormDescription>{t('requests.service.description.priority')}</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -192,10 +192,10 @@ export function ServiceRequestForm({ customerId, onSuccess }: ServiceRequestForm
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Mô tả chi tiết</FormLabel>
+                  <FormLabel>{t('requests.service.field.description')}</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Mô tả chi tiết vấn đề gặp phải, tình trạng hiện tại..."
+                      placeholder={t('requests.service.placeholder.description')}
                       rows={5}
                       className="resize-none"
                       {...field}
@@ -215,11 +215,13 @@ export function ServiceRequestForm({ customerId, onSuccess }: ServiceRequestForm
                 onClick={onSuccess}
                 disabled={createMutation.isPending}
               >
-                Hủy bỏ
+                {t('cancel')}
               </Button>
               <Button type="submit" disabled={createMutation.isPending}>
                 {createMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {createMutation.isPending ? 'Đang xử lý...' : 'Gửi yêu cầu'}
+                {createMutation.isPending
+                  ? t('button.processing')
+                  : t('dashboard.actions.send_request')}
               </Button>
             </div>
           </form>

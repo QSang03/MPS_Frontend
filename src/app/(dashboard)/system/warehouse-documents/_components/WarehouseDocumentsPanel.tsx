@@ -14,9 +14,11 @@ import {
 } from '@/components/ui/select'
 import { CustomerSelect } from '@/components/shared/CustomerSelect'
 import { WarehouseDocumentStatus, WarehouseDocumentType } from '@/types/models/warehouse-document'
+import { useLocale } from '@/components/providers/LocaleProvider'
 // Icons are used in the page layout
 
 export default function WarehouseDocumentsPanel() {
+  const { t } = useLocale()
   const [search, setSearch] = useState('')
   const [customerId, setCustomerId] = useState<string>('')
   const [status, setStatus] = useState<WarehouseDocumentStatus | 'all'>('all')
@@ -24,7 +26,11 @@ export default function WarehouseDocumentsPanel() {
 
   const activeFilters: ActiveFilter[] = []
   if (search)
-    activeFilters.push({ label: `Tìm: ${search}`, value: 'search', onRemove: () => setSearch('') })
+    activeFilters.push({
+      label: `${t('common.search')}: ${search}`,
+      value: 'search',
+      onRemove: () => setSearch(''),
+    })
   if (customerId)
     activeFilters.push({
       label: `Khách hàng`,
@@ -43,8 +49,8 @@ export default function WarehouseDocumentsPanel() {
   return (
     <div className="space-y-6">
       <FilterSection
-        title="Bộ lọc chứng từ"
-        subtitle="Lọc danh sách chứng từ kho"
+        title={t('warehouse_document.filter.title')}
+        subtitle={t('warehouse_document.filter.subtitle')}
         activeFilters={activeFilters}
         onReset={() => {
           setSearch('')
@@ -56,7 +62,7 @@ export default function WarehouseDocumentsPanel() {
         <div className="grid gap-4 md:grid-cols-3">
           <div>
             <Input
-              placeholder="Tìm số chứng từ hoặc ghi chú"
+              placeholder={t('warehouse_document.filter.search_placeholder')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -65,7 +71,7 @@ export default function WarehouseDocumentsPanel() {
             <CustomerSelect
               value={customerId}
               onChange={(id) => setCustomerId(id ?? '')}
-              placeholder="Lọc theo khách hàng"
+              placeholder={t('customer.filter_placeholder')}
             />
           </div>
           <div>
@@ -74,26 +80,36 @@ export default function WarehouseDocumentsPanel() {
               onValueChange={(v) => setStatus(v as WarehouseDocumentStatus | 'all')}
             >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Tất cả trạng thái" />
+                <SelectValue placeholder={t('warehouse_document.filter.status_placeholder')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tất cả</SelectItem>
-                <SelectItem value="DRAFT">Nháp</SelectItem>
-                <SelectItem value="CONFIRMED">Xác nhận</SelectItem>
-                <SelectItem value="CANCELLED">Hủy</SelectItem>
+                <SelectItem value="all">{t('common.all')}</SelectItem>
+                <SelectItem value="DRAFT">{t('warehouse_document.statuses.DRAFT')}</SelectItem>
+                <SelectItem value="CONFIRMED">
+                  {t('warehouse_document.statuses.CONFIRMED')}
+                </SelectItem>
+                <SelectItem value="CANCELLED">
+                  {t('warehouse_document.statuses.CANCELLED')}
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div>
             <Select value={type} onValueChange={(v) => setType(v as WarehouseDocumentType | 'all')}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Tất cả loại" />
+                <SelectValue placeholder={t('warehouse_document.filter.type_placeholder')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tất cả</SelectItem>
-                <SelectItem value="IMPORT_FROM_SUPPLIER">Nhập kho</SelectItem>
-                <SelectItem value="EXPORT_TO_CUSTOMER">Xuất kho</SelectItem>
-                <SelectItem value="RETURN_FROM_CUSTOMER">Trả khách</SelectItem>
+                <SelectItem value="all">{t('common.all')}</SelectItem>
+                <SelectItem value="IMPORT_FROM_SUPPLIER">
+                  {t('warehouse_document.types.IMPORT_FROM_SUPPLIER')}
+                </SelectItem>
+                <SelectItem value="EXPORT_TO_CUSTOMER">
+                  {t('warehouse_document.types.EXPORT_TO_CUSTOMER')}
+                </SelectItem>
+                <SelectItem value="RETURN_FROM_CUSTOMER">
+                  {t('warehouse_document.types.RETURN_FROM_CUSTOMER')}
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>

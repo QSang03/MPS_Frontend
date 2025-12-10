@@ -16,6 +16,37 @@ export type CostAdjustmentVoucher = {
   createdBy?: unknown
   createdAt?: string
   updatedAt?: string
+  customer?: {
+    id?: string
+    name?: string
+    code?: unknown
+    defaultCurrency?: {
+      id?: string
+      code?: string
+      name?: string
+      symbol?: string
+      isActive?: boolean
+      createdAt?: string
+      updatedAt?: string
+    }
+  }
+  device?: {
+    id?: string
+    customerId?: string
+    serialNumber?: string
+    status?: string
+    isActive?: boolean
+    deviceModel?: {
+      id?: string
+      name?: string
+      manufacturer?: string
+      deviceType?: string
+      isActive?: boolean
+      useA4Counter?: boolean
+      createdAt?: string
+      updatedAt?: string
+    }
+  }
 }
 
 export type CreateCostAdjustmentDto = {

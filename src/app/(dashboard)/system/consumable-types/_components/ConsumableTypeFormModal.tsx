@@ -14,6 +14,7 @@ import type { ConsumableType, CreateConsumableTypeDto } from '@/types/models/con
 import { Plus, Edit, Loader2, Sparkles, Package, FileText, Hash, CheckCircle2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 interface Props {
   mode?: 'create' | 'edit'
@@ -41,6 +42,7 @@ export default function ConsumableTypeFormModal({
       (model as unknown as Record<string, unknown>)?.compatibleMachineLine ?? ''
     ),
   })
+  const { t } = useLocale()
 
   React.useEffect(() => {
     if (model) {
@@ -127,17 +129,17 @@ export default function ConsumableTypeFormModal({
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {mode === 'create' ? 'Đang tạo...' : 'Đang lưu...'}
+                  {mode === 'create' ? t('button.creating') : t('button.saving')}
                 </>
               ) : mode === 'create' ? (
                 <>
                   <Plus className="mr-2 h-4 w-4" />
-                  Tạo loại vật tư
+                  {t('consumable_type.button.create')}
                 </>
               ) : (
                 <>
                   <CheckCircle2 className="mr-2 h-4 w-4" />
-                  Lưu thay đổi
+                  {t('consumable_type.button.save')}
                 </>
               )}
             </Button>
@@ -160,7 +162,7 @@ export default function ConsumableTypeFormModal({
               <Input
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="Nhập tên loại vật tư..."
+                placeholder={t('consumable_type.placeholder.name')}
                 required
                 className="h-11"
               />
@@ -174,7 +176,7 @@ export default function ConsumableTypeFormModal({
               <Input
                 value={form.unit}
                 onChange={(e) => setForm({ ...form, unit: e.target.value })}
-                placeholder="cái, hộp, lít..."
+                placeholder={t('consumable_type.placeholder.unit')}
                 className="h-11"
               />
             </div>
@@ -187,7 +189,7 @@ export default function ConsumableTypeFormModal({
               <Input
                 value={form.partNumber ?? ''}
                 onChange={(e) => setForm({ ...form, partNumber: e.target.value })}
-                placeholder="Nhập mã/part number (ví dụ: HP-CF410A)"
+                placeholder={t('consumable_type.placeholder.part_number')}
                 className="h-11"
               />
             </div>
@@ -200,7 +202,7 @@ export default function ConsumableTypeFormModal({
               <Input
                 value={form.compatibleMachineLine ?? ''}
                 onChange={(e) => setForm({ ...form, compatibleMachineLine: e.target.value })}
-                placeholder="Nhập dòng máy tương thích (ví dụ: LaserJet Pro M404, ...)"
+                placeholder={t('consumable_type.placeholder.compatible_models')}
                 className="h-11"
               />
             </div>
@@ -217,7 +219,7 @@ export default function ConsumableTypeFormModal({
                   const v = e.target.value
                   setForm({ ...form, capacity: v === '' ? undefined : Number(v) })
                 }}
-                placeholder="Số lượng (ví dụ: 5000)"
+                placeholder={t('consumable_type.placeholder.capacity')}
                 className="h-11"
               />
             </div>
@@ -237,7 +239,7 @@ export default function ConsumableTypeFormModal({
               <Textarea
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
-                placeholder="Nhập mô tả chi tiết về loại vật tư..."
+                placeholder={t('consumable_type.placeholder.description')}
                 rows={4}
                 className="resize-none"
               />

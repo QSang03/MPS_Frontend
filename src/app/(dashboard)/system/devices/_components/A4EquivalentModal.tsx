@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Dialog } from '@/components/ui/dialog'
 import { SystemModalLayout } from '@/components/system/SystemModalLayout'
 import { FileText } from 'lucide-react'
@@ -13,6 +13,8 @@ import { toast } from 'sonner'
 import internalApiClient from '@/lib/api/internal-client'
 import type { Device } from '@/types/models/device'
 import { useLocale } from '@/components/providers/LocaleProvider'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Loader2, Scan } from 'lucide-react'
 
 interface Props {
   // Accept any device-like object which must include `id` and optionally `serialNumber`.
@@ -25,7 +27,7 @@ interface Props {
 }
 
 export default function A4EquivalentModal({ device, open, onOpenChange, onSaved }: Props) {
-  const { t } = useLocale()
+  const { t, locale } = useLocale()
   const [submitting, setSubmitting] = useState(false)
   const [totalPageCountA4, setTotalPageCountA4] = useState<string>('')
   const [totalColorPagesA4, setTotalColorPagesA4] = useState<string>('')
@@ -37,6 +39,13 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
   const [recordedAt, setRecordedAt] = useState<string>('') // local value
   const [recordedAtISO, setRecordedAtISO] = useState<string | null>(null) // ISO
   const [updateLatest, setUpdateLatest] = useState<boolean>(false)
+  const [scanLoading, setScanLoading] = useState(false)
+  const [scanResult, setScanResult] = useState<{
+    totalPageCount?: number | null
+    totalPageCountA4?: number | null
+    message?: string | null
+  } | null>(null)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   const rawA4 = (device as Device | null)?.deviceModel?.useA4Counter as unknown
   const useA4 = rawA4 === true || rawA4 === 'true' || rawA4 === 1 || rawA4 === '1'
@@ -63,6 +72,7 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
     }
     setRecordedAt('')
     setUpdateLatest(false)
+    setScanResult(null)
   }, [device, open, useA4])
 
   if (!device) return null
@@ -75,12 +85,12 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
         ? !totalPageCountA4.trim() && !totalColorPagesA4.trim() && !totalBlackWhitePagesA4.trim()
         : !totalPageCount.trim() && !totalColorPages.trim() && !totalBlackWhitePages.trim()
     ) {
-      toast.error('Vui lòng nhập ít nhất một giá trị counter (A4 hoặc tổng counter)')
+      toast.error(t('device.a4.error.require_counter'))
       return
     }
 
     if (!recordedAtISO) {
-      toast.error('Vui lòng chọn thời gian ghi nhận')
+      toast.error(t('device.a4.error.require_recorded_at'))
       return
     }
 
@@ -99,7 +109,7 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
       (v) => v !== undefined && (Number.isNaN(v) || v < 0)
     )
     if (invalidNumber) {
-      toast.error('Các giá trị counter phải là số nguyên không âm')
+      toast.error(t('device.a4.error.invalid_counter_values'))
       return
     }
 
@@ -240,6 +250,62 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
     }
   }
 
+  const handleScanPdf = async (file: File) => {
+    if (!device?.id) return
+    const fd = new FormData()
+    fd.append('file', file)
+    const effectiveAt = recordedAtISO ?? new Date().toISOString()
+    fd.append('at', effectiveAt)
+    if (!recordedAtISO) {
+      setRecordedAtISO(effectiveAt)
+      setRecordedAt(effectiveAt.slice(0, 16))
+    }
+    const params: Record<string, string> = {
+      deviceId: device.id,
+      lang: locale === 'en' ? 'en' : 'vi',
+    }
+    const customerId =
+      (device as Device)?.customerId || (device as { customerId?: string })?.customerId
+    if (customerId) params.customerId = customerId
+
+    setScanLoading(true)
+    setScanResult(null)
+    try {
+      const resp = await internalApiClient.post('/api/reports/usage/scan-pdf', fd, {
+        params,
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      const data = resp?.data?.data || {}
+      const total = data.totalPageCount ?? data.totalPageCountA4 ?? 0
+      setScanResult({
+        totalPageCount: data.totalPageCount,
+        totalPageCountA4: data.totalPageCountA4,
+        message: resp?.data?.message,
+      })
+
+      if (useA4) {
+        setTotalPageCountA4(total !== null && total !== undefined ? String(total) : '')
+        // clear non-A4 to avoid confusion
+        setTotalPageCount('0')
+        setTotalColorPages('0')
+        setTotalBlackWhitePages('0')
+      } else {
+        setTotalPageCount(total !== null && total !== undefined ? String(total) : '')
+        setTotalPageCountA4('0')
+        setTotalColorPagesA4('0')
+        setTotalBlackWhitePagesA4('0')
+      }
+
+      toast.success('Phân tích PDF thành công, vui lòng kiểm tra trước khi lưu')
+    } catch (err: unknown) {
+      const maybe = err as { response?: { data?: { message?: string; error?: string } } }
+      const msg = maybe?.response?.data?.message || maybe?.response?.data?.error
+      toast.error(msg || 'Phân tích PDF thất bại')
+    } finally {
+      setScanLoading(false)
+    }
+  }
+
   // helpers for live auto-fill behavior
   const parseNum = (s: string) => {
     if (!s?.trim()) return undefined
@@ -361,6 +427,52 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
           }}
           className="space-y-4"
         >
+          <div className="flex flex-wrap items-center gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={scanLoading}
+              className="gap-2"
+            >
+              {scanLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Scan className="h-4 w-4" />
+              )}
+              {scanLoading ? 'Đang phân tích PDF...' : 'Phân tích PDF'}
+            </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="application/pdf"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                if (file) {
+                  void handleScanPdf(file)
+                  // allow re-selecting same file
+                  e.target.value = ''
+                }
+              }}
+            />
+            <p className="text-muted-foreground text-xs">
+              Chỉ nhận PDF báo cáo counter. Hệ thống sẽ tự điền trang tổng, hãy kiểm tra lại trước
+              khi lưu.
+            </p>
+          </div>
+
+          {scanResult && (
+            <Alert className="border-amber-200 bg-amber-50">
+              <AlertTitle>Kết quả phân tích PDF</AlertTitle>
+              <AlertDescription className="text-sm">
+                Tổng trang: {scanResult.totalPageCount ?? '—'} | A4:{' '}
+                {scanResult.totalPageCountA4 ?? '—'}. Vui lòng soát lại các trường bên dưới trước
+                khi lưu.
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* non-A4 fields (regular counters) */}
           {!useA4 && (
             <>

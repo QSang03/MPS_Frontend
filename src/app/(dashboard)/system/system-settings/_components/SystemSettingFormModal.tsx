@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge'
 import type { SystemSetting, SystemSettingFormData } from '@/types/system-settings'
 import { SystemSettingType } from '@/types/system-settings'
 import { Edit, Loader2, Settings, Lock, FileText, Info } from 'lucide-react'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { updateSystemSetting } from '@/lib/api/system-settings'
@@ -24,6 +25,7 @@ interface Props {
 
 export default function SystemSettingFormModal({ setting, onSaved }: Props) {
   const [open, setOpen] = useState(false)
+  const { t } = useLocale()
   const queryClient = useQueryClient()
 
   const getInitialValue = (value: unknown): string => {
@@ -55,14 +57,14 @@ export default function SystemSettingFormModal({ setting, onSaved }: Props) {
   const mutation = useMutation({
     mutationFn: (data: SystemSettingFormData) => updateSystemSetting(setting.id, data),
     onSuccess: (response) => {
-      toast.success('Cập nhật cấu hình thành công')
+      toast.success(t('system_settings.update_success'))
       queryClient.invalidateQueries({ queryKey: ['system-settings'] })
       onSaved?.(response.data)
       setOpen(false)
     },
     onError: (error: Error) => {
       console.error('Update system setting failed', error)
-      toast.error('Có lỗi khi cập nhật cấu hình')
+      toast.error(t('system_settings.update_error'))
     },
   })
 
@@ -97,7 +99,7 @@ export default function SystemSettingFormModal({ setting, onSaved }: Props) {
             type="number"
             value={form.value}
             onChange={(e) => setForm({ ...form, value: e.target.value })}
-            placeholder="Nhập giá trị số"
+            placeholder={t('system_settings.placeholders.number')}
             className="transition-all focus:ring-2 focus:ring-[var(--brand-500)]"
           />
         )
@@ -109,8 +111,8 @@ export default function SystemSettingFormModal({ setting, onSaved }: Props) {
             onChange={(e) => setForm({ ...form, value: e.target.value })}
             className="border-input bg-background ring-offset-background flex h-10 w-full rounded-md border px-3 py-2 text-sm transition-all focus:ring-2 focus:ring-[var(--ring)]"
           >
-            <option value="true">true</option>
             <option value="false">false</option>
+            <option value="true">true</option>
           </select>
         )
       case SystemSettingType.JSON:
@@ -119,7 +121,7 @@ export default function SystemSettingFormModal({ setting, onSaved }: Props) {
             id="value"
             value={form.value}
             onChange={(e) => setForm({ ...form, value: e.target.value })}
-            placeholder='{"key": "value"}'
+            placeholder={t('system_settings.placeholder.json')}
             rows={6}
             className="font-mono text-sm transition-all focus:ring-2 focus:ring-[var(--ring)]"
           />
@@ -131,7 +133,7 @@ export default function SystemSettingFormModal({ setting, onSaved }: Props) {
             type="password"
             value={form.value}
             onChange={(e) => setForm({ ...form, value: e.target.value })}
-            placeholder="Nhập giá trị bảo mật"
+            placeholder={t('system_settings.placeholders.secret')}
             className="transition-all focus:ring-2 focus:ring-[var(--error-500)]"
           />
         )
@@ -142,7 +144,7 @@ export default function SystemSettingFormModal({ setting, onSaved }: Props) {
             type="text"
             value={form.value}
             onChange={(e) => setForm({ ...form, value: e.target.value })}
-            placeholder="Nhập giá trị"
+            placeholder={t('system_settings.placeholders.text')}
             className="transition-all focus:ring-2 focus:ring-[var(--ring)]"
           />
         )
@@ -158,13 +160,13 @@ export default function SystemSettingFormModal({ setting, onSaved }: Props) {
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="gap-2 hover:bg-[var(--brand-50)]">
           <Edit className="h-4 w-4" />
-          Chỉnh sửa
+          {t('system_settings.edit')}
         </Button>
       </DialogTrigger>
 
       <SystemModalLayout
-        title="Chỉnh sửa cấu hình hệ thống"
-        description="Cập nhật giá trị và mô tả cho cấu hình hệ thống"
+        title={t('system_settings.title')}
+        description={t('system_settings.description')}
         icon={Settings}
         variant="edit"
         footer={
@@ -176,7 +178,7 @@ export default function SystemSettingFormModal({ setting, onSaved }: Props) {
               disabled={mutation.isPending}
               className="min-w-[100px]"
             >
-              Hủy
+              {t('system_settings.cancel')}
             </Button>
             <Button
               type="submit"
@@ -187,12 +189,12 @@ export default function SystemSettingFormModal({ setting, onSaved }: Props) {
               {mutation.isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Đang lưu...
+                  {t('system_settings.saving')}
                 </>
               ) : (
                 <>
                   <Settings className="mr-2 h-4 w-4" />
-                  Cập nhật
+                  {t('system_settings.update')}
                 </>
               )}
             </Button>
@@ -204,7 +206,7 @@ export default function SystemSettingFormModal({ setting, onSaved }: Props) {
           <div className="space-y-3">
             <Label className="flex items-center gap-2 text-sm font-medium text-gray-700">
               <FileText className="h-4 w-4" />
-              Khóa cấu hình
+              {t('system_settings.key_label')}
             </Label>
             <div className="flex items-center gap-3">
               <Input
@@ -237,7 +239,7 @@ export default function SystemSettingFormModal({ setting, onSaved }: Props) {
             {renderValueInput()}
             {setting.type === SystemSettingType.JSON && (
               <p className="text-xs text-gray-500">
-                <Info className="inline h-3 w-3" /> Nhập JSON hợp lệ
+                <Info className="inline h-3 w-3" /> {t('system_settings.json_hint')}
               </p>
             )}
           </div>
@@ -249,13 +251,13 @@ export default function SystemSettingFormModal({ setting, onSaved }: Props) {
               className="flex items-center gap-2 text-sm font-medium text-gray-700"
             >
               <FileText className="h-4 w-4" />
-              Mô tả
+              {t('system_settings.description_label')}
             </Label>
             <Textarea
               id="description"
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
-              placeholder="Nhập mô tả chi tiết cho cấu hình này"
+              placeholder={t('system_settings.description_placeholder')}
               rows={3}
               className="transition-all focus:ring-2 focus:ring-[var(--brand-500)]"
             />

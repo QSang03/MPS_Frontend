@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { Loader2, ShoppingCart, Package } from 'lucide-react'
 import { Dialog } from '@/components/ui/dialog'
 import { SystemModalLayout } from '@/components/system/SystemModalLayout'
@@ -41,21 +42,32 @@ export default function ConsumablesModal({
   filterOrphaned,
   onFilterChange,
 }: ConsumablesModalProps) {
+  const { t, locale } = useLocale()
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <SystemModalLayout
-        title="Vật tư tiêu hao của khách hàng"
-        description={`${viewCustomer?.name} — ${filterOrphaned === 'orphaned' ? 'Chưa lắp' : filterOrphaned === 'installed' ? 'Đã lắp' : 'Tất cả'}`}
+        title={
+          viewCustomer
+            ? `${t('customer.consumables.title')} - ${viewCustomer.name}`
+            : t('customer.consumables.title')
+        }
+        description={`${viewCustomer?.name} — ${
+          filterOrphaned === 'orphaned'
+            ? t('consumables.filter.orphaned')
+            : filterOrphaned === 'installed'
+              ? t('consumables.filter.installed')
+              : t('placeholder.all')
+        }`}
         icon={ShoppingCart}
         variant="view"
         maxWidth="!max-w-[75vw]"
       >
         <div className="mb-4 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-gray-700">Bộ lọc:</span>
+            <span className="text-sm font-semibold text-gray-700">{t('filters.filter_label')}</span>
             <Select
               value={filterOrphaned}
-              onValueChange={async (v: 'all' | 'orphaned') => {
+              onValueChange={async (v: 'all' | 'orphaned' | 'installed') => {
                 await onFilterChange(v)
               }}
             >
@@ -63,9 +75,9 @@ export default function ConsumablesModal({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="orphaned">Chưa lắp</SelectItem>
-                <SelectItem value="installed">Đã lắp</SelectItem>
-                <SelectItem value="all">Tất cả</SelectItem>
+                <SelectItem value="orphaned">{t('consumables.filter.orphaned')}</SelectItem>
+                <SelectItem value="installed">{t('consumables.filter.installed')}</SelectItem>
+                <SelectItem value="all">{t('placeholder.all')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -77,11 +89,11 @@ export default function ConsumablesModal({
               <tr>
                 <th className="px-3 py-2 text-left text-sm font-bold">#</th>
                 <th className="flex items-center gap-2 px-3 py-2 text-left text-sm font-bold">
-                  <Package className="inline h-4 w-4 text-emerald-600" /> Loại
+                  <Package className="inline h-4 w-4 text-emerald-600" /> {t('table.type')}
                 </th>
-                <th className="px-3 py-2 text-left text-sm font-bold">Serial</th>
-                <th className="px-3 py-2 text-left text-sm font-bold">Hết hạn</th>
-                <th className="px-3 py-2 text-left text-sm font-bold">Thiết bị</th>
+                <th className="px-3 py-2 text-left text-sm font-bold">{t('table.serial')}</th>
+                <th className="px-3 py-2 text-left text-sm font-bold">{t('table.expiry')}</th>
+                <th className="px-3 py-2 text-left text-sm font-bold">{t('table.device')}</th>
               </tr>
             </thead>
             <tbody>
@@ -97,7 +109,7 @@ export default function ConsumablesModal({
                     colSpan={5}
                     className="px-5 py-12 text-center text-base font-semibold text-emerald-700"
                   >
-                    Không có dữ liệu
+                    {t('empty.consumables.empty')}
                   </td>
                 </tr>
               ) : (
@@ -112,7 +124,11 @@ export default function ConsumablesModal({
                       {it?.serialNumber || '-'}
                     </td>
                     <td className="px-3 py-2 text-sm">
-                      {it?.expiryDate ? new Date(it.expiryDate).toLocaleDateString('vi-VN') : '-'}
+                      {it?.expiryDate
+                        ? new Date(it.expiryDate).toLocaleDateString(
+                            locale === 'vi' ? 'vi-VN' : 'en-US'
+                          )
+                        : '-'}
                     </td>
                     <td className="px-3 py-2 text-sm">
                       {typeof it?.deviceCount === 'number'

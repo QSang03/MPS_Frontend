@@ -164,7 +164,7 @@ export function ValueInput({
             .filter(Boolean)
           onChange(newValue)
         }}
-        placeholder={placeholder || 'Nhập giá trị, phân cách bằng dấu phẩy'}
+        placeholder={placeholder || t('rule_builder.placeholder.csv_values')}
         disabled={disabled}
       />
     )
@@ -188,7 +188,7 @@ export function ValueInput({
             }
           }
         }}
-        placeholder={placeholder || 'Nhập số'}
+        placeholder={placeholder || t('rule_builder.placeholder.number')}
         disabled={disabled}
       />
     )
@@ -202,7 +202,7 @@ export function ValueInput({
         type="time"
         value={timeValue}
         onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder || 'HH:mm'}
+        placeholder={placeholder || t('rule_builder.placeholder.time')}
         disabled={disabled}
       />
     )
@@ -222,7 +222,7 @@ export function ValueInput({
           if (iso) onChange(iso)
           else onChange(undefined)
         }}
-        placeholder={placeholder || 'YYYY-MM-DDTHH:mm'}
+        placeholder={placeholder || t('rule_builder.placeholder.datetime')}
         disabled={disabled}
       />
     )
@@ -238,7 +238,7 @@ export function ValueInput({
         value={value}
         onChange={onChange}
         disabled={disabled}
-        placeholder={placeholder || 'Chọn từ danh sách...'}
+        placeholder={placeholder || t('rule_builder.select_placeholder')}
       />
     )
   }
@@ -249,7 +249,7 @@ export function ValueInput({
       <Input
         value={textValue}
         onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder || 'Nhập giá trị'}
+        placeholder={placeholder || t('rule_builder.placeholder.value')}
         disabled={disabled}
         className={operator === '$regex' ? 'font-mono text-sm' : ''}
       />

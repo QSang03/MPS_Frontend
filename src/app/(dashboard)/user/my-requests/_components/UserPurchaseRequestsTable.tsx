@@ -39,6 +39,7 @@ import { Priority, PurchaseRequestStatus } from '@/constants/status'
 import type { PurchaseRequest } from '@/types/models/purchase-request'
 import type { Customer } from '@/types/models/customer'
 import { usePurchaseRequestsQuery } from '@/lib/hooks/queries/usePurchaseRequestsQuery'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 type PurchaseRequestRow = PurchaseRequest & {
   customer?: Customer
@@ -75,19 +76,42 @@ type TimelineStep = {
   by?: string
 }
 
-const buildTimelineSteps = (request: PurchaseRequestRow): TimelineStep[] =>
+const buildTimelineSteps = (
+  request: PurchaseRequestRow,
+  t?: (key: string) => string
+): TimelineStep[] =>
   (
     [
-      { label: 'Tạo yêu cầu', time: request.createdAt, by: request.requestedBy },
       {
-        label: 'Đã duyệt',
+        label: t ? t('requests.purchase.timeline.created') : 'Tạo yêu cầu',
+        time: request.createdAt,
+        by: request.requestedBy,
+      },
+      {
+        label: t ? t('requests.purchase.timeline.approved') : 'Đã duyệt',
         time: request.approvedAt,
         by: request.approvedByName ?? request.approvedBy,
       },
-      { label: 'Đặt hàng', time: request.orderedAt, by: request.orderedBy },
-      { label: 'Đã nhận', time: request.receivedAt, by: request.receivedBy },
-      { label: 'Hủy', time: request.cancelledAt, by: request.cancelledBy },
-      { label: 'Khách hủy', time: request.customerCancelledAt, by: request.customerCancelledBy },
+      {
+        label: t ? t('requests.purchase.timeline.ordered') : 'Đặt hàng',
+        time: request.orderedAt,
+        by: request.orderedBy,
+      },
+      {
+        label: t ? t('requests.purchase.timeline.received') : 'Đã nhận',
+        time: request.receivedAt,
+        by: request.receivedBy,
+      },
+      {
+        label: t ? t('requests.purchase.timeline.cancelled') : 'Đã hủy',
+        time: request.cancelledAt,
+        by: request.cancelledBy,
+      },
+      {
+        label: t ? t('requests.purchase.timeline.customer_cancelled') : 'Khách hủy',
+        time: request.customerCancelledAt,
+        by: request.customerCancelledBy,
+      },
     ] as Array<Omit<TimelineStep, 'time'> & { time?: string }>
   ).filter((step): step is TimelineStep => Boolean(step.time))
 
@@ -284,6 +308,7 @@ function UserPurchaseRequestsTableContent({
   onStatsChange,
   renderColumnVisibilityMenu,
 }: UserPurchaseRequestsTableContentProps) {
+  const { t } = useLocale()
   const [isPending, startTransition] = useTransition()
   const [sortVersion, setSortVersion] = useState(0)
 
@@ -419,7 +444,7 @@ function UserPurchaseRequestsTableContent({
           </div>
         ),
         cell: ({ row }) => {
-          const steps = buildTimelineSteps(row.original)
+          const steps = buildTimelineSteps(row.original, t)
           if (steps.length === 0) {
             return <span className="text-muted-foreground text-xs">Chờ xử lý</span>
           }
@@ -544,7 +569,7 @@ function UserPurchaseRequestsTableContent({
         ),
       },
     ],
-    [pagination.pageIndex, pagination.pageSize]
+    [pagination.pageIndex, pagination.pageSize, t]
   )
 
   return (

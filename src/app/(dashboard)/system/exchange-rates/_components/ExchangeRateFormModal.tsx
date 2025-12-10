@@ -171,7 +171,7 @@ export function ExchangeRateFormModal({
               disabled={isLoading}
               className="min-w-[100px]"
             >
-              Hủy
+              {t('cancel')}
             </Button>
             <Button
               type="submit"
@@ -182,10 +182,10 @@ export function ExchangeRateFormModal({
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Đang xử lý...
+                  {t('button.processing')}
                 </>
               ) : (
-                <>{exchangeRate ? 'Cập nhật' : 'Tạo tỷ giá'}</>
+                <>{exchangeRate ? t('exchange_rate.update') : t('exchange_rate.create')}</>
               )}
             </Button>
           </>
@@ -209,7 +209,7 @@ export function ExchangeRateFormModal({
                   <FormControl>
                     <Select value={field.value} onValueChange={field.onChange} disabled={isLoading}>
                       <SelectTrigger className="h-10">
-                        <SelectValue placeholder="Chọn tiền tệ nguồn" />
+                        <SelectValue placeholder={t('currency.select.placeholder_source')} />
                       </SelectTrigger>
                       <SelectContent>
                         {currencies
@@ -239,7 +239,7 @@ export function ExchangeRateFormModal({
                   <FormControl>
                     <Select value={field.value} onValueChange={field.onChange} disabled={isLoading}>
                       <SelectTrigger className="h-10">
-                        <SelectValue placeholder="Chọn tiền tệ đích" />
+                        <SelectValue placeholder={t('currency.select.placeholder_target')} />
                       </SelectTrigger>
                       <SelectContent>
                         {currencies
@@ -270,7 +270,7 @@ export function ExchangeRateFormModal({
                     <Input
                       type="number"
                       step="0.000001"
-                      placeholder="Nhập tỷ giá (ví dụ: 25000)"
+                      placeholder={t('exchange_rate.placeholder.rate')}
                       {...field}
                       onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                       className="h-10"

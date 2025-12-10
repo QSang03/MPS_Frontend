@@ -7,6 +7,7 @@ import { Dialog } from '@/components/ui/dialog'
 import { SystemModalLayout } from '@/components/system/SystemModalLayout'
 import { Button } from '@/components/ui/button'
 import { Loader2, Eye } from 'lucide-react'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { format } from 'date-fns'
 
 // Regex helpers are module scoped and can be safely referenced in useEffect deps without being re-created
@@ -75,6 +76,7 @@ export default function MovementHistoryModal({
   const [deviceNames, setDeviceNames] = useState<Record<string, string>>({})
   const [consumableDeviceNameMap, setConsumableDeviceNameMap] = useState<Record<string, string>>({})
   const [namesLoading, setNamesLoading] = useState(false)
+  const { t } = useLocale()
 
   useEffect(() => {
     if (!movements || movements.length === 0) return
@@ -264,8 +266,8 @@ export default function MovementHistoryModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <SystemModalLayout
-        title="Lịch sử nhập/xuất kho"
-        description={`${consumableName || stockId} — gần nhất ở đầu`}
+        title={t('movement_history.title')}
+        description={`${consumableName || stockId} — ${t('movement_history.description_suffix')}`}
         icon={Eye}
         variant="view"
         maxWidth="!max-w-[75vw]"
@@ -275,25 +277,31 @@ export default function MovementHistoryModal({
             <div className="flex flex-col items-center gap-3">
               <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
               {namesLoading && !isLoading && (
-                <span className="text-sm text-emerald-600">Đang tải thông tin tham chiếu...</span>
+                <span className="text-sm text-emerald-600">
+                  {t('movement_history.loading_references')}
+                </span>
               )}
             </div>
           </div>
         ) : movements.length === 0 ? (
           <div className="py-8 text-center text-base font-semibold text-emerald-700">
-            Không có lịch sử
+            {t('movement_history.empty')}
           </div>
         ) : (
           <div className="mb-4 overflow-x-auto rounded-xl border-2 border-emerald-100 shadow">
             <table className="w-full table-auto">
               <thead className="bg-gradient-to-r from-emerald-100 via-teal-100 to-cyan-100 text-teal-800">
                 <tr>
-                  <th className="px-3 py-2">Thời gian</th>
-                  <th className="px-3 py-2">Loại</th>
-                  <th className="px-3 py-2">Số lượng thay đổi</th>
-                  <th className="px-3 py-2">Số lượng sau</th>
-                  <th className="px-3 py-2">Ghi chú</th>
-                  <th className="px-3 py-2">Tham chiếu</th>
+                  <th className="px-3 py-2">{t('movement_history.table.headers.time')}</th>
+                  <th className="px-3 py-2">{t('movement_history.table.headers.type')}</th>
+                  <th className="px-3 py-2">
+                    {t('movement_history.table.headers.quantity_changed')}
+                  </th>
+                  <th className="px-3 py-2">
+                    {t('movement_history.table.headers.quantity_after')}
+                  </th>
+                  <th className="px-3 py-2">{t('movement_history.table.headers.notes')}</th>
+                  <th className="px-3 py-2">{t('movement_history.table.headers.reference')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -303,8 +311,12 @@ export default function MovementHistoryModal({
                       {mv.createdAt ? format(new Date(mv.createdAt), 'yyyy-MM-dd HH:mm') : '—'}
                     </td>
                     <td className="px-3 py-2 text-sm font-semibold">
-                      {mv.type === 'IN' && <span className="text-green-700">Nhập</span>}
-                      {mv.type === 'OUT' && <span className="text-red-600">Xuất</span>}
+                      {mv.type === 'IN' && (
+                        <span className="text-green-700">{t('movements.type_in')}</span>
+                      )}
+                      {mv.type === 'OUT' && (
+                        <span className="text-red-600">{t('movements.type_out')}</span>
+                      )}
                       {mv.type !== 'IN' && mv.type !== 'OUT' && mv.type}
                     </td>
                     <td className="px-3 py-2 text-sm">{mv.quantityChanged}</td>

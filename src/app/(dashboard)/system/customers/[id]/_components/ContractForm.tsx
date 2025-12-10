@@ -823,8 +823,8 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
               <FileText className="h-6 w-6 text-white" />
             </div>
             <div className="flex-1">
-              <h3 className="text-xl font-bold text-slate-900">Chi tiết hợp đồng</h3>
-              <p className="text-sm text-slate-600">Thêm mô tả và thông tin bổ sung</p>
+              <h3 className="text-xl font-bold text-slate-900">{t('contract.detail_title')}</h3>
+              <p className="text-sm text-slate-600">{t('contract.detail_subtitle')}</p>
             </div>
             <div className="rounded-full bg-[var(--brand-50)] px-3 py-1 text-xs font-semibold text-[var(--brand-700)]">
               Bước 3/3
@@ -838,12 +838,12 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
               <FormItem>
                 <FormLabel className="flex items-center gap-2 text-sm font-bold text-slate-800">
                   <FileText className="h-4 w-4 text-[var(--brand-600)]" />
-                  Mô tả hợp đồng
+                  {t('contract.description_label')}
                 </FormLabel>
                 <FormControl>
                   <Textarea
                     {...field}
-                    placeholder="Nhập mô tả chi tiết về hợp đồng, điều khoản đặc biệt, ghi chú..."
+                    placeholder={t('contract.placeholder.description')}
                     rows={6}
                     disabled={isPending}
                     className="resize-none border-2 border-slate-300 bg-white transition-all focus:border-[var(--brand-500)] focus:ring-4 focus:ring-[var(--brand-100)]"
@@ -1011,19 +1011,19 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
               {isPending ? (
                 <>
                   <Loader2 className="h-5 w-5 animate-spin" />
-                  <span>Đang xử lý...</span>
+                  <span>{t('button.processing')}</span>
                 </>
               ) : (
                 <>
                   {id ? (
                     <>
                       <Save className="h-5 w-5" />
-                      <span>Cập nhật hợp đồng</span>
+                      <span>{t('contract.update')}</span>
                     </>
                   ) : (
                     <>
                       <Sparkles className="h-5 w-5" />
-                      <span>Tạo hợp đồng</span>
+                      <span>{t('contract.create')}</span>
                     </>
                   )}
                 </>

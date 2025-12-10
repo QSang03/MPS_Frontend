@@ -17,12 +17,14 @@ import {
 import { Label } from '@/components/ui/label'
 import { ArrowRight, Calculator, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 interface CurrencyConverterProps {
   currencies: CurrencyDataDto[]
 }
 
 export function CurrencyConverter({ currencies }: CurrencyConverterProps) {
+  const { t } = useLocale()
   const [amount, setAmount] = useState<string>('')
   const [fromCurrencyId, setFromCurrencyId] = useState<string>('')
   const [toCurrencyId, setToCurrencyId] = useState<string>('')
@@ -64,15 +66,15 @@ export function CurrencyConverter({ currencies }: CurrencyConverterProps) {
 
   const handleConvert = () => {
     if (!amount || parseFloat(amount) <= 0) {
-      toast.error('Vui lòng nhập số tiền hợp lệ')
+      toast.error(t('exchange_rates.error.invalid_amount'))
       return
     }
     if (!fromCurrencyId || !toCurrencyId) {
-      toast.error('Vui lòng chọn cả hai loại tiền tệ')
+      toast.error(t('exchange_rates.error.select_currencies'))
       return
     }
     if (fromCurrencyId === toCurrencyId) {
-      toast.error('Tiền tệ nguồn và đích không được giống nhau')
+      toast.error(t('exchange_rates.error.same_currency'))
       return
     }
     refetch()
@@ -83,20 +85,18 @@ export function CurrencyConverter({ currencies }: CurrencyConverterProps) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Calculator className="h-5 w-5" />
-          Công cụ chuyển đổi tiền tệ
+          {t('exchange_rates.title')}
         </CardTitle>
-        <CardDescription>
-          Chuyển đổi số tiền giữa các loại tiền tệ dựa trên tỷ giá hiện tại
-        </CardDescription>
+        <CardDescription>{t('exchange_rates.description')}</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label>Số tiền</Label>
+              <Label>{t('exchange_rates.amount_label')}</Label>
               <Input
                 type="number"
-                placeholder="Nhập số tiền"
+                placeholder={t('exchange_rates.placeholder.amount')}
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 className="h-10"
@@ -104,7 +104,7 @@ export function CurrencyConverter({ currencies }: CurrencyConverterProps) {
             </div>
 
             <div className="space-y-2">
-              <Label>Ngày (tùy chọn)</Label>
+              <Label>{t('exchange_rates.date_label')}</Label>
               <Input
                 type="date"
                 value={date}
@@ -116,10 +116,10 @@ export function CurrencyConverter({ currencies }: CurrencyConverterProps) {
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label>Từ tiền tệ</Label>
+              <Label>{t('exchange_rates.from_label')}</Label>
               <Select value={fromCurrencyId} onValueChange={setFromCurrencyId}>
                 <SelectTrigger className="h-10">
-                  <SelectValue placeholder="Chọn tiền tệ nguồn" />
+                  <SelectValue placeholder={t('currency.select.placeholder_source')} />
                 </SelectTrigger>
                 <SelectContent>
                   {currencies
@@ -134,10 +134,10 @@ export function CurrencyConverter({ currencies }: CurrencyConverterProps) {
             </div>
 
             <div className="space-y-2">
-              <Label>Đến tiền tệ</Label>
+              <Label>{t('exchange_rates.to_label')}</Label>
               <Select value={toCurrencyId} onValueChange={setToCurrencyId}>
                 <SelectTrigger className="h-10">
-                  <SelectValue placeholder="Chọn tiền tệ đích" />
+                  <SelectValue placeholder={t('currency.select.placeholder_target')} />
                 </SelectTrigger>
                 <SelectContent>
                   {currencies
@@ -160,12 +160,12 @@ export function CurrencyConverter({ currencies }: CurrencyConverterProps) {
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Đang chuyển đổi...
+                {t('exchange_rates.convert.loading')}
               </>
             ) : (
               <>
                 <Calculator className="mr-2 h-4 w-4" />
-                Chuyển đổi
+                {t('exchange_rates.convert.button')}
               </>
             )}
           </Button>

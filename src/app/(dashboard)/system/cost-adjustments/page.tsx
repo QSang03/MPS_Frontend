@@ -14,6 +14,7 @@ import { SystemPageHeader } from '@/components/system/SystemPageHeader'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import {
   Select,
   SelectContent,
@@ -33,6 +34,7 @@ import type { ColumnDef } from '@tanstack/react-table'
 import { Calendar } from '@/components/ui/calendar'
 import { cn } from '@/lib/utils'
 import { SystemModalLayout } from '@/components/system/SystemModalLayout'
+import type { Device } from '@/types/models/device'
 
 type FormState = {
   customerId: string
@@ -57,6 +59,7 @@ type ListFilters = {
 }
 
 type SearchOption = { value: string; label: string; description?: string }
+type DeviceOption = SearchOption
 
 function DatePopover({
   value,
@@ -67,6 +70,7 @@ function DatePopover({
   onChange: (v: string) => void
   placeholder: string
 }) {
+  const { locale } = useLocale()
   const parsed = value ? new Date(value) : undefined
 
   return (
@@ -77,7 +81,7 @@ function DatePopover({
           className="border-input bg-background w-full justify-between border"
         >
           <span className="truncate">
-            {parsed ? parsed.toLocaleDateString('vi-VN') : placeholder}
+            {parsed ? parsed.toLocaleDateString(locale) : placeholder}
           </span>
           <span className="text-muted-foreground text-xs">▼</span>
         </Button>
@@ -104,7 +108,7 @@ function SearchSelect({
   placeholder,
   fetchOptions,
   allowAll = false,
-  allLabel = 'Tất cả',
+  allLabel,
   disabled = false,
 }: {
   value: string
@@ -115,6 +119,7 @@ function SearchSelect({
   allLabel?: string
   disabled?: boolean
 }) {
+  const { t } = useLocale()
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [options, setOptions] = useState<SearchOption[]>([])
@@ -152,7 +157,7 @@ function SearchSelect({
 
   const displayLabel =
     value === 'all' && allowAll
-      ? allLabel
+      ? (allLabel ?? t('placeholder.all'))
       : options.find((o) => o.value === value)?.label || placeholder
 
   return (
@@ -171,52 +176,58 @@ function SearchSelect({
       <PopoverContent align="start" sideOffset={4} className="bg-background z-[70] w-[320px] p-3">
         <div className="space-y-2">
           <Input
-            placeholder="Tìm kiếm..."
+            placeholder={t('filters.search_placeholder')}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             autoFocus
           />
-          <div className="max-h-64 overflow-y-auto rounded border">
-            {allowAll && (
-              <button
-                type="button"
-                className="hover:bg-muted flex w-full items-center justify-between px-3 py-2 text-left text-sm"
-                onClick={() => {
-                  onChange('all')
-                  setOpen(false)
-                }}
-              >
-                <span>{allLabel}</span>
-              </button>
-            )}
-            {loading ? (
-              <div className="text-muted-foreground px-3 py-2 text-sm">Đang tải...</div>
-            ) : options.length === 0 ? (
-              <div className="text-muted-foreground px-3 py-2 text-sm">Không có dữ liệu</div>
-            ) : (
-              options.map((opt) => (
+          <ScrollArea className="max-h-64 rounded border">
+            <div className="divide-y">
+              {allowAll && (
                 <button
-                  key={opt.value}
                   type="button"
-                  className="hover:bg-muted flex w-full items-start justify-between px-3 py-2 text-left text-sm"
+                  className="hover:bg-muted flex w-full items-center justify-between px-3 py-2 text-left text-sm"
                   onClick={() => {
-                    onChange(opt.value)
+                    onChange('all')
                     setOpen(false)
                   }}
                 >
-                  <span className="truncate">
-                    {opt.label}
-                    {opt.description ? (
-                      <span className="text-muted-foreground ml-1">({opt.description})</span>
-                    ) : null}
-                  </span>
-                  {value === opt.value && (
-                    <span className="text-xs text-[var(--brand-600)]">Đã chọn</span>
-                  )}
+                  <span>{allLabel ?? t('placeholder.all')}</span>
                 </button>
-              ))
-            )}
-          </div>
+              )}
+              {loading ? (
+                <div className="text-muted-foreground px-3 py-2 text-sm">{t('common.loading')}</div>
+              ) : options.length === 0 ? (
+                <div className="text-muted-foreground px-3 py-2 text-sm">
+                  {t('empty.no_data.title')}
+                </div>
+              ) : (
+                options.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    className="hover:bg-muted flex w-full items-start justify-between px-3 py-2 text-left text-sm"
+                    onClick={() => {
+                      onChange(opt.value)
+                      setOpen(false)
+                    }}
+                  >
+                    <span className="truncate">
+                      {opt.label}
+                      {opt.description ? (
+                        <span className="text-muted-foreground ml-1">({opt.description})</span>
+                      ) : null}
+                    </span>
+                    {value === opt.value && (
+                      <span className="text-xs text-[var(--brand-600)]">
+                        {t('customer.select.selected')}
+                      </span>
+                    )}
+                  </button>
+                ))
+              )}
+            </div>
+          </ScrollArea>
         </div>
       </PopoverContent>
     </Popover>
@@ -224,7 +235,7 @@ function SearchSelect({
 }
 
 export default function CostAdjustmentsPage() {
-  const { t } = useLocale()
+  const { t, locale } = useLocale()
   const [items, setItems] = useState<CostAdjustmentVoucher[]>([])
   const [loading, setLoading] = useState(false)
   const [loadingForm, setLoadingForm] = useState(false)
@@ -263,9 +274,32 @@ export default function CostAdjustmentsPage() {
   })
 
   const typeOptions: { value: CostAdjustmentType; label: string; color: string }[] = [
-    { value: 'DEBIT', label: 'DEBIT (trừ)', color: 'bg-red-100 text-red-700' },
-    { value: 'CREDIT', label: 'CREDIT (cộng)', color: 'bg-emerald-100 text-emerald-700' },
+    { value: 'DEBIT', label: t('cost_adjustments.type.DEBIT'), color: 'bg-red-100 text-red-700' },
+    {
+      value: 'CREDIT',
+      label: t('cost_adjustments.type.CREDIT'),
+      color: 'bg-emerald-100 text-emerald-700',
+    },
   ]
+
+  const formatAmount = useCallback(
+    (amount: number, currencyCode?: string) => {
+      if (!Number.isFinite(amount)) return '-'
+      if (!currencyCode) {
+        return new Intl.NumberFormat(locale, { style: 'currency', currency: 'USD' }).format(amount)
+      }
+      try {
+        return new Intl.NumberFormat(locale, {
+          style: 'currency',
+          currency: currencyCode,
+          currencyDisplay: 'symbol',
+        }).format(amount)
+      } catch {
+        return new Intl.NumberFormat(locale, { style: 'currency', currency: 'USD' }).format(amount)
+      }
+    },
+    [locale]
+  )
 
   const fetchCustomerOptions = useCallback(async (search: string): Promise<SearchOption[]> => {
     const res = await customersClientService.getAll({
@@ -282,28 +316,61 @@ export default function CostAdjustmentsPage() {
     }))
   }, [])
 
-  const fetchDeviceOptions = useCallback(async (search: string): Promise<SearchOption[]> => {
-    const res = await devicesClientService.getAll({
-      search: search || undefined,
-      limit: 20,
-      page: 1,
-      sortBy: 'model',
-      sortOrder: 'asc',
-    })
-    return (res.data || []).map((d) => ({
-      value: d.id,
-      label: d.model || d.serialNumber || d.id,
-      description: d.serialNumber,
-    }))
-  }, [])
+  const formatDeviceLabel = (d: Device) => {
+    const modelName = d.deviceModel?.name || d.model || (d as { name?: string }).name
+    const name = modelName || d.serialNumber || d.id
+    const serial = d.serialNumber
+    return serial ? `${name} (${serial})` : name
+  }
+
+  const fetchDeviceOptionsForForm = useCallback(
+    async (search: string): Promise<DeviceOption[]> => {
+      if (!form.customerId) return []
+      const res = await devicesClientService.getAll({
+        search: search || undefined,
+        limit: 20,
+        page: 1,
+        sortBy: 'model',
+        sortOrder: 'asc',
+        customerId: form.customerId,
+      })
+      return (res.data || []).map((d) => ({
+        value: d.id,
+        label: formatDeviceLabel(d),
+        description: d.serialNumber,
+      }))
+    },
+    [form.customerId]
+  )
+
+  const fetchDeviceOptionsForFilter = useCallback(
+    async (search: string): Promise<DeviceOption[]> => {
+      const res = await devicesClientService.getAll({
+        search: search || undefined,
+        limit: 20,
+        page: 1,
+        sortBy: 'model',
+        sortOrder: 'asc',
+        // Nếu đã chọn khách hàng thì lọc theo khách hàng, còn không thì lấy tất cả thiết bị
+        customerId:
+          !filters.customerId || filters.customerId === 'all' ? undefined : filters.customerId,
+      })
+      return (res.data || []).map((d) => ({
+        value: d.id,
+        label: formatDeviceLabel(d),
+        description: d.serialNumber,
+      }))
+    },
+    [filters.customerId]
+  )
 
   const activeOptions = useMemo(
     () => [
-      { value: 'all', label: 'Tất cả' },
-      { value: 'true', label: 'Đang hiệu lực' },
-      { value: 'false', label: 'Vô hiệu' },
+      { value: 'all', label: t('placeholder.all') },
+      { value: 'true', label: t('status.active') },
+      { value: 'false', label: t('status.inactive') },
     ],
-    []
+    [t]
   )
 
   const loadList = useCallback(async () => {
@@ -332,11 +399,11 @@ export default function CostAdjustmentsPage() {
       })
     } catch (err) {
       console.error(err)
-      toast.error('Không thể tải danh sách phiếu điều chỉnh')
+      toast.error(t('cost_adjustments.error.load_list'))
     } finally {
       setLoading(false)
     }
-  }, [filters])
+  }, [filters, t])
 
   useEffect(() => {
     void loadList()
@@ -359,42 +426,42 @@ export default function CostAdjustmentsPage() {
     const chips: { label: string; value: string; onRemove: () => void }[] = []
     if (filters.customerId !== 'all')
       chips.push({
-        label: `Khách hàng: ${filters.customerId}`,
+        label: t('filters.customer', { customer: filters.customerId }),
         value: filters.customerId,
         onRemove: () => setFilters((f) => ({ ...f, customerId: 'all', page: 1 })),
       })
     if (filters.deviceId !== 'all')
       chips.push({
-        label: `Thiết bị: ${filters.deviceId}`,
+        label: `${t('nav.devices')}: ${filters.deviceId}`,
         value: filters.deviceId,
         onRemove: () => setFilters((f) => ({ ...f, deviceId: 'all', page: 1 })),
       })
     if (filters.type !== 'all')
       chips.push({
-        label: `Loại: ${filters.type}`,
+        label: `${t('cost_adjustments.type_label')}: ${filters.type}`,
         value: filters.type,
         onRemove: () => setFilters((f) => ({ ...f, type: 'all', page: 1 })),
       })
     if (filters.isActive !== 'all')
       chips.push({
-        label: filters.isActive === 'true' ? 'Đang hiệu lực' : 'Vô hiệu',
+        label: filters.isActive === 'true' ? t('status.active') : t('status.inactive'),
         value: filters.isActive,
         onRemove: () => setFilters((f) => ({ ...f, isActive: 'all', page: 1 })),
       })
     if (filters.from)
       chips.push({
-        label: `Từ: ${filters.from}`,
+        label: `${t('device_usage.from_date')}: ${filters.from}`,
         value: filters.from,
         onRemove: () => setFilters((f) => ({ ...f, from: '', page: 1 })),
       })
     if (filters.to)
       chips.push({
-        label: `Đến: ${filters.to}`,
+        label: `${t('device_usage.to_date')}: ${filters.to}`,
         value: filters.to,
         onRemove: () => setFilters((f) => ({ ...f, to: '', page: 1 })),
       })
     return chips
-  }, [filters])
+  }, [filters, t])
 
   const openCreate = () => {
     setEditingId(null)
@@ -411,37 +478,40 @@ export default function CostAdjustmentsPage() {
     setModalOpen(true)
   }
 
-  const openEdit = async (id: string) => {
-    try {
-      setLoadingForm(true)
-      const detail = await costAdjustmentsService.getById(id)
-      if (!detail) {
-        toast.error('Không tìm thấy phiếu')
-        return
+  const openEdit = useCallback(
+    async (id: string) => {
+      try {
+        setLoadingForm(true)
+        const detail = await costAdjustmentsService.getById(id)
+        if (!detail) {
+          toast.error(t('cost_adjustments.error.not_found'))
+          return
+        }
+        setEditingId(id)
+        setForm({
+          customerId: detail.customerId || '',
+          deviceId: detail.deviceId || '',
+          amount: detail.amount?.toString() ?? '',
+          type: detail.type,
+          effectiveDate: detail.effectiveDate?.slice(0, 10) ?? '',
+          reason: detail.reason ?? '',
+          note: detail.note ?? '',
+          isActive: detail.isActive ?? true,
+        })
+        setModalOpen(true)
+      } catch (err) {
+        console.error(err)
+        toast.error(t('cost_adjustments.error.load_detail'))
+      } finally {
+        setLoadingForm(false)
       }
-      setEditingId(id)
-      setForm({
-        customerId: detail.customerId || '',
-        deviceId: detail.deviceId || '',
-        amount: detail.amount?.toString() ?? '',
-        type: detail.type,
-        effectiveDate: detail.effectiveDate?.slice(0, 10) ?? '',
-        reason: detail.reason ?? '',
-        note: detail.note ?? '',
-        isActive: detail.isActive ?? true,
-      })
-      setModalOpen(true)
-    } catch (err) {
-      console.error(err)
-      toast.error('Không thể tải phiếu')
-    } finally {
-      setLoadingForm(false)
-    }
-  }
+    },
+    [t]
+  )
 
   const handleSubmit = async () => {
     if (!form.customerId || !form.deviceId || !form.amount || !form.effectiveDate) {
-      toast.warning('Vui lòng nhập đủ customer, device, amount, effectiveDate')
+      toast.warning(t('cost_adjustments.error.validation.missing_fields'))
       return
     }
 
@@ -461,17 +531,17 @@ export default function CostAdjustmentsPage() {
           ...commonPayload,
           isActive: form.isActive,
         })
-        toast.success('Cập nhật phiếu thành công')
+        toast.success(t('cost_adjustments.success.update'))
       } else {
         await costAdjustmentsService.create(commonPayload)
-        toast.success('Tạo phiếu thành công')
+        toast.success(t('cost_adjustments.success.create'))
       }
       setModalOpen(false)
       setEditingId(null)
       await loadList()
     } catch (err: unknown) {
       const e = err as { message?: string }
-      toast.error(e?.message || 'Lưu phiếu thất bại')
+      toast.error(e?.message || t('cost_adjustments.error.save'))
     } finally {
       setLoadingForm(false)
     }
@@ -480,73 +550,94 @@ export default function CostAdjustmentsPage() {
   const columns = useMemo<ColumnDef<CostAdjustmentVoucher>[]>(() => {
     return [
       {
-        header: 'Thiết bị',
+        header: t('nav.devices'),
         accessorKey: 'deviceId',
-        cell: ({ row }) => (
-          <div className="flex flex-col">
-            <span className="font-medium">{row.original.deviceId}</span>
-          </div>
-        ),
+        cell: ({ row }) => {
+          const dev = row.original.device
+          const label = dev
+            ? formatDeviceLabel({
+                id: dev.id || row.original.deviceId,
+                deviceModel: dev.deviceModel,
+                model: (dev as { model?: string }).model,
+                serialNumber: dev.serialNumber,
+              } as Device)
+            : row.original.deviceId
+          return (
+            <div className="flex flex-col">
+              <span className="font-medium">{label}</span>
+            </div>
+          )
+        },
       },
       {
-        header: 'Khách hàng',
+        header: t('table.customer'),
         accessorKey: 'customerId',
-        cell: ({ row }) => row.original.customerId,
+        cell: ({ row }) =>
+          row.original.customer?.name
+            ? `${row.original.customer.name}${row.original.customer.code ? ` (${row.original.customer.code})` : ''}`
+            : row.original.customerId,
       },
       {
-        header: 'Amount',
+        header: t('cost_adjustments.amount_label'),
         accessorKey: 'amount',
         cell: ({ row }) =>
-          new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'USD' }).format(
-            Number(row.original.amount || 0)
+          formatAmount(
+            Number(row.original.amount || 0),
+            row.original.customer?.defaultCurrency?.code || undefined
           ),
       },
       {
-        header: 'Loại',
+        header: t('table.type'),
         accessorKey: 'type',
         cell: ({ row }) =>
           row.original.type === 'CREDIT' ? (
-            <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">CREDIT</Badge>
+            <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
+              {t('cost_adjustments.type.CREDIT')}
+            </Badge>
           ) : (
-            <Badge className="bg-red-100 text-red-700 hover:bg-red-100">DEBIT</Badge>
+            <Badge className="bg-red-100 text-red-700 hover:bg-red-100">
+              {t('cost_adjustments.type.DEBIT')}
+            </Badge>
           ),
       },
       {
-        header: 'Hiệu lực',
+        header: t('cost_adjustments.date_label'),
         accessorKey: 'effectiveDate',
         cell: ({ row }) =>
           row.original.effectiveDate
-            ? new Date(row.original.effectiveDate).toLocaleDateString('vi-VN')
+            ? new Date(row.original.effectiveDate).toLocaleDateString(locale)
             : '',
       },
       {
-        header: 'Lý do',
+        header: t('cost_adjustments.reason_label'),
         accessorKey: 'reason',
         cell: ({ row }) => (
           <span className="line-clamp-2 text-sm text-slate-600">{row.original.reason || '-'}</span>
         ),
       },
       {
-        header: 'Ghi chú',
+        header: t('cost_adjustments.note_label'),
         accessorKey: 'note',
         cell: ({ row }) => (
           <span className="line-clamp-2 text-sm text-slate-600">{row.original.note || '-'}</span>
         ),
       },
       {
-        header: 'Trạng thái',
+        header: t('table.status'),
         accessorKey: 'isActive',
         cell: ({ row }) =>
           row.original.isActive ? (
             <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
-              Đang hiệu lực
+              {t('status.active')}
             </Badge>
           ) : (
-            <Badge className="bg-slate-200 text-slate-700 hover:bg-slate-200">Vô hiệu</Badge>
+            <Badge className="bg-slate-200 text-slate-700 hover:bg-slate-200">
+              {t('status.inactive')}
+            </Badge>
           ),
       },
       {
-        header: 'Thao tác',
+        header: t('table.actions'),
         id: 'actions',
         cell: ({ row }) => (
           <div className="text-center">
@@ -557,34 +648,42 @@ export default function CostAdjustmentsPage() {
         ),
       },
     ]
-  }, [])
+  }, [openEdit, t, locale, formatAmount])
 
   return (
     <SystemPageLayout fullWidth>
       <SystemPageHeader
-        title="Phiếu điều chỉnh chi phí"
-        subtitle="Quản lý phiếu cộng/trừ chi phí theo thiết bị"
+        title={t('cost_adjustments.title')}
+        subtitle={t('cost_adjustments.subtitle')}
         icon={<Filter className="h-6 w-6" />}
         actions={
           <Dialog open={modalOpen} onOpenChange={setModalOpen}>
             <DialogTrigger asChild>
               <Button onClick={openCreate}>
                 <Plus className="mr-2 h-4 w-4" />
-                Tạo phiếu
+                {t('cost_adjustments.create')}
               </Button>
             </DialogTrigger>
             <SystemModalLayout
-              title={editingId ? 'Cập nhật phiếu' : 'Tạo phiếu điều chỉnh'}
-              description="Amount là giá trị tuyệt đối. DEBIT trừ, CREDIT cộng vào doanh thu/chi phí thiết bị trong kỳ."
+              title={
+                editingId
+                  ? t('cost_adjustments.modal.title_edit')
+                  : t('cost_adjustments.modal.title_create')
+              }
+              description={t('cost_adjustments.modal.description')}
               icon={Filter}
               variant={editingId ? 'edit' : 'create'}
               footer={
                 <div className="flex w-full justify-end gap-2">
                   <Button variant="outline" onClick={() => setModalOpen(false)}>
-                    Đóng
+                    {t('close')}
                   </Button>
                   <Button onClick={handleSubmit} disabled={loadingForm}>
-                    {loadingForm ? 'Đang lưu...' : editingId ? 'Cập nhật' : 'Tạo mới'}
+                    {loadingForm
+                      ? t('button.saving')
+                      : editingId
+                        ? t('button.update')
+                        : t('cost_adjustments.create')}
                   </Button>
                 </div>
               }
@@ -592,25 +691,32 @@ export default function CostAdjustmentsPage() {
             >
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label>Khách hàng</Label>
+                  <Label>{t('filters.customer')}</Label>
                   <SearchSelect
                     value={form.customerId}
-                    onChange={(v) => setForm((f) => ({ ...f, customerId: v }))}
-                    placeholder="Chọn khách hàng"
+                    onChange={(v) =>
+                      setForm((f) => ({
+                        ...f,
+                        customerId: v,
+                        deviceId: '', // reset device when customer changes
+                      }))
+                    }
+                    placeholder={t('placeholder.all_customers')}
                     fetchOptions={fetchCustomerOptions}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Thiết bị</Label>
+                  <Label>{t('nav.devices')}</Label>
                   <SearchSelect
                     value={form.deviceId}
                     onChange={(v) => setForm((f) => ({ ...f, deviceId: v }))}
-                    placeholder="Chọn thiết bị"
-                    fetchOptions={fetchDeviceOptions}
+                    placeholder={t('placeholder.select_device')}
+                    fetchOptions={fetchDeviceOptionsForForm}
+                    disabled={!form.customerId}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Loại (DEBIT/CREDIT)</Label>
+                  <Label>{t('cost_adjustments.type_label')}</Label>
                   <Select
                     value={form.type}
                     onValueChange={(v) => setForm((f) => ({ ...f, type: v as CostAdjustmentType }))}
@@ -628,47 +734,47 @@ export default function CostAdjustmentsPage() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Giá trị (amount)</Label>
+                  <Label>{t('cost_adjustments.amount_label')}</Label>
                   <Input
                     type="number"
                     min="0"
                     value={form.amount}
                     onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))}
-                    placeholder="Nhập số tiền"
+                    placeholder={t('cost_adjustments.placeholder.amount')}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Ngày hiệu lực</Label>
+                  <Label>{t('cost_adjustments.date_label')}</Label>
                   <DatePopover
                     value={form.effectiveDate}
                     onChange={(v) => setForm((f) => ({ ...f, effectiveDate: v }))}
-                    placeholder="Chọn ngày hiệu lực"
+                    placeholder={t('cost_adjustments.placeholder.date')}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Trạng thái</Label>
+                  <Label>{t('cost_adjustments.status_label')}</Label>
                   <div className="flex items-center gap-2">
                     <Switch
                       checked={form.isActive}
                       onCheckedChange={(checked) => setForm((f) => ({ ...f, isActive: checked }))}
                     />
-                    <span>{form.isActive ? 'Đang hiệu lực' : 'Vô hiệu'}</span>
+                    <span>{form.isActive ? t('status.active') : t('status.inactive')}</span>
                   </div>
                 </div>
                 <div className="space-y-2 md:col-span-2">
-                  <Label>Lý do</Label>
+                  <Label>{t('cost_adjustments.reason_label')}</Label>
                   <Input
                     value={form.reason}
                     onChange={(e) => setForm((f) => ({ ...f, reason: e.target.value }))}
-                    placeholder="Nguyên nhân điều chỉnh"
+                    placeholder={t('cost_adjustments.placeholder.reason')}
                   />
                 </div>
                 <div className="space-y-2 md:col-span-2">
-                  <Label>Ghi chú</Label>
+                  <Label>{t('cost_adjustments.note_label')}</Label>
                   <Input
                     value={form.note}
                     onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
-                    placeholder="Ghi chú thêm (tuỳ chọn)"
+                    placeholder={t('cost_adjustments.placeholder.note')}
                   />
                 </div>
               </div>
@@ -679,36 +785,44 @@ export default function CostAdjustmentsPage() {
 
       <div className="space-y-6">
         <FilterSection
-          title="Bộ lọc & tìm kiếm"
-          subtitle="Lọc theo khách hàng, thiết bị, trạng thái, loại phiếu và khoảng ngày"
+          title={t('filters.general')}
+          subtitle={t('cost_adjustments.subtitle')}
           onReset={resetFilters}
           activeFilters={activeFilters}
         >
           <div className="grid gap-4 md:grid-cols-3">
             <div className="space-y-2">
-              <Label>Khách hàng</Label>
+              <Label>{t('customer.title')}</Label>
               <SearchSelect
                 value={filters.customerId}
-                onChange={(v) => setFilters((f) => ({ ...f, customerId: v, page: 1 }))}
-                placeholder="Chọn khách hàng"
+                onChange={(v) =>
+                  setFilters((f) => ({
+                    ...f,
+                    customerId: v,
+                    deviceId: 'all', // reset device filter when customer changes
+                    page: 1,
+                  }))
+                }
+                placeholder={t('customer.select_placeholder')}
                 fetchOptions={fetchCustomerOptions}
                 allowAll
-                allLabel="Tất cả"
+                allLabel={t('placeholder.all')}
               />
             </div>
             <div className="space-y-2">
-              <Label>Thiết bị</Label>
+              <Label>{t('nav.devices')}</Label>
               <SearchSelect
                 value={filters.deviceId}
                 onChange={(v) => setFilters((f) => ({ ...f, deviceId: v, page: 1 }))}
-                placeholder="Chọn thiết bị"
-                fetchOptions={fetchDeviceOptions}
+                placeholder={t('placeholder.select_device')}
+                fetchOptions={fetchDeviceOptionsForFilter}
                 allowAll
-                allLabel="Tất cả"
+                allLabel={t('placeholder.all')}
+                disabled={false}
               />
             </div>
             <div className="space-y-2">
-              <Label>Loại phiếu</Label>
+              <Label>{t('cost_adjustments.type_label')}</Label>
               <Select
                 value={filters.type}
                 onValueChange={(v) =>
@@ -719,9 +833,9 @@ export default function CostAdjustmentsPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Tất cả</SelectItem>
-                  <SelectItem value="DEBIT">DEBIT (trừ)</SelectItem>
-                  <SelectItem value="CREDIT">CREDIT (cộng)</SelectItem>
+                  <SelectItem value="all">{t('placeholder.all')}</SelectItem>
+                  <SelectItem value="DEBIT">{t('cost_adjustments.type.DEBIT')}</SelectItem>
+                  <SelectItem value="CREDIT">{t('cost_adjustments.type.CREDIT')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -742,7 +856,7 @@ export default function CostAdjustmentsPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Trạng thái</Label>
+              <Label>{t('cost_adjustments.status_label')}</Label>
               <Select
                 value={filters.isActive}
                 onValueChange={(v) =>
@@ -784,8 +898,8 @@ export default function CostAdjustmentsPage() {
           onPaginationChange={({ pageIndex, pageSize }) =>
             setFilters((f) => ({ ...f, page: pageIndex + 1, limit: pageSize }))
           }
-          title="Danh sách phiếu điều chỉnh"
-          subtitle="DEBIT: trừ vào doanh thu/chi phí thiết bị; CREDIT: cộng thêm. Amount nhập giá trị tuyệt đối."
+          title={t('cost_adjustments.title')}
+          subtitle={t('cost_adjustments.modal.description')}
           enableSorting={false}
         />
       </div>

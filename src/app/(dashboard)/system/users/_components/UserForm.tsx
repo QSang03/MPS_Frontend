@@ -455,7 +455,11 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
             <FormItem>
               <FormLabel>Họ tên</FormLabel>
               <FormControl>
-                <Input placeholder="Nhập họ tên đầy đủ" {...field} disabled={isPending} />
+                <Input
+                  placeholder={t('user.placeholder.fullName')}
+                  {...field}
+                  disabled={isPending}
+                />
               </FormControl>
               <FormDescription>Họ tên đầy đủ của người dùng</FormDescription>
             </FormItem>
@@ -500,7 +504,7 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
 
               return (
                 <FormItem>
-                  <FormLabel>Vai trò</FormLabel>
+                  <FormLabel>{t('user.field.role')}</FormLabel>
                   <Select
                     onValueChange={(v) => field.onChange(v === '__empty' ? '' : v)}
                     defaultValue={field.value}
@@ -508,13 +512,13 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Chọn vai trò" />
+                        <SelectValue placeholder={t('placeholder.select_role')} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
                       {isLoadingRoles ? (
                         <SelectItem value="loading" disabled>
-                          Đang tải vai trò...
+                          {t('user.roles.loading')}
                         </SelectItem>
                       ) : roleOptions.length > 0 ? (
                         roleOptions.map((role) => (
@@ -524,7 +528,7 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
                         ))
                       ) : (
                         <>
-                          <SelectItem value="__empty">Không có vai trò</SelectItem>
+                          <SelectItem value="__empty">{t('user.roles.no_roles')}</SelectItem>
                         </>
                       )}
                     </SelectContent>

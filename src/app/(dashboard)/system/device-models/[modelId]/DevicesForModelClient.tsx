@@ -341,12 +341,12 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
                 {creating ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Đang tạo...
+                    {t('button.creating')}
                   </>
                 ) : (
                   <>
                     <Plus className="mr-2 h-4 w-4" />
-                    Tạo thiết bị
+                    {t('device.create_submit')}
                   </>
                 )}
               </Button>

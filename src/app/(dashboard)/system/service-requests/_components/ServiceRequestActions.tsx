@@ -6,6 +6,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { MoreHorizontal, Eye, Edit, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,17 +25,18 @@ interface ServiceRequestActionsProps {
 
 export function ServiceRequestActions({ serviceRequest }: ServiceRequestActionsProps) {
   const router = useRouter()
+  const { t } = useLocale()
   const queryClient = useQueryClient()
 
   const deleteMutation = useMutation({
     mutationFn: () => serviceRequestService.delete(serviceRequest.id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['service-requests'] })
-      toast.success('Service request deleted successfully')
+      toast.success(t('requests.service.delete_success'))
       router.refresh()
     },
     onError: (error: unknown) => {
-      const message = error instanceof Error ? error.message : 'Không thể xóa yêu cầu bảo trì'
+      const message = error instanceof Error ? error.message : t('requests.service.delete_error')
       toast.error(message)
     },
   })
@@ -57,12 +59,12 @@ export function ServiceRequestActions({ serviceRequest }: ServiceRequestActionsP
         <DropdownMenuItem asChild>
           <Link href={`/system/service-requests/${serviceRequest.id}`}>
             <Eye className="mr-2 h-4 w-4" />
-            Xem chi tiết
+            {t('button.view')}
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem>
           <Edit className="mr-2 h-4 w-4" />
-          Cập nhật trạng thái
+          {t('service_request.change_state')}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DeleteDialog
@@ -75,7 +77,7 @@ export function ServiceRequestActions({ serviceRequest }: ServiceRequestActionsP
               onSelect={(e) => e.preventDefault()}
             >
               <Trash2 className="mr-2 h-4 w-4" />
-              Delete
+              {t('button.delete')}
             </DropdownMenuItem>
           }
         />

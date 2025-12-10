@@ -189,10 +189,12 @@ export function AlertsSummary({
             <div>
               <CardTitle className="flex items-center gap-2 text-base font-semibold text-[var(--foreground)]">
                 <Bell className="h-5 w-5 text-[var(--error-500)]" />
-                Cảnh báo hệ thống
+                {t('alerts.title')}
               </CardTitle>
               <CardDescription className="text-[13px] text-[var(--neutral-500)]">
-                {totalAlerts > 0 ? `${totalAlerts} cảnh báo cần xử lý` : 'Không có cảnh báo'}
+                {totalAlerts > 0
+                  ? t('alerts.header_count', { count: totalAlerts })
+                  : t('alerts.empty')}
               </CardDescription>
             </div>
             {totalAlerts > 0 && (
@@ -207,10 +209,8 @@ export function AlertsSummary({
             <div className="flex h-40 items-center justify-center text-gray-500">
               <div className="text-center">
                 <Bell className="mx-auto mb-2 h-12 w-12 text-green-300" />
-                <p className="font-medium text-[var(--color-success-600)]">
-                  Hệ thống hoạt động bình thường
-                </p>
-                <p className="text-sm text-gray-500">Không có cảnh báo nào</p>
+                <p className="font-medium text-[var(--color-success-600)]">{t('alerts.ok')}</p>
+                <p className="text-sm text-gray-500">{t('notifications.empty')}</p>
               </div>
             </div>
           ) : (
@@ -342,7 +342,7 @@ export function AlertsSummary({
                               setModalOpen(true)
                             }}
                           >
-                            Xem chi tiết
+                            {t('alerts.view_details')}
                             <ArrowRight className="ml-1 h-3 w-3" />
                           </Button>
                         )}
@@ -379,7 +379,7 @@ export function AlertsSummary({
               onClick={onViewAll}
             >
               <Bell className="mr-2 h-4 w-4" />
-              Xem tất cả cảnh báo ({totalAlerts})
+              {t('alerts.view_all', { count: totalAlerts })}
             </Button>
           </CardFooter>
         )}

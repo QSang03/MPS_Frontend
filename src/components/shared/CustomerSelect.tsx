@@ -189,7 +189,7 @@ export function CustomerSelect({ value, onChange, disabled, placeholder }: Custo
           >
             {loading && items.length === 0 ? (
               <div className="text-muted-foreground flex items-center gap-2 p-3 text-sm">
-                <Loader2 className="h-4 w-4 animate-spin" /> Đang tải...
+                <Loader2 className="h-4 w-4 animate-spin" /> {t('common.loading')}
               </div>
             ) : items.length === 0 ? (
               <div className="text-muted-foreground p-3 text-sm">{t('customer.select.empty')}</div>

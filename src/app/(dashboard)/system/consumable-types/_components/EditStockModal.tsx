@@ -8,6 +8,7 @@ import { Dialog } from '@/components/ui/dialog'
 import { SystemModalLayout } from '@/components/system/SystemModalLayout'
 import { Package } from 'lucide-react'
 import { Loader2 } from 'lucide-react'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 interface EditStockModalProps {
   open: boolean
@@ -28,6 +29,7 @@ export function EditStockModal({
   currentThreshold,
   onSave,
 }: EditStockModalProps) {
+  const { t } = useLocale()
   const [quantity, setQuantity] = useState(currentQuantity)
   const [threshold, setThreshold] = useState(currentThreshold)
   const [saving, setSaving] = useState(false)
@@ -70,7 +72,7 @@ export function EditStockModal({
               disabled={saving}
               className="min-w-[100px]"
             >
-              Hủy
+              {t('cancel')}
             </Button>
             <Button
               type="button"
@@ -81,10 +83,10 @@ export function EditStockModal({
               {saving ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Đang lưu...
+                  {t('button.saving')}
                 </>
               ) : (
-                'Lưu thay đổi'
+                t('department.button.save_changes')
               )}
             </Button>
           </>

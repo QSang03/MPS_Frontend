@@ -296,7 +296,7 @@ export default function ContractDevicesModal({
                   onClick={() => setAttachOpen(false)}
                   disabled={attachMutation.status === 'pending'}
                 >
-                  Hủy
+                  {t('cancel')}
                 </Button>
                 <Button
                   onClick={handleAttach}
@@ -306,12 +306,14 @@ export default function ContractDevicesModal({
                   {attachMutation.status === 'pending' ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      Đang xử lý...
+                      {t('button.processing')}
                     </>
                   ) : (
                     <>
                       <CheckCircle2 className="h-4 w-4" />
-                      {hasAttachedDevicesSelected ? 'Cập nhật' : 'Đính kèm'}
+                      {hasAttachedDevicesSelected
+                        ? t('button.update')
+                        : t('contract.device.attach')}
                       {selectedToAttach.length > 0 && ` (${selectedToAttach.length})`}
                     </>
                   )}
@@ -447,7 +449,7 @@ export default function ContractDevicesModal({
                 {devicesLoading ? (
                   <div className="flex flex-col items-center justify-center space-y-3 p-12">
                     <Loader2 className="h-10 w-10 animate-spin text-blue-500" />
-                    <p className="text-sm text-slate-600">Đang tải danh sách thiết bị...</p>
+                    <p className="text-sm text-slate-600">{t('page.user_devices.loading')}</p>
                   </div>
                 ) : filteredDevices.length === 0 ? (
                   <div className="flex flex-col items-center justify-center space-y-3 p-12">

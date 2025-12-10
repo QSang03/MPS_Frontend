@@ -336,7 +336,7 @@ export function ExchangeRatesList({
       <FilterSection title="Bộ lọc" onReset={handleResetFilters} activeFilters={activeFilters}>
         <div className="grid gap-4 md:grid-cols-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Từ tiền tệ</label>
+            <label className="text-sm font-medium">{t('exchange_rates.from_label')}</label>
             <Select value={fromCurrencyId} onValueChange={setFromCurrencyId}>
               <SelectTrigger>
                 <SelectValue placeholder="Tất cả" />
@@ -353,7 +353,7 @@ export function ExchangeRatesList({
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Đến tiền tệ</label>
+            <label className="text-sm font-medium">{t('exchange_rates.to_label')}</label>
             <Select value={toCurrencyId} onValueChange={setToCurrencyId}>
               <SelectTrigger>
                 <SelectValue placeholder="Tất cả" />

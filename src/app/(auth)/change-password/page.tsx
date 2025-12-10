@@ -12,10 +12,12 @@ import { AlertCircle, CheckCircle, Loader2, Lock, Eye, EyeOff } from 'lucide-rea
 import { toast } from 'sonner'
 import { changePasswordForClient } from '@/lib/auth/server-actions'
 import { ROUTES } from '@/constants/routes'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 export default function ChangePasswordPage() {
   const router = useRouter()
   const [isRequired, setIsRequired] = useState(false)
+  const { t } = useLocale()
 
   // Avoid using `useSearchParams()` at the top-level page (it causes a CSR bailout
   // that Next expects to be wrapped in a Suspense boundary). Read the query
@@ -58,22 +60,22 @@ export default function ChangePasswordPage() {
 
     // Validation
     if (!oldPassword || !newPassword || !confirmPassword) {
-      setError('Vui lòng điền đầy đủ thông tin')
+      setError(t('auth.errors.required_fields'))
       return
     }
 
     if (newPassword.length < 8) {
-      setError('Mật khẩu mới phải có ít nhất 8 ký tự')
+      setError(t('auth.errors.password_min'))
       return
     }
 
     if (newPassword !== confirmPassword) {
-      setError('Mật khẩu xác nhận không khớp')
+      setError(t('auth.errors.password_mismatch'))
       return
     }
 
     if (oldPassword === newPassword) {
-      setError('Mật khẩu mới phải khác mật khẩu cũ')
+      setError(t('auth.change_password.errors.new_must_differ'))
       return
     }
 
@@ -107,31 +109,22 @@ export default function ChangePasswordPage() {
           (fieldErrors?.currentPassword as string) ||
           (fieldErrors?.newPassword as string) ||
           (fieldErrors?.confirmPassword as string) ||
-          String(
-            payload['error'] ?? payload['message'] ?? 'Đổi mật khẩu thất bại. Vui lòng thử lại.'
-          )
+          String(payload['error'] ?? payload['message'] ?? t('auth.change_password.errors.generic'))
 
-        setError(errorText)
-        toast.error(errorText)
-        return
-      }
-
-      if (payload['error'] && successFlag !== true) {
-        const errorText = String(payload['error'] || 'Đổi mật khẩu thất bại. Vui lòng thử lại.')
         setError(errorText)
         toast.error(errorText)
         return
       }
 
       setSuccess(true)
-      toast.success(message || 'Đổi mật khẩu thành công!')
+      let isDefaultCustomerCookie = false
 
       // Sau khi đổi mật khẩu:
       // - Nếu là flow bắt buộc (required=true) -> quay về khu vực system nếu login là customer-admin
       // - Ngược lại (user thường) -> về dashboard user
       setTimeout(() => {
         try {
-          let isDefaultCustomerCookie = false
+          toast.success(message || t('auth.change_password.success'))
           if (typeof document !== 'undefined') {
             const cookies = document.cookie.split(';')
             const found = cookies.find((c) => c.trim().startsWith('mps_is_default_customer='))
@@ -197,12 +190,14 @@ export default function ChangePasswordPage() {
               transition={{ delay: 0.3 }}
             >
               <CardTitle className="text-center text-3xl font-bold">
-                {isRequired ? 'Đổi mật khẩu bắt buộc' : 'Đổi mật khẩu'}
+                {isRequired
+                  ? t('auth.change_password.title_required')
+                  : t('auth.change_password.title')}
               </CardTitle>
               <CardDescription className="mt-2 text-center text-base">
                 {isRequired
-                  ? 'Bạn đang sử dụng mật khẩu mặc định. Vui lòng đổi mật khẩu để tiếp tục.'
-                  : 'Nhập mật khẩu cũ và mật khẩu mới'}
+                  ? t('auth.change_password.required_desc')
+                  : t('auth.change_password.description')}
               </CardDescription>
             </motion.div>
           </CardHeader>
@@ -224,20 +219,20 @@ export default function ChangePasswordPage() {
                   className="border-[var(--color-success-200)] bg-[var(--color-success-50)] text-[var(--color-success-600)]"
                 >
                   <CheckCircle className="h-4 w-4" />
-                  <AlertDescription>Đổi mật khẩu thành công! Đang chuyển hướng...</AlertDescription>
+                  <AlertDescription>{t('auth.change_password.success_redirect')}</AlertDescription>
                 </Alert>
               )}
 
               {/* Old Password */}
               <div className="space-y-2">
-                <Label htmlFor="oldPassword">Mật khẩu cũ</Label>
+                <Label htmlFor="oldPassword">{t('auth.change_password.old_password_label')}</Label>
                 <div className="relative">
                   <Input
                     id="oldPassword"
                     type={showOldPassword ? 'text' : 'password'}
                     value={oldPassword}
                     onChange={(e) => setOldPassword(e.target.value)}
-                    placeholder="Nhập mật khẩu cũ"
+                    placeholder={t('auth.change_password.old_password_placeholder')}
                     required
                     disabled={isSubmitting || success}
                     className="pr-10"
@@ -254,14 +249,14 @@ export default function ChangePasswordPage() {
 
               {/* New Password */}
               <div className="space-y-2">
-                <Label htmlFor="newPassword">Mật khẩu mới</Label>
+                <Label htmlFor="newPassword">{t('auth.change_password.new_password_label')}</Label>
                 <div className="relative">
                   <Input
                     id="newPassword"
                     type={showNewPassword ? 'text' : 'password'}
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="Nhập mật khẩu mới (tối thiểu 8 ký tự)"
+                    placeholder={t('auth.change_password.new_password_placeholder')}
                     required
                     disabled={isSubmitting || success}
                     className="pr-10"
@@ -278,14 +273,16 @@ export default function ChangePasswordPage() {
 
               {/* Confirm Password */}
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Xác nhận mật khẩu mới</Label>
+                <Label htmlFor="confirmPassword">
+                  {t('auth.change_password.confirm_password_label')}
+                </Label>
                 <div className="relative">
                   <Input
                     id="confirmPassword"
                     type={showConfirmPassword ? 'text' : 'password'}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Nhập lại mật khẩu mới"
+                    placeholder={t('auth.change_password.confirm_password_placeholder')}
                     required
                     disabled={isSubmitting || success}
                     className="pr-10"
@@ -311,7 +308,7 @@ export default function ChangePasswordPage() {
                 disabled={isSubmitting || success}
               >
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isSubmitting ? 'Đang xử lý...' : 'Đổi mật khẩu'}
+                {isSubmitting ? t('auth.sending') : t('auth.change_password.action')}
               </Button>
 
               {/* Cancel button - only show if not required */}
@@ -323,7 +320,7 @@ export default function ChangePasswordPage() {
                   onClick={() => router.back()}
                   disabled={isSubmitting || success}
                 >
-                  Hủy
+                  {t('auth.cancel')}
                 </Button>
               )}
             </form>
@@ -331,7 +328,7 @@ export default function ChangePasswordPage() {
             {isRequired && (
               <div className="mt-4 rounded-lg bg-amber-50 p-3 text-center">
                 <p className="text-sm text-amber-800">
-                  ⚠️ Bạn phải đổi mật khẩu mới có thể sử dụng hệ thống
+                  ⚠️ {t('auth.change_password.must_change_warning')}
                 </p>
               </div>
             )}

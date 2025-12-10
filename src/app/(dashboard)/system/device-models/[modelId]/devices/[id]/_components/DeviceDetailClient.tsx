@@ -2401,6 +2401,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
               </div>
               <div>
                 <Label className="text-base font-semibold">Giá</Label>
+                <Label className="text-base font-semibold">{t('device.price_label')}</Label>
                 <Input
                   type="number"
                   step="any"
@@ -2409,7 +2410,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                     const value = e.target.value ? Number(e.target.value) : ''
                     setCreatePrice(value)
                   }}
-                  placeholder="Nhập giá"
+                  placeholder={t('device.price_placeholder')}
                   className="mt-2 h-11"
                 />
                 {createPriceError && createPrice !== '' && createPrice !== undefined && (
@@ -2417,20 +2418,17 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                 )}
               </div>
               <div>
+                <Label className="text-base font-semibold">{t('currency.label')}</Label>
                 <CurrencySelector
-                  label="Tiền tệ"
+                  label={t('currency.label')}
                   value={createCurrencyId}
                   onChange={(value) => {
                     setCreateCurrencyId(value)
-                    if (!value) {
-                      setCreateCurrencyCode(null)
-                    }
+                    if (!value) setCreateCurrencyCode(null)
                   }}
-                  onSelect={(currency) => {
-                    setCreateCurrencyCode(currency?.code || null)
-                  }}
+                  onSelect={(currency) => setCreateCurrencyCode(currency?.code || null)}
                   optional
-                  placeholder="Chọn tiền tệ (mặc định: USD)"
+                  placeholder={t('currency.select.placeholder_with_default')}
                   customerId={customerId}
                 />
               </div>
@@ -3121,7 +3119,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                         const value = e.target.value ? Number(e.target.value) : ''
                         setEditPrice(value)
                       }}
-                      placeholder="Nhập giá"
+                      placeholder={t('device.price_placeholder')}
                       className="mt-2 h-11"
                     />
                     {editPriceError && editPrice !== '' && editPrice !== undefined && (
@@ -3129,12 +3127,13 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                     )}
                   </div>
                   <div>
+                    <Label className="text-base font-semibold">{t('currency.label')}</Label>
                     <CurrencySelector
-                      label="Tiền tệ"
+                      label={t('currency.label')}
                       value={editCurrencyId}
                       onChange={(value) => setEditCurrencyId(value)}
                       optional
-                      placeholder="Chọn tiền tệ (mặc định: USD)"
+                      placeholder={t('currency.select.placeholder_with_default')}
                       customerId={customerId}
                     />
                   </div>

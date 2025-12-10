@@ -90,9 +90,11 @@ export default function ResetPasswordPage() {
       >
         <Card className="relative overflow-hidden border-0 shadow-2xl">
           <CardHeader>
-            <CardTitle className="text-center text-2xl font-bold">Đặt lại mật khẩu</CardTitle>
+            <CardTitle className="text-center text-2xl font-bold">
+              {t('auth.reset_password.title')}
+            </CardTitle>
             <CardDescription className="text-center">
-              Nhập mật khẩu mới để hoàn tất đặt lại mật khẩu
+              {t('auth.reset_password.description')}
             </CardDescription>
           </CardHeader>
 
@@ -113,26 +115,28 @@ export default function ResetPasswordPage() {
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="newPassword">Mật khẩu mới</Label>
+                <Label htmlFor="newPassword">{t('auth.reset_password.new_password_label')}</Label>
                 <Input
                   id="newPassword"
                   type="password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Mật khẩu mới (tối thiểu 8 ký tự)"
+                  placeholder={t('auth.reset_password.new_password_placeholder')}
                   required
                   disabled={isPending}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Xác nhận mật khẩu mới</Label>
+                <Label htmlFor="confirmPassword">
+                  {t('auth.reset_password.confirm_password_label')}
+                </Label>
                 <Input
                   id="confirmPassword"
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Nhập lại mật khẩu mới"
+                  placeholder={t('auth.reset_password.confirm_password_placeholder')}
                   required
                   disabled={isPending}
                 />

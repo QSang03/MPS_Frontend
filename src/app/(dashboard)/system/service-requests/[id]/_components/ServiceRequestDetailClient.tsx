@@ -170,11 +170,11 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
     mutationFn: () => serviceRequestsClientService.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['service-requests'] })
-      toast.success('Yêu cầu đã được xóa')
+      toast.success(t('requests.service.delete_success'))
       router.push('/system/requests')
     },
     onError: (err: unknown) => {
-      const msg = err instanceof Error ? err.message : 'Không thể xóa yêu cầu'
+      const msg = err instanceof Error ? err.message : t('requests.service.delete_error')
       toast.error(msg)
     },
   })
@@ -186,11 +186,11 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
     onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ['service-requests'] })
       queryClient.invalidateQueries({ queryKey: ['service-requests', 'detail', id] })
-      toast.success('Đã phân công kỹ thuật viên')
+      toast.success(t('requests.service.assign_success'))
       setAssignNote('')
     },
     onError: (err: unknown) => {
-      const msg = err instanceof Error ? err.message : 'Không thể phân công'
+      const msg = err instanceof Error ? err.message : t('requests.service.assign_error')
       toast.error(msg)
     },
   })
@@ -940,16 +940,16 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                 onClick={() => setShowAddCost(false)}
                 disabled={createCostMutation.isPending}
               >
-                Hủy bỏ
+                {t('cancel')}
               </Button>
               <Button
                 onClick={() => {
                   if (newItems.length === 0) {
-                    toast.error('Vui lòng thêm ít nhất 1 mục chi phí')
+                    toast.error(t('requests.service.cost_add_item_required'))
                     return
                   }
                   if (newItems.some((it) => !it.amount || Number(it.amount) <= 0)) {
-                    toast.error('Số tiền phải lớn hơn 0 cho mỗi mục')
+                    toast.error(t('requests.service.cost_item_amount_positive'))
                     return
                   }
                   createCostMutation.mutate({
@@ -966,7 +966,9 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                 }}
                 disabled={createCostMutation.isPending}
               >
-                {createCostMutation.isPending ? 'Đang lưu...' : 'Lưu chi phí'}
+                {createCostMutation.isPending
+                  ? t('button.saving')
+                  : t('requests.service.save_cost')}
               </Button>
             </>
           }
@@ -980,7 +982,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                 </Button>
               </div>
               <CurrencySelector
-                label="Tiền tệ"
+                label={t('currency.label')}
                 value={costCurrencyId}
                 onChange={(value) => {
                   setCostCurrencyId(value)
@@ -992,7 +994,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                   setCostCurrencyCode(currency?.code || null)
                 }}
                 optional
-                placeholder="Chọn tiền tệ (mặc định: USD)"
+                placeholder={t('currency.select.placeholder_with_default')}
                 customerId={data?.customerId}
               />
             </div>

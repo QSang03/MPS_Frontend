@@ -9,6 +9,7 @@ import { formatRelativeTime } from '@/lib/utils/formatters'
 import { ArrowLeft } from 'lucide-react'
 import { notificationsClientService } from '@/lib/api/services/notifications-client.service'
 import { useState } from 'react'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 interface NotificationListItem {
   id?: string
@@ -42,6 +43,7 @@ export function NotificationDetailModal({
   onMarkedRead,
 }: NotificationDetailModalProps) {
   const [loading, setLoading] = useState(false)
+  const { t } = useLocale()
 
   if (!notification) return null
 
@@ -76,7 +78,7 @@ export function NotificationDetailModal({
 
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => onOpenChange(false)}>
-                Đóng
+                {t('button.close')}
               </Button>
               <Button
                 onClick={async () => {
@@ -96,7 +98,7 @@ export function NotificationDetailModal({
                 }}
                 disabled={loading}
               >
-                {loading ? 'Đang xử lý...' : 'Đánh dấu đã đọc'}
+                {loading ? t('button.processing') : t('notifications.mark_read')}
               </Button>
             </div>
           </div>

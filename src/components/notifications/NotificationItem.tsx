@@ -7,6 +7,7 @@ import { NotificationStatus } from '@/types/models/notification'
 import { cn } from '@/lib/utils'
 import { CheckCircle2, Circle, Check } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import Cookies from 'js-cookie'
 import { Button } from '@/components/ui/button'
 
@@ -19,6 +20,7 @@ export function NotificationItem({ notification, onMarkAsRead }: NotificationIte
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [marking, setMarking] = useState(false)
+  const { t } = useLocale()
   const isRead = notification.status === NotificationStatus.READ || !!notification.readAt
 
   const extractServiceRequestId = (text?: string): string | null => {
@@ -133,7 +135,7 @@ export function NotificationItem({ notification, onMarkAsRead }: NotificationIte
           size="sm"
           onClick={handleQuickMark}
           disabled={marking}
-          aria-label="Đánh dấu đã đọc"
+          aria-label={t('notifications.mark_read')}
         >
           {marking ? <Check className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
         </Button>

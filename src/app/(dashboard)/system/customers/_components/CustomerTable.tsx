@@ -267,12 +267,12 @@ export function CustomerTable({
                           setCustomers((cur) =>
                             cur.map((item) => (item.id === updated.id ? updated : item))
                           )
-                          toast.success('Cập nhật địa chỉ thành công')
+                          toast.success(t('customer.address_update_success'))
                         }
                         setEditingAddressFor(null)
                       } catch (err) {
                         console.error('Update address failed', err)
-                        toast.error('Không thể cập nhật địa chỉ')
+                        toast.error((err as Error).message || t('customer.address_update_error'))
                       } finally {
                         setSavingAddressId(null)
                       }
@@ -316,7 +316,7 @@ export function CustomerTable({
                     setEditingAddressValue(first === '—' ? '' : String(first))
                   }}
                   className="transition-all hover:bg-[var(--brand-100)] hover:text-[var(--brand-700)]"
-                  aria-label="Chỉnh sửa địa chỉ"
+                  aria-label={t('customer.address.edit')}
                 >
                   <Edit className="h-4 w-4" />
                 </Button>
@@ -330,7 +330,7 @@ export function CustomerTable({
         header: () => (
           <div className="flex items-center gap-2">
             <CheckCircle2 className="h-4 w-4 text-gray-600" />
-            Trạng thái
+            {t('table.status')}
           </div>
         ),
         enableSorting: true,
@@ -341,7 +341,7 @@ export function CustomerTable({
               variant={isActive ? 'default' : 'secondary'}
               className={isActive ? 'bg-green-500 text-white' : 'bg-gray-400 text-white'}
             >
-              {isActive ? 'Hoạt động' : 'Tạm dừng'}
+              {isActive ? t('status.active') : t('status.inactive')}
             </Badge>
           )
         },
@@ -351,14 +351,16 @@ export function CustomerTable({
         header: () => (
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-gray-600" />
-            Ngày lấy số liệu
+            {t('customer.field.billing_day')}
           </div>
         ),
         enableSorting: true,
         cell: ({ row }) => {
           const billingDay = (row.original as unknown as { billingDay?: number | null }).billingDay
           return billingDay ? (
-            <span className="text-sm font-medium text-slate-700">Ngày {billingDay}</span>
+            <span className="text-sm font-medium text-slate-700">
+              {t('customer.billing_day_value', { day: billingDay })}
+            </span>
           ) : (
             <span className="text-muted-foreground text-sm">—</span>
           )
@@ -369,7 +371,7 @@ export function CustomerTable({
         header: () => (
           <div className="flex items-center gap-2">
             <Settings className="h-4 w-4 text-gray-600" />
-            Thao tác
+            {t('table.actions')}
           </div>
         ),
         enableSorting: false,
@@ -385,7 +387,7 @@ export function CustomerTable({
                 className="transition-all hover:bg-[var(--brand-100)] hover:text-[var(--brand-700)]"
               >
                 <Package className="mr-2 h-4 w-4" />
-                Vật tư
+                {t('nav.consumables')}
               </Button>
 
               {/* Create device for this customer */}

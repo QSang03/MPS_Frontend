@@ -132,7 +132,7 @@ export function WarehouseDocumentForm({ initialData, onSuccess }: Props) {
             name="type"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Loại chứng từ</FormLabel>
+                <FormLabel>{t('warehouse_document.type_label')}</FormLabel>
                 <FormControl>
                   <Select
                     onValueChange={(value) => {
@@ -148,16 +148,22 @@ export function WarehouseDocumentForm({ initialData, onSuccess }: Props) {
                     disabled={isPending}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Chọn loại" />
+                      <SelectValue placeholder={t('warehouse_document.type_placeholder')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="IMPORT_FROM_SUPPLIER">Nhập hàng (IMPORT)</SelectItem>
-                      <SelectItem value="EXPORT_TO_CUSTOMER">Xuất hàng (EXPORT)</SelectItem>
-                      <SelectItem value="RETURN_FROM_CUSTOMER">Trả hàng (RETURN)</SelectItem>
+                      <SelectItem value="IMPORT_FROM_SUPPLIER">
+                        {t('warehouse_document.types.IMPORT_FROM_SUPPLIER')}
+                      </SelectItem>
+                      <SelectItem value="EXPORT_TO_CUSTOMER">
+                        {t('warehouse_document.types.EXPORT_TO_CUSTOMER')}
+                      </SelectItem>
+                      <SelectItem value="RETURN_FROM_CUSTOMER">
+                        {t('warehouse_document.types.RETURN_FROM_CUSTOMER')}
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </FormControl>
-                <FormDescription>Chọn loại chứng từ kho (Nhập/Xuất/Trả)</FormDescription>
+                <FormDescription>{t('warehouse_document.type_description')}</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -168,7 +174,7 @@ export function WarehouseDocumentForm({ initialData, onSuccess }: Props) {
             name="customerId"
             render={() => (
               <FormItem>
-                <FormLabel>Khách hàng</FormLabel>
+                <FormLabel>{t('customer.label')}</FormLabel>
                 <FormControl>
                   <Controller
                     control={control}
@@ -180,16 +186,14 @@ export function WarehouseDocumentForm({ initialData, onSuccess }: Props) {
                         disabled={isPending || watchType === 'IMPORT_FROM_SUPPLIER'}
                         placeholder={
                           watchType === 'IMPORT_FROM_SUPPLIER'
-                            ? 'Không áp dụng cho nhập'
-                            : 'Chọn khách hàng'
+                            ? t('warehouse_document.customer.placeholder.import_not_applicable')
+                            : t('customer.select_placeholder')
                         }
                       />
                     )}
                   />
                 </FormControl>
-                <FormDescription>
-                  Yêu cầu chọn khách hàng khi loại là Xuất hoặc Trả (không áp dụng cho Nhập)
-                </FormDescription>
+                <FormDescription>{t('warehouse_document.customer.description')}</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -202,15 +206,15 @@ export function WarehouseDocumentForm({ initialData, onSuccess }: Props) {
             name="supplierName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Nhà cung cấp</FormLabel>
+                <FormLabel>{t('warehouse_document.supplier_label')}</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="Tên nhà cung cấp"
+                    placeholder={t('warehouse_document.supplier.placeholder')}
                     disabled={isPending || watchType !== 'IMPORT_FROM_SUPPLIER'}
                     {...field}
                   />
                 </FormControl>
-                <FormDescription>Chỉ áp dụng cho chứng từ Nhập</FormDescription>
+                <FormDescription>{t('warehouse_document.supplier.description')}</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -335,7 +339,7 @@ export function WarehouseDocumentForm({ initialData, onSuccess }: Props) {
                     name={`items.${idx}.currencyId` as const}
                     render={({ field: cField }) => (
                       <FormItem>
-                        <FormLabel>Tiền tệ</FormLabel>
+                        <FormLabel>{t('currency.label')}</FormLabel>
                         <FormControl>
                           <CurrencySelector
                             value={cField.value || null}
@@ -353,7 +357,7 @@ export function WarehouseDocumentForm({ initialData, onSuccess }: Props) {
                             }}
                             disabled={isPending}
                             optional
-                            placeholder="Chọn tiền tệ"
+                            placeholder={t('currency.select.placeholder')}
                             customerId={watchCustomerId}
                           />
                         </FormControl>

@@ -172,7 +172,7 @@ export function EditProfileModal({
                     </FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Nhập tên"
+                        placeholder={t('user.placeholder.fullName')}
                         {...field}
                         className="h-10 rounded-lg border-2 border-gray-200 text-base transition-all focus:border-rose-500 focus:ring-2 focus:ring-rose-200"
                       />
@@ -194,7 +194,7 @@ export function EditProfileModal({
                     </FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Nhập số điện thoại"
+                        placeholder={t('user.placeholder.phone')}
                         {...field}
                         className="h-10 rounded-lg border-2 border-gray-200 text-base transition-all focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)]"
                       />

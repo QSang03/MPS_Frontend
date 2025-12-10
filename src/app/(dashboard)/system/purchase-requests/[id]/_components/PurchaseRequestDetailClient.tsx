@@ -135,11 +135,11 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
     mutationFn: () => purchaseRequestsClientService.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['purchase-requests'] })
-      toast.success('Đã xóa yêu cầu mua hàng')
+      toast.success(t('requests.purchase.delete_success'))
       router.push('/system/requests')
     },
     onError: (error: unknown) => {
-      const message = error instanceof Error ? error.message : 'Không thể xóa yêu cầu'
+      const message = error instanceof Error ? error.message : t('requests.purchase.delete_error')
       toast.error(message)
     },
   })
@@ -152,12 +152,12 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['purchase-requests'] })
       queryClient.invalidateQueries({ queryKey: ['purchase-requests', 'detail', id] })
-      toast.success('Đã phân công nhân viên')
+      toast.success(t('requests.purchase.assign_success'))
       setAssignNote('')
       setSelectedAssignee(undefined)
     },
     onError: (error: unknown) => {
-      const message = error instanceof Error ? error.message : 'Không thể phân công'
+      const message = error instanceof Error ? error.message : t('requests.purchase.assign_error')
       toast.error(message)
     },
   })
@@ -548,14 +548,14 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
                       <textarea
                         value={statusNote}
                         onChange={(e) => setStatusNote(e.target.value)}
-                        placeholder="Nhập ghi chú để lưu cùng cập nhật trạng thái"
+                        placeholder={t('purchase_request.placeholder.update_note')}
                         className="mt-2 w-full rounded-md border px-3 py-2 text-sm"
                       />
                     </div>
                     <DialogFooter className="mt-4">
                       <div className="flex w-full gap-2">
                         <Button variant="outline" onClick={() => setPendingStatusChange(null)}>
-                          Hủy
+                          {t('cancel')}
                         </Button>
                         <Button
                           onClick={() => {
@@ -567,7 +567,9 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
                           }}
                           disabled={statusUpdating}
                         >
-                          {statusUpdating ? 'Đang cập nhật...' : 'Xác nhận'}
+                          {statusUpdating
+                            ? t('service_request.updating')
+                            : t('dialog.confirm.confirm')}
                         </Button>
                       </div>
                     </DialogFooter>
@@ -618,7 +620,7 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
                     <DialogFooter className="mt-4">
                       <div className="flex w-full gap-2">
                         <Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>
-                          Hủy
+                          {t('cancel')}
                         </Button>
                         <Button
                           variant="destructive"
@@ -628,7 +630,9 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
                           }}
                           disabled={deleteMutation.isPending}
                         >
-                          {deleteMutation.isPending ? 'Đang xóa...' : 'Xác nhận xóa'}
+                          {deleteMutation.isPending
+                            ? t('dialog.delete.deleting')
+                            : t('dialog.delete.confirm')}
                         </Button>
                       </div>
                     </DialogFooter>

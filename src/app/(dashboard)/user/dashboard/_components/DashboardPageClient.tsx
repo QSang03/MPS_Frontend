@@ -150,7 +150,7 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
         setOverview(resp as Overview)
       } catch (err) {
         console.error('Failed to load dashboard overview', err)
-        setError('Không thể tải dữ liệu tổng quan')
+        setError(t('dashboard.error.load_overview'))
       } finally {
         if (mounted) setLoading(false)
       }
@@ -161,7 +161,7 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
       mounted = false
       mountedName = false
     }
-  }, [month])
+  }, [month, t])
 
   // Handle month change
   const handleMonthChange = (newMonth: string) => {
@@ -179,7 +179,7 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
       <EmptyState
         title={t('dashboard.error.title')}
         description={error}
-        action={{ label: 'Thử lại', onClick: () => window.location.reload() }}
+        action={{ label: t('button.retry'), onClick: () => window.location.reload() }}
       />
     )
   }
@@ -271,7 +271,7 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
     <UserPageLayout>
       {/* Hero Section */}
       <SystemPageHeader
-        title="Tổng quan"
+        title={t('dashboard.title')}
         subtitle={subtitleText}
         breadcrumb={
           <>
@@ -290,12 +290,12 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
               onClick={() => router.push(ROUTES.USER_MY_DEVICES)}
             >
               <FileBarChart className="mr-2 h-4 w-4" />
-              Thiết bị
+              {t('dashboard.actions.devices')}
             </Button>
             <ServiceRequestFormModal customerId={overview.customerId}>
               <Button className="h-10 rounded-full border-0 bg-white px-5 text-sm font-semibold text-[var(--brand-500)] shadow-sm hover:bg-[var(--brand-50)]">
                 <Send className="mr-2 h-4 w-4" />
-                Gửi yêu cầu
+                {t('dashboard.actions.send_request')}
               </Button>
             </ServiceRequestFormModal>
           </>
@@ -313,7 +313,7 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
             <div className="flex items-start gap-4">
               <div>
                 <p className="text-[11px] font-medium tracking-wider text-[var(--neutral-500)] uppercase md:text-xs">
-                  Chi phí trong tháng
+                  {t('dashboard.cost.month_title')}
                 </p>
                 <div className="mt-2 flex items-baseline gap-2">
                   <div className="text-2xl font-bold text-[var(--foreground)] md:text-[28px] lg:text-[32px]">
@@ -322,7 +322,10 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
                 </div>
                 <div className="mt-1 flex items-center text-xs font-medium text-[var(--color-success-500)]">
                   <TrendingUp className="mr-1 h-3 w-3" />
-                  12% <span className="ml-1 text-[var(--neutral-500)]">so với tháng trước</span>
+                  12%{' '}
+                  <span className="ml-1 text-[var(--neutral-500)]">
+                    {t('dashboard.compare_to_last_month')}
+                  </span>
                 </div>
               </div>
               <div className="ml-auto flex flex-col items-end gap-4">
@@ -412,7 +415,7 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
               className="h-8 text-xs"
               onClick={() => router.push(ROUTES.USER_MY_DEVICES)}
             >
-              Xem chi tiết
+              {t('common.view_detail')}
             </Button>
           </CardHeader>
           <CardContent className="min-h-[250px] flex-1 md:min-h-[300px] lg:min-h-[400px]">
@@ -502,8 +505,8 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
               </ResponsiveContainer>
             ) : (
               <EmptyState
-                title="Chưa có dữ liệu"
-                description="Không có dữ liệu biểu đồ cho khoảng thời gian này"
+                title={t('empty.no_data.title')}
+                description={t('empty.no_data.chart_description')}
                 className="h-full border-none bg-transparent py-0"
               />
             )}
@@ -513,8 +516,8 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
         {/* Top Devices Chart */}
         <Card className="shadow-card flex flex-col">
           <CardHeader>
-            <CardTitle className="text-lg font-bold">Top thiết bị theo chi phí</CardTitle>
-            <CardDescription>5 thiết bị có chi phí cao nhất</CardDescription>
+            <CardTitle className="text-lg font-bold">{t('dashboard.top_devices.title')}</CardTitle>
+            <CardDescription>{t('dashboard.top_devices.description')}</CardDescription>
           </CardHeader>
           <CardContent className="min-h-[250px] flex-1 md:min-h-[300px] lg:min-h-[400px]">
             {deviceData.length > 0 ? (
@@ -547,7 +550,12 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
                     }}
                     formatter={(value: number) => formatCurrency(value)}
                   />
-                  <Bar dataKey="value" name="Chi phí" radius={[0, 4, 4, 0]} barSize={36}>
+                  <Bar
+                    dataKey="value"
+                    name={t('dashboard.cost_label')}
+                    radius={[0, 4, 4, 0]}
+                    barSize={36}
+                  >
                     {deviceData.map((entry, index) => (
                       <Cell
                         key={`cell-${index}`}
@@ -571,8 +579,8 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
               </ResponsiveContainer>
             ) : (
               <EmptyState
-                title="Chưa có dữ liệu"
-                description="Không có dữ liệu thiết bị cho khoảng thời gian này"
+                title={t('empty.no_data.title')}
+                description={t('dashboard.empty.top_devices_description')}
                 className="h-full border-none bg-transparent py-0"
               />
             )}
@@ -632,7 +640,9 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
                     <div className="mt-auto">
                       <div className="flex items-end justify-between">
                         <div>
-                          <p className="text-muted-foreground text-xs">Tổng chi phí</p>
+                          <p className="text-muted-foreground text-xs">
+                            {t('dashboard.totals.total_cost')}
+                          </p>
                           <p className="text-lg font-bold text-[var(--brand-600)]">
                             {formatCurrency(
                               getDisplayValue(d.totalRevenue, d.totalRevenueConverted, useConverted)
@@ -720,7 +730,7 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
                             <div className="flex items-center justify-between">
                               <div className="flex items-center text-sm font-semibold text-gray-700">
                                 <DollarSign className="mr-1.5 h-4 w-4" />
-                                Tổng Chi phí
+                                {t('dashboard.totals.total_cost')}
                               </div>
                               <div className="text-base font-bold text-[var(--brand-700)]">
                                 {formatCurrency(

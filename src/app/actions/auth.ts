@@ -231,6 +231,7 @@ export async function logout(): Promise<void> {
   // Clear localStorage
   if (typeof window !== 'undefined') {
     try {
+      localStorage.removeItem('mps_navigation')
       localStorage.removeItem('mps_user_role')
       localStorage.removeItem('mps_is_default_customer')
       localStorage.removeItem('mps_user_id')

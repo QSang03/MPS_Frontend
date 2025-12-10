@@ -5,6 +5,7 @@ import Cookies from 'js-cookie'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { login, type LoginActionState } from '@/app/actions/auth'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -35,6 +36,14 @@ export default function LoginPage() {
             path: '/',
             sameSite: 'lax',
           })
+        }
+        // Clear cached navigation to force re-fetch after login
+        try {
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('mps_navigation')
+          }
+        } catch {
+          // ignore
         }
         // Persist customer name to localStorage for header display
         if (typeof window !== 'undefined' && state.success.customerName) {
@@ -79,6 +88,8 @@ export default function LoginPage() {
     return undefined
   }, [state, isPending, router, queryClient])
 
+  const { t } = useLocale()
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
@@ -120,10 +131,10 @@ export default function LoginPage() {
             transition={{ delay: 0.3 }}
           >
             <CardTitle className="font-display text-center text-3xl font-bold">
-              Chào mừng đến MPS
+              {t('auth.welcome_title')}
             </CardTitle>
             <CardDescription className="mt-2 text-center text-base">
-              Nhập thông tin đăng nhập để truy cập hệ thống
+              {t('auth.welcome_description')}
             </CardDescription>
           </motion.div>
         </CardHeader>
@@ -147,12 +158,12 @@ export default function LoginPage() {
 
             {/* Email field */}
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t('auth.email_label')}</Label>
               <Input
                 id="email"
                 name="email"
                 type="email"
-                placeholder="Nhập email"
+                placeholder={t('auth.placeholder.email')}
                 required
                 disabled={isPending}
                 autoComplete="email"
@@ -166,12 +177,12 @@ export default function LoginPage() {
 
             {/* Password field */}
             <div className="space-y-2">
-              <Label htmlFor="password">Mật khẩu</Label>
+              <Label htmlFor="password">{t('auth.password_label')}</Label>
               <Input
                 id="password"
                 name="password"
                 type="password"
-                placeholder="Nhập mật khẩu"
+                placeholder={t('auth.placeholder.password')}
                 required
                 disabled={isPending}
                 autoComplete="current-password"
@@ -187,7 +198,7 @@ export default function LoginPage() {
                   onClick={() => router.push('/forgot-password')}
                   className="text-sm text-[var(--brand-600)] hover:underline"
                 >
-                  Quên mật khẩu?
+                  {t('auth.forgot_password_link')}
                 </button>
               </div>
             </div>
@@ -195,13 +206,13 @@ export default function LoginPage() {
             {/* Submit button */}
             <Button type="submit" className="w-full" disabled={isPending}>
               {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isPending ? 'Đang đăng nhập...' : 'Đăng nhập'}
+              {isPending ? t('auth.sending') : t('auth.login_action')}
             </Button>
           </form>
 
           <div className="text-muted-foreground mt-4 text-center text-sm">
-            <p>Tài khoản demo:</p>
-            <p className="mt-1 text-xs">Admin: admin / Ainkczalov3 </p>
+            <p>{t('auth.demo.title')}</p>
+            <p className="mt-1 text-xs">{t('auth.demo.admin_credentials')}</p>
           </div>
         </CardContent>
       </Card>
