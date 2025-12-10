@@ -422,7 +422,10 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
                 </div>
                 <div className="mt-1 flex items-center text-xs font-medium text-[var(--error-500)]">
                   <TrendingDown className="mr-1 h-3 w-3" />
-                  1.8% <span className="ml-1 text-[var(--neutral-500)]">so với tháng trước</span>
+                  1.8%{' '}
+                  <span className="ml-1 text-[var(--neutral-500)]">
+                    {t('dashboard.compare_to_last_month')}
+                  </span>
                 </div>
               </div>
               <div className="ml-auto flex flex-col items-end gap-4">
@@ -441,8 +444,8 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
         <Card className="shadow-card flex flex-col lg:col-span-2" id="usage-chart">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <div>
-              <CardTitle className="text-lg font-bold">Biểu đồ sử dụng</CardTitle>
-              <CardDescription>Số lượng trang in theo thời gian</CardDescription>
+              <CardTitle className="text-lg font-bold">{t('dashboard.usage.title')}</CardTitle>
+              <CardDescription>{t('dashboard.usage.description')}</CardDescription>
             </div>
             <Button
               variant="outline"
@@ -476,7 +479,7 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
                     dy={10}
                     height={60}
                     label={{
-                      value: 'Tháng',
+                      value: t('dashboard.month'),
                       position: 'insideBottomRight',
                       offset: -5,
                       fontSize: 12,
@@ -491,7 +494,7 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
                     ticks={[0, 200000, 400000, 600000, 800000]}
                     domain={[0, 800000]}
                     label={{
-                      value: 'Trang in (Số lượng)',
+                      value: t('dashboard.usage.yaxis'),
                       angle: -90,
                       position: 'insideLeft',
                       fontSize: 12,
@@ -506,7 +509,11 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
                     }}
                     formatter={(value: number, name: string) => [
                       formatNumber(value),
-                      name === 'bw' ? 'B/W' : name === 'color' ? 'Màu' : name,
+                      name === 'bw'
+                        ? t('dashboard.labels.bw')
+                        : name === 'color'
+                          ? t('dashboard.labels.color')
+                          : name,
                     ]}
                     labelStyle={{ fontWeight: 'bold', color: 'var(--foreground)' }}
                   />
@@ -519,7 +526,7 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
                   <Area
                     type="monotone"
                     dataKey="bw"
-                    name="B/W"
+                    name={t('dashboard.labels.bw')}
                     stroke="var(--color-success-500)"
                     strokeWidth={2}
                     fillOpacity={1}
@@ -529,7 +536,7 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
                   <Area
                     type="monotone"
                     dataKey="color"
-                    name="Màu"
+                    name={t('dashboard.labels.color')}
                     stroke="var(--brand-500)"
                     strokeWidth={2}
                     fillOpacity={1}
@@ -626,7 +633,9 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
       {/* Top Devices List (Detailed) */}
       <Card className="shadow-card" id="cost-breakdown">
         <CardHeader>
-          <CardTitle className="text-lg font-bold">Chi tiết thiết bị tiêu thụ nhiều</CardTitle>
+          <CardTitle className="text-lg font-bold">
+            {t('dashboard.top_devices.details_title')}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {overview.topDevices && overview.topDevices.length > 0 ? (
@@ -705,7 +714,7 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
                           <div className="space-y-1">
                             <div className="text-muted-foreground flex items-center text-xs">
                               <Wrench className="mr-1.5 h-3 w-3" />
-                              Thuê & Sửa chữa
+                              {t('dashboard.detail.rental_repair')}
                             </div>
                             <div className="font-medium">
                               {d.revenueRental || d.revenueRepair
@@ -728,7 +737,7 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
                           <div className="space-y-1">
                             <div className="text-muted-foreground flex items-center text-xs">
                               <FileText className="mr-1.5 h-3 w-3" />
-                              Trang B/W
+                              {t('dashboard.detail.pages_bw')}
                             </div>
                             <div className="font-medium">
                               {d.revenuePageBW
@@ -746,7 +755,7 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
                           <div className="space-y-1">
                             <div className="text-muted-foreground flex items-center text-xs">
                               <Palette className="mr-1.5 h-3 w-3" />
-                              Trang Màu
+                              {t('dashboard.detail.pages_color')}
                             </div>
                             <div className="font-medium">
                               {d.revenuePageColor
@@ -787,8 +796,8 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
             </div>
           ) : (
             <EmptyState
-              title="Chưa có thiết bị nổi bật"
-              description="Không có dữ liệu thiết bị nổi bật cho khoảng thời gian này"
+              title={t('dashboard.top_devices.empty_title')}
+              description={t('dashboard.top_devices.empty_description')}
               className="border-none bg-transparent py-8"
             />
           )}

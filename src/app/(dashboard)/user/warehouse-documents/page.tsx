@@ -2,7 +2,7 @@ import WarehouseDocumentsPageClient from './_components/WarehouseDocumentsPageCl
 import { UserPageLayout } from '@/components/user/UserPageLayout'
 
 export const metadata = {
-  title: 'Chứng từ kho của tôi',
+  title: 'My Warehouse Documents',
 }
 
 export default function WarehouseDocumentsPage() {

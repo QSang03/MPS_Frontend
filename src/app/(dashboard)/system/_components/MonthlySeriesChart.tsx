@@ -28,6 +28,7 @@ import { TrendingUp, FileText, ArrowRight } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import type { CurrencyDataDto } from '@/types/models/currency'
 import { formatCurrencyWithSymbol } from '@/lib/utils/formatters'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 interface MonthlySeriesChartProps {
   monthlySeries: MonthlySeries | undefined
@@ -37,57 +38,10 @@ interface MonthlySeriesChartProps {
   baseCurrency?: CurrencyDataDto | null
 }
 
-const METRIC_CONFIG = {
-  totalRevenue: {
-    label: 'Tổng doanh thu',
-    color: 'var(--color-success-500)',
-    strokeWidth: 3,
-  },
-  revenueRental: {
-    label: 'Doanh thu thuê máy',
-    color: 'var(--brand-600)',
-    strokeWidth: 2,
-  },
-  revenueRepair: {
-    label: 'Doanh thu sửa chữa',
-    color: 'var(--warning-500)',
-    strokeWidth: 2,
-  },
-  revenuePageBW: {
-    label: 'Doanh thu trang BW',
-    color: 'var(--muted-foreground)',
-    strokeWidth: 2,
-  },
-  revenuePageColor: {
-    label: 'Doanh thu trang màu',
-    color: 'var(--brand-500)',
-    strokeWidth: 2,
-  },
-  totalCogs: {
-    label: 'Tổng chi phí',
-    color: 'var(--error-500)',
-    strokeWidth: 2,
-  },
-  cogsConsumable: {
-    label: 'Chi phí vật tư',
-    color: 'var(--error-500)',
-    strokeWidth: 2,
-  },
-  cogsRepair: {
-    label: 'Chi phí sửa chữa',
-    color: 'var(--error-500)',
-    strokeWidth: 2,
-  },
-  grossProfit: {
-    label: 'Lợi nhuận gộp',
-    color: 'var(--color-success-500)',
-    strokeWidth: 3,
-  },
-}
+// METRIC_CONFIG will be created inside component so we can use translations
 
 type ChartType = 'area' | 'line'
 
-// Custom tooltip component (outside render to avoid recreation)
 interface CustomTooltipProps {
   active?: boolean
   payload?: Array<{
@@ -104,21 +58,23 @@ const CustomTooltip = ({
   payload,
   label,
   baseCurrency,
-}: CustomTooltipProps & { baseCurrency?: CurrencyDataDto | null }) => {
+  metricConfig,
+}: CustomTooltipProps & {
+  baseCurrency?: CurrencyDataDto | null
+  metricConfig: Record<string, { label: string; color?: string; strokeWidth?: number }>
+}) => {
   if (active && payload && payload.length) {
     return (
       <div className="rounded-lg border-0 bg-[var(--popover)] p-3 text-[var(--popover-foreground)] shadow-[0_4px_12px_rgba(0,0,0,0.15)]">
         <p className="mb-2 font-semibold text-white">{label}</p>
         {payload.map((entry) => {
-          const config = METRIC_CONFIG[entry.dataKey as keyof typeof METRIC_CONFIG]
+          const config = metricConfig[entry.dataKey as keyof typeof metricConfig]
           if (!config) return null
 
           const formatValue = (value: number) => {
-            // Format all metrics as currency since they're all monetary values
             if (baseCurrency) {
               return formatCurrencyWithSymbol(value, baseCurrency)
             }
-            // Fallback to USD if no currency provided
             return formatCurrencyWithSymbol(value, { code: 'USD', symbol: '$' } as CurrencyDataDto)
           }
 
@@ -147,6 +103,7 @@ export function MonthlySeriesChart({
   onExport,
   baseCurrency,
 }: MonthlySeriesChartProps) {
+  const { t, locale } = useLocale()
   const [chartType, setChartType] = useState<ChartType>('area')
   const [visibleMetrics, setVisibleMetrics] = useState<string[]>([
     'totalRevenue',
@@ -154,15 +111,88 @@ export function MonthlySeriesChart({
     'grossProfit',
   ])
 
+  const METRIC_CONFIG = {
+    totalRevenue: {
+      label: t('dashboard.metrics.total_revenue'),
+      color: 'var(--color-success-500)',
+      strokeWidth: 3,
+    },
+    totalCogsAfterAdjustment: {
+      label: t('dashboard.metrics.total_cogs_after_adjustment'),
+      color: 'var(--error-300)',
+      strokeWidth: 3,
+    },
+    revenueRental: {
+      label: t('dashboard.metrics.revenue_rental'),
+      color: 'var(--brand-600)',
+      strokeWidth: 2,
+    },
+    revenueRepair: {
+      label: t('dashboard.metrics.revenue_repair'),
+      color: 'var(--warning-500)',
+      strokeWidth: 2,
+    },
+    revenuePageBW: {
+      label: t('dashboard.metrics.revenue_page_bw'),
+      color: 'var(--muted-foreground)',
+      strokeWidth: 2,
+    },
+    revenuePageColor: {
+      label: t('dashboard.metrics.revenue_page_color'),
+      color: 'var(--brand-500)',
+      strokeWidth: 2,
+    },
+    totalCogs: {
+      label: t('dashboard.metrics.total_cogs'),
+      color: 'var(--error-500)',
+      strokeWidth: 2,
+    },
+    costAdjustmentDebit: {
+      label: t('dashboard.metrics.cost_adjustment_debit'),
+      color: 'var(--error-400)',
+      strokeWidth: 2,
+    },
+    costAdjustmentCredit: {
+      label: t('dashboard.metrics.cost_adjustment_credit'),
+      color: 'var(--color-success-400)',
+      strokeWidth: 2,
+    },
+    costAdjustmentNet: {
+      label: t('dashboard.metrics.cost_adjustment_net'),
+      color: 'var(--warning-500)',
+      strokeWidth: 2,
+    },
+    cogsConsumable: {
+      label: t('dashboard.metrics.cogs_consumable'),
+      color: 'var(--error-500)',
+      strokeWidth: 2,
+    },
+    cogsRepair: {
+      label: t('dashboard.metrics.cogs_repair'),
+      color: 'var(--error-500)',
+      strokeWidth: 2,
+    },
+    grossProfit: {
+      label: t('dashboard.metrics.gross_profit'),
+      color: 'var(--color-success-500)',
+      strokeWidth: 3,
+    },
+    grossProfitAfterAdjustment: {
+      label: t('dashboard.metrics.gross_profit_after_adjustment'),
+      color: 'var(--color-success-300)',
+      strokeWidth: 3,
+    },
+  }
+
   if (isLoading || !monthlySeries) {
     return (
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5" />
-            Xu hướng theo tháng
+            {t('dashboard.monthly_trend.title')}
           </CardTitle>
-          <CardDescription>Biểu đồ thống kê các chỉ số theo thời gian</CardDescription>
+          <CardDescription>{t('dashboard.monthly_trend.description')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex h-80 items-center justify-center">
@@ -207,6 +237,32 @@ export function MonthlySeriesChart({
     cogsRepair: getDisplayValue(point.cogsRepair, point.cogsRepairConverted, useConverted),
     totalCogs: getDisplayValue(point.totalCogs, point.totalCogsConverted, useConverted),
     grossProfit: getDisplayValue(point.grossProfit, point.grossProfitConverted, useConverted),
+    costAdjustmentDebit: getDisplayValue(
+      point.costAdjustmentDebit ?? 0,
+      point.costAdjustmentDebitConverted,
+      useConverted
+    ),
+    costAdjustmentCredit: getDisplayValue(
+      point.costAdjustmentCredit ?? 0,
+      point.costAdjustmentCreditConverted,
+      useConverted
+    ),
+    costAdjustmentNet: getDisplayValue(
+      point.costAdjustmentNet ?? 0,
+      point.costAdjustmentNetConverted,
+      useConverted
+    ),
+    totalCogsAfterAdjustment: getDisplayValue(
+      point.totalCogsAfterAdjustment ?? 0,
+      point.totalCogsAfterAdjustmentConverted,
+      useConverted
+    ),
+    grossProfitAfterAdjustment: getDisplayValue(
+      point.grossProfitAfterAdjustment ?? 0,
+      point.grossProfitAfterAdjustmentConverted,
+      useConverted
+    ),
+    costAdjustmentFormula: point.costAdjustmentFormula,
   }))
 
   // Toggle metric visibility
@@ -230,10 +286,10 @@ export function MonthlySeriesChart({
             <div>
               <CardTitle className="flex items-center gap-2 text-base font-semibold text-[var(--foreground)]">
                 <TrendingUp className="h-5 w-5 text-[var(--brand-500)]" />
-                Xu hướng theo tháng
+                {t('dashboard.monthly_trend.title')}
               </CardTitle>
               <CardDescription className="text-[13px] text-[var(--neutral-500)]">
-                Biểu đồ thống kê các chỉ số theo thời gian
+                {t('dashboard.monthly_trend.description')}
               </CardDescription>
             </div>
 
@@ -249,7 +305,7 @@ export function MonthlySeriesChart({
                     : ''
                 )}
               >
-                Area
+                {t('dashboard.chart.area')}
               </Button>
               <Button
                 variant={chartType === 'line' ? 'default' : 'outline'}
@@ -261,7 +317,7 @@ export function MonthlySeriesChart({
                     : ''
                 )}
               >
-                Line
+                {t('dashboard.chart.line')}
               </Button>
             </div>
           </div>
@@ -313,13 +369,15 @@ export function MonthlySeriesChart({
                 tickLine={false}
                 axisLine={false}
                 tickFormatter={(value) =>
-                  new Intl.NumberFormat('en-US', {
+                  new Intl.NumberFormat(locale === 'vi' ? 'vi-VN' : 'en-US', {
                     notation: 'compact',
                     compactDisplay: 'short',
                   }).format(value)
                 }
               />
-              <Tooltip content={<CustomTooltip baseCurrency={baseCurrency} />} />
+              <Tooltip
+                content={<CustomTooltip baseCurrency={baseCurrency} metricConfig={METRIC_CONFIG} />}
+              />
               <Legend
                 verticalAlign="top"
                 height={36}
@@ -376,14 +434,14 @@ export function MonthlySeriesChart({
             className="gap-2 border-gray-200 text-[var(--neutral-500)] hover:bg-white hover:text-[var(--foreground)]"
           >
             <FileText className="h-4 w-4" />
-            Xuất báo cáo
+            {t('dashboard.monthly_trend.export')}
           </Button>
           <Button
             size="sm"
             onClick={onViewDetails}
             className="gap-2 bg-[var(--btn-primary)] hover:bg-[var(--btn-primary-hover)]"
           >
-            Chi tiết
+            {t('dashboard.monthly_trend.details')}
             <ArrowRight className="h-4 w-4" />
           </Button>
         </CardFooter>

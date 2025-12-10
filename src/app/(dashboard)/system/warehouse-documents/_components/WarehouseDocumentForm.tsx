@@ -225,9 +225,13 @@ export function WarehouseDocumentForm({ initialData, onSuccess }: Props) {
             name="notes"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Ghi chú</FormLabel>
+                <FormLabel>{t('warehouse_document.notes_label')}</FormLabel>
                 <FormControl>
-                  <Textarea placeholder="Ghi chú cho chứng từ" {...field} disabled={isPending} />
+                  <Textarea
+                    placeholder={t('warehouse_document.notes_placeholder')}
+                    {...field}
+                    disabled={isPending}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -238,8 +242,10 @@ export function WarehouseDocumentForm({ initialData, onSuccess }: Props) {
         <div>
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-lg font-medium">Items</h3>
-              <div className="text-muted-foreground text-sm">Thêm mặt hàng cho chứng từ</div>
+              <h3 className="text-lg font-medium">{t('warehouse_document.items.title')}</h3>
+              <div className="text-muted-foreground text-sm">
+                {t('warehouse_document.items.description')}
+              </div>
             </div>
             <Button
               onClick={() =>
@@ -257,7 +263,7 @@ export function WarehouseDocumentForm({ initialData, onSuccess }: Props) {
               disabled={isPending}
               className="flex items-center gap-2"
             >
-              <Plus className="h-4 w-4" /> Thêm item
+              <Plus className="h-4 w-4" /> {t('warehouse_document.items.add')}
             </Button>
           </div>
 
@@ -273,7 +279,7 @@ export function WarehouseDocumentForm({ initialData, onSuccess }: Props) {
                     name={`items.${idx}.consumableTypeId` as const}
                     render={({ field: cField }) => (
                       <FormItem>
-                        <FormLabel>Vật tư</FormLabel>
+                        <FormLabel>{t('warehouse_document.table.name')}</FormLabel>
                         <FormControl>
                           <ConsumableTypeSelect
                             value={cField.value}
@@ -293,11 +299,11 @@ export function WarehouseDocumentForm({ initialData, onSuccess }: Props) {
                     name={`items.${idx}.quantity` as const}
                     render={({ field: qField }) => (
                       <FormItem>
-                        <FormLabel>Số lượng</FormLabel>
+                        <FormLabel>{t('warehouse_document.table.qty')}</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
-                            placeholder="Số lượng"
+                            placeholder={t('warehouse_document.table.qty')}
                             {...qField}
                             onChange={(e) => {
                               qField.onChange(Number(e.target.value) || 0)

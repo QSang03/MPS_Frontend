@@ -48,7 +48,7 @@ export default function WarehouseDocumentDetailClient({ id }: Props) {
   if (!detail) {
     return (
       <div className="text-muted-foreground flex h-[50vh] items-center justify-center">
-        Không tìm thấy chứng từ.
+        {t('warehouse_document.not_found')}
       </div>
     )
   }
@@ -80,25 +80,33 @@ export default function WarehouseDocumentDetailClient({ id }: Props) {
         <div className="space-y-6 lg:col-span-8">
           <Card>
             <CardHeader>
-              <CardTitle>Thông tin chứng từ</CardTitle>
-              <CardDescription>Thông tin chung của chứng từ kho</CardDescription>
+              <CardTitle>{t('warehouse_document.info_title')}</CardTitle>
+              <CardDescription>{t('warehouse_document.info_description')}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                 <div>
-                  <p className="text-muted-foreground text-sm">Số chứng từ</p>
+                  <p className="text-muted-foreground text-sm">
+                    {t('warehouse_document.field.document_number')}
+                  </p>
                   <div className="font-medium">{detail.documentNumber}</div>
                 </div>
                 <div>
-                  <p className="text-muted-foreground text-sm">Ngày tạo</p>
+                  <p className="text-muted-foreground text-sm">
+                    {t('warehouse_document.field.created_at')}
+                  </p>
                   <div className="font-medium">{formatDateTime(detail.createdAt ?? '')}</div>
                 </div>
                 <div>
-                  <p className="text-muted-foreground text-sm">Khách hàng</p>
+                  <p className="text-muted-foreground text-sm">
+                    {t('warehouse_document.field.customer')}
+                  </p>
                   <div className="font-medium">{detail.customer?.name ?? '-'}</div>
                 </div>
                 <div>
-                  <p className="text-muted-foreground text-sm">Nhà cung cấp</p>
+                  <p className="text-muted-foreground text-sm">
+                    {t('warehouse_document.field.supplier')}
+                  </p>
                   <div className="font-medium">{detail.supplierName ?? '-'}</div>
                 </div>
               </div>
@@ -107,8 +115,8 @@ export default function WarehouseDocumentDetailClient({ id }: Props) {
 
           <Card>
             <CardHeader>
-              <CardTitle>Items</CardTitle>
-              <CardDescription>Danh sách mặt hàng trong chứng từ</CardDescription>
+              <CardTitle>{t('warehouse_document.items.title')}</CardTitle>
+              <CardDescription>{t('warehouse_document.items.description')}</CardDescription>
             </CardHeader>
             <CardContent className="p-0">
               {detail.items && detail.items.length > 0 ? (
@@ -116,11 +124,15 @@ export default function WarehouseDocumentDetailClient({ id }: Props) {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Tên vật tư</TableHead>
-                        <TableHead>SL</TableHead>
-                        <TableHead className="text-right">Đơn giá</TableHead>
-                        <TableHead className="text-right">Thành tiền</TableHead>
-                        <TableHead>Ghi chú</TableHead>
+                        <TableHead>{t('warehouse_document.table.name')}</TableHead>
+                        <TableHead>{t('warehouse_document.table.qty')}</TableHead>
+                        <TableHead className="text-right">
+                          {t('warehouse_document.table.unit_price')}
+                        </TableHead>
+                        <TableHead className="text-right">
+                          {t('warehouse_document.table.total')}
+                        </TableHead>
+                        <TableHead>{t('warehouse_document.table.notes')}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -156,7 +168,7 @@ export default function WarehouseDocumentDetailClient({ id }: Props) {
                 </div>
               ) : (
                 <div className="text-muted-foreground flex flex-col items-center justify-center border-t py-12 text-sm">
-                  Không có item nào.
+                  {t('warehouse_document.items.empty')}
                 </div>
               )}
             </CardContent>
@@ -166,11 +178,13 @@ export default function WarehouseDocumentDetailClient({ id }: Props) {
         <div className="space-y-6 lg:col-span-4">
           <Card>
             <CardHeader>
-              <CardTitle>Thông tin liên quan</CardTitle>
+              <CardTitle>{t('warehouse_document.related.title')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="text-sm">
-                <p className="text-muted-foreground text-xs">Mang liên quan</p>
+                <p className="text-muted-foreground text-xs">
+                  {t('warehouse_document.related.field.related_to')}
+                </p>
                 <div className="font-medium">{detail.purchaseRequest?.title ?? '-'}</div>
                 {detail.purchaseRequest && (
                   <div className="text-muted-foreground text-xs">
@@ -181,7 +195,9 @@ export default function WarehouseDocumentDetailClient({ id }: Props) {
                 )}
               </div>
               <div className="text-sm">
-                <p className="text-muted-foreground text-xs">Ghi chú</p>
+                <p className="text-muted-foreground text-xs">
+                  {t('warehouse_document.notes_label')}
+                </p>
                 <div className="font-medium">{detail.notes ?? '-'}</div>
               </div>
             </CardContent>

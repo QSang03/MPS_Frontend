@@ -111,6 +111,26 @@ export function TopCustomersTable({
       sum + getDisplayValue(customer.totalRevenue, customer.totalRevenueConverted, useConverted),
     0
   )
+  const totalCogsAfterAdj = topCustomers.reduce(
+    (sum, customer) =>
+      sum +
+      getDisplayValue(
+        customer.totalCogsAfterAdjustment ?? customer.totalCogs,
+        customer.totalCogsAfterAdjustmentConverted ?? customer.totalCogsConverted,
+        useConverted
+      ),
+    0
+  )
+  const totalProfitAfterAdj = topCustomers.reduce(
+    (sum, customer) =>
+      sum +
+      getDisplayValue(
+        customer.grossProfitAfterAdjustment ?? customer.grossProfit,
+        customer.grossProfitAfterAdjustmentConverted ?? customer.grossProfitConverted,
+        useConverted
+      ),
+    0
+  )
 
   return (
     <motion.div
@@ -144,6 +164,31 @@ export function TopCustomersTable({
               const profit = getDisplayValue(
                 customer.grossProfit,
                 customer.grossProfitConverted,
+                useConverted
+              )
+              const adjDebit = getDisplayValue(
+                customer.costAdjustmentDebit ?? 0,
+                customer.costAdjustmentDebitConverted,
+                useConverted
+              )
+              const adjCredit = getDisplayValue(
+                customer.costAdjustmentCredit ?? 0,
+                customer.costAdjustmentCreditConverted,
+                useConverted
+              )
+              const adjNet = getDisplayValue(
+                customer.costAdjustmentNet ?? 0,
+                customer.costAdjustmentNetConverted,
+                useConverted
+              )
+              const cogsAfter = getDisplayValue(
+                customer.totalCogsAfterAdjustment ?? customer.totalCogs,
+                customer.totalCogsAfterAdjustmentConverted ?? customer.totalCogsConverted,
+                useConverted
+              )
+              const profitAfter = getDisplayValue(
+                customer.grossProfitAfterAdjustment ?? customer.grossProfit,
+                customer.grossProfitAfterAdjustmentConverted ?? customer.grossProfitConverted,
                 useConverted
               )
               const percentage = totalRevenue > 0 ? (revenue / totalRevenue) * 100 : 0
@@ -233,6 +278,51 @@ export function TopCustomersTable({
                       {t('dashboard.top_customers.profit_label')}:{' '}
                       {formatCurrency(profit, baseCurrency || customer.baseCurrency)}
                     </p>
+                    <div className="mt-2 space-y-1 text-xs text-gray-500">
+                      <div className="flex justify-between gap-2">
+                        <span>{t('dashboard.top_customers.adjust_debit')}</span>
+                        <span className="font-semibold text-[var(--error-600)]">
+                          {formatCurrency(adjDebit, baseCurrency || customer.baseCurrency)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between gap-2">
+                        <span>{t('dashboard.top_customers.adjust_credit')}</span>
+                        <span className="font-semibold text-[var(--color-success-600)]">
+                          {formatCurrency(adjCredit, baseCurrency || customer.baseCurrency)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between gap-2">
+                        <span>{t('dashboard.top_customers.adjust_net')}</span>
+                        <span className="font-semibold text-[var(--warning-600)]">
+                          {formatCurrency(adjNet, baseCurrency || customer.baseCurrency)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between gap-2">
+                        <span>{t('dashboard.top_customers.cogs_after')}</span>
+                        <span className="font-semibold text-gray-900">
+                          {formatCurrency(cogsAfter, baseCurrency || customer.baseCurrency)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between gap-2">
+                        <span>{t('dashboard.top_customers.profit_after')}</span>
+                        <span
+                          className={cn(
+                            'font-semibold',
+                            profitAfter >= 0
+                              ? 'text-[var(--color-success-600)]'
+                              : 'text-[var(--error-600)]'
+                          )}
+                        >
+                          {formatCurrency(profitAfter, baseCurrency || customer.baseCurrency)}
+                        </span>
+                      </div>
+                      {customer.costAdjustmentFormula && (
+                        <div className="text-[11px] text-gray-400">
+                          {t('dashboard.top_customers.adjust_formula')}:{' '}
+                          {customer.costAdjustmentFormula}
+                        </div>
+                      )}
+                    </div>
                     <p className="mt-1 text-xs text-gray-400">
                       {t('dashboard.top_customers.revenue_percentage', {
                         value: percentage.toFixed(1),
@@ -303,6 +393,49 @@ export function TopCustomersTable({
                           getDisplayValue(
                             customer.grossProfit,
                             customer.grossProfitConverted,
+                            useConverted
+                          ),
+                        0
+                      ),
+                      baseCurrency
+                    )}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-medium text-gray-600">
+                    {t('dashboard.top_customers.total_cogs_after')}
+                  </span>
+                  <span className="text-lg font-bold text-gray-900">
+                    {formatCurrency(totalCogsAfterAdj, baseCurrency)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-medium text-gray-600">
+                    {t('dashboard.top_customers.total_profit_after')}
+                  </span>
+                  <span
+                    className={cn(
+                      'text-lg font-bold',
+                      totalProfitAfterAdj >= 0
+                        ? 'text-[var(--color-success-600)]'
+                        : 'text-[var(--error-600)]'
+                    )}
+                  >
+                    {formatCurrency(totalProfitAfterAdj, baseCurrency)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm text-[var(--warning-700)]">
+                  <span className="font-medium">
+                    {t('dashboard.top_customers.total_adjust_net')}
+                  </span>
+                  <span className="text-lg font-bold">
+                    {formatCurrency(
+                      topCustomers.reduce(
+                        (sum, customer) =>
+                          sum +
+                          getDisplayValue(
+                            customer.costAdjustmentNet ?? 0,
+                            customer.costAdjustmentNetConverted,
                             useConverted
                           ),
                         0

@@ -14,6 +14,7 @@ import { formatRelativeTime } from '@/lib/utils/formatters'
 import { ArrowRight, Printer, FileText, AlertCircle, History } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 import type { AdminOverviewData } from '@/types/dashboard'
 
@@ -34,6 +35,7 @@ const iconMap = {
 export function RecentActivity({ onViewAll, recentRequests }: RecentActivityProps) {
   const router = useRouter()
   const [isClient, setIsClient] = useState(false)
+  const { t, locale } = useLocale()
 
   useEffect(() => {
     // Avoid synchronous setState inside an effect by scheduling update asynchronously.
@@ -80,9 +82,9 @@ export function RecentActivity({ onViewAll, recentRequests }: RecentActivityProp
           <div>
             <CardTitle className="flex items-center gap-2">
               <History className="h-5 w-5" />
-              Hoạt động gần đây
+              {t('dashboard.recent_activity.title')}
             </CardTitle>
-            <CardDescription>Cập nhật mới nhất từ thiết bị và yêu cầu</CardDescription>
+            <CardDescription>{t('dashboard.recent_activity.description')}</CardDescription>
           </div>
         </div>
       </CardHeader>
@@ -90,7 +92,7 @@ export function RecentActivity({ onViewAll, recentRequests }: RecentActivityProp
         <div className="space-y-4">
           {activities.length === 0 ? (
             <div className="flex h-40 items-center justify-center text-gray-500">
-              <p className="text-center">Không có hoạt động gần đây</p>
+              <p className="text-center">{t('dashboard.recent_activity.empty')}</p>
             </div>
           ) : (
             activities.slice(0, 6).map((activity) => {
@@ -127,7 +129,7 @@ export function RecentActivity({ onViewAll, recentRequests }: RecentActivityProp
                       {activity.severity === 'high' && (
                         <Badge variant="destructive" className="shrink-0">
                           <AlertCircle className="mr-1 h-3 w-3" />
-                          Khẩn cấp
+                          {t('dashboard.recent_activity.critical')}
                         </Badge>
                       )}
                       {activity.type === 'request' && activity.description && (
@@ -143,7 +145,9 @@ export function RecentActivity({ onViewAll, recentRequests }: RecentActivityProp
                       {isClient && activity.time
                         ? formatRelativeTime(activity.time ?? '')
                         : activity.time
-                          ? new Date(activity.time).toLocaleDateString('vi-VN')
+                          ? new Date(activity.time).toLocaleDateString(
+                              locale === 'vi' ? 'vi-VN' : 'en-US'
+                            )
                           : ''}
                     </p>
                   </div>
@@ -155,7 +159,7 @@ export function RecentActivity({ onViewAll, recentRequests }: RecentActivityProp
       </CardContent>
       <CardFooter className="flex justify-end border-t bg-gray-50/50 p-4">
         <Button size="sm" onClick={onViewAll} className="gap-2">
-          Xem tất cả
+          {t('dashboard.recent_activity.view_all')}
           <ArrowRight className="h-4 w-4" />
         </Button>
       </CardFooter>

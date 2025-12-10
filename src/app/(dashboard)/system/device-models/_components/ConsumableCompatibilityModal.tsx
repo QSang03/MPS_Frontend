@@ -152,7 +152,7 @@ export function ConsumableCompatibilityModal({
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <SystemModalLayout
-          title={t('device_model.compatibility.title')}
+          title={`${t('device_model.compatibility.title')}${deviceModelName ? ` — ${deviceModelName}` : ''}`}
           description={t('device_model.compatibility.description', { modelName: deviceModelName })}
           icon={Zap}
           variant="view"

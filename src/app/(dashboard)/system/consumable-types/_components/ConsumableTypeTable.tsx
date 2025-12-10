@@ -25,6 +25,7 @@ import {
   Trash2,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { useActionPermission } from '@/lib/hooks/useActionPermission'
 import { ActionGuard } from '@/components/shared/ActionGuard'
 import { cn } from '@/lib/utils'
@@ -81,6 +82,7 @@ export function ConsumableTypeTable({
   )
 
   const { data } = useConsumableTypesQuery(queryParams, { version: sortVersion })
+  const { t } = useLocale()
 
   const models = useMemo(() => data?.data ?? [], [data?.data])
   const total = useMemo(
@@ -106,24 +108,24 @@ export function ConsumableTypeTable({
       setDeletingId(id)
       try {
         await consumableTypesClientService.delete(id)
-        toast.success('Xóa loại vật tư tiêu hao thành công')
+        toast.success(t('consumable_types.table.delete_success'))
         queryClient.invalidateQueries({ queryKey: ['consumable-types'] })
       } catch (error: unknown) {
         const e = error as Error
         console.error('Error deleting consumable type:', e)
-        toast.error(e.message || 'Không thể xóa')
+        toast.error(e.message || t('consumable_types.table.delete_error'))
       } finally {
         setDeletingId(null)
       }
     },
-    [queryClient]
+    [queryClient, t]
   )
 
   const columns = useMemo<ColumnDef<ConsumableType>[]>(
     () => [
       {
         id: 'index',
-        header: 'STT',
+        header: t('table.index'),
         cell: ({ row, table }) => {
           const index = table.getSortedRowModel().rows.findIndex((r) => r.id === row.id)
           return (
@@ -139,7 +141,7 @@ export function ConsumableTypeTable({
         header: () => (
           <div className="flex items-center gap-2">
             <Hash className="h-4 w-4 text-gray-600" />
-            Mã/Part
+            {t('consumable_types.table.header.part')}
           </div>
         ),
         enableSorting: true,
@@ -152,7 +154,7 @@ export function ConsumableTypeTable({
         header: () => (
           <div className="flex items-center gap-2">
             <FileText className="h-4 w-4 text-gray-600" />
-            Tên
+            {t('consumable_types.table.header.name')}
           </div>
         ),
         enableSorting: true,
@@ -165,7 +167,7 @@ export function ConsumableTypeTable({
         header: () => (
           <div className="flex items-center gap-2">
             <Link2 className="h-4 w-4 text-gray-600" />
-            Dòng tương thích
+            {t('consumable_types.table.header.compatible')}
           </div>
         ),
         enableSorting: false,
@@ -182,7 +184,7 @@ export function ConsumableTypeTable({
         header: () => (
           <div className="flex items-center gap-2">
             <Gauge className="h-4 w-4 text-gray-600" />
-            Dung lượng
+            {t('consumable_types.table.header.capacity')}
           </div>
         ),
         enableSorting: true,
@@ -194,7 +196,7 @@ export function ConsumableTypeTable({
         header: () => (
           <div className="flex items-center gap-2">
             <Box className="h-4 w-4 text-gray-600" />
-            Số lượng tồn
+            {t('consumable_types.table.header.stock')}
           </div>
         ),
         enableSorting: true,
@@ -240,7 +242,7 @@ export function ConsumableTypeTable({
         header: () => (
           <div className="flex items-center gap-2">
             <CheckCircle2 className="h-4 w-4 text-gray-600" />
-            Trạng thái
+            {t('consumable_types.table.header.status')}
           </div>
         ),
         enableSorting: true,
@@ -253,7 +255,7 @@ export function ConsumableTypeTable({
                 : 'bg-[var(--color-neutral-300)] text-white'
             }
           >
-            {row.original.isActive ? 'Hoạt động' : 'Tạm dừng'}
+            {row.original.isActive ? t('label.active') : t('label.inactive')}
           </Badge>
         ),
       },
@@ -262,7 +264,7 @@ export function ConsumableTypeTable({
         header: () => (
           <div className="flex items-center gap-2">
             <Settings className="h-4 w-4 text-gray-600" />
-            Thao tác
+            {t('consumable_types.table.header.actions')}
           </div>
         ),
         cell: ({ row }) => {
@@ -274,8 +276,10 @@ export function ConsumableTypeTable({
               </ActionGuard>
               <ActionGuard pageId="consumable-types" actionId="delete">
                 <DeleteDialog
-                  title="Xác nhận xóa loại vật tư"
-                  description={`Xác nhận xóa loại vật tư "${m.name || ''}"?`}
+                  title={t('consumable_types.table.delete_confirm_title')}
+                  description={t('consumable_types.table.delete_confirm_description', {
+                    name: m.name || '',
+                  })}
                   onConfirm={async () => handleDelete(m.id)}
                   trigger={
                     <Button
@@ -299,7 +303,7 @@ export function ConsumableTypeTable({
         enableSorting: false,
       },
     ],
-    [page, pageSize, can, deletingId, onOpenEditStockModal, handleSaved, handleDelete]
+    [page, pageSize, can, deletingId, onOpenEditStockModal, handleSaved, handleDelete, t]
   )
 
   return (
@@ -340,14 +344,10 @@ export function ConsumableTypeTable({
               )}
             </div>
             <h3 className="mb-2 text-xl font-bold text-gray-700">
-              {searchInput
-                ? 'Không tìm thấy loại vật tư phù hợp'
-                : 'Chưa có loại vật tư tiêu hao nào'}
+              {searchInput ? t('empty.consumables.search_result') : t('empty.consumables.first')}
             </h3>
             <p className="mb-6 text-gray-500">
-              {searchInput
-                ? 'Thử điều chỉnh bộ lọc hoặc tìm kiếm'
-                : 'Hãy tạo loại vật tư tiêu hao đầu tiên'}
+              {searchInput ? t('empty.consumables.try_filter') : ''}
             </p>
             {!searchInput && (
               <ActionGuard pageId="consumable-types" actionId="create">

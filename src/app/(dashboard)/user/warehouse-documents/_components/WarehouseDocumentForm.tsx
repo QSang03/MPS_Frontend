@@ -225,9 +225,13 @@ export function WarehouseDocumentForm({ initialData, onSuccess }: Props) {
             name="notes"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Ghi chú</FormLabel>
+                <FormLabel>{t('warehouse_document.notes_label')}</FormLabel>
                 <FormControl>
-                  <Textarea placeholder="Ghi chú cho chứng từ" {...field} disabled={isPending} />
+                  <Textarea
+                    placeholder={t('warehouse_document.notes_placeholder')}
+                    {...field}
+                    disabled={isPending}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -275,7 +279,7 @@ export function WarehouseDocumentForm({ initialData, onSuccess }: Props) {
                     name={`items.${idx}.consumableTypeId` as const}
                     render={({ field: cField }) => (
                       <FormItem>
-                        <FormLabel>Vật tư</FormLabel>
+                        <FormLabel>{t('warehouse_document.table.name')}</FormLabel>
                         <FormControl>
                           <ConsumableTypeSelect
                             value={cField.value}
@@ -295,11 +299,11 @@ export function WarehouseDocumentForm({ initialData, onSuccess }: Props) {
                     name={`items.${idx}.quantity` as const}
                     render={({ field: qField }) => (
                       <FormItem>
-                        <FormLabel>Số lượng</FormLabel>
+                        <FormLabel>{t('warehouse_document.table.qty')}</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
-                            placeholder="Số lượng"
+                            placeholder={t('warehouse_document.table.qty')}
                             {...qField}
                             onChange={(e) => {
                               qField.onChange(Number(e.target.value) || 0)
@@ -319,11 +323,11 @@ export function WarehouseDocumentForm({ initialData, onSuccess }: Props) {
                     name={`items.${idx}.unitPrice` as const}
                     render={({ field: pField }) => (
                       <FormItem>
-                        <FormLabel>Đơn giá</FormLabel>
+                        <FormLabel>{t('warehouse_document.table.unit_price')}</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
-                            placeholder="Đơn giá"
+                            placeholder={t('warehouse_document.table.unit_price')}
                             {...pField}
                             onChange={(e) => pField.onChange(Number(e.target.value) || undefined)}
                             disabled={isPending}
@@ -376,7 +380,11 @@ export function WarehouseDocumentForm({ initialData, onSuccess }: Props) {
                     render={({ field: nField }) => (
                       <FormItem>
                         <FormControl>
-                          <Input placeholder="Ghi chú" {...nField} disabled={isPending} />
+                          <Input
+                            placeholder={t('warehouse_document.table.notes')}
+                            {...nField}
+                            disabled={isPending}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

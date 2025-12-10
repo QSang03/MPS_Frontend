@@ -19,6 +19,7 @@ import {
 import { FileText, Search, Building2, Calendar, ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import internalApiClient from '@/lib/api/internal-client'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 interface ContractsModalProps {
   open: boolean
@@ -58,21 +59,6 @@ interface ContractsResponse {
   }
 }
 
-const CONTRACT_TYPE_LABELS: Record<string, string> = {
-  MPS_CLICK_CHARGE: 'MPS - Click Charge',
-  MPS_CONSUMABLE: 'MPS - Consumable',
-  CMPS_CLICK_CHARGE: 'CMPS - Click Charge',
-  CMPS_CONSUMABLE: 'CMPS - Consumable',
-  PARTS_REPAIR_SERVICE: 'Parts & Repair Service',
-}
-
-const CONTRACT_STATUS_LABELS: Record<string, string> = {
-  PENDING: 'Chờ xử lý',
-  ACTIVE: 'Đang hoạt động',
-  EXPIRED: 'Hết hạn',
-  TERMINATED: 'Đã chấm dứt',
-}
-
 const STATUS_COLORS: Record<string, string> = {
   PENDING: 'bg-yellow-100 text-yellow-700 border-yellow-300',
   ACTIVE: 'bg-green-100 text-green-700 border-green-300',
@@ -85,6 +71,7 @@ export function ContractsModal({
   onOpenChange,
   onOpenContractDetail,
 }: ContractsModalProps & { onOpenContractDetail?: (id: string) => void }) {
+  const { t, locale } = useLocale()
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
@@ -128,14 +115,18 @@ export function ContractsModal({
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('vi-VN')
+    try {
+      return new Date(dateString).toLocaleDateString(locale === 'vi' ? 'vi-VN' : 'en-US')
+    } catch {
+      return dateString
+    }
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <SystemModalLayout
-        title="Danh sách hợp đồng"
-        description="Quản lý và theo dõi tất cả hợp đồng trong hệ thống"
+        title={t('dashboard.contracts.title')}
+        description={t('dashboard.contracts.description')}
         icon={FileText}
         variant="view"
         maxWidth="!max-w-[60vw]"
@@ -146,7 +137,7 @@ export function ContractsModal({
           <div className="relative">
             <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <Input
-              placeholder="Tìm kiếm hợp đồng..."
+              placeholder={t('dashboard.contracts.search_placeholder')}
               value={search}
               onChange={(e) => handleSearch(e.target.value)}
               className="pl-10"
@@ -155,28 +146,34 @@ export function ContractsModal({
 
           <Select value={statusFilter} onValueChange={handleStatusFilter}>
             <SelectTrigger>
-              <SelectValue placeholder="Lọc theo trạng thái" />
+              <SelectValue placeholder={t('dashboard.contracts.filter_status_placeholder')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Tất cả trạng thái</SelectItem>
-              <SelectItem value="PENDING">Chờ xử lý</SelectItem>
-              <SelectItem value="ACTIVE">Đang hoạt động</SelectItem>
-              <SelectItem value="EXPIRED">Hết hạn</SelectItem>
-              <SelectItem value="TERMINATED">Đã chấm dứt</SelectItem>
+              <SelectItem value="all">{t('dashboard.contracts.status_all')}</SelectItem>
+              <SelectItem value="PENDING">{t('contracts.status.PENDING')}</SelectItem>
+              <SelectItem value="ACTIVE">{t('contracts.status.ACTIVE')}</SelectItem>
+              <SelectItem value="EXPIRED">{t('contracts.status.EXPIRED')}</SelectItem>
+              <SelectItem value="TERMINATED">{t('contracts.status.TERMINATED')}</SelectItem>
             </SelectContent>
           </Select>
 
           <Select value={typeFilter} onValueChange={handleTypeFilter}>
             <SelectTrigger>
-              <SelectValue placeholder="Lọc theo loại" />
+              <SelectValue placeholder={t('dashboard.contracts.filter_type_placeholder')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Tất cả loại</SelectItem>
-              <SelectItem value="MPS_CLICK_CHARGE">MPS - Click Charge</SelectItem>
-              <SelectItem value="MPS_CONSUMABLE">MPS - Consumable</SelectItem>
-              <SelectItem value="CMPS_CLICK_CHARGE">CMPS - Click Charge</SelectItem>
-              <SelectItem value="CMPS_CONSUMABLE">CMPS - Consumable</SelectItem>
-              <SelectItem value="PARTS_REPAIR_SERVICE">Parts & Repair Service</SelectItem>
+              <SelectItem value="all">{t('dashboard.contracts.type_all')}</SelectItem>
+              <SelectItem value="MPS_CLICK_CHARGE">
+                {t('contracts.type.MPS_CLICK_CHARGE')}
+              </SelectItem>
+              <SelectItem value="MPS_CONSUMABLE">{t('contracts.type.MPS_CONSUMABLE')}</SelectItem>
+              <SelectItem value="CMPS_CLICK_CHARGE">
+                {t('contracts.type.CMPS_CLICK_CHARGE')}
+              </SelectItem>
+              <SelectItem value="CMPS_CONSUMABLE">{t('contracts.type.CMPS_CONSUMABLE')}</SelectItem>
+              <SelectItem value="PARTS_REPAIR_SERVICE">
+                {t('contracts.type.PARTS_REPAIR_SERVICE')}
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -189,7 +186,7 @@ export function ContractsModal({
             <div className="flex h-40 items-center justify-center text-gray-500">
               <div className="text-center">
                 <FileText className="mx-auto mb-2 h-12 w-12 text-gray-300" />
-                <p>Không tìm thấy hợp đồng nào</p>
+                <p>{t('dashboard.contracts.empty')}</p>
               </div>
             </div>
           ) : (
@@ -223,11 +220,11 @@ export function ContractsModal({
                               STATUS_COLORS[contract.status] || 'bg-gray-100 text-gray-700'
                             )}
                           >
-                            {CONTRACT_STATUS_LABELS[contract.status] || contract.status}
+                            {t(`contracts.status.${contract.status}`) || contract.status}
                           </Badge>
                         </div>
                         <p className="mt-1 text-sm text-gray-600">
-                          {CONTRACT_TYPE_LABELS[contract.type] || contract.type}
+                          {t(`contracts.type.${contract.type}`) || contract.type}
                         </p>
                       </div>
                     </div>
@@ -270,9 +267,11 @@ export function ContractsModal({
         {pagination && pagination.totalPages > 1 && (
           <div className="mt-6 flex items-center justify-between border-t pt-4">
             <div className="text-sm text-gray-600">
-              Hiển thị {(pagination.page - 1) * pagination.limit + 1} -{' '}
-              {Math.min(pagination.page * pagination.limit, pagination.total)} / {pagination.total}{' '}
-              hợp đồng
+              {t('dashboard.contracts.showing', {
+                from: (pagination.page - 1) * pagination.limit + 1,
+                to: Math.min(pagination.page * pagination.limit, pagination.total),
+                total: pagination.total,
+              })}
             </div>
             <div className="flex items-center gap-2">
               <Button
@@ -282,10 +281,13 @@ export function ContractsModal({
                 disabled={page === 1}
               >
                 <ChevronLeft className="h-4 w-4" />
-                Trước
+                {t('pagination.prev')}
               </Button>
               <span className="text-sm text-gray-600">
-                Trang {pagination.page} / {pagination.totalPages}
+                {t('pagination.page_of', {
+                  page: pagination.page,
+                  totalPages: pagination.totalPages,
+                })}
               </span>
               <Button
                 variant="outline"
@@ -293,7 +295,7 @@ export function ContractsModal({
                 onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
                 disabled={page === pagination.totalPages}
               >
-                Sau
+                {t('pagination.next')}
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>

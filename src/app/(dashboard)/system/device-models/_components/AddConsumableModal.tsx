@@ -117,7 +117,7 @@ export function AddConsumableModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <SystemModalLayout
-        title={t('device_model.add_consumable.title')}
+        title={`${t('device_model.add_consumable.title')}${deviceModelName ? ` — ${deviceModelName}` : ''}`}
         description={t('device_model.add_consumable.description', { modelName: deviceModelName })}
         icon={Plus}
         variant="create"

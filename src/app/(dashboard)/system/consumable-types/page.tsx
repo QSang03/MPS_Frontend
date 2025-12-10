@@ -9,13 +9,15 @@ import { ActionGuard } from '@/components/shared/ActionGuard'
 import ImportExcelModal from './_components/ImportExcelModal'
 import BulkAssignModal from '../consumables/_components/BulkAssignModal'
 import ConsumableTypeFormModal from './_components/ConsumableTypeFormModal'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 export default function ConsumableTypesPage() {
+  const { t } = useLocale()
   return (
     <SystemPageLayout fullWidth>
       <SystemPageHeader
-        title="Loại Vật Tư Tiêu Hao"
-        subtitle="Quản lý các loại vật tư tiêu hao cho thiết bị"
+        title={t('consumable_types.page.title')}
+        subtitle={t('consumable_types.page.subtitle')}
         icon={<Package className="h-8 w-8" />}
         actions={
           <>
@@ -23,7 +25,7 @@ export default function ConsumableTypesPage() {
               trigger={
                 <Button className="border-0 bg-white text-[var(--brand-500)] hover:bg-[var(--brand-50)]">
                   <Upload className="mr-2 h-4 w-4" />
-                  Import Excel
+                  {t('consumable_types.import.button')}
                 </Button>
               }
             />
@@ -31,7 +33,7 @@ export default function ConsumableTypesPage() {
               trigger={
                 <Button className="border-0 bg-white text-[var(--brand-500)] hover:bg-[var(--brand-50)]">
                   <Link2 className="mr-2 h-4 w-4" />
-                  Gán vật tư cho khách hàng
+                  {t('consumable_types.actions.bulk_assign')}
                 </Button>
               }
             />
@@ -46,7 +48,7 @@ export default function ConsumableTypesPage() {
                 trigger={
                   <Button className="border-0 bg-white text-[var(--brand-500)] hover:bg-[var(--brand-50)]">
                     <Plus className="mr-2 h-4 w-4" />
-                    Thêm loại vật tư
+                    {t('consumable_types.actions.create')}
                   </Button>
                 }
               />

@@ -62,6 +62,19 @@ export interface CostBreakdown {
   repairPercent: number
   pageBWPercent: number
   pageColorPercent: number
+  // Cost adjustments (original)
+  costAdjustmentDebit?: number
+  costAdjustmentCredit?: number
+  costAdjustmentNet?: number
+  totalCogsAfterAdjustment?: number
+  grossProfitAfterAdjustment?: number
+  // Converted values (if backend returns for admin/base currency)
+  costAdjustmentDebitConverted?: number
+  costAdjustmentCreditConverted?: number
+  costAdjustmentNetConverted?: number
+  totalCogsAfterAdjustmentConverted?: number
+  grossProfitAfterAdjustmentConverted?: number
+  costAdjustmentFormula?: string
 }
 
 /**
@@ -81,6 +94,19 @@ export interface TopCustomer {
   currency?: import('@/types/models/currency').CurrencyDataDto | null
   baseCurrency?: import('@/types/models/currency').CurrencyDataDto | null
   exchangeRate?: number | null
+  // Cost adjustments (original)
+  costAdjustmentDebit?: number
+  costAdjustmentCredit?: number
+  costAdjustmentNet?: number
+  totalCogsAfterAdjustment?: number
+  grossProfitAfterAdjustment?: number
+  // Cost adjustments (converted)
+  costAdjustmentDebitConverted?: number
+  costAdjustmentCreditConverted?: number
+  costAdjustmentNetConverted?: number
+  totalCogsAfterAdjustmentConverted?: number
+  grossProfitAfterAdjustmentConverted?: number
+  costAdjustmentFormula?: string
 }
 
 /**
@@ -99,6 +125,12 @@ export interface MonthlySeries {
     cogsRepair: number
     totalCogs: number // chi phí
     grossProfit: number // lợi nhuận gộp
+    // Cost adjustments (original)
+    costAdjustmentDebit?: number
+    costAdjustmentCredit?: number
+    costAdjustmentNet?: number
+    totalCogsAfterAdjustment?: number
+    grossProfitAfterAdjustment?: number
     // Converted values (only for System Admin context)
     revenueRentalConverted?: number
     revenueRepairConverted?: number
@@ -109,6 +141,12 @@ export interface MonthlySeries {
     cogsRepairConverted?: number
     totalCogsConverted?: number
     grossProfitConverted?: number
+    costAdjustmentDebitConverted?: number
+    costAdjustmentCreditConverted?: number
+    costAdjustmentNetConverted?: number
+    totalCogsAfterAdjustmentConverted?: number
+    grossProfitAfterAdjustmentConverted?: number
+    costAdjustmentFormula?: string
     // Currency information (only for System Admin context)
     currency?: import('@/types/models/currency').CurrencyDataDto | null
     baseCurrency?: import('@/types/models/currency').CurrencyDataDto | null
@@ -253,6 +291,18 @@ export interface DeviceDashboardData {
   series: DeviceTimeSeries
   pages: DevicePages
   consumableHistory: ConsumableHistory[]
+  // Cost adjustments summary for device dashboard (optional)
+  costAdjustmentDebit?: number
+  costAdjustmentCredit?: number
+  costAdjustmentNet?: number
+  totalCogsAfterAdjustment?: number
+  grossProfitAfterAdjustment?: number
+  costAdjustmentDebitConverted?: number
+  costAdjustmentCreditConverted?: number
+  costAdjustmentNetConverted?: number
+  totalCogsAfterAdjustmentConverted?: number
+  grossProfitAfterAdjustmentConverted?: number
+  costAdjustmentFormula?: string
 }
 
 // ============================================================================

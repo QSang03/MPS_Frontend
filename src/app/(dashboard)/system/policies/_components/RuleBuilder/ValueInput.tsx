@@ -104,7 +104,7 @@ export function ValueInput({
         </SelectTrigger>
         <SelectContent>
           {resourceTypes.length === 0 && (
-            <SelectItem value="" disabled>
+            <SelectItem value="__disabled__" disabled>
               {t('rule_builder.resource_type.loading')}
             </SelectItem>
           )}

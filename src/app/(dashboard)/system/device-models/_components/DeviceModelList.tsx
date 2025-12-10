@@ -63,10 +63,10 @@ export default function DeviceModelList() {
 
   const [searchInput, setSearchInput] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
-  const [manufacturerFilter, setManufacturerFilter] = useState<string>('all')
-  const [typeFilter, setTypeFilter] = useState<string>('all')
-  const [isActiveFilter, setIsActiveFilter] = useState<string>('all') // 'all', 'true', 'false'
-  const [useA4Filter, setUseA4Filter] = useState<string>('all') // 'all', 'true', 'false'
+  const [manufacturerFilter, setManufacturerFilter] = useState<string>('')
+  const [typeFilter, setTypeFilter] = useState<string>('')
+  const [isActiveFilter, setIsActiveFilter] = useState<string>('') // '', 'all', 'true', 'false'
+  const [useA4Filter, setUseA4Filter] = useState<string>('') // '', 'all', 'true', 'false'
   const [sorting, setSorting] = useState<{ sortBy?: string; sortOrder?: 'asc' | 'desc' }>({
     sortBy: 'createdAt',
     sortOrder: 'desc',
@@ -85,55 +85,65 @@ export default function DeviceModelList() {
     const filters: Array<{ label: string; value: string; onRemove: () => void }> = []
     if (searchInput) {
       filters.push({
-        label: `Tìm kiếm: "${searchInput}"`,
+        label: t('device_model.filter.active.search', { q: searchInput }),
         value: searchInput,
         onRemove: () => setSearchInput(''),
       })
     }
     if (manufacturerFilter && manufacturerFilter !== 'all') {
       filters.push({
-        label: `NSX: ${manufacturerFilter}`,
+        label: t('device_model.filter.active.manufacturer', { manufacturer: manufacturerFilter }),
         value: manufacturerFilter,
-        onRemove: () => setManufacturerFilter('all'),
+        onRemove: () => setManufacturerFilter(''),
       })
     }
     if (typeFilter && typeFilter !== 'all') {
       filters.push({
-        label: `Loại: ${typeFilter}`,
+        label: t('device_model.filter.active.type', { type: typeFilter }),
         value: typeFilter,
-        onRemove: () => setTypeFilter('all'),
+        onRemove: () => setTypeFilter(''),
       })
     }
     if (isActiveFilter && isActiveFilter !== 'all') {
       filters.push({
-        label: `Trạng thái: ${isActiveFilter === 'true' ? 'Hoạt động' : 'Không hoạt động'}`,
+        label: t('device_model.filter.active.status', {
+          status:
+            isActiveFilter === 'true' ? t('filters.status_active') : t('filters.status_inactive'),
+        }),
         value: isActiveFilter,
-        onRemove: () => setIsActiveFilter('all'),
+        onRemove: () => setIsActiveFilter(''),
       })
     }
     if (useA4Filter && useA4Filter !== 'all') {
       filters.push({
-        label: `Loại counter: ${useA4Filter === 'true' ? 'A4 Counter' : 'Standard Counter'}`,
+        label: t('device_model.filter.active.counter', {
+          counter: useA4Filter === 'true' ? 'A4' : 'Standard',
+        }),
         value: useA4Filter,
-        onRemove: () => setUseA4Filter('all'),
+        onRemove: () => setUseA4Filter(''),
       })
     }
     if (sorting.sortBy !== 'createdAt' || sorting.sortOrder !== 'desc') {
+      const currentSortBy = sorting.sortBy || 'createdAt'
+      const currentSortOrder = sorting.sortOrder || 'desc'
       filters.push({
-        label: `Sắp xếp: ${sorting.sortBy} (${sorting.sortOrder === 'asc' ? 'Tăng dần' : 'Giảm dần'})`,
-        value: `${sorting.sortBy}-${sorting.sortOrder}`,
+        label: t('filters.sort', {
+          sortBy: currentSortBy,
+          direction: currentSortOrder === 'asc' ? t('sort.asc') : t('sort.desc'),
+        }),
+        value: `${currentSortBy}-${currentSortOrder}`,
         onRemove: () => setSorting({ sortBy: 'createdAt', sortOrder: 'desc' }),
       })
     }
     return filters
-  }, [searchInput, manufacturerFilter, typeFilter, isActiveFilter, useA4Filter, sorting])
+  }, [searchInput, manufacturerFilter, typeFilter, isActiveFilter, useA4Filter, sorting, t])
 
   const handleResetFilters = () => {
     setSearchInput('')
-    setManufacturerFilter('all')
-    setTypeFilter('all')
-    setIsActiveFilter('all')
-    setUseA4Filter('all')
+    setManufacturerFilter('')
+    setTypeFilter('')
+    setIsActiveFilter('')
+    setUseA4Filter('')
     setSorting({ sortBy: 'createdAt', sortOrder: 'desc' })
   }
 
@@ -167,8 +177,8 @@ export default function DeviceModelList() {
       />
 
       <FilterSection
-        title="Bộ lọc & Tìm kiếm"
-        subtitle="Tìm kiếm và lọc device models theo nhà sản xuất, loại, trạng thái"
+        title={t('filters.general')}
+        subtitle={t('device_model.filter.subtitle')}
         onReset={handleResetFilters}
         columnVisibilityMenu={columnVisibilityMenu}
         activeFilters={activeFilters}
@@ -200,10 +210,10 @@ export default function DeviceModelList() {
               disabled={!canFilterByManufacturer}
             >
               <SelectTrigger className="w-full">
-                <SelectValue />
+                <SelectValue placeholder={t('device_model.filter.manufacturer_placeholder')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tất cả NSX</SelectItem>
+                <SelectItem value="all">{t('common.all')}</SelectItem>
                 <SelectItem value="HP">HP</SelectItem>
                 <SelectItem value="Canon">Canon</SelectItem>
                 <SelectItem value="Epson">Epson</SelectItem>
@@ -222,15 +232,21 @@ export default function DeviceModelList() {
               disabled={!canFilterByType}
             >
               <SelectTrigger className="w-full">
-                <SelectValue />
+                <SelectValue placeholder={t('device_model.filter.type_placeholder')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tất cả loại</SelectItem>
-                <SelectItem value="PRINTER">Máy in</SelectItem>
-                <SelectItem value="SCANNER">Máy quét</SelectItem>
-                <SelectItem value="COPIER">Máy photocopy</SelectItem>
-                <SelectItem value="FAX">Máy fax</SelectItem>
-                <SelectItem value="MULTIFUNCTION">Đa năng</SelectItem>
+                <SelectItem value="all">{t('common.all')}</SelectItem>
+                <SelectItem value="PRINTER">
+                  {t('device_model.type.PRINTER') || 'Printer'}
+                </SelectItem>
+                <SelectItem value="SCANNER">
+                  {t('device_model.type.SCANNER') || 'Scanner'}
+                </SelectItem>
+                <SelectItem value="COPIER">{t('device_model.type.COPIER') || 'Copier'}</SelectItem>
+                <SelectItem value="FAX">{t('device_model.type.FAX') || 'Fax'}</SelectItem>
+                <SelectItem value="MULTIFUNCTION">
+                  {t('device_model.type.MULTIFUNCTION') || 'Multifunction'}
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -239,26 +255,28 @@ export default function DeviceModelList() {
             <label className="mb-2 block text-sm font-medium">{t('filters.status')}</label>
             <Select value={isActiveFilter} onValueChange={(value) => setIsActiveFilter(value)}>
               <SelectTrigger className="w-full">
-                <SelectValue />
+                <SelectValue placeholder={t('device_model.filter.status_placeholder')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tất cả</SelectItem>
-                <SelectItem value="true">Đang hoạt động</SelectItem>
-                <SelectItem value="false">Không hoạt động</SelectItem>
+                <SelectItem value="all">{t('common.all')}</SelectItem>
+                <SelectItem value="true">{t('filters.status_active')}</SelectItem>
+                <SelectItem value="false">{t('filters.status_inactive')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium">Loại counter</label>
+            <label className="mb-2 block text-sm font-medium">
+              {t('device_model.filter.counter_label')}
+            </label>
             <Select value={useA4Filter} onValueChange={(value) => setUseA4Filter(value)}>
               <SelectTrigger className="w-full">
-                <SelectValue />
+                <SelectValue placeholder={t('device_model.filter.counter_placeholder')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tất cả</SelectItem>
-                <SelectItem value="true">A4 Counter</SelectItem>
-                <SelectItem value="false">Standard Counter</SelectItem>
+                <SelectItem value="all">{t('common.all')}</SelectItem>
+                <SelectItem value="true">{t('device_model.counter.A4')}</SelectItem>
+                <SelectItem value="false">{t('device_model.counter.standard')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -308,6 +326,7 @@ function DeviceModelsTableContent({
   onStatsChange,
   renderColumnVisibilityMenu,
 }: DeviceModelsTableContentProps) {
+  const { t } = useLocale()
   const [isPending, startTransition] = useTransition()
   const [sortVersion, setSortVersion] = useState(0)
   const [compatibilityModal, setCompatibilityModal] = useState<{
@@ -447,7 +466,7 @@ function DeviceModelsTableContent({
     return [
       {
         id: 'index',
-        header: 'STT',
+        header: t('table.index'),
         cell: ({ row, table }) => {
           const index = table.getSortedRowModel().rows.findIndex((r) => r.id === row.id)
           return (
@@ -463,7 +482,7 @@ function DeviceModelsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <Package className="h-4 w-4 text-gray-600" />
-            Tên Model
+            {t('table.name')}
           </div>
         ),
         enableSorting: true,
@@ -481,7 +500,7 @@ function DeviceModelsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <Hash className="h-4 w-4 text-gray-600" />
-            Part Number
+            {t('device_model.part_number_label')}
           </div>
         ),
         enableSorting: true,
@@ -499,7 +518,7 @@ function DeviceModelsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <Factory className="h-4 w-4 text-gray-600" />
-            Nhà sản xuất
+            {t('filters.manufacturer')}
           </div>
         ),
         enableSorting: true,
@@ -510,7 +529,7 @@ function DeviceModelsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <FileText className="h-4 w-4 text-gray-600" />
-            Counter
+            {t('device_model.filter.counter_label')}
           </div>
         ),
         enableSorting: true,
@@ -526,7 +545,7 @@ function DeviceModelsTableContent({
                   : 'bg-gray-400 text-white hover:bg-gray-500'
               )}
             >
-              {m.useA4Counter ? 'A4' : 'Standard'}
+              {m.useA4Counter ? t('device_model.counter.A4') : t('device_model.counter.standard')}
             </Badge>
           )
         },
@@ -536,7 +555,7 @@ function DeviceModelsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <CheckCircle2 className="h-4 w-4 text-gray-600" />
-            Trạng thái
+            {t('table.status')}
           </div>
         ),
         enableSorting: true,
@@ -553,14 +572,14 @@ function DeviceModelsTableContent({
               )}
             >
               {m.isActive ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
-              {m.isActive ? 'Active' : 'Inactive'}
+              {m.isActive ? t('filters.status_active') : t('filters.status_inactive')}
             </Badge>
           )
         },
       },
       {
         id: 'consumableCount',
-        header: 'Số loại tiêu hao',
+        header: t('device_model.table.consumable_count'),
         enableSorting: false,
         cell: ({ row }) => {
           const model = row.original
@@ -576,7 +595,7 @@ function DeviceModelsTableContent({
       },
       {
         id: 'deviceCount',
-        header: 'Số thiết bị',
+        header: t('device_model.table.device_count'),
         enableSorting: false,
         cell: ({ row }) => (
           <Badge variant="outline" className="font-mono text-xs">
@@ -586,7 +605,7 @@ function DeviceModelsTableContent({
       },
       {
         id: 'compatibility',
-        header: 'Vật tư tiêu hao',
+        header: t('device_model.table.compatibility'),
         enableSorting: false,
         cell: ({ row }) => (
           <Button
@@ -603,7 +622,7 @@ function DeviceModelsTableContent({
             className="gap-2"
           >
             <Package className="h-4 w-4" />
-            Quản lý
+            {t('device_model.button.manage')}
           </Button>
         ),
       },
@@ -612,7 +631,7 @@ function DeviceModelsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <Settings className="h-4 w-4 text-gray-600" />
-            Thao tác
+            {t('table.actions')}
           </div>
         ),
         enableSorting: false,
@@ -623,8 +642,10 @@ function DeviceModelsTableContent({
             </ActionGuard>
             <ActionGuard pageId="device-models" actionId="delete">
               <DeleteDialog
-                title="Xác nhận xóa device model này?"
-                description={`Xóa device model "${row.original.name || ''}"?`}
+                title={t('device_model.delete.confirm_title')}
+                description={t('device_model.delete.confirm_description', {
+                  name: row.original.name || '',
+                })}
                 onConfirm={async () => handleDelete(row.original.id)}
                 trigger={
                   <Button
@@ -647,7 +668,7 @@ function DeviceModelsTableContent({
         ),
       },
     ]
-  }, [consumableCounts, countsLoading, deletingId, handleSaved, handleDelete])
+  }, [consumableCounts, countsLoading, deletingId, handleSaved, handleDelete, t])
 
   return (
     <>
@@ -681,13 +702,13 @@ function DeviceModelsTableContent({
               </div>
               <h3 className="mb-2 text-xl font-bold text-gray-700">
                 {rawSearch
-                  ? `Không tìm thấy model phù hợp với "${rawSearch}"`
-                  : 'Chưa có device model nào'}
+                  ? t('device_model.empty.search_not_found', { q: rawSearch })
+                  : t('device_model.empty.no_models')}
               </h3>
               <p className="mb-6 text-gray-500">
                 {rawSearch
-                  ? 'Thử điều chỉnh bộ lọc hoặc tìm kiếm'
-                  : 'Hãy tạo device model đầu tiên'}
+                  ? t('device_model.empty.try_filter')
+                  : t('device_model.empty.create_first')}
               </p>
               {!rawSearch && (
                 <ActionGuard pageId="device-models" actionId="create">

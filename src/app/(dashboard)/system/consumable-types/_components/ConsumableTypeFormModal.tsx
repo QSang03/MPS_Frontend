@@ -66,18 +66,18 @@ export default function ConsumableTypeFormModal({
     try {
       if (mode === 'create') {
         const created = await consumableTypesClientService.create(form)
-        toast.success('Tạo loại vật tư thành công')
+        toast.success(t('consumable_types.form.create_success'))
         onSaved?.(created || null)
       } else if (model) {
         const updated = await consumableTypesClientService.update(model.id, form)
-        toast.success('Cập nhật loại vật tư thành công')
+        toast.success(t('consumable_types.form.update_success'))
         onSaved?.(updated || null)
       }
       setOpen(false)
     } catch (err: unknown) {
       const e = err as Error
       console.error('Save consumable type failed', e)
-      toast.error('Có lỗi khi lưu loại vật tư')
+      toast.error(t('consumable_types.form.save_error'))
     } finally {
       setLoading(false)
     }
@@ -92,7 +92,7 @@ export default function ConsumableTypeFormModal({
           {mode === 'create' ? (
             <Button className="gap-2 bg-white text-emerald-600 hover:bg-white/90">
               <Plus className="h-4 w-4" />
-              Thêm loại vật tư
+              {t('consumable_types.actions.create')}
             </Button>
           ) : (
             <Button variant="outline" size="sm" className="gap-2">
@@ -103,9 +103,15 @@ export default function ConsumableTypeFormModal({
       )}
 
       <SystemModalLayout
-        title={mode === 'create' ? 'Tạo loại vật tư tiêu hao' : 'Chỉnh sửa loại vật tư'}
+        title={
+          mode === 'create'
+            ? t('consumable_types.form.title_create')
+            : t('consumable_types.form.title_edit')
+        }
         description={
-          mode === 'create' ? 'Thêm loại vật tư mới vào hệ thống' : 'Cập nhật thông tin loại vật tư'
+          mode === 'create'
+            ? t('consumable_types.form.description_create')
+            : t('consumable_types.form.description_edit')
         }
         icon={mode === 'create' ? Sparkles : Edit}
         variant={mode}
@@ -118,7 +124,7 @@ export default function ConsumableTypeFormModal({
               disabled={loading}
               className="min-w-[100px]"
             >
-              Hủy
+              {t('button.cancel')}
             </Button>
             <Button
               type="submit"
@@ -151,13 +157,13 @@ export default function ConsumableTypeFormModal({
           <div className="space-y-4">
             <div className="flex items-center gap-2 text-sm font-semibold text-emerald-700">
               <Package className="h-4 w-4" />
-              Thông tin cơ bản
+              {t('consumable_type.section.basic_info')}
             </div>
 
             <div className="space-y-2">
               <Label className="flex items-center gap-2 text-base font-semibold">
                 <Package className="h-4 w-4 text-emerald-600" />
-                Tên loại vật tư *
+                {t('consumable_type.field.name')}
               </Label>
               <Input
                 value={form.name}
@@ -171,7 +177,7 @@ export default function ConsumableTypeFormModal({
             <div className="space-y-2">
               <Label className="flex items-center gap-2 text-base font-semibold">
                 <Hash className="h-4 w-4 text-teal-600" />
-                Đơn vị
+                {t('consumable_type.field.unit')}
               </Label>
               <Input
                 value={form.unit}
@@ -184,7 +190,7 @@ export default function ConsumableTypeFormModal({
             <div className="space-y-2">
               <Label className="flex items-center gap-2 text-base font-semibold">
                 <FileText className="h-4 w-4 text-[var(--brand-600)]" />
-                Mã/Part Number
+                {t('consumable_type.field.part_number')}
               </Label>
               <Input
                 value={form.partNumber ?? ''}
@@ -197,7 +203,7 @@ export default function ConsumableTypeFormModal({
             <div className="space-y-2">
               <Label className="flex items-center gap-2 text-base font-semibold">
                 <FileText className="h-4 w-4 text-[var(--brand-600)]" />
-                compatibleMachineLine
+                {t('consumable_type.field.compatible_models')}
               </Label>
               <Input
                 value={form.compatibleMachineLine ?? ''}
@@ -210,7 +216,7 @@ export default function ConsumableTypeFormModal({
             <div className="space-y-2">
               <Label className="flex items-center gap-2 text-base font-semibold">
                 <Sparkles className="h-4 w-4 text-emerald-600" />
-                Dung lượng / Capacity
+                {t('consumable_type.field.capacity')}
               </Label>
               <Input
                 type="number"
@@ -231,11 +237,13 @@ export default function ConsumableTypeFormModal({
           <div className="space-y-4">
             <div className="flex items-center gap-2 text-sm font-semibold text-teal-700">
               <FileText className="h-4 w-4" />
-              Mô tả
+              {t('consumable_type.section.description')}
             </div>
 
             <div className="space-y-2">
-              <Label className="text-base font-semibold">Mô tả chi tiết</Label>
+              <Label className="text-base font-semibold">
+                {t('consumable_type.field.description')}
+              </Label>
               <Textarea
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
@@ -252,7 +260,7 @@ export default function ConsumableTypeFormModal({
           <div className="space-y-4">
             <div className="flex items-center gap-2 text-sm font-semibold text-[var(--brand-700)]">
               <CheckCircle2 className="h-4 w-4" />
-              Trạng thái
+              {t('consumable_type.section.status')}
             </div>
 
             <div
@@ -268,12 +276,12 @@ export default function ConsumableTypeFormModal({
                   ) : (
                     <Package className="h-4 w-4 text-gray-600" />
                   )}
-                  Trạng thái hoạt động
+                  {t('consumable_type.status.label')}
                 </label>
                 <p className="text-muted-foreground text-sm">
                   {form.isActive
-                    ? 'Loại vật tư đang hoạt động và có thể sử dụng'
-                    : 'Loại vật tư đã bị tắt và không thể sử dụng'}
+                    ? t('consumable_type.status.active_description')
+                    : t('consumable_type.status.inactive_description')}
                 </p>
               </div>
               <Switch

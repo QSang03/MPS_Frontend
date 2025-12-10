@@ -21,8 +21,8 @@ export default function WarehouseDocumentsPanel() {
   const { t } = useLocale()
   const [search, setSearch] = useState('')
   const [customerId, setCustomerId] = useState<string>('')
-  const [status, setStatus] = useState<WarehouseDocumentStatus | 'all'>('all')
-  const [type, setType] = useState<WarehouseDocumentType | 'all'>('all')
+  const [status, setStatus] = useState<WarehouseDocumentStatus | ''>('')
+  const [type, setType] = useState<WarehouseDocumentType | ''>('')
 
   const activeFilters: ActiveFilter[] = []
   if (search)
@@ -33,18 +33,22 @@ export default function WarehouseDocumentsPanel() {
     })
   if (customerId)
     activeFilters.push({
-      label: `Khách hàng`,
+      label: t('warehouse_document.filter.active.customer'),
       value: 'customer',
       onRemove: () => setCustomerId(''),
     })
-  if (status !== 'all')
+  if (status)
     activeFilters.push({
-      label: `Trạng thái: ${status}`,
+      label: t('warehouse_document.filter.active.status', { status }),
       value: 'status',
-      onRemove: () => setStatus('all'),
+      onRemove: () => setStatus(''),
     })
-  if (type !== 'all')
-    activeFilters.push({ label: `Loại: ${type}`, value: 'type', onRemove: () => setType('all') })
+  if (type)
+    activeFilters.push({
+      label: t('warehouse_document.filter.active.type', { type }),
+      value: 'type',
+      onRemove: () => setType(''),
+    })
 
   return (
     <div className="space-y-6">
@@ -55,8 +59,8 @@ export default function WarehouseDocumentsPanel() {
         onReset={() => {
           setSearch('')
           setCustomerId('')
-          setStatus('all')
-          setType('all')
+          setStatus('')
+          setType('')
         }}
       >
         <div className="grid gap-4 md:grid-cols-3">
@@ -71,13 +75,13 @@ export default function WarehouseDocumentsPanel() {
             <CustomerSelect
               value={customerId}
               onChange={(id) => setCustomerId(id ?? '')}
-              placeholder={t('customer.filter_placeholder')}
+              placeholder={t('placeholder.select_customer')}
             />
           </div>
           <div>
             <Select
               value={status}
-              onValueChange={(v) => setStatus(v as WarehouseDocumentStatus | 'all')}
+              onValueChange={(v) => setStatus(v as WarehouseDocumentStatus | '')}
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder={t('warehouse_document.filter.status_placeholder')} />
@@ -95,7 +99,7 @@ export default function WarehouseDocumentsPanel() {
             </Select>
           </div>
           <div>
-            <Select value={type} onValueChange={(v) => setType(v as WarehouseDocumentType | 'all')}>
+            <Select value={type} onValueChange={(v) => setType(v as WarehouseDocumentType | '')}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder={t('warehouse_document.filter.type_placeholder')} />
               </SelectTrigger>
@@ -118,8 +122,8 @@ export default function WarehouseDocumentsPanel() {
 
       <WarehouseDocumentList
         customerId={customerId || undefined}
-        status={status === 'all' ? undefined : (status as WarehouseDocumentStatus)}
-        type={type === 'all' ? undefined : (type as WarehouseDocumentType)}
+        status={status === '' ? undefined : (status as WarehouseDocumentStatus)}
+        type={type === '' ? undefined : (type as WarehouseDocumentType)}
       />
     </div>
   )

@@ -15,14 +15,14 @@ const statusColorMap: Record<WarehouseDocumentStatus, string> = {
   ['CANCELLED']: 'bg-[var(--color-error-50)] text-[var(--color-error-600)]',
 }
 
-export const getColumns = (type?: WarehouseDocumentType) => {
+export const getColumns = (type?: WarehouseDocumentType, t?: (k: string) => string) => {
   const isImport = type === 'IMPORT_FROM_SUPPLIER'
   const isExportOrReturn = type === 'EXPORT_TO_CUSTOMER' || type === 'RETURN_FROM_CUSTOMER'
 
   const cols: ColumnDef<WarehouseDocument>[] = [
     {
       accessorKey: 'documentNumber',
-      header: 'Số chứng từ',
+      header: t ? t('warehouse_document.field.document_number') : 'Số chứng từ',
       cell: ({ row }) => (
         <Link
           href={`/system/warehouse-documents/${row.original.id}`}
@@ -34,7 +34,7 @@ export const getColumns = (type?: WarehouseDocumentType) => {
     },
     {
       accessorKey: 'type',
-      header: 'Loại',
+      header: t ? t('warehouse_document.field.type') : 'Loại',
       cell: ({ row }) => (
         <div className="capitalize">
           {(row.original.type || '').replace(/_/g, ' ').toLowerCase()}
@@ -43,7 +43,7 @@ export const getColumns = (type?: WarehouseDocumentType) => {
     },
     {
       accessorKey: 'status',
-      header: 'Trạng thái',
+      header: t ? t('warehouse_document.field.status') : 'Trạng thái',
       cell: ({ row }) => (
         <Badge variant="secondary" className={statusColorMap[row.original.status || 'DRAFT']}>
           {row.original.status}
@@ -56,7 +56,7 @@ export const getColumns = (type?: WarehouseDocumentType) => {
     cols.push({
       id: 'customer.name',
       accessorKey: 'customer.name',
-      header: 'Khách hàng',
+      header: t ? t('warehouse_document.field.customer') : 'Khách hàng',
       cell: ({ row }) => row.original.customer?.name ?? row.original.customerId ?? '-',
       enableSorting: true,
     })
@@ -64,13 +64,13 @@ export const getColumns = (type?: WarehouseDocumentType) => {
   if (!isExportOrReturn) {
     cols.push({
       accessorKey: 'supplierName',
-      header: 'Nhà cung cấp',
+      header: t ? t('warehouse_document.field.supplier') : 'Nhà cung cấp',
       cell: ({ row }) => row.original.supplierName ?? '-',
     })
   }
   cols.push({
     accessorKey: 'purchaseRequestId',
-    header: 'Yêu cầu mua (PR)',
+    header: t ? t('warehouse_document.field.purchase_request') : 'Yêu cầu mua (PR)',
     cell: ({ row }) =>
       row.original.purchaseRequest?.id ? (
         <Link
@@ -85,7 +85,7 @@ export const getColumns = (type?: WarehouseDocumentType) => {
   })
   cols.push({
     accessorKey: 'createdAt',
-    header: 'Ngày tạo',
+    header: t ? t('warehouse_document.field.created_at') : 'Ngày tạo',
     cell: ({ row }) => formatRelativeTime(row.original.createdAt ?? ''),
   })
   cols.push({

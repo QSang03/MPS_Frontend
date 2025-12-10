@@ -9,6 +9,7 @@ import { Package, CheckCircle2, AlertCircle, Search } from 'lucide-react'
 import { StatsCards } from '@/components/system/StatsCard'
 import { FilterSection } from '@/components/system/FilterSection'
 import { EditStockModal } from './EditStockModal'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { TableSkeleton } from '@/components/system/TableSkeleton'
 import { ConsumableTypeTable } from './ConsumableTypeTable'
 import { useQueryClient } from '@tanstack/react-query'
@@ -20,6 +21,7 @@ interface ConsumableTypeStats {
 }
 
 export function ConsumableTypeList() {
+  const { t } = useLocale()
   const [searchTerm, setSearchTerm] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [page, setPage] = useState(1)
@@ -40,11 +42,11 @@ export function ConsumableTypeList() {
   const queryClient = useQueryClient()
 
   useEffect(() => {
-    const t = setTimeout(() => {
+    const timeout = setTimeout(() => {
       setDebouncedSearch(searchTerm.trim())
       setPage(1)
     }, 700)
-    return () => clearTimeout(t)
+    return () => clearTimeout(timeout)
   }, [searchTerm])
 
   const activeFilters = useMemo(
@@ -52,7 +54,7 @@ export function ConsumableTypeList() {
       searchTerm
         ? [
             {
-              label: `Tìm kiếm: "${searchTerm}"`,
+              label: t('consumable_types.filters.search_label', { term: searchTerm }),
               value: searchTerm,
               onRemove: () => {
                 setSearchTerm('')
@@ -62,7 +64,7 @@ export function ConsumableTypeList() {
             },
           ]
         : [],
-    [searchTerm]
+    [searchTerm, t]
   )
 
   const handleResetFilters = () => {
@@ -77,12 +79,12 @@ export function ConsumableTypeList() {
         quantity,
         lowStockThreshold: threshold,
       })
-      toast.success('Cập nhật thông tin tồn kho thành công')
+      toast.success(t('consumable_types.stock.update_success'))
       queryClient.invalidateQueries({ queryKey: ['consumable-types'] })
     } catch (error: unknown) {
       const e = error as Error
       console.error('Error updating stock item:', e)
-      toast.error(e.message || 'Không thể cập nhật')
+      toast.error(e.message || t('consumable_types.stock.update_error'))
       throw error
     }
   }
@@ -92,19 +94,19 @@ export function ConsumableTypeList() {
       <StatsCards
         cards={[
           {
-            label: 'Tổng loại',
+            label: t('consumable_types.stats.total'),
             value: stats.total,
             icon: <Package className="h-6 w-6" />,
             borderColor: 'violet',
           },
           {
-            label: 'Hoạt động',
+            label: t('consumable_types.stats.active'),
             value: stats.active,
             icon: <CheckCircle2 className="h-6 w-6" />,
             borderColor: 'green',
           },
           {
-            label: 'Không hoạt động',
+            label: t('consumable_types.stats.inactive'),
             value: stats.inactive,
             icon: <AlertCircle className="h-6 w-6" />,
             borderColor: 'gray',
@@ -113,8 +115,8 @@ export function ConsumableTypeList() {
       />
 
       <FilterSection
-        title="Bộ lọc & Tìm kiếm"
-        subtitle="Tìm kiếm loại vật tư tiêu hao"
+        title={t('consumable_types.filter.title')}
+        subtitle={t('consumable_types.filter.subtitle')}
         onReset={handleResetFilters}
         activeFilters={activeFilters}
         columnVisibilityMenu={columnVisibilityMenu}
@@ -123,7 +125,7 @@ export function ConsumableTypeList() {
           <div className="relative">
             <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <Input
-              placeholder="Tìm kiếm loại vật tư..."
+              placeholder={t('consumable_types.search.placeholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onKeyDown={(e) => {

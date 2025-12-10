@@ -52,7 +52,7 @@ export function AlertsSummary({
   alerts,
 }: AlertsSummaryProps) {
   const router = useRouter()
-  const { t } = useLocale()
+  const { t, locale } = useLocale()
   const [modalOpen, setModalOpen] = useState(false)
   const [selectedAlertType, setSelectedAlertType] = useState<
     null | 'low_consumable' | 'device_error' | 'sla_breach'
@@ -274,12 +274,30 @@ export function AlertsSummary({
                                   className="text-xs text-gray-500 hover:underline"
                                 >
                                   {item.deviceName ?? item.deviceId}
-                                  {item.serialNumber ? ` (SN: ${item.serialNumber})` : ''}
-                                  {item.ipAddress ? ` • IP: ${item.ipAddress}` : ''}
-                                  {item.consumableTypeName ? ` - ${item.consumableTypeName}` : ''}
-                                  {item.remainingPercentage !== undefined
-                                    ? ` • ${Math.round(item.remainingPercentage)}% còn lại`
-                                    : ''}
+                                  {item.serialNumber && (
+                                    <span>
+                                      {' '}
+                                      ({t('label.serial_short')}: {item.serialNumber})
+                                    </span>
+                                  )}
+                                  {item.ipAddress && (
+                                    <span>
+                                      {' '}
+                                      • {t('label.ip')}: {item.ipAddress}
+                                    </span>
+                                  )}
+                                  {item.consumableTypeName && (
+                                    <span> - {item.consumableTypeName}</span>
+                                  )}
+                                  {item.remainingPercentage !== undefined && (
+                                    <span>
+                                      {' '}
+                                      •{' '}
+                                      {t('alerts.remaining_percentage', {
+                                        percent: Math.round(item.remainingPercentage),
+                                      })}
+                                    </span>
+                                  )}
                                 </button>
                               ))}
 
@@ -354,7 +372,9 @@ export function AlertsSummary({
 
               {/* Recent Notifications - show below the alert summary */}
               <div className="mt-4 space-y-3">
-                <h4 className="text-sm font-semibold text-gray-700">Thông báo gần đây</h4>
+                <h4 className="text-sm font-semibold text-gray-700">
+                  {t('notifications.recent_title')}
+                </h4>
                 {Array.isArray(recentNotifications) && recentNotifications.length > 0 ? (
                   recentNotifications.slice(0, 4).map((n) => (
                     <div key={n.id}>
@@ -364,7 +384,7 @@ export function AlertsSummary({
                 ) : (
                   <div className="flex items-center gap-3 text-sm text-gray-500">
                     <Bell className="text-muted-foreground h-5 w-5" />
-                    <span>Không có thông báo mới</span>
+                    <span>{t('notifications.empty')}</span>
                   </div>
                 )}
               </div>
@@ -390,12 +410,12 @@ export function AlertsSummary({
           <SystemModalLayout
             title={
               selectedAlertType === 'low_consumable'
-                ? 'Vật tư tiêu hao sắp hết'
+                ? t('alerts.modal.title.low_consumable')
                 : selectedAlertType === 'device_error'
-                  ? 'Lỗi thiết bị'
-                  : 'Vi phạm SLA'
+                  ? t('alerts.modal.title.device_error')
+                  : t('alerts.modal.title.sla_breach')
             }
-            description="Chi tiết các mục cảnh báo"
+            description={t('alerts.modal.description')}
             icon={Bell}
             variant="view"
           >
@@ -403,7 +423,7 @@ export function AlertsSummary({
               {selectedAlertType === 'low_consumable' && (
                 <div>
                   {(alerts?.consumableWarnings?.items ?? []).length === 0 ? (
-                    <p className="text-sm text-gray-500">Không có mục nào.</p>
+                    <p className="text-sm text-gray-500">{t('alerts.modal.empty_item')}</p>
                   ) : (
                     <ul className="space-y-2">
                       {alerts!.consumableWarnings!.items!.map((it, i) => (
@@ -426,27 +446,40 @@ export function AlertsSummary({
                             </button>
                             <div className="mt-1 space-y-1">
                               <div className="text-xs text-gray-500">
-                                {it.serialNumber && <span>Serial: {it.serialNumber}</span>}
+                                {it.serialNumber && (
+                                  <span>
+                                    {t('label.serial')}: {it.serialNumber}
+                                  </span>
+                                )}
                                 {it.serialNumber && it.ipAddress && <span> • </span>}
-                                {it.ipAddress && <span>IP: {it.ipAddress}</span>}
+                                {it.ipAddress && (
+                                  <span>
+                                    {t('label.ip')}: {it.ipAddress}
+                                  </span>
+                                )}
                               </div>
                               <div className="text-xs text-gray-500">
                                 {it.consumableTypeName ? `${it.consumableTypeName} • ` : ''}
                                 {it.remainingPercentage !== undefined
-                                  ? `${Math.round(it.remainingPercentage)}% còn lại`
+                                  ? t('alerts.remaining_percentage', {
+                                      percent: Math.round(it.remainingPercentage),
+                                    })
                                   : ''}
                               </div>
                             </div>
                           </div>
                           <div className="text-xs whitespace-nowrap text-gray-500">
                             {it.lastUpdatedAt
-                              ? new Date(it.lastUpdatedAt).toLocaleString('vi-VN', {
-                                  day: '2-digit',
-                                  month: '2-digit',
-                                  year: 'numeric',
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                })
+                              ? new Date(it.lastUpdatedAt).toLocaleString(
+                                  locale === 'vi' ? 'vi-VN' : 'en-US',
+                                  {
+                                    day: '2-digit',
+                                    month: '2-digit',
+                                    year: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  }
+                                )
                               : ''}
                           </div>
                         </li>
@@ -459,7 +492,7 @@ export function AlertsSummary({
               {selectedAlertType === 'device_error' && (
                 <div>
                   {(alerts?.deviceErrors?.items ?? []).length === 0 ? (
-                    <p className="text-sm text-gray-500">Không có mục nào.</p>
+                    <p className="text-sm text-gray-500">{t('alerts.modal.empty_item')}</p>
                   ) : (
                     <ul className="space-y-2">
                       {alerts!.deviceErrors!.items!.map((it, i) => (
@@ -481,7 +514,7 @@ export function AlertsSummary({
               {selectedAlertType === 'sla_breach' && (
                 <div>
                   {(alerts?.slaViolations?.items ?? []).length === 0 ? (
-                    <p className="text-sm text-gray-500">Không có mục nào.</p>
+                    <p className="text-sm text-gray-500">{t('alerts.modal.empty_item')}</p>
                   ) : (
                     <ul className="space-y-2">
                       {alerts!.slaViolations!.items!.map((it, i) => (

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react'
 import MonthPicker from '@/components/ui/month-picker'
 import { cn } from '@/lib/utils/cn'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 interface DateRangeSelectorProps {
   defaultMonth?: string // Format: YYYY-MM
@@ -26,12 +27,14 @@ export function DateRangeSelector({ defaultMonth, onChange }: DateRangeSelectorP
   const year = parts[0] ?? new Date().getFullYear()
   const month = parts[1] ?? new Date().getMonth() + 1
 
-  // Quick select options
+  const { locale, t } = useLocale()
+
+  // Quick select options (labels will use translations)
   const quickSelects = [
-    { label: 'Tháng này', value: 0 },
-    { label: 'Tháng trước', value: -1 },
-    { label: '3 tháng trước', value: -3 },
-    { label: '6 tháng trước', value: -6 },
+    { label: t('dashboard.date_range.this_month'), value: 0 },
+    { label: t('dashboard.date_range.last_month'), value: -1 },
+    { label: t('dashboard.date_range.last_3_months'), value: -3 },
+    { label: t('dashboard.date_range.last_6_months'), value: -6 },
   ]
 
   const handleMonthChange = (newMonth: string) => {
@@ -60,8 +63,9 @@ export function DateRangeSelector({ defaultMonth, onChange }: DateRangeSelectorP
     handleMonthChange(newMonth)
   }
 
-  // Format display month
-  const displayMonth = new Date(year, month - 1).toLocaleDateString('vi-VN', {
+  // Format display month according to current locale
+  const localeCode = locale === 'vi' ? 'vi-VN' : 'en-US'
+  const displayMonth = new Date(year, month - 1).toLocaleDateString(localeCode, {
     month: 'long',
     year: 'numeric',
   })

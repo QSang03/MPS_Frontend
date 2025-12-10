@@ -95,7 +95,7 @@ export default function ImportExcelModal({ trigger }: ImportExcelModalProps = {}
 
   const handleUpload = async () => {
     if (!file) {
-      toast.error('Vui lòng chọn file')
+      toast.error(t('consumable_types.import.errors.no_file'))
       return
     }
 
@@ -112,19 +112,19 @@ export default function ImportExcelModal({ trigger }: ImportExcelModalProps = {}
       const data = await res.json().catch(() => null)
 
       if (!res.ok) {
-        const msg = data?.error || data?.message || 'Có lỗi khi import'
+        const msg = data?.error || data?.message || t('consumable_types.import.errors.failed')
         toast.error(String(msg))
         return
       }
 
       // Success - backend should return summary
-      toast.success('Import thành công')
+      toast.success(t('consumable_types.import.success'))
       queryClient.invalidateQueries({ queryKey: ['consumable-types'] })
       setOpen(false)
       setFile(null)
     } catch (err) {
       console.error('Import error', err)
-      toast.error('Có lỗi khi import')
+      toast.error(t('consumable_types.import.errors.failed'))
     } finally {
       setLoading(false)
     }
@@ -138,14 +138,14 @@ export default function ImportExcelModal({ trigger }: ImportExcelModalProps = {}
         <DialogTrigger asChild>
           <Button className="gap-2 bg-white text-emerald-600 hover:bg-white/90">
             <FileText className="h-4 w-4" />
-            Import Excel
+            {t('consumable_types.import.button')}
           </Button>
         </DialogTrigger>
       )}
 
       <SystemModalLayout
-        title="Import từ Excel"
-        description="Upload file Excel (.xlsx, .xls) để thêm loại vật tư tiêu hao. File tối đa 10MB."
+        title={t('consumable_types.import.title')}
+        description={t('consumable_types.import.description')}
         icon={Upload}
         variant="create"
         maxWidth="!max-w-[55vw]"
@@ -159,7 +159,7 @@ export default function ImportExcelModal({ trigger }: ImportExcelModalProps = {}
               }}
               className="min-w-[100px]"
             >
-              Hủy
+              {t('button.cancel')}
             </Button>
             <Button
               onClick={handleUpload}
@@ -167,14 +167,16 @@ export default function ImportExcelModal({ trigger }: ImportExcelModalProps = {}
               className="min-w-[120px] bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
             >
               {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              Tải lên
+              {t('consumable_types.import.upload')}
             </Button>
           </>
         }
       >
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-semibold">Chọn file</label>
+            <label className="block text-sm font-semibold">
+              {t('consumable_types.import.select_file')}
+            </label>
             <div className="flex items-center gap-2">
               <Input type="file" accept=".xlsx,.xls" onChange={handleFileChange} className="mt-2" />
               <Button
@@ -184,7 +186,12 @@ export default function ImportExcelModal({ trigger }: ImportExcelModalProps = {}
                   try {
                     const workbook = new ExcelJS.Workbook()
                     const sheet = workbook.addWorksheet('Template')
-                    sheet.addRow(['Part', 'Tên', 'Sản lượng', 'Dòng máy tương thích'])
+                    sheet.addRow([
+                      t('consumable_types.import.template.part'),
+                      t('consumable_types.import.template.name'),
+                      t('consumable_types.import.template.capacity'),
+                      t('consumable_types.import.template.compatible'),
+                    ])
                     sheet.addRow(['ABC-123', 'Mực in', 1000, 'Model A; Model B'])
                     sheet.addRow(['DEF-456', 'Bộ lọc', 500, 'Model C'])
                     sheet.columns = [{ width: 20 }, { width: 30 }, { width: 15 }, { width: 40 }]
@@ -202,12 +209,12 @@ export default function ImportExcelModal({ trigger }: ImportExcelModalProps = {}
                     URL.revokeObjectURL(url)
                   } catch (err) {
                     console.error('Failed to generate template', err)
-                    toast.error('Không thể tạo file mẫu')
+                    toast.error(t('consumable_types.import.errors.template_failed'))
                   }
                 }}
                 className="mt-2"
               >
-                Tải mẫu
+                {t('consumable_types.import.download_template')}
               </Button>
             </div>
             {file && <div className="text-muted-foreground mt-2 text-sm">{file.name}</div>}
@@ -220,7 +227,7 @@ export default function ImportExcelModal({ trigger }: ImportExcelModalProps = {}
             <div className="mt-2">
               {headerValid === false && (
                 <div className="text-sm text-red-600">
-                  Header file không hợp lệ. Cột mong đợi: Part, Tên, Sản lượng, Dòng máy tương thích
+                  {t('consumable_types.import.errors.invalid_header')}
                 </div>
               )}
               {previewRows.length === 0 && headerValid !== false && (
@@ -234,10 +241,14 @@ export default function ImportExcelModal({ trigger }: ImportExcelModalProps = {}
                     <thead>
                       <tr className="text-left">
                         <th className="px-2 py-1">#</th>
-                        <th className="px-2 py-1">Part</th>
-                        <th className="px-2 py-1">Tên</th>
-                        <th className="px-2 py-1">Sản lượng</th>
-                        <th className="px-2 py-1">Dòng máy tương thích</th>
+                        <th className="px-2 py-1">{t('consumable_types.import.template.part')}</th>
+                        <th className="px-2 py-1">{t('consumable_types.import.template.name')}</th>
+                        <th className="px-2 py-1">
+                          {t('consumable_types.import.template.capacity')}
+                        </th>
+                        <th className="px-2 py-1">
+                          {t('consumable_types.import.template.compatible')}
+                        </th>
                       </tr>
                     </thead>
                     <tbody>

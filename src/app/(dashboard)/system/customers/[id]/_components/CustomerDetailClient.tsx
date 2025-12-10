@@ -156,29 +156,34 @@ export default function CustomerDetailClient({ customerId }: Props) {
     number?: string
   } | null>(null)
 
+  const displayCurrency =
+    customerInfo?.defaultCurrency ||
+    overview?.contracts?.items?.[0]?.customer?.defaultCurrency ||
+    null
+
   const formatPrice = (
     value?: number | null,
     currency?: { symbol?: string; code?: string } | null
   ) => {
     if (value === undefined || value === null) return '—'
-    const parts = value.toString().split('.')
-    const integerPart = Math.abs(parseInt(parts[0] ?? '0', 10))
-    const decimalPart = parts[1]
-    const formattedInteger = integerPart.toLocaleString('en-US')
-    const currencySymbol = currency?.symbol || (currency?.code ? currency.code : '$')
-    let formattedValue = ''
-    if (decimalPart) {
-      const trimmedDecimal = decimalPart.replace(/0+$/, '')
-      if (trimmedDecimal) {
-        formattedValue = `${value < 0 ? '-' : ''}${formattedInteger}.${trimmedDecimal}`
-      } else {
-        formattedValue = `${value < 0 ? '-' : ''}${formattedInteger}`
-      }
-    } else {
-      formattedValue = `${value < 0 ? '-' : ''}${formattedInteger}`
+    const curr =
+      currency ||
+      displayCurrency ||
+      (customerInfo?.defaultCurrencyId
+        ? { code: customerInfo.defaultCurrencyId, symbol: undefined }
+        : null)
+    const code = curr?.code || 'USD'
+    try {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: code,
+        currencyDisplay: 'symbol',
+        maximumFractionDigits: 2,
+      }).format(value)
+    } catch {
+      const symbol = curr?.symbol || curr?.code || '$'
+      return `${symbol}\u00A0${value.toLocaleString('en-US')}`
     }
-    // Use non-breaking space to prevent line break between currency symbol and value
-    return `${currencySymbol}\u00A0${formattedValue}`
   }
 
   const formatNumber = (value?: number | null) => {

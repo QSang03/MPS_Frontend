@@ -2,24 +2,25 @@
 
 import { Card, CardContent, CardHeader, CardDescription, CardTitle } from '@/components/ui/card'
 import WarehouseDocumentList from './WarehouseDocumentList'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 export default function WarehouseDocumentsPageClient() {
+  const { t } = useLocale()
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Chứng từ kho của tôi</h1>
-          <p className="text-muted-foreground">
-            Danh sách các chứng từ nhập/xuất/trả liên quan đến tôi
-          </p>
+          <h1 className="text-3xl font-bold">{t('page.warehouseDocuments.user_title')}</h1>
+          <p className="text-muted-foreground">{t('page.warehouseDocuments.user_subtitle')}</p>
         </div>
         {/* Create action removed for user scope */}
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Danh sách chứng từ</CardTitle>
-          <CardDescription>Quản lý chứng từ xuất/nhập trả trong kho (scope user)</CardDescription>
+          <CardTitle>{t('warehouse_document.list_title')}</CardTitle>
+          <CardDescription>{t('warehouse_document.list_description_user')}</CardDescription>
         </CardHeader>
         <CardContent>
           <WarehouseDocumentList />

@@ -7,6 +7,7 @@ import type { WarehouseDocument } from '@/types/models/warehouse-document'
 import type { ListPagination } from '@/types/api'
 import { DataTable } from '@/components/shared/DataTable/DataTable'
 import getColumns from './columns'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import type {
   WarehouseDocumentStatus,
   WarehouseDocumentType,
@@ -33,11 +34,14 @@ export function WarehouseDocumentList({ customerId, status, type }: WarehouseDoc
       }),
   })
 
-  const cols = getColumns(type)
+  const { t } = useLocale()
+
+  // pass translation function into columns generator
+  const translatedCols = getColumns(type, t)
 
   return (
     <DataTable
-      columns={cols}
+      columns={translatedCols}
       data={data?.data || []}
       totalCount={data?.pagination?.total || 0}
       pageIndex={pagination.pageIndex}

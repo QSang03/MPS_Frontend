@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { usePageTitle } from '@/lib/hooks/usePageTitle'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { useAdminOverview, useCurrentMonth } from '@/lib/hooks/useDashboardData'
 import { KPICards } from './_components/KPICards'
 import { CostBreakdownChart } from './_components/CostBreakdownChart'
@@ -58,7 +59,8 @@ export default function CustomerAdminDashboard() {
   const [showContractDetail, setShowContractDetail] = useState(false)
   const [selectedContractId, setSelectedContractId] = useState<string | null>(null)
   const [isAggregating, setIsAggregating] = useState(false)
-  usePageTitle('Dashboard Tổng quan')
+  const { t } = useLocale()
+  usePageTitle(t('dashboard.overview.title'))
 
   // Fetch admin overview data
   const { data: overviewData, isLoading, isError, error, refetch } = useAdminOverview(selectedMonth)
@@ -79,7 +81,7 @@ export default function CustomerAdminDashboard() {
       await internalApiClient.post('/api/reports/jobs/monthly-aggregation', undefined, {
         params: { month: selectedMonth },
       })
-      toast.success('Tổng hợp dữ liệu tháng thành công')
+      toast.success(t('dashboard.aggregation.success'))
       // Refetch dashboard data after aggregation
       refetch()
     } catch (err: unknown) {
@@ -88,7 +90,7 @@ export default function CustomerAdminDashboard() {
         | { response?: { data?: { error?: string } }; message?: unknown }
         | undefined
       const msg = maybeErr?.response?.data?.error ?? (maybeErr?.message as string | undefined)
-      toast.error(msg ? String(msg) : 'Không thể chạy tổng hợp dữ liệu')
+      toast.error(msg ? String(msg) : t('dashboard.aggregation.error'))
     } finally {
       setIsAggregating(false)
     }
@@ -107,7 +109,7 @@ export default function CustomerAdminDashboard() {
       if (resp?.data?.success && resp.data.data?.url) {
         const url = getPublicUrl(resp.data.data.url)
         if (url) window.open(url, '_blank')
-        toast.success('Báo cáo PDF đã được tạo, mở ở tab mới')
+        toast.success(t('export.pdf_created'))
         return
       }
     } catch (err) {
@@ -117,32 +119,32 @@ export default function CustomerAdminDashboard() {
     // Fallback: client-side Excel export
     const data = [
       {
-        Category: 'Thuê thiết bị',
+        Category: t('export.categories.rental'),
         Percentage: overviewData.costBreakdown.rentalPercent,
       },
       {
-        Category: 'Sửa chữa',
+        Category: t('export.categories.repair'),
         Percentage: overviewData.costBreakdown.repairPercent,
       },
       {
-        Category: 'Trang đen trắng',
+        Category: t('export.categories.page_bw'),
         Percentage: overviewData.costBreakdown.pageBWPercent,
       },
       {
-        Category: 'Trang màu',
+        Category: t('export.categories.page_color'),
         Percentage: overviewData.costBreakdown.pageColorPercent,
       },
     ]
     await exportToExcel(
       data,
       [
-        { header: 'Danh mục', key: 'Category', width: 30 },
-        { header: 'Tỷ lệ (%)', key: 'Percentage', width: 15 },
+        { header: t('export.headers.category'), key: 'Category', width: 30 },
+        { header: t('export.headers.percentage'), key: 'Percentage', width: 15 },
       ],
       `cost-breakdown-${selectedMonth}`,
-      'Phân bổ chi phí'
+      t('export.title.cost_breakdown')
     )
-    toast.success('Đã tải xuống báo cáo phân bổ chi phí (Excel)')
+    toast.success(t('export.cost_breakdown_downloaded'))
   }
 
   const handleExportMonthlySeries = async () => {
@@ -159,7 +161,7 @@ export default function CustomerAdminDashboard() {
       if (resp?.data?.success && resp.data.data?.url) {
         const url = getPublicUrl(resp.data.data.url)
         if (url) window.open(url, '_blank')
-        toast.success('Báo cáo PDF đã được tạo, mở ở tab mới')
+        toast.success(t('export.pdf_created'))
         return
       }
     } catch (err) {
@@ -170,18 +172,18 @@ export default function CustomerAdminDashboard() {
     await exportToExcel(
       overviewData.monthlySeries.points,
       [
-        { header: 'Tháng', key: 'month', width: 15 },
-        { header: 'Tổng doanh thu', key: 'totalRevenue', width: 20 },
-        { header: 'Tổng chi phí', key: 'totalCogs', width: 20 },
-        { header: 'Lợi nhuận gộp', key: 'grossProfit', width: 20 },
-        { header: 'Doanh thu thuê', key: 'revenueRental', width: 20 },
-        { header: 'Doanh thu sửa chữa', key: 'revenueRepair', width: 20 },
-        { header: 'Doanh thu trang in', key: 'revenuePageBW', width: 20 },
+        { header: t('export.headers.month'), key: 'month', width: 15 },
+        { header: t('export.headers.total_revenue'), key: 'totalRevenue', width: 20 },
+        { header: t('export.headers.total_cogs'), key: 'totalCogs', width: 20 },
+        { header: t('export.headers.gross_profit'), key: 'grossProfit', width: 20 },
+        { header: t('export.headers.revenue_rental'), key: 'revenueRental', width: 20 },
+        { header: t('export.headers.revenue_repair'), key: 'revenueRepair', width: 20 },
+        { header: t('export.headers.revenue_page_bw'), key: 'revenuePageBW', width: 20 },
       ],
       `monthly-trends-${selectedMonth}`,
-      'Xu hướng tháng'
+      t('export.title.monthly_trends')
     )
-    toast.success('Đã tải xuống báo cáo xu hướng tháng (Excel)')
+    toast.success(t('export.monthly_trends_downloaded'))
   }
 
   const handleExportTopCustomers = async () => {
@@ -197,7 +199,7 @@ export default function CustomerAdminDashboard() {
       if (resp?.data?.success && resp.data.data?.url) {
         const url = getPublicUrl(resp.data.data.url)
         if (url) window.open(url, '_blank')
-        toast.success('CSV báo cáo đã được tạo, mở ở tab mới')
+        toast.success(t('export.csv_created'))
         return
       }
     } catch (err) {
@@ -207,16 +209,16 @@ export default function CustomerAdminDashboard() {
     await exportToExcel(
       overviewData.topCustomers,
       [
-        { header: 'Mã KH', key: 'customerId', width: 15 },
-        { header: 'Tên khách hàng', key: 'customerName', width: 30 },
-        { header: 'Doanh thu', key: 'totalRevenue', width: 20 },
-        { header: 'Chi phí', key: 'totalCogs', width: 20 },
-        { header: 'Lợi nhuận', key: 'grossProfit', width: 20 },
+        { header: t('export.headers.customer_id'), key: 'customerId', width: 15 },
+        { header: t('export.headers.customer_name'), key: 'customerName', width: 30 },
+        { header: t('export.headers.total_revenue'), key: 'totalRevenue', width: 20 },
+        { header: t('export.headers.total_cogs'), key: 'totalCogs', width: 20 },
+        { header: t('export.headers.gross_profit'), key: 'grossProfit', width: 20 },
       ],
       `top-customers-${selectedMonth}`,
-      'Top khách hàng'
+      t('export.title.top_customers')
     )
-    toast.success('Đã tải xuống danh sách khách hàng (Excel)')
+    toast.success(t('export.top_customers_downloaded'))
   }
 
   // Error state
@@ -226,10 +228,12 @@ export default function CustomerAdminDashboard() {
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription className="flex items-center justify-between">
-            <span>Không thể tải dữ liệu dashboard: {error?.message || 'Lỗi không xác định'}</span>
+            <span>
+              {t('dashboard.error.load_failed')}: {error?.message || t('dashboard.error.unknown')}
+            </span>
             <Button variant="outline" size="sm" onClick={() => refetch()}>
               <RefreshCw className="mr-2 h-4 w-4" />
-              Thử lại
+              {t('button.retry')}
             </Button>
           </AlertDescription>
         </Alert>
@@ -243,16 +247,16 @@ export default function CustomerAdminDashboard() {
   }
 
   return (
-    <SystemPageLayout>
+    <SystemPageLayout fullWidth>
       <SystemPageHeader
-        title="Dashboard Tổng quan"
-        subtitle={`Tháng ${selectedMonth} • Administrator`}
-        stats="Chào mừng trở lại, Administrator. Dưới đây là tổng hợp hoạt động hệ thống hôm nay."
+        title={t('dashboard.overview.title')}
+        subtitle={t('dashboard.overview.subtitle', { month: selectedMonth, role: 'Administrator' })}
+        stats={t('dashboard.overview.stats', { name: 'Administrator' })}
         breadcrumb={
           <>
-            <span>Dashboard</span>
+            <span>{t('nav.dashboard')}</span>
             <ChevronRight className="h-3 w-3" />
-            <span>Tổng quan</span>
+            <span>{t('nav.overview')}</span>
             <ChevronRight className="h-3 w-3" />
             <span>{selectedMonth}</span>
           </>
@@ -262,9 +266,8 @@ export default function CustomerAdminDashboard() {
           <>
             <Button className="h-10 rounded-full border-0 bg-white px-5 text-sm font-semibold text-[var(--brand-500)] shadow-sm hover:bg-[var(--brand-50)]">
               <FileText className="mr-2 h-4 w-4" />
-              Xem báo cáo chi tiết
+              {t('dashboard.overview.actions.view_report')}
             </Button>
-            {/* 'Cấu hình hiển thị' button removed per request */}
           </>
         }
       />
@@ -278,7 +281,7 @@ export default function CustomerAdminDashboard() {
           className="bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
         >
           <PlayCircle className="mr-2 h-4 w-4" />
-          {isAggregating ? 'Đang tổng hợp...' : 'Tổng hợp dữ liệu tháng'}
+          {isAggregating ? t('dashboard.aggregation.running') : t('dashboard.aggregation.button')}
         </Button>
       </div>
 
@@ -332,6 +335,7 @@ export default function CustomerAdminDashboard() {
           isLoading={isLoading}
           onViewDetails={() => router.push('/system/reports')}
           onExport={handleExportCostBreakdown}
+          baseCurrency={displayCurrency}
         />
         <AlertsSummary
           kpis={overviewData?.kpis}

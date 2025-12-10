@@ -22,6 +22,7 @@ import {
 import type { TopCustomer } from '@/types/dashboard'
 import { cn } from '@/lib/utils/cn'
 import internalApiClient from '@/lib/api/internal-client'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 interface CustomerDetailsModalProps {
   open: boolean
@@ -84,6 +85,7 @@ export function CustomerDetailsModal({
   month,
   baseCurrency,
 }: CustomerDetailsModalProps) {
+  const { t, locale } = useLocale()
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null)
   // Fetch top customers when modal is opened. Use React Query to manage cache.
   const { data: topCustomers } = useQuery({
@@ -118,8 +120,10 @@ export function CustomerDetailsModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <SystemModalLayout
-        title="Top khách hàng"
-        description={`Danh sách ${(topCustomers ?? []).length} khách hàng chi tiêu cao nhất trong tháng ${month}`}
+        title={t('dashboard.top_customers.title')}
+        description={t('dashboard.top_customers.description_with_count', {
+          count: (topCustomers ?? []).length,
+        })}
         icon={Building2}
         variant="view"
         maxWidth="!max-w-[80vw]"
@@ -205,18 +209,21 @@ export function CustomerDetailsModal({
                                   index === 2 && 'bg-orange-500'
                                 )}
                               >
-                                Top {index + 1}
+                                {t('dashboard.top_customers.rank', { rank: index + 1 })}
                               </Badge>
                             )}
                           </div>
-                          <p className="text-xs text-gray-500">ID: {customer.customerId}</p>
+                          <p className="text-xs text-gray-500">
+                            {t('dashboard.top_customers.id_label', { id: customer.customerId })}
+                          </p>
                         </div>
                         <div className="text-right">
                           <p className="text-lg font-bold text-gray-900">
                             {formatCurrency(revenue, baseCurrency || customer.baseCurrency)}
                           </p>
                           <p className="text-xs text-gray-500">
-                            Chi phí: {formatCurrency(cogs, baseCurrency || customer.baseCurrency)}
+                            {t('dashboard.top_customers.cost_label')}:{' '}
+                            {formatCurrency(cogs, baseCurrency || customer.baseCurrency)}
                           </p>
                           <p
                             className={cn(
@@ -226,11 +233,13 @@ export function CustomerDetailsModal({
                                 : 'text-[var(--error-600)]'
                             )}
                           >
-                            Lợi nhuận:{' '}
+                            {t('dashboard.top_customers.profit_label')}:{' '}
                             {formatCurrency(profit, baseCurrency || customer.baseCurrency)}
                           </p>
                           <p className="mt-1 text-xs text-gray-400">
-                            {percentage.toFixed(1)}% tổng doanh thu
+                            {t('dashboard.top_customers.revenue_percentage', {
+                              value: percentage.toFixed(1),
+                            })}
                           </p>
                         </div>
                       </div>
@@ -254,7 +263,7 @@ export function CustomerDetailsModal({
                     <ArrowLeft className="h-5 w-5" />
                   </Button>
                   <div>
-                    <h3 className="text-2xl font-bold">Chi tiết khách hàng</h3>
+                    <h3 className="text-2xl font-bold">{t('dashboard.customer_detail.title')}</h3>
                     <p className="text-sm text-gray-600">
                       {
                         (topCustomers ?? []).find((c) => c.customerId === selectedCustomerId)
@@ -279,7 +288,7 @@ export function CustomerDetailsModal({
                       <CardHeader className="pb-3">
                         <CardTitle className="flex items-center gap-2 text-sm">
                           <DollarSign className="h-4 w-4" />
-                          Tổng chi phí
+                          {t('dashboard.customer_detail.total_cost')}
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
@@ -302,12 +311,12 @@ export function CustomerDetailsModal({
                             ) : (
                               <TrendingDown className="h-4 w-4" />
                             )}
-                            {Math.abs(customerDetails.kpis.costChangePercent).toFixed(1)}% so với
-                            tháng trước
+                            {Math.abs(customerDetails.kpis.costChangePercent).toFixed(1)}%{' '}
+                            {t('dashboard.customer_detail.compared_to_last_month')}
                           </div>
                         ) : (
                           <p className="mt-1 text-xs text-gray-500">
-                            Chưa có dữ liệu tháng trước để so sánh
+                            {t('dashboard.customer_detail.no_previous_data')}
                           </p>
                         )}
                       </CardContent>
@@ -317,7 +326,7 @@ export function CustomerDetailsModal({
                       <CardHeader className="pb-3">
                         <CardTitle className="flex items-center gap-2 text-sm">
                           <FileText className="h-4 w-4" />
-                          Tổng trang in
+                          {t('dashboard.customer_detail.total_pages')}
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
@@ -328,7 +337,8 @@ export function CustomerDetailsModal({
                         </p>
                         <p className="text-xs text-gray-500">
                           {formatNumber(customerDetails.kpis.totalBWPages)} BW •{' '}
-                          {formatNumber(customerDetails.kpis.totalColorPages)} Màu
+                          {formatNumber(customerDetails.kpis.totalColorPages)}{' '}
+                          {t('dashboard.customer_detail.color')}
                         </p>
                       </CardContent>
                     </Card>
@@ -337,13 +347,15 @@ export function CustomerDetailsModal({
                   {/* Cost Breakdown */}
                   <Card>
                     <CardHeader>
-                      <CardTitle className="text-sm">Phân tích chi phí</CardTitle>
+                      <CardTitle className="text-sm">
+                        {t('dashboard.customer_detail.cost_breakdown')}
+                      </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-3">
                         <div>
                           <div className="mb-1 flex justify-between text-sm">
-                            <span>Thuê máy</span>
+                            <span>{t('dashboard.customer_detail.rental')}</span>
                             <span className="font-semibold">
                               {customerDetails.costBreakdown.rentalPercent.toFixed(1)}%
                             </span>
@@ -357,7 +369,7 @@ export function CustomerDetailsModal({
                         </div>
                         <div>
                           <div className="mb-1 flex justify-between text-sm">
-                            <span>Sửa chữa</span>
+                            <span>{t('dashboard.customer_detail.repair')}</span>
                             <span className="font-semibold">
                               {customerDetails.costBreakdown.repairPercent.toFixed(1)}%
                             </span>
@@ -371,7 +383,7 @@ export function CustomerDetailsModal({
                         </div>
                         <div>
                           <div className="mb-1 flex justify-between text-sm">
-                            <span>In đen trắng</span>
+                            <span>{t('dashboard.customer_detail.page_bw')}</span>
                             <span className="font-semibold">
                               {customerDetails.costBreakdown.pageBWPercent.toFixed(1)}%
                             </span>
@@ -385,7 +397,7 @@ export function CustomerDetailsModal({
                         </div>
                         <div>
                           <div className="mb-1 flex justify-between text-sm">
-                            <span>In màu</span>
+                            <span>{t('dashboard.customer_detail.page_color')}</span>
                             <span className="font-semibold">
                               {customerDetails.costBreakdown.pageColorPercent.toFixed(1)}%
                             </span>
@@ -409,7 +421,7 @@ export function CustomerDetailsModal({
                       <CardHeader>
                         <CardTitle className="flex items-center gap-2 text-sm">
                           <Printer className="h-4 w-4" />
-                          Thiết bị chi phí cao nhất
+                          {t('dashboard.customer_detail.top_devices')}
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
@@ -420,7 +432,9 @@ export function CustomerDetailsModal({
                               className="flex items-center justify-between rounded border p-2"
                             >
                               <div>
-                                <p className="text-sm font-medium">Thiết bị #{idx + 1}</p>
+                                <p className="text-sm font-medium">
+                                  {t('dashboard.customer_detail.device_label', { index: idx + 1 })}
+                                </p>
                                 <p className="text-xs text-gray-500">{device.deviceId}</p>
                               </div>
                               <p className="font-bold">{formatCurrency(device.totalCost)}</p>
@@ -438,7 +452,9 @@ export function CustomerDetailsModal({
                         <CardHeader>
                           <CardTitle className="flex items-center gap-2 text-sm">
                             <AlertTriangle className="h-4 w-4 text-orange-500" />
-                            Cảnh báo vật tư ({customerDetails.consumableAlerts.length})
+                            {t('dashboard.customer_detail.consumable_alerts', {
+                              count: customerDetails.consumableAlerts.length,
+                            })}
                           </CardTitle>
                         </CardHeader>
                         <CardContent>
@@ -451,7 +467,9 @@ export function CustomerDetailsModal({
                                 <p className="text-sm font-semibold">{alert.title}</p>
                                 <p className="text-xs text-gray-600">{alert.message}</p>
                                 <p className="mt-1 text-xs text-gray-500">
-                                  {new Date(alert.createdAt).toLocaleString('vi-VN')}
+                                  {new Date(alert.createdAt).toLocaleString(
+                                    locale === 'vi' ? 'vi-VN' : 'en-US'
+                                  )}
                                 </p>
                               </div>
                             ))}
@@ -462,7 +480,7 @@ export function CustomerDetailsModal({
                 </div>
               ) : (
                 <div className="mt-6 text-center text-gray-500">
-                  <p>Không thể tải thông tin chi tiết</p>
+                  <p>{t('dashboard.customer_detail.load_error')}</p>
                 </div>
               )}
             </motion.div>
