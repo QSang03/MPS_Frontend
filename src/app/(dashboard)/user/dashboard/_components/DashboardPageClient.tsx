@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useLocale } from '@/components/providers/LocaleProvider'
 import { SystemPageHeader } from '@/components/system/SystemPageHeader'
@@ -47,18 +47,31 @@ import MonthPicker from '@/components/ui/month-picker'
 
 // `Skeleton` removed — not used in this module
 
-const formatCurrency = (value: number) =>
-  new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value)
-
 const formatNumber = (value: number) => new Intl.NumberFormat('en-US').format(value)
 
 type Overview = {
   month: string
   customerId: string
+  customer?: {
+    id?: string
+    name?: string
+    code?: string
+    isActive?: boolean
+    defaultCurrency?: {
+      id?: string
+      code?: string
+      name?: string
+      symbol?: string
+      isActive?: boolean
+      createdAt?: string
+      updatedAt?: string
+    }
+  }
   kpis: {
     totalCost?: number
     totalBWPages?: number
     totalColorPages?: number
+    previousMonthTotalCost?: number
   }
   topDevices?: Array<{
     deviceId?: string
@@ -114,7 +127,29 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
   const [error, setError] = useState<string | null>(null)
   const [expandedDeviceId, setExpandedDeviceId] = useState<string | null>(null)
 
-  const { t } = useLocale()
+  const { t, locale } = useLocale()
+
+  // Dynamic currency formatter based on customer/base currency
+  const currencyCode =
+    overview?.customer?.defaultCurrency?.code || overview?.baseCurrency?.code || 'USD'
+
+  const formatCurrency = useCallback(
+    (value: number) => {
+      try {
+        return new Intl.NumberFormat(locale || 'vi-VN', {
+          style: 'currency',
+          currency: currencyCode,
+          currencyDisplay: 'symbol',
+        }).format(value ?? 0)
+      } catch {
+        return new Intl.NumberFormat(locale || 'vi-VN', {
+          style: 'currency',
+          currency: 'USD',
+        }).format(value ?? 0)
+      }
+    },
+    [currencyCode, locale]
+  )
 
   // Get month from URL searchParams or prop or default to current month
   const now = new Date()

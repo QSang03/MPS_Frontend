@@ -22,6 +22,7 @@ import type {
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils/cn'
 import { toast } from 'sonner'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import {
   ResponsiveContainer,
   CartesianGrid,
@@ -46,9 +47,11 @@ type TimeRangeMode = 'period' | 'range' | 'year'
 type TimeFilter = { period?: string; from?: string; to?: string; year?: string }
 
 export default function UsagePageClient() {
+  const { t, locale } = useLocale()
+
   const formatNumber = (n?: number | null) => {
     if (n === undefined || n === null || Number.isNaN(Number(n))) return '-'
-    return Number(n).toLocaleString('vi-VN')
+    return Number(n).toLocaleString(locale || 'en-US')
   }
 
   // Global time filter
@@ -188,15 +191,15 @@ export default function UsagePageClient() {
       }
 
       if (mode === 'period' && !params.period) {
-        toast.warning('Vui lòng chọn tháng')
+        toast.warning(t('analytics.warning.choose_month'))
         return
       }
       if (mode === 'range' && (!params.from || !params.to)) {
-        toast.warning('Vui lòng chọn khoảng thời gian')
+        toast.warning(t('analytics.warning.choose_range'))
         return
       }
       if (mode === 'year' && !params.year) {
-        toast.warning('Vui lòng chọn năm')
+        toast.warning(t('analytics.warning.choose_year'))
         return
       }
       setEnterpriseLoading(true)
@@ -206,7 +209,7 @@ export default function UsagePageClient() {
           const fromDate = new Date(String(cleaned.from) + '-01')
           const toDate = new Date(String(cleaned.to) + '-01')
           if (fromDate > toDate) {
-            toast.warning('Tháng bắt đầu phải nhỏ hơn tháng kết thúc')
+            toast.warning(t('analytics.error.invalid_range'))
             setEnterpriseLoading(false)
             return
           }
@@ -215,9 +218,9 @@ export default function UsagePageClient() {
         if (res.success && res.data) {
           setEnterpriseData(res.data)
         } else {
-          const msg = res.message || 'Không thể tải dữ liệu'
+          const msg = res.message || t('analytics.error.load_failed')
           if (msg.toLowerCase().includes('no data')) {
-            toast.warning('Không có dữ liệu cho kỳ này')
+            toast.warning(t('analytics.warning.no_data'))
           } else {
             toast.error(msg)
           }
@@ -225,13 +228,13 @@ export default function UsagePageClient() {
         }
       } catch (e) {
         console.error(e)
-        toast.error('Không thể tải dữ liệu')
+        toast.error(t('analytics.error.load_failed'))
         setEnterpriseData(null)
       } finally {
         setEnterpriseLoading(false)
       }
     },
-    [globalPeriod, globalMode, globalFrom, globalTo, globalYear]
+    [globalPeriod, globalMode, globalFrom, globalTo, globalYear, t]
   )
 
   // Load Customers Usage
@@ -249,15 +252,15 @@ export default function UsagePageClient() {
         } else if (mode === 'year') params.year = globalYear
       }
       if (mode === 'period' && !params.period) {
-        toast.warning('Vui lòng chọn tháng')
+        toast.warning(t('analytics.warning.choose_month'))
         return
       }
       if (mode === 'range' && (!params.from || !params.to)) {
-        toast.warning('Vui lòng chọn khoảng thời gian')
+        toast.warning(t('analytics.warning.choose_range'))
         return
       }
       if (mode === 'year' && !params.year) {
-        toast.warning('Vui lòng chọn năm')
+        toast.warning(t('analytics.warning.choose_year'))
         return
       }
       setCustomersLoading(true)
@@ -267,7 +270,7 @@ export default function UsagePageClient() {
           const fromDate = new Date(String(cleaned.from) + '-01')
           const toDate = new Date(String(cleaned.to) + '-01')
           if (fromDate > toDate) {
-            toast.warning('Tháng bắt đầu phải nhỏ hơn tháng kết thúc')
+            toast.warning(t('analytics.error.invalid_range'))
             setCustomersLoading(false)
             return
           }
@@ -276,9 +279,9 @@ export default function UsagePageClient() {
         if (res.success && res.data) {
           setCustomersData(res.data.customers)
         } else {
-          const msg = res.message || 'Không thể tải dữ liệu'
+          const msg = res.message || t('analytics.error.load_failed')
           if (msg.toLowerCase().includes('no data')) {
-            toast.warning('Không có dữ liệu cho kỳ này')
+            toast.warning(t('analytics.warning.no_data'))
           } else {
             toast.error(msg)
           }
@@ -286,13 +289,13 @@ export default function UsagePageClient() {
         }
       } catch (e) {
         console.error(e)
-        toast.error('Không thể tải dữ liệu')
+        toast.error(t('analytics.error.load_failed'))
         setCustomersData([])
       } finally {
         setCustomersLoading(false)
       }
     },
-    [globalPeriod, globalMode, globalFrom, globalTo, globalYear]
+    [globalPeriod, globalMode, globalFrom, globalTo, globalYear, t]
   )
 
   // Load Customer Detail
@@ -312,7 +315,7 @@ export default function UsagePageClient() {
         } else if (globalMode === 'year') params.year = globalYear
       }
       if (!idToUse) {
-        toast.warning('Vui lòng chọn khách hàng')
+        toast.warning(t('analytics.warning.choose_customer'))
         return
       }
 
@@ -323,9 +326,9 @@ export default function UsagePageClient() {
           setCustomerDetailData(res.data)
           setSelectedCustomerId(idToUse)
         } else {
-          const msg = res.message || 'Không thể tải dữ liệu'
+          const msg = res.message || t('analytics.error.load_failed')
           if (msg.toLowerCase().includes('no data')) {
-            toast.warning('Không có dữ liệu cho kỳ này')
+            toast.warning(t('analytics.warning.no_data'))
           } else {
             toast.error(msg)
           }
@@ -333,13 +336,13 @@ export default function UsagePageClient() {
         }
       } catch (e) {
         console.error(e)
-        toast.error('Không thể tải dữ liệu')
+        toast.error(t('analytics.error.load_failed'))
         setCustomerDetailData(null)
       } finally {
         setCustomerDetailLoading(false)
       }
     },
-    [selectedCustomerId, globalMode, globalPeriod, globalFrom, globalTo, globalYear]
+    [selectedCustomerId, globalMode, globalPeriod, globalFrom, globalTo, globalYear, t]
   )
 
   // Load Device Usage
@@ -355,7 +358,7 @@ export default function UsagePageClient() {
         } else if (globalMode === 'year') params.year = globalYear
       }
       if (!selectedDeviceId) {
-        toast.warning('Vui lòng chọn thiết bị')
+        toast.warning(t('analytics.warning.choose_device'))
         return
       }
       setDeviceLoading(true)
@@ -365,9 +368,9 @@ export default function UsagePageClient() {
         if (res.success && res.data) {
           setDeviceData(res.data)
         } else {
-          const msg = res.message || 'Không thể tải dữ liệu'
+          const msg = res.message || t('analytics.error.load_failed')
           if (msg.toLowerCase().includes('no data')) {
-            toast.warning('Không có dữ liệu cho kỳ này')
+            toast.warning(t('analytics.warning.no_data'))
           } else {
             toast.error(msg)
           }
@@ -375,13 +378,13 @@ export default function UsagePageClient() {
         }
       } catch (e) {
         console.error(e)
-        toast.error('Không thể tải dữ liệu')
+        toast.error(t('analytics.error.load_failed'))
         setDeviceData(null)
       } finally {
         setDeviceLoading(false)
       }
     },
-    [selectedDeviceId, globalMode, globalPeriod, globalFrom, globalTo, globalYear]
+    [selectedDeviceId, globalMode, globalPeriod, globalFrom, globalTo, globalYear, t]
   )
 
   // Load all concurrent
@@ -468,14 +471,16 @@ export default function UsagePageClient() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Thống kê sử dụng</h2>
+        <h2 className="text-2xl font-bold">{t('analytics.title')}</h2>
       </div>
 
       {/* Global time filter */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">Bộ lọc thời gian</CardTitle>
-          <CardDescription>Áp dụng cho tất cả các phần</CardDescription>
+          <CardTitle className="flex items-center gap-2">
+            {t('analytics.filters.time.title')}
+          </CardTitle>
+          <CardDescription>{t('analytics.filters.time.description')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-3">
@@ -508,15 +513,15 @@ export default function UsagePageClient() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="period">Tháng</SelectItem>
-                  <SelectItem value="range">Khoảng thời gian</SelectItem>
-                  <SelectItem value="year">Năm</SelectItem>
+                  <SelectItem value="period">{t('analytics.mode.period')}</SelectItem>
+                  <SelectItem value="range">{t('analytics.mode.range')}</SelectItem>
+                  <SelectItem value="year">{t('analytics.mode.year')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             {globalMode === 'period' && (
               <MonthPicker
-                placeholder="Chọn tháng"
+                placeholder={t('analytics.filters.period.placeholder')}
                 value={globalPeriod}
                 onChange={(v) => setGlobalPeriod(v)}
               />
@@ -524,12 +529,12 @@ export default function UsagePageClient() {
             {globalMode === 'range' && (
               <>
                 <MonthPicker
-                  placeholder="Từ tháng"
+                  placeholder={t('analytics.filters.range.from_placeholder')}
                   value={globalFrom}
                   onChange={(v) => setGlobalFrom(v)}
                 />
                 <MonthPicker
-                  placeholder="Đến tháng"
+                  placeholder={t('analytics.filters.range.to_placeholder')}
                   value={globalTo}
                   onChange={(v) => setGlobalTo(v)}
                 />
@@ -557,7 +562,7 @@ export default function UsagePageClient() {
                 }, 50)
               }}
             >
-              Áp dụng
+              {t('analytics.actions.apply')}
             </Button>
           </div>
         </CardContent>
@@ -568,20 +573,20 @@ export default function UsagePageClient() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5 text-[var(--brand-600)]" />
-            Tổng quan doanh nghiệp
+            {t('analytics.enterprise.title')}
           </CardTitle>
-          <CardDescription>Thống kê sử dụng toàn hệ thống</CardDescription>
+          <CardDescription>{t('analytics.enterprise.description')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="mb-4 flex gap-3">
             <div className="flex items-center gap-2">
               <Calendar className="text-muted-foreground h-4 w-4" />
               <div className="text-sm">
-                Kỳ:{' '}
+                {t('analytics.enterprise.period_label')}{' '}
                 {globalMode === 'period'
                   ? globalPeriod
                   : globalMode === 'range'
-                    ? `${globalFrom} đến ${globalTo}`
+                    ? `${globalFrom} ${t('analytics.range.to')} ${globalTo}`
                     : globalYear}
               </div>
             </div>
@@ -598,7 +603,7 @@ export default function UsagePageClient() {
               disabled={enterpriseLoading}
             >
               {enterpriseLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              Tải dữ liệu
+              {t('analytics.actions.fetch')}
             </Button>
           </div>
 
@@ -607,7 +612,7 @@ export default function UsagePageClient() {
               <Card className="border-[var(--brand-200)] bg-[var(--brand-50)]">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium text-[var(--brand-700)]">
-                    Tổng số trang
+                    {t('analytics.enterprise.total_pages')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -615,8 +620,10 @@ export default function UsagePageClient() {
                     {formatNumber(enterpriseData.totalPages)}
                   </div>
                   <p className="text-muted-foreground mt-1 text-xs">
-                    {enterpriseData.devicesCount} thiết bị • {enterpriseData.customersCount} khách
-                    hàng
+                    {t('analytics.enterprise.devices_customers', {
+                      devices: String(enterpriseData.devicesCount),
+                      customers: String(enterpriseData.customersCount),
+                    })}
                   </p>
                 </CardContent>
               </Card>
@@ -624,7 +631,7 @@ export default function UsagePageClient() {
               <Card className="border-green-200 bg-green-50">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium text-green-700">
-                    Trang đen trắng
+                    {t('analytics.enterprise.bw_pages')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -632,7 +639,7 @@ export default function UsagePageClient() {
                     {formatNumber(enterpriseData.totalBwPages)}
                   </div>
                   <p className="text-muted-foreground mt-1 text-xs">
-                    A4: {formatNumber(enterpriseData.totalBwPagesA4)}
+                    {t('analytics.a4_label')}: {formatNumber(enterpriseData.totalBwPagesA4)}
                   </p>
                 </CardContent>
               </Card>
@@ -640,7 +647,7 @@ export default function UsagePageClient() {
               <Card className="border-[var(--brand-200)] bg-[var(--brand-50)]">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium text-[var(--brand-700)]">
-                    Trang màu
+                    {t('analytics.enterprise.color_pages')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -648,7 +655,7 @@ export default function UsagePageClient() {
                     {formatNumber(enterpriseData.totalColorPages)}
                   </div>
                   <p className="text-muted-foreground mt-1 text-xs">
-                    A4: {formatNumber(enterpriseData.totalColorPagesA4)}
+                    {t('analytics.a4_label')}: {formatNumber(enterpriseData.totalColorPagesA4)}
                   </p>
                 </CardContent>
               </Card>
@@ -662,14 +669,14 @@ export default function UsagePageClient() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5 text-[var(--color-success-600)]" />
-            Danh sách khách hàng
+            {t('analytics.customers.title')}
           </CardTitle>
-          <CardDescription>Thống kê sử dụng theo khách hàng</CardDescription>
+          <CardDescription>{t('analytics.customers.description')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="mb-4 flex gap-3">
             <CustomerSelect
-              placeholder="Chọn khách hàng"
+              placeholder={t('analytics.placeholders.choose_customer')}
               value={selectedCustomerId}
               onChange={(id) => {
                 setSelectedCustomerId(id || '')
@@ -685,7 +692,7 @@ export default function UsagePageClient() {
                 setCustomerDetailData(null)
               }}
             >
-              Tất cả
+              {t('analytics.actions.all')}
             </Button>
           </div>
 
@@ -728,14 +735,14 @@ export default function UsagePageClient() {
                     dataKey="bwPages"
                     stackId="pages"
                     fill="var(--color-success-500)"
-                    name="Đen trắng"
+                    name={t('analytics.bw_label')}
                     radius={[4, 4, 0, 0]}
                   />
                   <Bar
                     dataKey="colorPages"
                     stackId="pages"
                     fill="var(--brand-500)"
-                    name="Màu"
+                    name={t('analytics.color_label')}
                     radius={[0, 0, 4, 4]}
                   >
                     <LabelList
@@ -757,11 +764,21 @@ export default function UsagePageClient() {
               <table className="min-w-full divide-y">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-4 py-3 text-left text-sm font-semibold">Khách hàng</th>
-                    <th className="px-4 py-3 text-right text-sm font-semibold">Tổng trang</th>
-                    <th className="px-4 py-3 text-right text-sm font-semibold">Đen trắng</th>
-                    <th className="px-4 py-3 text-right text-sm font-semibold">Màu</th>
-                    <th className="px-4 py-3 text-right text-sm font-semibold">Thiết bị</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold">
+                      {t('analytics.table.customer')}
+                    </th>
+                    <th className="px-4 py-3 text-right text-sm font-semibold">
+                      {t('analytics.table.total_pages')}
+                    </th>
+                    <th className="px-4 py-3 text-right text-sm font-semibold">
+                      {t('analytics.table.bw_pages')}
+                    </th>
+                    <th className="px-4 py-3 text-right text-sm font-semibold">
+                      {t('analytics.table.color_pages')}
+                    </th>
+                    <th className="px-4 py-3 text-right text-sm font-semibold">
+                      {t('analytics.table.devices')}
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
@@ -799,7 +816,7 @@ export default function UsagePageClient() {
               </table>
             </div>
           ) : (
-            <div className="py-12 text-center text-sm text-gray-500">Không có dữ liệu</div>
+            <div className="py-12 text-center text-sm text-gray-500">{t('analytics.no_data')}</div>
           )}
         </CardContent>
       </Card>
@@ -810,7 +827,7 @@ export default function UsagePageClient() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Users className="h-5 w-5 text-[var(--brand-600)]" />
-              Chi tiết khách hàng
+              {t('analytics.customer_detail.title')}
             </CardTitle>
             <CardDescription>{customerDetailData.customer.name}</CardDescription>
           </CardHeader>
@@ -819,25 +836,25 @@ export default function UsagePageClient() {
               <h3 className="mb-2 text-lg font-semibold">{customerDetailData.customer.name}</h3>
               <div className="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
                 <div>
-                  <span className="text-muted-foreground">Tổng trang</span>
+                  <span className="text-muted-foreground">{t('analytics.detail.total_pages')}</span>
                   <p className="font-semibold">
                     {formatNumber(customerDetailData.customer.totalPages)}
                   </p>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Đen trắng</span>
+                  <span className="text-muted-foreground">{t('analytics.detail.bw_pages')}</span>
                   <p className="font-semibold">
                     {formatNumber(customerDetailData.customer.totalBwPages)}
                   </p>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Màu</span>
+                  <span className="text-muted-foreground">{t('analytics.detail.color_pages')}</span>
                   <p className="font-semibold">
                     {formatNumber(customerDetailData.customer.totalColorPages)}
                   </p>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">A4</span>
+                  <span className="text-muted-foreground">{t('analytics.a4_label')}</span>
                   <p className="font-semibold">
                     {formatNumber(customerDetailData.customer.totalPagesA4)}
                   </p>
@@ -854,9 +871,9 @@ export default function UsagePageClient() {
                     if (globalMode === 'period' && customerDetailData.usage.length === 1) {
                       const single = customerDetailData.usage[0]
                       const chartConfig: ChartConfig = {
-                        totalPages: { label: 'Tổng trang', color: '#3b82f6' },
-                        bwPages: { label: 'Đen trắng', color: '#10b981' },
-                        colorPages: { label: 'Màu', color: '#8b5cf6' },
+                        totalPages: { label: t('analytics.detail.total_pages'), color: '#3b82f6' },
+                        bwPages: { label: t('analytics.detail.bw_pages'), color: '#10b981' },
+                        colorPages: { label: t('analytics.detail.color_pages'), color: '#8b5cf6' },
                       }
                       return (
                         <ChartContainer
@@ -953,9 +970,9 @@ export default function UsagePageClient() {
                       colorPages: u.colorPages,
                     }))
                     const chartConfig: ChartConfig = {
-                      totalPages: { label: 'Tổng trang', color: '#3b82f6' },
-                      bwPages: { label: 'Đen trắng', color: '#10b981' },
-                      colorPages: { label: 'Màu', color: '#8b5cf6' },
+                      totalPages: { label: t('analytics.detail.total_pages'), color: '#3b82f6' },
+                      bwPages: { label: t('analytics.detail.bw_pages'), color: '#10b981' },
+                      colorPages: { label: t('analytics.detail.color_pages'), color: '#8b5cf6' },
                     }
                     return (
                       <ChartContainer
@@ -1086,14 +1103,14 @@ export default function UsagePageClient() {
                         dataKey="bwPages"
                         stackId="pages"
                         fill="var(--color-success-500)"
-                        name="Đen trắng"
+                        name={t('analytics.bw_label')}
                         radius={[4, 4, 0, 0]}
                       />
                       <Bar
                         dataKey="colorPages"
                         stackId="pages"
                         fill="var(--brand-500)"
-                        name="Màu"
+                        name={t('analytics.color_label')}
                         radius={[0, 0, 4, 4]}
                       >
                         <LabelList
@@ -1113,12 +1130,24 @@ export default function UsagePageClient() {
               <table className="min-w-full divide-y">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-4 py-3 text-left text-sm font-semibold">Thiết bị</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold">Serial</th>
-                    <th className="px-4 py-3 text-right text-sm font-semibold">Tổng trang</th>
-                    <th className="px-4 py-3 text-right text-sm font-semibold">Đen trắng</th>
-                    <th className="px-4 py-3 text-right text-sm font-semibold">Màu</th>
-                    <th className="px-4 py-3 text-center text-sm font-semibold">Thao tác</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold">
+                      {t('analytics.table.device')}
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold">
+                      {t('analytics.table.serial')}
+                    </th>
+                    <th className="px-4 py-3 text-right text-sm font-semibold">
+                      {t('analytics.table.total_pages')}
+                    </th>
+                    <th className="px-4 py-3 text-right text-sm font-semibold">
+                      {t('analytics.table.bw_pages')}
+                    </th>
+                    <th className="px-4 py-3 text-right text-sm font-semibold">
+                      {t('analytics.table.color_pages')}
+                    </th>
+                    <th className="px-4 py-3 text-center text-sm font-semibold">
+                      {t('analytics.table.actions')}
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
@@ -1141,7 +1170,7 @@ export default function UsagePageClient() {
                             setSelectedDeviceId(d.deviceId)
                           }}
                         >
-                          Xem chi tiết
+                          {t('analytics.actions.view_detail')}
                         </Button>
                       </td>
                     </tr>
@@ -1159,7 +1188,7 @@ export default function UsagePageClient() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Printer className="h-5 w-5 text-violet-600" />
-              Chi tiết thiết bị
+              {t('analytics.device_detail.title')}
             </CardTitle>
             <CardDescription>
               {deviceData.device.model} - {deviceData.device.serialNumber}
@@ -1167,7 +1196,9 @@ export default function UsagePageClient() {
           </CardHeader>
           <CardContent>
             {deviceData.usage.length === 0 ? (
-              <div className="py-12 text-center text-sm text-gray-500">Không có dữ liệu</div>
+              <div className="py-12 text-center text-sm text-gray-500">
+                {t('analytics.no_data')}
+              </div>
             ) : (
               <>
                 {/* Bar Chart */}
@@ -1208,14 +1239,14 @@ export default function UsagePageClient() {
                         dataKey="bwPages"
                         stackId="pages"
                         fill="var(--color-success-500)"
-                        name="Đen trắng"
+                        name={t('analytics.bw_label')}
                         radius={[4, 4, 0, 0]}
                       />
                       <Bar
                         dataKey="colorPages"
                         stackId="pages"
                         fill="var(--brand-500)"
-                        name="Màu"
+                        name={t('analytics.color_label')}
                         radius={[0, 0, 4, 4]}
                       >
                         <LabelList
@@ -1234,10 +1265,18 @@ export default function UsagePageClient() {
                   <table className="min-w-full divide-y">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-4 py-3 text-left text-sm font-semibold">Tháng</th>
-                        <th className="px-4 py-3 text-right text-sm font-semibold">Tổng trang</th>
-                        <th className="px-4 py-3 text-right text-sm font-semibold">Đen trắng</th>
-                        <th className="px-4 py-3 text-right text-sm font-semibold">Màu</th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold">
+                          {t('analytics.table.month')}
+                        </th>
+                        <th className="px-4 py-3 text-right text-sm font-semibold">
+                          {t('analytics.table.total_pages')}
+                        </th>
+                        <th className="px-4 py-3 text-right text-sm font-semibold">
+                          {t('analytics.table.bw_pages')}
+                        </th>
+                        <th className="px-4 py-3 text-right text-sm font-semibold">
+                          {t('analytics.table.color_pages')}
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y">

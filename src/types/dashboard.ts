@@ -125,6 +125,13 @@ export interface AdminOverviewData {
   costBreakdown: CostBreakdown
   topCustomers: TopCustomer[]
   monthlySeries: MonthlySeries
+  customer?: {
+    id?: string
+    name?: string
+    code?: string
+    isActive?: boolean
+    defaultCurrency?: import('@/types/models/currency').CurrencyDataDto | null
+  }
   // Currency information (only for System Admin context)
   baseCurrency?: import('@/types/models/currency').CurrencyDataDto | null
   // Optional detailed alerts structure (for Admin Overview API)

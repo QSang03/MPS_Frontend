@@ -63,6 +63,9 @@ export default function CustomerAdminDashboard() {
   // Fetch admin overview data
   const { data: overviewData, isLoading, isError, error, refetch } = useAdminOverview(selectedMonth)
 
+  // Prefer baseCurrency from API; fallback to customer.defaultCurrency if provided
+  const displayCurrency = overviewData?.baseCurrency || overviewData?.customer?.defaultCurrency
+
   // Handle month change
   const handleMonthChange = (newMonth: string) => {
     setSelectedMonth(newMonth)
@@ -285,7 +288,7 @@ export default function CustomerAdminDashboard() {
         isLoading={isLoading}
         onRevenueClick={() => setShowCustomersModal(true)}
         onContractsClick={() => setShowContractsModal(true)}
-        baseCurrency={overviewData?.baseCurrency}
+        baseCurrency={displayCurrency}
       />
 
       {/* Customer Details Modal */}
@@ -293,7 +296,7 @@ export default function CustomerAdminDashboard() {
         open={showCustomersModal}
         onOpenChange={setShowCustomersModal}
         month={selectedMonth}
-        baseCurrency={overviewData?.baseCurrency}
+        baseCurrency={displayCurrency}
       />
 
       {/* Contracts Modal */}
@@ -345,7 +348,7 @@ export default function CustomerAdminDashboard() {
         isLoading={isLoading}
         onViewDetails={() => router.push('/system/reports')}
         onExport={handleExportMonthlySeries}
-        baseCurrency={overviewData?.baseCurrency}
+        baseCurrency={displayCurrency}
       />
 
       {/* Row 3: Top Customers + Recent Activity */}
@@ -355,7 +358,7 @@ export default function CustomerAdminDashboard() {
           isLoading={isLoading}
           onViewAll={() => router.push('/system/customers')}
           onExport={handleExportTopCustomers}
-          baseCurrency={overviewData?.baseCurrency}
+          baseCurrency={displayCurrency}
         />
         <RecentActivity
           onViewAll={() => router.push('/system/requests')}
