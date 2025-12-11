@@ -2210,6 +2210,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                       // Removed incomplete datetime validation: accept partial input
                       const dto: CreateConsumableDto = {
                         consumableTypeId: selectedConsumableType.id,
+                        deviceId: deviceId,
                         serialNumber: serialNumber || undefined,
                         batchNumber: batchNumber || undefined,
                         capacity: capacity || undefined,

@@ -278,7 +278,6 @@
   "device_model.stats.total_label": "Tổng models",
   "device_model.stats.active_label": "Đang hoạt động",
   "device_model.stats.paused_label": "Không hoạt động",
-
   "device_model.title_create": "Tạo Device Model Mới",
   "device_model.title_edit": "Chỉnh sửa Device Model",
   "device_model.description_create": "Thêm mẫu thiết bị mới vào hệ thống",
@@ -338,7 +337,6 @@
   "device_model.empty.try_filter": "Thử điều chỉnh bộ lọc hoặc tìm kiếm",
   "device_model.empty.create_first": "Hãy tạo device model đầu tiên",
   "common.confirm_delete": "Xác nhận xóa",
-
   "device_model.compatibility.title": "Tương thích vật tư",
   "device_model.compatibility.description": "Các vật tư tương thích cho model: {modelName}",
   "device_model.compatibility.total_label": "Tổng vật tư",
@@ -637,7 +635,6 @@
   "customer.address_update_error": "Không thể cập nhật địa chỉ",
   "customer.address.edit": "Chỉnh sửa địa chỉ",
   "customer.billing_day_value": "Ngày {day}",
-
   "customer.validation.name_required": "Tên khách hàng là bắt buộc",
   "customer.validation.email_invalid": "Email không hợp lệ",
   "customer.validation.phone_invalid": "Số điện thoại không hợp lệ",
@@ -703,7 +700,6 @@
   "notifications.mark_read": "Đánh dấu đã đọc",
   "notifications.view_details": "Xem chi tiết",
   "notifications.list.recent": "Thông báo gần đây",
-
   "alerts.title": "Cảnh báo hệ thống",
   "alerts.description": "Các cảnh báo cần xử lý",
   "alerts.low_consumable.title": "Vật tư tiêu hao sắp hết",
@@ -717,7 +713,6 @@
   "alerts.ok": "Hệ thống hoạt động bình thường",
   "alerts.view_all": "Xem tất cả cảnh báo ({count})",
   "alerts.view_details": "Xem chi tiết",
-
   "common.none": "Không có",
   "alert.severity.critical": "Nghiêm trọng",
   "alert.severity.high": "Cao",
@@ -794,12 +789,10 @@
   "empty.devices.search_result": "Không tìm thấy thiết bị phù hợp với \"{query}\"",
   "empty.devices.try_filter": "Thử điều chỉnh bộ lọc hoặc tìm kiếm",
   "device.create_title": "Tạo thiết bị",
-
   "empty.customers.empty": "Chưa có khách hàng nào",
   "empty.customers.search_result": "Không tìm thấy khách hàng phù hợp với \"{query}\"",
   "empty.customers.try_filter": "Thử điều chỉnh bộ lọc hoặc tìm kiếm",
   "empty.customers.first": "Hãy tạo khách hàng đầu tiên",
-
   "table.code": "Mã",
   "table.address": "Địa chỉ",
   "consumable.stats.total_label": "Tổng vật tư",
@@ -863,7 +856,6 @@
   "loading.addresses": "Đang tải địa chỉ...",
   "device.choose_address_from_list": "Chọn địa chỉ từ danh sách địa chỉ của khách hàng",
   "device.enter_customer_address": "Nhập địa chỉ của thiết bị tại khách hàng",
-
   "device.last_maintenance": "Bảo trì lần cuối",
   "device.next_maintenance": "Bảo trì lần tiếp theo",
   "empty.no_data": "Chưa có dữ liệu",

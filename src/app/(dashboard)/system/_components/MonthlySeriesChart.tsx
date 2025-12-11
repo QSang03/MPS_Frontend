@@ -339,12 +339,16 @@ export function MonthlySeriesChart({
                 style={{
                   backgroundColor: visibleMetrics.includes(key) ? config.color : undefined,
                   borderColor: config.color,
-                  color: visibleMetrics.includes(key) ? 'white' : config.color,
+                  color: visibleMetrics.includes(key) ? 'var(--foreground)' : config.color,
                 }}
               >
                 <span
                   className="mr-2 inline-block h-2 w-2 rounded-full"
-                  style={{ backgroundColor: visibleMetrics.includes(key) ? 'white' : config.color }}
+                  style={{
+                    backgroundColor: visibleMetrics.includes(key)
+                      ? 'var(--foreground)'
+                      : config.color,
+                  }}
                 />
                 {config.label}
               </Button>

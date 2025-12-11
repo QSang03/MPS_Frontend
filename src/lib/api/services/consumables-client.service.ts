@@ -2,6 +2,7 @@ import internalApiClient, { getWithDedupe } from '../internal-client'
 
 export interface CreateConsumableDto {
   consumableTypeId: string
+  deviceId?: string
   serialNumber?: string
   batchNumber?: string
   capacity?: number
