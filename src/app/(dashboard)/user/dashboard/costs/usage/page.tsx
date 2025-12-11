@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import {
   Select,
   SelectContent,
@@ -40,9 +41,12 @@ type TimeRangeMode = 'period' | 'range' | 'year'
 type TimeFilter = { period?: string; from?: string; to?: string; year?: string }
 
 export default function UsagePage() {
+  const { t, locale } = useLocale()
+
   const formatNumber = (n?: number | null) => {
     if (n === undefined || n === null || Number.isNaN(Number(n))) return '-'
-    return Number(n).toLocaleString('vi-VN')
+    const fmt = locale === 'vi' ? 'vi-VN' : 'en-US'
+    return Number(n).toLocaleString(fmt)
   }
 
   const [mode, setMode] = useState<TimeRangeMode>('period')
@@ -147,10 +151,10 @@ export default function UsagePage() {
           <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h1 className="mb-2 text-3xl font-bold text-slate-900 sm:text-4xl dark:text-white">
-                Thống Kê Sử Dụng
+                {t('page.user.costs.usage.title')}
               </h1>
               <p className="text-slate-600 dark:text-slate-400">
-                Theo dõi và quản lý số trang in hàng tháng
+                {t('page.user.costs.usage.description')}
               </p>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -184,9 +188,9 @@ export default function UsagePage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="period">Tháng</SelectItem>
-                      <SelectItem value="range">Khoảng thời gian</SelectItem>
-                      <SelectItem value="year">Năm</SelectItem>
+                      <SelectItem value="period">{t('analytics.mode.period')}</SelectItem>
+                      <SelectItem value="range">{t('analytics.mode.range')}</SelectItem>
+                      <SelectItem value="year">{t('analytics.mode.year')}</SelectItem>
                     </SelectContent>
                   </Select>
                   {mode === 'period' && <MonthPicker value={period} onChange={setPeriod} />}
@@ -207,7 +211,7 @@ export default function UsagePage() {
                   )}
                   <Button onClick={loadUsage} disabled={loading}>
                     {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                    Tải dữ liệu
+                    {t('page.user.costs.load_data')}
                   </Button>
                 </div>
               </Card>
@@ -238,7 +242,7 @@ export default function UsagePage() {
         ) : !usageData ? (
           <div className="rounded-xl bg-slate-100 p-12 text-center dark:bg-slate-800">
             <p className="text-lg text-slate-600 dark:text-slate-400">
-              Không có dữ liệu cho kỳ này
+              {t('page.user.costs.no_data')}
             </p>
           </div>
         ) : (
@@ -251,7 +255,7 @@ export default function UsagePage() {
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                        Tổng Số Trang
+                        {t('page.user.costs.usage.kpi.total_pages')}
                       </p>
                       <h3 className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
                         {formatNumber(usageData.customer.totalPages)}
@@ -273,7 +277,7 @@ export default function UsagePage() {
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                        Trang Đen Trắng
+                        {t('page.user.costs.usage.kpi.bw_pages')}
                       </p>
                       <h3 className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
                         {formatNumber(usageData.customer.totalBwPages)}
@@ -292,7 +296,7 @@ export default function UsagePage() {
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                        Trang Màu
+                        {t('page.user.costs.usage.kpi.color_pages')}
                       </p>
                       <h3 className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
                         {formatNumber(usageData.customer.totalColorPages)}
@@ -311,10 +315,10 @@ export default function UsagePage() {
               <Card className="border-slate-200 shadow-sm dark:border-slate-700 dark:bg-slate-800">
                 <CardHeader>
                   <CardTitle className="text-xl font-bold text-slate-900 dark:text-white">
-                    Xu Hướng Sử Dụng
+                    {t('page.user.costs.usage.trends.title')}
                   </CardTitle>
                   <p className="text-sm text-slate-600 dark:text-slate-400">
-                    Biểu đồ số trang in theo từng tháng
+                    {t('page.user.costs.usage.trends.description')}
                   </p>
                 </CardHeader>
                 <CardContent>
@@ -339,7 +343,7 @@ export default function UsagePage() {
                           tickFormatter={(v) => formatNumber(Number(v))}
                         />
                         <RechartsTooltip
-                          formatter={(value: number) => [formatNumber(value), 'Trang']}
+                          formatter={(value: number) => [formatNumber(value), t('analytics.pages')]}
                           contentStyle={{
                             backgroundColor: 'var(--popover)',
                             border: 'none',
@@ -355,14 +359,14 @@ export default function UsagePage() {
                           dataKey="bwPages"
                           stackId="pages"
                           fill="var(--color-success-500)"
-                          name="Đen trắng"
+                          name={t('analytics.bw_label')}
                           radius={[4, 4, 0, 0]}
                         />
                         <Bar
                           dataKey="colorPages"
                           stackId="pages"
                           fill="var(--brand-500)"
-                          name="Màu"
+                          name={t('analytics.color_label')}
                           radius={[0, 0, 4, 4]}
                         >
                           <LabelList
@@ -384,10 +388,10 @@ export default function UsagePage() {
               <Card className="border-slate-200 shadow-sm dark:border-slate-700 dark:bg-slate-800">
                 <CardHeader>
                   <CardTitle className="text-xl font-bold text-slate-900 dark:text-white">
-                    Phân Bổ Theo Thiết Bị (Biểu Đồ)
+                    {t('page.user.costs.usage.device_chart.title')}
                   </CardTitle>
                   <p className="text-sm text-slate-600 dark:text-slate-400">
-                    Biểu đồ số trang in theo từng thiết bị
+                    {t('page.user.costs.usage.device_chart.description')}
                   </p>
                 </CardHeader>
                 <CardContent>
@@ -456,10 +460,10 @@ export default function UsagePage() {
             <Card className="border-slate-200 shadow-sm dark:border-slate-700 dark:bg-slate-800">
               <CardHeader>
                 <CardTitle className="text-xl font-bold text-slate-900 dark:text-white">
-                  Phân Bổ Theo Thiết Bị
+                  {t('page.user.costs.usage.device_table.title')}
                 </CardTitle>
                 <p className="text-sm text-slate-600 dark:text-slate-400">
-                  Chi tiết số trang in theo từng thiết bị
+                  {t('page.user.costs.usage.device_table.description')}
                 </p>
               </CardHeader>
               <CardContent>
@@ -468,12 +472,22 @@ export default function UsagePage() {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead className="w-[300px]">Thiết bị</TableHead>
-                          <TableHead>Serial Number</TableHead>
-                          <TableHead className="text-right">Tổng trang</TableHead>
-                          <TableHead className="text-right">Đen trắng</TableHead>
-                          <TableHead className="text-right">Màu</TableHead>
-                          <TableHead className="text-right">A4</TableHead>
+                          <TableHead className="w-[300px]">
+                            {t('page.user.costs.usage.table.headers.device')}
+                          </TableHead>
+                          <TableHead>{t('page.user.costs.usage.table.headers.serial')}</TableHead>
+                          <TableHead className="text-right">
+                            {t('page.user.costs.usage.table.headers.total_pages')}
+                          </TableHead>
+                          <TableHead className="text-right">
+                            {t('page.user.costs.usage.table.headers.bw_pages')}
+                          </TableHead>
+                          <TableHead className="text-right">
+                            {t('page.user.costs.usage.table.headers.color_pages')}
+                          </TableHead>
+                          <TableHead className="text-right">
+                            {t('page.user.costs.usage.table.headers.a4')}
+                          </TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -507,7 +521,7 @@ export default function UsagePage() {
                 ) : (
                   <div className="py-12 text-center">
                     <p className="text-slate-600 dark:text-slate-400">
-                      Chưa có dữ liệu phân bổ thiết bị
+                      {t('page.user.costs.monthly.allocation.no_data')}
                     </p>
                   </div>
                 )}

@@ -851,10 +851,10 @@ export default function DevicesPageClient() {
                           let tooltipText: string | null = null
 
                           if (d.isCustomerOwned === true) {
-                            // Đã mua đứt (sở hữu vĩnh viễn)
+                            // Owned (customer-owned)
                             badgeContent = (
                               <Badge className="bg-[var(--brand-50)] text-[var(--brand-700)] hover:bg-[var(--brand-100)]">
-                                Đã sở hữu
+                                {t('devices.ownership.owned')}
                               </Badge>
                             )
                             if (ownershipPeriod) {
@@ -864,10 +864,10 @@ export default function DevicesPageClient() {
                               )
                             }
                           } else if (d.ownershipStatus === 'current') {
-                            // Đang sở hữu (có thể là thuê)
+                            // Current ownership (rented)
                             badgeContent = (
                               <Badge className="bg-[var(--color-success-50)] text-[var(--color-success-500)] hover:bg-[var(--color-success-100)]">
-                                Đang thuê
+                                {t('devices.ownership.rented')}
                               </Badge>
                             )
                             if (ownershipPeriod) {
@@ -877,13 +877,13 @@ export default function DevicesPageClient() {
                               )
                             }
                           } else if (d.ownershipStatus === 'historical') {
-                            // Đã từng sở hữu
+                            // Historical ownership
                             badgeContent = (
                               <Badge
                                 variant="outline"
                                 className="border-amber-200 bg-amber-50 text-amber-700"
                               >
-                                Đã từng thuê
+                                {t('devices.ownership.historical')}
                               </Badge>
                             )
                             if (ownershipPeriod) {
@@ -893,10 +893,10 @@ export default function DevicesPageClient() {
                               )
                             }
                           } else {
-                            // Không sở hữu
+                            // Not owned
                             badgeContent = (
                               <Badge variant="outline" className="bg-gray-50 text-gray-600">
-                                Không sở hữu
+                                {t('devices.ownership.none')}
                               </Badge>
                             )
                           }

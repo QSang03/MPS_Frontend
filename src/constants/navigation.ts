@@ -434,6 +434,18 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
     actions: [],
   },
   {
+    id: 'usage-page',
+    label: 'Usage Page OCR',
+    icon: 'Upload',
+    route: '/system/reports/usage-page',
+    description: 'Upload ảnh counter, OCR và duyệt số liệu',
+    requiredPermissions: {
+      strategy: 'all',
+      resources: [{ resource: 'reports', action: 'create' }],
+    },
+    actions: [],
+  },
+  {
     id: 'cost-adjustments',
     label: 'Điều chỉnh chi phí',
     icon: 'Calculator',

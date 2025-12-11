@@ -4,11 +4,13 @@ import { usePathname, useRouter } from 'next/navigation'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { DollarSign, FileText } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 export default function CostsLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<'monthly' | 'usage'>('monthly')
+  const { t } = useLocale()
 
   useEffect(() => {
     if (pathname?.includes('/usage')) {
@@ -36,14 +38,14 @@ export default function CostsLayout({ children }: { children: React.ReactNode })
               className="inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium whitespace-nowrap"
             >
               <DollarSign className="h-4 w-4" />
-              Chi phí
+              {t('page.user.costs.tabs.monthly')}
             </TabsTrigger>
             <TabsTrigger
               value="usage"
               className="inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium whitespace-nowrap"
             >
               <FileText className="h-4 w-4" />
-              Thống kê sử dụng
+              {t('page.user.costs.tabs.usage')}
             </TabsTrigger>
           </TabsList>
         </Tabs>

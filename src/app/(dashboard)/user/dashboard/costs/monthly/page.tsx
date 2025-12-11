@@ -21,6 +21,7 @@ import {
   Cell,
 } from 'recharts'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import {
   ChevronRight,
   DollarSign,
@@ -57,6 +58,7 @@ type TimeRangeMode = 'period' | 'range' | 'year'
 type TimeFilter = { period?: string; from?: string; to?: string; year?: string }
 
 export default function MonthlyCostsPage() {
+  const { t } = useLocale()
   const [mode, setMode] = useState<TimeRangeMode>('period')
   const [period, setPeriod] = useState(() => {
     const now = new Date()
@@ -219,15 +221,15 @@ export default function MonthlyCostsPage() {
   const loadCost = useCallback(async () => {
     const params = buildTimeForMode()
     if (mode === 'period' && !params.period) {
-      toast.warning('Vui lòng chọn tháng')
+      toast.warning(t('analytics.warning.choose_month'))
       return
     }
     if (mode === 'range' && (!params.from || !params.to)) {
-      toast.warning('Vui lòng chọn khoảng thời gian')
+      toast.warning(t('analytics.warning.choose_range'))
       return
     }
     if (mode === 'year' && !params.year) {
-      toast.warning('Vui lòng chọn năm')
+      toast.warning(t('analytics.warning.choose_year'))
       return
     }
 
@@ -246,9 +248,9 @@ export default function MonthlyCostsPage() {
           setAggregatedCostSeries(null)
         }
       } else {
-        const msg = res.message || 'Không thể tải dữ liệu'
+        const msg = res.message || t('analytics.error.load_failed')
         if (msg.toLowerCase().includes('no data')) {
-          toast.warning('Không có dữ liệu cho kỳ này')
+          toast.warning(t('analytics.warning.no_data'))
         } else {
           toast.error(msg)
         }
@@ -259,8 +261,8 @@ export default function MonthlyCostsPage() {
       }
     } catch (err) {
       console.error('Failed to load cost', err)
-      setError('Không thể tải dữ liệu chi phí')
-      toast.error('Không thể tải dữ liệu chi phí')
+      setError(t('analytics.error.load_failed'))
+      toast.error(t('analytics.error.load_failed'))
       setAggregatedCostSeries(null)
       setBaseCurrency(null)
     } finally {
@@ -318,10 +320,10 @@ export default function MonthlyCostsPage() {
           <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h1 className="mb-2 text-3xl font-bold text-slate-900 sm:text-4xl dark:text-white">
-                Chi Phí Tháng
+                {t('page.user.costs.monthly.title')}
               </h1>
               <p className="text-slate-600 dark:text-slate-400">
-                Theo dõi và quản lý chi phí hoạt động hàng tháng
+                {t('page.user.costs.monthly.description')}
               </p>
             </div>
             <div className="flex flex-col gap-3">
@@ -355,16 +357,24 @@ export default function MonthlyCostsPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="period">Tháng</SelectItem>
-                      <SelectItem value="range">Khoảng thời gian</SelectItem>
-                      <SelectItem value="year">Năm</SelectItem>
+                      <SelectItem value="period">{t('analytics.time_mode.period')}</SelectItem>
+                      <SelectItem value="range">{t('analytics.time_mode.range')}</SelectItem>
+                      <SelectItem value="year">{t('analytics.time_mode.year')}</SelectItem>
                     </SelectContent>
                   </Select>
                   {mode === 'period' && <MonthPicker value={period} onChange={setPeriod} />}
                   {mode === 'range' && (
                     <>
-                      <MonthPicker placeholder="Từ tháng" value={from} onChange={setFrom} />
-                      <MonthPicker placeholder="Đến tháng" value={to} onChange={setTo} />
+                      <MonthPicker
+                        placeholder={t('analytics.filters.range.from_placeholder')}
+                        value={from}
+                        onChange={setFrom}
+                      />
+                      <MonthPicker
+                        placeholder={t('analytics.filters.range.to_placeholder')}
+                        value={to}
+                        onChange={setTo}
+                      />
                     </>
                   )}
                   {mode === 'year' && (
@@ -378,7 +388,7 @@ export default function MonthlyCostsPage() {
                   )}
                   <Button onClick={loadCost} disabled={loading}>
                     {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                    Tải dữ liệu
+                    {t('analytics.load_data')}
                   </Button>
                 </div>
               </Card>
@@ -406,7 +416,9 @@ export default function MonthlyCostsPage() {
           <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
             <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600 dark:text-red-400" />
             <div>
-              <h3 className="font-semibold text-red-900 dark:text-red-200">Lỗi tải dữ liệu</h3>
+              <h3 className="font-semibold text-red-900 dark:text-red-200">
+                {t('analytics.error.title')}
+              </h3>
               <p className="mt-1 text-sm text-red-700 dark:text-red-300">{error}</p>
             </div>
           </div>
@@ -425,7 +437,7 @@ export default function MonthlyCostsPage() {
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                        Tổng phí khách trả
+                        {t('page.user.costs.monthly.kpi.total_revenue')}
                       </p>
                       <h3 className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
                         {formatCurrency(totalRevenue, displayCurrency)}
@@ -436,7 +448,7 @@ export default function MonthlyCostsPage() {
                     </div>
                   </div>
                   <p className="mt-4 text-xs text-slate-500 dark:text-slate-500">
-                    Thuê bao, sửa chữa, trang trắng và màu
+                    {t('page.user.costs.monthly.kpi.total_revenue_desc')}
                   </p>
                 </CardContent>
               </Card>
@@ -447,7 +459,7 @@ export default function MonthlyCostsPage() {
                     <div>
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                          Tổng Chi Phí (COGS)
+                          {t('page.user.costs.monthly.kpi.total_cogs')}
                         </p>
                         <TooltipProvider>
                           <Tooltip>
@@ -455,7 +467,7 @@ export default function MonthlyCostsPage() {
                               <Info className="h-4 w-4 text-slate-400" />
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p>Giá vốn gồm vật tư tiêu hao và chi phí sửa chữa</p>
+                              <p>{t('page.user.costs.monthly.kpi.total_cogs_tooltip')}</p>
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
@@ -469,7 +481,12 @@ export default function MonthlyCostsPage() {
                     </div>
                   </div>
                   <p className="mt-4 text-xs text-slate-500 dark:text-slate-500">
-                    Kỳ: {mode === 'period' ? period : mode === 'range' ? `${from} đến ${to}` : year}
+                    {t('page.user.costs.monthly.period_prefix')}:{' '}
+                    {mode === 'period'
+                      ? period
+                      : mode === 'range'
+                        ? `${from} ${t('analytics.range.to')} ${to}`
+                        : year}
                   </p>
                 </CardContent>
               </Card>
@@ -479,7 +496,7 @@ export default function MonthlyCostsPage() {
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                        Chi Phí Vật Tư
+                        {t('page.user.costs.monthly.kpi.cogs_consumable')}
                       </p>
                       <h3 className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
                         {formatCurrency(costData.customer.cogsConsumable, displayCurrency)}
@@ -495,7 +512,9 @@ export default function MonthlyCostsPage() {
                         ? `${((costData.customer.cogsConsumable / totalCogs) * 100).toFixed(1)}%`
                         : '0%'}
                     </span>
-                    <p className="text-xs text-slate-500 dark:text-slate-500">tổng chi phí</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-500">
+                      {t('page.user.costs.monthly.kpi.of_total_cost')}
+                    </p>
                   </div>
                 </CardContent>
               </Card>
@@ -505,7 +524,7 @@ export default function MonthlyCostsPage() {
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                        Chi Phí Sửa Chữa
+                        {t('page.user.costs.monthly.kpi.repair_costs')}
                       </p>
                       <h3 className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
                         {formatCurrency(costData.customer.cogsRepair, displayCurrency)}
@@ -521,7 +540,9 @@ export default function MonthlyCostsPage() {
                         ? `${((costData.customer.cogsRepair / totalCogs) * 100).toFixed(1)}%`
                         : '0%'}
                     </span>
-                    <p className="text-xs text-slate-500 dark:text-slate-500">tổng chi phí</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-500">
+                      {t('page.user.costs.monthly.kpi.of_total_cost')}
+                    </p>
                   </div>
                 </CardContent>
               </Card>
@@ -534,7 +555,7 @@ export default function MonthlyCostsPage() {
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                        Phí thuê bao
+                        {t('page.user.costs.monthly.kpi.rental_fee')}
                       </p>
                       <h3 className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">
                         {formatCurrency(revenueRental, displayCurrency)}
@@ -552,7 +573,7 @@ export default function MonthlyCostsPage() {
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                        Phí trang trắng (BW)
+                        {t('page.user.costs.monthly.kpi.page_bw')}
                       </p>
                       <h3 className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">
                         {formatCurrency(revenuePageBW, displayCurrency)}
@@ -570,7 +591,7 @@ export default function MonthlyCostsPage() {
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                        Phí trang màu
+                        {t('page.user.costs.monthly.kpi.page_color')}
                       </p>
                       <h3 className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">
                         {formatCurrency(revenuePageColor, displayCurrency)}
@@ -588,7 +609,7 @@ export default function MonthlyCostsPage() {
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                        Phí sửa chữa
+                        {t('page.user.costs.monthly.kpi.repair_fee')}
                       </p>
                       <h3 className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">
                         {formatCurrency(revenueRepair, displayCurrency)}
@@ -605,11 +626,10 @@ export default function MonthlyCostsPage() {
             {/* Công thức */}
             <Card className="border-slate-200 shadow-sm dark:border-slate-700 dark:bg-slate-800">
               <CardContent className="p-4 text-sm text-slate-700 dark:text-slate-300">
-                <p className="font-medium text-slate-900 dark:text-white">Công thức tính:</p>
-                <p className="mt-1">
-                  Tổng phí khách trả = Phí thuê bao + Phí trang trắng (BW) + Phí trang màu + Phí sửa
-                  chữa
+                <p className="font-medium text-slate-900 dark:text-white">
+                  {t('page.user.costs.monthly.formula.title')}
                 </p>
+                <p className="mt-1">{t('page.user.costs.monthly.formula.description')}</p>
               </CardContent>
             </Card>
 
@@ -618,10 +638,10 @@ export default function MonthlyCostsPage() {
               <Card className="border-slate-200 shadow-sm dark:border-slate-700 dark:bg-slate-800">
                 <CardHeader>
                   <CardTitle className="text-xl font-bold text-slate-900 dark:text-white">
-                    Phân Bổ Chi Phí
+                    {t('page.user.costs.monthly.allocation.title')}
                   </CardTitle>
                   <p className="text-sm text-slate-600 dark:text-slate-400">
-                    Tỷ lệ chi phí vật tư và sửa chữa
+                    {t('page.user.costs.monthly.allocation.description')}
                   </p>
                 </CardHeader>
                 <CardContent>
@@ -632,12 +652,12 @@ export default function MonthlyCostsPage() {
                           <Pie
                             data={[
                               {
-                                name: 'Vật tư',
+                                name: t('page.user.costs.monthly.pie.consumable'),
                                 value: costData.customer.cogsConsumable,
                                 color: 'var(--color-success-500)',
                               },
                               {
-                                name: 'Sửa chữa',
+                                name: t('page.user.costs.monthly.pie.repair'),
                                 value: costData.customer.cogsRepair,
                                 color: 'var(--warning-500)',
                               },
@@ -658,7 +678,7 @@ export default function MonthlyCostsPage() {
                           <RechartsTooltip
                             formatter={(value: number) => [
                               formatCurrency(value, displayCurrency),
-                              'Giá trị',
+                              t('analytics.tooltip.value'),
                             ]}
                             contentStyle={{
                               backgroundColor: 'var(--popover)',
@@ -675,8 +695,8 @@ export default function MonthlyCostsPage() {
                     <div className="flex items-center gap-2">
                       <div className="h-4 w-4 rounded bg-[var(--color-success-500)]"></div>
                       <span className="text-sm">
-                        Vật tư: {formatCurrency(costData.customer.cogsConsumable, displayCurrency)}{' '}
-                        (
+                        {t('page.user.costs.monthly.pie.consumable')}:{' '}
+                        {formatCurrency(costData.customer.cogsConsumable, displayCurrency)} (
                         {totalCogs > 0
                           ? ((costData.customer.cogsConsumable / totalCogs) * 100).toFixed(1)
                           : '0.0'}
@@ -686,7 +706,8 @@ export default function MonthlyCostsPage() {
                     <div className="flex items-center gap-2">
                       <div className="h-4 w-4 rounded bg-orange-500"></div>
                       <span className="text-sm">
-                        Sửa chữa: {formatCurrency(costData.customer.cogsRepair, displayCurrency)} (
+                        {t('page.user.costs.monthly.pie.repair')}:{' '}
+                        {formatCurrency(costData.customer.cogsRepair, displayCurrency)} (
                         {totalCogs > 0
                           ? ((costData.customer.cogsRepair / totalCogs) * 100).toFixed(1)
                           : '0.0'}
@@ -702,10 +723,10 @@ export default function MonthlyCostsPage() {
             <Card className="border-slate-200 shadow-sm dark:border-slate-700 dark:bg-slate-800">
               <CardHeader>
                 <CardTitle className="text-xl font-bold text-slate-900 dark:text-white">
-                  Phân Bổ Theo Thiết Bị
+                  {t('page.user.costs.monthly.allocation.by_device')}
                 </CardTitle>
                 <p className="text-sm text-slate-600 dark:text-slate-400">
-                  Chi tiết chi phí và xếp hạng thiết bị
+                  {t('page.user.costs.monthly.allocation.by_device_description')}
                 </p>
               </CardHeader>
               <CardContent>
@@ -716,50 +737,56 @@ export default function MonthlyCostsPage() {
                         <TableRow>
                           <TableHead className="w-[300px]">
                             <Button variant="ghost" onClick={() => handleSort('model')}>
-                              Thiết bị
+                              {t('analytics.table.device')}
                               <ArrowUpDown className="ml-2 h-4 w-4" />
                             </Button>
                           </TableHead>
                           <TableHead>Serial Number</TableHead>
                           <TableHead className="text-right">
                             <Button variant="ghost" onClick={() => handleSort('totalRevenue')}>
-                              Phí khách trả
+                              {t('page.user.costs.monthly.table.total_customer_charges')}
                               <ArrowUpDown className="ml-2 h-4 w-4" />
                             </Button>
                           </TableHead>
                           <TableHead className="text-right">
                             <Button variant="ghost" onClick={() => handleSort('revenueRental')}>
-                              Thuê bao
+                              {t('page.user.costs.monthly.table.rental_fee')}
                               <ArrowUpDown className="ml-2 h-4 w-4" />
                             </Button>
                           </TableHead>
                           <TableHead className="text-right">
                             <Button variant="ghost" onClick={() => handleSort('revenuePageBW')}>
-                              Trang trắng
+                              {t('page.user.costs.monthly.table.page_bw')}
                               <ArrowUpDown className="ml-2 h-4 w-4" />
                             </Button>
                           </TableHead>
                           <TableHead className="text-right">
                             <Button variant="ghost" onClick={() => handleSort('revenuePageColor')}>
-                              Trang màu
+                              {t('page.user.costs.monthly.table.page_color')}
                               <ArrowUpDown className="ml-2 h-4 w-4" />
                             </Button>
                           </TableHead>
                           <TableHead className="text-right">
                             <Button variant="ghost" onClick={() => handleSort('revenueRepair')}>
-                              Sửa chữa (phí)
+                              {t('page.user.costs.monthly.table.repair_fee')}
                               <ArrowUpDown className="ml-2 h-4 w-4" />
                             </Button>
                           </TableHead>
                           <TableHead className="text-right">
                             <Button variant="ghost" onClick={() => handleSort('totalCogs')}>
-                              Tổng chi phí
+                              {t('page.user.costs.monthly.table.total_cogs')}
                               <ArrowUpDown className="ml-2 h-4 w-4" />
                             </Button>
                           </TableHead>
-                          <TableHead className="text-right">Vật tư</TableHead>
-                          <TableHead className="text-right">Chi phí sửa chữa (COGS)</TableHead>
-                          <TableHead className="text-right">% Tổng chi phí</TableHead>
+                          <TableHead className="text-right">
+                            {t('page.user.costs.monthly.table.consumable')}
+                          </TableHead>
+                          <TableHead className="text-right">
+                            {t('page.user.costs.monthly.table.repair_cogs')}
+                          </TableHead>
+                          <TableHead className="text-right">
+                            {t('page.user.costs.monthly.table.percent_total')}
+                          </TableHead>
                           <TableHead className="w-[50px]"></TableHead>
                         </TableRow>
                       </TableHeader>
@@ -825,7 +852,7 @@ export default function MonthlyCostsPage() {
                   <div className="py-12 text-center">
                     <AlertCircle className="mx-auto mb-3 h-12 w-12 text-slate-300 dark:text-slate-600" />
                     <p className="text-slate-600 dark:text-slate-400">
-                      Chưa có dữ liệu phân bổ thiết bị
+                      {t('page.user.costs.monthly.allocation.no_data')}
                     </p>
                   </div>
                 )}
@@ -837,10 +864,10 @@ export default function MonthlyCostsPage() {
               <Card className="border-slate-200 shadow-sm dark:border-slate-700 dark:bg-slate-800">
                 <CardHeader>
                   <CardTitle className="text-xl font-bold text-slate-900 dark:text-white">
-                    Xu Hướng Chi Phí Tổng Quan
+                    {t('page.user.costs.monthly.trends.overview_title')}
                   </CardTitle>
                   <p className="text-sm text-slate-600 dark:text-slate-400">
-                    Biểu đồ chi phí tổng hợp theo từng tháng
+                    {t('page.user.costs.monthly.trends.overview_description')}
                   </p>
                 </CardHeader>
                 <CardContent>
@@ -860,7 +887,7 @@ export default function MonthlyCostsPage() {
                         <RechartsTooltip
                           formatter={(value: number) => [
                             formatCurrency(value, displayCurrency),
-                            'Giá trị',
+                            t('analytics.tooltip.value'),
                           ]}
                           contentStyle={{
                             backgroundColor: 'var(--popover)',
@@ -880,7 +907,7 @@ export default function MonthlyCostsPage() {
                           strokeWidth={3}
                           dot={{ fill: 'var(--brand-600)', r: 4 }}
                           activeDot={{ r: 6 }}
-                          name="Tổng chi phí"
+                          name={t('page.user.costs.monthly.series.total_cogs')}
                         />
                         <Line
                           type="monotone"
@@ -889,7 +916,7 @@ export default function MonthlyCostsPage() {
                           strokeWidth={3}
                           dot={{ fill: 'var(--color-success-500)', r: 4 }}
                           activeDot={{ r: 6 }}
-                          name="Vật tư"
+                          name={t('page.user.costs.monthly.series.consumable')}
                         />
                         <Line
                           type="monotone"
@@ -898,7 +925,7 @@ export default function MonthlyCostsPage() {
                           strokeWidth={3}
                           dot={{ fill: 'var(--warning-500)', r: 4 }}
                           activeDot={{ r: 6 }}
-                          name="Sửa chữa"
+                          name={t('page.user.costs.monthly.series.repair')}
                         />
                       </LineChart>
                     </ResponsiveContainer>
@@ -912,7 +939,7 @@ export default function MonthlyCostsPage() {
               <Card className="border-slate-200 shadow-sm dark:border-slate-700 dark:bg-slate-800">
                 <CardHeader>
                   <CardTitle className="text-xl font-bold text-slate-900 dark:text-white">
-                    Xu Hướng Chi Phí Thiết Bị
+                    {t('page.user.costs.monthly.trends.device_title')}
                   </CardTitle>
                   <CardDescription>
                     {costData.devices.find((d) => d.deviceId === selectedDeviceId)?.model} -{' '}
@@ -938,7 +965,7 @@ export default function MonthlyCostsPage() {
                         <RechartsTooltip
                           formatter={(value: number) => [
                             formatCurrency(value, deviceCurrency || displayCurrency),
-                            'Giá trị',
+                            t('analytics.tooltip.value'),
                           ]}
                           contentStyle={{
                             backgroundColor: 'var(--popover)',
