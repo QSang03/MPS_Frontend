@@ -1282,7 +1282,8 @@ export default function AnalyticsPageClient() {
                           </CardContent>
                         </Card>
                       </div>
-                      <div className="flex justify-end">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <FormulaBadge formula={enterpriseData.costAdjustmentFormula} />
                         <Button
                           variant="ghost"
                           size="sm"
@@ -2193,7 +2194,7 @@ export default function AnalyticsPageClient() {
             <Card className="border-violet-200">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Printer className="h-5 w-5 text-violet-600" />
+                  <Printer className="h-5 w-5 text-[var(--brand-600)]" />
                   {t('analytics.device.title')}
                 </CardTitle>
                 <CardDescription>{t('analytics.device.description')}</CardDescription>
@@ -2537,9 +2538,6 @@ export default function AnalyticsPageClient() {
                             <th className="px-3 py-2 text-right font-semibold">
                               {t('dashboard.metrics.gross_profit_after_adjustment')}
                             </th>
-                            <th className="px-3 py-2 text-left font-semibold">
-                              {t('dashboard.cost_breakdown.formula_label')}
-                            </th>
                           </tr>
                         </thead>
                         <tbody className="divide-y">
@@ -2673,9 +2671,6 @@ export default function AnalyticsPageClient() {
                                   p.currency,
                                   'right'
                                 )}
-                              </td>
-                              <td className="text-muted-foreground px-3 py-2 text-left text-xs">
-                                <FormulaBadge formula={p.costAdjustmentFormula} />
                               </td>
                             </tr>
                           ))}

@@ -141,7 +141,7 @@ export function DeviceModelFormModal({ mode = 'create', model = null, onSaved, t
       ) : (
         <DialogTrigger asChild>
           {mode === 'create' ? (
-            <Button className="gap-2 bg-white text-violet-600 hover:bg-white/90">
+            <Button className="gap-2 bg-white text-[var(--brand-600)] hover:bg-white/90">
               <Plus className="h-4 w-4" />
               {t('device_model.button.create')}
             </Button>
@@ -179,28 +179,30 @@ export function DeviceModelFormModal({ mode = 'create', model = null, onSaved, t
               className="min-w-[120px] bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
               disabled={submitting}
             >
-              {submitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {mode === 'create'
-                    ? t('device_model.button.creating')
-                    : t('device_model.button.saving')}
-                </>
-              ) : (
-                <>
-                  {mode === 'create' ? (
-                    <>
-                      <Plus className="mr-2 h-4 w-4" />
-                      {t('device_model.button.create_new')}
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle2 className="mr-2 h-4 w-4" />
-                      {t('device_model.button.update')}
-                    </>
-                  )}
-                </>
-              )}
+              <div className="flex items-center gap-2 text-sm font-semibold text-[var(--brand-700)]">
+                {submitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {mode === 'create'
+                      ? t('device_model.button.creating')
+                      : t('device_model.button.saving')}
+                  </>
+                ) : (
+                  <>
+                    {mode === 'create' ? (
+                      <>
+                        <Plus className="mr-2 h-4 w-4" />
+                        {t('device_model.button.create_new')}
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="mr-2 h-4 w-4" />
+                        {t('device_model.button.update')}
+                      </>
+                    )}
+                  </>
+                )}
+              </div>
             </Button>
           </>
         }
@@ -208,7 +210,7 @@ export function DeviceModelFormModal({ mode = 'create', model = null, onSaved, t
         <form id="device-model-form" onSubmit={handleSubmit} className="space-y-6">
           {/* Main Info Section */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2 text-sm font-semibold text-violet-700">
+            <div className="flex items-center gap-2 text-sm font-semibold text-[var(--brand-700)]">
               <Package className="h-4 w-4" />
               {t('device_model.basic_info')}
             </div>
@@ -230,7 +232,7 @@ export function DeviceModelFormModal({ mode = 'create', model = null, onSaved, t
 
               <div className="space-y-2">
                 <Label className="flex items-center gap-2 text-base font-semibold">
-                  <Package className="h-4 w-4 text-violet-600" />
+                  <Package className="h-4 w-4 text-[var(--brand-600)]" />
                   {t('device_model.name_label')}
                 </Label>
                 <Input
@@ -303,7 +305,7 @@ export function DeviceModelFormModal({ mode = 'create', model = null, onSaved, t
 
           {/* Description Section */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2 text-sm font-semibold text-violet-700">
+            <div className="flex items-center gap-2 text-sm font-semibold text-[var(--brand-700)]">
               <FileText className="h-4 w-4" />
               {t('device_model.description_title')}
             </div>
@@ -325,7 +327,7 @@ export function DeviceModelFormModal({ mode = 'create', model = null, onSaved, t
 
           {/* Status Section */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2 text-sm font-semibold text-violet-700">
+            <div className="flex items-center gap-2 text-sm font-semibold text-[var(--brand-700)]">
               <CheckCircle2 className="h-4 w-4" />
               {t('device_model.status_title')}
             </div>
@@ -333,7 +335,7 @@ export function DeviceModelFormModal({ mode = 'create', model = null, onSaved, t
 
             {/* A4 Counter Section */}
             <div className="space-y-4">
-              <div className="flex items-center gap-2 text-sm font-semibold text-violet-700">
+              <div className="flex items-center gap-2 text-sm font-semibold text-[var(--brand-700)]">
                 <CheckCircle2 className="h-4 w-4" />
                 {t('device_model.counter_mode_title')}
               </div>

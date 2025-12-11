@@ -2414,6 +2414,7 @@
   "dashboard.cost_breakdown.gross_profit_after": "LN gộp sau điều chỉnh",
   "dashboard.cost_breakdown.formula_label": "Công thức",
   "dashboard.cost_breakdown.view_details": "Chi tiết",
+  "dashboard.cost_breakdown.hide_details": "Ẩn chi tiết",
   "dashboard.cost_breakdown.export": "Xuất báo cáo",
   "consumable_types.page.title": "Loại vật tư tiêu hao",
   "consumable_types.page.subtitle": "Quản lý các loại vật tư tiêu hao cho thiết bị",

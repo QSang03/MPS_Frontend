@@ -1187,7 +1187,7 @@ export default function UsagePageClient() {
         <Card className="border-violet-200">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Printer className="h-5 w-5 text-violet-600" />
+              <Printer className="h-5 w-5 text-[var(--brand-600)]" />
               {t('analytics.device_detail.title')}
             </CardTitle>
             <CardDescription>

@@ -381,7 +381,7 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
         {trigger ? (
           trigger
         ) : mode === 'create' ? (
-          <Button className="gap-2 bg-white text-violet-600 hover:bg-white/90">
+          <Button className="gap-2 bg-white text-[var(--brand-600)] hover:bg-white/90">
             <Plus className="h-4 w-4" />
             {t('customer.button.add')}
           </Button>
@@ -445,7 +445,7 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
       >
         <form id="customer-form" onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-4">
-            <div className="flex items-center gap-2 text-sm font-semibold text-violet-700">
+            <div className="flex items-center gap-2 text-sm font-semibold text-[var(--brand-700)]">
               <User className="h-4 w-4" />
               {t('customer.section.basic_info')}
             </div>
@@ -606,7 +606,7 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
           <Separator />
 
           <div className="space-y-4">
-            <div className="flex items-center gap-2 text-sm font-semibold text-violet-700">
+            <div className="flex items-center gap-2 text-sm font-semibold text-[var(--brand-700)]">
               <MapPin className="h-4 w-4" />
               {t('customer.section.address_desc')}
             </div>
@@ -690,7 +690,7 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
           <Separator />
 
           <div className="space-y-4">
-            <div className="flex items-center gap-2 text-sm font-semibold text-violet-700">
+            <div className="flex items-center gap-2 text-sm font-semibold text-[var(--brand-700)]">
               <FileText className="h-4 w-4" />
               {t('customer.section.invoice_info')}
             </div>
@@ -844,7 +844,7 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
           </div>
 
           <div className="space-y-4">
-            <div className="flex items-center gap-2 text-sm font-semibold text-violet-700">
+            <div className="flex items-center gap-2 text-sm font-semibold text-[var(--brand-700)]">
               <CheckCircle2 className="h-4 w-4" />
               {t('customer.section.status')}
             </div>

@@ -181,7 +181,7 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
 
           <Button
             onClick={() => setShowCreate(true)}
-            className="gap-2 bg-white text-[var(--brand-600)] hover:bg-white/90"
+            className="gap-2 rounded-md bg-[var(--brand-100)] px-3 py-1.5 text-[var(--brand-700)] hover:bg-[var(--brand-200)]"
           >
             <Plus className="h-4 w-4" />
             {t('devices.add')}
@@ -254,7 +254,11 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
                     <td colSpan={6} className="px-4 py-12 text-center">
                       <Monitor className="text-muted-foreground mx-auto mb-3 h-12 w-12 opacity-20" />
                       <p className="text-muted-foreground">{t('empty.device_model.empty')}</p>
-                      <Button size="sm" onClick={() => setShowCreate(true)} className="mt-3 gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => setShowCreate(true)}
+                        className="mt-3 gap-2 rounded-md bg-[var(--brand-100)] px-3 py-1.5 text-[var(--brand-700)] hover:bg-[var(--brand-200)]"
+                      >
                         <Plus className="h-4 w-4" />
                         {t('empty.devices.first')}
                       </Button>

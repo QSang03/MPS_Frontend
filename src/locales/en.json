@@ -2483,5 +2483,6 @@
   "dashboard.cost_breakdown.gross_profit_after": "Gross profit after adjustment",
   "dashboard.cost_breakdown.formula_label": "Formula",
   "dashboard.cost_breakdown.view_details": "View details",
+  "dashboard.cost_breakdown.hide_details": "Hide details",
   "dashboard.cost_breakdown.export": "Export report"
 }

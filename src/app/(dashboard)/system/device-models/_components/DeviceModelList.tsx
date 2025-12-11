@@ -490,7 +490,7 @@ function DeviceModelsTableContent({
         cell: ({ row }) => (
           <Link
             href={`/system/device-models/${encodeURIComponent(row.original.id)}`}
-            className="font-semibold text-violet-600 hover:text-violet-700 hover:underline"
+            className="font-semibold text-[var(--brand-600)] hover:text-[var(--brand-700)] hover:underline"
           >
             {row.original.name || '-'}
           </Link>
