@@ -204,6 +204,7 @@ export default function AnalyticsPageClient() {
     ProfitabilityTrendItem[] | null
   >(null)
   const [enterpriseBaseCurrency, setEnterpriseBaseCurrency] = useState<CurrencyDataDto | null>(null)
+  const [showEnterpriseDetails, setShowEnterpriseDetails] = useState(false)
 
   // Customers Profit State
   const [customersPeriod, setCustomersPeriod] = useState('')
@@ -1095,31 +1096,6 @@ export default function AnalyticsPageClient() {
                     enterpriseData.totalRevenueConverted,
                     useConverted
                   )
-                  const cogs = getDisplayValue(
-                    enterpriseData.totalCogs,
-                    enterpriseData.totalCogsConverted,
-                    useConverted
-                  )
-                  const profit = getDisplayValue(
-                    enterpriseData.grossProfit,
-                    enterpriseData.grossProfitConverted,
-                    useConverted
-                  )
-                  const caDebit = getDisplayValue(
-                    enterpriseData.costAdjustmentDebit ?? 0,
-                    enterpriseData.costAdjustmentDebitConverted,
-                    useConverted
-                  )
-                  const caCredit = getDisplayValue(
-                    enterpriseData.costAdjustmentCredit ?? 0,
-                    enterpriseData.costAdjustmentCreditConverted,
-                    useConverted
-                  )
-                  const caNet = getDisplayValue(
-                    enterpriseData.costAdjustmentNet ?? 0,
-                    enterpriseData.costAdjustmentNetConverted,
-                    useConverted
-                  )
                   const cogsAfterAdj = getDisplayValue(
                     enterpriseData.totalCogsAfterAdjustment ?? enterpriseData.totalCogs,
                     enterpriseData.totalCogsAfterAdjustmentConverted ??
@@ -1132,146 +1108,192 @@ export default function AnalyticsPageClient() {
                       enterpriseData.grossProfitConverted,
                     useConverted
                   )
+                  const detailCards = (() => {
+                    const cogs = getDisplayValue(
+                      enterpriseData.totalCogs,
+                      enterpriseData.totalCogsConverted,
+                      useConverted
+                    )
+                    const profit = getDisplayValue(
+                      enterpriseData.grossProfit,
+                      enterpriseData.grossProfitConverted,
+                      useConverted
+                    )
+                    const caDebit = getDisplayValue(
+                      enterpriseData.costAdjustmentDebit ?? 0,
+                      enterpriseData.costAdjustmentDebitConverted,
+                      useConverted
+                    )
+                    const caCredit = getDisplayValue(
+                      enterpriseData.costAdjustmentCredit ?? 0,
+                      enterpriseData.costAdjustmentCreditConverted,
+                      useConverted
+                    )
+                    const caNet = getDisplayValue(
+                      enterpriseData.costAdjustmentNet ?? 0,
+                      enterpriseData.costAdjustmentNetConverted,
+                      useConverted
+                    )
+                    return (
+                      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                        <Card className="border-orange-200 bg-orange-50">
+                          <CardHeader className="pb-1">
+                            <CardTitle className="text-xs font-semibold text-orange-700">
+                              {t('analytics.total_cogs')}
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="pt-1">
+                            <div className="text-xl font-semibold text-orange-900">
+                              {formatCurrency(cogs, enterpriseBaseCurrency)}
+                            </div>
+                          </CardContent>
+                        </Card>
+                        <Card
+                          className={
+                            profit >= 0
+                              ? 'border-emerald-200 bg-emerald-50'
+                              : 'border-red-200 bg-red-50'
+                          }
+                        >
+                          <CardHeader className="pb-1">
+                            <CardTitle
+                              className={`text-xs font-semibold ${profit >= 0 ? 'text-emerald-700' : 'text-red-700'}`}
+                            >
+                              {t('analytics.gross_profit')}
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="pt-1">
+                            <div
+                              className={`flex items-center gap-2 text-xl font-semibold ${profit >= 0 ? 'text-emerald-900' : 'text-red-900'}`}
+                            >
+                              {profit >= 0 ? (
+                                <TrendingUp className="h-5 w-5" />
+                              ) : (
+                                <TrendingDown className="h-5 w-5" />
+                              )}
+                              {formatCurrency(profit, enterpriseBaseCurrency)}
+                            </div>
+                            <p className="text-muted-foreground mt-0.5 text-[11px]">
+                              {t('analytics.gross_margin')}: {enterpriseData.grossMargin.toFixed(1)}
+                              %
+                            </p>
+                          </CardContent>
+                        </Card>
+                        <Card className="border-red-200 bg-red-50">
+                          <CardHeader className="pb-1">
+                            <CardTitle className="text-xs font-semibold text-red-700">
+                              {t('dashboard.metrics.cost_adjustment_debit')}
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="pt-1">
+                            <div className="text-xl font-semibold text-red-900">
+                              {formatCurrency(caDebit, enterpriseBaseCurrency)}
+                            </div>
+                          </CardContent>
+                        </Card>
+                        <Card className="border-emerald-200 bg-emerald-50">
+                          <CardHeader className="pb-1">
+                            <CardTitle className="text-xs font-semibold text-emerald-700">
+                              {t('dashboard.metrics.cost_adjustment_credit')}
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="pt-1">
+                            <div className="text-xl font-semibold text-emerald-900">
+                              {formatCurrency(caCredit, enterpriseBaseCurrency)}
+                            </div>
+                          </CardContent>
+                        </Card>
+                        <Card className="border-amber-200 bg-amber-50">
+                          <CardHeader className="pb-1">
+                            <CardTitle className="text-xs font-semibold text-amber-700">
+                              {t('dashboard.metrics.cost_adjustment_net')}
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="pt-1">
+                            <div className="text-xl font-semibold text-amber-900">
+                              {formatCurrency(caNet, enterpriseBaseCurrency)}
+                            </div>
+                            <FormulaBadge formula={enterpriseData.costAdjustmentFormula} />
+                          </CardContent>
+                        </Card>
+                      </div>
+                    )
+                  })()
+
                   return (
-                    <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-                      <Card className="border-[var(--brand-200)] bg-[var(--brand-50)]">
-                        <CardHeader className="pb-1">
-                          <CardTitle className="text-xs font-semibold text-[var(--brand-700)]">
-                            {t('analytics.total_revenue')}
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="pt-1">
-                          <div className="text-xl font-semibold text-[var(--brand-900)]">
-                            {formatCurrency(revenue, enterpriseBaseCurrency)}
-                          </div>
-                          <p className="text-muted-foreground mt-0.5 text-[11px]">
-                            {t('analytics.devices_count', { count: enterpriseData.devicesCount })} •{' '}
-                            {t('analytics.customers_count', {
-                              count: enterpriseData.customersCount,
-                            })}
-                          </p>
-                        </CardContent>
-                      </Card>
-
-                      <Card className="border-orange-200 bg-orange-50">
-                        <CardHeader className="pb-1">
-                          <CardTitle className="text-xs font-semibold text-orange-700">
-                            {t('analytics.total_cogs')}
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="pt-1">
-                          <div className="text-xl font-semibold text-orange-900">
-                            {formatCurrency(cogs, enterpriseBaseCurrency)}
-                          </div>
-                        </CardContent>
-                      </Card>
-
-                      <Card
-                        className={
-                          profit >= 0
-                            ? 'border-emerald-200 bg-emerald-50'
-                            : 'border-red-200 bg-red-50'
-                        }
-                      >
-                        <CardHeader className="pb-1">
-                          <CardTitle
-                            className={`text-xs font-semibold ${profit >= 0 ? 'text-emerald-700' : 'text-red-700'}`}
-                          >
-                            {t('analytics.gross_profit')}
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="pt-1">
-                          <div
-                            className={`flex items-center gap-2 text-xl font-semibold ${profit >= 0 ? 'text-emerald-900' : 'text-red-900'}`}
-                          >
-                            {profit >= 0 ? (
-                              <TrendingUp className="h-5 w-5" />
-                            ) : (
-                              <TrendingDown className="h-5 w-5" />
-                            )}
-                            {formatCurrency(profit, enterpriseBaseCurrency)}
-                          </div>
-                          <p className="text-muted-foreground mt-0.5 text-[11px]">
-                            {t('analytics.gross_margin')}: {enterpriseData.grossMargin.toFixed(1)}%
-                          </p>
-                        </CardContent>
-                      </Card>
-                      <Card className="border-red-200 bg-red-50">
-                        <CardHeader className="pb-1">
-                          <CardTitle className="text-xs font-semibold text-red-700">
-                            {t('dashboard.metrics.cost_adjustment_debit')}
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="pt-1">
-                          <div className="text-xl font-semibold text-red-900">
-                            {formatCurrency(caDebit, enterpriseBaseCurrency)}
-                          </div>
-                        </CardContent>
-                      </Card>
-                      <Card className="border-emerald-200 bg-emerald-50">
-                        <CardHeader className="pb-1">
-                          <CardTitle className="text-xs font-semibold text-emerald-700">
-                            {t('dashboard.metrics.cost_adjustment_credit')}
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="pt-1">
-                          <div className="text-xl font-semibold text-emerald-900">
-                            {formatCurrency(caCredit, enterpriseBaseCurrency)}
-                          </div>
-                        </CardContent>
-                      </Card>
-                      <Card className="border-amber-200 bg-amber-50">
-                        <CardHeader className="pb-1">
-                          <CardTitle className="text-xs font-semibold text-amber-700">
-                            {t('dashboard.metrics.cost_adjustment_net')}
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="pt-1">
-                          <div className="text-xl font-semibold text-amber-900">
-                            {formatCurrency(caNet, enterpriseBaseCurrency)}
-                          </div>
-                          <FormulaBadge formula={enterpriseData.costAdjustmentFormula} />
-                        </CardContent>
-                      </Card>
-                      <Card className="border-orange-200 bg-orange-50">
-                        <CardHeader className="pb-1">
-                          <CardTitle className="text-xs font-semibold text-orange-700">
-                            {t('dashboard.metrics.total_cogs_after_adjustment')}
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="pt-1">
-                          <div className="text-xl font-semibold text-orange-900">
-                            {formatCurrency(cogsAfterAdj, enterpriseBaseCurrency)}
-                          </div>
-                        </CardContent>
-                      </Card>
-                      <Card
-                        className={
-                          profitAfterAdj >= 0
-                            ? 'border-emerald-200 bg-emerald-50'
-                            : 'border-red-200 bg-red-50'
-                        }
-                      >
-                        <CardHeader className="pb-1">
-                          <CardTitle
-                            className={`text-xs font-semibold ${profitAfterAdj >= 0 ? 'text-emerald-700' : 'text-red-700'}`}
-                          >
-                            {t('dashboard.metrics.gross_profit_after_adjustment')}
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="pt-1">
-                          <div
-                            className={`flex items-center gap-2 text-xl font-semibold ${profitAfterAdj >= 0 ? 'text-emerald-900' : 'text-red-900'}`}
-                          >
-                            {profitAfterAdj >= 0 ? (
-                              <TrendingUp className="h-5 w-5" />
-                            ) : (
-                              <TrendingDown className="h-5 w-5" />
-                            )}
-                            {formatCurrency(profitAfterAdj, enterpriseBaseCurrency)}
-                          </div>
-                        </CardContent>
-                      </Card>
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                        <Card className="border-[var(--brand-200)] bg-[var(--brand-50)]">
+                          <CardHeader className="pb-1">
+                            <CardTitle className="text-xs font-semibold text-[var(--brand-700)]">
+                              {t('analytics.total_revenue')}
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="pt-1">
+                            <div className="text-xl font-semibold text-[var(--brand-900)]">
+                              {formatCurrency(revenue, enterpriseBaseCurrency)}
+                            </div>
+                            <p className="text-muted-foreground mt-0.5 text-[11px]">
+                              {t('analytics.devices_count', { count: enterpriseData.devicesCount })}{' '}
+                              •{' '}
+                              {t('analytics.customers_count', {
+                                count: enterpriseData.customersCount,
+                              })}
+                            </p>
+                          </CardContent>
+                        </Card>
+                        <Card className="border-orange-200 bg-orange-50">
+                          <CardHeader className="pb-1">
+                            <CardTitle className="text-xs font-semibold text-orange-700">
+                              {t('dashboard.metrics.total_cogs_after_adjustment')}
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="pt-1">
+                            <div className="text-xl font-semibold text-orange-900">
+                              {formatCurrency(cogsAfterAdj, enterpriseBaseCurrency)}
+                            </div>
+                          </CardContent>
+                        </Card>
+                        <Card
+                          className={
+                            profitAfterAdj >= 0
+                              ? 'border-emerald-200 bg-emerald-50'
+                              : 'border-red-200 bg-red-50'
+                          }
+                        >
+                          <CardHeader className="pb-1">
+                            <CardTitle
+                              className={`text-xs font-semibold ${profitAfterAdj >= 0 ? 'text-emerald-700' : 'text-red-700'}`}
+                            >
+                              {t('dashboard.metrics.gross_profit_after_adjustment')}
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="pt-1">
+                            <div
+                              className={`flex items-center gap-2 text-xl font-semibold ${profitAfterAdj >= 0 ? 'text-emerald-900' : 'text-red-900'}`}
+                            >
+                              {profitAfterAdj >= 0 ? (
+                                <TrendingUp className="h-5 w-5" />
+                              ) : (
+                                <TrendingDown className="h-5 w-5" />
+                              )}
+                              {formatCurrency(profitAfterAdj, enterpriseBaseCurrency)}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </div>
+                      <div className="flex justify-end">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setShowEnterpriseDetails((v) => !v)}
+                        >
+                          {showEnterpriseDetails
+                            ? (t('dashboard.cost_breakdown.hide_details') ?? t('hide'))
+                            : t('dashboard.cost_breakdown.view_details')}
+                        </Button>
+                      </div>
+                      {showEnterpriseDetails ? detailCards : null}
                     </div>
                   )
                 })()}
