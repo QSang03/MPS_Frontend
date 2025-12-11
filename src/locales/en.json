@@ -2051,6 +2051,7 @@
   "system_device_detail.consumables.create_error": "Failed to create consumable",
   "system_device_detail.consumables.install_success": "Consumable installed successfully",
   "system_device_detail.consumables.create_install_error": "Failed to create or install consumable",
+  "system_device_detail.consumables.insufficient_stock": "Insufficient consumable stock. Required {required}, available {available}.",
   "system_device_detail.consumables.creating": "Creating...",
   "system_device_detail.consumables.create_install_button": "Create and Install",
   "system_device_detail.consumables.type_label": "Consumable Type",

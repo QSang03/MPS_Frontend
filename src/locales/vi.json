@@ -1978,6 +1978,7 @@
   "system_device_detail.consumables.create_error": "Tạo vật tư thất bại",
   "system_device_detail.consumables.install_success": "Đã lắp vật tư vào thiết bị",
   "system_device_detail.consumables.create_install_error": "Không thể tạo hoặc lắp vật tư",
+  "system_device_detail.consumables.insufficient_stock": "Không đủ tồn kho vật tư. Cần {required}, hiện còn {available}.",
   "system_device_detail.consumables.creating": "Đang tạo...",
   "system_device_detail.consumables.create_install_button": "Tạo và lắp",
   "system_device_detail.consumables.type_label": "Loại vật tư",

@@ -1579,7 +1579,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
 
                                       // Set price and currency fields
                                       const existingPrice = hasPrice(c) ? c.price : undefined
-                                      setEditPrice(existingPrice || '')
+                                      setEditPrice(existingPrice ?? '')
                                       setEditCurrencyId(c.currencyId || null)
 
                                       setShowEditConsumable(true)
@@ -2231,8 +2231,8 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                       if (typeof createActualPagesPrinted === 'number')
                         installPayload.actualPagesPrinted = createActualPagesPrinted
 
-                      // Set price and currencyId
-                      if (typeof createPrice === 'number' && createPrice > 0) {
+                      // Set price and currencyId (allow zero)
+                      if (typeof createPrice === 'number') {
                         const priceErr = validateDecimal3010(createPrice)
                         if (priceErr) {
                           setCreatePriceError(priceErr)
@@ -2243,6 +2243,9 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                         const formatted = formatDecimal3010(createPrice)
                         if (formatted !== undefined) {
                           installPayload.price = formatted
+                          setCreatePriceError(null)
+                        } else {
+                          installPayload.price = createPrice
                           setCreatePriceError(null)
                         }
                       }
@@ -2278,7 +2281,32 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                       setCompatibleConsumables(Array.isArray(compatibleRaw) ? compatibleRaw : [])
                     } catch (err) {
                       console.error('Create/install consumable failed', err)
-                      toast.error(t('system_device_detail.consumables.create_install_error'))
+                      // Surface clear stock error if backend returns insufficient stock details
+                      const respData = (err as { response?: { data?: unknown } })?.response
+                        ?.data as
+                        | {
+                            error?: string
+                            message?: string
+                            details?: { available?: number; required?: number }
+                          }
+                        | undefined
+                      if (respData?.error === 'messages.consumable.insufficientStock') {
+                        const available = respData.details?.available ?? 0
+                        const required = respData.details?.required ?? 0
+                        toast.error(
+                          t('system_device_detail.consumables.insufficient_stock', {
+                            required,
+                            available,
+                          })
+                        )
+                      } else {
+                        toast.error(
+                          respData?.message ||
+                            (respData?.error && typeof respData.error === 'string'
+                              ? respData.error
+                              : t('system_device_detail.consumables.create_install_error'))
+                        )
+                      }
                     } finally {
                       setCreatingConsumable(false)
                       setConsumablesLoading(false)
@@ -2825,8 +2853,8 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
 
                         // Only include price if removedAt is not being set (checkbox not checked)
                         if (!editShowRemovedAt) {
-                          // Set price and currencyId
-                          if (typeof editPrice === 'number' && editPrice > 0) {
+                          // Set price and currencyId (allow zero)
+                          if (typeof editPrice === 'number') {
                             const priceErr = validateDecimal3010(editPrice)
                             if (priceErr) {
                               setEditPriceError(priceErr)
@@ -2837,6 +2865,9 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                             const formatted = formatDecimal3010(editPrice)
                             if (formatted !== undefined) {
                               deviceDto.price = formatted
+                              setEditPriceError(null)
+                            } else {
+                              deviceDto.price = editPrice
                               setEditPriceError(null)
                             }
                           }
