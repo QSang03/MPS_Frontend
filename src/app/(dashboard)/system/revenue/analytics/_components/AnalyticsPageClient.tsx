@@ -15,6 +15,7 @@ import ConsumableTypeSelect from '@/components/shared/ConsumableTypeSelect'
 import MonthPicker from '@/components/ui/month-picker'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { Badge } from '@/components/ui/badge'
 import {
   Loader2,
   TrendingUp,
@@ -133,6 +134,27 @@ export default function AnalyticsPageClient() {
   ): number => {
     if (useConverted && converted !== undefined) return converted
     return original
+  }
+
+  const humanizeFormula = (formula?: string | null) => {
+    if (!formula) return ''
+    if (
+      formula.includes('totalCogsAfterAdjustment') &&
+      formula.includes('grossProfitAfterAdjustment')
+    ) {
+      return 'COGS sau điều chỉnh = COGS + Debit - Credit; Lợi nhuận gộp sau điều chỉnh = Doanh thu - COGS sau điều chỉnh'
+    }
+    return formula
+  }
+
+  const FormulaBadge = ({ formula }: { formula?: string | null }) => {
+    const friendly = humanizeFormula(formula)
+    if (!friendly) return null
+    return (
+      <Badge variant="secondary" className="text-xs whitespace-normal" title={friendly}>
+        {t('dashboard.cost_breakdown.formula_label')}
+      </Badge>
+    )
   }
   // Active tab state
   const [activeTab, setActiveTab] = useState('profit')
@@ -1208,11 +1230,7 @@ export default function AnalyticsPageClient() {
                           <div className="text-2xl font-bold text-amber-900">
                             {formatCurrency(caNet, enterpriseBaseCurrency)}
                           </div>
-                          {enterpriseData.costAdjustmentFormula ? (
-                            <p className="text-muted-foreground mt-1 text-xs">
-                              {enterpriseData.costAdjustmentFormula}
-                            </p>
-                          ) : null}
+                          <FormulaBadge formula={enterpriseData.costAdjustmentFormula} />
                         </CardContent>
                       </Card>
                       <Card className="border-orange-200 bg-orange-50">
@@ -1509,9 +1527,6 @@ export default function AnalyticsPageClient() {
                       <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
                         {t('dashboard.metrics.gross_profit_after_adjustment')}
                       </th>
-                      <th className="px-4 py-2 text-left text-sm font-semibold text-gray-600">
-                        {t('dashboard.cost_breakdown.formula_label')}
-                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
@@ -1653,8 +1668,8 @@ export default function AnalyticsPageClient() {
                               'right'
                             )}
                           </td>
-                          <td className="text-muted-foreground px-4 py-2 text-left text-xs">
-                            {row.costAdjustmentFormula || '-'}
+                          <td className="px-4 py-2 text-left text-xs">
+                            <FormulaBadge formula={row.costAdjustmentFormula} />
                           </td>
                         </tr>
                       )
@@ -1887,12 +1902,9 @@ export default function AnalyticsPageClient() {
                                 </div>
                                 {customerDetailData.customer.costAdjustmentFormula ? (
                                   <div className="col-span-3">
-                                    <span className="text-muted-foreground">
-                                      {t('dashboard.cost_breakdown.formula_label')}
-                                    </span>
-                                    <p className="text-muted-foreground text-xs">
-                                      {customerDetailData.customer.costAdjustmentFormula}
-                                    </p>
+                                    <FormulaBadge
+                                      formula={customerDetailData.customer.costAdjustmentFormula}
+                                    />
                                   </div>
                                 ) : null}
                               </div>
@@ -2641,7 +2653,7 @@ export default function AnalyticsPageClient() {
                                 )}
                               </td>
                               <td className="text-muted-foreground px-3 py-2 text-left text-xs">
-                                {p.costAdjustmentFormula || '-'}
+                                <FormulaBadge formula={p.costAdjustmentFormula} />
                               </td>
                             </tr>
                           ))}
