@@ -1133,18 +1133,18 @@ export default function AnalyticsPageClient() {
                     useConverted
                   )
                   return (
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                    <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
                       <Card className="border-[var(--brand-200)] bg-[var(--brand-50)]">
-                        <CardHeader className="pb-2">
-                          <CardTitle className="text-sm font-medium text-[var(--brand-700)]">
+                        <CardHeader className="pb-1">
+                          <CardTitle className="text-xs font-semibold text-[var(--brand-700)]">
                             {t('analytics.total_revenue')}
                           </CardTitle>
                         </CardHeader>
-                        <CardContent>
-                          <div className="text-2xl font-bold text-[var(--brand-900)]">
+                        <CardContent className="pt-1">
+                          <div className="text-xl font-semibold text-[var(--brand-900)]">
                             {formatCurrency(revenue, enterpriseBaseCurrency)}
                           </div>
-                          <p className="text-muted-foreground mt-1 text-xs">
+                          <p className="text-muted-foreground mt-0.5 text-[11px]">
                             {t('analytics.devices_count', { count: enterpriseData.devicesCount })} •{' '}
                             {t('analytics.customers_count', {
                               count: enterpriseData.customersCount,
@@ -1154,13 +1154,13 @@ export default function AnalyticsPageClient() {
                       </Card>
 
                       <Card className="border-orange-200 bg-orange-50">
-                        <CardHeader className="pb-2">
-                          <CardTitle className="text-sm font-medium text-orange-700">
+                        <CardHeader className="pb-1">
+                          <CardTitle className="text-xs font-semibold text-orange-700">
                             {t('analytics.total_cogs')}
                           </CardTitle>
                         </CardHeader>
-                        <CardContent>
-                          <div className="text-2xl font-bold text-orange-900">
+                        <CardContent className="pt-1">
+                          <div className="text-xl font-semibold text-orange-900">
                             {formatCurrency(cogs, enterpriseBaseCurrency)}
                           </div>
                         </CardContent>
@@ -1173,16 +1173,16 @@ export default function AnalyticsPageClient() {
                             : 'border-red-200 bg-red-50'
                         }
                       >
-                        <CardHeader className="pb-2">
+                        <CardHeader className="pb-1">
                           <CardTitle
-                            className={`text-sm font-medium ${profit >= 0 ? 'text-emerald-700' : 'text-red-700'}`}
+                            className={`text-xs font-semibold ${profit >= 0 ? 'text-emerald-700' : 'text-red-700'}`}
                           >
                             {t('analytics.gross_profit')}
                           </CardTitle>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="pt-1">
                           <div
-                            className={`flex items-center gap-2 text-2xl font-bold ${profit >= 0 ? 'text-emerald-900' : 'text-red-900'}`}
+                            className={`flex items-center gap-2 text-xl font-semibold ${profit >= 0 ? 'text-emerald-900' : 'text-red-900'}`}
                           >
                             {profit >= 0 ? (
                               <TrendingUp className="h-5 w-5" />
@@ -1191,56 +1191,56 @@ export default function AnalyticsPageClient() {
                             )}
                             {formatCurrency(profit, enterpriseBaseCurrency)}
                           </div>
-                          <p className="text-muted-foreground mt-1 text-xs">
+                          <p className="text-muted-foreground mt-0.5 text-[11px]">
                             {t('analytics.gross_margin')}: {enterpriseData.grossMargin.toFixed(1)}%
                           </p>
                         </CardContent>
                       </Card>
                       <Card className="border-red-200 bg-red-50">
-                        <CardHeader className="pb-2">
-                          <CardTitle className="text-sm font-medium text-red-700">
+                        <CardHeader className="pb-1">
+                          <CardTitle className="text-xs font-semibold text-red-700">
                             {t('dashboard.metrics.cost_adjustment_debit')}
                           </CardTitle>
                         </CardHeader>
-                        <CardContent>
-                          <div className="text-2xl font-bold text-red-900">
+                        <CardContent className="pt-1">
+                          <div className="text-xl font-semibold text-red-900">
                             {formatCurrency(caDebit, enterpriseBaseCurrency)}
                           </div>
                         </CardContent>
                       </Card>
                       <Card className="border-emerald-200 bg-emerald-50">
-                        <CardHeader className="pb-2">
-                          <CardTitle className="text-sm font-medium text-emerald-700">
+                        <CardHeader className="pb-1">
+                          <CardTitle className="text-xs font-semibold text-emerald-700">
                             {t('dashboard.metrics.cost_adjustment_credit')}
                           </CardTitle>
                         </CardHeader>
-                        <CardContent>
-                          <div className="text-2xl font-bold text-emerald-900">
+                        <CardContent className="pt-1">
+                          <div className="text-xl font-semibold text-emerald-900">
                             {formatCurrency(caCredit, enterpriseBaseCurrency)}
                           </div>
                         </CardContent>
                       </Card>
                       <Card className="border-amber-200 bg-amber-50">
-                        <CardHeader className="pb-2">
-                          <CardTitle className="text-sm font-medium text-amber-700">
+                        <CardHeader className="pb-1">
+                          <CardTitle className="text-xs font-semibold text-amber-700">
                             {t('dashboard.metrics.cost_adjustment_net')}
                           </CardTitle>
                         </CardHeader>
-                        <CardContent>
-                          <div className="text-2xl font-bold text-amber-900">
+                        <CardContent className="pt-1">
+                          <div className="text-xl font-semibold text-amber-900">
                             {formatCurrency(caNet, enterpriseBaseCurrency)}
                           </div>
                           <FormulaBadge formula={enterpriseData.costAdjustmentFormula} />
                         </CardContent>
                       </Card>
                       <Card className="border-orange-200 bg-orange-50">
-                        <CardHeader className="pb-2">
-                          <CardTitle className="text-sm font-medium text-orange-700">
+                        <CardHeader className="pb-1">
+                          <CardTitle className="text-xs font-semibold text-orange-700">
                             {t('dashboard.metrics.total_cogs_after_adjustment')}
                           </CardTitle>
                         </CardHeader>
-                        <CardContent>
-                          <div className="text-2xl font-bold text-orange-900">
+                        <CardContent className="pt-1">
+                          <div className="text-xl font-semibold text-orange-900">
                             {formatCurrency(cogsAfterAdj, enterpriseBaseCurrency)}
                           </div>
                         </CardContent>
@@ -1252,16 +1252,16 @@ export default function AnalyticsPageClient() {
                             : 'border-red-200 bg-red-50'
                         }
                       >
-                        <CardHeader className="pb-2">
+                        <CardHeader className="pb-1">
                           <CardTitle
-                            className={`text-sm font-medium ${profitAfterAdj >= 0 ? 'text-emerald-700' : 'text-red-700'}`}
+                            className={`text-xs font-semibold ${profitAfterAdj >= 0 ? 'text-emerald-700' : 'text-red-700'}`}
                           >
                             {t('dashboard.metrics.gross_profit_after_adjustment')}
                           </CardTitle>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="pt-1">
                           <div
-                            className={`flex items-center gap-2 text-2xl font-bold ${profitAfterAdj >= 0 ? 'text-emerald-900' : 'text-red-900'}`}
+                            className={`flex items-center gap-2 text-xl font-semibold ${profitAfterAdj >= 0 ? 'text-emerald-900' : 'text-red-900'}`}
                           >
                             {profitAfterAdj >= 0 ? (
                               <TrendingUp className="h-5 w-5" />
