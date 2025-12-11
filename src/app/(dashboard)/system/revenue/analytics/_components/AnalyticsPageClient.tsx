@@ -166,6 +166,17 @@ export default function AnalyticsPageClient() {
     totalRevenueConverted?: number
     totalCogsConverted?: number
     grossProfitConverted?: number
+    costAdjustmentDebit?: number
+    costAdjustmentCredit?: number
+    costAdjustmentNet?: number
+    totalCogsAfterAdjustment?: number
+    grossProfitAfterAdjustment?: number
+    costAdjustmentDebitConverted?: number
+    costAdjustmentCreditConverted?: number
+    costAdjustmentNetConverted?: number
+    totalCogsAfterAdjustmentConverted?: number
+    grossProfitAfterAdjustmentConverted?: number
+    costAdjustmentFormula?: string
   } | null>(null)
   const [enterpriseProfitability, setEnterpriseProfitability] = useState<
     ProfitabilityTrendItem[] | null
@@ -193,6 +204,17 @@ export default function AnalyticsPageClient() {
       totalRevenue: number
       totalCogs: number
       grossProfit: number
+      costAdjustmentDebit?: number
+      costAdjustmentCredit?: number
+      costAdjustmentNet?: number
+      totalCogsAfterAdjustment?: number
+      grossProfitAfterAdjustment?: number
+      costAdjustmentDebitConverted?: number
+      costAdjustmentCreditConverted?: number
+      costAdjustmentNetConverted?: number
+      totalCogsAfterAdjustmentConverted?: number
+      grossProfitAfterAdjustmentConverted?: number
+      costAdjustmentFormula?: string
       // Converted values (only for System Admin context)
       totalRevenueConverted?: number
       totalCogsConverted?: number
@@ -1061,6 +1083,33 @@ export default function AnalyticsPageClient() {
                     enterpriseData.grossProfitConverted,
                     useConverted
                   )
+                  const caDebit = getDisplayValue(
+                    enterpriseData.costAdjustmentDebit ?? 0,
+                    enterpriseData.costAdjustmentDebitConverted,
+                    useConverted
+                  )
+                  const caCredit = getDisplayValue(
+                    enterpriseData.costAdjustmentCredit ?? 0,
+                    enterpriseData.costAdjustmentCreditConverted,
+                    useConverted
+                  )
+                  const caNet = getDisplayValue(
+                    enterpriseData.costAdjustmentNet ?? 0,
+                    enterpriseData.costAdjustmentNetConverted,
+                    useConverted
+                  )
+                  const cogsAfterAdj = getDisplayValue(
+                    enterpriseData.totalCogsAfterAdjustment ?? enterpriseData.totalCogs,
+                    enterpriseData.totalCogsAfterAdjustmentConverted ??
+                      enterpriseData.totalCogsConverted,
+                    useConverted
+                  )
+                  const profitAfterAdj = getDisplayValue(
+                    enterpriseData.grossProfitAfterAdjustment ?? enterpriseData.grossProfit,
+                    enterpriseData.grossProfitAfterAdjustmentConverted ??
+                      enterpriseData.grossProfitConverted,
+                    useConverted
+                  )
                   return (
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                       <Card className="border-[var(--brand-200)] bg-[var(--brand-50)]">
@@ -1123,6 +1172,86 @@ export default function AnalyticsPageClient() {
                           <p className="text-muted-foreground mt-1 text-xs">
                             {t('analytics.gross_margin')}: {enterpriseData.grossMargin.toFixed(1)}%
                           </p>
+                        </CardContent>
+                      </Card>
+                      <Card className="border-red-200 bg-red-50">
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-sm font-medium text-red-700">
+                            {t('dashboard.metrics.cost_adjustment_debit')}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="text-2xl font-bold text-red-900">
+                            {formatCurrency(caDebit, enterpriseBaseCurrency)}
+                          </div>
+                        </CardContent>
+                      </Card>
+                      <Card className="border-emerald-200 bg-emerald-50">
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-sm font-medium text-emerald-700">
+                            {t('dashboard.metrics.cost_adjustment_credit')}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="text-2xl font-bold text-emerald-900">
+                            {formatCurrency(caCredit, enterpriseBaseCurrency)}
+                          </div>
+                        </CardContent>
+                      </Card>
+                      <Card className="border-amber-200 bg-amber-50">
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-sm font-medium text-amber-700">
+                            {t('dashboard.metrics.cost_adjustment_net')}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="text-2xl font-bold text-amber-900">
+                            {formatCurrency(caNet, enterpriseBaseCurrency)}
+                          </div>
+                          {enterpriseData.costAdjustmentFormula ? (
+                            <p className="text-muted-foreground mt-1 text-xs">
+                              {enterpriseData.costAdjustmentFormula}
+                            </p>
+                          ) : null}
+                        </CardContent>
+                      </Card>
+                      <Card className="border-orange-200 bg-orange-50">
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-sm font-medium text-orange-700">
+                            {t('dashboard.metrics.total_cogs_after_adjustment')}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="text-2xl font-bold text-orange-900">
+                            {formatCurrency(cogsAfterAdj, enterpriseBaseCurrency)}
+                          </div>
+                        </CardContent>
+                      </Card>
+                      <Card
+                        className={
+                          profitAfterAdj >= 0
+                            ? 'border-emerald-200 bg-emerald-50'
+                            : 'border-red-200 bg-red-50'
+                        }
+                      >
+                        <CardHeader className="pb-2">
+                          <CardTitle
+                            className={`text-sm font-medium ${profitAfterAdj >= 0 ? 'text-emerald-700' : 'text-red-700'}`}
+                          >
+                            {t('dashboard.metrics.gross_profit_after_adjustment')}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div
+                            className={`flex items-center gap-2 text-2xl font-bold ${profitAfterAdj >= 0 ? 'text-emerald-900' : 'text-red-900'}`}
+                          >
+                            {profitAfterAdj >= 0 ? (
+                              <TrendingUp className="h-5 w-5" />
+                            ) : (
+                              <TrendingDown className="h-5 w-5" />
+                            )}
+                            {formatCurrency(profitAfterAdj, enterpriseBaseCurrency)}
+                          </div>
                         </CardContent>
                       </Card>
                     </div>
@@ -1365,6 +1494,24 @@ export default function AnalyticsPageClient() {
                       <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
                         {t('analytics.table.margin')}
                       </th>
+                      <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
+                        {t('dashboard.metrics.cost_adjustment_debit')}
+                      </th>
+                      <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
+                        {t('dashboard.metrics.cost_adjustment_credit')}
+                      </th>
+                      <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
+                        {t('dashboard.metrics.cost_adjustment_net')}
+                      </th>
+                      <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
+                        {t('dashboard.metrics.total_cogs_after_adjustment')}
+                      </th>
+                      <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
+                        {t('dashboard.metrics.gross_profit_after_adjustment')}
+                      </th>
+                      <th className="px-4 py-2 text-left text-sm font-semibold text-gray-600">
+                        {t('dashboard.cost_breakdown.formula_label')}
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
@@ -1452,6 +1599,63 @@ export default function AnalyticsPageClient() {
                               ? `${row.grossMargin.toFixed(1)}%`
                               : '-'}
                           </td>
+                          <td className="px-4 py-2 text-right text-sm">
+                            {formatDual(
+                              row.costAdjustmentDebit ?? 0,
+                              row.costAdjustmentDebitConverted,
+                              currentCurrency,
+                              row.currency,
+                              'right'
+                            )}
+                          </td>
+                          <td className="px-4 py-2 text-right text-sm">
+                            {formatDual(
+                              row.costAdjustmentCredit ?? 0,
+                              row.costAdjustmentCreditConverted,
+                              currentCurrency,
+                              row.currency,
+                              'right'
+                            )}
+                          </td>
+                          <td className="px-4 py-2 text-right text-sm">
+                            {formatDual(
+                              row.costAdjustmentNet ?? 0,
+                              row.costAdjustmentNetConverted,
+                              currentCurrency,
+                              row.currency,
+                              'right'
+                            )}
+                          </td>
+                          <td className="px-4 py-2 text-right text-sm font-semibold">
+                            {formatDual(
+                              row.totalCogsAfterAdjustment ?? row.totalCogs,
+                              row.totalCogsAfterAdjustmentConverted ?? row.totalCogsConverted,
+                              currentCurrency,
+                              row.currency,
+                              'right'
+                            )}
+                          </td>
+                          <td
+                            className={`px-4 py-2 text-right text-sm font-semibold ${
+                              (row.grossProfitAfterAdjustmentConverted ??
+                                row.grossProfitAfterAdjustment ??
+                                row.grossProfitConverted ??
+                                row.grossProfit) >= 0
+                                ? 'text-[var(--color-success-600)]'
+                                : 'text-[var(--color-error-600)]'
+                            }`}
+                          >
+                            {formatDual(
+                              row.grossProfitAfterAdjustment ?? row.grossProfit,
+                              row.grossProfitAfterAdjustmentConverted ?? row.grossProfitConverted,
+                              currentCurrency,
+                              row.currency,
+                              'right'
+                            )}
+                          </td>
+                          <td className="text-muted-foreground px-4 py-2 text-left text-xs">
+                            {row.costAdjustmentFormula || '-'}
+                          </td>
                         </tr>
                       )
                     })}
@@ -1460,7 +1664,7 @@ export default function AnalyticsPageClient() {
                       : (enterpriseProfitability ?? [])
                     ).length === 0 && !(enterpriseLoading || customerDetailLoading) ? (
                       <tr>
-                        <td className="px-4 py-6 text-center text-sm text-gray-500" colSpan={9}>
+                        <td className="px-4 py-6 text-center text-sm text-gray-500" colSpan={15}>
                           {t('empty.no_data')}
                         </td>
                       </tr>
@@ -1603,6 +1807,94 @@ export default function AnalyticsPageClient() {
                                     )}
                                   </p>
                                 </div>
+                                <div>
+                                  <span className="text-muted-foreground">
+                                    {t('dashboard.metrics.cost_adjustment_debit')}
+                                  </span>
+                                  <p className="font-semibold">
+                                    {formatDual(
+                                      customerDetailData.customer.costAdjustmentDebit ?? 0,
+                                      customerDetailData.customer.costAdjustmentDebitConverted,
+                                      customerDetailBaseCurrency,
+                                      customerDetailData.customer.currency,
+                                      'left'
+                                    )}
+                                  </p>
+                                </div>
+                                <div>
+                                  <span className="text-muted-foreground">
+                                    {t('dashboard.metrics.cost_adjustment_credit')}
+                                  </span>
+                                  <p className="font-semibold">
+                                    {formatDual(
+                                      customerDetailData.customer.costAdjustmentCredit ?? 0,
+                                      customerDetailData.customer.costAdjustmentCreditConverted,
+                                      customerDetailBaseCurrency,
+                                      customerDetailData.customer.currency,
+                                      'left'
+                                    )}
+                                  </p>
+                                </div>
+                                <div>
+                                  <span className="text-muted-foreground">
+                                    {t('dashboard.metrics.cost_adjustment_net')}
+                                  </span>
+                                  <p className="font-semibold">
+                                    {formatDual(
+                                      customerDetailData.customer.costAdjustmentNet ?? 0,
+                                      customerDetailData.customer.costAdjustmentNetConverted,
+                                      customerDetailBaseCurrency,
+                                      customerDetailData.customer.currency,
+                                      'left'
+                                    )}
+                                  </p>
+                                </div>
+                                <div>
+                                  <span className="text-muted-foreground">
+                                    {t('dashboard.metrics.total_cogs_after_adjustment')}
+                                  </span>
+                                  <p className="font-semibold">
+                                    {formatDual(
+                                      customerDetailData.customer.totalCogsAfterAdjustment ??
+                                        customerDetailData.customer.totalCogs,
+                                      customerDetailData.customer
+                                        .totalCogsAfterAdjustmentConverted ??
+                                        customerDetailData.customer.totalCogsConverted,
+                                      customerDetailBaseCurrency,
+                                      customerDetailData.customer.currency,
+                                      'left'
+                                    )}
+                                  </p>
+                                </div>
+                                <div>
+                                  <span className="text-muted-foreground">
+                                    {t('dashboard.metrics.gross_profit_after_adjustment')}
+                                  </span>
+                                  <p
+                                    className={`font-semibold ${(customerDetailData.customer.grossProfitAfterAdjustment ?? customerDetailData.customer.grossProfit) >= 0 ? 'text-[var(--color-success-600)]' : 'text-[var(--color-error-600)]'}`}
+                                  >
+                                    {formatDual(
+                                      customerDetailData.customer.grossProfitAfterAdjustment ??
+                                        customerDetailData.customer.grossProfit,
+                                      customerDetailData.customer
+                                        .grossProfitAfterAdjustmentConverted ??
+                                        customerDetailData.customer.grossProfitConverted,
+                                      customerDetailBaseCurrency,
+                                      customerDetailData.customer.currency,
+                                      'left'
+                                    )}
+                                  </p>
+                                </div>
+                                {customerDetailData.customer.costAdjustmentFormula ? (
+                                  <div className="col-span-3">
+                                    <span className="text-muted-foreground">
+                                      {t('dashboard.cost_breakdown.formula_label')}
+                                    </span>
+                                    <p className="text-muted-foreground text-xs">
+                                      {customerDetailData.customer.costAdjustmentFormula}
+                                    </p>
+                                  </div>
+                                ) : null}
                               </div>
                             </CardContent>
                           </Card>
@@ -1921,224 +2213,246 @@ export default function AnalyticsPageClient() {
                         </div>
                       ) : (
                         <Suspense fallback={<Skeleton className="h-[360px] w-full rounded-lg" />}>
-                          {globalMode === 'period' && deviceData.profitability.length === 1
-                            ? (() => {
-                                const single = deviceData.profitability[0]
-                                const chartConfig: ChartConfig = {
-                                  totalRevenueConverted: {
-                                    label: t('analytics.total_revenue'),
-                                    color: '#3b82f6',
-                                  },
-                                  totalCogsConverted: {
-                                    label: t('analytics.total_cogs'),
-                                    color: '#f59e0b',
-                                  },
-                                  grossProfitConverted: {
-                                    label: t('analytics.gross_profit'),
-                                    color: '#10b981',
-                                  },
-                                }
-                                const formatter = (v: unknown) =>
-                                  typeof v === 'number'
-                                    ? formatCurrency(
-                                        Number(v),
-                                        enterpriseBaseCurrency || customerDetailBaseCurrency
-                                      )
-                                    : String(v ?? '-')
-                                return (
-                                  <ChartContainer config={chartConfig} className="h-full w-full">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                      <BarChart accessibilityLayer data={[single]}>
-                                        <CartesianGrid
-                                          vertical={false}
-                                          strokeDasharray="3 3"
-                                          className="stroke-border/40"
-                                        />
-                                        <XAxis
-                                          dataKey="month"
-                                          tickLine={false}
-                                          axisLine={false}
-                                          tickMargin={10}
-                                          tick={{ fill: 'hsl(var(--foreground))' }}
-                                        />
-                                        <YAxis
-                                          tickLine={false}
-                                          axisLine={false}
-                                          tickMargin={10}
-                                          tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                                          tickFormatter={(v) => {
-                                            const num = Number(v)
-                                            if (num >= 1000000)
-                                              return `${(num / 1000000).toFixed(1)}M`
-                                            if (num >= 1000) return `${(num / 1000).toFixed(1)}K`
-                                            return Intl.NumberFormat('vi-VN').format(num)
-                                          }}
-                                        />
-                                        <ChartTooltip
-                                          content={
-                                            <ChartTooltipContent
-                                              indicator="dot"
-                                              formatter={(v) =>
-                                                typeof v === 'number'
-                                                  ? formatter(v)
-                                                  : String(v ?? '-')
-                                              }
-                                            />
+                          {(() => {
+                            const chartCurrency =
+                              enterpriseBaseCurrency || customerDetailBaseCurrency
+                            const chartData = deviceData.profitability.map((p) => ({
+                              ...p,
+                              costAdjustmentDebitConverted:
+                                p.costAdjustmentDebitConverted ?? p.costAdjustmentDebit ?? 0,
+                              costAdjustmentCreditConverted:
+                                p.costAdjustmentCreditConverted ?? p.costAdjustmentCredit ?? 0,
+                              costAdjustmentNetConverted:
+                                p.costAdjustmentNetConverted ?? p.costAdjustmentNet ?? 0,
+                              totalCogsAfterAdjustmentConverted:
+                                p.totalCogsAfterAdjustmentConverted ??
+                                p.totalCogsAfterAdjustment ??
+                                p.totalCogsConverted ??
+                                p.totalCogs,
+                              grossProfitAfterAdjustmentConverted:
+                                p.grossProfitAfterAdjustmentConverted ??
+                                p.grossProfitAfterAdjustment ??
+                                p.grossProfitConverted ??
+                                p.grossProfit,
+                            }))
+
+                            if (globalMode === 'period' && chartData.length === 1) {
+                              const single = chartData[0]
+                              const chartConfig: ChartConfig = {
+                                totalRevenueConverted: {
+                                  label: t('analytics.total_revenue'),
+                                  color: '#3b82f6',
+                                },
+                                totalCogsConverted: {
+                                  label: t('analytics.total_cogs'),
+                                  color: '#f59e0b',
+                                },
+                                grossProfitConverted: {
+                                  label: t('analytics.gross_profit'),
+                                  color: '#10b981',
+                                },
+                                totalCogsAfterAdjustmentConverted: {
+                                  label: t('dashboard.metrics.total_cogs_after_adjustment'),
+                                  color: '#f97316',
+                                },
+                                grossProfitAfterAdjustmentConverted: {
+                                  label: t('dashboard.metrics.gross_profit_after_adjustment'),
+                                  color: '#0ea5e9',
+                                },
+                                costAdjustmentDebitConverted: {
+                                  label: t('dashboard.metrics.cost_adjustment_debit'),
+                                  color: '#ef4444',
+                                },
+                                costAdjustmentCreditConverted: {
+                                  label: t('dashboard.metrics.cost_adjustment_credit'),
+                                  color: '#10b981',
+                                },
+                                costAdjustmentNetConverted: {
+                                  label: t('dashboard.metrics.cost_adjustment_net'),
+                                  color: '#f59e0b',
+                                },
+                              }
+                              const formatter = (v: unknown) =>
+                                typeof v === 'number'
+                                  ? formatCurrency(Number(v), chartCurrency)
+                                  : String(v ?? '-')
+
+                              return (
+                                <ChartContainer config={chartConfig} className="h-full w-full">
+                                  <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart accessibilityLayer data={[single]}>
+                                      <CartesianGrid
+                                        vertical={false}
+                                        strokeDasharray="3 3"
+                                        className="stroke-border/40"
+                                      />
+                                      <XAxis
+                                        dataKey="month"
+                                        tickLine={false}
+                                        axisLine={false}
+                                        tickMargin={10}
+                                        tick={{ fill: 'hsl(var(--foreground))' }}
+                                      />
+                                      <YAxis
+                                        tickLine={false}
+                                        axisLine={false}
+                                        tickMargin={10}
+                                        tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                                        tickFormatter={(v) => {
+                                          const num = Number(v)
+                                          if (num >= 1000000)
+                                            return `${(num / 1000000).toFixed(1)}M`
+                                          if (num >= 1000) return `${(num / 1000).toFixed(1)}K`
+                                          return Intl.NumberFormat('vi-VN').format(num)
+                                        }}
+                                      />
+                                      <ChartTooltip
+                                        content={
+                                          <ChartTooltipContent
+                                            indicator="dot"
+                                            formatter={(v) =>
+                                              typeof v === 'number'
+                                                ? formatter(v)
+                                                : String(v ?? '-')
+                                            }
+                                          />
+                                        }
+                                      />
+                                      <ChartLegend content={<ChartLegendContent />} />
+                                      {[
+                                        'totalRevenueConverted',
+                                        'totalCogsConverted',
+                                        'grossProfitConverted',
+                                        'totalCogsAfterAdjustmentConverted',
+                                        'grossProfitAfterAdjustmentConverted',
+                                        'costAdjustmentDebitConverted',
+                                        'costAdjustmentCreditConverted',
+                                        'costAdjustmentNetConverted',
+                                      ].map((key) => (
+                                        <Bar
+                                          key={key}
+                                          dataKey={key}
+                                          fill={`var(--color-${key})`}
+                                          radius={[6, 6, 0, 0]}
+                                        >
+                                          <LabelList
+                                            dataKey={key}
+                                            position="top"
+                                            formatter={(v) => formatter(v)}
+                                            className="fill-foreground text-xs font-medium"
+                                          />
+                                        </Bar>
+                                      ))}
+                                    </BarChart>
+                                  </ResponsiveContainer>
+                                </ChartContainer>
+                              )
+                            }
+
+                            const chartConfig: ChartConfig = {
+                              totalRevenueConverted: {
+                                label: t('analytics.total_revenue'),
+                                color: '#3b82f6',
+                              },
+                              totalCogsConverted: {
+                                label: t('analytics.total_cogs'),
+                                color: '#f59e0b',
+                              },
+                              grossProfitConverted: {
+                                label: t('analytics.gross_profit'),
+                                color: '#10b981',
+                              },
+                              totalCogsAfterAdjustmentConverted: {
+                                label: t('dashboard.metrics.total_cogs_after_adjustment'),
+                                color: '#f97316',
+                              },
+                              grossProfitAfterAdjustmentConverted: {
+                                label: t('dashboard.metrics.gross_profit_after_adjustment'),
+                                color: '#0ea5e9',
+                              },
+                              costAdjustmentDebitConverted: {
+                                label: t('dashboard.metrics.cost_adjustment_debit'),
+                                color: '#ef4444',
+                              },
+                              costAdjustmentCreditConverted: {
+                                label: t('dashboard.metrics.cost_adjustment_credit'),
+                                color: '#10b981',
+                              },
+                              costAdjustmentNetConverted: {
+                                label: t('dashboard.metrics.cost_adjustment_net'),
+                                color: '#f59e0b',
+                              },
+                            }
+                            const formatter = (v: unknown) =>
+                              typeof v === 'number'
+                                ? formatCurrency(Number(v), chartCurrency)
+                                : String(v ?? '-')
+
+                            return (
+                              <ChartContainer config={chartConfig} className="h-full w-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                  <LineChart accessibilityLayer data={chartData}>
+                                    <CartesianGrid
+                                      vertical={false}
+                                      strokeDasharray="3 3"
+                                      className="stroke-border/40"
+                                    />
+                                    <XAxis
+                                      dataKey="month"
+                                      tickLine={false}
+                                      axisLine={false}
+                                      tickMargin={10}
+                                      tick={{ fill: 'hsl(var(--foreground))' }}
+                                    />
+                                    <YAxis
+                                      tickLine={false}
+                                      axisLine={false}
+                                      tickMargin={10}
+                                      tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                                      tickFormatter={(v) => {
+                                        const num = Number(v)
+                                        if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`
+                                        if (num >= 1000) return `${(num / 1000).toFixed(1)}K`
+                                        return Intl.NumberFormat('vi-VN').format(num)
+                                      }}
+                                    />
+                                    <ChartTooltip
+                                      content={
+                                        <ChartTooltipContent
+                                          indicator="dot"
+                                          formatter={(v) =>
+                                            typeof v === 'number' ? formatter(v) : String(v ?? '-')
                                           }
                                         />
-                                        <ChartLegend content={<ChartLegendContent />} />
-                                        <Bar
-                                          dataKey="totalRevenueConverted"
-                                          fill="var(--color-totalRevenueConverted)"
-                                          radius={[6, 6, 0, 0]}
-                                        >
-                                          <LabelList
-                                            dataKey="totalRevenueConverted"
-                                            position="top"
-                                            formatter={(v) => formatter(v)}
-                                            className="fill-foreground text-xs font-medium"
-                                          />
-                                        </Bar>
-                                        <Bar
-                                          dataKey="totalCogsConverted"
-                                          fill="var(--color-totalCogsConverted)"
-                                          radius={[6, 6, 0, 0]}
-                                        >
-                                          <LabelList
-                                            dataKey="totalCogsConverted"
-                                            position="top"
-                                            formatter={(v) => formatter(v)}
-                                            className="fill-foreground text-xs font-medium"
-                                          />
-                                        </Bar>
-                                        <Bar
-                                          dataKey="grossProfitConverted"
-                                          fill="var(--color-grossProfitConverted)"
-                                          radius={[6, 6, 0, 0]}
-                                        >
-                                          <LabelList
-                                            dataKey="grossProfitConverted"
-                                            position="top"
-                                            formatter={(v) => formatter(v)}
-                                            className="fill-foreground text-xs font-medium"
-                                          />
-                                        </Bar>
-                                      </BarChart>
-                                    </ResponsiveContainer>
-                                  </ChartContainer>
-                                )
-                              })()
-                            : (() => {
-                                const chartConfig: ChartConfig = {
-                                  totalRevenueConverted: {
-                                    label: t('analytics.total_revenue'),
-                                    color: '#3b82f6',
-                                  },
-                                  totalCogsConverted: {
-                                    label: t('analytics.total_cogs'),
-                                    color: '#f59e0b',
-                                  },
-                                  grossProfitConverted: {
-                                    label: t('analytics.gross_profit'),
-                                    color: '#10b981',
-                                  },
-                                }
-                                const formatter = (v: unknown) =>
-                                  typeof v === 'number'
-                                    ? formatCurrency(
-                                        Number(v),
-                                        enterpriseBaseCurrency || customerDetailBaseCurrency
-                                      )
-                                    : String(v ?? '-')
-                                return (
-                                  <ChartContainer config={chartConfig} className="h-full w-full">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                      <LineChart accessibilityLayer data={deviceData.profitability}>
-                                        <CartesianGrid
-                                          vertical={false}
-                                          strokeDasharray="3 3"
-                                          className="stroke-border/40"
-                                        />
-                                        <XAxis
-                                          dataKey="month"
-                                          tickLine={false}
-                                          axisLine={false}
-                                          tickMargin={10}
-                                          tick={{ fill: 'hsl(var(--foreground))' }}
-                                        />
-                                        <YAxis
-                                          tickLine={false}
-                                          axisLine={false}
-                                          tickMargin={10}
-                                          tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                                          tickFormatter={(v) => {
-                                            const num = Number(v)
-                                            if (num >= 1000000)
-                                              return `${(num / 1000000).toFixed(1)}M`
-                                            if (num >= 1000) return `${(num / 1000).toFixed(1)}K`
-                                            return Intl.NumberFormat('vi-VN').format(num)
-                                          }}
-                                        />
-                                        <ChartTooltip
-                                          content={
-                                            <ChartTooltipContent
-                                              indicator="dot"
-                                              formatter={(v) =>
-                                                typeof v === 'number'
-                                                  ? formatter(v)
-                                                  : String(v ?? '-')
-                                              }
-                                            />
-                                          }
-                                        />
-                                        <ChartLegend content={<ChartLegendContent />} />
-                                        <Line
-                                          type="monotone"
-                                          dataKey="totalRevenueConverted"
-                                          stroke="var(--color-totalRevenueConverted)"
-                                          name={t('analytics.total_revenue')}
-                                          strokeWidth={3}
-                                          dot={false}
-                                          activeDot={{
-                                            r: 5,
-                                            fill: 'var(--color-totalRevenueConverted)',
-                                            strokeWidth: 2,
-                                            stroke: 'hsl(var(--background))',
-                                          }}
-                                        />
-                                        <Line
-                                          type="monotone"
-                                          dataKey="totalCogsConverted"
-                                          stroke="var(--color-totalCogsConverted)"
-                                          name={t('analytics.total_cogs')}
-                                          strokeWidth={3}
-                                          dot={false}
-                                          activeDot={{
-                                            r: 5,
-                                            fill: 'var(--color-totalCogsConverted)',
-                                            strokeWidth: 2,
-                                            stroke: 'hsl(var(--background))',
-                                          }}
-                                        />
-                                        <Line
-                                          type="monotone"
-                                          dataKey="grossProfitConverted"
-                                          stroke="var(--color-grossProfitConverted)"
-                                          name={t('analytics.gross_profit')}
-                                          strokeWidth={3}
-                                          dot={false}
-                                          activeDot={{
-                                            r: 5,
-                                            fill: 'var(--color-grossProfitConverted)',
-                                            strokeWidth: 2,
-                                            stroke: 'hsl(var(--background))',
-                                          }}
-                                        />
-                                      </LineChart>
-                                    </ResponsiveContainer>
-                                  </ChartContainer>
-                                )
-                              })()}
+                                      }
+                                    />
+                                    <ChartLegend content={<ChartLegendContent />} />
+                                    {[
+                                      'totalRevenueConverted',
+                                      'totalCogsConverted',
+                                      'grossProfitConverted',
+                                      'totalCogsAfterAdjustmentConverted',
+                                      'grossProfitAfterAdjustmentConverted',
+                                      'costAdjustmentDebitConverted',
+                                      'costAdjustmentCreditConverted',
+                                      'costAdjustmentNetConverted',
+                                    ].map((key) => (
+                                      <Line
+                                        key={key}
+                                        type="monotone"
+                                        dataKey={key}
+                                        stroke={`var(--color-${key})`}
+                                        strokeWidth={
+                                          key.includes('total') || key.includes('gross') ? 3 : 2
+                                        }
+                                        dot={false}
+                                      />
+                                    ))}
+                                  </LineChart>
+                                </ResponsiveContainer>
+                              </ChartContainer>
+                            )
+                          })()}
                         </Suspense>
                       )}
                     </div>
@@ -2173,6 +2487,24 @@ export default function AnalyticsPageClient() {
                             </th>
                             <th className="px-3 py-2 text-right font-semibold">
                               {t('analytics.device.table.profit')}
+                            </th>
+                            <th className="px-3 py-2 text-right font-semibold">
+                              {t('dashboard.metrics.cost_adjustment_debit')}
+                            </th>
+                            <th className="px-3 py-2 text-right font-semibold">
+                              {t('dashboard.metrics.cost_adjustment_credit')}
+                            </th>
+                            <th className="px-3 py-2 text-right font-semibold">
+                              {t('dashboard.metrics.cost_adjustment_net')}
+                            </th>
+                            <th className="px-3 py-2 text-right font-semibold">
+                              {t('dashboard.metrics.total_cogs_after_adjustment')}
+                            </th>
+                            <th className="px-3 py-2 text-right font-semibold">
+                              {t('dashboard.metrics.gross_profit_after_adjustment')}
+                            </th>
+                            <th className="px-3 py-2 text-left font-semibold">
+                              {t('dashboard.cost_breakdown.formula_label')}
                             </th>
                           </tr>
                         </thead>
@@ -2253,6 +2585,63 @@ export default function AnalyticsPageClient() {
                                   p.currency,
                                   'right'
                                 )}
+                              </td>
+                              <td className="px-3 py-2 text-right">
+                                {formatDual(
+                                  p.costAdjustmentDebit ?? 0,
+                                  p.costAdjustmentDebitConverted,
+                                  enterpriseBaseCurrency || customerDetailBaseCurrency,
+                                  p.currency,
+                                  'right'
+                                )}
+                              </td>
+                              <td className="px-3 py-2 text-right">
+                                {formatDual(
+                                  p.costAdjustmentCredit ?? 0,
+                                  p.costAdjustmentCreditConverted,
+                                  enterpriseBaseCurrency || customerDetailBaseCurrency,
+                                  p.currency,
+                                  'right'
+                                )}
+                              </td>
+                              <td className="px-3 py-2 text-right">
+                                {formatDual(
+                                  p.costAdjustmentNet ?? 0,
+                                  p.costAdjustmentNetConverted,
+                                  enterpriseBaseCurrency || customerDetailBaseCurrency,
+                                  p.currency,
+                                  'right'
+                                )}
+                              </td>
+                              <td className="px-3 py-2 text-right font-semibold">
+                                {formatDual(
+                                  p.totalCogsAfterAdjustment ?? p.totalCogs,
+                                  p.totalCogsAfterAdjustmentConverted ?? p.totalCogsConverted,
+                                  enterpriseBaseCurrency || customerDetailBaseCurrency,
+                                  p.currency,
+                                  'right'
+                                )}
+                              </td>
+                              <td
+                                className={`px-3 py-2 text-right font-semibold ${
+                                  (p.grossProfitAfterAdjustmentConverted ??
+                                    p.grossProfitAfterAdjustment ??
+                                    p.grossProfitConverted ??
+                                    p.grossProfit) >= 0
+                                    ? 'text-[var(--color-success-600)]'
+                                    : 'text-[var(--color-error-600)]'
+                                }`}
+                              >
+                                {formatDual(
+                                  p.grossProfitAfterAdjustment ?? p.grossProfit,
+                                  p.grossProfitAfterAdjustmentConverted ?? p.grossProfitConverted,
+                                  enterpriseBaseCurrency || customerDetailBaseCurrency,
+                                  p.currency,
+                                  'right'
+                                )}
+                              </td>
+                              <td className="text-muted-foreground px-3 py-2 text-left text-xs">
+                                {p.costAdjustmentFormula || '-'}
                               </td>
                             </tr>
                           ))}

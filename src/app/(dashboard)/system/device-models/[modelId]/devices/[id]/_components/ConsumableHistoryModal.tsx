@@ -53,7 +53,7 @@ export function ConsumableUsageHistory({
   const [endDate, setEndDate] = useState('')
   const [showFilters, setShowFilters] = useState(false)
 
-  const { t } = useLocale()
+  const { t, locale } = useLocale()
 
   const load = useCallback(async () => {
     if (!deviceId) return
@@ -96,7 +96,8 @@ export function ConsumableUsageHistory({
     }
   }, [deviceId, page, limit, search, startDate, endDate, consumableId, t])
 
-  const fmt = (v: unknown) => (typeof v === 'number' ? v.toLocaleString('vi-VN') : String(v ?? '-'))
+  const fmt = (v: unknown) =>
+    typeof v === 'number' ? v.toLocaleString(locale === 'vi' ? 'vi-VN' : 'en-US') : String(v ?? '-')
   const shortId = (id?: string) => (id ? `${id.slice(0, 8)}…` : '-')
 
   useEffect(() => {
@@ -194,7 +195,7 @@ export function ConsumableUsageHistory({
               <div className="space-y-2">
                 <Label className="flex items-center gap-2 text-sm font-medium">
                   <Calendar className="h-4 w-4 text-[var(--brand-600)]" />
-                  Từ ngày
+                  {t('system_device_detail.consumable_history.from')}
                 </Label>
                 <Input
                   type="date"
@@ -206,7 +207,7 @@ export function ConsumableUsageHistory({
               <div className="space-y-2">
                 <Label className="flex items-center gap-2 text-sm font-medium">
                   <Calendar className="h-4 w-4 text-[var(--brand-600)]" />
-                  Đến ngày
+                  {t('system_device_detail.consumable_history.to')}
                 </Label>
                 <Input
                   type="date"
@@ -218,16 +219,18 @@ export function ConsumableUsageHistory({
 
               {/* Items Per Page */}
               <div className="space-y-2">
-                <Label className="text-sm font-medium">Số bản ghi</Label>
+                <Label className="text-sm font-medium">
+                  {t('system_device_detail.consumable_history.records_per_page')}
+                </Label>
                 <select
                   value={String(limit)}
                   onChange={(e) => setLimit(Number(e.target.value))}
                   className="h-10 w-full rounded-lg border border-slate-300 bg-white px-3 shadow-sm transition-all hover:border-[var(--brand-400)] focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)]/20 focus:outline-none dark:border-slate-700 dark:bg-slate-900"
                 >
-                  <option value="10">10 bản ghi</option>
-                  <option value="20">20 bản ghi</option>
-                  <option value="50">50 bản ghi</option>
-                  <option value="100">100 bản ghi</option>
+                  <option value="10">{`10 ${t('system_device_detail.consumable_history.records_unit')}`}</option>
+                  <option value="20">{`20 ${t('system_device_detail.consumable_history.records_unit')}`}</option>
+                  <option value="50">{`50 ${t('system_device_detail.consumable_history.records_unit')}`}</option>
+                  <option value="100">{`100 ${t('system_device_detail.consumable_history.records_unit')}`}</option>
                 </select>
               </div>
 
@@ -235,7 +238,7 @@ export function ConsumableUsageHistory({
               <div className="flex items-end gap-2">
                 <Button onClick={() => load()} variant="outline" className="flex-1 rounded-lg">
                   <RefreshCw className="mr-2 h-4 w-4" />
-                  Làm mới
+                  {t('button.refresh')}
                 </Button>
               </div>
             </div>
@@ -274,22 +277,22 @@ export function ConsumableUsageHistory({
                     ID
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-bold tracking-wider text-slate-600 uppercase dark:text-slate-400">
-                    Vật tư
+                    {t('system_device_detail.consumable_history.table.consumable_name')}
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-bold tracking-wider text-slate-600 uppercase dark:text-slate-400">
-                    Loại
+                    {t('system_device_detail.consumable_history.table.type')}
                   </th>
                   <th className="px-6 py-4 text-right text-xs font-bold tracking-wider text-slate-600 uppercase dark:text-slate-400">
-                    Tỷ lệ
+                    {t('system_device_detail.consumable_history.table.percentage')}
                   </th>
                   <th className="px-6 py-4 text-right text-xs font-bold tracking-wider text-slate-600 uppercase dark:text-slate-400">
-                    Còn lại
+                    {t('system_device_detail.consumable_history.table.remaining')}
                   </th>
                   <th className="px-6 py-4 text-right text-xs font-bold tracking-wider text-slate-600 uppercase dark:text-slate-400">
-                    Dung lượng
+                    {t('system_device_detail.consumable_history.table.capacity')}
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-bold tracking-wider text-slate-600 uppercase dark:text-slate-400">
-                    Trạng thái
+                    {t('system_device_detail.consumable_history.table.status')}
                   </th>
                   <th className="px-6 py-4 text-right text-xs font-bold tracking-wider text-slate-600 uppercase dark:text-slate-400">
                     Thời gian
@@ -347,7 +350,11 @@ export function ConsumableUsageHistory({
                     </td>
                     <td className="px-6 py-4 text-right">
                       <span className="text-sm text-slate-600 dark:text-slate-400">
-                        {r.recordedAt ? new Date(r.recordedAt).toLocaleString('vi-VN') : '-'}
+                        {r.recordedAt
+                          ? new Date(r.recordedAt).toLocaleString(
+                              locale === 'vi' ? 'vi-VN' : 'en-US'
+                            )
+                          : '-'}
                       </span>
                     </td>
                   </tr>

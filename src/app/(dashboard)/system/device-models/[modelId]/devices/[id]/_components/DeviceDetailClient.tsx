@@ -5,6 +5,7 @@ import { QueryProvider } from '@/components/providers/QueryProvider'
 import Link from 'next/link'
 import {
   ArrowLeft,
+  Calendar as CalendarIcon,
   Edit,
   Trash2,
   Loader2,
@@ -37,10 +38,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
 import { devicesClientService } from '@/lib/api/services/devices-client.service'
 import { customersClientService } from '@/lib/api/services/customers-client.service'
 import type { Device, UpdateDeviceDto } from '@/types/models/device'
 import { Input } from '@/components/ui/input'
+import { Calendar } from '@/components/ui/calendar'
 import DateTimeLocalPicker from '@/components/ui/DateTimeLocalPicker'
 import { Label } from '@/components/ui/label'
 import {
@@ -115,7 +118,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
   const [error, setError] = useState<string | null>(null)
   const [showEdit, setShowEdit] = useState(false)
   const [editing, setEditing] = useState(false)
-  const { t } = useLocale()
+  const { t, locale } = useLocale()
   const [, setLocationEdit] = useState('')
   const [ipEdit, setIpEdit] = useState('')
   const [macEdit, setMacEdit] = useState('')
@@ -3043,12 +3046,37 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                 <Label className="text-base font-semibold">
                   {t('system_device_detail.consumables.expected_expiry')}
                 </Label>
-                <Input
-                  type="date"
-                  value={editExpiryDate}
-                  onChange={(e) => setEditExpiryDate(e.target.value)}
-                  className="mt-2 h-11"
-                />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        'mt-2 h-11 w-full justify-between text-left font-normal',
+                        !editExpiryDate && 'text-muted-foreground'
+                      )}
+                    >
+                      {editExpiryDate
+                        ? new Date(editExpiryDate).toLocaleDateString(locale)
+                        : t('common.choose_date')}
+                      <CalendarIcon className="ml-2 h-4 w-4 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent align="start" className="p-0">
+                    <Calendar
+                      mode="single"
+                      selected={editExpiryDate ? new Date(editExpiryDate) : undefined}
+                      onSelect={(date) => {
+                        if (!date) {
+                          setEditExpiryDate('')
+                          return
+                        }
+                        const iso = date.toISOString().split('T')[0] ?? ''
+                        setEditExpiryDate(iso)
+                      }}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
 
               {/* device-consumable specific fields */}

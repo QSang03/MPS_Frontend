@@ -309,7 +309,9 @@ export function DeviceModelFormModal({ mode = 'create', model = null, onSaved, t
             </div>
 
             <div className="space-y-2">
-              <Label className="text-base font-semibold">Mô tả chi tiết</Label>
+              <Label className="text-base font-semibold">
+                {t('device_model.description_label')}
+              </Label>
               <Input
                 value={form.description || ''}
                 onChange={(e) => setForm((s) => ({ ...s, description: e.target.value }))}
@@ -325,7 +327,7 @@ export function DeviceModelFormModal({ mode = 'create', model = null, onSaved, t
           <div className="space-y-4">
             <div className="flex items-center gap-2 text-sm font-semibold text-violet-700">
               <CheckCircle2 className="h-4 w-4" />
-              Trạng thái
+              {t('device_model.status_title')}
             </div>
             <Separator />
 
@@ -333,7 +335,7 @@ export function DeviceModelFormModal({ mode = 'create', model = null, onSaved, t
             <div className="space-y-4">
               <div className="flex items-center gap-2 text-sm font-semibold text-violet-700">
                 <CheckCircle2 className="h-4 w-4" />
-                Counter Mode
+                {t('device_model.counter_mode_title')}
               </div>
 
               <div
