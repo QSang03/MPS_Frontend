@@ -343,7 +343,7 @@ export default function UsagePage() {
                           tickFormatter={(v) => formatNumber(Number(v))}
                         />
                         <RechartsTooltip
-                          formatter={(value: number) => [formatNumber(value), t('analytics.pages')]}
+                          formatter={(value: number) => formatNumber(value)}
                           contentStyle={{
                             backgroundColor: 'var(--popover)',
                             border: 'none',
@@ -416,7 +416,7 @@ export default function UsagePage() {
                           tickFormatter={(v) => formatNumber(Number(v))}
                         />
                         <RechartsTooltip
-                          formatter={(value: number) => [formatNumber(value), 'Trang']}
+                          formatter={(value: number) => formatNumber(value)}
                           contentStyle={{
                             backgroundColor: 'var(--popover)',
                             border: 'none',

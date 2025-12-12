@@ -885,10 +885,7 @@ export default function MonthlyCostsPage() {
                           tickFormatter={(v) => formatCurrency(Number(v), displayCurrency)}
                         />
                         <RechartsTooltip
-                          formatter={(value: number) => [
-                            formatCurrency(value, displayCurrency),
-                            t('analytics.tooltip.value'),
-                          ]}
+                          formatter={(value: number) => formatCurrency(value, displayCurrency)}
                           contentStyle={{
                             backgroundColor: 'var(--popover)',
                             border: 'none',
@@ -963,10 +960,9 @@ export default function MonthlyCostsPage() {
                           }
                         />
                         <RechartsTooltip
-                          formatter={(value: number) => [
-                            formatCurrency(value, deviceCurrency || displayCurrency),
-                            t('analytics.tooltip.value'),
-                          ]}
+                          formatter={(value: number) =>
+                            formatCurrency(value, deviceCurrency || displayCurrency)
+                          }
                           contentStyle={{
                             backgroundColor: 'var(--popover)',
                             border: 'none',
