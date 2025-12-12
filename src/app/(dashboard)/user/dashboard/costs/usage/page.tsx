@@ -432,14 +432,14 @@ export default function UsagePage() {
                           dataKey="bwPages"
                           stackId="pages"
                           fill="#000"
-                          name="Đen trắng"
+                          name={t('analytics.bw_label')}
                           radius={[4, 4, 0, 0]}
                         />
                         <Bar
                           dataKey="colorPages"
                           stackId="pages"
                           fill="var(--brand-500)"
-                          name="Màu"
+                          name={t('analytics.color_label')}
                           radius={[0, 0, 4, 4]}
                         >
                           <LabelList
