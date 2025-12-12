@@ -745,7 +745,7 @@ function UserRequestsTableContent({
         },
       },
     ],
-    [pagination.pageIndex, pagination.pageSize, selectedIds, requests, handleViewDetail]
+    [pagination.pageIndex, pagination.pageSize, selectedIds, requests, handleViewDetail, t]
   )
 
   return (

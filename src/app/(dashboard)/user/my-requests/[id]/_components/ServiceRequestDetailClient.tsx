@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
@@ -82,6 +83,7 @@ export function ServiceRequestDetailClient({ id }: Props) {
   const router = useRouter()
   const queryClient = useQueryClient()
   const [showCloseConfirm, setShowCloseConfirm] = useState(false)
+  const { t } = useLocale()
 
   const { data, isLoading } = useQuery({
     queryKey: ['service-requests', 'detail', id],
