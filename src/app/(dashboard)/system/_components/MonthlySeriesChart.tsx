@@ -139,7 +139,7 @@ export function MonthlySeriesChart({
     },
     revenuePageColor: {
       label: t('dashboard.metrics.revenue_page_color'),
-      color: 'var(--color-success-500)',
+      color: 'var(--brand-500)',
       strokeWidth: 2,
     },
     totalCogs: {

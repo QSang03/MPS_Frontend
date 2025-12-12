@@ -741,7 +741,7 @@ export default function UsagePageClient() {
                   <Bar
                     dataKey="colorPages"
                     stackId="pages"
-                    fill="var(--brand-500)"
+                    fill="var(--color-success-500)"
                     name={t('analytics.color_label')}
                     radius={[0, 0, 4, 4]}
                   >
@@ -1109,7 +1109,7 @@ export default function UsagePageClient() {
                       <Bar
                         dataKey="colorPages"
                         stackId="pages"
-                        fill="var(--brand-500)"
+                        fill="var(--color-success-500)"
                         name={t('analytics.color_label')}
                         radius={[0, 0, 4, 4]}
                       >
@@ -1245,7 +1245,7 @@ export default function UsagePageClient() {
                       <Bar
                         dataKey="colorPages"
                         stackId="pages"
-                        fill="var(--brand-500)"
+                        fill="var(--color-success-500)"
                         name={t('analytics.color_label')}
                         radius={[0, 0, 4, 4]}
                       >
