@@ -15,7 +15,6 @@ import ConsumableTypeSelect from '@/components/shared/ConsumableTypeSelect'
 import MonthPicker from '@/components/ui/month-picker'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
-import { Badge } from '@/components/ui/badge'
 import {
   Loader2,
   TrendingUp,
@@ -136,26 +135,6 @@ export default function AnalyticsPageClient() {
     return original
   }
 
-  const humanizeFormula = (formula?: string | null) => {
-    if (!formula) return ''
-    if (
-      formula.includes('totalCogsAfterAdjustment') &&
-      formula.includes('grossProfitAfterAdjustment')
-    ) {
-      return 'COGS sau điều chỉnh = COGS + Debit - Credit; Lợi nhuận gộp sau điều chỉnh = Doanh thu - COGS sau điều chỉnh'
-    }
-    return formula
-  }
-
-  const FormulaBadge = ({ formula }: { formula?: string | null }) => {
-    const friendly = humanizeFormula(formula)
-    if (!friendly) return null
-    return (
-      <Badge variant="secondary" className="text-xs whitespace-normal" title={friendly}>
-        {t('dashboard.cost_breakdown.formula_label')}
-      </Badge>
-    )
-  }
   // Active tab state
   const [activeTab, setActiveTab] = useState('profit')
 
@@ -198,7 +177,6 @@ export default function AnalyticsPageClient() {
     costAdjustmentNetConverted?: number
     totalCogsAfterAdjustmentConverted?: number
     grossProfitAfterAdjustmentConverted?: number
-    costAdjustmentFormula?: string
   } | null>(null)
   const [enterpriseProfitability, setEnterpriseProfitability] = useState<
     ProfitabilityTrendItem[] | null
@@ -237,7 +215,6 @@ export default function AnalyticsPageClient() {
       costAdjustmentNetConverted?: number
       totalCogsAfterAdjustmentConverted?: number
       grossProfitAfterAdjustmentConverted?: number
-      costAdjustmentFormula?: string
       // Converted values (only for System Admin context)
       totalRevenueConverted?: number
       totalCogsConverted?: number
@@ -1213,7 +1190,6 @@ export default function AnalyticsPageClient() {
                             <div className="text-xl font-semibold text-amber-900">
                               {formatCurrency(caNet, enterpriseBaseCurrency)}
                             </div>
-                            <FormulaBadge formula={enterpriseData.costAdjustmentFormula} />
                           </CardContent>
                         </Card>
                       </div>
@@ -1283,7 +1259,6 @@ export default function AnalyticsPageClient() {
                         </Card>
                       </div>
                       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                        <FormulaBadge formula={enterpriseData.costAdjustmentFormula} />
                         <Button
                           variant="ghost"
                           size="sm"
@@ -1691,9 +1666,6 @@ export default function AnalyticsPageClient() {
                               'right'
                             )}
                           </td>
-                          <td className="px-4 py-2 text-left text-xs">
-                            <FormulaBadge formula={row.costAdjustmentFormula} />
-                          </td>
                         </tr>
                       )
                     })}
@@ -1923,13 +1895,6 @@ export default function AnalyticsPageClient() {
                                     )}
                                   </p>
                                 </div>
-                                {customerDetailData.customer.costAdjustmentFormula ? (
-                                  <div className="col-span-3">
-                                    <FormulaBadge
-                                      formula={customerDetailData.customer.costAdjustmentFormula}
-                                    />
-                                  </div>
-                                ) : null}
                               </div>
                             </CardContent>
                           </Card>

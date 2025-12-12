@@ -216,12 +216,6 @@ export function CostBreakdownChart({
                   {formatMoney(costBreakdown.grossProfitAfterAdjustment)}
                 </span>
               </div>
-              {costBreakdown.costAdjustmentFormula && (
-                <div className="text-[11px] text-gray-500">
-                  {t('dashboard.cost_breakdown.formula_label')}:{' '}
-                  {costBreakdown.costAdjustmentFormula}
-                </div>
-              )}
             </div>
             <div className="flex flex-1 gap-2">
               <Button

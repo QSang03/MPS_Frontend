@@ -622,17 +622,6 @@ export default function MonthlyCostsPage() {
                 </CardContent>
               </Card>
             </div>
-
-            {/* Công thức */}
-            <Card className="border-slate-200 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-              <CardContent className="p-4 text-sm text-slate-700 dark:text-slate-300">
-                <p className="font-medium text-slate-900 dark:text-white">
-                  {t('page.user.costs.monthly.formula.title')}
-                </p>
-                <p className="mt-1">{t('page.user.costs.monthly.formula.description')}</p>
-              </CardContent>
-            </Card>
-
             {/* Cost Breakdown Pie Chart */}
             {costData && costData.customer.totalCogs > 0 && (
               <Card className="border-slate-200 shadow-sm dark:border-slate-700 dark:bg-slate-800">

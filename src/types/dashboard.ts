@@ -74,7 +74,6 @@ export interface CostBreakdown {
   costAdjustmentNetConverted?: number
   totalCogsAfterAdjustmentConverted?: number
   grossProfitAfterAdjustmentConverted?: number
-  costAdjustmentFormula?: string
 }
 
 /**
@@ -106,7 +105,6 @@ export interface TopCustomer {
   costAdjustmentNetConverted?: number
   totalCogsAfterAdjustmentConverted?: number
   grossProfitAfterAdjustmentConverted?: number
-  costAdjustmentFormula?: string
 }
 
 /**
@@ -146,7 +144,6 @@ export interface MonthlySeries {
     costAdjustmentNetConverted?: number
     totalCogsAfterAdjustmentConverted?: number
     grossProfitAfterAdjustmentConverted?: number
-    costAdjustmentFormula?: string
     // Currency information (only for System Admin context)
     currency?: import('@/types/models/currency').CurrencyDataDto | null
     baseCurrency?: import('@/types/models/currency').CurrencyDataDto | null
@@ -302,7 +299,6 @@ export interface DeviceDashboardData {
   costAdjustmentNetConverted?: number
   totalCogsAfterAdjustmentConverted?: number
   grossProfitAfterAdjustmentConverted?: number
-  costAdjustmentFormula?: string
 }
 
 // ============================================================================

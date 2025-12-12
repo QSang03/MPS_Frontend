@@ -178,7 +178,7 @@ export function SettingsClient({ initialProfile, initialTab = 'account' }: Setti
       hasError = true
     }
 
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z]).{8,}$/
     if (!passwordRegex.test(newPassword)) {
       setNewPasswordError(t('settings.password.requirements'))
       hasError = true

@@ -39,10 +39,7 @@ export const changePasswordSchema = z
     newPassword: z
       .string()
       .min(8, 'Mật khẩu mới phải có ít nhất 8 ký tự')
-      .regex(
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-        'Mật khẩu phải chứa ít nhất 1 chữ thường, 1 chữ hoa và 1 số'
-      ),
+      .regex(/^(?=.*[a-z])(?=.*[A-Z])/, 'Mật khẩu phải chứa ít nhất 1 chữ thường và 1 chữ hoa'),
     confirmPassword: z.string().min(1, 'Xác nhận mật khẩu là bắt buộc'),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {
@@ -61,10 +58,7 @@ export const adminChangePasswordSchema = z
     newPassword: z
       .string()
       .min(8, 'Mật khẩu mới phải có ít nhất 8 ký tự')
-      .regex(
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-        'Mật khẩu phải chứa ít nhất 1 chữ thường, 1 chữ hoa và 1 số'
-      ),
+      .regex(/^(?=.*[a-z])(?=.*[A-Z])/, 'Mật khẩu phải chứa ít nhất 1 chữ thường và 1 chữ hoa'),
     confirmPassword: z.string().min(1, 'Xác nhận mật khẩu là bắt buộc'),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {

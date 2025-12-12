@@ -262,7 +262,6 @@ export function MonthlySeriesChart({
       point.grossProfitAfterAdjustmentConverted,
       useConverted
     ),
-    costAdjustmentFormula: point.costAdjustmentFormula,
   }))
 
   // Toggle metric visibility

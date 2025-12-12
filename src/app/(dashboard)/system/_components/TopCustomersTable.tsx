@@ -316,12 +316,6 @@ export function TopCustomersTable({
                           {formatCurrency(profitAfter, baseCurrency || customer.baseCurrency)}
                         </span>
                       </div>
-                      {customer.costAdjustmentFormula && (
-                        <div className="text-[11px] text-gray-400">
-                          {t('dashboard.top_customers.adjust_formula')}:{' '}
-                          {customer.costAdjustmentFormula}
-                        </div>
-                      )}
                     </div>
                     <p className="mt-1 text-xs text-gray-400">
                       {t('dashboard.top_customers.revenue_percentage', {
