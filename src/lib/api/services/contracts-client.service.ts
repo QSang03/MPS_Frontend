@@ -178,7 +178,12 @@ export const contractsClientService = {
   async updateMonthlyRent(
     contractId: string,
     deviceId: string,
-    payload: { monthlyRent: number; currencyId?: string; currencyCode?: string }
+    payload: {
+      monthlyRent: number
+      monthlyRentCogs?: number
+      currencyId?: string
+      currencyCode?: string
+    }
   ): Promise<ContractDevice | null> {
     const response = await internalApiClient.patch(
       `/api/contracts/${contractId}/devices/${deviceId}/monthly-rent`,

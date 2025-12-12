@@ -103,9 +103,7 @@ export function EditProfileModal({
       console.error('Error updating profile:', error)
       const err = error as { response?: { data?: { message?: string; error?: string } } }
       const message =
-        err?.response?.data?.message ||
-        err?.response?.data?.error ||
-        'Có lỗi xảy ra khi cập nhật hồ sơ'
+        err?.response?.data?.message || err?.response?.data?.error || t('profile.update_error')
 
       // Handle field errors if available
       if (err?.response?.data && typeof err.response.data === 'object') {
@@ -148,10 +146,12 @@ export function EditProfileModal({
               <div className="rounded-xl border border-white/30 bg-white/20 p-2.5 backdrop-blur-lg">
                 <Edit className="h-6 w-6 text-white" />
               </div>
-              <DialogTitle className="text-2xl font-bold text-white">Chỉnh sửa hồ sơ</DialogTitle>
+              <DialogTitle className="text-2xl font-bold text-white">
+                {t('modal.edit_profile.title')}
+              </DialogTitle>
             </div>
             <DialogDescription className="text-sm font-medium text-pink-100">
-              Cập nhật thông tin cá nhân của bạn
+              {t('modal.edit_profile.description')}
             </DialogDescription>
           </div>
         </DialogHeader>
@@ -168,7 +168,7 @@ export function EditProfileModal({
                   <FormItem>
                     <FormLabel className="flex items-center gap-2 text-sm font-bold text-gray-800">
                       <User className="h-4 w-4 text-rose-600" />
-                      Tên
+                      {t('profile.basic.name')}
                     </FormLabel>
                     <FormControl>
                       <Input
@@ -190,7 +190,7 @@ export function EditProfileModal({
                   <FormItem>
                     <FormLabel className="flex items-center gap-2 text-sm font-bold text-gray-800">
                       <Phone className="h-4 w-4 text-[var(--brand-600)]" />
-                      Điện thoại
+                      {t('profile.basic.phone')}
                     </FormLabel>
                     <FormControl>
                       <Input
@@ -207,8 +207,8 @@ export function EditProfileModal({
               {/* Info card */}
               <div className="rounded-lg border-2 border-[var(--brand-200)] bg-gradient-to-r from-[var(--brand-50)] to-[var(--brand-100)] p-4">
                 <p className="text-xs text-gray-700">
-                  <span className="font-bold text-[var(--brand-700)]">💡 Tip:</span> Các thay đổi sẽ
-                  được lưu ngay khi bạn nhấn "Cập nhật".
+                  <span className="font-bold text-[var(--brand-700)]">💡 Tip:</span>{' '}
+                  {t('modal.edit_profile.tip')}
                 </p>
               </div>
 
@@ -220,7 +220,7 @@ export function EditProfileModal({
                   onClick={handleClose}
                   className="flex-1 rounded-lg border-2 border-gray-300 font-medium transition-all hover:border-gray-400 hover:bg-gray-50"
                 >
-                  Hủy
+                  {t('button.cancel')}
                 </Button>
                 <Button
                   type="submit"
@@ -230,10 +230,10 @@ export function EditProfileModal({
                   {isLoading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Đang xử lý...
+                      {t('button.processing')}
                     </>
                   ) : (
-                    <>💾 Cập nhật</>
+                    <>{t('button.update')}</>
                   )}
                 </Button>
               </div>

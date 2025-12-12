@@ -22,6 +22,7 @@ interface DevicePricingForm {
   pricePerBWPage: string
   pricePerColorPage: string
   monthlyRent: string
+  monthlyRentCogs: string
   effectiveFrom: string
   effectiveFromISO?: string | null | undefined
 }
@@ -61,6 +62,7 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
     pricePerBWPage: '',
     pricePerColorPage: '',
     monthlyRent: '',
+    monthlyRentCogs: '',
     effectiveFrom: '',
     effectiveFromISO: undefined,
   })
@@ -105,6 +107,7 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
             pricePerBWPage: bw,
             pricePerColorPage: color,
             monthlyRent: '',
+            monthlyRentCogs: '',
             effectiveFrom: isoToLocalDatetimeInput(data.effectiveFrom),
           })
           // Set currency from response if available
@@ -117,7 +120,13 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
           const pricingData = data as { effectiveFrom?: string | null } | null
           setCurrentEffectiveFromISO(pricingData?.effectiveFrom ?? null)
         } else {
-          setForm({ pricePerBWPage: '', pricePerColorPage: '', monthlyRent: '', effectiveFrom: '' })
+          setForm({
+            pricePerBWPage: '',
+            pricePerColorPage: '',
+            monthlyRent: '',
+            monthlyRentCogs: '',
+            effectiveFrom: '',
+          })
           setCurrencyId(null)
           setCurrentEffectiveFromISO(null)
         }
@@ -145,6 +154,11 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
           setForm((prev) => ({
             ...prev,
             monthlyRent: String(contractRentRes.monthlyRent),
+            monthlyRentCogs:
+              contractRentRes.monthlyRentCogs !== undefined &&
+              contractRentRes.monthlyRentCogs !== null
+                ? String(contractRentRes.monthlyRentCogs)
+                : '',
           }))
           setCanEditMonthlyRent(true)
           setContractRentError(null)
@@ -154,7 +168,7 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
             setCurrencyId(contractRentRes.currencyId || contractRentRes.currency?.id || null)
           }
         } else {
-          setForm((prev) => ({ ...prev, monthlyRent: '' }))
+          setForm((prev) => ({ ...prev, monthlyRent: '', monthlyRentCogs: '' }))
           setCanEditMonthlyRent(false)
           setContractRentError(
             contractRentErrMessage || t('devices.pricing.contract_rent_missing_edit_blocked')
@@ -189,6 +203,7 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
         pricePerBWPage?: number
         pricePerColorPage?: number
         monthlyRent?: number
+        monthlyRentCogs?: number
         currencyId?: string
         effectiveFrom?: string
       } = {}
@@ -247,6 +262,24 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
         monthlyRentValue = parsed
       }
 
+      // Validate and set monthlyRentCogs if provided
+      let monthlyRentCogsValue: number | undefined = undefined
+      if (canEditMonthlyRent && form.monthlyRentCogs !== '') {
+        const validationError = validateDecimal3010(form.monthlyRentCogs)
+        if (validationError) {
+          toast.error(validationError)
+          setSubmitting(false)
+          return
+        }
+        const parsed = parseNum(form.monthlyRentCogs)
+        if (!Number.isFinite(parsed) || parsed < 0) {
+          toast.error(t('devices.pricing.error.invalid_price'))
+          setSubmitting(false)
+          return
+        }
+        monthlyRentCogsValue = parsed
+      }
+
       // effectiveFrom validation: if backend had existing effectiveFrom, new one must be greater
       // Validate effectiveFrom if user provided a value - require full datetime
       if (form.effectiveFrom && !localInputToIso(form.effectiveFrom)) {
@@ -271,14 +304,26 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
       await devicesClientService.upsertPricing(device.id, payload)
 
       // Then update monthlyRent on active contract via dedicated endpoint
-      if (canEditMonthlyRent && monthlyRentValue !== undefined) {
+      if (
+        canEditMonthlyRent &&
+        (monthlyRentValue !== undefined || monthlyRentCogsValue !== undefined)
+      ) {
+        if (monthlyRentValue === undefined) {
+          toast.error(t('devices.pricing.error.invalid_monthly_rent'))
+          setSubmitting(false)
+          return
+        }
         try {
           const updatePayload: {
             monthlyRent: number
+            monthlyRentCogs?: number
             currencyId?: string
             currencyCode?: string
           } = {
             monthlyRent: monthlyRentValue,
+          }
+          if (monthlyRentCogsValue !== undefined) {
+            updatePayload.monthlyRentCogs = monthlyRentCogsValue
           }
           if (currencyId) {
             updatePayload.currencyId = currencyId
@@ -430,6 +475,21 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
                   className="h-11 text-base"
                   disabled={!canEditMonthlyRent}
                 />
+                <div className="space-y-2">
+                  <Label className={!canEditMonthlyRent ? 'text-muted-foreground' : ''}>
+                    Chi phí vận hành/tháng
+                  </Label>
+                  <Input
+                    type="number"
+                    step="any"
+                    inputMode="decimal"
+                    value={form.monthlyRentCogs}
+                    onChange={(e) => setForm((s) => ({ ...s, monthlyRentCogs: e.target.value }))}
+                    placeholder="Ví dụ: 300000"
+                    className="h-11 text-base"
+                    disabled={!canEditMonthlyRent}
+                  />
+                </div>
               </div>
               <Separator />
               <div className="space-y-2">

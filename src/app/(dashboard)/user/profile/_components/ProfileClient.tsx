@@ -23,6 +23,7 @@ import {
 import type { UserProfile } from '@/types/auth'
 import { getUserProfileForClient } from '@/lib/auth/server-actions'
 import { EditProfileModal } from './EditProfileModal'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 interface ProfileClientProps {
   initialProfile: UserProfile | null
@@ -32,6 +33,7 @@ export function ProfileClient({ initialProfile }: ProfileClientProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [profile, setProfile] = useState<UserProfile | null>(initialProfile)
   const router = useRouter()
+  const { t } = useLocale()
 
   useEffect(() => {
     if (!profile) {
@@ -198,6 +200,7 @@ export function ProfileClient({ initialProfile }: ProfileClientProps) {
             </div>
 
             <CardContent className="space-y-6 bg-gradient-to-b from-gray-50 to-white p-8">
+              <p className="text-lg text-gray-500">{t('profile.loading')}</p>
               {/* Basic Information */}
               <div>
                 <h4 className="mb-4 flex items-center gap-2 text-lg font-bold text-gray-800">
@@ -234,10 +237,10 @@ export function ProfileClient({ initialProfile }: ProfileClientProps) {
                   {/* Name (attributes.name) */}
                   <div className="space-y-2">
                     <Label htmlFor="name" className="text-sm font-bold text-gray-700">
-                      📝 Tên
+                      📝 {t('profile.basic.name')}
                     </Label>
                     <div className="flex-1 rounded-2xl border-2 border-gray-200 bg-gray-50 px-3 py-2 text-gray-700">
-                      {(attributes && (attributes.name as string)) || 'Chưa cập nhật'}
+                      {(attributes && (attributes.name as string)) || t('profile.not_updated')}
                     </div>
                   </div>
 
@@ -247,7 +250,7 @@ export function ProfileClient({ initialProfile }: ProfileClientProps) {
                       📞 Điện thoại
                     </Label>
                     <div className="flex-1 rounded-2xl border-2 border-gray-200 bg-gray-50 px-3 py-2 text-gray-700">
-                      {(attributes && (attributes.phone as string)) || 'Chưa cập nhật'}
+                      {(attributes && (attributes.phone as string)) || t('profile.not_updated')}
                     </div>
                   </div>
                 </div>

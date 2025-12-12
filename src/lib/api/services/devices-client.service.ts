@@ -311,7 +311,12 @@ export const devicesClientService = {
   // Update monthly rent in active contract
   async updateContractMonthlyRent(
     id: string,
-    dto: { monthlyRent: number; currencyId?: string; currencyCode?: string }
+    dto: {
+      monthlyRent: number
+      monthlyRentCogs?: number
+      currencyId?: string
+      currencyCode?: string
+    }
   ) {
     try {
       const response = await internalApiClient.patch(

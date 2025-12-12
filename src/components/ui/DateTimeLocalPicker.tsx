@@ -144,23 +144,44 @@ export default function DateTimeLocalPicker({
     return undefined
   }, [open, autoFillCurrentDateTime, hasAutoFilled, value, onChange, onISOChange])
 
+  // Reset selection state when opening popover to allow re-selecting date/time
+  useEffect(() => {
+    if (open && value) {
+      // When reopening with existing value, allow user to modify any part
+      // Don't reset date/hour/minute here as they should reflect current value
+      // But ensure month view is synced
+      if (date) {
+        setMonth(date)
+      }
+    }
+  }, [open, value, date])
+
   const handleDateSelect = (selectedDate: Date | undefined) => {
     setDate(selectedDate)
-    commitValue(selectedDate, hour, minute)
+    // Only commit if all values are present, otherwise just update the date
+    if (selectedDate && hour && minute) {
+      commitValue(selectedDate, hour, minute)
+    }
   }
 
   const handleHourChange = (newHour: string) => {
     // map sentinel value back to empty string
     const mapped = newHour === '__clear' ? '' : newHour
     setHour(mapped)
-    commitValue(date, mapped, minute)
+    // Only commit if all values are present, otherwise just update the hour
+    if (date && mapped && minute) {
+      commitValue(date, mapped, minute)
+    }
   }
 
   const handleMinuteChange = (newMinute: string) => {
     // map sentinel value back to empty string
     const mapped = newMinute === '__clear' ? '' : newMinute
     setMinute(mapped)
-    commitValue(date, hour, mapped)
+    // Only commit if all values are present, otherwise just update the minute
+    if (date && hour && mapped) {
+      commitValue(date, hour, mapped)
+    }
   }
 
   const commitValue = (d: Date | undefined, h: string, m: string) => {
