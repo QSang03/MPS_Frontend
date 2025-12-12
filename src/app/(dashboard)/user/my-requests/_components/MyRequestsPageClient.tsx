@@ -8,6 +8,7 @@ import { serviceRequestsClientService } from '@/lib/api/services/service-request
 import { purchaseRequestsClientService } from '@/lib/api/services/purchase-requests-client.service'
 import { getClientUserProfile } from '@/lib/auth/client-auth'
 import { toast } from 'sonner'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { ServiceRequestFormModal } from './ServiceRequestFormModal'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -17,6 +18,7 @@ import { UserSlaPanel } from './UserSlaPanel'
 
 export default function MyRequestsPageClient() {
   const queryClient = useQueryClient()
+  const { t } = useLocale()
   const [customerId, setCustomerId] = useState<string | null>(null)
 
   // Load customerId from user profile
@@ -29,19 +31,19 @@ export default function MyRequestsPageClient() {
         if (profile?.user?.customerId) {
           setCustomerId(profile.user.customerId)
         } else {
-          toast.error('Không thể lấy thông tin khách hàng')
+          toast.error(t('error.cannot_load_customer'))
         }
       } catch (err) {
         if (!mounted) return
         console.error('Failed to load client profile', err)
-        toast.error('Không thể tải thông tin người dùng')
+        toast.error(t('error.cannot_load_user_profile'))
       }
     }
     loadCustomerId()
     return () => {
       mounted = false
     }
-  }, [])
+  }, [t])
 
   // Fetch counts for tabs
   const { data: serviceData, isLoading: loadingService } = useQuery({
@@ -76,7 +78,7 @@ export default function MyRequestsPageClient() {
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: ['service-requests'] })
     queryClient.invalidateQueries({ queryKey: ['purchase-requests'] })
-    toast.success('Đã làm mới danh sách')
+    toast.success(t('toast.refreshed'))
   }
 
   if (!customerId) {
@@ -92,15 +94,15 @@ export default function MyRequestsPageClient() {
       <div className="w-full space-y-6">
         {/* Header */}
         <PageHeader
-          title="Yêu Cầu Của Tôi"
-          subtitle="Theo dõi và xử lý nhanh các yêu cầu bảo trì & mua vật tư"
+          title={t('page.my-requests.title')}
+          subtitle={t('page.my-requests.subtitle')}
           icon={<FileText className="h-6 w-6" />}
           actions={
             <div className="flex items-center gap-3">
               <ServiceRequestFormModal customerId={customerId} onSuccess={handleRefresh}>
                 <Button className="shadow-sm">
                   <Plus className="mr-2 h-4 w-4" />
-                  Tạo Yêu Cầu
+                  {t('user_service_request.create_new')}
                 </Button>
               </ServiceRequestFormModal>
             </div>
