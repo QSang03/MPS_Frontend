@@ -106,11 +106,12 @@ export function ServiceRequestDetailClient({ id }: Props) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['service-requests'] })
       queryClient.invalidateQueries({ queryKey: ['service-requests', 'detail', id] })
-      toast.success('Đã đóng yêu cầu')
+      toast.success(t('requests.service.close.success'))
       setShowCloseConfirm(false)
     },
     onError: (error: unknown) => {
-      const message = error instanceof Error ? error.message : 'Không thể đóng yêu cầu'
+      const message =
+        error instanceof Error ? error.message : t('requests.service.close.cannot_close')
       toast.error(message)
     },
   })
@@ -135,7 +136,7 @@ export function ServiceRequestDetailClient({ id }: Props) {
   if (!detail) {
     return (
       <div className="text-muted-foreground flex h-[50vh] items-center justify-center">
-        Không tìm thấy yêu cầu dịch vụ.
+        {t('requests.service.detail.not_found')}
       </div>
     )
   }
@@ -145,35 +146,35 @@ export function ServiceRequestDetailClient({ id }: Props) {
   const timeline: TimelineEntry[] = (
     [
       {
-        label: 'Đã tạo',
+        label: t('requests.service.timeline.created'),
         time: detail.createdAt,
         by: detail.createdByName ?? detail.createdBy,
         icon: Clock4,
         color: 'text-slate-500',
       },
       {
-        label: 'Đã phản hồi',
+        label: t('requests.service.timeline.responded'),
         time: detail.respondedAt,
         by: detail.respondedByName ?? detail.respondedBy,
         icon: Activity,
         color: 'text-[var(--brand-600)]',
       },
       {
-        label: 'Đã giải quyết',
+        label: t('requests.service.timeline.resolved'),
         time: detail.resolvedAt,
         by: detail.resolvedByName ?? detail.resolvedBy,
         icon: CheckCircle2,
         color: 'text-emerald-600',
       },
       {
-        label: 'Đã đóng',
+        label: t('requests.service.timeline.closed'),
         time: detail.closedAt,
         by: detail.closedByName ?? detail.closedBy,
         icon: XCircle,
         color: 'text-slate-600',
       },
       {
-        label: 'Khách hàng đóng',
+        label: t('requests.service.timeline.customer_closed'),
         time: detail.customerClosedAt,
         by: detail.customerClosedByName ?? detail.customerClosedBy,
         reason: detail.customerClosedReason,
@@ -198,7 +199,7 @@ export function ServiceRequestDetailClient({ id }: Props) {
               className="text-muted-foreground hover:text-foreground -ml-2 h-8"
             >
               <ArrowLeft className="mr-1 h-4 w-4" />
-              Quay lại
+              {t('common.back')}
             </Button>
           </div>
           <h1 className="flex items-center gap-3 text-2xl font-bold tracking-tight md:text-3xl">
@@ -254,7 +255,7 @@ export function ServiceRequestDetailClient({ id }: Props) {
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2 text-base font-medium">
                   <FileText className="text-muted-foreground h-4 w-4" />
-                  Thông tin chung
+                  {t('requests.service.detail.info_title')}
                 </CardTitle>
                 <div className="text-right">
                   <p className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
@@ -288,10 +289,14 @@ export function ServiceRequestDetailClient({ id }: Props) {
             </CardHeader>
             <CardContent className="space-y-4 pt-4">
               <div>
-                <p className="text-muted-foreground mb-1 text-sm font-medium">Mô tả yêu cầu</p>
+                <p className="text-muted-foreground mb-1 text-sm font-medium">
+                  {t('requests.service.detail.description_title')}
+                </p>
                 <p className="text-sm leading-relaxed">
                   {detail.description || (
-                    <span className="text-muted-foreground italic">Không có mô tả chi tiết.</span>
+                    <span className="text-muted-foreground italic">
+                      {t('requests.service.detail.no_description')}
+                    </span>
                   )}
                 </p>
               </div>
@@ -303,9 +308,9 @@ export function ServiceRequestDetailClient({ id }: Props) {
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base font-medium">
                 <DollarSign className="text-muted-foreground h-4 w-4" />
-                Chi phí liên quan
+                {t('requests.service.detail.costs_title')}
               </CardTitle>
-              <CardDescription>Chi tiết các khoản chi phí cho yêu cầu này</CardDescription>
+              <CardDescription>{t('requests.service.detail.costs_description')}</CardDescription>
             </CardHeader>
             <CardContent className="p-0">
               {costsQuery.data?.data && costsQuery.data.data.length > 0 ? (
@@ -373,9 +378,11 @@ export function ServiceRequestDetailClient({ id }: Props) {
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base font-medium">
                 <Activity className="h-4 w-4 text-blue-500" />
-                Trao đổi & Thảo luận
+                {t('requests.service.detail.conversation_title')}
               </CardTitle>
-              <CardDescription>Lịch sử trao đổi liên quan tới yêu cầu</CardDescription>
+              <CardDescription>
+                {t('requests.service.detail.conversation_description')}
+              </CardDescription>
             </CardHeader>
             <CardContent className="flex-1 overflow-hidden p-0">
               <div className="flex h-full flex-col">
@@ -415,21 +422,25 @@ export function ServiceRequestDetailClient({ id }: Props) {
                   <Dialog open={showCloseConfirm} onOpenChange={setShowCloseConfirm}>
                     <DialogContent>
                       <DialogHeader>
-                        <DialogTitle>Xác nhận đóng yêu cầu</DialogTitle>
+                        <DialogTitle>
+                          {t('requests.service.close.confirm_dialog_title')}
+                        </DialogTitle>
                         <DialogDescription>
-                          Bạn có chắc chắn muốn đóng yêu cầu này không?
+                          {t('requests.service.close.confirm_dialog_description')}
                         </DialogDescription>
                       </DialogHeader>
                       <DialogFooter>
                         <Button variant="outline" onClick={() => setShowCloseConfirm(false)}>
-                          Hủy
+                          {t('button.cancel')}
                         </Button>
                         <Button
                           variant="destructive"
                           onClick={() => closeMutation.mutate()}
                           disabled={closeMutation.isPending}
                         >
-                          Đóng yêu cầu
+                          {closeMutation.isPending
+                            ? t('button.processing')
+                            : t('requests.service.table.close')}
                         </Button>
                       </DialogFooter>
                     </DialogContent>

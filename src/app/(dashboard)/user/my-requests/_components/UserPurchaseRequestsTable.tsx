@@ -45,15 +45,6 @@ type PurchaseRequestRow = PurchaseRequest & {
   customer?: Customer
 }
 
-const statusOptions = [
-  { label: 'Chờ duyệt', value: PurchaseRequestStatus.PENDING },
-  { label: 'Đã duyệt', value: PurchaseRequestStatus.APPROVED },
-  { label: 'Đã đặt hàng', value: PurchaseRequestStatus.ORDERED },
-  { label: 'Đang vận chuyển', value: PurchaseRequestStatus.IN_TRANSIT },
-  { label: 'Đã nhận', value: PurchaseRequestStatus.RECEIVED },
-  { label: 'Đã hủy', value: PurchaseRequestStatus.CANCELLED },
-]
-
 const statusBadgeMap: Record<PurchaseRequestStatus, string> = {
   [PurchaseRequestStatus.PENDING]: 'bg-amber-100 text-amber-700',
   [PurchaseRequestStatus.APPROVED]: 'bg-emerald-100 text-emerald-700',
@@ -132,6 +123,15 @@ interface UserPurchaseRequestsTableProps {
 
 export function UserPurchaseRequestsTable({ defaultCustomerId }: UserPurchaseRequestsTableProps) {
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 })
+  const { t } = useLocale()
+  const statusOptions = [
+    { label: t('requests.purchase.timeline.pending'), value: PurchaseRequestStatus.PENDING },
+    { label: t('requests.purchase.timeline.approved'), value: PurchaseRequestStatus.APPROVED },
+    { label: t('requests.purchase.timeline.ordered'), value: PurchaseRequestStatus.ORDERED },
+    { label: t('requests.purchase.timeline.in_transit'), value: PurchaseRequestStatus.IN_TRANSIT },
+    { label: t('requests.purchase.timeline.received'), value: PurchaseRequestStatus.RECEIVED },
+    { label: t('requests.purchase.timeline.cancelled'), value: PurchaseRequestStatus.CANCELLED },
+  ]
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<PurchaseRequestStatus | 'all'>('all')
   const [customerFilter, setCustomerFilter] = useState<string>('')
@@ -158,7 +158,7 @@ export function UserPurchaseRequestsTable({ defaultCustomerId }: UserPurchaseReq
   const activeFilters: Array<{ label: string; value: string; onRemove: () => void }> = []
   if (search) {
     activeFilters.push({
-      label: `Tìm kiếm: "${search}"`,
+      label: t('filters.search', { query: search }),
       value: search,
       onRemove: () => setSearch(''),
     })
@@ -167,14 +167,14 @@ export function UserPurchaseRequestsTable({ defaultCustomerId }: UserPurchaseReq
     const statusLabel =
       statusOptions.find((opt) => opt.value === statusFilter)?.label || statusFilter
     activeFilters.push({
-      label: `Trạng thái: ${statusLabel}`,
+      label: t('filters.status', { status: statusLabel }),
       value: statusFilter,
       onRemove: () => setStatusFilter('all'),
     })
   }
   if (customerFilter) {
     activeFilters.push({
-      label: `Khách hàng: ${customerFilter}`,
+      label: t('filters.customer', { customer: customerFilter }),
       value: customerFilter,
       onRemove: () => setCustomerFilter(''),
     })
@@ -185,25 +185,25 @@ export function UserPurchaseRequestsTable({ defaultCustomerId }: UserPurchaseReq
       <StatsCards
         cards={[
           {
-            label: 'Tổng yêu cầu',
+            label: t('requests.purchase.stats.total'),
             value: summary.total,
             icon: <ListOrdered className="h-6 w-6" />,
             borderColor: 'blue',
           },
           {
-            label: 'Chờ duyệt',
+            label: t('requests.purchase.stats.pending'),
             value: summary.pending,
             icon: <ListOrdered className="h-6 w-6" />,
             borderColor: 'orange',
           },
           {
-            label: 'Đang đặt hàng',
+            label: t('requests.purchase.stats.ordered'),
             value: summary.ordered,
             icon: <ListOrdered className="h-6 w-6" />,
             borderColor: 'blue',
           },
           {
-            label: 'Đã nhận',
+            label: t('requests.purchase.stats.received'),
             value: summary.received,
             icon: <ListOrdered className="h-6 w-6" />,
             borderColor: 'green',
@@ -212,35 +212,35 @@ export function UserPurchaseRequestsTable({ defaultCustomerId }: UserPurchaseReq
       />
 
       <FilterSection
-        title="Bộ lọc & Tìm kiếm"
+        title={t('requests.purchase.filter.title')}
         onReset={handleResetFilters}
         activeFilters={activeFilters}
         columnVisibilityMenu={columnVisibilityMenu}
       >
         <div className="grid gap-4 md:grid-cols-3">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Tìm kiếm</label>
+            <label className="text-sm font-medium">{t('requests.purchase.filter.search')}</label>
             <Input
-              placeholder="Tìm kiếm tiêu đề, mô tả..."
+              placeholder={t('requests.purchase.filter.search_placeholder')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium">Trạng thái</label>
+            <label className="text-sm font-medium">{t('requests.purchase.filter.status')}</label>
             <Select
               value={statusFilter}
               onValueChange={(value) => setStatusFilter(value as PurchaseRequestStatus | 'all')}
             >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Tất cả trạng thái">
+                <SelectValue placeholder={t('requests.purchase.filter.status_all')}>
                   {statusFilter === 'all'
-                    ? 'Tất cả trạng thái'
+                    ? t('requests.purchase.filter.status_all')
                     : statusOptions.find((opt) => opt.value === statusFilter)?.label}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                <SelectItem value="all">{t('requests.purchase.filter.status_all')}</SelectItem>
                 {statusOptions.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
@@ -250,11 +250,11 @@ export function UserPurchaseRequestsTable({ defaultCustomerId }: UserPurchaseReq
             </Select>
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium">Khách hàng</label>
+            <label className="text-sm font-medium">{t('requests.purchase.filter.customer')}</label>
             <CustomerSelect
               value={customerFilter}
               onChange={(id) => setCustomerFilter(id)}
-              placeholder="Lọc theo khách hàng"
+              placeholder={t('requests.purchase.filter.customer_placeholder')}
             />
           </div>
         </div>
@@ -345,7 +345,7 @@ function UserPurchaseRequestsTableContent({
     () => [
       {
         id: 'index',
-        header: 'STT',
+        header: t('table.index'),
         cell: ({ row, table }) => {
           const index = table.getSortedRowModel().rows.findIndex((r) => r.id === row.id)
           return (
@@ -602,9 +602,13 @@ function UserPurchaseRequestsTableContent({
             <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200">
               <ListOrdered className="h-12 w-12 opacity-20" />
             </div>
-            <h3 className="mb-2 text-xl font-bold text-gray-700">Không có yêu cầu mua hàng</h3>
+            <h3 className="mb-2 text-xl font-bold text-gray-700">
+              {t('requests.purchase.empty.title')}
+            </h3>
             <p className="mb-6 text-gray-500">
-              {searchInput ? 'Không tìm thấy yêu cầu phù hợp' : 'Hãy tạo yêu cầu mua hàng đầu tiên'}
+              {searchInput
+                ? t('requests.purchase.empty.search')
+                : t('requests.purchase.empty.create_first')}
             </p>
           </div>
         ) : undefined

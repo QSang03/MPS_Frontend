@@ -19,6 +19,7 @@ import {
   Settings,
   Eye,
 } from 'lucide-react'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Button } from '@/components/ui/button'
@@ -55,22 +56,6 @@ import {
 
 type ServiceRequestRow = ServiceRequest
 
-const statusOptions = [
-  { label: 'Mở', value: ServiceRequestStatus.OPEN },
-  { label: 'Đang xử lý', value: ServiceRequestStatus.IN_PROGRESS },
-  { label: 'Đã duyệt', value: ServiceRequestStatus.APPROVED },
-  { label: 'Đã xử lý', value: ServiceRequestStatus.RESOLVED },
-  { label: 'Đóng', value: ServiceRequestStatus.CLOSED },
-]
-
-const priorityOptions = [
-  { label: 'Tất cả ưu tiên', value: 'all' },
-  { label: 'Thấp', value: Priority.LOW },
-  { label: 'Trung bình', value: Priority.NORMAL },
-  { label: 'Cao', value: Priority.HIGH },
-  { label: 'Khẩn cấp', value: Priority.URGENT },
-]
-
 const renderTimestamp = (timestamp?: string) => {
   if (!timestamp) {
     return <span className="text-muted-foreground text-xs">—</span>
@@ -95,6 +80,7 @@ interface UserRequestsTableProps {
 
 export function UserRequestsTable({ defaultCustomerId }: UserRequestsTableProps) {
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 })
+  const { t } = useLocale()
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<ServiceRequestStatus | 'all'>('all')
   const [priorityFilter, setPriorityFilter] = useState<Priority | 'all'>('all')
@@ -111,6 +97,22 @@ export function UserRequestsTable({ defaultCustomerId }: UserRequestsTableProps)
     resolved: 0,
     urgent: 0,
   })
+
+  const statusOptions = [
+    { label: t('requests.service.status.open'), value: ServiceRequestStatus.OPEN },
+    { label: t('requests.service.status.in_progress'), value: ServiceRequestStatus.IN_PROGRESS },
+    { label: t('requests.service.status.approved'), value: ServiceRequestStatus.APPROVED },
+    { label: t('requests.service.status.resolved'), value: ServiceRequestStatus.RESOLVED },
+    { label: t('requests.service.status.closed'), value: ServiceRequestStatus.CLOSED },
+  ]
+
+  const priorityOptions = [
+    { label: t('requests.service.priority.all'), value: 'all' },
+    { label: t('requests.service.priority.low'), value: Priority.LOW },
+    { label: t('requests.service.priority.normal'), value: Priority.NORMAL },
+    { label: t('requests.service.priority.high'), value: Priority.HIGH },
+    { label: t('requests.service.priority.urgent'), value: Priority.URGENT },
+  ]
 
   // Use defaultCustomerId if provided and no filter is set, or allow filter to override?
   // Requirement says "Add Filter Field for Customer".
@@ -132,7 +134,7 @@ export function UserRequestsTable({ defaultCustomerId }: UserRequestsTableProps)
   const activeFilters: Array<{ label: string; value: string; onRemove: () => void }> = []
   if (search) {
     activeFilters.push({
-      label: `Tìm kiếm: "${search}"`,
+      label: t('filters.search', { query: search }),
       value: search,
       onRemove: () => setSearch(''),
     })
@@ -141,7 +143,7 @@ export function UserRequestsTable({ defaultCustomerId }: UserRequestsTableProps)
     const statusLabel =
       statusOptions.find((opt) => opt.value === statusFilter)?.label || statusFilter
     activeFilters.push({
-      label: `Trạng thái: ${statusLabel}`,
+      label: t('filters.status', { status: statusLabel }),
       value: statusFilter,
       onRemove: () => setStatusFilter('all'),
     })
@@ -150,14 +152,14 @@ export function UserRequestsTable({ defaultCustomerId }: UserRequestsTableProps)
     const priorityLabel =
       priorityOptions.find((opt) => opt.value === priorityFilter)?.label || priorityFilter
     activeFilters.push({
-      label: `Ưu tiên: ${priorityLabel}`,
+      label: `${t('requests.service.filter.priority')}: ${priorityLabel}`,
       value: priorityFilter,
       onRemove: () => setPriorityFilter('all'),
     })
   }
   if (customerFilter) {
     activeFilters.push({
-      label: `Khách hàng: ${customerFilter}`,
+      label: t('filters.customer', { customer: customerFilter }),
       value: customerFilter,
       onRemove: () => setCustomerFilter(''),
     })
@@ -168,31 +170,31 @@ export function UserRequestsTable({ defaultCustomerId }: UserRequestsTableProps)
       <StatsCards
         cards={[
           {
-            label: 'Tổng yêu cầu',
+            label: t('requests.service.stats.total'),
             value: summary.total,
             icon: <FileText className="h-6 w-6" />,
             borderColor: 'blue',
           },
           {
-            label: 'Đang mở',
+            label: t('requests.service.stats.open'),
             value: summary.open,
             icon: <FileText className="h-6 w-6" />,
             borderColor: 'blue',
           },
           {
-            label: 'Đang xử lý',
+            label: t('requests.service.stats.in_progress'),
             value: summary.inProgress,
             icon: <FileText className="h-6 w-6" />,
             borderColor: 'orange',
           },
           {
-            label: 'Đã xử lý',
+            label: t('requests.service.stats.resolved'),
             value: summary.resolved,
             icon: <FileText className="h-6 w-6" />,
             borderColor: 'green',
           },
           {
-            label: 'Ưu tiên khẩn',
+            label: t('requests.service.stats.urgent'),
             value: summary.urgent,
             icon: <FileText className="h-6 w-6" />,
             borderColor: 'red',
@@ -202,35 +204,35 @@ export function UserRequestsTable({ defaultCustomerId }: UserRequestsTableProps)
       />
 
       <FilterSection
-        title="Bộ lọc & Tìm kiếm"
+        title={t('requests.service.filter.title')}
         onReset={handleResetFilters}
         activeFilters={activeFilters}
         columnVisibilityMenu={columnVisibilityMenu}
       >
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Tìm kiếm</label>
+            <label className="text-sm font-medium">{t('requests.service.filter.search')}</label>
             <Input
-              placeholder="Tìm kiếm tiêu đề, mô tả..."
+              placeholder={t('requests.service.filter.search_placeholder')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium">Trạng thái</label>
+            <label className="text-sm font-medium">{t('requests.service.filter.status')}</label>
             <Select
               value={statusFilter}
               onValueChange={(value) => setStatusFilter(value as ServiceRequestStatus | 'all')}
             >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Tất cả trạng thái">
+                <SelectValue placeholder={t('requests.service.filter.status_all')}>
                   {statusFilter === 'all'
-                    ? 'Tất cả trạng thái'
+                    ? t('requests.service.filter.status_all')
                     : statusOptions.find((opt) => opt.value === statusFilter)?.label}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                <SelectItem value="all">{t('requests.service.filter.status_all')}</SelectItem>
                 {statusOptions.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
@@ -240,15 +242,15 @@ export function UserRequestsTable({ defaultCustomerId }: UserRequestsTableProps)
             </Select>
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium">Ưu tiên</label>
+            <label className="text-sm font-medium">{t('requests.service.filter.priority')}</label>
             <Select
               value={priorityFilter}
               onValueChange={(value) => setPriorityFilter(value as Priority | 'all')}
             >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Tất cả ưu tiên">
+                <SelectValue placeholder={t('requests.service.filter.priority_all')}>
                   {priorityFilter === 'all'
-                    ? 'Tất cả ưu tiên'
+                    ? t('requests.service.filter.priority_all')
                     : priorityOptions.find((opt) => opt.value === priorityFilter)?.label}
                 </SelectValue>
               </SelectTrigger>
@@ -262,11 +264,11 @@ export function UserRequestsTable({ defaultCustomerId }: UserRequestsTableProps)
             </Select>
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium">Khách hàng</label>
+            <label className="text-sm font-medium">{t('requests.service.filter.customer')}</label>
             <CustomerSelect
               value={customerFilter}
               onChange={(id) => setCustomerFilter(id)}
-              placeholder="Lọc theo khách hàng"
+              placeholder={t('requests.service.filter.customer_placeholder')}
             />
           </div>
         </div>
@@ -325,6 +327,7 @@ function UserRequestsTableContent({
   renderColumnVisibilityMenu,
 }: UserRequestsTableContentProps) {
   const [isPending, startTransition] = useTransition()
+  const { t } = useLocale()
   const [sortVersion, setSortVersion] = useState(0)
   const router = useRouter()
   const [closeReason, setCloseReason] = useState('')
@@ -395,7 +398,7 @@ function UserRequestsTableContent({
   const handleConfirmClose = async () => {
     if (!closingRequestId || !closeReason.trim()) {
       toast({
-        title: 'Vui lòng nhập lý do đóng yêu cầu',
+        title: t('requests.service.close.missing_reason'),
         variant: 'destructive',
       })
       return
@@ -408,13 +411,13 @@ function UserRequestsTableContent({
         customerInitiatedClose: true,
         customerCloseReason: closeReason.trim(),
       })
-      toast({ title: 'Đóng yêu cầu thành công' })
+      toast({ title: t('requests.service.close.success') })
       setIsCloseDialogOpen(false)
     } catch (error) {
       console.error('Failed to close service request', error)
       toast({
-        title: 'Đóng yêu cầu thất bại',
-        description: 'Vui lòng thử lại sau.',
+        title: t('requests.service.close.error'),
+        description: t('requests.service.close.error_description'),
         variant: 'destructive',
       })
     } finally {
@@ -435,11 +438,11 @@ function UserRequestsTableContent({
 
   const handleConfirmBulkClose = async () => {
     if (selectedIds.length === 0) {
-      toast({ title: 'Vui lòng chọn ít nhất một yêu cầu', variant: 'destructive' })
+      toast({ title: t('requests.service.close.select_one'), variant: 'destructive' })
       return
     }
     if (!bulkCloseReason.trim()) {
-      toast({ title: 'Vui lòng nhập lý do đóng yêu cầu', variant: 'destructive' })
+      toast({ title: t('requests.service.close.missing_reason'), variant: 'destructive' })
       return
     }
 
@@ -458,12 +461,12 @@ function UserRequestsTableContent({
       const failures = results.length - successes
 
       if (successes > 0) {
-        toast({ title: `Đóng ${successes} yêu cầu thành công` })
+        toast({ title: t('requests.service.close.bulk_success', { count: successes }) })
       }
       if (failures > 0) {
         toast({
-          title: `Có ${failures} yêu cầu không đóng được`,
-          description: 'Vui lòng thử lại sau.',
+          title: t('requests.service.close.bulk_failure', { count: failures }),
+          description: t('requests.service.close.error_description'),
           variant: 'destructive',
         })
       }
@@ -473,8 +476,8 @@ function UserRequestsTableContent({
     } catch (error) {
       console.error('Bulk close failed', error)
       toast({
-        title: 'Đóng yêu cầu thất bại',
-        description: 'Vui lòng thử lại sau.',
+        title: t('requests.service.close.error'),
+        description: t('requests.service.close.error_description'),
         variant: 'destructive',
       })
     } finally {
@@ -542,7 +545,7 @@ function UserRequestsTableContent({
       },
       {
         id: 'index',
-        header: 'STT',
+        header: t('table.index'),
         cell: ({ row, table }) => {
           const index = table.getSortedRowModel().rows.findIndex((r) => r.id === row.id)
           return (
@@ -559,14 +562,14 @@ function UserRequestsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <Hash className="h-4 w-4 text-gray-600" />
-            <span>Mã yêu cầu</span>
+            <span>{t('requests.service.table.request_code')}</span>
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Info className="text-muted-foreground h-4 w-4" />
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Mã rút gọn hiển thị 8 ký tự đầu</p>
+                  <p>{t('requests.service.table.request_code_tooltip')}</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -587,7 +590,7 @@ function UserRequestsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <Heading className="h-4 w-4 text-gray-600" />
-            Tiêu đề
+            {t('requests.service.table.title')}
           </div>
         ),
         cell: ({ row }) => (
@@ -602,7 +605,7 @@ function UserRequestsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <Building2 className="h-4 w-4 text-gray-600" />
-            Khách hàng
+            {t('requests.service.table.customer')}
           </div>
         ),
         cell: ({ row }) => (
@@ -622,7 +625,7 @@ function UserRequestsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <Monitor className="h-4 w-4 text-gray-600" />
-            Thiết bị
+            {t('requests.service.table.device')}
           </div>
         ),
         cell: ({ row }) => (
@@ -639,7 +642,7 @@ function UserRequestsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <ClockIcon className="h-4 w-4 text-gray-600" />
-            <span>Phản hồi</span>
+            <span>{t('requests.service.table.responded')}</span>
           </div>
         ),
         cell: ({ row }) => renderTimestamp(row.original.respondedAt ?? undefined),
@@ -649,7 +652,7 @@ function UserRequestsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <CalendarCheck className="h-4 w-4 text-gray-600" />
-            <span>Đã duyệt</span>
+            <span>{t('requests.service.table.approved')}</span>
           </div>
         ),
         cell: ({ row }) => (
@@ -668,7 +671,7 @@ function UserRequestsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <ClockIcon className="h-4 w-4 text-gray-600" />
-            <span>Giải quyết</span>
+            <span>{t('requests.service.table.resolved')}</span>
           </div>
         ),
         cell: ({ row }) => renderTimestamp(row.original.resolvedAt ?? undefined),
@@ -678,7 +681,7 @@ function UserRequestsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <Tag className="h-4 w-4 text-gray-600" />
-            Ưu tiên
+            {t('requests.service.table.priority')}
           </div>
         ),
         cell: ({ row }) => <StatusBadge priority={row.original.priority} />,
@@ -688,7 +691,7 @@ function UserRequestsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <CheckCircle2 className="h-4 w-4 text-gray-600" />
-            Trạng thái
+            {t('requests.service.table.status')}
           </div>
         ),
         cell: ({ row }) => <StatusBadge serviceStatus={row.original.status} />,
@@ -699,7 +702,7 @@ function UserRequestsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-gray-600" />
-            Ngày tạo
+            {t('requests.service.table.created_at')}
           </div>
         ),
         cell: ({ row }) => <div className="text-sm">{formatDateTime(row.original.createdAt)}</div>,
@@ -709,7 +712,7 @@ function UserRequestsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <Settings className="h-4 w-4 text-gray-600" />
-            Thao tác
+            {t('requests.service.table.actions')}
           </div>
         ),
         cell: ({ row }) => {
@@ -726,7 +729,7 @@ function UserRequestsTableContent({
                 className="transition-all hover:bg-gray-100 hover:text-gray-700"
               >
                 <Eye className="mr-2 h-4 w-4" />
-                Chi tiết
+                {t('requests.service.table.detail')}
               </Button>
               {canClose && (
                 <Button
@@ -734,7 +737,7 @@ function UserRequestsTableContent({
                   size="sm"
                   onClick={() => openCloseDialog(row.original.id)}
                 >
-                  Đóng yêu cầu
+                  {t('requests.service.table.close')}
                 </Button>
               )}
             </div>
@@ -760,7 +763,7 @@ function UserRequestsTableContent({
               onClick={openBulkCloseDialog}
               disabled={selectedIds.length === 0}
             >
-              Đóng yêu cầu đã chọn ({selectedIds.length})
+              {t('requests.service.close.bulk_action', { count: selectedIds.length })}
             </Button>
           </div>
         }
@@ -788,9 +791,13 @@ function UserRequestsTableContent({
               <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200">
                 <FileText className="h-12 w-12 opacity-20" />
               </div>
-              <h3 className="mb-2 text-xl font-bold text-gray-700">Không có yêu cầu dịch vụ</h3>
+              <h3 className="mb-2 text-xl font-bold text-gray-700">
+                {t('requests.service.empty.title')}
+              </h3>
               <p className="mb-6 text-gray-500">
-                {searchInput ? 'Không tìm thấy yêu cầu phù hợp' : 'Hãy tạo yêu cầu đầu tiên'}
+                {searchInput
+                  ? t('requests.service.empty.search')
+                  : t('requests.service.empty.create_first')}
               </p>
             </div>
           ) : undefined
@@ -803,17 +810,17 @@ function UserRequestsTableContent({
       <Dialog open={isCloseDialogOpen} onOpenChange={setIsCloseDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Đóng yêu cầu dịch vụ</DialogTitle>
-            <DialogDescription>
-              Vui lòng nhập lý do đóng yêu cầu. Lý do này sẽ được lưu lại cùng yêu cầu.
-            </DialogDescription>
+            <DialogTitle>{t('requests.service.close.dialog_title')}</DialogTitle>
+            <DialogDescription>{t('requests.service.close.dialog_description')}</DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
-            <label className="text-sm font-medium">Lý do đóng yêu cầu</label>
+            <label className="text-sm font-medium">
+              {t('requests.service.close.reason_label')}
+            </label>
             <Textarea
               value={closeReason}
               onChange={(e) => setCloseReason(e.target.value)}
-              placeholder="Ví dụ: Tôi tạo yêu cầu nhầm, không cần xử lý nữa..."
+              placeholder={t('requests.service.close.placeholder')}
               rows={4}
             />
           </div>
@@ -823,10 +830,10 @@ function UserRequestsTableContent({
               onClick={() => setIsCloseDialogOpen(false)}
               disabled={isClosing}
             >
-              Hủy
+              {t('button.cancel')}
             </Button>
             <Button onClick={handleConfirmClose} disabled={isClosing}>
-              {isClosing ? 'Đang đóng...' : 'Xác nhận đóng'}
+              {isClosing ? t('button.processing') : t('requests.service.close.confirm')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -835,20 +842,24 @@ function UserRequestsTableContent({
       <Dialog open={isBulkCloseDialogOpen} onOpenChange={setIsBulkCloseDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Đóng nhiều yêu cầu</DialogTitle>
+            <DialogTitle>{t('requests.service.close.bulk_dialog_title')}</DialogTitle>
             <DialogDescription>
-              Vui lòng nhập lý do đóng các yêu cầu đã chọn. Lý do này sẽ được lưu lại cùng yêu cầu.
+              {t('requests.service.close.bulk_dialog_description')}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
-            <label className="text-sm font-medium">Lý do đóng yêu cầu</label>
+            <label className="text-sm font-medium">
+              {t('requests.service.close.reason_label')}
+            </label>
             <Textarea
               value={bulkCloseReason}
               onChange={(e) => setBulkCloseReason(e.target.value)}
-              placeholder="Ví dụ: Tôi tạo các yêu cầu nhầm, không cần xử lý nữa..."
+              placeholder={t('requests.service.close.bulk_placeholder')}
               rows={4}
             />
-            <p className="text-muted-foreground text-sm">Số yêu cầu: {selectedIds.length}</p>
+            <p className="text-muted-foreground text-sm">
+              {t('requests.service.close.count', { count: selectedIds.length })}
+            </p>
           </div>
           <DialogFooter>
             <Button
@@ -856,10 +867,10 @@ function UserRequestsTableContent({
               onClick={() => setIsBulkCloseDialogOpen(false)}
               disabled={isBulkClosing}
             >
-              Hủy
+              {t('button.cancel')}
             </Button>
             <Button onClick={handleConfirmBulkClose} disabled={isBulkClosing}>
-              {isBulkClosing ? 'Đang đóng...' : 'Xác nhận đóng'}
+              {isBulkClosing ? t('button.processing') : t('requests.service.close.bulk_confirm')}
             </Button>
           </DialogFooter>
         </DialogContent>
