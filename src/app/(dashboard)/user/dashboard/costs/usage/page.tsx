@@ -335,12 +335,6 @@ export default function UsagePage() {
                         barCategoryGap="50%"
                         barSize={60}
                       >
-                        <defs>
-                          <linearGradient id="bwGradient" x1="0" x2="0" y1="0" y2="1">
-                            <stop offset="0%" stopColor="#000000" stopOpacity={0.9} />
-                            <stop offset="100%" stopColor="#ffffff" stopOpacity={0.95} />
-                          </linearGradient>
-                        </defs>
                         <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                         <XAxis dataKey="month" stroke="var(--muted-foreground)" />
                         <YAxis
@@ -364,7 +358,7 @@ export default function UsagePage() {
                         <Bar
                           dataKey="bwPages"
                           stackId="pages"
-                          fill="url(#bwGradient)"
+                          fill="#000"
                           name={t('analytics.bw_label')}
                           radius={[4, 4, 0, 0]}
                         />
@@ -414,12 +408,6 @@ export default function UsagePage() {
                         barCategoryGap="50%"
                         barSize={60}
                       >
-                        <defs>
-                          <linearGradient id="bwGradientDevices" x1="0" x2="0" y1="0" y2="1">
-                            <stop offset="0%" stopColor="#000000" stopOpacity={0.9} />
-                            <stop offset="100%" stopColor="#ffffff" stopOpacity={0.95} />
-                          </linearGradient>
-                        </defs>
                         <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                         <XAxis dataKey="name" stroke="var(--muted-foreground)" />
                         <YAxis
@@ -443,7 +431,7 @@ export default function UsagePage() {
                         <Bar
                           dataKey="bwPages"
                           stackId="pages"
-                          fill="url(#bwGradientDevices)"
+                          fill="var(--color-success-500)"
                           name="Đen trắng"
                           radius={[4, 4, 0, 0]}
                         />

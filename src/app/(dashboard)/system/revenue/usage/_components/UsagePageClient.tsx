@@ -1021,7 +1021,7 @@ export default function UsagePageClient() {
                             <Bar
                               dataKey="bwPages"
                               stackId="pages"
-                              fill="var(--color-bwPages)"
+                              fill="#000"
                               radius={[6, 6, 0, 0]}
                             >
                               <LabelList
@@ -1102,7 +1102,7 @@ export default function UsagePageClient() {
                       <Bar
                         dataKey="bwPages"
                         stackId="pages"
-                        fill="var(--color-success-500)"
+                        fill="#000"
                         name={t('analytics.bw_label')}
                         radius={[4, 4, 0, 0]}
                       />
@@ -1238,7 +1238,7 @@ export default function UsagePageClient() {
                       <Bar
                         dataKey="bwPages"
                         stackId="pages"
-                        fill="var(--color-success-500)"
+                        fill="#000"
                         name={t('analytics.bw_label')}
                         radius={[4, 4, 0, 0]}
                       />
