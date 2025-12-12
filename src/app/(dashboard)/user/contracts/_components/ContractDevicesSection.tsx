@@ -65,7 +65,6 @@ export default function ContractDevicesSection({ contractId, attachedDevices }: 
               <th className="px-3 py-2 text-left text-sm font-bold">Serial</th>
               <th className="px-3 py-2 text-left text-sm font-bold">Model</th>
               <th className="px-3 py-2 text-left text-sm font-bold">Giá thuê/tháng</th>
-              <th className="px-3 py-2 text-left text-sm font-bold">Chi phí vận hành/tháng</th>
               <th className="px-3 py-2 text-left text-sm font-bold">Giá trang B/W</th>
               <th className="px-3 py-2 text-left text-sm font-bold">Giá trang màu</th>
               <th className="px-3 py-2 text-left text-sm font-bold">Bắt đầu</th>
@@ -75,13 +74,13 @@ export default function ContractDevicesSection({ contractId, attachedDevices }: 
           <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan={8} className="px-4 py-7 text-center text-base text-[var(--brand-400)]">
+                <td colSpan={7} className="px-4 py-7 text-center text-base text-[var(--brand-400)]">
                   Đang tải...
                 </td>
               </tr>
             ) : devices.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-4 py-8 text-center text-base text-[var(--brand-400)]">
+                <td colSpan={7} className="px-4 py-8 text-center text-base text-[var(--brand-400)]">
                   Chưa có thiết bị nào được gắn
                 </td>
               </tr>
@@ -100,11 +99,6 @@ export default function ContractDevicesSection({ contractId, attachedDevices }: 
                   <td className="px-3 py-2">
                     {d.monthlyRent != null
                       ? formatCurrencyWithSymbol(d.monthlyRent, d.currency)
-                      : '—'}
-                  </td>
-                  <td className="px-3 py-2">
-                    {d.monthlyRentCogs != null
-                      ? formatCurrencyWithSymbol(d.monthlyRentCogs, d.currency)
                       : '—'}
                   </td>
                   <td className="px-3 py-2">

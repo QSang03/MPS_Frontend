@@ -771,9 +771,6 @@ export default function MonthlyCostsPage() {
                             {t('page.user.costs.monthly.table.consumable')}
                           </TableHead>
                           <TableHead className="text-right">
-                            {t('page.user.costs.monthly.table.repair_cogs')}
-                          </TableHead>
-                          <TableHead className="text-right">
                             {t('page.user.costs.monthly.table.percent_total')}
                           </TableHead>
                           <TableHead className="w-[50px]"></TableHead>
@@ -813,9 +810,6 @@ export default function MonthlyCostsPage() {
                               </TableCell>
                               <TableCell className="text-right">
                                 {formatCurrency(d.cogsConsumable, displayCurrency)}
-                              </TableCell>
-                              <TableCell className="text-right">
-                                {formatCurrency(d.cogsRepair, displayCurrency)}
                               </TableCell>
                               <TableCell className="text-right">
                                 {Number.isFinite(costShare) ? `${costShare.toFixed(1)}%` : '0%'}

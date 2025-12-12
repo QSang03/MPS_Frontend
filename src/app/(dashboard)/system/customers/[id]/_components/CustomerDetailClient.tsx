@@ -1463,119 +1463,7 @@ export default function CustomerDetailClient({ customerId }: Props) {
                                     >
                                       {getStatusLabel(contract.status)}
                                     </Badge>
-                                    <div className="ml-auto flex items-center gap-1.5">
-                                      {/* Only show Create billing button to system admin on FE */}
-                                      {isAdminForUI && (
-                                        <Tooltip>
-                                          <TooltipTrigger asChild>
-                                            <Button
-                                              variant="ghost"
-                                              size="sm"
-                                              className="h-8 w-8 p-0 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
-                                              onClick={() =>
-                                                setCreateBillingContract({
-                                                  id: contract.id,
-                                                  number: contract.contractNumber,
-                                                })
-                                              }
-                                              aria-label={t(
-                                                'customer.detail.contracts.create_billing'
-                                              )}
-                                            >
-                                              <Receipt className="h-4 w-4" />
-                                            </Button>
-                                          </TooltipTrigger>
-                                          <TooltipContent sideOffset={4}>
-                                            {t('customer.detail.contracts.create_billing')}
-                                          </TooltipContent>
-                                        </Tooltip>
-                                      )}
-                                      {canUpdateContract && (
-                                        <Tooltip>
-                                          <TooltipTrigger asChild>
-                                            <Button
-                                              variant="ghost"
-                                              size="sm"
-                                              className="h-8 w-8 p-0 text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-                                              onClick={() => setEditingContract(contract)}
-                                              aria-label={t('customer.detail.contracts.edit')}
-                                            >
-                                              <Edit className="h-4 w-4" />
-                                            </Button>
-                                          </TooltipTrigger>
-                                          <TooltipContent sideOffset={4}>
-                                            {t('customer.detail.contracts.edit')}
-                                          </TooltipContent>
-                                        </Tooltip>
-                                      )}
-                                      {canAttachDevices && (
-                                        <Tooltip>
-                                          <TooltipTrigger asChild>
-                                            <Button
-                                              variant="ghost"
-                                              size="sm"
-                                              className="h-8 w-8 p-0 text-sky-600 hover:bg-sky-50 hover:text-sky-700"
-                                              onClick={() => {
-                                                setAttachModalContractId(contract.id)
-                                                setAttachModalOpen(true)
-                                              }}
-                                              aria-label={t(
-                                                'customer.detail.contracts.attach_device'
-                                              )}
-                                            >
-                                              <MonitorSmartphone className="h-4 w-4" />
-                                            </Button>
-                                          </TooltipTrigger>
-                                          <TooltipContent sideOffset={4}>
-                                            {t('customer.detail.contracts.attach_device')}
-                                          </TooltipContent>
-                                        </Tooltip>
-                                      )}
-                                      {canDeleteContract && (
-                                        <Tooltip>
-                                          <DeleteDialog
-                                            title={t('customer.detail.contracts.delete.title')}
-                                            description={t(
-                                              'customer.detail.contracts.delete.description',
-                                              { number: contract.contractNumber }
-                                            )}
-                                            onConfirm={async () => {
-                                              try {
-                                                await contractsClientService.delete(contract.id)
-                                                await loadOverview()
-                                                toast.success(
-                                                  t('customer.detail.contracts.delete.success')
-                                                )
-                                              } catch (err: unknown) {
-                                                console.error('Delete contract error', err)
-                                                const apiMsg = extractApiMessage(err)
-                                                toast.error(
-                                                  apiMsg ||
-                                                    t('customer.detail.contracts.delete.error')
-                                                )
-                                              }
-                                            }}
-                                            trigger={
-                                              <TooltipTrigger asChild>
-                                                <Button
-                                                  variant="ghost"
-                                                  size="sm"
-                                                  className="h-8 w-8 p-0 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
-                                                  aria-label={t(
-                                                    'customer.detail.contracts.delete.label'
-                                                  )}
-                                                >
-                                                  <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                              </TooltipTrigger>
-                                            }
-                                          />
-                                          <TooltipContent sideOffset={4}>
-                                            {t('customer.detail.contracts.delete.label')}
-                                          </TooltipContent>
-                                        </Tooltip>
-                                      )}
-                                    </div>
+                                    {/* Contract-level action buttons moved to actions column */}
                                   </div>
                                   <div className="flex items-center gap-4 text-xs text-slate-600">
                                     <span className="flex items-center gap-1.5">
@@ -1611,22 +1499,133 @@ export default function CustomerDetailClient({ customerId }: Props) {
                                   </span>
                                 )}
                               </td>
-                              <td className="px-4 py-5 text-right">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => toggleContract(contract.id)}
-                                  className="h-8 w-8 transition-transform hover:bg-slate-100"
-                                >
-                                  <motion.div
-                                    animate={{
-                                      rotate: expandedContracts.has(contract.id) ? 180 : 0,
-                                    }}
-                                    transition={{ duration: 0.2 }}
+                              <td className="px-4 py-5 text-right align-top">
+                                <div className="flex items-center justify-end gap-2">
+                                  {/* Re-render contract-level actions here (moved from header) */}
+                                  {/* Only show Create billing button to system admin on FE */}
+                                  {isAdminForUI && (
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-8 w-8 p-0 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
+                                          onClick={() =>
+                                            setCreateBillingContract({
+                                              id: contract.id,
+                                              number: contract.contractNumber,
+                                            })
+                                          }
+                                          aria-label={t('customer.detail.contracts.create_billing')}
+                                        >
+                                          <Receipt className="h-4 w-4" />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent sideOffset={4}>
+                                        {t('customer.detail.contracts.create_billing')}
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  )}
+                                  {canUpdateContract && (
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-8 w-8 p-0 text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                                          onClick={() => setEditingContract(contract)}
+                                          aria-label={t('customer.detail.contracts.edit')}
+                                        >
+                                          <Edit className="h-4 w-4" />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent sideOffset={4}>
+                                        {t('customer.detail.contracts.edit')}
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  )}
+                                  {canAttachDevices && (
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-8 w-8 p-0 text-sky-600 hover:bg-sky-50 hover:text-sky-700"
+                                          onClick={() => {
+                                            setAttachModalContractId(contract.id)
+                                            setAttachModalOpen(true)
+                                          }}
+                                          aria-label={t('customer.detail.contracts.attach_device')}
+                                        >
+                                          <MonitorSmartphone className="h-4 w-4" />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent sideOffset={4}>
+                                        {t('customer.detail.contracts.attach_device')}
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  )}
+                                  {canDeleteContract && (
+                                    <Tooltip>
+                                      <DeleteDialog
+                                        title={t('customer.detail.contracts.delete.title')}
+                                        description={t(
+                                          'customer.detail.contracts.delete.description',
+                                          { number: contract.contractNumber }
+                                        )}
+                                        onConfirm={async () => {
+                                          try {
+                                            await contractsClientService.delete(contract.id)
+                                            await loadOverview()
+                                            toast.success(
+                                              t('customer.detail.contracts.delete.success')
+                                            )
+                                          } catch (err: unknown) {
+                                            console.error('Delete contract error', err)
+                                            const apiMsg = extractApiMessage(err)
+                                            toast.error(
+                                              apiMsg || t('customer.detail.contracts.delete.error')
+                                            )
+                                          }
+                                        }}
+                                        trigger={
+                                          <TooltipTrigger asChild>
+                                            <Button
+                                              variant="ghost"
+                                              size="sm"
+                                              className="h-8 w-8 p-0 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                                              aria-label={t(
+                                                'customer.detail.contracts.delete.label'
+                                              )}
+                                            >
+                                              <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                          </TooltipTrigger>
+                                        }
+                                      />
+                                      <TooltipContent sideOffset={4}>
+                                        {t('customer.detail.contracts.delete.label')}
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  )}
+
+                                  {/* Expand/collapse chevron */}
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => toggleContract(contract.id)}
+                                    className="h-8 w-8 transition-transform hover:bg-slate-100"
                                   >
-                                    <ChevronDown className="h-4 w-4" />
-                                  </motion.div>
-                                </Button>
+                                    <motion.div
+                                      animate={{
+                                        rotate: expandedContracts.has(contract.id) ? 180 : 0,
+                                      }}
+                                      transition={{ duration: 0.2 }}
+                                    >
+                                      <ChevronDown className="h-4 w-4" />
+                                    </motion.div>
+                                  </Button>
+                                </div>
                               </td>
                             </motion.tr>
                             <AnimatePresence>
