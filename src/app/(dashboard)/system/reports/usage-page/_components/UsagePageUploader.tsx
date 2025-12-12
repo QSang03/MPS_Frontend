@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useEffect, useMemo, useState } from 'react'
+import Image from 'next/image'
 import { AlertCircle, CheckCircle, Loader2, RefreshCw, Save, Upload } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -204,11 +205,16 @@ export function UsagePageUploader() {
                   />
                 </label>
               ) : (
-                <img
-                  src={previewUrl}
-                  alt="Preview"
-                  className="h-full w-full bg-white object-contain"
-                />
+                <div className="relative h-full w-full bg-white">
+                  <Image
+                    src={previewUrl as string}
+                    alt={t('usagePageUploader.preview_alt') || 'Preview'}
+                    fill
+                    unoptimized
+                    style={{ objectFit: 'contain' }}
+                    className="rounded-xl"
+                  />
+                </div>
               )}
 
               {previewUrl && step === 'upload' ? (

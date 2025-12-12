@@ -95,7 +95,7 @@ export default function ConsumableDetailModal({
       }
     }
     void load()
-  }, [open, consumableId])
+  }, [open, consumableId, t])
 
   const fmtDate = (v: unknown) =>
     v

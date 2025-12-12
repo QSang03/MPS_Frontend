@@ -1091,7 +1091,6 @@
   "page.user.costs.monthly.kpi.total_cogs_tooltip": "COGS includes consumable costs and repair costs",
   "page.user.costs.monthly.period_prefix": "Period",
   "page.user.costs.monthly.kpi.cogs_consumable": "Consumable Costs",
-  "page.user.costs.monthly.kpi.of_total_cost": "of total cost",
   "analytics.all": "All",
   "analytics.table.period": "Period",
   "analytics.table.rental": "Rental",
