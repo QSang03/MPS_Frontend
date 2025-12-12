@@ -93,9 +93,9 @@ export function ProfileClient({ initialProfile }: ProfileClientProps) {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] bg-clip-text text-4xl font-bold text-transparent">
-            👤 Hồ sơ cá nhân
+            {t('page.profile.title')}
           </h1>
-          <p className="mt-2 text-gray-500">Quản lý thông tin tài khoản và bảo mật</p>
+          <p className="mt-2 text-gray-500">{t('profile.header.description')}</p>
         </div>
       </div>
 
@@ -129,7 +129,7 @@ export function ProfileClient({ initialProfile }: ProfileClientProps) {
               <div className="flex items-center gap-3 rounded-2xl border border-[var(--brand-200)] bg-gradient-to-r from-[var(--brand-50)] to-[var(--brand-100)] p-3">
                 <Shield className="h-5 w-5 flex-shrink-0 text-black dark:text-white" />
                 <div>
-                  <p className="text-xs font-bold text-gray-600">CẤP ĐỘ</p>
+                  <p className="text-xs font-bold text-gray-600">{t('profile.level')}</p>
                   <p className="text-sm font-bold text-[var(--brand-700)]">
                     Level {user.role?.level || 0}
                   </p>
@@ -140,7 +140,7 @@ export function ProfileClient({ initialProfile }: ProfileClientProps) {
               <div className="flex items-center gap-3 rounded-2xl border border-[var(--brand-200)] bg-gradient-to-r from-[var(--brand-50)] to-[var(--brand-100)] p-3">
                 <Building className="h-5 w-5 flex-shrink-0 text-black dark:text-white" />
                 <div>
-                  <p className="text-xs font-bold text-gray-600">BỘ PHẬN</p>
+                  <p className="text-xs font-bold text-gray-600">{t('profile.department')}</p>
                   <p className="text-sm font-bold text-[var(--brand-700)]">{departmentName}</p>
                 </div>
               </div>
@@ -149,7 +149,7 @@ export function ProfileClient({ initialProfile }: ProfileClientProps) {
               <div className="flex items-center gap-3 rounded-2xl border border-green-200 bg-gradient-to-r from-green-50 to-green-100 p-3">
                 <Calendar className="h-5 w-5 flex-shrink-0 text-black dark:text-white" />
                 <div>
-                  <p className="text-xs font-bold text-gray-600">NGÀY TẠO</p>
+                  <p className="text-xs font-bold text-gray-600">{t('table.created_at')}</p>
                   <p className="text-sm font-bold text-green-700">{createdDate}</p>
                 </div>
               </div>
@@ -159,12 +159,12 @@ export function ProfileClient({ initialProfile }: ProfileClientProps) {
                 {isUserActive ? (
                   <Badge className="w-full justify-center rounded-2xl border-2 border-emerald-300 bg-gradient-to-r from-emerald-100 to-emerald-50 py-2 font-bold text-emerald-700">
                     <CheckCircle2 className="mr-2 h-4 w-4 text-black dark:text-white" />
-                    Tài khoản hoạt động
+                    {t('profile.account_active')}
                   </Badge>
                 ) : (
                   <Badge className="w-full justify-center rounded-2xl border-2 border-red-300 bg-gradient-to-r from-red-100 to-red-50 py-2 font-bold text-red-700">
                     <AlertCircle className="mr-2 h-4 w-4 text-black dark:text-white" />
-                    Tài khoản bị khóa
+                    {t('profile.account_locked')}
                   </Badge>
                 )}
               </div>
@@ -182,9 +182,9 @@ export function ProfileClient({ initialProfile }: ProfileClientProps) {
               </div>
               <div className="relative flex items-center justify-between px-8 py-6">
                 <div className="text-white">
-                  <CardTitle className="text-2xl font-bold">📋 Thông tin chi tiết</CardTitle>
+                  <CardTitle className="text-2xl font-bold">{t('profile.details.title')}</CardTitle>
                   <CardDescription className="mt-1 text-sm text-pink-100">
-                    Cập nhật hồ sơ cá nhân của bạn
+                    {t('profile.details.description')}
                   </CardDescription>
                 </div>
                 <Button
@@ -194,7 +194,7 @@ export function ProfileClient({ initialProfile }: ProfileClientProps) {
                   className="rounded-xl border-white/30 bg-white/20 font-bold text-white transition-all hover:bg-white/30"
                 >
                   <Edit className="mr-2 h-4 w-4" />
-                  ✏️ Chỉnh sửa
+                  {t('button.edit')}
                 </Button>
               </div>
             </div>
@@ -205,13 +205,13 @@ export function ProfileClient({ initialProfile }: ProfileClientProps) {
               <div>
                 <h4 className="mb-4 flex items-center gap-2 text-lg font-bold text-gray-800">
                   <User className="h-5 w-5 text-black dark:text-white" />
-                  Thông tin cơ bản
+                  {t('profile.basic.title')}
                 </h4>
                 <div className="grid gap-4 md:grid-cols-2">
                   {/* Email */}
                   <div className="space-y-2">
                     <Label htmlFor="email" className="text-sm font-bold text-gray-700">
-                      📧 Email
+                      📧 {t('user.email')}
                     </Label>
                     <div className="flex items-center gap-2">
                       <Mail className="h-4 w-4 flex-shrink-0 text-black dark:text-white" />
@@ -224,12 +224,12 @@ export function ProfileClient({ initialProfile }: ProfileClientProps) {
                   {/* Username */}
                   <div className="space-y-2">
                     <Label htmlFor="username" className="text-sm font-bold text-gray-700">
-                      👤 Tên đăng nhập
+                      👤 {t('profile.basic.username')}
                     </Label>
                     <div className="flex items-center gap-2">
                       <User className="h-4 w-4 flex-shrink-0 text-black dark:text-white" />
                       <div className="flex-1 rounded-2xl border-2 border-gray-200 bg-gray-50 px-3 py-2 text-gray-700">
-                        {user.username || user.email || 'Chưa cập nhật'}
+                        {user.username || user.email || t('profile.not_updated')}
                       </div>
                     </div>
                   </div>
@@ -247,7 +247,7 @@ export function ProfileClient({ initialProfile }: ProfileClientProps) {
                   {/* Phone (attributes.phone) */}
                   <div className="space-y-2">
                     <Label htmlFor="phone" className="text-sm font-bold text-gray-700">
-                      📞 Điện thoại
+                      📞 {t('profile.basic.phone')}
                     </Label>
                     <div className="flex-1 rounded-2xl border-2 border-gray-200 bg-gray-50 px-3 py-2 text-gray-700">
                       {(attributes && (attributes.phone as string)) || t('profile.not_updated')}
@@ -262,12 +262,14 @@ export function ProfileClient({ initialProfile }: ProfileClientProps) {
               <div>
                 <h4 className="mb-4 flex items-center gap-2 text-lg font-bold text-gray-800">
                   <Shield className="h-5 w-5 text-black dark:text-white" />
-                  Thông tin vai trò
+                  {t('profile.role.title')}
                 </h4>
                 <div className="grid gap-4 md:grid-cols-2">
                   {/* Role */}
                   <div className="space-y-2">
-                    <Label className="text-sm font-bold text-gray-700">🎭 Vai trò</Label>
+                    <Label className="text-sm font-bold text-gray-700">
+                      🎭 {t('profile.role')}
+                    </Label>
                     <Badge className="w-full justify-center rounded-2xl border-2 border-[var(--brand-200)] bg-gradient-to-r from-[var(--brand-50)] to-[var(--brand-100)] py-2 font-bold text-[var(--brand-700)]">
                       {user.role?.name || 'User'}
                     </Badge>
@@ -275,7 +277,9 @@ export function ProfileClient({ initialProfile }: ProfileClientProps) {
 
                   {/* Status */}
                   <div className="space-y-2">
-                    <Label className="text-sm font-bold text-gray-700">✅ Trạng thái</Label>
+                    <Label className="text-sm font-bold text-gray-700">
+                      ✅ {t('profile.status')}
+                    </Label>
                     <Badge
                       className={`w-full justify-center rounded-2xl border-2 py-2 font-bold ${
                         isUserActive
@@ -283,7 +287,7 @@ export function ProfileClient({ initialProfile }: ProfileClientProps) {
                           : 'border-red-300 bg-gradient-to-r from-red-100 to-red-50 text-red-700'
                       }`}
                     >
-                      {isUserActive ? '✓ Hoạt động' : '✗ Không hoạt động'}
+                      {isUserActive ? t('profile.status.active') : t('profile.status.inactive')}
                     </Badge>
                   </div>
                 </div>
@@ -296,10 +300,10 @@ export function ProfileClient({ initialProfile }: ProfileClientProps) {
                     <Lock className="mt-1 h-5 w-5 flex-shrink-0 text-black dark:text-white" />
                     <div>
                       <h5 className="flex items-center gap-2 font-bold text-gray-800">
-                        🔒 Bảo mật tài khoản
+                        🔒 {t('profile.security.title')}
                       </h5>
                       <p className="mt-1 text-sm text-gray-600">
-                        Thay đổi mật khẩu và cài đặt bảo mật của bạn
+                        {t('profile.security.description')}
                       </p>
                     </div>
                   </div>
@@ -309,7 +313,7 @@ export function ProfileClient({ initialProfile }: ProfileClientProps) {
                     }}
                     className="rounded-xl bg-gradient-to-r from-red-600 to-orange-600 font-bold whitespace-nowrap text-white shadow-lg transition-all hover:from-red-700 hover:to-orange-700 hover:shadow-xl"
                   >
-                    🔐 Đổi mật khẩu
+                    {t('profile.security.change_password')}
                   </Button>
                 </div>
               </div>

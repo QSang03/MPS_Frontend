@@ -302,6 +302,8 @@
   "filters.type_all": "All types",
   "button.reset": "Reset",
   "profile": "Profile",
+  "page.profile.title": "Profile",
+  "page.profile.subtitle": "Manage account information and security",
   "profile.loading": "Loading profile information...",
   "profile.header.description": "Manage account information and security settings",
   "profile.level": "Level",

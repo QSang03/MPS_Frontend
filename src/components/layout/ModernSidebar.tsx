@@ -33,6 +33,8 @@ import {
   ClipboardCheck,
   Shield,
   MonitorSmartphone,
+  Upload,
+  Calculator,
 } from 'lucide-react'
 import { NAVIGATION_PAYLOAD, USER_NAVIGATION_PAYLOAD } from '@/constants/navigation'
 import { Dialog, DialogTrigger, DialogContent } from '@/components/ui/dialog'
@@ -65,6 +67,8 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   Shield,
   MonitorSmartphone,
   Zap,
+  Upload,
+  Calculator,
 }
 
 // Icon mapping helper - map our string icon names to lucide-react components

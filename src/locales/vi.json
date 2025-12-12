@@ -376,6 +376,8 @@
   "device_model.add_consumable.pagination_info": "Trang {page} / {totalPages} — Hiển thị {showCount} / {total}",
   "button.reset": "Reset",
   "profile": "Hồ sơ cá nhân",
+  "page.profile.title": "Hồ sơ cá nhân",
+  "page.profile.subtitle": "Quản lý thông tin tài khoản và bảo mật",
   "profile.loading": "Đang tải thông tin hồ sơ...",
   "profile.header.description": "Quản lý thông tin tài khoản và bảo mật",
   "profile.level": "Cấp độ",
