@@ -67,6 +67,8 @@ export default function ContractDevicesModal({
   const [selectedToAttach, setSelectedToAttach] = useState<string[]>([])
   const [activeFrom, setActiveFrom] = useState<string>('')
   const [activeTo, setActiveTo] = useState<string>('')
+  const [monthlyRent, setMonthlyRent] = useState<string>('')
+  const [monthlyRentCogs, setMonthlyRentCogs] = useState<string>('')
   const [searchTerm, setSearchTerm] = useState('')
 
   // Sử dụng type FilterStatus thay vì string chung chung
@@ -146,6 +148,7 @@ export default function ContractDevicesModal({
       items: Array<{
         deviceId: string
         monthlyRent?: number
+        monthlyRentCogs?: number
         activeFrom?: string | null
         activeTo?: string | null
       }>
@@ -156,6 +159,10 @@ export default function ContractDevicesModal({
       setAttachOpen(false)
       setHideOuter(false)
       setSelectedToAttach([])
+      setActiveFrom('')
+      setActiveTo('')
+      setMonthlyRent('')
+      setMonthlyRentCogs('')
       setSearchTerm('')
       setFilterStatus('all')
       queryClient.invalidateQueries({ queryKey: ['contract-devices', contractId] })
@@ -227,6 +234,9 @@ export default function ContractDevicesModal({
 
     const items = selectedToAttach.map((deviceId) => ({
       deviceId,
+      monthlyRent: monthlyRent && monthlyRent.trim() ? parseFloat(monthlyRent.trim()) : undefined,
+      monthlyRentCogs:
+        monthlyRentCogs && monthlyRentCogs.trim() ? parseFloat(monthlyRentCogs.trim()) : undefined,
       activeFrom: activeFrom && activeFrom.trim() ? activeFrom.trim() : null,
       activeTo: activeTo && activeTo.trim() ? activeTo.trim() : null,
     }))
@@ -644,6 +654,44 @@ export default function ContractDevicesModal({
                 </div>
                 <p className="mt-2 text-xs text-slate-500">
                   Nếu để trống, hệ thống sẽ sử dụng thời gian của hợp đồng
+                </p>
+              </div>
+
+              {/* Pricing Inputs */}
+              <div className="rounded-lg border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-4">
+                <div className="mb-3 flex items-center gap-2">
+                  <Info className="h-4 w-4 text-slate-600" />
+                  <h4 className="text-sm font-semibold text-slate-700">Thông tin giá</h4>
+                </div>
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium text-slate-600">
+                      Giá thuê/tháng (VNĐ)
+                    </label>
+                    <Input
+                      type="number"
+                      value={monthlyRent}
+                      onChange={(e) => setMonthlyRent(e.target.value)}
+                      className="h-10"
+                      placeholder="Ví dụ: 500000"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium text-slate-600">
+                      Chi phí vận hành/tháng (VNĐ)
+                    </label>
+                    <Input
+                      type="number"
+                      value={monthlyRentCogs}
+                      onChange={(e) => setMonthlyRentCogs(e.target.value)}
+                      className="h-10"
+                      placeholder="Ví dụ: 300000"
+                    />
+                  </div>
+                </div>
+                <p className="mt-2 text-xs text-slate-500">
+                  Để trống nếu không muốn cập nhật giá. Giá sẽ được áp dụng cho tất cả thiết bị đã
+                  chọn.
                 </p>
               </div>
 

@@ -2,18 +2,14 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { AlertTriangle } from 'lucide-react'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { slasClientService } from '@/lib/api/services/slas-client.service'
 import { Priority } from '@/constants/status'
 import { formatRelativeTime } from '@/lib/utils/formatters'
 
-const priorityLabel: Record<Priority, string> = {
-  [Priority.LOW]: 'Thấp',
-  [Priority.NORMAL]: 'Bình thường',
-  [Priority.HIGH]: 'Cao',
-  [Priority.URGENT]: 'Khẩn cấp',
-}
+// priority labels are localized inside the component using `t`
 
 const priorityTone: Record<Priority, string> = {
   [Priority.LOW]: 'bg-slate-100 text-slate-700',
@@ -27,6 +23,13 @@ interface UserSlaPanelProps {
 }
 
 export function UserSlaPanel({ customerId }: UserSlaPanelProps) {
+  const { t } = useLocale()
+  const priorityLabel: Record<Priority, string> = {
+    [Priority.LOW]: t('requests.sla.priority.low'),
+    [Priority.NORMAL]: t('requests.sla.priority.normal'),
+    [Priority.HIGH]: t('requests.sla.priority.high'),
+    [Priority.URGENT]: t('requests.sla.priority.urgent'),
+  }
   const listQuery = useQuery({
     queryKey: ['requests-sla-preview', customerId],
     queryFn: () =>
@@ -56,8 +59,10 @@ export function UserSlaPanel({ customerId }: UserSlaPanelProps) {
           <CardHeader className="flex flex-row items-center gap-3">
             <AlertTriangle className="h-5 w-5 text-red-500" />
             <div>
-              <CardTitle>Lỗi tải SLA</CardTitle>
-              <CardDescription>{errorMessage || 'Không thể tải danh sách SLA'}</CardDescription>
+              <CardTitle>{t('requests.sla.error.title')}</CardTitle>
+              <CardDescription>
+                {errorMessage || t('requests.sla.error.description')}
+              </CardDescription>
             </div>
           </CardHeader>
         </Card>
@@ -73,10 +78,8 @@ export function UserSlaPanel({ customerId }: UserSlaPanelProps) {
       ) : items.length === 0 ? (
         <Card>
           <CardHeader>
-            <CardTitle>Chưa có SLA hoạt động</CardTitle>
-            <CardDescription>
-              Hiện tại chưa có cam kết chất lượng dịch vụ nào được áp dụng.
-            </CardDescription>
+            <CardTitle>{t('requests.sla.empty.title')}</CardTitle>
+            <CardDescription>{t('requests.sla.empty.description')}</CardDescription>
           </CardHeader>
         </Card>
       ) : (
@@ -95,15 +98,25 @@ export function UserSlaPanel({ customerId }: UserSlaPanelProps) {
               </div>
               <div className="mt-3 grid gap-3 sm:grid-cols-3">
                 <div>
-                  <p className="text-muted-foreground text-xs uppercase">Phản hồi</p>
-                  <p className="text-sm font-medium">{sla.responseTimeHours} giờ</p>
+                  <p className="text-muted-foreground text-xs uppercase">
+                    {t('requests.sla.response_time')}
+                  </p>
+                  <p className="text-sm font-medium">
+                    {sla.responseTimeHours} {t('requests.sla.hours')}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground text-xs uppercase">Xử lý</p>
-                  <p className="text-sm font-medium">{sla.resolutionTimeHours} giờ</p>
+                  <p className="text-muted-foreground text-xs uppercase">
+                    {t('requests.sla.resolution_time')}
+                  </p>
+                  <p className="text-sm font-medium">
+                    {sla.resolutionTimeHours} {t('requests.sla.hours')}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground text-xs uppercase">Cập nhật</p>
+                  <p className="text-muted-foreground text-xs uppercase">
+                    {t('requests.sla.updated')}
+                  </p>
                   <p className="text-sm font-medium">
                     {formatRelativeTime(sla.updatedAt ?? sla.createdAt ?? '')}
                   </p>

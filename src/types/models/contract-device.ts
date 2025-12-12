@@ -6,6 +6,7 @@ export interface ContractDevice {
   contractId: string
   deviceId: string
   monthlyRent?: number | null
+  monthlyRentCogs?: number | null
   currencyId?: string | null
   currency?: CurrencyDataDto | null
   currentExchangeRate?: number | null
@@ -21,6 +22,7 @@ export interface ContractDevice {
 export interface AttachDeviceItem {
   deviceId: string
   monthlyRent?: number | null
+  monthlyRentCogs?: number | null
   currencyId?: string | null
   activeFrom?: string | null
   activeTo?: string | null

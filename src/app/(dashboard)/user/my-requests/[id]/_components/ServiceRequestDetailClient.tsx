@@ -352,7 +352,7 @@ export function ServiceRequestDetailClient({ id }: Props) {
                       )}
                       <TableRow className="bg-slate-50 font-medium">
                         <TableCell colSpan={2} className="text-right">
-                          Tổng cộng
+                          {t('requests.service.detail.total')}
                         </TableCell>
                         <TableCell className="text-right text-emerald-600">
                           {costsQuery.data?.data && costsQuery.data.data.length > 0
@@ -373,7 +373,7 @@ export function ServiceRequestDetailClient({ id }: Props) {
               ) : (
                 <div className="text-muted-foreground flex flex-col items-center justify-center border-t py-12 text-sm">
                   <DollarSign className="mb-2 h-8 w-8 opacity-40" />
-                  <p>Chưa có chi phí nào được ghi nhận.</p>
+                  <p>{t('requests.service.detail.no_costs')}</p>
                 </div>
               )}
             </CardContent>
@@ -404,7 +404,7 @@ export function ServiceRequestDetailClient({ id }: Props) {
           <Card className="border-l-4 border-l-blue-500 shadow-md">
             <CardHeader className="pb-3">
               <CardTitle className="text-muted-foreground text-sm font-semibold tracking-wider uppercase">
-                Tác vụ
+                {t('requests.service.detail.actions')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -422,7 +422,7 @@ export function ServiceRequestDetailClient({ id }: Props) {
                     ) : (
                       <XCircle className="mr-2 h-4 w-4" />
                     )}
-                    Đóng yêu cầu
+                    {t('requests.service.table.close')}
                   </Button>
 
                   <Dialog open={showCloseConfirm} onOpenChange={setShowCloseConfirm}>
@@ -455,7 +455,7 @@ export function ServiceRequestDetailClient({ id }: Props) {
               )}
               {detail.status === ServiceRequestStatus.CLOSED && (
                 <div className="text-muted-foreground text-sm italic">
-                  Yêu cầu này đã đóng và không thể thực hiện thêm tác vụ.
+                  {t('requests.service.detail.closed_info')}
                 </div>
               )}
             </CardContent>
@@ -466,7 +466,7 @@ export function ServiceRequestDetailClient({ id }: Props) {
             <CardHeader className="bg-muted/20 border-b pt-4 pb-3">
               <CardTitle className="flex items-center gap-2 text-sm font-semibold">
                 <Monitor className="h-4 w-4" />
-                Thiết bị
+                {t('requests.service.detail.device')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 pt-4">
@@ -497,7 +497,9 @@ export function ServiceRequestDetailClient({ id }: Props) {
                   </div>
                 </>
               ) : (
-                <div className="text-muted-foreground text-sm">Không có thông tin thiết bị</div>
+                <div className="text-muted-foreground text-sm">
+                  {t('requests.service.detail.no_device')}
+                </div>
               )}
             </CardContent>
           </Card>
@@ -505,12 +507,14 @@ export function ServiceRequestDetailClient({ id }: Props) {
           {/* 3. Timeline */}
           <Card>
             <CardHeader className="pt-4 pb-3">
-              <CardTitle className="text-sm font-semibold">Tiến độ xử lý</CardTitle>
+              <CardTitle className="text-sm font-semibold">
+                {t('requests.service.detail.progress_title')}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="border-muted relative ml-2 space-y-6 border-l pb-2">
                 {timeline.length === 0 ? (
-                  <div className="text-muted-foreground pl-4 text-xs">Chưa có dữ liệu.</div>
+                  <div className="text-muted-foreground pl-4 text-xs">{t('empty.no_data')}</div>
                 ) : (
                   timeline.map((event, idx) => {
                     const Icon = event.icon
@@ -531,12 +535,12 @@ export function ServiceRequestDetailClient({ id }: Props) {
                           </span>
                           {event.by && (
                             <span className="text-muted-foreground mt-0.5 text-xs">
-                              bởi {event.by}
+                              {t('timeline.by')} {event.by}
                             </span>
                           )}
                           {event.reason && (
                             <span className="mt-1 rounded bg-rose-50 p-1 text-xs text-rose-600 italic">
-                              Lý do: {event.reason}
+                              {t('cost_adjustments.reason_label')}: {event.reason}
                             </span>
                           )}
                         </div>

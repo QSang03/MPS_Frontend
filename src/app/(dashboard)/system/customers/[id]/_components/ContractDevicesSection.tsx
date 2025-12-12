@@ -10,7 +10,15 @@ import type { ContractDevice } from '@/types/models/contract-device'
 import { formatCurrencyWithSymbol } from '@/lib/utils/formatters'
 import { toast } from 'sonner'
 import { useLocale } from '@/components/providers/LocaleProvider'
-import { MonitorSmartphone, Plug2, Calendar, DollarSign, Trash2, Plus } from 'lucide-react'
+import {
+  MonitorSmartphone,
+  Plug2,
+  Calendar,
+  DollarSign,
+  Trash2,
+  Plus,
+  TrendingUp,
+} from 'lucide-react'
 import { useActionPermission } from '@/lib/hooks/useActionPermission'
 
 interface Props {
@@ -186,6 +194,12 @@ export default function ContractDevicesSection({
                     Thuê/tháng
                   </div>
                 </th>
+                <th className="px-4 py-3 text-left text-sm font-bold tracking-wide text-orange-900 uppercase">
+                  <div className="flex items-center gap-1">
+                    <TrendingUp className="h-4 w-4" />
+                    Chi phí vận hành/tháng
+                  </div>
+                </th>
                 <th className="px-4 py-3 text-left text-sm font-bold tracking-wide text-indigo-900 uppercase">
                   B/W
                 </th>
@@ -218,7 +232,7 @@ export default function ContractDevicesSection({
                 </tr>
               ) : devices.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-12 text-center">
+                  <td colSpan={9} className="px-4 py-12 text-center">
                     <div className="flex flex-col items-center gap-3">
                       <div className="rounded-full bg-[var(--brand-50)] p-4">
                         <MonitorSmartphone className="h-8 w-8 text-[var(--brand-300)]" />
@@ -266,6 +280,13 @@ export default function ContractDevicesSection({
                       <span className="text-sm font-semibold whitespace-nowrap text-[var(--brand-700)]">
                         {d.monthlyRent != null
                           ? formatCurrencyWithSymbol(d.monthlyRent, d.currency)
+                          : '—'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="text-sm font-semibold whitespace-nowrap text-orange-700">
+                        {d.monthlyRentCogs != null
+                          ? formatCurrencyWithSymbol(d.monthlyRentCogs, d.currency)
                           : '—'}
                       </span>
                     </td>
