@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Separator } from '@/components/ui/separator'
 import { contractsClientService } from '@/lib/api/services/contracts-client.service'
 import type { ContractDevice } from '@/types/models/contract-device'
+import { formatCurrencyWithSymbol } from '@/lib/utils/formatters'
 import { MonitorSmartphone, Plug2 } from 'lucide-react'
 
 interface Props {
@@ -43,22 +44,6 @@ export default function ContractDevicesSection({ contractId, attachedDevices }: 
         </div>
       </div>
     )
-  }
-
-  const formatPrice = (
-    value?: number | null,
-    currency?: { symbol?: string; code?: string } | null
-  ) => {
-    if (value === undefined || value === null) return '—'
-    if (typeof value !== 'number') return String(value)
-    const currencySymbol = currency?.symbol || (currency?.code ? currency.code : '$')
-    // keep up to 5 decimal places, then remove unnecessary trailing zeros
-    // e.g. 0.50000 -> "0.5", 2.00000 -> "2", 1.234567 -> "1.23457"
-    const formatted = value
-      .toFixed(5)
-      .replace(/(?:\.0+|(?<=\.[0-9]*?)0+)$/, '')
-      .replace(/\.$/, '')
-    return `${currencySymbol} ${formatted}`
   }
 
   return (
@@ -111,9 +96,21 @@ export default function ContractDevicesSection({ contractId, attachedDevices }: 
                   <td className="px-3 py-2">
                     {d.device?.deviceModel?.name ?? d.device?.model ?? '—'}
                   </td>
-                  <td className="px-3 py-2">{formatPrice(d.monthlyRent)}</td>
-                  <td className="px-3 py-2">{formatPrice(d.pricePerBWPage)}</td>
-                  <td className="px-3 py-2">{formatPrice(d.pricePerColorPage)}</td>
+                  <td className="px-3 py-2">
+                    {d.monthlyRent != null
+                      ? formatCurrencyWithSymbol(d.monthlyRent, d.currency)
+                      : '—'}
+                  </td>
+                  <td className="px-3 py-2">
+                    {d.pricePerBWPage != null
+                      ? formatCurrencyWithSymbol(d.pricePerBWPage, d.currency)
+                      : '—'}
+                  </td>
+                  <td className="px-3 py-2">
+                    {d.pricePerColorPage != null
+                      ? formatCurrencyWithSymbol(d.pricePerColorPage, d.currency)
+                      : '—'}
+                  </td>
                   <td className="px-3 py-2">{d.activeFrom ? d.activeFrom.slice(0, 10) : '—'}</td>
                   <td className="px-3 py-2">{d.activeTo ? d.activeTo.slice(0, 10) : '—'}</td>
                 </tr>
