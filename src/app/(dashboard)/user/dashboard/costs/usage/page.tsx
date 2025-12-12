@@ -431,7 +431,7 @@ export default function UsagePage() {
                         <Bar
                           dataKey="bwPages"
                           stackId="pages"
-                          fill="var(--color-success-500)"
+                          fill="#000"
                           name="Đen trắng"
                           radius={[4, 4, 0, 0]}
                         />
