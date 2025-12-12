@@ -19,9 +19,9 @@ export type UsagePageDeviceInfo = {
 export type UsagePageProcessResponse = {
   success?: boolean
   message?: string
-  data?: {
-    data?: UsagePageProcessData
+  data?: UsagePageProcessData & {
     device?: UsagePageDeviceInfo | null
+    serialNumber?: string
   }
 }
 

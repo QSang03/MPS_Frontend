@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { contractsClientService } from '@/lib/api/services/contracts-client.service'
 import type { ContractDevice } from '@/types/models/contract-device'
+import { formatCurrencyWithSymbol } from '@/lib/utils/formatters'
 import { toast } from 'sonner'
 import { useLocale } from '@/components/providers/LocaleProvider'
 import { MonitorSmartphone, Plug2, Calendar, DollarSign, Trash2, Plus } from 'lucide-react'
@@ -101,20 +102,6 @@ export default function ContractDevicesSection({
 
   const openAttachDialog = () => {
     if (typeof onRequestOpenAttach === 'function') onRequestOpenAttach()
-  }
-
-  const formatPrice = (
-    value?: number | string | null,
-    currency?: { symbol?: string; code?: string } | null
-  ) => {
-    if (value === undefined || value === null) return '—'
-    const currencySymbol = currency?.symbol || (currency?.code ? currency.code : '$')
-    if (typeof value === 'number') {
-      const formatted = new Intl.NumberFormat('en-US').format(value)
-      // Use non-breaking space to prevent line break between currency symbol and value
-      return `${currencySymbol}\u00A0${formatted}`
-    }
-    return `${currencySymbol}\u00A0${String(value)}`
   }
 
   const formatDate = (date?: string | null) => {
@@ -277,17 +264,23 @@ export default function ContractDevicesSection({
                     </td>
                     <td className="px-4 py-3">
                       <span className="text-sm font-semibold whitespace-nowrap text-[var(--brand-700)]">
-                        {formatPrice(d.monthlyRent, d.currency)}
+                        {d.monthlyRent != null
+                          ? formatCurrencyWithSymbol(d.monthlyRent, d.currency)
+                          : '—'}
                       </span>
                     </td>
                     <td className="px-4 py-3">
                       <span className="text-sm whitespace-nowrap text-gray-700">
-                        {formatPrice(d.pricePerBWPage, d.currency)}
+                        {d.pricePerBWPage != null
+                          ? formatCurrencyWithSymbol(d.pricePerBWPage, d.currency)
+                          : '—'}
                       </span>
                     </td>
                     <td className="px-4 py-3">
                       <span className="text-sm whitespace-nowrap text-gray-700">
-                        {formatPrice(d.pricePerColorPage, d.currency)}
+                        {d.pricePerColorPage != null
+                          ? formatCurrencyWithSymbol(d.pricePerColorPage, d.currency)
+                          : '—'}
                       </span>
                     </td>
                     <td className="px-4 py-3">

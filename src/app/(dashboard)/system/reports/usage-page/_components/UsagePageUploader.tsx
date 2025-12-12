@@ -8,10 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { useLocale } from '@/components/providers/LocaleProvider'
-import usagePageService, {
-  type UsagePageDeviceInfo,
-  type UsagePageProcessData,
-} from '@/lib/api/services/usage-page.service'
+import usagePageService, { type UsagePageDeviceInfo } from '@/lib/api/services/usage-page.service'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 
@@ -72,16 +69,15 @@ export function UsagePageUploader() {
     try {
       const res = await usagePageService.process(file)
       const payload = res?.data
-      const data: UsagePageProcessData | undefined = payload?.data
       const device: UsagePageDeviceInfo | null | undefined = payload?.device
 
       setFormData({
-        deviceId: data?.deviceId || '',
-        serialNumber: device?.serialNumber || 'Unknown Serial',
-        totalPageCount: data?.totalPageCount?.toString() ?? '0',
-        totalColorPages: data?.totalColorPages?.toString() ?? '0',
-        totalBlackWhitePages: data?.totalBlackWhitePages?.toString() ?? '0',
-        recordedAt: data?.recordedAt || new Date().toISOString().slice(0, 10), // default yyyy-mm-dd
+        deviceId: payload?.deviceId || '',
+        serialNumber: payload?.serialNumber || device?.serialNumber || 'Unknown Serial',
+        totalPageCount: payload?.totalPageCount?.toString() ?? '0',
+        totalColorPages: payload?.totalColorPages?.toString() ?? '0',
+        totalBlackWhitePages: payload?.totalBlackWhitePages?.toString() ?? '0',
+        recordedAt: payload?.recordedAt || new Date().toISOString().slice(0, 10), // default yyyy-mm-dd
         deviceInfo: device ?? null,
       })
       setStep('review')
