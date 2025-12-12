@@ -361,7 +361,7 @@ function UserPurchaseRequestsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <Hash className="h-4 w-4 text-gray-600" />
-            Mã yêu cầu
+            {t('requests.purchase.table.request_code')}
           </div>
         ),
         cell: ({ row }) => (
@@ -376,7 +376,7 @@ function UserPurchaseRequestsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <Heading className="h-4 w-4 text-gray-600" />
-            Tiêu đề
+            {t('requests.purchase.table.title')}
           </div>
         ),
         cell: ({ row }) => (
@@ -395,7 +395,7 @@ function UserPurchaseRequestsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <Building2 className="h-4 w-4 text-gray-600" />
-            Khách hàng
+            {t('requests.purchase.table.customer')}
           </div>
         ),
         cell: ({ row }) => (
@@ -410,7 +410,7 @@ function UserPurchaseRequestsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <Tag className="h-4 w-4 text-gray-600" />
-            Người phụ trách
+            {t('requests.purchase.table.assigned_to')}
           </div>
         ),
         cell: ({ row }) => (
@@ -426,7 +426,7 @@ function UserPurchaseRequestsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <Tag className="h-4 w-4 text-gray-600" />
-            Ưu tiên
+            {t('requests.purchase.table.priority')}
           </div>
         ),
         cell: ({ row }) => (
@@ -440,13 +440,17 @@ function UserPurchaseRequestsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <TrendingUp className="h-4 w-4 text-gray-600" />
-            Tiến trình
+            {t('requests.purchase.table.progress')}
           </div>
         ),
         cell: ({ row }) => {
           const steps = buildTimelineSteps(row.original, t)
           if (steps.length === 0) {
-            return <span className="text-muted-foreground text-xs">Chờ xử lý</span>
+            return (
+              <span className="text-muted-foreground text-xs">
+                {t('requests.purchase.timeline.waiting')}
+              </span>
+            )
           }
           const latest = steps[steps.length - 1]!
           return (
@@ -479,7 +483,7 @@ function UserPurchaseRequestsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <DollarSign className="h-4 w-4 text-gray-600" />
-            Tổng dự toán
+            {t('requests.purchase.table.total_amount')}
           </div>
         ),
         cell: ({ row }) => {
@@ -498,7 +502,7 @@ function UserPurchaseRequestsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <Package className="h-4 w-4 text-gray-600" />
-            Chi tiết vật tư
+            {t('requests.purchase.table.items')}
           </div>
         ),
         cell: ({ row }) => {
@@ -511,23 +515,33 @@ function UserPurchaseRequestsTableContent({
               <PopoverTrigger asChild>
                 <Button variant="outline" size="sm" className="flex items-center gap-2">
                   <ListOrdered className="h-4 w-4" />
-                  {items.length} mục
+                  {t('requests.purchase.table.items_count', { count: items.length })}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-80 space-y-2">
-                <p className="text-sm font-semibold">Danh sách vật tư</p>
+                <p className="text-sm font-semibold">{t('requests.purchase.table.items_list')}</p>
                 <div className="max-h-60 space-y-3 overflow-y-auto">
                   {items.map((item) => (
                     <div key={item.id} className="rounded-md border p-2">
                       <div className="flex items-center justify-between text-sm font-medium">
-                        <span>Số lượng: {item.quantity}</span>
+                        <span>
+                          {t('requests.purchase.table.quantity', { quantity: item.quantity })}
+                        </span>
                         {item.totalPrice !== undefined && (
                           <span>{formatCurrency(item.totalPrice)}</span>
                         )}
                       </div>
                       <div className="text-muted-foreground mt-1 space-y-1 text-xs">
-                        <p>Đơn vị: {item.unitPrice ? formatCurrency(item.unitPrice) : '—'}</p>
-                        {item.notes && <p>Ghi chú: {item.notes}</p>}
+                        <p>
+                          {item.unitPrice
+                            ? t('requests.purchase.table.unit_price', {
+                                price: formatCurrency(item.unitPrice),
+                              })
+                            : '—'}
+                        </p>
+                        {item.notes && (
+                          <p>{t('requests.purchase.table.notes', { notes: item.notes })}</p>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -542,7 +556,7 @@ function UserPurchaseRequestsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <CheckCircle2 className="h-4 w-4 text-gray-600" />
-            Trạng thái
+            {t('requests.purchase.table.status')}
           </div>
         ),
         cell: ({ row }) => (
@@ -556,12 +570,12 @@ function UserPurchaseRequestsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-gray-600" />
-            Ngày tạo
+            {t('requests.purchase.table.created_at')}
           </div>
         ),
         cell: ({ row }) => (
           <div className="text-sm">
-            <p>{new Date(row.original.createdAt).toLocaleDateString('vi-VN')}</p>
+            <p>{formatDateTime(row.original.createdAt)}</p>
             <p className="text-muted-foreground text-xs">
               {formatRelativeTime(row.original.createdAt)}
             </p>

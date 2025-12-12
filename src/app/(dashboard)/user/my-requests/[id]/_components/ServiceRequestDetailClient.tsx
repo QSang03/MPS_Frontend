@@ -283,7 +283,9 @@ export function ServiceRequestDetailClient({ id }: Props) {
                   <div className="mb-2 flex items-center gap-3">
                     <User className="h-4 w-4 text-blue-500" />
                     <div className="text-sm">
-                      <div className="font-medium">Người phụ trách: {detail.assignedToName}</div>
+                      <div className="font-medium">
+                        {t('requests.service.detail.assigned_to')}: {detail.assignedToName}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -320,9 +322,11 @@ export function ServiceRequestDetailClient({ id }: Props) {
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-muted/50 hover:bg-muted/50">
-                        <TableHead>Loại chi phí</TableHead>
-                        <TableHead>Ghi chú</TableHead>
-                        <TableHead className="text-right">Số tiền</TableHead>
+                        <TableHead>{t('requests.service.detail.costs.type')}</TableHead>
+                        <TableHead>{t('requests.service.detail.costs.notes')}</TableHead>
+                        <TableHead className="text-right">
+                          {t('requests.service.detail.costs.amount')}
+                        </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
