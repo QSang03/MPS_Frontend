@@ -59,6 +59,27 @@ type TimeFilter = { period?: string; from?: string; to?: string; year?: string }
 
 export default function MonthlyCostsPage() {
   const { t } = useLocale()
+  const labels = {
+    totalCostAfterAdjustment:
+      t('page.user.costs.monthly.kpi.total_cost_after_adjustment') || 'Tổng chi phí sau điều chỉnh',
+    totalCost: t('page.user.costs.monthly.kpi.total_cost') || 'Tổng chi phí',
+    totalCostFormula:
+      t('page.user.costs.monthly.kpi.total_cost_formula') ||
+      'costRental + costRepair + costPageBW + costPageColor',
+    costAdjustmentDebit: t('page.user.costs.monthly.kpi.cost_adjustment_debit') || 'Điều chỉnh Nợ',
+    costAdjustmentCredit:
+      t('page.user.costs.monthly.kpi.cost_adjustment_credit') || 'Điều chỉnh Có',
+    costRental: t('page.user.costs.monthly.kpi.cost_rental') || 'Rental',
+    costPageBW: t('page.user.costs.monthly.kpi.cost_page_bw') || 'Page BW',
+    costPageColor: t('page.user.costs.monthly.kpi.cost_page_color') || 'Page Color',
+    costRepair: t('page.user.costs.monthly.kpi.cost_repair') || 'Repair',
+    applyNote:
+      t('page.user.costs.monthly.kpi.apply_note') ||
+      'Phiếu applyOnCustomerCost=true đã được trừ vào tổng chi phí.',
+    creditNote:
+      t('page.user.costs.monthly.kpi.credit_note') ||
+      'Giá trị điều chỉnh cộng thêm (Có) phía khách.',
+  }
   const [mode, setMode] = useState<TimeRangeMode>('period')
   const [period, setPeriod] = useState(() => {
     const now = new Date()
@@ -167,37 +188,40 @@ export default function MonthlyCostsPage() {
         const monthMap = new Map<
           string,
           {
-            revenueRental: number
-            revenueRepair: number
-            revenuePageBW: number
-            revenuePageColor: number
-            totalRevenue: number
-            cogsConsumable: number
-            cogsRepair: number
-            totalCogs: number
+            costRental: number
+            costRepair: number
+            costPageBW: number
+            costPageColor: number
+            totalCost: number
+            costAdjustmentDebit: number
+            costAdjustmentCredit: number
+            totalCostAfterAdjustment: number
           }
         >()
         allSeries.forEach((series) => {
           series.forEach((item) => {
             const existing = monthMap.get(item.month) || {
-              revenueRental: 0,
-              revenueRepair: 0,
-              revenuePageBW: 0,
-              revenuePageColor: 0,
-              totalRevenue: 0,
-              cogsConsumable: 0,
-              cogsRepair: 0,
-              totalCogs: 0,
+              costRental: 0,
+              costRepair: 0,
+              costPageBW: 0,
+              costPageColor: 0,
+              totalCost: 0,
+              costAdjustmentDebit: 0,
+              costAdjustmentCredit: 0,
+              totalCostAfterAdjustment: 0,
             }
             monthMap.set(item.month, {
-              revenueRental: existing.revenueRental + Number(item.revenueRental || 0),
-              revenueRepair: existing.revenueRepair + Number(item.revenueRepair || 0),
-              revenuePageBW: existing.revenuePageBW + Number(item.revenuePageBW || 0),
-              revenuePageColor: existing.revenuePageColor + Number(item.revenuePageColor || 0),
-              totalRevenue: existing.totalRevenue + Number(item.totalRevenue || 0),
-              cogsConsumable: existing.cogsConsumable + Number(item.cogsConsumable || 0),
-              cogsRepair: existing.cogsRepair + Number(item.cogsRepair || 0),
-              totalCogs: existing.totalCogs + Number(item.totalCogs || 0),
+              costRental: existing.costRental + Number(item.costRental || 0),
+              costRepair: existing.costRepair + Number(item.costRepair || 0),
+              costPageBW: existing.costPageBW + Number(item.costPageBW || 0),
+              costPageColor: existing.costPageColor + Number(item.costPageColor || 0),
+              totalCost: existing.totalCost + Number(item.totalCost || 0),
+              costAdjustmentDebit:
+                existing.costAdjustmentDebit + Number(item.costAdjustmentDebit || 0),
+              costAdjustmentCredit:
+                existing.costAdjustmentCredit + Number(item.costAdjustmentCredit || 0),
+              totalCostAfterAdjustment:
+                existing.totalCostAfterAdjustment + Number(item.totalCostAfterAdjustment || 0),
             })
           })
         })
@@ -305,12 +329,16 @@ export default function MonthlyCostsPage() {
 
   const displayCurrency =
     baseCurrency || costData?.baseCurrency || costData?.customer?.currency || null
-  const totalRevenue = costData?.customer?.totalRevenue ?? 0
-  const totalCogs = costData?.customer?.totalCogs ?? 0
-  const revenueRental = costData?.customer?.revenueRental ?? 0
-  const revenueRepair = costData?.customer?.revenueRepair ?? 0
-  const revenuePageBW = costData?.customer?.revenuePageBW ?? 0
-  const revenuePageColor = costData?.customer?.revenuePageColor ?? 0
+  const costRental = costData?.customer?.costRental ?? 0
+  const costRepair = costData?.customer?.costRepair ?? 0
+  const costPageBW = costData?.customer?.costPageBW ?? 0
+  const costPageColor = costData?.customer?.costPageColor ?? 0
+  const totalCost = costData?.customer?.totalCost ?? 0
+  const totalCostAfterAdjustment =
+    costData?.customer?.totalCostAfterAdjustment ?? costData?.customer?.totalCost ?? 0
+  const costAdjustmentDebit = costData?.customer?.costAdjustmentDebit ?? 0
+  const costAdjustmentCredit = costData?.customer?.costAdjustmentCredit ?? 0
+  const costAdjustmentFormula = costData?.customer?.costAdjustmentFormula
 
   return (
     <div className="min-h-screen from-slate-50 via-[var(--brand-50)] to-[var(--brand-50)] px-4 py-8 sm:px-6 lg:px-8 dark:from-slate-950 dark:via-[var(--brand-950)] dark:to-[var(--brand-950)]">
@@ -437,10 +465,10 @@ export default function MonthlyCostsPage() {
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                        {t('page.user.costs.monthly.kpi.total_revenue')}
+                        {labels.totalCostAfterAdjustment}
                       </p>
                       <h3 className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
-                        {formatCurrency(totalRevenue, displayCurrency)}
+                        {formatCurrency(totalCostAfterAdjustment, displayCurrency)}
                       </h3>
                     </div>
                     <div className="rounded-lg bg-[var(--brand-50)] p-3 dark:bg-[var(--brand-900)]/30">
@@ -448,7 +476,7 @@ export default function MonthlyCostsPage() {
                     </div>
                   </div>
                   <p className="mt-4 text-xs text-slate-500 dark:text-slate-500">
-                    {t('page.user.costs.monthly.kpi.total_revenue_desc')}
+                    {costAdjustmentFormula || labels.totalCostFormula}
                   </p>
                 </CardContent>
               </Card>
@@ -459,7 +487,7 @@ export default function MonthlyCostsPage() {
                     <div>
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                          {t('page.user.costs.monthly.kpi.total_cogs')}
+                          {labels.totalCost}
                         </p>
                         <TooltipProvider>
                           <Tooltip>
@@ -467,13 +495,13 @@ export default function MonthlyCostsPage() {
                               <Info className="h-4 w-4 text-slate-400" />
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p>{t('page.user.costs.monthly.kpi.total_cogs_tooltip')}</p>
+                              <p>{labels.totalCostFormula}</p>
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
                       </div>
                       <h3 className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
-                        {formatCurrency(totalCogs, displayCurrency)}
+                        {formatCurrency(totalCost, displayCurrency)}
                       </h3>
                     </div>
                     <div className="rounded-lg bg-orange-50 p-3 dark:bg-orange-900/30">
@@ -496,25 +524,18 @@ export default function MonthlyCostsPage() {
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                        {t('page.user.costs.monthly.kpi.cogs_consumable')}
+                        {labels.costAdjustmentDebit}
                       </p>
                       <h3 className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
-                        {formatCurrency(costData.customer.cogsConsumable, displayCurrency)}
+                        {formatCurrency(costAdjustmentDebit, displayCurrency)}
                       </h3>
                     </div>
                     <div className="rounded-lg bg-green-100 p-3 dark:bg-green-900/30">
                       <DollarSign className="h-6 w-6 text-green-600 dark:text-green-400" />
                     </div>
                   </div>
-                  <div className="mt-2 flex items-center gap-1">
-                    <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                      {totalCogs > 0
-                        ? `${((costData.customer.cogsConsumable / totalCogs) * 100).toFixed(1)}%`
-                        : '0%'}
-                    </span>
-                    <p className="text-xs text-slate-500 dark:text-slate-500">
-                      {t('page.user.costs.monthly.kpi.of_total_cost')}
-                    </p>
+                  <div className="mt-2 text-xs text-slate-500 dark:text-slate-500">
+                    {labels.applyNote}
                   </div>
                 </CardContent>
               </Card>
@@ -524,25 +545,18 @@ export default function MonthlyCostsPage() {
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                        {t('page.user.costs.monthly.kpi.repair_costs')}
+                        {labels.costAdjustmentCredit}
                       </p>
                       <h3 className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
-                        {formatCurrency(costData.customer.cogsRepair, displayCurrency)}
+                        {formatCurrency(costAdjustmentCredit, displayCurrency)}
                       </h3>
                     </div>
                     <div className="rounded-lg bg-orange-100 p-3 dark:bg-orange-900/30">
                       <DollarSign className="h-6 w-6 text-orange-600 dark:text-orange-400" />
                     </div>
                   </div>
-                  <div className="mt-2 flex items-center gap-1">
-                    <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                      {totalCogs > 0
-                        ? `${((costData.customer.cogsRepair / totalCogs) * 100).toFixed(1)}%`
-                        : '0%'}
-                    </span>
-                    <p className="text-xs text-slate-500 dark:text-slate-500">
-                      {t('page.user.costs.monthly.kpi.of_total_cost')}
-                    </p>
+                  <div className="mt-2 text-xs text-slate-500 dark:text-slate-500">
+                    {labels.creditNote}
                   </div>
                 </CardContent>
               </Card>
@@ -555,10 +569,10 @@ export default function MonthlyCostsPage() {
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                        {t('page.user.costs.monthly.kpi.rental_fee')}
+                        {labels.costRental}
                       </p>
                       <h3 className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">
-                        {formatCurrency(revenueRental, displayCurrency)}
+                        {formatCurrency(costRental, displayCurrency)}
                       </h3>
                     </div>
                     <div className="rounded-lg bg-slate-100 p-3 dark:bg-slate-900/40">
@@ -573,10 +587,10 @@ export default function MonthlyCostsPage() {
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                        {t('page.user.costs.monthly.kpi.page_bw')}
+                        {labels.costPageBW}
                       </p>
                       <h3 className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">
-                        {formatCurrency(revenuePageBW, displayCurrency)}
+                        {formatCurrency(costPageBW, displayCurrency)}
                       </h3>
                     </div>
                     <div className="rounded-lg bg-slate-100 p-3 dark:bg-slate-900/40">
@@ -591,10 +605,10 @@ export default function MonthlyCostsPage() {
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                        {t('page.user.costs.monthly.kpi.page_color')}
+                        {labels.costPageColor}
                       </p>
                       <h3 className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">
-                        {formatCurrency(revenuePageColor, displayCurrency)}
+                        {formatCurrency(costPageColor, displayCurrency)}
                       </h3>
                     </div>
                     <div className="rounded-lg bg-slate-100 p-3 dark:bg-slate-900/40">
@@ -609,10 +623,10 @@ export default function MonthlyCostsPage() {
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                        {t('page.user.costs.monthly.kpi.repair_fee')}
+                        {labels.costRepair}
                       </p>
                       <h3 className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">
-                        {formatCurrency(revenueRepair, displayCurrency)}
+                        {formatCurrency(costRepair, displayCurrency)}
                       </h3>
                     </div>
                     <div className="rounded-lg bg-slate-100 p-3 dark:bg-slate-900/40">
@@ -623,7 +637,7 @@ export default function MonthlyCostsPage() {
               </Card>
             </div>
             {/* Cost Breakdown Pie Chart */}
-            {costData && costData.customer.totalCogs > 0 && (
+            {costData && costData.customer.totalCost > 0 && (
               <Card className="border-slate-200 shadow-sm dark:border-slate-700 dark:bg-slate-800">
                 <CardHeader>
                   <CardTitle className="text-xl font-bold text-slate-900 dark:text-white">
@@ -641,14 +655,24 @@ export default function MonthlyCostsPage() {
                           <Pie
                             data={[
                               {
-                                name: t('page.user.costs.monthly.pie.consumable'),
-                                value: costData.customer.cogsConsumable,
+                                name: labels.costRental,
+                                value: costData.customer.costRental,
                                 color: 'var(--color-success-500)',
                               },
                               {
-                                name: t('page.user.costs.monthly.pie.repair'),
-                                value: costData.customer.cogsRepair,
+                                name: labels.costRepair,
+                                value: costData.customer.costRepair,
                                 color: 'var(--warning-500)',
+                              },
+                              {
+                                name: labels.costPageBW,
+                                value: costData.customer.costPageBW,
+                                color: 'var(--brand-500)',
+                              },
+                              {
+                                name: labels.costPageColor,
+                                value: costData.customer.costPageColor,
+                                color: 'var(--brand-700)',
                               },
                             ]}
                             cx="50%"
@@ -663,6 +687,8 @@ export default function MonthlyCostsPage() {
                           >
                             <Cell fill="var(--color-success-500)" />
                             <Cell fill="var(--warning-500)" />
+                            <Cell fill="var(--brand-500)" />
+                            <Cell fill="var(--brand-700)" />
                           </Pie>
                           <RechartsTooltip
                             formatter={(value: number) => [
@@ -684,10 +710,10 @@ export default function MonthlyCostsPage() {
                     <div className="flex items-center gap-2">
                       <div className="h-4 w-4 rounded bg-[var(--color-success-500)]"></div>
                       <span className="text-sm">
-                        {t('page.user.costs.monthly.pie.consumable')}:{' '}
-                        {formatCurrency(costData.customer.cogsConsumable, displayCurrency)} (
-                        {totalCogs > 0
-                          ? ((costData.customer.cogsConsumable / totalCogs) * 100).toFixed(1)
+                        {labels.costRental}:{' '}
+                        {formatCurrency(costData.customer.costRental, displayCurrency)} (
+                        {totalCost > 0
+                          ? ((costData.customer.costRental / totalCost) * 100).toFixed(1)
                           : '0.0'}
                         %)
                       </span>
@@ -695,10 +721,32 @@ export default function MonthlyCostsPage() {
                     <div className="flex items-center gap-2">
                       <div className="h-4 w-4 rounded bg-orange-500"></div>
                       <span className="text-sm">
-                        {t('page.user.costs.monthly.pie.repair')}:{' '}
-                        {formatCurrency(costData.customer.cogsRepair, displayCurrency)} (
-                        {totalCogs > 0
-                          ? ((costData.customer.cogsRepair / totalCogs) * 100).toFixed(1)
+                        {labels.costRepair}:{' '}
+                        {formatCurrency(costData.customer.costRepair, displayCurrency)} (
+                        {totalCost > 0
+                          ? ((costData.customer.costRepair / totalCost) * 100).toFixed(1)
+                          : '0.0'}
+                        %)
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="h-4 w-4 rounded bg-[var(--brand-500)]"></div>
+                      <span className="text-sm">
+                        {labels.costPageBW}:{' '}
+                        {formatCurrency(costData.customer.costPageBW, displayCurrency)} (
+                        {totalCost > 0
+                          ? ((costData.customer.costPageBW / totalCost) * 100).toFixed(1)
+                          : '0.0'}
+                        %)
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="h-4 w-4 rounded bg-[var(--brand-700)]"></div>
+                      <span className="text-sm">
+                        {labels.costPageColor}:{' '}
+                        {formatCurrency(costData.customer.costPageColor, displayCurrency)} (
+                        {totalCost > 0
+                          ? ((costData.customer.costPageColor / totalCost) * 100).toFixed(1)
                           : '0.0'}
                         %)
                       </span>
@@ -732,43 +780,41 @@ export default function MonthlyCostsPage() {
                           </TableHead>
                           <TableHead>Serial Number</TableHead>
                           <TableHead className="text-right">
-                            <Button variant="ghost" onClick={() => handleSort('totalRevenue')}>
-                              {t('page.user.costs.monthly.table.total_customer_charges')}
+                            <Button
+                              variant="ghost"
+                              onClick={() => handleSort('totalCostAfterAdjustment')}
+                            >
+                              {labels.totalCostAfterAdjustment}
                               <ArrowUpDown className="ml-2 h-4 w-4" />
                             </Button>
                           </TableHead>
                           <TableHead className="text-right">
-                            <Button variant="ghost" onClick={() => handleSort('revenueRental')}>
-                              {t('page.user.costs.monthly.table.rental_fee')}
+                            <Button variant="ghost" onClick={() => handleSort('costRental')}>
+                              {labels.costRental}
                               <ArrowUpDown className="ml-2 h-4 w-4" />
                             </Button>
                           </TableHead>
                           <TableHead className="text-right">
-                            <Button variant="ghost" onClick={() => handleSort('revenuePageBW')}>
-                              {t('page.user.costs.monthly.table.page_bw')}
+                            <Button variant="ghost" onClick={() => handleSort('costPageBW')}>
+                              {labels.costPageBW}
                               <ArrowUpDown className="ml-2 h-4 w-4" />
                             </Button>
                           </TableHead>
                           <TableHead className="text-right">
-                            <Button variant="ghost" onClick={() => handleSort('revenuePageColor')}>
-                              {t('page.user.costs.monthly.table.page_color')}
+                            <Button variant="ghost" onClick={() => handleSort('costPageColor')}>
+                              {labels.costPageColor}
                               <ArrowUpDown className="ml-2 h-4 w-4" />
                             </Button>
                           </TableHead>
                           <TableHead className="text-right">
-                            <Button variant="ghost" onClick={() => handleSort('revenueRepair')}>
-                              {t('page.user.costs.monthly.table.repair_fee')}
+                            <Button variant="ghost" onClick={() => handleSort('costRepair')}>
+                              {labels.costRepair}
                               <ArrowUpDown className="ml-2 h-4 w-4" />
                             </Button>
                           </TableHead>
+                          <TableHead className="text-right">{labels.costAdjustmentDebit}</TableHead>
                           <TableHead className="text-right">
-                            <Button variant="ghost" onClick={() => handleSort('totalCogs')}>
-                              {t('page.user.costs.monthly.table.total_cogs')}
-                              <ArrowUpDown className="ml-2 h-4 w-4" />
-                            </Button>
-                          </TableHead>
-                          <TableHead className="text-right">
-                            {t('page.user.costs.monthly.table.consumable')}
+                            {labels.costAdjustmentCredit}
                           </TableHead>
                           <TableHead className="text-right">
                             {t('page.user.costs.monthly.table.percent_total')}
@@ -778,8 +824,9 @@ export default function MonthlyCostsPage() {
                       </TableHeader>
                       <TableBody>
                         {sortedDevices.map((d) => {
+                          const totalCostRow = d.totalCostAfterAdjustment ?? d.totalCost ?? 0
                           const costShare =
-                            totalCogs > 0 ? (Number(d.totalCogs || 0) / totalCogs) * 100 : 0
+                            totalCost > 0 ? (Number(totalCostRow || 0) / totalCost) * 100 : 0
                           return (
                             <TableRow key={d.deviceId}>
                               <TableCell className="font-medium">
@@ -791,25 +838,25 @@ export default function MonthlyCostsPage() {
                               </TableCell>
                               <TableCell>{d.serialNumber ?? '—'}</TableCell>
                               <TableCell className="text-right font-bold">
-                                {formatCurrency(d.totalRevenue, displayCurrency)}
+                                {formatCurrency(totalCostRow, displayCurrency)}
                               </TableCell>
                               <TableCell className="text-right">
-                                {formatCurrency(d.revenueRental, displayCurrency)}
+                                {formatCurrency(d.costRental, displayCurrency)}
                               </TableCell>
                               <TableCell className="text-right">
-                                {formatCurrency(d.revenuePageBW, displayCurrency)}
+                                {formatCurrency(d.costPageBW, displayCurrency)}
                               </TableCell>
                               <TableCell className="text-right">
-                                {formatCurrency(d.revenuePageColor, displayCurrency)}
+                                {formatCurrency(d.costPageColor, displayCurrency)}
                               </TableCell>
                               <TableCell className="text-right">
-                                {formatCurrency(d.revenueRepair, displayCurrency)}
+                                {formatCurrency(d.costRepair, displayCurrency)}
                               </TableCell>
                               <TableCell className="text-right font-bold">
-                                {formatCurrency(d.totalCogs, displayCurrency)}
+                                {formatCurrency(d.costAdjustmentDebit ?? 0, displayCurrency)}
                               </TableCell>
                               <TableCell className="text-right">
-                                {formatCurrency(d.cogsConsumable, displayCurrency)}
+                                {formatCurrency(d.costAdjustmentCredit ?? 0, displayCurrency)}
                               </TableCell>
                               <TableCell className="text-right">
                                 {Number.isFinite(costShare) ? `${costShare.toFixed(1)}%` : '0%'}
@@ -882,30 +929,30 @@ export default function MonthlyCostsPage() {
                         <Legend />
                         <Line
                           type="monotone"
-                          dataKey="totalCogs"
+                          dataKey="totalCostAfterAdjustment"
                           stroke="var(--brand-600)"
                           strokeWidth={3}
                           dot={{ fill: 'var(--brand-600)', r: 4 }}
                           activeDot={{ r: 6 }}
-                          name={t('page.user.costs.monthly.series.total_cogs')}
+                          name={labels.totalCostAfterAdjustment}
                         />
                         <Line
                           type="monotone"
-                          dataKey="cogsConsumable"
+                          dataKey="costRental"
                           stroke="var(--color-success-500)"
                           strokeWidth={3}
                           dot={{ fill: 'var(--color-success-500)', r: 4 }}
                           activeDot={{ r: 6 }}
-                          name={t('page.user.costs.monthly.series.consumable')}
+                          name={labels.costRental}
                         />
                         <Line
                           type="monotone"
-                          dataKey="cogsRepair"
+                          dataKey="costRepair"
                           stroke="var(--warning-500)"
                           strokeWidth={3}
                           dot={{ fill: 'var(--warning-500)', r: 4 }}
                           activeDot={{ r: 6 }}
-                          name={t('page.user.costs.monthly.series.repair')}
+                          name={labels.costRepair}
                         />
                       </LineChart>
                     </ResponsiveContainer>
@@ -959,30 +1006,30 @@ export default function MonthlyCostsPage() {
                         <Legend />
                         <Line
                           type="monotone"
-                          dataKey="totalCogs"
+                          dataKey="totalCostAfterAdjustment"
                           stroke="var(--brand-600)"
                           strokeWidth={3}
                           dot={{ fill: 'var(--brand-600)', r: 4 }}
                           activeDot={{ r: 6 }}
-                          name="Tổng chi phí"
+                          name={labels.totalCostAfterAdjustment}
                         />
                         <Line
                           type="monotone"
-                          dataKey="cogsConsumable"
+                          dataKey="costRental"
                           stroke="var(--color-success-500)"
                           strokeWidth={3}
                           dot={{ fill: 'var(--color-success-500)', r: 4 }}
                           activeDot={{ r: 6 }}
-                          name="Vật tư"
+                          name={labels.costRental}
                         />
                         <Line
                           type="monotone"
-                          dataKey="cogsRepair"
+                          dataKey="costRepair"
                           stroke="var(--warning-500)"
                           strokeWidth={3}
                           dot={{ fill: 'var(--warning-500)', r: 4 }}
                           activeDot={{ r: 6 }}
-                          name="Sửa chữa"
+                          name={labels.costRepair}
                         />
                       </LineChart>
                     </ResponsiveContainer>

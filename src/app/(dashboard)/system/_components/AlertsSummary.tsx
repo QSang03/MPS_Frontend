@@ -86,9 +86,107 @@ export function AlertsSummary({
   }
 
   // Prefer counts from the `alerts` payload when present, otherwise fall back to KPIs
-  const lowConsumableCount = alerts?.consumableWarnings?.total ?? kpis.lowConsumableAlerts ?? 0
-  const deviceErrorCount = alerts?.deviceErrors?.total ?? kpis.deviceErrorAlerts ?? 0
-  const slaCount = alerts?.slaViolations?.total ?? kpis.slaBreachAlerts ?? 0
+  const consumableWarnings = alerts?.consumableWarnings
+  const deviceErrorSource = alerts?.deviceErrors ?? alerts?.urgentServiceRequests
+  const slaSource = alerts?.slaViolations ?? alerts?.slaBreaches
+
+  const lowConsumableCount = consumableWarnings?.total ?? kpis.lowConsumableAlerts ?? 0
+  const deviceErrorCount = deviceErrorSource?.total ?? kpis.deviceErrorAlerts ?? 0
+  const slaCount = slaSource?.total ?? kpis.slaBreachAlerts ?? 0
+
+  type DeviceErrorLike =
+    | {
+        deviceId?: string
+        deviceName?: string
+        serialNumber?: string
+        errorMessage?: string
+        occurredAt?: string
+        // shared fields
+        id?: string
+        title?: string
+        status?: string
+        priority?: string
+        customerName?: string
+        createdAt?: string
+      }
+    | {
+        id?: string
+        title?: string
+        status?: string
+        priority?: string
+        customerName?: string
+        createdAt?: string
+      }
+
+  type SlaLike =
+    | {
+        id?: string
+        title?: string
+        status?: string
+        priority?: string
+        customerName?: string
+        createdAt?: string
+      }
+    | {
+        id?: string
+        title?: string
+        breachType?: string
+        status?: string
+        customerName?: string
+        dueAt?: string
+        actualAt?: string
+        overdueHours?: number
+      }
+
+  const deviceErrorItems = (deviceErrorSource?.items as Array<DeviceErrorLike> | undefined) ?? []
+  const slaItems = (slaSource?.items as Array<SlaLike> | undefined) ?? []
+
+  const normalizeSeverity = (
+    severity: string | undefined,
+    fallback: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
+  ) => {
+    const sev = (severity ?? fallback).toLowerCase()
+    if (sev === 'critical' || sev === 'high' || sev === 'medium' || sev === 'low') return sev
+    // Map unsupported values (e.g., "none") to low
+    return 'low'
+  }
+
+  const getDeviceErrorTitle = (item: DeviceErrorLike) => {
+    if ('deviceName' in item && item.deviceName) return item.deviceName
+    if ('title' in item && item.title) return item.title
+    if ('deviceId' in item && item.deviceId) return item.deviceId
+    if ('id' in item && item.id) return item.id
+    return ''
+  }
+
+  const getDeviceErrorMessage = (item: DeviceErrorLike) => {
+    if ('errorMessage' in item && item.errorMessage) return item.errorMessage
+    if ('status' in item && item.status) return item.status
+    return ''
+  }
+
+  const getDeviceErrorTime = (item: DeviceErrorLike) => {
+    if ('occurredAt' in item && item.occurredAt) return item.occurredAt
+    if ('createdAt' in item && item.createdAt) return item.createdAt
+    return ''
+  }
+
+  const getSlaTitle = (item: SlaLike) => {
+    if ('title' in item && item.title) return item.title
+    if ('id' in item && item.id) return item.id
+    return ''
+  }
+
+  const getSlaCustomer = (item: SlaLike) => {
+    if ('customerName' in item && item.customerName) return item.customerName
+    return ''
+  }
+
+  const getSlaTime = (item: SlaLike) => {
+    if ('createdAt' in item && item.createdAt) return item.createdAt
+    if ('dueAt' in item && item.dueAt) return item.dueAt
+    return ''
+  }
 
   const alertItems: AlertItem[] = [
     {
@@ -96,7 +194,7 @@ export function AlertsSummary({
       type: 'low_consumable',
       title: t('alerts.low_consumable.title'),
       count: lowConsumableCount,
-      severity: (alerts?.consumableWarnings?.severity ?? 'MEDIUM').toLowerCase() as
+      severity: normalizeSeverity(alerts?.consumableWarnings?.severity, 'MEDIUM') as
         | 'low'
         | 'medium'
         | 'high'
@@ -112,7 +210,7 @@ export function AlertsSummary({
       type: 'device_error',
       title: t('alerts.device_error.title'),
       count: deviceErrorCount,
-      severity: (alerts?.deviceErrors?.severity ?? 'HIGH').toLowerCase() as
+      severity: normalizeSeverity(deviceErrorSource?.severity, 'HIGH') as
         | 'low'
         | 'medium'
         | 'high'
@@ -128,7 +226,7 @@ export function AlertsSummary({
       type: 'sla_breach',
       title: t('alerts.sla_breach.title'),
       count: slaCount,
-      severity: (alerts?.slaViolations?.severity ?? 'CRITICAL').toLowerCase() as
+      severity: normalizeSeverity(slaSource?.severity, 'CRITICAL') as
         | 'low'
         | 'medium'
         | 'high'
@@ -144,9 +242,9 @@ export function AlertsSummary({
   // Compute total: if alerts object provides per-category totals, sum those;
   // otherwise fall back to KPI total.
   const alertTotalsFromAlerts = [
-    alerts?.consumableWarnings?.total,
-    alerts?.deviceErrors?.total,
-    alerts?.slaViolations?.total,
+    consumableWarnings?.total,
+    deviceErrorSource?.total,
+    slaSource?.total,
   ].filter((v) => typeof v === 'number') as number[]
 
   const totalAlerts =
@@ -302,35 +400,40 @@ export function AlertsSummary({
                               ))}
 
                             {alert.type === 'device_error' &&
-                              alerts?.deviceErrors?.items &&
-                              alerts.deviceErrors.items.slice(0, 2).map((item, idx) => (
+                              deviceErrorItems &&
+                              deviceErrorItems.slice(0, 2).map((item, idx) => (
                                 <button
                                   key={`err-${idx}`}
                                   onClick={(e) => {
                                     e.stopPropagation()
                                     try {
-                                      if (item.deviceId)
+                                      if ('deviceId' in item && item.deviceId) {
                                         router.push(`/system/devices/${item.deviceId}`)
+                                      } else if ('id' in item && item.id) {
+                                        router.push(`/system/service-requests/${item.id}`)
+                                      }
                                     } catch (err) {
                                       console.error('Navigation failed for device error item', err)
                                     }
                                   }}
                                   className="text-xs text-gray-500 hover:underline"
                                 >
-                                  {item.deviceName ?? item.deviceId}
-                                  {item.errorMessage ? ` • ${item.errorMessage}` : ''}
+                                  {getDeviceErrorTitle(item)}
+                                  {getDeviceErrorMessage(item)
+                                    ? ` • ${getDeviceErrorMessage(item)}`
+                                    : ''}
                                 </button>
                               ))}
 
                             {alert.type === 'sla_breach' &&
-                              alerts?.slaViolations?.items &&
-                              alerts.slaViolations.items.slice(0, 2).map((item, idx) => (
+                              slaItems &&
+                              slaItems.slice(0, 2).map((item, idx) => (
                                 <button
                                   key={`sla-${idx}`}
                                   onClick={(e) => {
                                     e.stopPropagation()
                                     try {
-                                      if (item.id)
+                                      if ('id' in item && item.id)
                                         router.push(`/system/service-requests/${item.id}`)
                                     } catch (err) {
                                       console.error('Navigation failed for SLA item', err)
@@ -338,8 +441,8 @@ export function AlertsSummary({
                                   }}
                                   className="text-xs text-gray-500 hover:underline"
                                 >
-                                  {item.title}
-                                  {item.customerName ? ` • ${item.customerName}` : ''}
+                                  {getSlaTitle(item)}
+                                  {getSlaCustomer(item) ? ` • ${getSlaCustomer(item)}` : ''}
                                 </button>
                               ))}
                           </div>
@@ -491,19 +594,17 @@ export function AlertsSummary({
 
               {selectedAlertType === 'device_error' && (
                 <div>
-                  {(alerts?.deviceErrors?.items ?? []).length === 0 ? (
+                  {deviceErrorItems.length === 0 ? (
                     <p className="text-sm text-gray-500">{t('alerts.modal.empty_item')}</p>
                   ) : (
                     <ul className="space-y-2">
-                      {alerts!.deviceErrors!.items!.map((it, i) => (
+                      {deviceErrorItems.map((it, i) => (
                         <li key={i} className="flex items-start justify-between gap-4">
                           <div>
-                            <div className="text-sm font-medium">
-                              {it.deviceName ?? it.deviceId}
-                            </div>
-                            <div className="text-xs text-gray-500">{it.errorMessage}</div>
+                            <div className="text-sm font-medium">{getDeviceErrorTitle(it)}</div>
+                            <div className="text-xs text-gray-500">{getDeviceErrorMessage(it)}</div>
                           </div>
-                          <div className="text-xs text-gray-500">{it.occurredAt}</div>
+                          <div className="text-xs text-gray-500">{getDeviceErrorTime(it)}</div>
                         </li>
                       ))}
                     </ul>
@@ -513,17 +614,17 @@ export function AlertsSummary({
 
               {selectedAlertType === 'sla_breach' && (
                 <div>
-                  {(alerts?.slaViolations?.items ?? []).length === 0 ? (
+                  {slaItems.length === 0 ? (
                     <p className="text-sm text-gray-500">{t('alerts.modal.empty_item')}</p>
                   ) : (
                     <ul className="space-y-2">
-                      {alerts!.slaViolations!.items!.map((it, i) => (
+                      {slaItems.map((it, i) => (
                         <li key={i} className="flex items-start justify-between gap-4">
                           <div>
-                            <div className="text-sm font-medium">{it.title}</div>
-                            <div className="text-xs text-gray-500">{it.customerName}</div>
+                            <div className="text-sm font-medium">{getSlaTitle(it)}</div>
+                            <div className="text-xs text-gray-500">{getSlaCustomer(it)}</div>
                           </div>
-                          <div className="text-xs text-gray-500">{it.createdAt}</div>
+                          <div className="text-xs text-gray-500">{getSlaTime(it)}</div>
                         </li>
                       ))}
                     </ul>

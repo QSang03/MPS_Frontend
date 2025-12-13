@@ -41,7 +41,50 @@ class DashboardService {
         throw new Error(response.data.error || 'Failed to fetch admin overview')
       }
 
-      return response.data.data
+      const raw = response.data.data
+
+      type Alerts = NonNullable<AdminOverviewData['alerts']>
+
+      const normalizeAlerts = (
+        alerts?: AdminOverviewData['alerts']
+      ): AdminOverviewData['alerts'] => {
+        if (!alerts) return undefined
+
+        const normalizedAlerts: Alerts = { ...(alerts as Alerts) }
+
+        const coerceUrgentFrom = (
+          src: Alerts['urgentServiceRequests'] | Alerts['deviceErrors'] | undefined
+        ): Alerts['urgentServiceRequests'] | undefined => {
+          if (!src) return undefined
+          const severity = src.severity === 'NONE' ? 'LOW' : src.severity
+          return { ...src, severity }
+        }
+
+        const deviceErrors = normalizedAlerts.deviceErrors ?? normalizedAlerts.urgentServiceRequests
+        const urgentServiceRequests =
+          normalizedAlerts.urgentServiceRequests ?? coerceUrgentFrom(normalizedAlerts.deviceErrors)
+        const slaViolations = normalizedAlerts.slaViolations ?? normalizedAlerts.slaBreaches
+        const slaBreaches = normalizedAlerts.slaBreaches ?? normalizedAlerts.slaViolations
+
+        return {
+          ...normalizedAlerts,
+          deviceErrors,
+          urgentServiceRequests,
+          slaViolations,
+          slaBreaches,
+        }
+      }
+
+      const normalizedMonthlySeries =
+        raw.monthlySeries && Object.keys(raw.monthlySeries).length > 0
+          ? { ...raw.monthlySeries, points: raw.monthlySeries.points ?? [] }
+          : { points: [] }
+
+      return {
+        ...raw,
+        monthlySeries: normalizedMonthlySeries,
+        alerts: normalizeAlerts(raw.alerts),
+      }
     } catch (error: unknown) {
       const err = error as { message?: string }
       console.error('[DashboardService] Error fetching admin overview:', {

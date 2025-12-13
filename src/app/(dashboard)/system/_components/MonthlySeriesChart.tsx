@@ -218,7 +218,9 @@ export function MonthlySeriesChart({
 
   // Transform data for recharts
   // monthlySeries has structure: { points: [{month, revenueRental, revenueRepair, ...}] }
-  const transformedData = monthlySeries.points.map((point) => ({
+  const points = monthlySeries?.points ?? []
+
+  const transformedData = points.map((point) => ({
     month: point.month,
     revenueRental: getDisplayValue(point.revenueRental, point.revenueRentalConverted, useConverted),
     revenueRepair: getDisplayValue(point.revenueRepair, point.revenueRepairConverted, useConverted),

@@ -350,15 +350,25 @@ export type DeviceCostItem = {
   deviceId: string
   serialNumber: string
   model: string
-  revenueRental: number
-  revenueRepair: number
-  revenuePageBW: number
-  revenuePageColor: number
-  totalRevenue: number
-  cogsConsumable: number
-  cogsRepair: number
-  totalCogs: number
+  costRental: number
+  costRepair: number
+  costPageBW: number
+  costPageColor: number
+  totalCost: number
+  costAdjustmentDebit?: number
+  costAdjustmentCredit?: number
+  totalCostAfterAdjustment?: number
+  costAdjustmentFormula?: string
   currency?: CurrencyDataDto | null
+  // Converted values for admin view
+  costRentalConverted?: number
+  costRepairConverted?: number
+  costPageBWConverted?: number
+  costPageColorConverted?: number
+  totalCostConverted?: number
+  costAdjustmentDebitConverted?: number
+  costAdjustmentCreditConverted?: number
+  totalCostAfterAdjustmentConverted?: number
 }
 
 export type CustomerCostResponse = {
@@ -368,33 +378,54 @@ export type CustomerCostResponse = {
     customer: {
       customerId: string
       name: string
-      revenueRental: number
-      revenueRepair: number
-      revenuePageBW: number
-      revenuePageColor: number
-      totalRevenue: number
-      cogsConsumable: number
-      cogsRepair: number
-      totalCogs: number
+      costRental: number
+      costRepair: number
+      costPageBW: number
+      costPageColor: number
+      totalCost: number
+      costAdjustmentDebit?: number
+      costAdjustmentCredit?: number
+      totalCostAfterAdjustment?: number
+      costAdjustmentFormula?: string
       currency?: CurrencyDataDto | null
+      // Converted values for admin view
+      costRentalConverted?: number
+      costRepairConverted?: number
+      costPageBWConverted?: number
+      costPageColorConverted?: number
+      totalCostConverted?: number
+      costAdjustmentDebitConverted?: number
+      costAdjustmentCreditConverted?: number
+      totalCostAfterAdjustmentConverted?: number
     }
     devices: DeviceCostItem[]
     baseCurrency?: CurrencyDataDto | null
+    exchangeRate?: number
   }
   message?: string
 }
 
 export type DeviceCostTrendItem = {
   month: string
-  revenueRental: number
-  revenueRepair: number
-  revenuePageBW: number
-  revenuePageColor: number
-  totalRevenue: number
-  cogsConsumable: number
-  cogsRepair: number
-  totalCogs: number
+  costRental: number
+  costRepair: number
+  costPageBW: number
+  costPageColor: number
+  totalCost: number
+  costAdjustmentDebit?: number
+  costAdjustmentCredit?: number
+  totalCostAfterAdjustment?: number
+  costAdjustmentFormula?: string
   currency?: CurrencyDataDto | null
+  // Converted values for admin view
+  costRentalConverted?: number
+  costRepairConverted?: number
+  costPageBWConverted?: number
+  costPageColorConverted?: number
+  totalCostConverted?: number
+  costAdjustmentDebitConverted?: number
+  costAdjustmentCreditConverted?: number
+  totalCostAfterAdjustmentConverted?: number
 }
 
 export type DeviceCostResponse = {

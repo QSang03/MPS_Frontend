@@ -1253,6 +1253,8 @@
   "user_devices.filter.title": "Bộ lọc & Tìm kiếm",
   "user_devices.filter.subtitle": "Lọc theo khách hàng, trạng thái hoặc tìm kiếm theo serial",
   "user_devices.filter.search_placeholder": "Tìm kiếm serial hoặc tên khách hàng",
+  "user_devices.column_menu.short": "C",
+  "user_devices.column_menu.button": "Cột",
   "user_devices.table.actions": "Thao tác",
   "dashboard.loading_overview": "Đang tải dữ liệu tổng quan...",
   "dashboard.error.title": "Đã xảy ra lỗi",

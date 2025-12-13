@@ -153,12 +153,12 @@ export default function DevicesPageClient() {
 
   useEffect(() => {
     const allColumns: { id: ColumnId; label: string; locked?: boolean }[] = [
-      { id: 'serial', label: 'Serial', locked: true },
-      { id: 'model', label: 'Model', locked: true },
-      { id: 'customer', label: 'Khách hàng' },
-      { id: 'location', label: 'Vị trí' },
-      { id: 'status', label: 'Trạng thái' },
-      { id: 'actions', label: 'Thao tác', locked: true },
+      { id: 'serial', label: t('table.serial'), locked: true },
+      { id: 'model', label: t('table.model'), locked: true },
+      { id: 'customer', label: t('devices.filter.customer') },
+      { id: 'location', label: t('table.location') },
+      { id: 'status', label: t('filters.status_label') },
+      { id: 'actions', label: t('user_devices.table.actions'), locked: true },
     ]
 
     const menu = (
@@ -171,9 +171,9 @@ export default function DevicesPageClient() {
             className="border-gray-300 bg-white text-gray-700 shadow-sm transition-transform duration-150 ease-in-out hover:scale-105 hover:bg-gray-50 focus:ring-2 focus:ring-[var(--brand-200)] focus:outline-none"
           >
             <span className="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[var(--brand-50)] text-xs font-semibold text-[var(--brand-600)]">
-              C
+              {t('user_devices.column_menu.short')}
             </span>
-            Cột
+            {t('user_devices.column_menu.button')}
           </Button>
 
           {showColumnMenu && (
@@ -698,7 +698,7 @@ export default function DevicesPageClient() {
                   <TableHead>
                     <div className="flex items-center gap-2">
                       <Users className="h-4 w-4 text-black dark:text-white" />
-                      Sở hữu
+                      {t('devices.table.ownership')}
                     </div>
                   </TableHead>
                   {visibleColumns.status && <TableHead>{t('filters.status_label')}</TableHead>}

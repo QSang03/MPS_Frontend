@@ -112,7 +112,8 @@ export interface TopCustomer {
  * Thống kê theo tháng
  */
 export interface MonthlySeries {
-  points: Array<{
+  // points may be omitted when backend returns empty object
+  points?: Array<{
     month: string // Format: YYYY-MM
     revenueRental: number
     revenueRepair: number
@@ -159,7 +160,7 @@ export interface AdminOverviewData {
   kpis: AdminOverviewKPIs
   costBreakdown: CostBreakdown
   topCustomers: TopCustomer[]
-  monthlySeries: MonthlySeries
+  monthlySeries?: MonthlySeries
   customer?: {
     id?: string
     name?: string
@@ -185,18 +186,8 @@ export interface AdminOverviewData {
         lastUpdatedAt?: string
       }>
     }
-    deviceErrors?: {
-      total: number
-      severity?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
-      items?: Array<{
-        deviceId?: string
-        deviceName?: string
-        serialNumber?: string
-        errorMessage?: string
-        occurredAt?: string
-      }>
-    }
-    slaViolations?: {
+    // New backend keys
+    urgentServiceRequests?: {
       total: number
       severity?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
       items?: Array<{
@@ -206,6 +197,56 @@ export interface AdminOverviewData {
         priority?: string
         customerName?: string
         createdAt?: string
+      }>
+    }
+    slaBreaches?: {
+      total: number
+      severity?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' | 'NONE'
+      items?: Array<{
+        id?: string
+        title?: string
+        breachType?: string
+        status?: string
+        customerName?: string
+        dueAt?: string
+        actualAt?: string
+        overdueHours?: number
+      }>
+    }
+    // Legacy keys retained for backward compatibility
+    deviceErrors?: {
+      total: number
+      severity?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' | 'NONE'
+      items?: Array<{
+        deviceId?: string
+        deviceName?: string
+        serialNumber?: string
+        errorMessage?: string
+        occurredAt?: string
+        // Fields shared with urgentServiceRequests
+        id?: string
+        title?: string
+        status?: string
+        priority?: string
+        customerName?: string
+        createdAt?: string
+      }>
+    }
+    slaViolations?: {
+      total: number
+      severity?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' | 'NONE'
+      items?: Array<{
+        id?: string
+        title?: string
+        status?: string
+        priority?: string
+        customerName?: string
+        createdAt?: string
+        // Fields shared with SLA breaches
+        breachType?: string
+        dueAt?: string
+        actualAt?: string
+        overdueHours?: number
       }>
     }
   }
