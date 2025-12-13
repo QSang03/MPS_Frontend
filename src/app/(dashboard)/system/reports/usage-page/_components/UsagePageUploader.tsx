@@ -217,9 +217,9 @@ export function UsagePageUploader() {
                 <Button
                   type="button"
                   size="icon-sm"
-                  variant="ghost"
+                  variant="secondary"
                   onClick={handleReset}
-                  className="text-destructive absolute top-3 right-3 rounded-full bg-white/80 shadow-sm hover:bg-white"
+                  className="text-destructive absolute top-3 right-3 rounded-full bg-white/80 shadow-sm"
                 >
                   <RefreshCw className="h-4 w-4" />
                 </Button>

@@ -386,9 +386,9 @@ export function DepartmentsTable() {
                           {canUpdate && (
                             <Button
                               size="sm"
-                              variant="ghost"
+                              variant="default"
                               onClick={() => openEdit(dept)}
-                              className="transform rounded-lg transition-all duration-300 hover:scale-110 hover:bg-[var(--brand-50)] hover:text-[var(--brand-700)]"
+                              className="transform rounded-lg transition-all duration-300"
                               title={t('button.edit')}
                             >
                               <Edit className="h-4 w-4" />
@@ -404,8 +404,8 @@ export function DepartmentsTable() {
                               trigger={
                                 <Button
                                   size="sm"
-                                  variant="ghost"
-                                  className="transform rounded-lg transition-all duration-300 hover:scale-110 hover:bg-[var(--error-50)] hover:text-[var(--error-500)]"
+                                  variant="destructive"
+                                  className="transform rounded-lg transition-all duration-300"
                                   title={t('button.delete')}
                                 >
                                   <Trash2 className="h-4 w-4" />

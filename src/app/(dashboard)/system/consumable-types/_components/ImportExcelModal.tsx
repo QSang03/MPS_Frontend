@@ -180,7 +180,7 @@ export default function ImportExcelModal({ trigger }: ImportExcelModalProps = {}
             <div className="flex items-center gap-2">
               <Input type="file" accept=".xlsx,.xls" onChange={handleFileChange} className="mt-2" />
               <Button
-                variant="ghost"
+                variant="default"
                 onClick={async () => {
                   // generate template and download
                   try {

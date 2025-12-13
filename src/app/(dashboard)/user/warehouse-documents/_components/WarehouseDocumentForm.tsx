@@ -394,7 +394,7 @@ export function WarehouseDocumentForm({ initialData, onSuccess }: Props) {
                   <div className="flex items-center">
                     <Button
                       type="button"
-                      variant="ghost"
+                      variant="destructive"
                       onClick={() => remove(idx)}
                       className="h-9 w-9 p-0"
                       disabled={isPending}

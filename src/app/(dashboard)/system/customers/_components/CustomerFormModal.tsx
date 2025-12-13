@@ -632,7 +632,7 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
                     />
                     <Button
                       type="button"
-                      variant="ghost"
+                      variant="destructive"
                       onClick={() =>
                         setForm((s) => {
                           const arr = Array.isArray(s.address) ? [...s.address] : []
@@ -795,7 +795,7 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
                     />
                     <Button
                       type="button"
-                      variant="ghost"
+                      variant="destructive"
                       onClick={() =>
                         setForm((s) => {
                           const emails = Array.isArray(s.invoiceInfo?.emails)

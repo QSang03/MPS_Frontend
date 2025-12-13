@@ -149,7 +149,7 @@ export default function ResetPasswordPage() {
 
               <Button
                 type="button"
-                variant="ghost"
+                variant="secondary"
                 className="w-full"
                 onClick={() => router.push(ROUTES.LOGIN)}
               >

@@ -686,7 +686,7 @@ export default function UsagePageClient() {
               }}
             />
             <Button
-              variant="ghost"
+              variant="secondary"
               onClick={() => {
                 setSelectedCustomerId('')
                 setCustomerDetailData(null)

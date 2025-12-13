@@ -295,7 +295,7 @@ export function ConsumableUsageHistory({
                     {t('system_device_detail.consumable_history.table.status')}
                   </th>
                   <th className="px-6 py-4 text-right text-xs font-bold tracking-wider text-slate-600 uppercase dark:text-slate-400">
-                    Thời gian
+                    {t('system_device_detail.consumable_history.table.recorded_at')}
                   </th>
                 </tr>
               </thead>
@@ -372,7 +372,7 @@ export function ConsumableUsageHistory({
             {page}
           </div>
           <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
-            Trang hiện tại
+            {t('pagination.current_page')}
           </span>
         </div>
 
@@ -385,7 +385,7 @@ export function ConsumableUsageHistory({
             className="gap-2 rounded-full transition-all hover:scale-105 disabled:opacity-50"
           >
             <ChevronLeft className="h-4 w-4" />
-            Trước
+            {t('pagination.prev')}
           </Button>
           <Button
             variant="outline"
@@ -394,7 +394,7 @@ export function ConsumableUsageHistory({
             onClick={() => setPage((p) => p + 1)}
             className="gap-2 rounded-full bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] text-white transition-all hover:scale-105 hover:shadow-lg disabled:opacity-50"
           >
-            Sau
+            {t('pagination.next')}
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>

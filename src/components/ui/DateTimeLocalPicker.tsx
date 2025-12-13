@@ -377,7 +377,7 @@ export default function DateTimeLocalPicker({
               {display && !disabled ? (
                 <Button
                   type="button"
-                  variant="ghost"
+                  variant="secondary"
                   size="icon"
                   className="pointer-events-auto h-7 w-7"
                   onClick={(e) => {

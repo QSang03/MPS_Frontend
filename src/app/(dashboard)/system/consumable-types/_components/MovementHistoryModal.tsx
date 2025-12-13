@@ -334,8 +334,11 @@ export default function MovementHistoryModal({
         <div className="flex w-full items-center justify-between border-t pt-4">
           <div className="text-muted-foreground flex items-center gap-2 text-sm">
             <span>
-              Trang {pagination?.page ?? page} / {pagination?.totalPages ?? 1} — Tổng{' '}
-              {pagination?.total ?? movements.length}
+              {t('pagination.page_total', {
+                page: String(pagination?.page ?? page),
+                totalPages: String(pagination?.totalPages ?? 1),
+                total: String(pagination?.total ?? movements.length),
+              })}
             </span>
           </div>
           <div className="flex items-center gap-2">
@@ -347,9 +350,9 @@ export default function MovementHistoryModal({
               }}
               className="rounded-md border-emerald-200 px-3 py-1.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none"
             >
-              <option value={10}>10 / trang</option>
-              <option value={25}>25 / trang</option>
-              <option value={50}>50 / trang</option>
+              <option value={10}>{t('pagination.per_page_option', { count: '10' })}</option>
+              <option value={25}>{t('pagination.per_page_option', { count: '25' })}</option>
+              <option value={50}>{t('pagination.per_page_option', { count: '50' })}</option>
             </select>
             <Button
               variant="outline"
@@ -360,7 +363,7 @@ export default function MovementHistoryModal({
               }}
               disabled={(pagination?.page ?? page) <= 1}
             >
-              Trước
+              {t('pagination.prev')}
             </Button>
             <Button
               variant="outline"
@@ -371,10 +374,10 @@ export default function MovementHistoryModal({
               }}
               disabled={(pagination?.page ?? page) >= (pagination?.totalPages ?? 1)}
             >
-              Sau
+              {t('pagination.next')}
             </Button>
-            <Button onClick={() => onOpenChange(false)} variant="ghost" size="sm">
-              Đóng
+            <Button onClick={() => onOpenChange(false)} variant="secondary" size="sm">
+              {t('button.close')}
             </Button>
           </div>
         </div>

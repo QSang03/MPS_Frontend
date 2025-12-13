@@ -694,10 +694,10 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
                           </p>
                         </div>
                         <Button
-                          variant="ghost"
+                          variant="secondary"
                           size="sm"
                           onClick={() => setExpandedDeviceId(expanded ? null : idKey)}
-                          className="h-8 w-8 rounded-full p-0 hover:bg-gray-100"
+                          className="h-8 w-8 rounded-full p-0"
                         >
                           {expanded ? (
                             <ChevronUp className="h-4 w-4" />

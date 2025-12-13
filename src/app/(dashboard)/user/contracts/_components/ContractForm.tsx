@@ -699,7 +699,7 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
                     </a>
                     <Button
                       type="button"
-                      variant="ghost"
+                      variant="secondary"
                       size="sm"
                       onClick={() => {
                         try {
@@ -765,9 +765,9 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
                     </div>
                     <Button
                       type="button"
-                      variant="ghost"
+                      variant="destructive"
                       size="sm"
-                      className="text-[var(--color-error-500)] hover:text-[var(--color-error-600)]"
+                      className="text-[var(--color-error-500)]"
                       onClick={() => {
                         setPdfFileValue(undefined)
                         field.onChange(undefined)

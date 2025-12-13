@@ -93,7 +93,7 @@ export function WarehouseDocumentDetailClient({ id, session }: Props) {
       <div className="flex items-center justify-between border-b pb-6">
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" asChild>
+            <Button variant="secondary" size="sm" asChild>
               <Link href="/system/warehouse-documents">
                 <ArrowLeft className="mr-1 h-4 w-4" /> {t('common.back')}
               </Link>

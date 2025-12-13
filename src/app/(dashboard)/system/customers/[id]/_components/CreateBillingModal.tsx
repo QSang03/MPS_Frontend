@@ -227,7 +227,7 @@ export function CreateBillingModal({
               <div className="space-y-4">
                 <Button
                   type="button"
-                  variant="ghost"
+                  variant="secondary"
                   onClick={() => setShowAdvanced(!showAdvanced)}
                   className="w-full justify-between"
                 >

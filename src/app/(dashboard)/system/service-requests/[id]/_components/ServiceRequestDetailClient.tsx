@@ -321,10 +321,10 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <Button
-              variant="ghost"
+              variant="secondary"
               size="sm"
               asChild
-              className="text-muted-foreground hover:text-foreground -ml-2 h-8"
+              className="text-muted-foreground -ml-2 h-8"
             >
               <Link href="/system/requests">
                 <ArrowLeft className="mr-1 h-4 w-4" />
@@ -631,14 +631,14 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                           </span>
                           <Button
                             size="sm"
-                            variant="ghost"
+                            variant="secondary"
                             onClick={() => setStatusNote('Bảo trì định kỳ')}
                           >
                             Bảo trì định kỳ
                           </Button>
                           <Button
                             size="sm"
-                            variant="ghost"
+                            variant="secondary"
                             onClick={() => setStatusNote('Bảo trì theo yêu cầu')}
                           >
                             Bảo trì theo yêu cầu
@@ -1058,9 +1058,9 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                     </div>
                   </div>
                   <Button
-                    variant="ghost"
+                    variant="destructive"
                     size="icon"
-                    className="text-muted-foreground -mt-1 h-9 w-9 hover:bg-rose-50 hover:text-rose-600 sm:mt-0"
+                    className="text-muted-foreground -mt-1 h-9 w-9 sm:mt-0"
                     onClick={() => removeItemAt(idx)}
                   >
                     <Trash2 className="h-4 w-4" />

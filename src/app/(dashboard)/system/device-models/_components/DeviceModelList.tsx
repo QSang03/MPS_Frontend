@@ -651,10 +651,10 @@ function DeviceModelsTableContent({
                 trigger={
                   <Button
                     type="button"
-                    variant="ghost"
+                    variant="destructive"
                     size="sm"
                     disabled={deletingId === row.original.id}
-                    className="transition-all hover:bg-red-100 hover:text-red-700"
+                    className="transition-all"
                   >
                     {deletingId === row.original.id ? (
                       <Loader2 className="h-4 w-4 animate-spin" />

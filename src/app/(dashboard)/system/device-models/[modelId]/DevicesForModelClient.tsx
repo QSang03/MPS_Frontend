@@ -163,7 +163,7 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
         <div className="flex items-center justify-between">
           <div className="space-y-2">
             <Link href="/system/device-models">
-              <Button variant="ghost" className="-ml-2 gap-2 text-white hover:bg-white/20">
+              <Button variant="secondary" className="-ml-2 gap-2 text-white">
                 <ArrowLeft className="h-4 w-4" />
                 {t('common.back')}
               </Button>

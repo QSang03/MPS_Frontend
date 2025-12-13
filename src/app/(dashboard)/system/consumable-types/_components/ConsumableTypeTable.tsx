@@ -217,7 +217,7 @@ export function ConsumableTypeTable({
               {can('edit-stock') && (
                 <Button
                   size="sm"
-                  variant="ghost"
+                  variant="default"
                   onClick={() =>
                     onOpenEditStockModal({
                       stockId: m.stockItem!.id,
@@ -283,10 +283,10 @@ export function ConsumableTypeTable({
                   onConfirm={async () => handleDelete(m.id)}
                   trigger={
                     <Button
-                      variant="ghost"
+                      variant="destructive"
                       size="sm"
                       disabled={deletingId === m.id}
-                      className="transition-all hover:bg-red-100 hover:text-red-700"
+                      className="transition-all"
                     >
                       {deletingId === m.id ? (
                         <Loader2 className="h-4 w-4 animate-spin" />

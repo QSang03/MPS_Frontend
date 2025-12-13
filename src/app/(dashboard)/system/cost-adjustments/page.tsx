@@ -667,7 +667,7 @@ export default function CostAdjustmentsPage() {
         id: 'actions',
         cell: ({ row }) => (
           <div className="text-center">
-            <Button variant="ghost" size="icon" onClick={() => openEdit(row.original.id)}>
+            <Button variant="default" size="icon" onClick={() => openEdit(row.original.id)}>
               <Edit3 className="h-4 w-4" />
             </Button>
           </div>

@@ -723,10 +723,10 @@ function UserRequestsTableContent({
           return (
             <div className="flex items-center gap-2">
               <Button
-                variant="ghost"
+                variant="default"
                 size="sm"
                 onClick={() => handleViewDetail(row.original.id)}
-                className="transition-all hover:bg-gray-100 hover:text-gray-700"
+                className="transition-all"
               >
                 <Eye className="mr-2 h-4 w-4" />
                 {t('requests.service.table.detail')}

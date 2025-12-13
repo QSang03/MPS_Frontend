@@ -124,7 +124,7 @@ export function DepartmentFormModal({
           </div>
 
           <div className="mt-4 flex items-center justify-end gap-2">
-            <Button variant="ghost" onClick={onClose} type="button">
+            <Button variant="secondary" onClick={onClose} type="button">
               {t('cancel')}
             </Button>
             <Button type="submit" disabled={isSubmitting}>

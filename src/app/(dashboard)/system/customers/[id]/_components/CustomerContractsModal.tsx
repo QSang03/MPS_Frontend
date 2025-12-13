@@ -343,7 +343,7 @@ export default function CustomerContractsModal({
                 </Button>
                 {hasActiveFilters && (
                   <Button
-                    variant="ghost"
+                    variant="secondary"
                     size="sm"
                     onClick={clearAllFilters}
                     className="gap-2 text-slate-600"
@@ -485,7 +485,7 @@ export default function CustomerContractsModal({
                             </Badge>
                             <Link href={`/system/contracts/${contract.id}`}>
                               <Button
-                                variant="ghost"
+                                variant="default"
                                 size="sm"
                                 className="h-6 w-6 p-0 opacity-0 transition-opacity group-hover:opacity-100"
                               >
@@ -525,7 +525,7 @@ export default function CustomerContractsModal({
                         <td className="px-4 py-3.5 text-right">
                           {contract.description && (
                             <Button
-                              variant="ghost"
+                              variant="secondary"
                               size="sm"
                               className="h-8 w-8 p-0"
                               onClick={() => toggleRowExpansion(contract.id)}

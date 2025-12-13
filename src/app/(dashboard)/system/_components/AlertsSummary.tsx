@@ -454,9 +454,9 @@ export function AlertsSummary({
                         <p className="text-2xl font-bold text-gray-900">{alert.count}</p>
                         {alert.count > 0 && (
                           <Button
-                            variant="ghost"
+                            variant="default"
                             size="sm"
-                            className="mt-1 h-auto p-0 text-xs hover:underline"
+                            className="mt-1 h-auto p-0 text-xs"
                             onClick={(e) => {
                               e.stopPropagation()
                               setSelectedAlertType(alert.type)

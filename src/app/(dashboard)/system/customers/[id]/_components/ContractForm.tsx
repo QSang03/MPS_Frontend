@@ -902,8 +902,8 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
                 {documentUrlValue && (
                   <Button
                     asChild
-                    variant="ghost"
-                    className="mt-2 h-8 w-fit gap-1 rounded-full border border-[var(--brand-200)] bg-[var(--brand-50)] px-3 text-sm font-medium text-[var(--brand-700)] hover:bg-[var(--brand-100)]"
+                    variant="default"
+                    className="mt-2 h-8 w-fit gap-1 rounded-full border border-[var(--brand-200)] bg-[var(--brand-50)] px-3 text-sm font-medium text-[var(--brand-700)]"
                   >
                     <a
                       href={getPublicUrl(documentUrlValue) ?? documentUrlValue}
@@ -965,9 +965,9 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
                     </div>
                     <Button
                       type="button"
-                      variant="ghost"
+                      variant="destructive"
                       size="sm"
-                      className="text-rose-600 hover:text-rose-700"
+                      className="text-rose-600"
                       onClick={() => {
                         setPdfFileValue(undefined)
                         field.onChange(undefined)

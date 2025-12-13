@@ -143,7 +143,7 @@ export default function SettingsPanel() {
 
       <DialogFooter className="mt-6">
         <div className="flex w-full justify-end gap-2">
-          <Button variant="ghost" onClick={handleReset}>
+          <Button variant="secondary" onClick={handleReset}>
             Khôi phục
           </Button>
           <DialogClose asChild>

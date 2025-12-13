@@ -498,9 +498,9 @@ function RolesTableContent({
               {canUpdate && (
                 <Button
                   size="sm"
-                  variant="ghost"
+                  variant="default"
                   onClick={() => !isProtectedRole && onEditRole(row.original)}
-                  className="transition-all hover:bg-[var(--brand-50)] hover:text-[var(--brand-700)]"
+                  className="transition-all"
                   title={isProtectedRole ? t('roles.table.protected_edit') : t('roles.table.edit')}
                   disabled={isProtectedRole}
                 >
@@ -517,8 +517,8 @@ function RolesTableContent({
                   trigger={
                     <Button
                       size="sm"
-                      variant="ghost"
-                      className="transition-all hover:bg-[var(--error-50)] hover:text-[var(--error-500)]"
+                      variant="destructive"
+                      className="transition-all"
                       title={
                         isProtectedRole
                           ? t('roles.table.protected_delete')

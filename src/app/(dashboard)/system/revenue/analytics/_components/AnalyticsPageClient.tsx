@@ -1260,7 +1260,7 @@ export default function AnalyticsPageClient() {
                       </div>
                       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <Button
-                          variant="ghost"
+                          variant="secondary"
                           size="sm"
                           onClick={() => setShowEnterpriseDetails((v) => !v)}
                         >
@@ -1288,7 +1288,7 @@ export default function AnalyticsPageClient() {
                     }}
                   />
                   <Button
-                    variant="ghost"
+                    variant="secondary"
                     onClick={() => {
                       setSelectedCustomerId('')
                       setCustomerDetailData(null)
@@ -1739,7 +1739,7 @@ export default function AnalyticsPageClient() {
                       {t('analytics.load_data')}
                     </Button>
                     <Button
-                      variant="ghost"
+                      variant="secondary"
                       size="sm"
                       onClick={() => {
                         // Clear selected customer
@@ -1750,7 +1750,7 @@ export default function AnalyticsPageClient() {
                       {t('analytics.customer_detail.clear')}
                     </Button>
                     <Button
-                      variant="ghost"
+                      variant="secondary"
                       size="sm"
                       onClick={() => setShowCustomerChart((v) => !v)}
                     >

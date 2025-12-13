@@ -301,11 +301,7 @@ export function ConsumableCompatibilityModal({
                               description={t('device_model.compatibility.delete_confirmation')}
                               onConfirm={() => removeCompatibility(c.id)}
                               trigger={
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="transition-all hover:bg-red-100 hover:text-red-700"
-                                >
+                                <Button variant="destructive" size="sm" className="transition-all">
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
                               }
@@ -336,7 +332,7 @@ export function ConsumableCompatibilityModal({
 
                   {searchTerm && compatibleConsumables.length !== filteredConsumables.length && (
                     <Button
-                      variant="ghost"
+                      variant="secondary"
                       size="sm"
                       onClick={() => setSearchTerm('')}
                       className="h-8"

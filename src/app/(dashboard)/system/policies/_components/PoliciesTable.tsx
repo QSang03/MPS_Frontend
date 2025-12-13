@@ -483,9 +483,9 @@ export function PoliciesTable() {
                         <div className="flex items-center justify-end gap-1.5">
                           <Button
                             size="sm"
-                            variant="ghost"
+                            variant="default"
                             onClick={() => openView(p)}
-                            className="transition-all hover:bg-gray-100 hover:text-gray-700"
+                            className="transition-all"
                             title={t('button.view')}
                           >
                             <Eye className="h-4 w-4" />
@@ -493,12 +493,12 @@ export function PoliciesTable() {
                           {canUpdate && (
                             <Button
                               size="sm"
-                              variant="ghost"
+                              variant="default"
                               onClick={() => {
                                 const isProtectedPolicy = p.name === 'SystemAdminFullAccess'
                                 if (!isProtectedPolicy) openEdit(p)
                               }}
-                              className="transition-all hover:bg-[var(--brand-100)] hover:text-[var(--brand-700)]"
+                              className="transition-all"
                               title={
                                 p.name === 'SystemAdminFullAccess'
                                   ? t('policy.protected_edit_title')
@@ -519,8 +519,8 @@ export function PoliciesTable() {
                               trigger={
                                 <Button
                                   size="sm"
-                                  variant="ghost"
-                                  className="transition-all hover:bg-red-100 hover:text-red-700"
+                                  variant="destructive"
+                                  className="transition-all"
                                   title={
                                     p.name === 'SystemAdminFullAccess'
                                       ? t('policy.protected_delete_title')

@@ -203,10 +203,10 @@ export function KPICards({
             {t('dashboard.kpi.critical_metrics')}
           </h3>
           <Button
-            variant="ghost"
+            variant="secondary"
             size="sm"
             onClick={() => setShowAllMetrics(!showAllMetrics)}
-            className="text-[var(--neutral-500)] hover:text-[var(--foreground)]"
+            className="text-[var(--neutral-500)]"
           >
             {showAllMetrics ? (
               <>

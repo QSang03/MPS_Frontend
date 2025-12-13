@@ -131,7 +131,7 @@ export function NotificationItem({ notification, onMarkAsRead }: NotificationIte
 
       <div className="flex items-start">
         <Button
-          variant="ghost"
+          variant="secondary"
           size="sm"
           onClick={handleQuickMark}
           disabled={marking}

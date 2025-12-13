@@ -493,9 +493,9 @@ function DepartmentsTableContent({
             {canUpdate && (
               <Button
                 size="sm"
-                variant="ghost"
+                variant="default"
                 onClick={() => onEditDepartment(row.original)}
-                className="transition-all hover:bg-[var(--brand-100)] hover:text-[var(--brand-700)]"
+                className="transition-all"
                 title="Chỉnh sửa"
               >
                 <Edit className="h-4 w-4" />
@@ -509,12 +509,7 @@ function DepartmentsTableContent({
                   await Promise.resolve(onDeleteDepartment(row.original.id))
                 }}
                 trigger={
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="transition-all hover:bg-red-100 hover:text-red-700"
-                    title="Xóa"
-                  >
+                  <Button size="sm" variant="destructive" className="transition-all" title="Xóa">
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 }

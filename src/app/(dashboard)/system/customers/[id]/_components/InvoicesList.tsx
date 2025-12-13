@@ -283,9 +283,9 @@ export function InvoicesList({ customerId, contractId }: InvoicesListProps) {
                       <td className="px-4 py-4">
                         <div className="flex items-center justify-end gap-1.5">
                           <Button
-                            variant="ghost"
+                            variant="default"
                             size="sm"
-                            className="h-8 w-8 p-0 text-[var(--brand-600)] hover:bg-[var(--brand-50)] hover:text-[var(--brand-700)]"
+                            className="h-8 w-8 p-0 text-[var(--brand-600)]"
                             onClick={() => {
                               // TODO: Open invoice detail modal
                               console.log('View invoice:', invoice.invoiceId)
@@ -296,9 +296,9 @@ export function InvoicesList({ customerId, contractId }: InvoicesListProps) {
                           </Button>
                           {invoice.pdfUrl && (
                             <Button
-                              variant="ghost"
+                              variant="default"
                               size="sm"
-                              className="h-8 w-8 p-0 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
+                              className="h-8 w-8 p-0 text-emerald-600"
                               onClick={() => {
                                 // Normalize the PDF URL to use NEXT_PUBLIC_API_URL
                                 const pdf = getPublicUrl(invoice.pdfUrl)
