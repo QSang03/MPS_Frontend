@@ -872,8 +872,11 @@ export default function UsagePageClient() {
                       const single = customerDetailData.usage[0]
                       const chartConfig: ChartConfig = {
                         totalPages: { label: t('analytics.detail.total_pages'), color: '#3b82f6' },
-                        bwPages: { label: t('analytics.detail.bw_pages'), color: '#10b981' },
-                        colorPages: { label: t('analytics.detail.color_pages'), color: '#8b5cf6' },
+                        bwPages: { label: t('analytics.detail.bw_pages'), color: '#000' },
+                        colorPages: {
+                          label: t('analytics.detail.color_pages'),
+                          color: 'var(--color-success-500)',
+                        },
                       }
                       return (
                         <ChartContainer
@@ -971,8 +974,11 @@ export default function UsagePageClient() {
                     }))
                     const chartConfig: ChartConfig = {
                       totalPages: { label: t('analytics.detail.total_pages'), color: '#3b82f6' },
-                      bwPages: { label: t('analytics.detail.bw_pages'), color: '#10b981' },
-                      colorPages: { label: t('analytics.detail.color_pages'), color: '#8b5cf6' },
+                      bwPages: { label: t('analytics.detail.bw_pages'), color: '#000' },
+                      colorPages: {
+                        label: t('analytics.detail.color_pages'),
+                        color: 'var(--color-success-500)',
+                      },
                     }
                     return (
                       <ChartContainer
