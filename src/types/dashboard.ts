@@ -28,6 +28,7 @@ export interface AdminOverviewKPIs {
 
   // Cost & Usage
   totalCost: number
+  totalRevenue: number
   totalBWPages: number
   totalColorPages: number
   previousMonthTotalCost: number
@@ -85,26 +86,6 @@ export interface TopCustomer {
   totalRevenue: number // doanh thu
   totalCogs: number // chi phí
   grossProfit: number // lợi nhuận gộp
-  // Converted values (only for System Admin context)
-  totalRevenueConverted?: number
-  totalCogsConverted?: number
-  grossProfitConverted?: number
-  // Currency information (only for System Admin context)
-  currency?: import('@/types/models/currency').CurrencyDataDto | null
-  baseCurrency?: import('@/types/models/currency').CurrencyDataDto | null
-  exchangeRate?: number | null
-  // Cost adjustments (original)
-  costAdjustmentDebit?: number
-  costAdjustmentCredit?: number
-  costAdjustmentNet?: number
-  totalCogsAfterAdjustment?: number
-  grossProfitAfterAdjustment?: number
-  // Cost adjustments (converted)
-  costAdjustmentDebitConverted?: number
-  costAdjustmentCreditConverted?: number
-  costAdjustmentNetConverted?: number
-  totalCogsAfterAdjustmentConverted?: number
-  grossProfitAfterAdjustmentConverted?: number
 }
 
 /**
@@ -112,8 +93,7 @@ export interface TopCustomer {
  * Thống kê theo tháng
  */
 export interface MonthlySeries {
-  // points may be omitted when backend returns empty object
-  points?: Array<{
+  points: Array<{
     month: string // Format: YYYY-MM
     revenueRental: number
     revenueRepair: number
@@ -122,33 +102,9 @@ export interface MonthlySeries {
     totalRevenue: number // doanh thu
     cogsConsumable: number
     cogsRepair: number
+    cogsRental: number
     totalCogs: number // chi phí
     grossProfit: number // lợi nhuận gộp
-    // Cost adjustments (original)
-    costAdjustmentDebit?: number
-    costAdjustmentCredit?: number
-    costAdjustmentNet?: number
-    totalCogsAfterAdjustment?: number
-    grossProfitAfterAdjustment?: number
-    // Converted values (only for System Admin context)
-    revenueRentalConverted?: number
-    revenueRepairConverted?: number
-    revenuePageBWConverted?: number
-    revenuePageColorConverted?: number
-    totalRevenueConverted?: number
-    cogsConsumableConverted?: number
-    cogsRepairConverted?: number
-    totalCogsConverted?: number
-    grossProfitConverted?: number
-    costAdjustmentDebitConverted?: number
-    costAdjustmentCreditConverted?: number
-    costAdjustmentNetConverted?: number
-    totalCogsAfterAdjustmentConverted?: number
-    grossProfitAfterAdjustmentConverted?: number
-    // Currency information (only for System Admin context)
-    currency?: import('@/types/models/currency').CurrencyDataDto | null
-    baseCurrency?: import('@/types/models/currency').CurrencyDataDto | null
-    exchangeRate?: number | null
   }>
 }
 
@@ -174,7 +130,7 @@ export interface AdminOverviewData {
   alerts?: {
     consumableWarnings?: {
       total: number
-      severity?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
+      severity?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' | 'NONE'
       items?: Array<{
         deviceId?: string
         deviceName?: string
@@ -186,10 +142,9 @@ export interface AdminOverviewData {
         lastUpdatedAt?: string
       }>
     }
-    // New backend keys
     urgentServiceRequests?: {
       total: number
-      severity?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
+      severity?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' | 'NONE'
       items?: Array<{
         id?: string
         title?: string
@@ -208,42 +163,6 @@ export interface AdminOverviewData {
         breachType?: string
         status?: string
         customerName?: string
-        dueAt?: string
-        actualAt?: string
-        overdueHours?: number
-      }>
-    }
-    // Legacy keys retained for backward compatibility
-    deviceErrors?: {
-      total: number
-      severity?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' | 'NONE'
-      items?: Array<{
-        deviceId?: string
-        deviceName?: string
-        serialNumber?: string
-        errorMessage?: string
-        occurredAt?: string
-        // Fields shared with urgentServiceRequests
-        id?: string
-        title?: string
-        status?: string
-        priority?: string
-        customerName?: string
-        createdAt?: string
-      }>
-    }
-    slaViolations?: {
-      total: number
-      severity?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' | 'NONE'
-      items?: Array<{
-        id?: string
-        title?: string
-        status?: string
-        priority?: string
-        customerName?: string
-        createdAt?: string
-        // Fields shared with SLA breaches
-        breachType?: string
         dueAt?: string
         actualAt?: string
         overdueHours?: number

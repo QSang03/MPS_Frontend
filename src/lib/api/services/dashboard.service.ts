@@ -50,29 +50,12 @@ class DashboardService {
       ): AdminOverviewData['alerts'] => {
         if (!alerts) return undefined
 
+        // API now returns consumableWarnings, urgentServiceRequests, and slaBreaches directly
+        // Keep backward compatibility by providing fallback mappings if needed
         const normalizedAlerts: Alerts = { ...(alerts as Alerts) }
 
-        const coerceUrgentFrom = (
-          src: Alerts['urgentServiceRequests'] | Alerts['deviceErrors'] | undefined
-        ): Alerts['urgentServiceRequests'] | undefined => {
-          if (!src) return undefined
-          const severity = src.severity === 'NONE' ? 'LOW' : src.severity
-          return { ...src, severity }
-        }
-
-        const deviceErrors = normalizedAlerts.deviceErrors ?? normalizedAlerts.urgentServiceRequests
-        const urgentServiceRequests =
-          normalizedAlerts.urgentServiceRequests ?? coerceUrgentFrom(normalizedAlerts.deviceErrors)
-        const slaViolations = normalizedAlerts.slaViolations ?? normalizedAlerts.slaBreaches
-        const slaBreaches = normalizedAlerts.slaBreaches ?? normalizedAlerts.slaViolations
-
-        return {
-          ...normalizedAlerts,
-          deviceErrors,
-          urgentServiceRequests,
-          slaViolations,
-          slaBreaches,
-        }
+        // API now returns direct structure, no need for complex mappings
+        return normalizedAlerts
       }
 
       const normalizedMonthlySeries =

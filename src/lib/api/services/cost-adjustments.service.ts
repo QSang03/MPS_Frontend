@@ -12,6 +12,7 @@ export type CostAdjustmentVoucher = {
   effectiveDate: string
   reason?: string | null
   note?: string | null
+  applyOnCustomerCost: boolean
   isActive: boolean
   createdBy?: unknown
   createdAt?: string
@@ -57,6 +58,7 @@ export type CreateCostAdjustmentDto = {
   effectiveDate: string // YYYY-MM-DD
   reason?: string
   note?: string
+  applyOnCustomerCost: boolean
 }
 
 export type UpdateCostAdjustmentDto = Partial<CreateCostAdjustmentDto> & {

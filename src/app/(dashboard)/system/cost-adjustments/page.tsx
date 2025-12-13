@@ -44,6 +44,7 @@ type FormState = {
   effectiveDate: string
   reason: string
   note: string
+  applyOnCustomerCost: boolean
   isActive: boolean
 }
 
@@ -277,6 +278,7 @@ export default function CostAdjustmentsPage() {
     effectiveDate: '',
     reason: '',
     note: '',
+    applyOnCustomerCost: true,
     isActive: true,
   })
 
@@ -480,6 +482,7 @@ export default function CostAdjustmentsPage() {
       effectiveDate: '',
       reason: '',
       note: '',
+      applyOnCustomerCost: true,
       isActive: true,
     })
     setModalOpen(true)
@@ -503,6 +506,7 @@ export default function CostAdjustmentsPage() {
           effectiveDate: detail.effectiveDate?.slice(0, 10) ?? '',
           reason: detail.reason ?? '',
           note: detail.note ?? '',
+          applyOnCustomerCost: detail.applyOnCustomerCost ?? true,
           isActive: detail.isActive ?? true,
         })
         setModalOpen(true)
@@ -532,6 +536,7 @@ export default function CostAdjustmentsPage() {
         effectiveDate: form.effectiveDate,
         reason: form.reason || undefined,
         note: form.note || undefined,
+        applyOnCustomerCost: form.applyOnCustomerCost,
       }
       if (editingId) {
         await costAdjustmentsService.update(editingId, {
@@ -628,6 +633,20 @@ export default function CostAdjustmentsPage() {
         cell: ({ row }) => (
           <span className="line-clamp-2 text-sm text-slate-600">{row.original.note || '-'}</span>
         ),
+      },
+      {
+        header: t('cost_adjustments.apply_on_customer_cost_label'),
+        accessorKey: 'applyOnCustomerCost',
+        cell: ({ row }) =>
+          row.original.applyOnCustomerCost ? (
+            <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
+              {t('cost_adjustments.apply_on_customer_cost_yes')}
+            </Badge>
+          ) : (
+            <Badge className="bg-slate-200 text-slate-700 hover:bg-slate-200">
+              {t('cost_adjustments.apply_on_customer_cost_no')}
+            </Badge>
+          ),
       },
       {
         header: t('table.status'),
@@ -783,6 +802,22 @@ export default function CostAdjustmentsPage() {
                     onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
                     placeholder={t('cost_adjustments.placeholder.note')}
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label>{t('cost_adjustments.apply_on_customer_cost_label')}</Label>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={form.applyOnCustomerCost}
+                      onCheckedChange={(checked) =>
+                        setForm((f) => ({ ...f, applyOnCustomerCost: checked }))
+                      }
+                    />
+                    <span className="text-sm text-slate-600">
+                      {form.applyOnCustomerCost
+                        ? t('cost_adjustments.apply_on_customer_cost_yes')
+                        : t('cost_adjustments.apply_on_customer_cost_no')}
+                    </span>
+                  </div>
                 </div>
               </div>
             </SystemModalLayout>

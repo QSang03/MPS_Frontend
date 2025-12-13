@@ -117,11 +117,6 @@ export function MonthlySeriesChart({
       color: 'var(--color-success-500)',
       strokeWidth: 3,
     },
-    totalCogsAfterAdjustment: {
-      label: t('dashboard.metrics.total_cogs_after_adjustment'),
-      color: 'var(--error-300)',
-      strokeWidth: 3,
-    },
     revenueRental: {
       label: t('dashboard.metrics.revenue_rental'),
       color: 'var(--brand-600)',
@@ -147,39 +142,24 @@ export function MonthlySeriesChart({
       color: 'var(--error-500)',
       strokeWidth: 2,
     },
-    costAdjustmentDebit: {
-      label: t('dashboard.metrics.cost_adjustment_debit'),
+    cogsRental: {
+      label: t('dashboard.metrics.cogs_rental'),
       color: 'var(--error-400)',
-      strokeWidth: 2,
-    },
-    costAdjustmentCredit: {
-      label: t('dashboard.metrics.cost_adjustment_credit'),
-      color: 'var(--color-success-400)',
-      strokeWidth: 2,
-    },
-    costAdjustmentNet: {
-      label: t('dashboard.metrics.cost_adjustment_net'),
-      color: 'var(--warning-500)',
       strokeWidth: 2,
     },
     cogsConsumable: {
       label: t('dashboard.metrics.cogs_consumable'),
-      color: 'var(--error-500)',
+      color: 'var(--error-300)',
       strokeWidth: 2,
     },
     cogsRepair: {
       label: t('dashboard.metrics.cogs_repair'),
-      color: 'var(--error-500)',
+      color: 'var(--error-600)',
       strokeWidth: 2,
     },
     grossProfit: {
       label: t('dashboard.metrics.gross_profit'),
       color: 'var(--color-success-500)',
-      strokeWidth: 3,
-    },
-    grossProfitAfterAdjustment: {
-      label: t('dashboard.metrics.gross_profit_after_adjustment'),
-      color: 'var(--color-success-300)',
       strokeWidth: 3,
     },
   }
@@ -203,67 +183,22 @@ export function MonthlySeriesChart({
     )
   }
 
-  // Helper to get display value (converted if available, else original)
-  const getDisplayValue = (
-    original: number,
-    converted: number | undefined,
-    useConverted: boolean
-  ): number => {
-    if (useConverted && converted !== undefined) return converted
-    return original
-  }
-
-  // Use converted values if baseCurrency is available (System Admin context)
-  const useConverted = !!baseCurrency
-
   // Transform data for recharts
   // monthlySeries has structure: { points: [{month, revenueRental, revenueRepair, ...}] }
   const points = monthlySeries?.points ?? []
 
   const transformedData = points.map((point) => ({
     month: point.month,
-    revenueRental: getDisplayValue(point.revenueRental, point.revenueRentalConverted, useConverted),
-    revenueRepair: getDisplayValue(point.revenueRepair, point.revenueRepairConverted, useConverted),
-    revenuePageBW: getDisplayValue(point.revenuePageBW, point.revenuePageBWConverted, useConverted),
-    revenuePageColor: getDisplayValue(
-      point.revenuePageColor,
-      point.revenuePageColorConverted,
-      useConverted
-    ),
-    totalRevenue: getDisplayValue(point.totalRevenue, point.totalRevenueConverted, useConverted),
-    cogsConsumable: getDisplayValue(
-      point.cogsConsumable,
-      point.cogsConsumableConverted,
-      useConverted
-    ),
-    cogsRepair: getDisplayValue(point.cogsRepair, point.cogsRepairConverted, useConverted),
-    totalCogs: getDisplayValue(point.totalCogs, point.totalCogsConverted, useConverted),
-    grossProfit: getDisplayValue(point.grossProfit, point.grossProfitConverted, useConverted),
-    costAdjustmentDebit: getDisplayValue(
-      point.costAdjustmentDebit ?? 0,
-      point.costAdjustmentDebitConverted,
-      useConverted
-    ),
-    costAdjustmentCredit: getDisplayValue(
-      point.costAdjustmentCredit ?? 0,
-      point.costAdjustmentCreditConverted,
-      useConverted
-    ),
-    costAdjustmentNet: getDisplayValue(
-      point.costAdjustmentNet ?? 0,
-      point.costAdjustmentNetConverted,
-      useConverted
-    ),
-    totalCogsAfterAdjustment: getDisplayValue(
-      point.totalCogsAfterAdjustment ?? 0,
-      point.totalCogsAfterAdjustmentConverted,
-      useConverted
-    ),
-    grossProfitAfterAdjustment: getDisplayValue(
-      point.grossProfitAfterAdjustment ?? 0,
-      point.grossProfitAfterAdjustmentConverted,
-      useConverted
-    ),
+    revenueRental: point.revenueRental,
+    revenueRepair: point.revenueRepair,
+    revenuePageBW: point.revenuePageBW,
+    revenuePageColor: point.revenuePageColor,
+    totalRevenue: point.totalRevenue,
+    cogsConsumable: point.cogsConsumable,
+    cogsRepair: point.cogsRepair,
+    cogsRental: point.cogsRental,
+    totalCogs: point.totalCogs,
+    grossProfit: point.grossProfit,
   }))
 
   // Toggle metric visibility
