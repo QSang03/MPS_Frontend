@@ -415,6 +415,9 @@ export default function ContractsPageClient() {
                     {t('table.customer')}
                   </th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                    {t('customer.field.billing_day')}
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
                     {t('table.type')}
                   </th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
@@ -431,7 +434,7 @@ export default function ContractsPageClient() {
               <tbody className="divide-y divide-gray-100">
                 {contracts.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-12 text-center">
+                    <td colSpan={8} className="px-6 py-12 text-center">
                       <div className="text-muted-foreground flex flex-col items-center gap-3">
                         {searchTerm ? (
                           <>
@@ -476,6 +479,11 @@ export default function ContractsPageClient() {
                       </td>
                       <td className="px-6 py-4 font-medium text-gray-700">
                         {c.customer?.name ?? '—'}
+                      </td>
+                      <td className="px-6 py-4 font-medium text-gray-700">
+                        {c.customer?.billingDay
+                          ? t('customer.billing_day_value', { day: c.customer.billingDay })
+                          : '—'}
                       </td>
                       <td className="px-6 py-4">
                         <Badge variant="outline" className={`font-normal ${getTypeColor(c.type)}`}>
