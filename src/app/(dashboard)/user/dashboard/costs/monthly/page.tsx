@@ -295,7 +295,7 @@ export default function MonthlyCostsPage() {
     } finally {
       setLoading(false)
     }
-  }, [buildTimeForMode, mode, loadAggregatedCostSeries, t])
+  }, [buildTimeForMode, mode, loadAggregatedCostSeries, t, selectedDeviceId])
 
   const loadDeviceCost = useCallback(
     async (deviceId: string) => {
