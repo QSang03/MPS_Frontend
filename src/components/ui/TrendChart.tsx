@@ -2,7 +2,7 @@
 
 import React, { useMemo } from 'react'
 import { useLocale } from '@/components/providers/LocaleProvider'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts'
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts'
 import {
   ChartContainer,
   ChartLegend,
@@ -83,6 +83,10 @@ export default function TrendChart({ data, height = 280, showMargin = true, base
     return <div className="p-6 text-center text-sm text-gray-500">{t('charts.empty')}</div>
   }
 
+  // Auto-detect chart type based on data points
+  // If only 1 data point, use bar chart; otherwise use line chart
+  const useBarChart = normalized.length === 1
+
   // Local chart configuration (Option A: local)
   const chartConfig: ChartConfig = {
     // Use theme CSS variables so charts update with the selected theme
@@ -95,132 +99,229 @@ export default function TrendChart({ data, height = 280, showMargin = true, base
   return (
     <div style={{ width: '100%', height }}>
       <ChartContainer config={chartConfig} className="h-full w-full">
-        <LineChart
-          accessibilityLayer
-          data={normalized}
-          margin={{ top: 12, right: 56, left: 0, bottom: 12 }}
-        >
-          <CartesianGrid vertical={false} strokeDasharray="3 3" className="stroke-border/40" />
-          <XAxis
-            dataKey="month"
-            tickLine={false}
-            axisLine={false}
-            tickMargin={10}
-            tick={{ fontSize: 13, fill: 'hsl(var(--foreground))' }}
-          />
-          <YAxis
-            yAxisId="left"
-            domain={leftDomain}
-            tickCount={6}
-            tickFormatter={(v) => {
-              const num = Number(v)
-              if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`
-              if (num >= 1000) return `${(num / 1000).toFixed(1)}K`
-              return Intl.NumberFormat('vi-VN').format(num)
-            }}
-            tickLine={false}
-            axisLine={false}
-            tickMargin={10}
-            tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
-          />
-          {showMargin && (
+        {useBarChart ? (
+          <BarChart
+            accessibilityLayer
+            data={normalized}
+            margin={{ top: 12, right: 56, left: 0, bottom: 12 }}
+          >
+            <CartesianGrid vertical={false} strokeDasharray="3 3" className="stroke-border/40" />
+            <XAxis
+              dataKey="month"
+              tickLine={false}
+              axisLine={false}
+              tickMargin={10}
+              tick={{ fontSize: 13, fill: 'hsl(var(--foreground))' }}
+            />
             <YAxis
-              yAxisId="right"
-              orientation="right"
-              domain={marginDomain}
-              tickFormatter={(v) => `${Number(v).toFixed(1)}%`}
+              yAxisId="left"
+              domain={leftDomain}
+              tickCount={6}
+              tickFormatter={(v) => {
+                const num = Number(v)
+                if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`
+                if (num >= 1000) return `${(num / 1000).toFixed(1)}K`
+                return Intl.NumberFormat('vi-VN').format(num)
+              }}
               tickLine={false}
               axisLine={false}
               tickMargin={10}
               tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
             />
-          )}
-          <ChartTooltip
-            content={
-              <ChartTooltipContent
-                indicator="dot"
-                formatter={(value, name) => {
-                  if (name === '__grossMargin') {
-                    return `${Number(value).toFixed(2)}%`
-                  }
-                  if (typeof value === 'number') {
-                    if (baseCurrency) {
-                      return formatCurrencyWithSymbol(value, baseCurrency)
-                    }
-                    // Fallback to USD if no currency provided
-                    return formatCurrencyWithSymbol(value, {
-                      code: 'USD',
-                      symbol: '$',
-                    } as CurrencyDataDto)
-                  }
-                  return String(value ?? '-')
-                }}
+            {showMargin && (
+              <YAxis
+                yAxisId="right"
+                orientation="right"
+                domain={marginDomain}
+                tickFormatter={(v) => `${Number(v).toFixed(1)}%`}
+                tickLine={false}
+                axisLine={false}
+                tickMargin={10}
+                tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
               />
-            }
-          />
-          <ChartLegend content={<ChartLegendContent />} />
+            )}
+            <ChartTooltip
+              cursor={false}
+              content={
+                <ChartTooltipContent
+                  indicator="dot"
+                  formatter={(value, name) => {
+                    if (name === '__grossMargin') {
+                      return `${Number(value).toFixed(2)}%`
+                    }
+                    if (typeof value === 'number') {
+                      if (baseCurrency) {
+                        return formatCurrencyWithSymbol(value, baseCurrency)
+                      }
+                      // Fallback to USD if no currency provided
+                      return formatCurrencyWithSymbol(value, {
+                        code: 'USD',
+                        symbol: '$',
+                      } as CurrencyDataDto)
+                    }
+                    return String(value ?? '-')
+                  }}
+                />
+              }
+            />
+            <ChartLegend content={<ChartLegendContent />} />
 
-          <Line
-            type="monotone"
-            dataKey="totalRevenue"
-            stroke="var(--color-totalRevenue)"
-            strokeWidth={3}
-            dot={false}
-            activeDot={{
-              r: 5,
-              fill: 'var(--color-totalRevenue)',
-              strokeWidth: 2,
-              stroke: 'hsl(var(--background))',
-            }}
-            name={t('charts.total_revenue')}
-          />
-          <Line
-            type="monotone"
-            dataKey="totalCogs"
-            stroke="var(--color-totalCogs)"
-            strokeWidth={3}
-            dot={false}
-            activeDot={{
-              r: 5,
-              fill: 'var(--color-totalCogs)',
-              strokeWidth: 2,
-              stroke: 'hsl(var(--background))',
-            }}
-            name={t('charts.total_cogs')}
-          />
-          <Line
-            type="monotone"
-            dataKey="grossProfit"
-            stroke="var(--color-grossProfit)"
-            strokeWidth={3}
-            dot={false}
-            activeDot={{
-              r: 5,
-              fill: 'var(--color-grossProfit)',
-              strokeWidth: 2,
-              stroke: 'hsl(var(--background))',
-            }}
-            name={t('charts.gross_profit')}
-          />
-          {showMargin && (
+            <Bar
+              dataKey="totalRevenue"
+              fill="var(--color-totalRevenue)"
+              radius={[2, 2, 0, 0]}
+              name={t('charts.total_revenue')}
+            />
+            <Bar
+              dataKey="totalCogs"
+              fill="var(--color-totalCogs)"
+              radius={[2, 2, 0, 0]}
+              name={t('charts.total_cogs')}
+            />
+            <Bar
+              dataKey="grossProfit"
+              fill="var(--color-grossProfit)"
+              radius={[2, 2, 0, 0]}
+              name={t('charts.gross_profit')}
+            />
+            {showMargin && (
+              <Bar
+                yAxisId="right"
+                dataKey="__grossMargin"
+                fill="var(--color-__grossMargin)"
+                radius={[2, 2, 0, 0]}
+                name={t('charts.gross_margin')}
+              />
+            )}
+          </BarChart>
+        ) : (
+          <LineChart
+            accessibilityLayer
+            data={normalized}
+            margin={{ top: 12, right: 56, left: 0, bottom: 12 }}
+          >
+            <CartesianGrid vertical={false} strokeDasharray="3 3" className="stroke-border/40" />
+            <XAxis
+              dataKey="month"
+              tickLine={false}
+              axisLine={false}
+              tickMargin={10}
+              tick={{ fontSize: 13, fill: 'hsl(var(--foreground))' }}
+            />
+            <YAxis
+              yAxisId="left"
+              domain={leftDomain}
+              tickCount={6}
+              tickFormatter={(v) => {
+                const num = Number(v)
+                if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`
+                if (num >= 1000) return `${(num / 1000).toFixed(1)}K`
+                return Intl.NumberFormat('vi-VN').format(num)
+              }}
+              tickLine={false}
+              axisLine={false}
+              tickMargin={10}
+              tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
+            />
+            {showMargin && (
+              <YAxis
+                yAxisId="right"
+                orientation="right"
+                domain={marginDomain}
+                tickFormatter={(v) => `${Number(v).toFixed(1)}%`}
+                tickLine={false}
+                axisLine={false}
+                tickMargin={10}
+                tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
+              />
+            )}
+            <ChartTooltip
+              content={
+                <ChartTooltipContent
+                  indicator="dot"
+                  formatter={(value, name) => {
+                    if (name === '__grossMargin') {
+                      return `${Number(value).toFixed(2)}%`
+                    }
+                    if (typeof value === 'number') {
+                      if (baseCurrency) {
+                        return formatCurrencyWithSymbol(value, baseCurrency)
+                      }
+                      // Fallback to USD if no currency provided
+                      return formatCurrencyWithSymbol(value, {
+                        code: 'USD',
+                        symbol: '$',
+                      } as CurrencyDataDto)
+                    }
+                    return String(value ?? '-')
+                  }}
+                />
+              }
+            />
+            <ChartLegend content={<ChartLegendContent />} />
+
             <Line
               type="monotone"
-              dataKey="__grossMargin"
-              stroke="var(--color-__grossMargin)"
+              dataKey="totalRevenue"
+              stroke="var(--color-totalRevenue)"
               strokeWidth={3}
               dot={false}
               activeDot={{
                 r: 5,
-                fill: 'var(--color-__grossMargin)',
+                fill: 'var(--color-totalRevenue)',
                 strokeWidth: 2,
                 stroke: 'hsl(var(--background))',
               }}
-              name={t('charts.gross_margin')}
-              yAxisId="right"
-              strokeDasharray="8 4"
+              name={t('charts.total_revenue')}
             />
-          )}
-        </LineChart>
+            <Line
+              type="monotone"
+              dataKey="totalCogs"
+              stroke="var(--color-totalCogs)"
+              strokeWidth={3}
+              dot={false}
+              activeDot={{
+                r: 5,
+                fill: 'var(--color-totalCogs)',
+                strokeWidth: 2,
+                stroke: 'hsl(var(--background))',
+              }}
+              name={t('charts.total_cogs')}
+            />
+            <Line
+              type="monotone"
+              dataKey="grossProfit"
+              stroke="var(--color-grossProfit)"
+              strokeWidth={3}
+              dot={false}
+              activeDot={{
+                r: 5,
+                fill: 'var(--color-grossProfit)',
+                strokeWidth: 2,
+                stroke: 'hsl(var(--background))',
+              }}
+              name={t('charts.gross_profit')}
+            />
+            {showMargin && (
+              <Line
+                type="monotone"
+                dataKey="__grossMargin"
+                stroke="var(--color-__grossMargin)"
+                strokeWidth={3}
+                dot={false}
+                activeDot={{
+                  r: 5,
+                  fill: 'var(--color-__grossMargin)',
+                  strokeWidth: 2,
+                  stroke: 'hsl(var(--background))',
+                }}
+                name={t('charts.gross_margin')}
+                yAxisId="right"
+                strokeDasharray="8 4"
+              />
+            )}
+          </LineChart>
+        )}
       </ChartContainer>
     </div>
   )

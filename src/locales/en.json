@@ -2493,6 +2493,7 @@
   "dashboard.monthly_trend.description": "Time series of key metrics",
   "dashboard.chart.area": "Area",
   "dashboard.chart.line": "Line",
+  "dashboard.chart.bar": "Bar",
   "dashboard.monthly_trend.export": "Export report",
   "dashboard.monthly_trend.details": "Details",
   "dashboard.overview.title": "Dashboard Overview",

@@ -16,6 +16,8 @@ import {
   Line,
   AreaChart,
   Area,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -40,7 +42,7 @@ interface MonthlySeriesChartProps {
 
 // METRIC_CONFIG will be created inside component so we can use translations
 
-type ChartType = 'area' | 'line'
+type ChartType = 'area' | 'line' | 'bar'
 
 interface CustomTooltipProps {
   active?: boolean
@@ -201,6 +203,10 @@ export function MonthlySeriesChart({
     grossProfit: point.grossProfit,
   }))
 
+  // Auto-detect chart type based on data points
+  // If only 1 data point, use bar chart; otherwise use selected chart type
+  const effectiveChartType: ChartType = points.length === 1 ? 'bar' : chartType
+
   // Toggle metric visibility
   const toggleMetric = (metric: string) => {
     setVisibleMetrics((prev) =>
@@ -208,7 +214,8 @@ export function MonthlySeriesChart({
     )
   }
 
-  const Chart = chartType === 'area' ? AreaChart : LineChart
+  const Chart =
+    effectiveChartType === 'area' ? AreaChart : effectiveChartType === 'bar' ? BarChart : LineChart
 
   return (
     <motion.div
@@ -229,33 +236,41 @@ export function MonthlySeriesChart({
               </CardDescription>
             </div>
 
-            {/* Chart Type Toggle */}
-            <div className="flex gap-2">
-              <Button
-                variant={chartType === 'area' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setChartType('area')}
-                className={cn(
-                  chartType === 'area'
-                    ? 'bg-[var(--btn-primary)] hover:bg-[var(--btn-primary-hover)]'
-                    : ''
-                )}
-              >
-                {t('dashboard.chart.area')}
-              </Button>
-              <Button
-                variant={chartType === 'line' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setChartType('line')}
-                className={cn(
-                  chartType === 'line'
-                    ? 'bg-[var(--btn-primary)] hover:bg-[var(--btn-primary-hover)]'
-                    : ''
-                )}
-              >
-                {t('dashboard.chart.line')}
-              </Button>
-            </div>
+            {/* Chart Type Toggle - Only show when multiple data points */}
+            {points.length > 1 && (
+              <div className="flex gap-2">
+                <Button
+                  variant={chartType === 'area' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setChartType('area')}
+                  className={cn(
+                    chartType === 'area'
+                      ? 'bg-[var(--btn-primary)] hover:bg-[var(--btn-primary-hover)]'
+                      : ''
+                  )}
+                >
+                  {t('dashboard.chart.area')}
+                </Button>
+                <Button
+                  variant={chartType === 'line' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setChartType('line')}
+                  className={cn(
+                    chartType === 'line'
+                      ? 'bg-[var(--btn-primary)] hover:bg-[var(--btn-primary-hover)]'
+                      : ''
+                  )}
+                >
+                  {t('dashboard.chart.line')}
+                </Button>
+              </div>
+            )}
+            {/* Show bar chart indicator when only 1 data point */}
+            {points.length === 1 && (
+              <div className="flex items-center gap-2 text-sm text-[var(--neutral-500)]">
+                <span>{t('dashboard.chart.bar')}</span>
+              </div>
+            )}
           </div>
         </CardHeader>
 
@@ -335,7 +350,7 @@ export function MonthlySeriesChart({
               {Object.entries(METRIC_CONFIG).map(([key, config]) => {
                 if (!visibleMetrics.includes(key)) return null
 
-                if (chartType === 'area') {
+                if (effectiveChartType === 'area') {
                   return (
                     <Area
                       key={key}
@@ -345,6 +360,18 @@ export function MonthlySeriesChart({
                       fill={config.color}
                       fillOpacity={0.1}
                       strokeWidth={config.strokeWidth}
+                      animationDuration={800}
+                    />
+                  )
+                }
+
+                if (effectiveChartType === 'bar') {
+                  return (
+                    <Bar
+                      key={key}
+                      dataKey={key}
+                      fill={config.color}
+                      radius={[2, 2, 0, 0]}
                       animationDuration={800}
                     />
                   )
