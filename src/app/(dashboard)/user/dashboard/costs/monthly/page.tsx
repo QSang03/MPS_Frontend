@@ -265,8 +265,11 @@ export default function MonthlyCostsPage() {
         setCostData(res.data)
         setBaseCurrency(res.data.baseCurrency || null)
 
-        // Load aggregated cost series for range/year modes
-        if ((mode === 'range' || mode === 'year') && res.data.devices.length > 0) {
+        // Load aggregated cost series for range/year modes, or when period mode with selected device
+        if (
+          (mode === 'range' || mode === 'year' || (mode === 'period' && selectedDeviceId)) &&
+          res.data.devices.length > 0
+        ) {
           await loadAggregatedCostSeries(res.data.devices, params)
         } else {
           setAggregatedCostSeries(null)
@@ -338,7 +341,7 @@ export default function MonthlyCostsPage() {
     costData?.customer?.totalCostAfterAdjustment ?? costData?.customer?.totalCost ?? 0
   const costAdjustmentDebit = costData?.customer?.costAdjustmentDebit ?? 0
   const costAdjustmentCredit = costData?.customer?.costAdjustmentCredit ?? 0
-  const costAdjustmentNet = costAdjustmentDebit + costAdjustmentCredit
+  const costAdjustmentNet = costAdjustmentCredit - costAdjustmentDebit
   const costRentalAdjusted = costRental + costAdjustmentNet
 
   return (
@@ -764,7 +767,7 @@ export default function MonthlyCostsPage() {
                               </TableCell>
                               <TableCell className="text-right">
                                 {formatCurrency(
-                                  d.costRental +
+                                  d.costRental -
                                     (d.costAdjustmentDebit ?? 0) +
                                     (d.costAdjustmentCredit ?? 0),
                                   displayCurrency
@@ -810,8 +813,9 @@ export default function MonthlyCostsPage() {
               </CardContent>
             </Card>
 
-            {/* Cost Trends Chart - for range/year modes */}
-            {aggregatedCostSeries && aggregatedCostSeries.length > 0 && (
+            {/* Cost Trends Chart - for range/year/period modes */}
+            {((aggregatedCostSeries && aggregatedCostSeries.length > 0) ||
+              (selectedDeviceId && deviceCostSeries && deviceCostSeries.length > 0)) && (
               <Card className="border-slate-200 shadow-sm dark:border-slate-700 dark:bg-slate-800">
                 <CardHeader>
                   <div className="flex items-center justify-between">
