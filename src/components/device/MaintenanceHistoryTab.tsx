@@ -99,15 +99,10 @@ export function MaintenanceHistoryTab({ deviceId }: MaintenanceHistoryTabProps) 
     },
   })
 
-  const maintenanceHistories = maintenanceData?.items ?? []
-  const pagination = maintenanceData
-    ? {
-        page: maintenanceData.page,
-        limit: maintenanceData.limit,
-        total: maintenanceData.totalCount,
-        totalPages: maintenanceData.totalPages,
-      }
-    : undefined
+  const { data: maintenanceHistories, pagination } = maintenanceData || {
+    data: [],
+    pagination: undefined,
+  }
   const totalPages = pagination?.totalPages ?? 1
   const total = pagination?.total ?? 0
 
