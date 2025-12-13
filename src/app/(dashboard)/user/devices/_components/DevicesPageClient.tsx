@@ -205,7 +205,7 @@ export default function DevicesPageClient() {
     )
 
     setColumnVisibilityMenu(menu)
-  }, [visibleColumnsKey, showColumnMenu, visibleColumns, updateVisibleColumns])
+  }, [visibleColumnsKey, showColumnMenu, visibleColumns, updateVisibleColumns, t])
 
   useEffect(() => {
     function onDown(e: MouseEvent | TouchEvent) {

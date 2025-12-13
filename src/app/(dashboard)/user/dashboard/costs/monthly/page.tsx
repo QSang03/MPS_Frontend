@@ -975,6 +975,24 @@ export default function MonthlyCostsPage() {
                           activeDot={{ r: 6 }}
                           name={labels.costRepair}
                         />
+                        <Line
+                          type="monotone"
+                          dataKey="costPageBW"
+                          stroke="var(--brand-700)"
+                          strokeWidth={3}
+                          dot={{ fill: 'var(--brand-700)', r: 4 }}
+                          activeDot={{ r: 6 }}
+                          name={labels.costPageBW}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="costPageColor"
+                          stroke="var(--color-info-500)"
+                          strokeWidth={3}
+                          dot={{ fill: 'var(--color-info-500)', r: 4 }}
+                          activeDot={{ r: 6 }}
+                          name={labels.costPageColor}
+                        />
                       </LineChart>
                     </ResponsiveContainer>
                   </div>
@@ -1051,6 +1069,24 @@ export default function MonthlyCostsPage() {
                           dot={{ fill: 'var(--warning-500)', r: 4 }}
                           activeDot={{ r: 6 }}
                           name={labels.costRepair}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="costPageBW"
+                          stroke="var(--brand-700)"
+                          strokeWidth={3}
+                          dot={{ fill: 'var(--brand-700)', r: 4 }}
+                          activeDot={{ r: 6 }}
+                          name={labels.costPageBW}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="costPageColor"
+                          stroke="var(--color-info-500)"
+                          strokeWidth={3}
+                          dot={{ fill: 'var(--color-info-500)', r: 4 }}
+                          activeDot={{ r: 6 }}
+                          name={labels.costPageColor}
                         />
                       </LineChart>
                     </ResponsiveContainer>

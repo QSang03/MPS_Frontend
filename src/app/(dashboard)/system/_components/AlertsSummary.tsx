@@ -87,8 +87,8 @@ export function AlertsSummary({
 
   // Prefer counts from the `alerts` payload when present, otherwise fall back to KPIs
   const consumableWarnings = alerts?.consumableWarnings
-  const deviceErrorSource = alerts?.deviceErrors ?? alerts?.urgentServiceRequests
-  const slaSource = alerts?.slaViolations ?? alerts?.slaBreaches
+  const deviceErrorSource = alerts?.urgentServiceRequests
+  const slaSource = alerts?.slaBreaches
 
   const lowConsumableCount = consumableWarnings?.total ?? kpis.lowConsumableAlerts ?? 0
   const deviceErrorCount = deviceErrorSource?.total ?? kpis.deviceErrorAlerts ?? 0
