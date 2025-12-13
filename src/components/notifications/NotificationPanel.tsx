@@ -47,7 +47,7 @@ export function NotificationPanel({ children }: NotificationPanelProps) {
           </div>
           {unreadCount > 0 && (
             <Button
-              variant="ghost"
+              variant="secondary"
               size="sm"
               onClick={handleMarkAllAsRead}
               disabled={isMarkingAllAsRead}

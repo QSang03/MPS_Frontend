@@ -41,7 +41,7 @@ export function TemplateVariablePicker({
       <DropdownMenuTrigger asChild>
         <Button
           type="button"
-          variant="ghost"
+          variant="secondary"
           size="icon"
           disabled={disabled}
           className="h-8 w-8"

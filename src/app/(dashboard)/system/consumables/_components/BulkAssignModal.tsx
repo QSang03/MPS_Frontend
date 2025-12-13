@@ -472,7 +472,7 @@ export default function BulkAssignModal({ trigger }: BulkAssignModalProps) {
                         </td>
                         <td className="px-3 py-2 text-right">
                           <Button
-                            variant="ghost"
+                            variant="destructive"
                             size="icon"
                             onClick={() => {
                               setRows((cur) => cur.filter((_, i) => i !== idx))

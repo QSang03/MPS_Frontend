@@ -422,7 +422,7 @@ export function DeviceMaintenanceTab({
                         <td className="px-4 py-3">
                           <div className="flex items-center justify-center gap-1">
                             <Link href={`/system/service-requests/${sr.id}`}>
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <Button variant="default" size="icon" className="h-8 w-8">
                                 <Eye className="h-4 w-4" />
                               </Button>
                             </Link>
@@ -431,7 +431,7 @@ export function DeviceMaintenanceTab({
                               target="_blank"
                               rel="noopener noreferrer"
                             >
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <Button variant="default" size="icon" className="h-8 w-8">
                                 <ExternalLink className="h-4 w-4" />
                               </Button>
                             </Link>

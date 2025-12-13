@@ -434,7 +434,7 @@ export default function DeviceFormModal({
             <DialogTrigger asChild>
               <div>
                 <Button
-                  variant="ghost"
+                  variant="default"
                   size="sm"
                   className="h-8 w-8 rounded-full p-0"
                   aria-label="Sửa"

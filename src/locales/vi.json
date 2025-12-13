@@ -187,6 +187,7 @@
   "user.update_tip": "Các thay đổi sẽ được lưu ngay khi bạn nhấn 'Cập nhật'.",
   "button.edit": "Chỉnh sửa",
   "button.delete": "Xóa",
+  "button.upload_images": "Tải ảnh lên",
   "user.reset_password": "Đặt lại mật khẩu",
   "user.reset_password_confirmation": "Bạn có chắc muốn đặt lại mật khẩu người dùng {email} về mật khẩu mặc định không?",
   "confirm.reset": "Đặt lại",

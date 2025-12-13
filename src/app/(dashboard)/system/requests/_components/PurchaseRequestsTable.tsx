@@ -666,8 +666,8 @@ function PurchaseRequestsTableContent({
                       return (
                         <Button
                           key={status}
-                          variant="ghost"
                           size="sm"
+                          variant="secondary"
                           className="h-auto justify-start py-2 text-xs"
                           onClick={() => handleStatusChange(row.original.id, status)}
                         >

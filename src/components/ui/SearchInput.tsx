@@ -34,7 +34,7 @@ export default function SearchInput({
       {value && (
         <div className="absolute top-1/2 right-1 -translate-y-1/2">
           <Button
-            variant="ghost"
+            variant="secondary"
             size="icon"
             onClick={() => onValueChange('')}
             aria-label={t('aria.clear_search')}

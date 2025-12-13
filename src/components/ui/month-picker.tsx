@@ -205,7 +205,7 @@ export function MonthPicker({ value, onChange, onApply, className, placeholder }
           <div className="mb-2 flex items-center justify-center gap-2">
             <Button
               type="button"
-              variant="ghost"
+              variant="secondary"
               size="sm"
               onClick={() => {
                 const n = selYearRef.current - 1
@@ -222,7 +222,7 @@ export function MonthPicker({ value, onChange, onApply, className, placeholder }
             <div className="min-w-[50px] text-center text-sm font-semibold">{selYear}</div>
             <Button
               type="button"
-              variant="ghost"
+              variant="secondary"
               size="sm"
               onClick={() => {
                 const n = selYearRef.current + 1
@@ -307,7 +307,7 @@ export function MonthPicker({ value, onChange, onApply, className, placeholder }
         </div>
 
         <div className="mt-2 flex justify-end gap-1.5">
-          <Button variant="ghost" size="sm" onClick={cancel} className="h-7 px-2 text-xs">
+          <Button variant="secondary" size="sm" onClick={cancel} className="h-7 px-2 text-xs">
             {t('cancel')}
           </Button>
           <Button size="sm" onClick={apply} className="h-7 px-2 text-xs">

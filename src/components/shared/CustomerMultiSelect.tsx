@@ -194,9 +194,9 @@ export function CustomerMultiSelect({
               <span className="text-muted-foreground text-xs">({customer.code})</span>
               {!disabled && (
                 <Button
-                  variant="ghost"
+                  variant="destructive"
                   size="sm"
-                  className="h-4 w-4 p-0 hover:bg-transparent"
+                  className="h-4 w-4 p-0"
                   onClick={() => removeCustomer(customer.id)}
                 >
                   <X className="h-3 w-3" />

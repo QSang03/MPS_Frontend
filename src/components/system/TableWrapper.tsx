@@ -295,7 +295,7 @@ export function TableWrapper<TData>({
                               <div className="flex items-center gap-2">
                                 {canSort ? (
                                   <Button
-                                    variant="ghost"
+                                    variant="secondary"
                                     size="sm"
                                     className="data-[state=open]:bg-accent -ml-3 h-8"
                                     onClick={() => header.column.toggleSorting()}

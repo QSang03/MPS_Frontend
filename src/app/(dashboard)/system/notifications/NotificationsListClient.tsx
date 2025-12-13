@@ -147,7 +147,7 @@ export default function NotificationsListClient() {
                   {n.status !== 'READ' && (
                     <Button
                       size="sm"
-                      variant="ghost"
+                      variant="secondary"
                       onClick={(e) => {
                         e.stopPropagation()
                         handleMarkAsRead(n.id)
@@ -159,7 +159,7 @@ export default function NotificationsListClient() {
                   {getNotificationTarget(n) && (
                     <Button
                       size="sm"
-                      variant="ghost"
+                      variant="default"
                       onClick={(e) => {
                         e.stopPropagation()
                         const target = getNotificationTarget(n)

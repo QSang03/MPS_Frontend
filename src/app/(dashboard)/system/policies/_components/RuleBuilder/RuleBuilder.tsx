@@ -165,10 +165,10 @@ export function RuleBuilder({
               {!disabled && (
                 <Button
                   type="button"
-                  variant="ghost"
+                  variant="destructive"
                   size="icon"
                   onClick={() => handleRemoveRule(rule.id)}
-                  className="h-8 w-8 text-red-500 hover:text-red-700"
+                  className="h-8 w-8 text-red-500"
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -348,10 +348,10 @@ function RuleGroupComponent({
         {!disabled && (
           <Button
             type="button"
-            variant="ghost"
+            variant="destructive"
             size="sm"
             onClick={() => onRemoveGroup?.(group.id)}
-            className="h-7 text-red-500 hover:text-red-700"
+            className="h-7 text-red-500"
           >
             <Minus className="mr-1 h-3 w-3" />
             Xóa nhóm
@@ -370,10 +370,10 @@ function RuleGroupComponent({
               {!disabled && (
                 <Button
                   type="button"
-                  variant="ghost"
+                  variant="destructive"
                   size="icon"
                   onClick={() => handleRemoveRule(rule.id)}
-                  className="h-8 w-8 text-red-500 hover:text-red-700"
+                  className="h-8 w-8 text-red-500"
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>

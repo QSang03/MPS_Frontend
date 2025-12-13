@@ -20,7 +20,7 @@ export default async function NewServiceRequestPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" asChild>
+        <Button variant="secondary" size="sm" asChild>
           <Link href="/system/service-requests">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back

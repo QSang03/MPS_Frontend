@@ -676,10 +676,10 @@ function SlasTableContent({
           <div className="flex justify-end gap-2">
             {canUpdate && (
               <Button
-                variant="ghost"
+                variant="default"
                 size="sm"
                 onClick={() => onEdit(row.original)}
-                className="transition-all hover:bg-[var(--brand-100)] hover:text-[var(--brand-700)]"
+                className="transition-all"
                 title={t('sla.table.action.edit')}
               >
                 <Edit3 className="h-4 w-4" />
@@ -694,9 +694,9 @@ function SlasTableContent({
                 }}
                 trigger={
                   <Button
-                    variant="ghost"
+                    variant="destructive"
                     size="sm"
-                    className="transition-all hover:bg-[var(--color-error-50)] hover:text-[var(--color-error-600)]"
+                    className="transition-all"
                     title={t('sla.table.action.delete')}
                   >
                     <Trash2 className="h-4 w-4" />

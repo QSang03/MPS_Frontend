@@ -322,7 +322,7 @@ export function SlaTemplateFormDialog({
                     <div className="md:col-span-1">
                       <div className="flex items-start justify-end gap-2">
                         <Button
-                          variant="ghost"
+                          variant="destructive"
                           type="button"
                           onClick={() => remove(idx)}
                           disabled={submitting}

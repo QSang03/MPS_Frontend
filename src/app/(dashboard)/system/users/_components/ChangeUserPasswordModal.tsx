@@ -83,7 +83,7 @@ export default function ChangeUserPasswordModal({
                   cancelLabel={t('cancel')}
                   onConfirm={handleResetToDefault}
                   trigger={
-                    <Button variant="ghost" disabled={isLoading}>
+                    <Button variant="secondary" disabled={isLoading}>
                       {t('user.reset_password_action')}
                     </Button>
                   }

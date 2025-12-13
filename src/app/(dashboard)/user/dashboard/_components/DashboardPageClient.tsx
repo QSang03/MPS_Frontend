@@ -72,6 +72,13 @@ type Overview = {
     totalBWPages?: number
     totalColorPages?: number
     previousMonthTotalCost?: number
+    costChangePercent?: number
+  }
+  costBreakdown?: {
+    rentalPercent?: number
+    repairPercent?: number
+    pageBWPercent?: number
+    pageColorPercent?: number
   }
   topDevices?: Array<{
     deviceId?: string
@@ -105,10 +112,21 @@ type Overview = {
   }>
   usage?: {
     items?: Array<{
-      date: string
+      deviceId: string
+      month: string
       bwPages: number
       colorPages: number
-      cost: number
+      totalPages: number
+      bwPagesA4?: number
+      colorPagesA4?: number
+      totalPagesA4?: number
+      bwPagesA4FromCounter?: number
+      colorPagesA4FromCounter?: number
+      totalPagesA4FromCounter?: number
+      availableModes?: string[]
+      deviceModelName?: string
+      serialNumber?: string
+      partNumber?: string
     }>
   }
   // Currency information (only for System Admin context)
@@ -243,37 +261,52 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
   // Check if baseCurrency exists (System Admin context)
   const useConverted = !!overview.baseCurrency
 
-  // Prepare data for charts
+  // Prepare data for charts - group by month and sum pages
   const usageData =
-    overview.usage?.items?.map((item) => {
-      let dateLabel = '—'
-      const itemData = item as Record<string, unknown>
-      if (itemData.date) {
-        const d = new Date(itemData.date as string)
-        if (!isNaN(d.getTime()))
-          dateLabel = d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })
-      } else if (itemData.month && typeof itemData.month === 'string') {
-        const m = itemData.month
-        const parts = m.split('-')
-        if (parts.length === 2) dateLabel = `${parts[1]}/${parts[0]}`
-        else dateLabel = m
-      }
-      return {
-        name: dateLabel,
-        bw: item.bwPages || 0,
-        color: item.colorPages || 0,
-        total: (item.bwPages || 0) + (item.colorPages || 0),
-      }
-    }) || []
+    overview.usage?.items?.reduce(
+      (acc, item) => {
+        const itemData = item as Record<string, unknown>
+        const month = itemData.month as string
+        const bwPages = (itemData.bwPages as number) || 0
+        const colorPages = (itemData.colorPages as number) || 0
+
+        if (!month) return acc
+
+        const existing = acc.find((d) => d.month === month)
+        if (existing) {
+          existing.bw += bwPages
+          existing.color += colorPages
+          existing.total += bwPages + colorPages
+        } else {
+          const parts = month.split('-')
+          const dateLabel = parts.length === 2 ? `${parts[1]}/${parts[0]}` : month
+          acc.push({
+            month,
+            name: dateLabel,
+            bw: bwPages,
+            color: colorPages,
+            total: bwPages + colorPages,
+          })
+        }
+        return acc
+      },
+      [] as Array<{ month: string; name: string; bw: number; color: number; total: number }>
+    ) || []
 
   // Mock previous data point for better visualization if only 1 point exists
   if (usageData.length === 1) {
     const current = usageData[0]
-    if (current) {
+    if (current && current.month) {
       // Generate 5 previous months mock data for better trend visualization
       for (let i = 1; i <= 5; i++) {
+        const currentDate = new Date(current.month + '-01')
+        currentDate.setMonth(currentDate.getMonth() - i)
+        const prevMonth = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`
+        const prevMonthLabel = `Prev ${i}`
+
         usageData.unshift({
-          name: `Prev ${i}`,
+          month: prevMonth,
+          name: prevMonthLabel,
           bw: Math.max(0, current.bw - i * 500),
           color: Math.max(0, current.color - i * 200),
           total: Math.max(0, current.total - i * 700),
@@ -355,9 +388,27 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
                     {formatCurrency(k.totalCost ?? 0)}
                   </div>
                 </div>
-                <div className="mt-1 flex items-center text-xs font-medium text-[var(--color-success-500)]">
-                  <TrendingUp className="mr-1 h-3 w-3" />
-                  12%{' '}
+                <div className="mt-1 flex items-center text-xs font-medium">
+                  {k.costChangePercent !== undefined && k.costChangePercent >= 0 ? (
+                    <>
+                      <TrendingUp className="mr-1 h-3 w-3 text-[var(--color-success-500)]" />
+                      <span className="text-[var(--color-success-500)]">
+                        +{k.costChangePercent.toFixed(1)}%
+                      </span>
+                    </>
+                  ) : k.costChangePercent !== undefined ? (
+                    <>
+                      <TrendingDown className="mr-1 h-3 w-3 text-[var(--error-500)]" />
+                      <span className="text-[var(--error-500)]">
+                        {k.costChangePercent.toFixed(1)}%
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <TrendingUp className="mr-1 h-3 w-3 text-[var(--color-success-500)]" />
+                      <span className="text-[var(--color-success-500)]">0.0%</span>
+                    </>
+                  )}
                   <span className="ml-1 text-[var(--neutral-500)]">
                     {t('dashboard.compare_to_last_month')}
                   </span>

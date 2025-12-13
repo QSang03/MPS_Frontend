@@ -228,11 +228,7 @@ export default function DeviceModelDevicesModal({
                           </td>
                           <td className="px-4 py-3 text-right">
                             <Link href={`/system/devices/${d.id}`}>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="transition-all hover:bg-gray-100 hover:text-gray-700"
-                              >
+                              <Button variant="default" size="sm" className="transition-all">
                                 <Eye className="h-4 w-4" />
                               </Button>
                             </Link>
@@ -261,7 +257,7 @@ export default function DeviceModelDevicesModal({
 
                   {searchTerm && devices.length !== filteredDevices.length && (
                     <Button
-                      variant="ghost"
+                      variant="secondary"
                       size="sm"
                       onClick={() => setSearchTerm('')}
                       className="h-8"

@@ -82,7 +82,7 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
   // editing states (basic subset of system UI)
   const [showEdit, setShowEdit] = useState(false)
   const [editing, setEditing] = useState(false)
-  const { t } = useLocale()
+  const { t, locale } = useLocale()
   const [locationEdit, setLocationEdit] = useState('')
   const [ipEdit, setIpEdit] = useState('')
   const [macEdit, setMacEdit] = useState('')
@@ -536,7 +536,7 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
                 {
                   label: t('user_device_detail.info.last_seen'),
                   value: device.lastSeen
-                    ? new Date(device.lastSeen).toLocaleString('vi-VN')
+                    ? new Date(device.lastSeen).toLocaleString(locale === 'vi' ? 'vi-VN' : 'en-US')
                     : t('user_device_detail.info.no_data'),
                 },
               ]}
@@ -1236,9 +1236,13 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
 
                             <td className="text-muted-foreground px-4 py-3 text-right text-sm">
                               {c?.installedAt
-                                ? new Date(c.installedAt).toLocaleDateString('vi-VN')
+                                ? new Date(c.installedAt).toLocaleDateString(
+                                    locale === 'vi' ? 'vi-VN' : 'en-US'
+                                  )
                                 : cons?.expiryDate
-                                  ? new Date(cons.expiryDate).toLocaleDateString('vi-VN')
+                                  ? new Date(cons.expiryDate).toLocaleDateString(
+                                      locale === 'vi' ? 'vi-VN' : 'en-US'
+                                    )
                                   : '—'}
                             </td>
                           </tr>

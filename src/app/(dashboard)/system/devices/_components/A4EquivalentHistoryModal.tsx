@@ -268,7 +268,7 @@ export function A4EquivalentUsageHistory({
               }
             }}
             trigger={
-              <Button size="sm" variant="ghost" title={t('devices.a4_history.delete')}>
+              <Button size="sm" variant="destructive" title={t('devices.a4_history.delete')}>
                 {' '}
                 <Trash2 className="h-4 w-4 text-red-600" />{' '}
               </Button>

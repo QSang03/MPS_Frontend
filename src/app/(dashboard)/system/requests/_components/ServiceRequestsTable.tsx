@@ -727,7 +727,7 @@ function ServiceRequestsTableContent({
                       return (
                         <Button
                           key={status}
-                          variant="ghost"
+                          variant="secondary"
                           size="sm"
                           className="h-auto justify-start py-2 text-xs"
                           onClick={() => handleStatusChange(row.original.id, status)}

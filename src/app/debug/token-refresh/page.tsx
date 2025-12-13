@@ -159,7 +159,7 @@ export default function TokenTestPage() {
             </Button>
           </div>
 
-          <Button onClick={clearResults} variant="ghost" size="sm" className="w-full">
+          <Button onClick={clearResults} variant="secondary" size="sm" className="w-full">
             Clear Results
           </Button>
 

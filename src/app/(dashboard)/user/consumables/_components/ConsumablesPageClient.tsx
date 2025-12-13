@@ -664,9 +664,9 @@ export default function ConsumablesPageClient() {
                     >
                       <TableCell className="px-4 py-5 text-center">
                         <Button
-                          variant="ghost"
+                          variant="secondary"
                           size="icon"
-                          className="h-8 w-8 transition-transform hover:bg-amber-100"
+                          className="h-8 w-8 transition-transform"
                           onClick={(e) => {
                             e.stopPropagation()
                             toggleConsumableType(group.typeId)
@@ -826,7 +826,7 @@ export default function ConsumablesPageClient() {
                                 <span>{String(item.status ?? '—')}</span>
                                 <DropdownMenu>
                                   <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 p-0">
+                                    <Button variant="secondary" size="icon" className="h-8 w-8 p-0">
                                       <span className="sr-only">Open menu</span>
                                       <MoreHorizontal className="h-4 w-4" />
                                     </Button>

@@ -68,10 +68,10 @@ export function TestScenarioTable({ scenarios }: TestScenarioTableProps) {
               </TableCell>
               <TableCell className="text-right">
                 <Button
-                  variant="ghost"
+                  variant="secondary"
                   size="sm"
                   onClick={() => handleCopy(scenario, idx)}
-                  className="transition-all hover:bg-gray-100 hover:text-gray-700"
+                  className="transition-all"
                 >
                   {copiedIndex === idx ? (
                     <CheckCheck className="h-4 w-4" />

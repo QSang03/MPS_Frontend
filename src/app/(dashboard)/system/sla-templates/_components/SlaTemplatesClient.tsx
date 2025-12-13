@@ -279,7 +279,7 @@ export default function SlaTemplatesClient({ session }: { session?: Session | nu
                         {canUpdate && (
                           <Button
                             size="sm"
-                            variant="ghost"
+                            variant="default"
                             onClick={() => handleEdit(row.original)}
                             title={t('button.edit')}
                           >
@@ -295,7 +295,7 @@ export default function SlaTemplatesClient({ session }: { session?: Session | nu
                               await handleDelete(row.original.id)
                             }}
                             trigger={
-                              <Button size="sm" variant="ghost" title={t('button.delete')}>
+                              <Button size="sm" variant="destructive" title={t('button.delete')}>
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             }

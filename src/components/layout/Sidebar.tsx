@@ -142,7 +142,7 @@ export function Sidebar({ session }: SidebarProps) {
                 {t('sidebar.logo.title')} - {t('sidebar.logo.subtitle')}
               </span>
             </div>
-            <Button variant="ghost" size="sm" className="lg:hidden" onClick={toggleSidebar}>
+            <Button variant="secondary" size="sm" className="lg:hidden" onClick={toggleSidebar}>
               <ChevronLeft className="h-5 w-5" />
             </Button>
           </div>

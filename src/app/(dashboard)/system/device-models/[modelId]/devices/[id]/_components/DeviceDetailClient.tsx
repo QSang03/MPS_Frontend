@@ -808,7 +808,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                 {
                   label: t('user_device_detail.info.last_seen'),
                   value: device.lastSeen
-                    ? new Date(device.lastSeen).toLocaleString('vi-VN')
+                    ? new Date(device.lastSeen).toLocaleString(locale === 'vi' ? 'vi-VN' : 'en-US')
                     : t('user_device_detail.info.no_data'),
                 },
               ]}
@@ -1499,11 +1499,15 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
 
                             <td className="text-muted-foreground px-4 py-3 text-right text-sm">
                               {typeof c?.installedAt === 'string' && c.installedAt
-                                ? new Date(c.installedAt).toLocaleDateString('vi-VN')
+                                ? new Date(c.installedAt).toLocaleDateString(
+                                    locale === 'vi' ? 'vi-VN' : 'en-US'
+                                  )
                                 : hasExpiryDate(cons) &&
                                     typeof cons.expiryDate === 'string' &&
                                     cons.expiryDate
-                                  ? new Date(cons.expiryDate).toLocaleDateString('vi-VN')
+                                  ? new Date(cons.expiryDate).toLocaleDateString(
+                                      locale === 'vi' ? 'vi-VN' : 'en-US'
+                                    )
                                   : '—'}
                             </td>
                             <td className="px-4 py-3 text-center">
@@ -3244,7 +3248,7 @@ export function ConsumableUsageHistory({
     [k: string]: unknown
   }
 
-  const { t } = useLocale()
+  const { t, locale } = useLocale()
   const [items, setItems] = useState<HistoryRecord[]>([])
   const [loading, setLoading] = useState(false)
   const [page, setPage] = useState(1)
@@ -3295,7 +3299,8 @@ export function ConsumableUsageHistory({
   }, [deviceId, page, limit, search, startDate, endDate, consumableId, t])
 
   // helper: format numbers and IDs
-  const fmt = (v: unknown) => (typeof v === 'number' ? v.toLocaleString('vi-VN') : String(v ?? '-'))
+  const fmt = (v: unknown) =>
+    typeof v === 'number' ? v.toLocaleString(locale === 'vi' ? 'vi-VN' : 'en-US') : String(v ?? '-')
   const shortId = (id?: string) => (id ? `${id.slice(0, 8)}…${id.slice(-4)}` : '-')
 
   // load on page/limit changes; searches are triggered via button or Enter
@@ -3419,7 +3424,9 @@ export function ConsumableUsageHistory({
                       <Badge variant="outline">{r.status ?? '-'}</Badge>
                     </td>
                     <td className="px-4 py-3 text-right text-sm">
-                      {r.recordedAt ? new Date(r.recordedAt).toLocaleString('vi-VN') : '-'}
+                      {r.recordedAt
+                        ? new Date(r.recordedAt).toLocaleString(locale === 'vi' ? 'vi-VN' : 'en-US')
+                        : '-'}
                     </td>
                   </tr>
                 ))}

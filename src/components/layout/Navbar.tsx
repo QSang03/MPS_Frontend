@@ -180,9 +180,9 @@ export function Navbar({ session }: NavbarProps) {
           {/* Left side - Mobile menu button */}
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <Button
-              variant="ghost"
+              variant="secondary"
               size="sm"
-              className="rounded-lg transition-all duration-300 hover:bg-[var(--brand-50)] hover:text-[var(--brand-700)] lg:hidden"
+              className="rounded-lg transition-all duration-300 lg:hidden"
               onClick={toggleSidebar}
             >
               <Menu className="h-6 w-6" />
@@ -230,9 +230,9 @@ export function Navbar({ session }: NavbarProps) {
             <NotificationPanel>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Button
-                  variant="ghost"
+                  variant="secondary"
                   size="sm"
-                  className="relative rounded-lg transition-all duration-300 hover:bg-[var(--brand-50)] hover:text-[var(--brand-700)]"
+                  className="relative rounded-lg transition-all duration-300"
                 >
                   <Bell className="h-5 w-5" />
                   {!isUnreadCountLoading && unreadCount > 0 && (
@@ -252,8 +252,8 @@ export function Navbar({ session }: NavbarProps) {
               <DropdownMenuTrigger asChild suppressHydrationWarning>
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                   <Button
-                    variant="ghost"
-                    className="group gap-2.5 rounded-lg transition-all duration-300 hover:bg-gradient-to-r hover:from-[var(--brand-50)] hover:to-[var(--brand-100)] hover:text-[var(--brand-700)]"
+                    variant="secondary"
+                    className="group gap-2.5 rounded-lg transition-all duration-300"
                   >
                     {/* Avatar with gradient border */}
                     <div className="relative">

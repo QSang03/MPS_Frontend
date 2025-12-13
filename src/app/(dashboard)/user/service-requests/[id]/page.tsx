@@ -126,10 +126,10 @@ export default function UserServiceRequestDetail() {
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <Button
-              variant="ghost"
+              variant="secondary"
               size="sm"
               asChild
-              className="text-muted-foreground hover:text-foreground -ml-2 h-8"
+              className="text-muted-foreground -ml-2 h-8"
             >
               <Link href="/user/my-requests">
                 <ArrowLeft className="mr-1 h-4 w-4" />
