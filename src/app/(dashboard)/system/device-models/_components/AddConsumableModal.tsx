@@ -70,7 +70,11 @@ export function AddConsumableModal({
         setTotalPages(res.pagination?.totalPages ?? 1)
       } catch (error: unknown) {
         console.error('Error loading consumable types:', error)
-        toast.error(String(error) || t('device_model.add_consumable.load_error'))
+        const message =
+          typeof error === 'object' && error !== null && 'message' in error
+            ? (error as { message?: unknown }).message
+            : undefined
+        toast.error(String(message ?? error) || t('device_model.add_consumable.load_error'))
       } finally {
         setLoading(false)
       }
@@ -97,7 +101,7 @@ export function AddConsumableModal({
     setAddingId(consumableTypeId)
     try {
       await deviceModelsClientService.addCompatibleConsumable(deviceModelId, consumableTypeId)
-      toast.success('Đã thêm vật tư tiêu hao')
+      toast.success(t('device_model.add_consumable.add_success'))
       onAdded()
       onOpenChange(false)
     } catch (error: unknown) {
@@ -106,7 +110,7 @@ export function AddConsumableModal({
         typeof error === 'object' && error !== null && 'message' in error
           ? (error as { message?: unknown }).message
           : undefined
-      toast.error(String(message ?? error) || 'Không thể thêm vật tư tiêu hao')
+      toast.error(String(message ?? error) || t('device_model.add_consumable.add_error_fallback'))
     } finally {
       setAddingId(null)
     }
@@ -227,7 +231,9 @@ export function AddConsumableModal({
                               ) : (
                                 <AlertCircle className="h-3 w-3" />
                               )}
-                              {c.isActive ? 'Hoạt động' : 'Tạm dừng'}
+                              {c.isActive
+                                ? t('device_model.add_consumable.status.active')
+                                : t('device_model.add_consumable.status.inactive')}
                             </Badge>
                           </td>
                           <td className="px-4 py-3 text-right">
