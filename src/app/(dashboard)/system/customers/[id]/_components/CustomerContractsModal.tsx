@@ -232,7 +232,9 @@ export default function CustomerContractsModal({
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs font-medium text-slate-500">Tổng hợp đồng</p>
+                    <p className="text-xs font-medium text-slate-500">
+                      {t('customer.contracts.modal.total_contracts')}
+                    </p>
                     <p className="mt-1 text-2xl font-bold text-slate-900">{contracts.length}</p>
                   </div>
                   <div className="rounded-lg bg-[var(--brand-50)] p-2">
@@ -249,7 +251,9 @@ export default function CustomerContractsModal({
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs font-medium text-emerald-700">Đang hoạt động</p>
+                    <p className="text-xs font-medium text-emerald-700">
+                      {t('customer.contracts.modal.active')}
+                    </p>
                     <p className="mt-1 text-2xl font-bold text-emerald-900">
                       {statusCounts.ACTIVE || 0}
                     </p>
@@ -268,7 +272,9 @@ export default function CustomerContractsModal({
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs font-medium text-amber-700">Chờ xử lý</p>
+                    <p className="text-xs font-medium text-amber-700">
+                      {t('customer.contracts.modal.pending')}
+                    </p>
                     <p className="mt-1 text-2xl font-bold text-amber-900">
                       {statusCounts.PENDING || 0}
                     </p>
@@ -287,7 +293,9 @@ export default function CustomerContractsModal({
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs font-medium text-rose-700">Hết hạn</p>
+                    <p className="text-xs font-medium text-rose-700">
+                      {t('customer.contracts.modal.expired')}
+                    </p>
                     <p className="mt-1 text-2xl font-bold text-rose-900">
                       {statusCounts.EXPIRED || 0}
                     </p>
@@ -312,7 +320,7 @@ export default function CustomerContractsModal({
                   <Input
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="Tìm theo mã hợp đồng..."
+                    placeholder={t('customer.contracts.modal.search_placeholder')}
                     className="pl-9"
                   />
                 </div>
@@ -326,7 +334,7 @@ export default function CustomerContractsModal({
                   )}
                 >
                   <Filter className="h-4 w-4" />
-                  Bộ lọc
+                  {t('customer.contracts.modal.filter_button')}
                   {hasActiveFilters && (
                     <Badge variant="secondary" className="ml-1 h-5 w-5 rounded-full p-0 text-xs">
                       !
@@ -341,7 +349,7 @@ export default function CustomerContractsModal({
                     className="gap-2 text-slate-600"
                   >
                     <X className="h-4 w-4" />
-                    Xóa bộ lọc
+                    {t('customer.contracts.modal.clear_filters')}
                   </Button>
                 )}
               </div>
@@ -359,14 +367,14 @@ export default function CustomerContractsModal({
                     <div className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 md:grid-cols-2">
                       <div>
                         <label className="mb-1.5 block text-xs font-medium text-slate-700">
-                          Trạng thái
+                          {t('customer.contracts.modal.status_label')}
                         </label>
                         <select
                           value={statusFilter}
                           onChange={(e) => setStatusFilter(e.target.value)}
                           className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm transition-colors focus:border-sky-500 focus:ring-2 focus:ring-sky-200 focus:outline-none"
                         >
-                          <option value="">Tất cả trạng thái</option>
+                          <option value="">{t('customer.contracts.modal.all_statuses')}</option>
                           <option value="PENDING">Chờ xử lý</option>
                           <option value="ACTIVE">Đang hoạt động</option>
                           <option value="EXPIRED">Hết hạn</option>
@@ -375,18 +383,18 @@ export default function CustomerContractsModal({
                       </div>
                       <div>
                         <label className="mb-1.5 block text-xs font-medium text-slate-700">
-                          Loại hợp đồng
+                          {t('customer.contracts.modal.type_label')}
                         </label>
                         <select
                           value={typeFilter}
                           onChange={(e) => setTypeFilter(e.target.value)}
                           className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm transition-colors focus:border-sky-500 focus:ring-2 focus:ring-sky-200 focus:outline-none"
                         >
-                          <option value="">Tất cả loại</option>
+                          <option value="">{t('customer.contracts.modal.all_types')}</option>
                           <option value="MPS_CLICK_CHARGE">MPS Click Charge</option>
                           <option value="MPS_CONSUMABLE">MPS Consumable</option>
-                          <option value="CMPS_CLICK_CHARGE">CMPS Click Charge</option>
-                          <option value="CMPS_CONSUMABLE">CMPS Consumable</option>
+                          <option value="CMPS_CLICK_CHARGE">cMPS Click Charge</option>
+                          <option value="CMPS_CONSUMABLE">cMPS Consumable</option>
                           <option value="PARTS_REPAIR_SERVICE">Parts & Repair</option>
                         </select>
                       </div>
@@ -409,9 +417,11 @@ export default function CustomerContractsModal({
                     <Search className="h-8 w-8 text-slate-400" />
                   </div>
                   <div className="text-center">
-                    <p className="font-medium text-slate-700">Không tìm thấy kết quả</p>
+                    <p className="font-medium text-slate-700">
+                      {t('customer.contracts.modal.no_results')}
+                    </p>
                     <p className="mt-1 text-sm text-slate-500">
-                      Thử điều chỉnh bộ lọc hoặc tìm kiếm khác
+                      {t('customer.contracts.modal.no_results_desc')}
                     </p>
                   </div>
                 </div>
@@ -427,24 +437,24 @@ export default function CustomerContractsModal({
                       <th className="px-4 py-3.5 text-left">
                         <div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-slate-600 uppercase">
                           <FileText className="h-4 w-4" />
-                          Mã hợp đồng
+                          {t('customer.contracts.modal.contract_number')}
                         </div>
                       </th>
                       <th className="px-4 py-3.5 text-left">
                         <div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-slate-600 uppercase">
                           <Tag className="h-4 w-4" />
-                          Loại
+                          {t('customer.contracts.modal.type')}
                         </div>
                       </th>
                       <th className="px-4 py-3.5 text-left">
                         <div className="text-xs font-semibold tracking-wide text-slate-600 uppercase">
-                          Trạng thái
+                          {t('customer.contracts.modal.status')}
                         </div>
                       </th>
                       <th className="px-4 py-3.5 text-left">
                         <div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-slate-600 uppercase">
                           <Calendar className="h-4 w-4" />
-                          Thời gian
+                          {t('customer.contracts.modal.time_period')}
                         </div>
                       </th>
                       <th className="w-12 px-4 py-3.5"></th>
@@ -552,10 +562,10 @@ export default function CustomerContractsModal({
                     return (
                       <div>
                         <h4 className="mb-2 text-sm font-semibold text-slate-700">
-                          Mô tả hợp đồng
+                          {t('customer.contracts.modal.description_title')}
                         </h4>
                         <p className="text-sm text-slate-600">
-                          {contract.description || 'Không có mô tả'}
+                          {contract.description || t('customer.contracts.modal.no_description')}
                         </p>
                         {contract.documentUrl && (
                           <div className="mt-3">
@@ -566,7 +576,7 @@ export default function CustomerContractsModal({
                               className="inline-flex items-center gap-2 text-sm text-sky-600 hover:text-sky-700"
                             >
                               <FileText className="h-4 w-4" />
-                              Xem tài liệu hợp đồng
+                              {t('customer.contracts.modal.view_document')}
                               <ExternalLink className="h-3.5 w-3.5" />
                             </a>
                           </div>
@@ -589,17 +599,17 @@ export default function CustomerContractsModal({
                 <div className="flex items-center gap-2 text-slate-600">
                   <FileText className="h-4 w-4" />
                   <span>
-                    Hiển thị{' '}
+                    {t('customer.contracts.modal.showing')}{' '}
                     <span className="font-semibold text-slate-900">{filteredContracts.length}</span>
                     {filteredContracts.length !== contracts.length && (
                       <span> / {contracts.length}</span>
                     )}{' '}
-                    hợp đồng
+                    {t('customer.contracts.modal.contracts')}
                   </span>
                 </div>
                 {hasActiveFilters && (
                   <Badge variant="outline" className="border-sky-300 bg-sky-50 text-sky-700">
-                    Đang lọc
+                    {t('customer.contracts.modal.filtering')}
                   </Badge>
                 )}
               </motion.div>

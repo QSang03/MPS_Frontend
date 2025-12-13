@@ -1298,8 +1298,8 @@ export default function CustomerDetailClient({ customerId }: Props) {
                             </option>
                             <option value="MPS_CLICK_CHARGE">MPS Click Charge</option>
                             <option value="MPS_CONSUMABLE">MPS Consumable</option>
-                            <option value="CMPS_CLICK_CHARGE">CMPS Click Charge</option>
-                            <option value="CMPS_CONSUMABLE">CMPS Consumable</option>
+                            <option value="CMPS_CLICK_CHARGE">cMPS Click Charge</option>
+                            <option value="CMPS_CONSUMABLE">cMPS Consumable</option>
                             <option value="PARTS_REPAIR_SERVICE">Parts & Repair</option>
                           </select>
 

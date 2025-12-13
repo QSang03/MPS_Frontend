@@ -65,8 +65,8 @@ interface ContractFormProps {
 const contractTypes = [
   { value: 'MPS_CLICK_CHARGE', label: 'MPS Click Charge', icon: '📄', color: 'blue' },
   { value: 'MPS_CONSUMABLE', label: 'MPS Consumable', icon: '🖨️', color: 'purple' },
-  { value: 'CMPS_CLICK_CHARGE', label: 'CMPS Click Charge', icon: '📊', color: 'cyan' },
-  { value: 'CMPS_CONSUMABLE', label: 'CMPS Consumable', icon: '🔧', color: 'orange' },
+  { value: 'CMPS_CLICK_CHARGE', label: 'cMPS Click Charge', icon: '📊', color: 'cyan' },
+  { value: 'CMPS_CONSUMABLE', label: 'cMPS Consumable', icon: '🔧', color: 'orange' },
   { value: 'PARTS_REPAIR_SERVICE', label: 'Parts & Repair Service', icon: '⚙️', color: 'emerald' },
 ]
 

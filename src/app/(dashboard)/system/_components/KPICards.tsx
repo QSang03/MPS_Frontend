@@ -126,8 +126,8 @@ export function KPICards({
     {
       id: 'revenue',
       title: t('dashboard.kpi.revenue.title'),
-      value: kpis.totalCost ?? 0,
-      displayValue: formatCurrency(kpis.totalCost ?? 0, baseCurrency),
+      value: kpis.totalRevenue ?? 0,
+      displayValue: formatCurrency(kpis.totalRevenue ?? 0, baseCurrency),
       subtitle: t('dashboard.kpi.revenue.subtitle', {
         percent: `${costChangePercent > 0 ? '+' : ''}${costChangePercent.toFixed(1)}`,
       }),
