@@ -51,7 +51,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { toast } from 'sonner'
 import type { CurrencyDataDto } from '@/types/models/currency'
 import { formatCurrencyWithSymbol } from '@/lib/utils/formatters'
@@ -461,7 +460,7 @@ export default function MonthlyCostsPage() {
         ) : (
           <div className="space-y-6">
             {/* KPI Cards */}
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+            <div className="grid grid-cols-1 gap-6">
               <Card className="border-slate-200 shadow-sm transition-all hover:shadow-md dark:border-slate-700 dark:bg-slate-800">
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between">
@@ -472,49 +471,19 @@ export default function MonthlyCostsPage() {
                       <h3 className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
                         {formatCurrency(totalCostAfterAdjustment, displayCurrency)}
                       </h3>
+                      <p className="mt-4 text-xs text-slate-500 dark:text-slate-500">
+                        {t('page.user.costs.monthly.period_prefix')}:{' '}
+                        {mode === 'period'
+                          ? period
+                          : mode === 'range'
+                            ? `${from} ${t('analytics.range.to')} ${to}`
+                            : year}
+                      </p>
                     </div>
                     <div className="rounded-lg bg-[var(--brand-50)] p-3 dark:bg-[var(--brand-900)]/30">
                       <DollarSign className="h-6 w-6 text-[var(--brand-600)] dark:text-[var(--brand-400)]" />
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border-slate-200 shadow-sm transition-all hover:shadow-md dark:border-slate-700 dark:bg-slate-800">
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                          {labels.totalCost}
-                        </p>
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger>
-                              <Info className="h-4 w-4 text-slate-400" />
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>{labels.totalCostFormula}</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      </div>
-                      <h3 className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
-                        {formatCurrency(totalCost, displayCurrency)}
-                      </h3>
-                    </div>
-                    <div className="rounded-lg bg-orange-50 p-3 dark:bg-orange-900/30">
-                      <DollarSign className="h-6 w-6 text-orange-600 dark:text-orange-400" />
-                    </div>
-                  </div>
-                  <p className="mt-4 text-xs text-slate-500 dark:text-slate-500">
-                    {t('page.user.costs.monthly.period_prefix')}:{' '}
-                    {mode === 'period'
-                      ? period
-                      : mode === 'range'
-                        ? `${from} ${t('analytics.range.to')} ${to}`
-                        : year}
-                  </p>
                 </CardContent>
               </Card>
             </div>
