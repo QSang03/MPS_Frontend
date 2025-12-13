@@ -17,7 +17,7 @@ export default function LanguageSwitcher() {
     <div className="flex items-center gap-2" suppressHydrationWarning>
       <Button
         size="sm"
-        variant={mounted ? (locale === 'vi' ? 'default' : 'ghost') : 'ghost'}
+        variant={mounted ? (locale === 'vi' ? 'default' : 'outline') : 'outline'}
         onClick={() => {
           setLocale('vi')
           try {
@@ -34,7 +34,7 @@ export default function LanguageSwitcher() {
       </Button>
       <Button
         size="sm"
-        variant={mounted ? (locale === 'en' ? 'default' : 'ghost') : 'ghost'}
+        variant={mounted ? (locale === 'en' ? 'default' : 'outline') : 'outline'}
         onClick={() => {
           setLocale('en')
           try {

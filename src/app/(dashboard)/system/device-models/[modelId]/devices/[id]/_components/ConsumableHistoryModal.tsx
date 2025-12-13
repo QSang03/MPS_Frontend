@@ -157,13 +157,13 @@ export function ConsumableUsageHistory({
               className="flex-1 border-0 bg-transparent px-0 text-base focus-visible:ring-0"
             />
             <Button
-              variant="ghost"
+              variant="secondary"
               size="icon"
               onClick={() => {
                 setSearch('')
                 handleSearch()
               }}
-              className="h-8 w-8 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800"
+              className="h-8 w-8 rounded-full"
             >
               <RefreshCw className="h-4 w-4" />
             </Button>

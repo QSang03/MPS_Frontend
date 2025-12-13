@@ -27,7 +27,7 @@ export default function Page() {
                 window.location.reload()
               }}
               trigger={
-                <Button className="rounded-md border-0 bg-[var(--brand-100)] px-3 py-1.5 text-[var(--brand-700)] hover:bg-[var(--brand-200)]">
+                <Button variant="secondary" className="rounded-md border-0 px-3 py-1.5">
                   <Plus className="mr-2 h-4 w-4" />
                   {t('device_model.button.create')}
                 </Button>

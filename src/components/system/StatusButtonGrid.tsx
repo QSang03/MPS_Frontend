@@ -28,7 +28,7 @@ export function StatusButtonGrid({ current, assignedTo, hasPermission = true, on
           <Button
             key={s}
             className="justify-start"
-            variant={enabled ? 'secondary' : 'ghost'}
+            variant={enabled ? 'secondary' : 'outline'}
             onClick={() => enabled && onSelect(s)}
             disabled={!enabled}
             aria-label={t('service_request.aria.change_to', {

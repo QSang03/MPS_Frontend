@@ -33,7 +33,7 @@ export function PurchaseStatusButtonGrid({ current, hasPermission = true, onSele
           <Button
             key={s}
             className="h-auto justify-start py-3"
-            variant={enabled ? 'secondary' : 'ghost'}
+            variant={enabled ? 'secondary' : 'outline'}
             onClick={() => enabled && onSelect(s)}
             disabled={!enabled}
             aria-label={t('purchase_request.status.change_to', {

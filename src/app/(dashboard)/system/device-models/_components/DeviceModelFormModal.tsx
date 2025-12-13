@@ -141,7 +141,7 @@ export function DeviceModelFormModal({ mode = 'create', model = null, onSaved, t
       ) : (
         <DialogTrigger asChild>
           {mode === 'create' ? (
-            <Button className="gap-2 bg-white text-[var(--brand-600)] hover:bg-white/90">
+            <Button variant="outline" className="gap-2 hover:bg-[var(--accent)]">
               <Plus className="h-4 w-4" />
               {t('device_model.button.create')}
             </Button>

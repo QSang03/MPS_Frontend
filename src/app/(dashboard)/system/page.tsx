@@ -264,7 +264,10 @@ export default function CustomerAdminDashboard() {
         icon={<LayoutDashboard className="h-7 w-7" />}
         actions={
           <>
-            <Button className="h-10 rounded-full border-0 bg-white px-5 text-sm font-semibold text-[var(--brand-500)] shadow-sm hover:bg-[var(--brand-50)]">
+            <Button
+              variant="outline"
+              className="h-10 rounded-full px-5 text-sm font-semibold shadow-sm hover:bg-[var(--accent)]"
+            >
               <FileText className="mr-2 h-4 w-4" />
               {t('dashboard.overview.actions.view_report')}
             </Button>

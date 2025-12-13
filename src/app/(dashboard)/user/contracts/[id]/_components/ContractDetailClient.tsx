@@ -66,7 +66,7 @@ export default function ContractDetailClient({ contractId }: Props) {
             {t('common.back')}
           </Button>
           {contract.documentUrl && (
-            <Button variant="secondary" size="sm" asChild className="gap-1 text-sky-700">
+            <Button variant="secondary" size="sm" asChild className="gap-1">
               <a href={contract.documentUrl} target="_blank" rel="noopener noreferrer">
                 <FileText className="h-4 w-4" />
                 {t('contracts.view_document')}

@@ -132,7 +132,7 @@ export function PurchaseRequestList({ status: initialStatus }: PurchaseRequestLi
           {Object.values(PurchaseRequestStatus).map((s) => (
             <Button
               key={s}
-              variant={filterStatus === s ? 'secondary' : 'ghost'}
+              variant={filterStatus === s ? 'secondary' : 'outline'}
               size="sm"
               onClick={() => setFilterStatus(s)}
               className={cn(

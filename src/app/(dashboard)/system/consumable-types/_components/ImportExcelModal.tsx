@@ -136,7 +136,7 @@ export default function ImportExcelModal({ trigger }: ImportExcelModalProps = {}
         <DialogTrigger asChild>{trigger}</DialogTrigger>
       ) : (
         <DialogTrigger asChild>
-          <Button className="gap-2 bg-white text-emerald-600 hover:bg-white/90">
+          <Button variant="outline" className="gap-2 hover:bg-[var(--accent)]">
             <FileText className="h-4 w-4" />
             {t('consumable_types.import.button')}
           </Button>
@@ -162,9 +162,10 @@ export default function ImportExcelModal({ trigger }: ImportExcelModalProps = {}
               {t('button.cancel')}
             </Button>
             <Button
+              variant="default"
               onClick={handleUpload}
               disabled={loading}
-              className="min-w-[120px] bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
+              className="min-w-[120px]"
             >
               {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               {t('consumable_types.import.upload')}

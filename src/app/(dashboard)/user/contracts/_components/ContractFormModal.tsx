@@ -73,7 +73,7 @@ export function ContractFormModal({ initial, onCreated, trigger }: ContractFormM
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger || (
-          <Button className="gap-2 bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] shadow-lg transition-all hover:bg-[var(--btn-primary-hover)] hover:shadow-xl">
+          <Button variant="default" className="gap-2 shadow-lg transition-all hover:shadow-xl">
             <Plus className="h-4 w-4" />
             Tạo hợp đồng
           </Button>

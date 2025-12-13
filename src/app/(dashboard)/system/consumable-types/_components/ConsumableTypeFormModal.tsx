@@ -90,7 +90,7 @@ export default function ConsumableTypeFormModal({
       ) : (
         <DialogTrigger asChild>
           {mode === 'create' ? (
-            <Button className="gap-2 bg-white text-emerald-600 hover:bg-white/90">
+            <Button variant="outline" className="gap-2 hover:bg-[var(--accent)]">
               <Plus className="h-4 w-4" />
               {t('consumable_types.actions.create')}
             </Button>

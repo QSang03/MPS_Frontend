@@ -293,28 +293,6 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
       [] as Array<{ month: string; name: string; bw: number; color: number; total: number }>
     ) || []
 
-  // Mock previous data point for better visualization if only 1 point exists
-  if (usageData.length === 1) {
-    const current = usageData[0]
-    if (current && current.month) {
-      // Generate 5 previous months mock data for better trend visualization
-      for (let i = 1; i <= 5; i++) {
-        const currentDate = new Date(current.month + '-01')
-        currentDate.setMonth(currentDate.getMonth() - i)
-        const prevMonth = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`
-        const prevMonthLabel = `Prev ${i}`
-
-        usageData.unshift({
-          month: prevMonth,
-          name: prevMonthLabel,
-          bw: Math.max(0, current.bw - i * 500),
-          color: Math.max(0, current.color - i * 200),
-          total: Math.max(0, current.total - i * 700),
-        })
-      }
-    }
-  }
-
   const deviceData =
     overview.topDevices
       ?.map((d, index) => ({
@@ -354,14 +332,14 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
             <MonthPicker value={month} onChange={handleMonthChange} />
             <Button
               variant="secondary"
-              className="h-10 rounded-full border-white/30 bg-white/10 px-5 text-sm font-semibold text-[var(--brand-500)] backdrop-blur hover:bg-white/20"
+              className="h-10 rounded-full border-white/30 bg-white/10 px-5 text-sm font-semibold backdrop-blur hover:bg-white/20"
               onClick={() => router.push(ROUTES.USER_MY_DEVICES)}
             >
               <FileBarChart className="mr-2 h-4 w-4" />
               {t('dashboard.actions.devices')}
             </Button>
             <ServiceRequestFormModal customerId={overview.customerId}>
-              <Button className="h-10 rounded-full border-0 bg-white px-5 text-sm font-semibold text-[var(--brand-500)] shadow-sm hover:bg-[var(--brand-50)]">
+              <Button className="h-10 rounded-full border-0 px-5 text-sm font-semibold shadow-sm">
                 <Send className="mr-2 h-4 w-4" />
                 {t('dashboard.actions.send_request')}
               </Button>
@@ -542,8 +520,7 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
                     tickLine={false}
                     tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }}
                     tickFormatter={(value) => (value >= 1000 ? `${value / 1000}k` : value)}
-                    ticks={[0, 200000, 400000, 600000, 800000]}
-                    domain={[0, 800000]}
+                    domain={['dataMin', (dataMax) => Math.ceil(dataMax * 1.1)]}
                     label={{
                       value: t('dashboard.usage.yaxis'),
                       angle: -90,

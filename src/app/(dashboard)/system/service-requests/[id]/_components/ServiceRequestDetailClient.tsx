@@ -1071,12 +1071,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                 <div className="text-muted-foreground bg-muted/10 flex h-32 flex-col items-center justify-center rounded-lg border-2 border-dashed">
                   <FileText className="mb-2 h-8 w-8 opacity-50" />
                   <span className="text-sm">Chưa có mục chi phí nào</span>
-                  <Button
-                    variant="link"
-                    size="sm"
-                    onClick={addItem}
-                    className="text-[var(--brand-500)]"
-                  >
+                  <Button variant="outline" size="sm" onClick={addItem}>
                     Thêm ngay
                   </Button>
                 </div>

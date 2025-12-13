@@ -984,7 +984,7 @@ function DevicesTableContent({
                     description={t('device.delete.description')}
                     onConfirm={async () => handleDeleteDevice(device.id)}
                     trigger={
-                      <Button variant="destructive" size="sm" className="h-7 w-7 p-0 text-red-600">
+                      <Button variant="destructive" size="sm" className="h-7 w-7 p-0">
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     }

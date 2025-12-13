@@ -422,7 +422,7 @@ export default function DeviceFormModal({
         <DialogTrigger asChild>{trigger}</DialogTrigger>
       ) : mode === 'create' ? (
         <DialogTrigger asChild>
-          <Button className="gap-2 bg-white text-[var(--brand-500)] hover:bg-[var(--brand-50)]">
+          <Button variant="outline" className="gap-2 hover:bg-[var(--accent)]">
             <Plus className="h-4 w-4" />
             {t('devices.add')}
           </Button>
@@ -475,7 +475,8 @@ export default function DeviceFormModal({
               type="submit"
               form="device-form"
               disabled={submitting}
-              className="min-w-[120px] bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
+              variant="default"
+              className="min-w-[120px]"
             >
               {submitting ? (
                 <>

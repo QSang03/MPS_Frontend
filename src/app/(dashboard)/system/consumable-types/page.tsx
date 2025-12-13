@@ -23,7 +23,7 @@ export default function ConsumableTypesPage() {
           <>
             <ImportExcelModal
               trigger={
-                <Button className="border-0 bg-white text-[var(--brand-500)] hover:bg-[var(--brand-50)]">
+                <Button variant="outline" className="hover:bg-[var(--accent)]">
                   <Upload className="mr-2 h-4 w-4" />
                   {t('consumable_types.import.button')}
                 </Button>
@@ -31,7 +31,7 @@ export default function ConsumableTypesPage() {
             />
             <BulkAssignModal
               trigger={
-                <Button className="border-0 bg-white text-[var(--brand-500)] hover:bg-[var(--brand-50)]">
+                <Button variant="outline" className="hover:bg-[var(--accent)]">
                   <Link2 className="mr-2 h-4 w-4" />
                   {t('consumable_types.actions.bulk_assign')}
                 </Button>
@@ -46,7 +46,7 @@ export default function ConsumableTypesPage() {
                   }
                 }}
                 trigger={
-                  <Button className="border-0 bg-white text-[var(--brand-500)] hover:bg-[var(--brand-50)]">
+                  <Button variant="outline" className="hover:bg-[var(--accent)]">
                     <Plus className="mr-2 h-4 w-4" />
                     {t('consumable_types.actions.create')}
                   </Button>

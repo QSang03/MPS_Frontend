@@ -17,7 +17,7 @@ export default function ConsumablesPage() {
         actions={
           <BulkAssignModal
             trigger={
-              <Button className="border-0 bg-white text-[var(--brand-500)] hover:bg-[var(--brand-50)]">
+              <Button variant="outline" className="hover:bg-[var(--accent)]">
                 <PackagePlus className="mr-2 h-4 w-4" />{' '}
                 {t('consumables.button.assign_to_customer')}
               </Button>

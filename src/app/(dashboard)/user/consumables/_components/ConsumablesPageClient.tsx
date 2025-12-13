@@ -342,7 +342,7 @@ export default function ConsumablesPageClient() {
               variant="outline"
               size="icon"
               onClick={handleRefresh}
-              className="border-white/20 bg-white/10 text-black hover:bg-white/20 dark:text-white"
+              className="border-white/20 bg-white/10 hover:bg-white/20"
               title={t('button.refresh')}
             >
               <RefreshCw className={`${loading ? 'animate-spin' : ''} h-5 w-5`} />
@@ -350,7 +350,7 @@ export default function ConsumablesPageClient() {
             <ActionGuard pageId="consumables" actionId="create">
               <BulkAssignModal
                 trigger={
-                  <Button className="bg-white text-[var(--brand-600)] hover:bg-[var(--brand-50)]">
+                  <Button variant="outline" className="hover:bg-[var(--accent)]">
                     <Plus className="mr-2 h-4 w-4" />
                     {t('page.consumables.create')}
                   </Button>

@@ -381,7 +381,7 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
         {trigger ? (
           trigger
         ) : mode === 'create' ? (
-          <Button className="gap-2 bg-white text-[var(--brand-600)] hover:bg-white/90">
+          <Button variant="outline" className="gap-2 hover:bg-[var(--accent)]">
             <Plus className="h-4 w-4" />
             {t('customer.button.add')}
           </Button>
@@ -414,9 +414,10 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
               {t('customer.button.cancel')}
             </Button>
             <Button
+              variant="default"
               type="submit"
               form="customer-form"
-              className="min-w-[140px] bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
+              className="min-w-[140px]"
               disabled={submitting}
             >
               {submitting ? (
