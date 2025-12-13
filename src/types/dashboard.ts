@@ -86,6 +86,11 @@ export interface TopCustomer {
   totalRevenue: number // doanh thu
   totalCogs: number // chi phí
   grossProfit: number // lợi nhuận gộp
+  // Converted values (if backend returns for admin/base currency)
+  totalRevenueConverted?: number
+  totalCogsConverted?: number
+  grossProfitConverted?: number
+  baseCurrency?: import('@/types/models/currency').CurrencyDataDto | null
 }
 
 /**
