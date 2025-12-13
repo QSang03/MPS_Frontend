@@ -48,9 +48,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
 // CREATE maintenance history by device ID
 export async function POST(request: NextRequest, { params }: RouteParams) {
+  const { deviceId } = await params
   let originalBody: unknown = undefined
   try {
-    const { deviceId } = await params
     const cookieStore = await cookies()
     const accessToken = cookieStore.get('access_token')?.value
     if (!accessToken) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

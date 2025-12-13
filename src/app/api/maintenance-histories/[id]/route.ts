@@ -38,9 +38,9 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
 
 // UPDATE maintenance history
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
+  const { id } = await params
   let originalBody: unknown = undefined
   try {
-    const { id } = await params
     const cookieStore = await cookies()
     const accessToken = cookieStore.get('access_token')?.value
     if (!accessToken) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -146,8 +146,8 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
 // DELETE maintenance history
 export async function DELETE(_request: NextRequest, { params }: RouteParams) {
+  const { id } = await params
   try {
-    const { id } = await params
     const cookieStore = await cookies()
     const accessToken = cookieStore.get('access_token')?.value
     if (!accessToken) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
