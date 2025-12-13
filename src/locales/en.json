@@ -246,6 +246,7 @@
   "placeholder.all_customers": "All customers",
   "table.index": "#",
   "customer": "Customer",
+  "user.role": "Role",
   "user.empty.title": "No users found",
   "user.empty.search_result": "No matching users found",
   "user.empty.create_first": "Create your first user",

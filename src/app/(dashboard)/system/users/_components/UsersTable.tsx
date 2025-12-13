@@ -40,6 +40,7 @@ import {
   AlertCircle,
   Building2,
   UserCog,
+  Settings,
 } from 'lucide-react'
 import { formatDate } from '@/lib/utils/formatters'
 import { EditUserModal } from './EditUserModal'
@@ -582,8 +583,8 @@ function UsersTableContent({
       {
         id: 'actions',
         header: () => (
-          <div className="flex items-center gap-2">
-            <UserCog className="h-4 w-4 text-gray-600" />
+          <div className="ml-auto flex items-center justify-end gap-2">
+            <Settings className="h-4 w-4 text-gray-600" />
             {t('table.actions')}
           </div>
         ),

@@ -223,6 +223,7 @@
   "placeholder.all_customers": "Tất cả KH",
   "table.index": "STT",
   "customer": "Khách hàng",
+  "user.role": "Vai trò",
   "user.empty.title": "Không có người dùng nào",
   "user.empty.search_result": "Không tìm thấy người dùng phù hợp",
   "user.empty.create_first": "Hãy tạo người dùng đầu tiên",
