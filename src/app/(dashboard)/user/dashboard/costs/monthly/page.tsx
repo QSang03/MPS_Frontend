@@ -953,7 +953,12 @@ export default function MonthlyCostsPage() {
                               marginBottom: '0.5rem',
                             }}
                           />
-                          <Legend />
+                          <Legend
+                            wrapperStyle={{
+                              paddingTop: '10px',
+                              fontSize: '12px',
+                            }}
+                          />
                           <Bar
                             dataKey="totalCostAfterAdjustment"
                             fill="var(--brand-600)"
@@ -1012,7 +1017,12 @@ export default function MonthlyCostsPage() {
                               marginBottom: '0.5rem',
                             }}
                           />
-                          <Legend />
+                          <Legend
+                            wrapperStyle={{
+                              paddingTop: '10px',
+                              fontSize: '12px',
+                            }}
+                          />
                           <Line
                             type="monotone"
                             dataKey="totalCostAfterAdjustment"
@@ -1112,7 +1122,12 @@ export default function MonthlyCostsPage() {
                               marginBottom: '0.5rem',
                             }}
                           />
-                          <Legend />
+                          <Legend
+                            wrapperStyle={{
+                              paddingTop: '10px',
+                              fontSize: '12px',
+                            }}
+                          />
                           <Bar
                             dataKey="totalCostAfterAdjustment"
                             fill="var(--brand-600)"
@@ -1175,7 +1190,12 @@ export default function MonthlyCostsPage() {
                               marginBottom: '0.5rem',
                             }}
                           />
-                          <Legend />
+                          <Legend
+                            wrapperStyle={{
+                              paddingTop: '10px',
+                              fontSize: '12px',
+                            }}
+                          />
                           <Line
                             type="monotone"
                             dataKey="totalCostAfterAdjustment"
