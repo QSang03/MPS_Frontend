@@ -338,7 +338,6 @@ export default function MonthlyCostsPage() {
     costData?.customer?.totalCostAfterAdjustment ?? costData?.customer?.totalCost ?? 0
   const costAdjustmentDebit = costData?.customer?.costAdjustmentDebit ?? 0
   const costAdjustmentCredit = costData?.customer?.costAdjustmentCredit ?? 0
-  const costAdjustmentFormula = costData?.customer?.costAdjustmentFormula
 
   return (
     <div className="min-h-screen from-slate-50 via-[var(--brand-50)] to-[var(--brand-50)] px-4 py-8 sm:px-6 lg:px-8 dark:from-slate-950 dark:via-[var(--brand-950)] dark:to-[var(--brand-950)]">
@@ -475,9 +474,6 @@ export default function MonthlyCostsPage() {
                       <DollarSign className="h-6 w-6 text-[var(--brand-600)] dark:text-[var(--brand-400)]" />
                     </div>
                   </div>
-                  <p className="mt-4 text-xs text-slate-500 dark:text-slate-500">
-                    {costAdjustmentFormula || labels.totalCostFormula}
-                  </p>
                 </CardContent>
               </Card>
 
@@ -893,12 +889,37 @@ export default function MonthlyCostsPage() {
             {!selectedDeviceId && aggregatedCostSeries && aggregatedCostSeries.length > 0 && (
               <Card className="border-slate-200 shadow-sm dark:border-slate-700 dark:bg-slate-800">
                 <CardHeader>
-                  <CardTitle className="text-xl font-bold text-slate-900 dark:text-white">
-                    {t('page.user.costs.monthly.trends.overview_title')}
-                  </CardTitle>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">
-                    {t('page.user.costs.monthly.trends.overview_description')}
-                  </p>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-xl font-bold text-slate-900 dark:text-white">
+                        {t('page.user.costs.monthly.trends.overview_title')}
+                      </CardTitle>
+                      <p className="text-sm text-slate-600 dark:text-slate-400">
+                        {t('page.user.costs.monthly.trends.overview_description')}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-slate-600 dark:text-slate-400">
+                        {t('page.user.costs.monthly.trends.select_device')}:
+                      </span>
+                      <Select onValueChange={setSelectedDeviceId}>
+                        <SelectTrigger className="w-48">
+                          <SelectValue
+                            placeholder={t(
+                              'page.user.costs.monthly.trends.select_device_placeholder'
+                            )}
+                          />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {costData?.devices?.map((device) => (
+                            <SelectItem key={device.deviceId} value={device.deviceId}>
+                              {device.model} - {device.serialNumber}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div style={{ width: '100%', height: 320 }}>
