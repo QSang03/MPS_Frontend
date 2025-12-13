@@ -197,7 +197,7 @@ export function ServiceRequestDetailClient({ id }: Props) {
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
               onClick={() => router.back()}
               className="text-muted-foreground hover:text-foreground -ml-2 h-8"

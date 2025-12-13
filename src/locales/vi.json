@@ -233,6 +233,7 @@
   "page.users.title": "Danh sách Người dùng",
   "page.users.subtitle": "Quản lý tài khoản và phân quyền người dùng",
   "pagination.showing_of": "Hiển thị {current} / {total} người dùng",
+  "pagination.showing_range_results": "Hiển thị {from} - {to} / {total} kết quả",
   "page.users.create": "Tạo người dùng",
   "empty.users.title": "Không có người dùng nào",
   "empty.users.description": "Hãy tạo người dùng đầu tiên hoặc thử thay đổi bộ lọc",

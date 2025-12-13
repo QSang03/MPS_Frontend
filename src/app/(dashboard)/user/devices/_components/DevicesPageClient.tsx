@@ -779,9 +779,9 @@ export default function DevicesPageClient() {
                                     }
                                   ).customer?.code === 'SYS' && (
                                     <Button
-                                      variant="ghost"
+                                      variant="default"
                                       size="sm"
-                                      className="h-7 w-7 p-0 hover:bg-[var(--warning-50)]"
+                                      className="h-7 w-7 p-0"
                                       onClick={() => {
                                         setEditingDeviceId(d.id)
                                         setShowCustomerSelect(true)
@@ -811,9 +811,9 @@ export default function DevicesPageClient() {
                                         }}
                                         trigger={
                                           <Button
-                                            variant="ghost"
+                                            variant="destructive"
                                             size="sm"
-                                            className="h-7 w-7 p-0 hover:bg-[var(--error-50)]"
+                                            className="h-7 w-7 p-0"
                                             disabled={updatingCustomer}
                                             title={t('user_devices.remove_customer.button')}
                                           >
@@ -1009,9 +1009,9 @@ export default function DevicesPageClient() {
                               <Tooltip>
                                 <TooltipTrigger asChild>
                                   <Button
-                                    variant="ghost"
+                                    variant="secondary"
                                     size="sm"
-                                    className="h-8 w-8 p-0 text-black hover:bg-[var(--brand-50)] dark:text-white"
+                                    className="h-8 w-8 p-0 text-black dark:text-white"
                                     disabled
                                     title={t('device.historical_cannot_edit')}
                                   >
@@ -1045,9 +1045,9 @@ export default function DevicesPageClient() {
                               onSuccess={() => fetchDevices()}
                             >
                               <Button
-                                variant="ghost"
+                                variant="default"
                                 size="sm"
-                                className="h-8 w-8 p-0 text-black hover:bg-[var(--brand-50)] dark:text-white"
+                                className="h-8 w-8 p-0 text-black dark:text-white"
                                 title={t('user_devices.action.create_request')}
                                 disabled={isHistoricalDevice(d)}
                               >
@@ -1055,9 +1055,9 @@ export default function DevicesPageClient() {
                               </Button>
                             </ServiceRequestFormModal>
                             <Button
-                              variant="ghost"
+                              variant="default"
                               size="sm"
-                              className="h-8 w-8 p-0 text-black hover:bg-[var(--brand-50)] dark:text-white"
+                              className="h-8 w-8 p-0 text-black dark:text-white"
                               title={t('user_devices.action.view_a4_history')}
                               onClick={() => {
                                 setA4HistoryDevice(d)
@@ -1091,7 +1091,12 @@ export default function DevicesPageClient() {
               </div>
 
               {searchTerm && devices.length !== filteredDevices.length && (
-                <Button variant="ghost" size="sm" onClick={() => setSearchTerm('')} className="h-8">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setSearchTerm('')}
+                  className="h-8"
+                >
                   {t('user_devices.footer.clear_filter')}
                 </Button>
               )}

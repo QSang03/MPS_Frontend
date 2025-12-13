@@ -231,7 +231,7 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
     return (
       <div className="space-y-6">
         <Link href={backHref ?? '/user/devices'}>
-          <Button variant="ghost" className="gap-2">
+          <Button variant="outline" className="gap-2">
             <ArrowLeft className="h-4 w-4" /> {t('common.back')}
           </Button>
         </Link>
@@ -251,7 +251,7 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
     return (
       <div className="space-y-6">
         <Link href={backHref ?? '/user/devices'}>
-          <Button variant="ghost" className="gap-2">
+          <Button variant="outline" className="gap-2">
             <ArrowLeft className="h-4 w-4" /> {t('common.back')}
           </Button>
         </Link>
@@ -323,7 +323,7 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
       <div>
         <div className="mb-2">
           <Link href={backHref ?? '/user/devices'}>
-            <Button variant="ghost" className="gap-2">
+            <Button variant="outline" className="gap-2">
               <ArrowLeft className="h-4 w-4" /> {t('common.back')}
             </Button>
           </Link>

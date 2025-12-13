@@ -285,7 +285,7 @@ export function CustomerTable({
                       <Check className="h-4 w-4" />
                     )}
                   </Button>
-                  <Button size="sm" variant="ghost" onClick={() => setEditingAddressFor(null)}>
+                  <Button size="sm" variant="secondary" onClick={() => setEditingAddressFor(null)}>
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
@@ -302,20 +302,20 @@ export function CustomerTable({
                   customer={customer}
                   onSaved={handleSaved}
                   trigger={
-                    <Button variant="ghost" size="sm" className="p-2">
+                    <Button variant="default" size="sm" className="p-2">
                       <Eye className="h-4 w-4" />
                     </Button>
                   }
                 />
               ) : (
                 <Button
-                  variant="ghost"
+                  variant="default"
                   size="sm"
                   onClick={() => {
                     setEditingAddressFor(customer.id)
                     setEditingAddressValue(first === '—' ? '' : String(first))
                   }}
-                  className="transition-all hover:bg-[var(--brand-100)] hover:text-[var(--brand-700)]"
+                  className="transition-all"
                   aria-label={t('customer.address.edit')}
                 >
                   <Edit className="h-4 w-4" />
@@ -398,9 +398,9 @@ export function CustomerTable({
                   initialIsCustomerOwned={true}
                   trigger={
                     <Button
-                      variant="ghost"
+                      variant="default"
                       size="sm"
-                      className="transition-all hover:bg-[var(--brand-50)] hover:text-[var(--brand-700)]"
+                      className="transition-all"
                       aria-label={t('devices.add')}
                     >
                       <Plus className="h-4 w-4" />
@@ -425,10 +425,10 @@ export function CustomerTable({
                   onConfirm={async () => handleDelete(customer.id)}
                   trigger={
                     <Button
-                      variant="ghost"
+                      variant="destructive"
                       size="sm"
                       disabled={deletingId === customer.id || isSysCustomer}
-                      className="transition-all hover:bg-red-100 hover:text-red-700"
+                      className="transition-all"
                       title={
                         isSysCustomer ? t('customer.delete_forbidden') : t('dialog.delete.trigger')
                       }

@@ -323,7 +323,7 @@ export function ModernSidebar({ session }: SidebarProps) {
               </div>
             </div>
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
               className="flex-shrink-0 text-slate-500 hover:bg-slate-100 lg:hidden"
               onClick={toggleSidebar}

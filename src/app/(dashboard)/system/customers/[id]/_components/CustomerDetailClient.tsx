@@ -801,9 +801,9 @@ export default function CustomerDetailClient({ customerId }: Props) {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
-                    variant="ghost"
+                    variant="secondary"
                     size="sm"
-                    className="h-8 w-8 p-0 text-slate-600 hover:bg-slate-100"
+                    className="h-8 w-8 p-0 text-slate-600"
                     onClick={() => {
                       setA4HistoryDevice(device)
                       setA4HistoryOpen(true)
@@ -821,9 +821,9 @@ export default function CustomerDetailClient({ customerId }: Props) {
                 <TooltipTrigger asChild>
                   <Link href={`/system/devices/${device.device.id}`}>
                     <Button
-                      variant="ghost"
+                      variant="default"
                       size="sm"
-                      className="h-8 w-8 p-0 text-sky-600 hover:bg-sky-50 hover:text-sky-700"
+                      className="h-8 w-8 p-0 text-sky-600"
                       aria-label={t('customer.detail.device.view')}
                     >
                       <Eye className="h-4 w-4" />
@@ -836,9 +836,9 @@ export default function CustomerDetailClient({ customerId }: Props) {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
-                      variant="ghost"
+                      variant="destructive"
                       size="sm"
-                      className="h-8 w-8 p-0 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                      className="h-8 w-8 p-0 text-rose-600"
                       onClick={() => {
                         if (device.deviceId) {
                           handleDetachDevice(contract.id, device.deviceId)
@@ -951,9 +951,9 @@ export default function CustomerDetailClient({ customerId }: Props) {
                   <TooltipTrigger asChild>
                     <Link href={`/system/devices/${device.id}`}>
                       <Button
-                        variant="ghost"
+                        variant="default"
                         size="sm"
-                        className="h-8 w-8 p-0 text-sky-600 hover:bg-sky-50 hover:text-sky-700"
+                        className="h-8 w-8 p-0 text-sky-600"
                         aria-label={t('customer.detail.device.view')}
                       >
                         <Eye className="h-4 w-4" />
@@ -1318,7 +1318,7 @@ export default function CustomerDetailClient({ customerId }: Props) {
                                 : t('customer.detail.contracts.sort.oldest')}
                             </Button>
                             <Button
-                              variant="ghost"
+                              variant="secondary"
                               size="sm"
                               onClick={() => {
                                 setSearch('')
@@ -1507,9 +1507,9 @@ export default function CustomerDetailClient({ customerId }: Props) {
                                     <Tooltip>
                                       <TooltipTrigger asChild>
                                         <Button
-                                          variant="ghost"
+                                          variant="default"
                                           size="sm"
-                                          className="h-8 w-8 p-0 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
+                                          className="h-8 w-8 p-0 text-emerald-600"
                                           onClick={() =>
                                             setCreateBillingContract({
                                               id: contract.id,
@@ -1530,9 +1530,9 @@ export default function CustomerDetailClient({ customerId }: Props) {
                                     <Tooltip>
                                       <TooltipTrigger asChild>
                                         <Button
-                                          variant="ghost"
+                                          variant="default"
                                           size="sm"
-                                          className="h-8 w-8 p-0 text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                                          className="h-8 w-8 p-0 text-slate-600"
                                           onClick={() => setEditingContract(contract)}
                                           aria-label={t('customer.detail.contracts.edit')}
                                         >
@@ -1548,9 +1548,9 @@ export default function CustomerDetailClient({ customerId }: Props) {
                                     <Tooltip>
                                       <TooltipTrigger asChild>
                                         <Button
-                                          variant="ghost"
+                                          variant="default"
                                           size="sm"
-                                          className="h-8 w-8 p-0 text-sky-600 hover:bg-sky-50 hover:text-sky-700"
+                                          className="h-8 w-8 p-0 text-sky-600"
                                           onClick={() => {
                                             setAttachModalContractId(contract.id)
                                             setAttachModalOpen(true)
@@ -1591,9 +1591,9 @@ export default function CustomerDetailClient({ customerId }: Props) {
                                         trigger={
                                           <TooltipTrigger asChild>
                                             <Button
-                                              variant="ghost"
+                                              variant="destructive"
                                               size="sm"
-                                              className="h-8 w-8 p-0 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                                              className="h-8 w-8 p-0 text-rose-600"
                                               aria-label={t(
                                                 'customer.detail.contracts.delete.label'
                                               )}
@@ -1611,7 +1611,7 @@ export default function CustomerDetailClient({ customerId }: Props) {
 
                                   {/* Expand/collapse chevron */}
                                   <Button
-                                    variant="ghost"
+                                    variant="secondary"
                                     size="icon"
                                     onClick={() => toggleContract(contract.id)}
                                     className="h-8 w-8 transition-transform hover:bg-slate-100"
@@ -1842,9 +1842,9 @@ export default function CustomerDetailClient({ customerId }: Props) {
                             >
                               <td className="px-4 py-5 text-center">
                                 <Button
-                                  variant="ghost"
+                                  variant="secondary"
                                   size="icon"
-                                  className="h-8 w-8 transition-transform hover:bg-amber-100"
+                                  className="h-8 w-8 transition-transform"
                                   onClick={() => toggleConsumableType(group.typeId)}
                                 >
                                   <motion.div

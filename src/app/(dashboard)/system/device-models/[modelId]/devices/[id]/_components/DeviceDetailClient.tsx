@@ -500,7 +500,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
             backHref ?? (modelId ? `/system/device-models/${modelId}` : '/system/device-models')
           }
         >
-          <Button variant="ghost" className="gap-2">
+          <Button variant="outline" className="gap-2">
             <ArrowLeft className="h-4 w-4" />
             {t('common.back')}
           </Button>
@@ -525,7 +525,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
             backHref ?? (modelId ? `/system/device-models/${modelId}` : '/system/device-models')
           }
         >
-          <Button variant="ghost" className="gap-2">
+          <Button variant="outline" className="gap-2">
             <ArrowLeft className="h-4 w-4" />
             {t('common.back')}
           </Button>
@@ -604,7 +604,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                 backHref ?? (modelId ? `/system/device-models/${modelId}` : '/system/device-models')
               }
             >
-              <Button variant="ghost" className="gap-2">
+              <Button variant="outline" className="gap-2">
                 <ArrowLeft className="h-4 w-4" />
                 {t('common.back')}
               </Button>
@@ -1510,7 +1510,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                               <div className="flex items-center justify-center gap-2">
                                 <Button
                                   size="sm"
-                                  variant="ghost"
+                                  variant="secondary"
                                   onClick={() => {
                                     // open modal to show consumable history for this consumable
                                     const selectedId = cons?.id ?? c?.id
@@ -1596,7 +1596,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                                 {canShowWarningButton ? (
                                   <Button
                                     size="sm"
-                                    variant="ghost"
+                                    variant="secondary"
                                     onClick={() => {
                                       setWarningTarget(c)
                                       setWarningPercentageEdit(
@@ -3324,7 +3324,7 @@ export function ConsumableUsageHistory({
               className="h-8 border-0 bg-transparent px-0 py-0"
             />
             <Button
-              variant="ghost"
+              variant="secondary"
               size="sm"
               onClick={() => {
                 setSearch('')
@@ -3364,7 +3364,7 @@ export function ConsumableUsageHistory({
             <option value="20">20</option>
             <option value="50">50</option>
           </select>
-          <Button variant="ghost" size="sm" onClick={() => load()}>
+          <Button variant="secondary" size="sm" onClick={() => load()}>
             {t('button.refresh')}
           </Button>
         </div>

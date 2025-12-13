@@ -347,7 +347,7 @@ export function MaintenanceHistoryTab({ deviceId }: MaintenanceHistoryTabProps) 
                             {item.attachmentUrls.length > 0 && (
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                                  <Button variant="outline" size="icon" className="h-8 w-8">
                                     <Eye className="h-4 w-4" />
                                   </Button>
                                 </TooltipTrigger>
@@ -364,7 +364,7 @@ export function MaintenanceHistoryTab({ deviceId }: MaintenanceHistoryTabProps) 
                               compact
                             />
                             <Button
-                              variant="ghost"
+                              variant="outline"
                               size="icon"
                               className="h-8 w-8 text-red-500 hover:text-red-700"
                               onClick={() => handleDelete(item)}
@@ -386,8 +386,11 @@ export function MaintenanceHistoryTab({ deviceId }: MaintenanceHistoryTabProps) 
             <div className="flex items-center justify-between">
               <div className="text-muted-foreground flex items-center gap-2 text-sm">
                 <span>
-                  Hiển thị {(page - 1) * limit + 1} - {Math.min(page * limit, total)} / {total} kết
-                  quả
+                  {t('pagination.showing_range_results', {
+                    from: String((page - 1) * limit + 1),
+                    to: String(Math.min(page * limit, total)),
+                    total: String(total),
+                  })}
                 </span>
                 <Select
                   value={String(limit)}
@@ -418,7 +421,7 @@ export function MaintenanceHistoryTab({ deviceId }: MaintenanceHistoryTabProps) 
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
                 <span className="text-muted-foreground text-sm">
-                  Trang {page} / {totalPages}
+                  {t('pagination.page_of', { page: String(page), totalPages: String(totalPages) })}
                 </span>
                 <Button
                   variant="outline"

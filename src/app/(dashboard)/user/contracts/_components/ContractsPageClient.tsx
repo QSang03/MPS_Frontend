@@ -504,7 +504,7 @@ export default function ContractsPageClient() {
                       <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-1">
                           <Button
-                            variant="ghost"
+                            variant="outline"
                             size="icon"
                             className="h-8 w-8 text-gray-500 hover:text-[var(--brand-600)]"
                             onClick={() => router.push(`/user/contracts/${c.id}`)}
@@ -523,7 +523,7 @@ export default function ContractsPageClient() {
                             return (
                               docUrl && (
                                 <Button
-                                  variant="ghost"
+                                  variant="outline"
                                   size="icon"
                                   className="h-8 w-8 text-gray-500 hover:text-emerald-600"
                                   title={t('button.view_pdf')}
@@ -544,7 +544,7 @@ export default function ContractsPageClient() {
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button
-                                  variant="ghost"
+                                  variant="outline"
                                   size="icon"
                                   className="h-8 w-8 text-gray-500 hover:text-gray-900"
                                 >
@@ -618,7 +618,12 @@ export default function ContractsPageClient() {
               </div>
 
               {searchTerm && (
-                <Button variant="ghost" size="sm" onClick={() => setSearchTerm('')} className="h-8">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSearchTerm('')}
+                  className="h-8"
+                >
                   {t('button.reset')}
                 </Button>
               )}

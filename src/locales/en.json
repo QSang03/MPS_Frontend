@@ -256,6 +256,7 @@
   "page.users.title": "Users",
   "page.users.subtitle": "Manage user accounts and roles",
   "pagination.showing_of": "Showing {current} / {total} users",
+  "pagination.showing_range_results": "Showing {from} - {to} / {total} results",
   "page.users.create": "Create user",
   "empty.users.title": "No users found",
   "empty.users.description": "Create your first user or try changing the filters",

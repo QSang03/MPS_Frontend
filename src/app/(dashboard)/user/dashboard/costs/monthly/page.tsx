@@ -702,7 +702,7 @@ export default function MonthlyCostsPage() {
                       <TableHeader>
                         <TableRow>
                           <TableHead className="w-[300px]">
-                            <Button variant="ghost" onClick={() => handleSort('model')}>
+                            <Button variant="secondary" onClick={() => handleSort('model')}>
                               {t('analytics.table.device')}
                               <ArrowUpDown className="ml-2 h-4 w-4" />
                             </Button>
@@ -710,7 +710,7 @@ export default function MonthlyCostsPage() {
                           <TableHead>Serial Number</TableHead>
                           <TableHead className="text-right">
                             <Button
-                              variant="ghost"
+                              variant="default"
                               onClick={() => handleSort('totalCostAfterAdjustment')}
                             >
                               {labels.totalCostAfterAdjustment}
@@ -718,25 +718,25 @@ export default function MonthlyCostsPage() {
                             </Button>
                           </TableHead>
                           <TableHead className="text-right">
-                            <Button variant="ghost" onClick={() => handleSort('costRental')}>
+                            <Button variant="secondary" onClick={() => handleSort('costRental')}>
                               {labels.costRental}
                               <ArrowUpDown className="ml-2 h-4 w-4" />
                             </Button>
                           </TableHead>
                           <TableHead className="text-right">
-                            <Button variant="ghost" onClick={() => handleSort('costPageBW')}>
+                            <Button variant="secondary" onClick={() => handleSort('costPageBW')}>
                               {labels.costPageBW}
                               <ArrowUpDown className="ml-2 h-4 w-4" />
                             </Button>
                           </TableHead>
                           <TableHead className="text-right">
-                            <Button variant="ghost" onClick={() => handleSort('costPageColor')}>
+                            <Button variant="secondary" onClick={() => handleSort('costPageColor')}>
                               {labels.costPageColor}
                               <ArrowUpDown className="ml-2 h-4 w-4" />
                             </Button>
                           </TableHead>
                           <TableHead className="text-right">
-                            <Button variant="ghost" onClick={() => handleSort('costRepair')}>
+                            <Button variant="secondary" onClick={() => handleSort('costRepair')}>
                               {labels.costRepair}
                               <ArrowUpDown className="ml-2 h-4 w-4" />
                             </Button>
@@ -787,7 +787,7 @@ export default function MonthlyCostsPage() {
                               </TableCell>
                               <TableCell>
                                 <Button
-                                  variant="ghost"
+                                  variant="outline"
                                   size="icon"
                                   onClick={() => {
                                     setSelectedDeviceId(d.deviceId)

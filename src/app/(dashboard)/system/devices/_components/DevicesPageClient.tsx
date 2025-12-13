@@ -687,9 +687,9 @@ function DevicesTableContent({
                   <>
                     {customer?.code === 'SYS' && (
                       <Button
-                        variant="ghost"
+                        variant="default"
                         size="sm"
-                        className="h-7 w-7 p-0 hover:bg-rose-100"
+                        className="h-7 w-7 p-0"
                         onClick={() => {
                           setEditingDeviceId(device.id)
                           setShowCustomerSelect(true)
@@ -708,9 +708,9 @@ function DevicesTableContent({
                         onConfirm={async () => handleRemoveCustomer(device.id)}
                         trigger={
                           <Button
-                            variant="ghost"
+                            variant="destructive"
                             size="sm"
-                            className="h-7 w-7 p-0 hover:bg-red-100"
+                            className="h-7 w-7 p-0"
                             disabled={updatingCustomer}
                             title={t('devices.unassign')}
                           >
@@ -861,12 +861,12 @@ function DevicesTableContent({
               </div>
               {device.isActive ? (
                 <Button
-                  variant="ghost"
+                  variant="secondary"
                   size="sm"
                   type="button"
                   aria-label="On"
                   title={t('devices.toggle_active.title')}
-                  className="h-7 w-7 p-0 transition-all hover:bg-[var(--color-success-50)] hover:text-[var(--color-success-500)]"
+                  className="h-7 w-7 p-0 transition-all"
                   onClick={() => {
                     setToggleTargetDevice(device)
                     setToggleTargetActive(false)
@@ -879,12 +879,12 @@ function DevicesTableContent({
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
-                      variant="ghost"
+                      variant="secondary"
                       size="sm"
                       type="button"
                       aria-label="Off"
                       title={t('devices.toggle_paused.title')}
-                      className="h-7 w-7 p-0 transition-all hover:bg-[var(--neutral-100)] hover:text-[var(--neutral-700)]"
+                      className="h-7 w-7 p-0 transition-all"
                       onClick={() => {
                         setToggleTargetDevice(device)
                         setToggleTargetActive(true)
@@ -924,7 +924,7 @@ function DevicesTableContent({
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
-                      variant="ghost"
+                      variant="secondary"
                       size="sm"
                       className="h-7 w-7 p-0 text-gray-400"
                       disabled
@@ -966,9 +966,9 @@ function DevicesTableContent({
                 </ActionGuard>
               )}
               <Button
-                variant="ghost"
+                variant="default"
                 size="sm"
-                className="h-7 w-7 p-0 text-slate-600 hover:bg-slate-100"
+                className="h-7 w-7 p-0 text-slate-600"
                 onClick={() => {
                   setA4HistoryDevice(device)
                   setA4HistoryOpen(true)
@@ -984,11 +984,7 @@ function DevicesTableContent({
                     description={t('device.delete.description')}
                     onConfirm={async () => handleDeleteDevice(device.id)}
                     trigger={
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 w-7 p-0 text-red-600 hover:bg-red-100"
-                      >
+                      <Button variant="destructive" size="sm" className="h-7 w-7 p-0 text-red-600">
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     }

@@ -594,7 +594,7 @@ function UsersTableContent({
             {canUpdate && (
               <Button
                 size="sm"
-                variant="ghost"
+                variant="outline"
                 onClick={() => {
                   const isProtectedUser =
                     String(row.original.email || '').toLowerCase() === 'duongnvq@nguyenkimvn.vn'
@@ -627,7 +627,7 @@ function UsersTableContent({
               trigger={
                 <Button
                   size="sm"
-                  variant="ghost"
+                  variant="outline"
                   className="transition-all hover:bg-[var(--brand-100)] hover:text-[var(--brand-700)]"
                   title={t('user.reset_password')}
                 >
@@ -645,7 +645,7 @@ function UsersTableContent({
                 trigger={
                   <Button
                     size="sm"
-                    variant="ghost"
+                    variant="outline"
                     className="transition-all hover:bg-[var(--error-50)] hover:text-[var(--error-500)]"
                     title={
                       String(row.original.email || '').toLowerCase() === 'duongnvq@nguyenkimvn.vn'
