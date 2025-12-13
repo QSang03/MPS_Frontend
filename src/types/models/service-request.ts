@@ -46,6 +46,10 @@ export interface ServiceRequest {
   sla?: SLA
   customer?: CustomerSummary
   device?: DeviceSummary
+  /** Customer satisfaction score (1-5) */
+  satisfactionScore?: number
+  /** Customer feedback text */
+  customerFeedback?: string
 }
 
 type CustomerSummary = Pick<
@@ -206,4 +210,12 @@ export interface CreateServiceRequestCostDto {
     amount: number
     note?: string
   }>
+}
+
+/**
+ * Service request rating DTO
+ */
+export interface CreateServiceRequestRatingDto {
+  satisfactionScore: number
+  customerFeedback?: string
 }

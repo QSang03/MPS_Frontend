@@ -18,6 +18,8 @@ import {
 } from '@/components/ui/table'
 import { formatCurrency, formatDateTime } from '@/lib/utils/formatters'
 import ServiceRequestMessages from '@/components/service-request/ServiceRequestMessages'
+import { ServiceRequestRatingForm } from '@/components/service-request/ServiceRequestRatingForm'
+import { ServiceRequestRatingDisplay } from '@/components/service-request/ServiceRequestRatingDisplay'
 import { serviceRequestsClientService } from '@/lib/api/services/service-requests-client.service'
 import { ServiceRequestStatus, Priority } from '@/constants/status'
 import type { Session } from '@/lib/auth/session'
@@ -379,7 +381,22 @@ export function ServiceRequestDetailClient({ id }: Props) {
             </CardContent>
           </Card>
 
-          {/* 3. Conversation */}
+          {/* 3. Service Rating */}
+          {(detail.status === ServiceRequestStatus.RESOLVED ||
+            detail.status === ServiceRequestStatus.CLOSED) && (
+            <div className="space-y-4">
+              {detail.satisfactionScore ? (
+                <ServiceRequestRatingDisplay
+                  satisfactionScore={detail.satisfactionScore}
+                  customerFeedback={detail.customerFeedback}
+                />
+              ) : (
+                <ServiceRequestRatingForm serviceRequestId={id} />
+              )}
+            </div>
+          )}
+
+          {/* 4. Conversation */}
           <Card className="flex h-[600px] flex-col border-none shadow-sm ring-1 ring-slate-200 dark:ring-slate-800">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base font-medium">

@@ -33,7 +33,7 @@ import A4EquivalentModal from '@/app/(dashboard)/system/devices/_components/A4Eq
 import A4EquivalentHistoryModal from '@/app/(dashboard)/system/devices/_components/A4EquivalentHistoryModal'
 import ConsumableHistoryModal from './ConsumableHistoryModal'
 import DeviceUsageHistory from '@/components/device/DeviceUsageHistory'
-import { DeviceMaintenanceTab } from '@/components/device/DeviceMaintenanceTab'
+import { MaintenanceHistoryTab } from '@/components/device/MaintenanceHistoryTab'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -1770,11 +1770,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
 
         {/* Maintenance Tab */}
         <TabsContent value="maintenance" className="space-y-6">
-          <DeviceMaintenanceTab
-            deviceId={deviceId}
-            lastMaintenanceDate={device.lastMaintenanceDate}
-            nextMaintenanceDate={device.nextMaintenanceDate}
-          />
+          <MaintenanceHistoryTab deviceId={deviceId} />
         </TabsContent>
 
         {/* History Tab - Consumable Usage History */}

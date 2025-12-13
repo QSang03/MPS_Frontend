@@ -8,6 +8,7 @@ import type {
   CreateServiceRequestCostDto,
   CreateServiceRequestMessageDto,
   ServiceRequestMessage,
+  CreateServiceRequestRatingDto,
 } from '@/types/models'
 import type { ApiListResponse, ListPagination } from '@/types/api'
 import { ServiceRequestStatus, Priority } from '@/constants/status'
@@ -149,5 +150,13 @@ export const serviceRequestsClientService = {
     )
     const { data, pagination } = response.data || { data: [], pagination: undefined }
     return { data: Array.isArray(data) ? data : [], pagination }
+  },
+
+  async updateRating(
+    id: string,
+    payload: CreateServiceRequestRatingDto
+  ): Promise<ServiceRequest | null> {
+    const response = await internalApiClient.patch(`/api/service-requests/${id}/rating`, payload)
+    return response.data?.data ?? null
   },
 }
