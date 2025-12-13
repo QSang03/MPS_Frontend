@@ -186,4 +186,15 @@ export const API_ENDPOINTS = {
     LIST: '/cost-adjustments',
     DETAIL: (id: string) => `/cost-adjustments/${id}`,
   },
+
+  // Maintenance Histories
+  MAINTENANCE_HISTORIES: {
+    LIST: '/maintenance-histories',
+    DETAIL: (id: string) => `/maintenance-histories/${id}`,
+    CREATE: '/maintenance-histories',
+    UPDATE: (id: string) => `/maintenance-histories/${id}`,
+    DELETE: (id: string) => `/maintenance-histories/${id}`,
+    BY_DEVICE: (deviceId: string) => `/maintenance-histories/devices/${deviceId}`,
+    CREATE_BY_DEVICE: (deviceId: string) => `/maintenance-histories/devices/${deviceId}`,
+  },
 } as const

@@ -209,11 +209,6 @@ export default function LoginPage() {
               {isPending ? t('auth.sending') : t('auth.login_action')}
             </Button>
           </form>
-
-          <div className="text-muted-foreground mt-4 text-center text-sm">
-            <p>{t('auth.demo.title')}</p>
-            <p className="mt-1 text-xs">{t('auth.demo.admin_credentials')}</p>
-          </div>
         </CardContent>
       </Card>
     </motion.div>

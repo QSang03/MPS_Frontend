@@ -68,9 +68,7 @@ export default function MonthlyCostsPage() {
     totalCostFormula:
       t('page.user.costs.monthly.kpi.total_cost_formula') ||
       'costRental + costRepair + costPageBW + costPageColor',
-    costAdjustmentDebit: t('page.user.costs.monthly.kpi.cost_adjustment_debit') || 'Điều chỉnh Nợ',
-    costAdjustmentCredit:
-      t('page.user.costs.monthly.kpi.cost_adjustment_credit') || 'Điều chỉnh Có',
+    costAdjustmentNet: t('page.user.costs.monthly.kpi.cost_adjustment_net') || 'Hiệu chỉnh chi phí',
     costRental: t('page.user.costs.monthly.kpi.cost_rental') || 'Rental',
     costPageBW: t('page.user.costs.monthly.kpi.cost_page_bw') || 'Page BW',
     costPageColor: t('page.user.costs.monthly.kpi.cost_page_color') || 'Page Color',
@@ -340,6 +338,7 @@ export default function MonthlyCostsPage() {
     costData?.customer?.totalCostAfterAdjustment ?? costData?.customer?.totalCost ?? 0
   const costAdjustmentDebit = costData?.customer?.costAdjustmentDebit ?? 0
   const costAdjustmentCredit = costData?.customer?.costAdjustmentCredit ?? 0
+  const costAdjustmentNet = costAdjustmentDebit + costAdjustmentCredit
 
   return (
     <div className="min-h-screen from-slate-50 via-[var(--brand-50)] to-[var(--brand-50)] px-4 py-8 sm:px-6 lg:px-8 dark:from-slate-950 dark:via-[var(--brand-950)] dark:to-[var(--brand-950)]">
@@ -522,39 +521,15 @@ export default function MonthlyCostsPage() {
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                        {labels.costAdjustmentDebit}
+                        {labels.costAdjustmentNet}
                       </p>
                       <h3 className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
-                        {formatCurrency(costAdjustmentDebit, displayCurrency)}
+                        {formatCurrency(costAdjustmentNet, displayCurrency)}
                       </h3>
                     </div>
-                    <div className="rounded-lg bg-green-100 p-3 dark:bg-green-900/30">
-                      <DollarSign className="h-6 w-6 text-green-600 dark:text-green-400" />
+                    <div className="rounded-lg bg-blue-100 p-3 dark:bg-blue-900/30">
+                      <DollarSign className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                     </div>
-                  </div>
-                  <div className="mt-2 text-xs text-slate-500 dark:text-slate-500">
-                    {labels.applyNote}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border-slate-200 shadow-sm transition-all hover:shadow-md dark:border-slate-700 dark:bg-slate-800">
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                        {labels.costAdjustmentCredit}
-                      </p>
-                      <h3 className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
-                        {formatCurrency(costAdjustmentCredit, displayCurrency)}
-                      </h3>
-                    </div>
-                    <div className="rounded-lg bg-orange-100 p-3 dark:bg-orange-900/30">
-                      <DollarSign className="h-6 w-6 text-orange-600 dark:text-orange-400" />
-                    </div>
-                  </div>
-                  <div className="mt-2 text-xs text-slate-500 dark:text-slate-500">
-                    {labels.creditNote}
                   </div>
                 </CardContent>
               </Card>
@@ -810,10 +785,7 @@ export default function MonthlyCostsPage() {
                               <ArrowUpDown className="ml-2 h-4 w-4" />
                             </Button>
                           </TableHead>
-                          <TableHead className="text-right">{labels.costAdjustmentDebit}</TableHead>
-                          <TableHead className="text-right">
-                            {labels.costAdjustmentCredit}
-                          </TableHead>
+                          <TableHead className="text-right">{labels.costAdjustmentNet}</TableHead>
                           <TableHead className="text-right">
                             {t('page.user.costs.monthly.table.percent_total')}
                           </TableHead>
@@ -851,10 +823,10 @@ export default function MonthlyCostsPage() {
                                 {formatCurrency(d.costRepair, displayCurrency)}
                               </TableCell>
                               <TableCell className="text-right font-bold">
-                                {formatCurrency(d.costAdjustmentDebit ?? 0, displayCurrency)}
-                              </TableCell>
-                              <TableCell className="text-right">
-                                {formatCurrency(d.costAdjustmentCredit ?? 0, displayCurrency)}
+                                {formatCurrency(
+                                  (d.costAdjustmentDebit ?? 0) + (d.costAdjustmentCredit ?? 0),
+                                  displayCurrency
+                                )}
                               </TableCell>
                               <TableCell className="text-right">
                                 {Number.isFinite(costShare) ? `${costShare.toFixed(1)}%` : '0%'}
