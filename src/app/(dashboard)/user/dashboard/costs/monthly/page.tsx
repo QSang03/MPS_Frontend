@@ -909,8 +909,10 @@ export default function MonthlyCostsPage() {
                         {t('page.user.costs.monthly.trends.select_device')}:
                       </span>
                       <Select
-                        value={selectedDeviceId || ''}
-                        onValueChange={(value) => setSelectedDeviceId(value || null)}
+                        value={selectedDeviceId || 'all'}
+                        onValueChange={(value) =>
+                          setSelectedDeviceId(value === 'all' ? null : value)
+                        }
                       >
                         <SelectTrigger className="w-48">
                           <SelectValue
@@ -920,7 +922,7 @@ export default function MonthlyCostsPage() {
                           />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">
+                          <SelectItem value="all">
                             ---{' '}
                             {t('page.user.costs.monthly.trends.all_devices') || 'Tất cả thiết bị'}{' '}
                             ---
