@@ -1115,6 +1115,7 @@
   "page.user.costs.monthly.trends.device_title": "Device Cost Trends",
   "page.user.costs.monthly.trends.select_device": "Select device",
   "page.user.costs.monthly.trends.select_device_placeholder": "Select device to view details",
+  "page.user.costs.monthly.trends.all_devices": "All devices",
   "analytics.total_revenue": "Total Revenue",
   "analytics.total_cogs": "Total Cost (COGS)",
   "analytics.gross_profit": "Gross Profit",

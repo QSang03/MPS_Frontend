@@ -1047,6 +1047,7 @@
   "page.user.costs.monthly.trends.device_title": "Xu Hướng Chi Phí Thiết Bị",
   "page.user.costs.monthly.trends.select_device": "Chọn thiết bị",
   "page.user.costs.monthly.trends.select_device_placeholder": "Chọn thiết bị để xem chi tiết",
+  "page.user.costs.monthly.trends.all_devices": "Tất cả thiết bị",
   "analytics.total_revenue": "Tổng doanh thu",
   "analytics.total_cogs": "Tổng chi phí (COGS)",
   "analytics.gross_profit": "Lợi nhuận gộp",

@@ -887,24 +887,31 @@ export default function MonthlyCostsPage() {
               </CardContent>
             </Card>
 
-            {/* Aggregated Cost Chart - for range/year modes */}
-            {!selectedDeviceId && aggregatedCostSeries && aggregatedCostSeries.length > 0 && (
+            {/* Cost Trends Chart - for range/year modes */}
+            {aggregatedCostSeries && aggregatedCostSeries.length > 0 && (
               <Card className="border-slate-200 shadow-sm dark:border-slate-700 dark:bg-slate-800">
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div>
                       <CardTitle className="text-xl font-bold text-slate-900 dark:text-white">
-                        {t('page.user.costs.monthly.trends.overview_title')}
+                        {!selectedDeviceId
+                          ? t('page.user.costs.monthly.trends.overview_title')
+                          : t('page.user.costs.monthly.trends.device_title')}
                       </CardTitle>
-                      <p className="text-sm text-slate-600 dark:text-slate-400">
-                        {t('page.user.costs.monthly.trends.overview_description')}
-                      </p>
+                      <CardDescription>
+                        {!selectedDeviceId
+                          ? t('page.user.costs.monthly.trends.overview_description')
+                          : `${costData.devices.find((d) => d.deviceId === selectedDeviceId)?.model} - ${costData.devices.find((d) => d.deviceId === selectedDeviceId)?.serialNumber}`}
+                      </CardDescription>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-sm text-slate-600 dark:text-slate-400">
                         {t('page.user.costs.monthly.trends.select_device')}:
                       </span>
-                      <Select onValueChange={setSelectedDeviceId}>
+                      <Select
+                        value={selectedDeviceId || ''}
+                        onValueChange={(value) => setSelectedDeviceId(value || null)}
+                      >
                         <SelectTrigger className="w-48">
                           <SelectValue
                             placeholder={t(
@@ -913,6 +920,11 @@ export default function MonthlyCostsPage() {
                           />
                         </SelectTrigger>
                         <SelectContent>
+                          <SelectItem value="">
+                            ---{' '}
+                            {t('page.user.costs.monthly.trends.all_devices') || 'Tất cả thiết bị'}{' '}
+                            ---
+                          </SelectItem>
                           {costData?.devices?.map((device) => (
                             <SelectItem key={device.deviceId} value={device.deviceId}>
                               {device.model} - {device.serialNumber}
@@ -926,323 +938,157 @@ export default function MonthlyCostsPage() {
                 <CardContent>
                   <div style={{ width: '100%', height: 320 }}>
                     <ResponsiveContainer width="100%" height="100%">
-                      {aggregatedCostSeries && aggregatedCostSeries.length === 1 ? (
-                        <BarChart
-                          data={aggregatedCostSeries}
-                          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                        >
-                          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                          <XAxis dataKey="month" stroke="var(--muted-foreground)" />
-                          <YAxis
-                            stroke="var(--muted-foreground)"
-                            width={80}
-                            tickFormatter={(v) => formatCurrency(Number(v), displayCurrency)}
-                          />
-                          <RechartsTooltip
-                            formatter={(value: number) => formatCurrency(value, displayCurrency)}
-                            contentStyle={{
-                              backgroundColor: 'var(--popover)',
-                              border: 'none',
-                              borderRadius: '8px',
-                              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                              color: 'var(--popover-foreground)',
-                            }}
-                            itemStyle={{ color: 'var(--popover-foreground)' }}
-                            labelStyle={{
-                              color: 'var(--muted-foreground)',
-                              marginBottom: '0.5rem',
-                            }}
-                          />
-                          <Legend
-                            wrapperStyle={{
-                              paddingTop: '10px',
-                              fontSize: '12px',
-                            }}
-                          />
-                          <Bar
-                            dataKey="totalCostAfterAdjustment"
-                            fill="var(--brand-600)"
-                            radius={[2, 2, 0, 0]}
-                            name={labels.totalCostAfterAdjustment}
-                          />
-                          <Bar
-                            dataKey="costRental"
-                            fill="var(--color-success-500)"
-                            radius={[2, 2, 0, 0]}
-                            name={labels.costRental}
-                          />
-                          <Bar
-                            dataKey="costRepair"
-                            fill="var(--warning-500)"
-                            radius={[2, 2, 0, 0]}
-                            name={labels.costRepair}
-                          />
-                          <Bar
-                            dataKey="costPageBW"
-                            fill="var(--brand-700)"
-                            radius={[2, 2, 0, 0]}
-                            name={labels.costPageBW}
-                          />
-                          <Bar
-                            dataKey="costPageColor"
-                            fill="var(--color-info-500)"
-                            radius={[2, 2, 0, 0]}
-                            name={labels.costPageColor}
-                          />
-                        </BarChart>
-                      ) : (
-                        <LineChart
-                          data={aggregatedCostSeries}
-                          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                        >
-                          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                          <XAxis dataKey="month" stroke="var(--muted-foreground)" />
-                          <YAxis
-                            stroke="var(--muted-foreground)"
-                            width={80}
-                            tickFormatter={(v) => formatCurrency(Number(v), displayCurrency)}
-                          />
-                          <RechartsTooltip
-                            formatter={(value: number) => formatCurrency(value, displayCurrency)}
-                            contentStyle={{
-                              backgroundColor: 'var(--popover)',
-                              border: 'none',
-                              borderRadius: '8px',
-                              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                              color: 'var(--popover-foreground)',
-                            }}
-                            itemStyle={{ color: 'var(--popover-foreground)' }}
-                            labelStyle={{
-                              color: 'var(--muted-foreground)',
-                              marginBottom: '0.5rem',
-                            }}
-                          />
-                          <Legend
-                            wrapperStyle={{
-                              paddingTop: '10px',
-                              fontSize: '12px',
-                            }}
-                          />
-                          <Line
-                            type="monotone"
-                            dataKey="totalCostAfterAdjustment"
-                            stroke="var(--brand-600)"
-                            strokeWidth={3}
-                            dot={{ fill: 'var(--brand-600)', r: 4 }}
-                            activeDot={{ r: 6 }}
-                            name={labels.totalCostAfterAdjustment}
-                          />
-                          <Line
-                            type="monotone"
-                            dataKey="costRental"
-                            stroke="var(--color-success-500)"
-                            strokeWidth={3}
-                            dot={{ fill: 'var(--color-success-500)', r: 4 }}
-                            activeDot={{ r: 6 }}
-                            name={labels.costRental}
-                          />
-                          <Line
-                            type="monotone"
-                            dataKey="costRepair"
-                            stroke="var(--warning-500)"
-                            strokeWidth={3}
-                            dot={{ fill: 'var(--warning-500)', r: 4 }}
-                            activeDot={{ r: 6 }}
-                            name={labels.costRepair}
-                          />
-                          <Line
-                            type="monotone"
-                            dataKey="costPageBW"
-                            stroke="var(--brand-700)"
-                            strokeWidth={3}
-                            dot={{ fill: 'var(--brand-700)', r: 4 }}
-                            activeDot={{ r: 6 }}
-                            name={labels.costPageBW}
-                          />
-                          <Line
-                            type="monotone"
-                            dataKey="costPageColor"
-                            stroke="var(--color-info-500)"
-                            strokeWidth={3}
-                            dot={{ fill: 'var(--color-info-500)', r: 4 }}
-                            activeDot={{ r: 6 }}
-                            name={labels.costPageColor}
-                          />
-                        </LineChart>
-                      )}
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+                      {(() => {
+                        const chartData = selectedDeviceId ? deviceCostSeries : aggregatedCostSeries
+                        const chartCurrency = selectedDeviceId ? deviceCurrency : displayCurrency
 
-            {/* Device Cost Chart Section */}
-            {selectedDeviceId && deviceCostSeries && deviceCostSeries.length > 0 && (
-              <Card className="border-slate-200 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-                <CardHeader>
-                  <CardTitle className="text-xl font-bold text-slate-900 dark:text-white">
-                    {t('page.user.costs.monthly.trends.device_title')}
-                  </CardTitle>
-                  <CardDescription>
-                    {costData.devices.find((d) => d.deviceId === selectedDeviceId)?.model} -{' '}
-                    {costData.devices.find((d) => d.deviceId === selectedDeviceId)?.serialNumber}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div style={{ width: '100%', height: 320 }}>
-                    <ResponsiveContainer width="100%" height="100%">
-                      {deviceCostSeries && deviceCostSeries.length === 1 ? (
-                        <BarChart
-                          data={deviceCostSeries}
-                          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                        >
-                          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                          <XAxis dataKey="month" stroke="var(--muted-foreground)" />
-                          <YAxis
-                            stroke="var(--muted-foreground)"
-                            width={80}
-                            tickFormatter={(v) =>
-                              formatCurrency(Number(v), deviceCurrency || displayCurrency)
-                            }
-                          />
-                          <RechartsTooltip
-                            formatter={(value: number) =>
-                              formatCurrency(value, deviceCurrency || displayCurrency)
-                            }
-                            contentStyle={{
-                              backgroundColor: 'var(--popover)',
-                              border: 'none',
-                              borderRadius: '8px',
-                              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                              color: 'var(--popover-foreground)',
-                            }}
-                            itemStyle={{ color: 'var(--popover-foreground)' }}
-                            labelStyle={{
-                              color: 'var(--muted-foreground)',
-                              marginBottom: '0.5rem',
-                            }}
-                          />
-                          <Legend
-                            wrapperStyle={{
-                              paddingTop: '10px',
-                              fontSize: '12px',
-                            }}
-                          />
-                          <Bar
-                            dataKey="totalCostAfterAdjustment"
-                            fill="var(--brand-600)"
-                            radius={[2, 2, 0, 0]}
-                            name={labels.totalCostAfterAdjustment}
-                          />
-                          <Bar
-                            dataKey="costRental"
-                            fill="var(--color-success-500)"
-                            radius={[2, 2, 0, 0]}
-                            name={labels.costRental}
-                          />
-                          <Bar
-                            dataKey="costRepair"
-                            fill="var(--warning-500)"
-                            radius={[2, 2, 0, 0]}
-                            name={labels.costRepair}
-                          />
-                          <Bar
-                            dataKey="costPageBW"
-                            fill="var(--brand-700)"
-                            radius={[2, 2, 0, 0]}
-                            name={labels.costPageBW}
-                          />
-                          <Bar
-                            dataKey="costPageColor"
-                            fill="var(--color-info-500)"
-                            radius={[2, 2, 0, 0]}
-                            name={labels.costPageColor}
-                          />
-                        </BarChart>
-                      ) : (
-                        <LineChart
-                          data={deviceCostSeries}
-                          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                        >
-                          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                          <XAxis dataKey="month" stroke="var(--muted-foreground)" />
-                          <YAxis
-                            stroke="var(--muted-foreground)"
-                            width={80}
-                            tickFormatter={(v) =>
-                              formatCurrency(Number(v), deviceCurrency || displayCurrency)
-                            }
-                          />
-                          <RechartsTooltip
-                            formatter={(value: number) =>
-                              formatCurrency(value, deviceCurrency || displayCurrency)
-                            }
-                            contentStyle={{
-                              backgroundColor: 'var(--popover)',
-                              border: 'none',
-                              borderRadius: '8px',
-                              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                              color: 'var(--popover-foreground)',
-                            }}
-                            itemStyle={{ color: 'var(--popover-foreground)' }}
-                            labelStyle={{
-                              color: 'var(--muted-foreground)',
-                              marginBottom: '0.5rem',
-                            }}
-                          />
-                          <Legend
-                            wrapperStyle={{
-                              paddingTop: '10px',
-                              fontSize: '12px',
-                            }}
-                          />
-                          <Line
-                            type="monotone"
-                            dataKey="totalCostAfterAdjustment"
-                            stroke="var(--brand-600)"
-                            strokeWidth={3}
-                            dot={{ fill: 'var(--brand-600)', r: 4 }}
-                            activeDot={{ r: 6 }}
-                            name={labels.totalCostAfterAdjustment}
-                          />
-                          <Line
-                            type="monotone"
-                            dataKey="costRental"
-                            stroke="var(--color-success-500)"
-                            strokeWidth={3}
-                            dot={{ fill: 'var(--color-success-500)', r: 4 }}
-                            activeDot={{ r: 6 }}
-                            name={labels.costRental}
-                          />
-                          <Line
-                            type="monotone"
-                            dataKey="costRepair"
-                            stroke="var(--warning-500)"
-                            strokeWidth={3}
-                            dot={{ fill: 'var(--warning-500)', r: 4 }}
-                            activeDot={{ r: 6 }}
-                            name={labels.costRepair}
-                          />
-                          <Line
-                            type="monotone"
-                            dataKey="costPageBW"
-                            stroke="var(--brand-700)"
-                            strokeWidth={3}
-                            dot={{ fill: 'var(--brand-700)', r: 4 }}
-                            activeDot={{ r: 6 }}
-                            name={labels.costPageBW}
-                          />
-                          <Line
-                            type="monotone"
-                            dataKey="costPageColor"
-                            stroke="var(--color-info-500)"
-                            strokeWidth={3}
-                            dot={{ fill: 'var(--color-info-500)', r: 4 }}
-                            activeDot={{ r: 6 }}
-                            name={labels.costPageColor}
-                          />
-                        </LineChart>
-                      )}
+                        if (!chartData || chartData.length === 0) return <div />
+
+                        return chartData.length === 1 ? (
+                          <BarChart
+                            data={chartData}
+                            margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                          >
+                            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                            <XAxis dataKey="month" stroke="var(--muted-foreground)" />
+                            <YAxis
+                              stroke="var(--muted-foreground)"
+                              width={80}
+                              tickFormatter={(v) => formatCurrency(Number(v), chartCurrency)}
+                            />
+                            <RechartsTooltip
+                              formatter={(value: number) => formatCurrency(value, chartCurrency)}
+                              contentStyle={{
+                                backgroundColor: 'var(--popover)',
+                                border: 'none',
+                                borderRadius: '8px',
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                                color: 'var(--popover-foreground)',
+                              }}
+                              itemStyle={{ color: 'var(--popover-foreground)' }}
+                              labelStyle={{
+                                color: 'var(--muted-foreground)',
+                                marginBottom: '0.5rem',
+                              }}
+                            />
+                            <Legend
+                              wrapperStyle={{
+                                paddingTop: '10px',
+                                fontSize: '12px',
+                              }}
+                            />
+                            <Bar
+                              dataKey="totalCostAfterAdjustment"
+                              fill="var(--brand-600)"
+                              radius={[2, 2, 0, 0]}
+                              name={labels.totalCostAfterAdjustment}
+                            />
+                            <Bar
+                              dataKey="costRental"
+                              fill="var(--color-success-500)"
+                              radius={[2, 2, 0, 0]}
+                              name={labels.costRental}
+                            />
+                            <Bar
+                              dataKey="costRepair"
+                              fill="var(--warning-500)"
+                              radius={[2, 2, 0, 0]}
+                              name={labels.costRepair}
+                            />
+                            <Bar
+                              dataKey="costPageBW"
+                              fill="var(--brand-700)"
+                              radius={[2, 2, 0, 0]}
+                              name={labels.costPageBW}
+                            />
+                            <Bar
+                              dataKey="costPageColor"
+                              fill="var(--color-info-500)"
+                              radius={[2, 2, 0, 0]}
+                              name={labels.costPageColor}
+                            />
+                          </BarChart>
+                        ) : (
+                          <LineChart
+                            data={chartData}
+                            margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                          >
+                            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                            <XAxis dataKey="month" stroke="var(--muted-foreground)" />
+                            <YAxis
+                              stroke="var(--muted-foreground)"
+                              width={80}
+                              tickFormatter={(v) => formatCurrency(Number(v), chartCurrency)}
+                            />
+                            <RechartsTooltip
+                              formatter={(value: number) => formatCurrency(value, chartCurrency)}
+                              contentStyle={{
+                                backgroundColor: 'var(--popover)',
+                                border: 'none',
+                                borderRadius: '8px',
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                                color: 'var(--popover-foreground)',
+                              }}
+                              itemStyle={{ color: 'var(--popover-foreground)' }}
+                              labelStyle={{
+                                color: 'var(--muted-foreground)',
+                                marginBottom: '0.5rem',
+                              }}
+                            />
+                            <Legend
+                              wrapperStyle={{
+                                paddingTop: '10px',
+                                fontSize: '12px',
+                              }}
+                            />
+                            <Line
+                              type="monotone"
+                              dataKey="totalCostAfterAdjustment"
+                              stroke="var(--brand-600)"
+                              strokeWidth={3}
+                              dot={{ fill: 'var(--brand-600)', r: 4 }}
+                              activeDot={{ r: 6 }}
+                              name={labels.totalCostAfterAdjustment}
+                            />
+                            <Line
+                              type="monotone"
+                              dataKey="costRental"
+                              stroke="var(--color-success-500)"
+                              strokeWidth={3}
+                              dot={{ fill: 'var(--color-success-500)', r: 4 }}
+                              activeDot={{ r: 6 }}
+                              name={labels.costRental}
+                            />
+                            <Line
+                              type="monotone"
+                              dataKey="costRepair"
+                              stroke="var(--warning-500)"
+                              strokeWidth={3}
+                              dot={{ fill: 'var(--warning-500)', r: 4 }}
+                              activeDot={{ r: 6 }}
+                              name={labels.costRepair}
+                            />
+                            <Line
+                              type="monotone"
+                              dataKey="costPageBW"
+                              stroke="var(--brand-700)"
+                              strokeWidth={3}
+                              dot={{ fill: 'var(--brand-700)', r: 4 }}
+                              activeDot={{ r: 6 }}
+                              name={labels.costPageBW}
+                            />
+                            <Line
+                              type="monotone"
+                              dataKey="costPageColor"
+                              stroke="var(--color-info-500)"
+                              strokeWidth={3}
+                              dot={{ fill: 'var(--color-info-500)', r: 4 }}
+                              activeDot={{ r: 6 }}
+                              name={labels.costPageColor}
+                            />
+                          </LineChart>
+                        )
+                      })()}
                     </ResponsiveContainer>
                   </div>
                 </CardContent>
