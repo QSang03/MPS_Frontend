@@ -37,7 +37,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { toast } from 'sonner'
 import { useLocale } from '@/components/providers/LocaleProvider'
-import { maintenanceHistoriesService } from '@/lib/api/services/maintenance-histories.service'
+import { maintenanceHistoriesClientService } from '@/lib/api/services/maintenance-histories-client.service'
 import { MaintenanceHistoryFormModal } from './MaintenanceHistoryFormModal'
 import type { MaintenanceHistory } from '@/types/models'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
@@ -72,7 +72,7 @@ export function MaintenanceHistoryTab({ deviceId }: MaintenanceHistoryTabProps) 
   } = useQuery({
     queryKey: ['maintenance-histories', deviceId, page, limit, search, minSatisfaction, sortOrder],
     queryFn: async () => {
-      const params: Parameters<typeof maintenanceHistoriesService.getByDeviceId>[1] = {
+      const params: Parameters<typeof maintenanceHistoriesClientService.getByDeviceId>[1] = {
         page,
         limit,
         sortBy: 'maintenanceDate',
@@ -81,14 +81,14 @@ export function MaintenanceHistoryTab({ deviceId }: MaintenanceHistoryTabProps) 
       if (search) params.search = search
       if (minSatisfaction !== 'ALL') params.minSatisfaction = minSatisfaction
 
-      return maintenanceHistoriesService.getByDeviceId(deviceId, params)
+      return maintenanceHistoriesClientService.getByDeviceId(deviceId, params)
     },
     staleTime: 30000,
     enabled: Boolean(deviceId),
   })
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => maintenanceHistoriesService.delete(id),
+    mutationFn: (id: string) => maintenanceHistoriesClientService.delete(id),
     onSuccess: () => {
       toast.success(t('maintenance_history.delete_success'))
       queryClient.invalidateQueries({ queryKey: ['maintenance-histories', deviceId] })
