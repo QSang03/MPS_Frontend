@@ -217,7 +217,7 @@ export function ConsumableTypeTable({
               {can('edit-stock') && (
                 <Button
                   size="sm"
-                  variant="default"
+                  variant="secondary"
                   onClick={() =>
                     onOpenEditStockModal({
                       stockId: m.stockItem!.id,

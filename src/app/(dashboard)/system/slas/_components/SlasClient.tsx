@@ -676,7 +676,7 @@ function SlasTableContent({
           <div className="flex justify-end gap-2">
             {canUpdate && (
               <Button
-                variant="default"
+                variant="secondary"
                 size="sm"
                 onClick={() => onEdit(row.original)}
                 className="transition-all"

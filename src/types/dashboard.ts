@@ -66,13 +66,11 @@ export interface CostBreakdown {
   // Cost adjustments (original)
   costAdjustmentDebit?: number
   costAdjustmentCredit?: number
-  costAdjustmentNet?: number
   totalCogsAfterAdjustment?: number
   grossProfitAfterAdjustment?: number
   // Converted values (if backend returns for admin/base currency)
   costAdjustmentDebitConverted?: number
   costAdjustmentCreditConverted?: number
-  costAdjustmentNetConverted?: number
   totalCogsAfterAdjustmentConverted?: number
   grossProfitAfterAdjustmentConverted?: number
 }
@@ -86,6 +84,13 @@ export interface TopCustomer {
   totalRevenue: number // doanh thu
   totalCogs: number // chi phí
   grossProfit: number // lợi nhuận gộp
+  grossMargin: number // tỷ suất lợi nhuận gộp (%)
+  costAdjustmentDebit: number // điều chỉnh chi phí ghi nợ
+  costAdjustmentCredit: number // điều chỉnh chi phí ghi có
+  totalRevenueAfterAdjustment: number // doanh thu sau điều chỉnh
+  totalCogsAfterAdjustment: number // chi phí sau điều chỉnh
+  grossProfitAfterAdjustment: number // lợi nhuận gộp sau điều chỉnh
+  costAdjustmentFormula: string // công thức tính điều chỉnh
   // Converted values (if backend returns for admin/base currency)
   totalRevenueConverted?: number
   totalCogsConverted?: number
@@ -256,12 +261,10 @@ export interface DeviceDashboardData {
   // Cost adjustments summary for device dashboard (optional)
   costAdjustmentDebit?: number
   costAdjustmentCredit?: number
-  costAdjustmentNet?: number
   totalCogsAfterAdjustment?: number
   grossProfitAfterAdjustment?: number
   costAdjustmentDebitConverted?: number
   costAdjustmentCreditConverted?: number
-  costAdjustmentNetConverted?: number
   totalCogsAfterAdjustmentConverted?: number
   grossProfitAfterAdjustmentConverted?: number
 }

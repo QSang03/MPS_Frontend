@@ -211,6 +211,7 @@ export function PoliciesTable() {
 
           <ActionGuard pageId="policies" actionId="create">
             <Button
+              variant="default"
               onClick={openCreate}
               className="transform rounded-xl bg-white px-6 py-2 text-base font-bold text-[var(--brand-600)] shadow-lg transition-all duration-300 hover:scale-105 hover:bg-[var(--brand-50)] hover:shadow-2xl"
             >
@@ -358,7 +359,7 @@ export function PoliciesTable() {
             </div>
           ) : policies.length === 0 ? (
             <div className="p-16 text-center">
-              <div className="mb-4 mb-6 inline-flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200">
+              <div className="mb-6 inline-flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200">
                 <Lock className="h-10 w-10 text-gray-400" />
               </div>
               <h3 className="mb-2 text-2xl font-bold text-gray-700">{t('empty.policies.title')}</h3>
@@ -483,7 +484,7 @@ export function PoliciesTable() {
                         <div className="flex items-center justify-end gap-1.5">
                           <Button
                             size="sm"
-                            variant="default"
+                            variant="secondary"
                             onClick={() => openView(p)}
                             className="transition-all"
                             title={t('button.view')}
@@ -493,7 +494,7 @@ export function PoliciesTable() {
                           {canUpdate && (
                             <Button
                               size="sm"
-                              variant="default"
+                              variant="secondary"
                               onClick={() => {
                                 const isProtectedPolicy = p.name === 'SystemAdminFullAccess'
                                 if (!isProtectedPolicy) openEdit(p)
@@ -545,7 +546,7 @@ export function PoliciesTable() {
 
         {/* PAGINATION - Premium */}
         {policies.length > 0 && (
-          <div className="border-gradient-to-r flex items-center justify-between rounded-2xl border-2 bg-gradient-to-r from-[var(--brand-200)] from-white via-[var(--brand-50)] to-[var(--brand-50)] to-[var(--brand-200)] p-5 shadow-lg transition-all duration-300 hover:shadow-xl">
+          <div className="border-gradient-to-r flex items-center justify-between rounded-2xl border-2 bg-gradient-to-r from-[var(--brand-200)] via-[var(--brand-50)] to-[var(--brand-200)] p-5 shadow-lg transition-all duration-300 hover:shadow-xl">
             <div className="flex items-center gap-3">
               <span className="text-xs font-bold tracking-widest text-gray-600 uppercase">
                 Hiển thị

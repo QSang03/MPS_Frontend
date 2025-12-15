@@ -31,6 +31,7 @@ import {
 import { toast } from 'sonner'
 import { format } from 'date-fns'
 import { vi } from 'date-fns/locale'
+import { enUS } from 'date-fns/locale'
 import { useLocale } from '@/components/providers/LocaleProvider'
 
 export function ConsumableUsageHistory({
@@ -59,7 +60,7 @@ export function ConsumableUsageHistory({
   const [search, setSearch] = useState('')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
-  const { t } = useLocale()
+  const { t, locale } = useLocale()
 
   const load = useCallback(async () => {
     if (!deviceId) return
@@ -96,14 +97,15 @@ export function ConsumableUsageHistory({
       setItems(Array.isArray(list) ? (list as HistoryRecord[]) : [])
     } catch (err) {
       console.error('Load consumable usage history failed', err)
-      toast.error('Không tải được lịch sử sử dụng vật tư')
+      toast.error(t('system_device_detail.consumable_history.load_error'))
     } finally {
       setLoading(false)
     }
-  }, [deviceId, page, limit, search, startDate, endDate, consumableId])
+  }, [deviceId, page, limit, search, startDate, endDate, consumableId, t])
 
   // helper: format numbers and IDs
-  const fmt = (v: unknown) => (typeof v === 'number' ? v.toLocaleString('vi-VN') : String(v ?? '-'))
+  const fmt = (v: unknown) =>
+    typeof v === 'number' ? v.toLocaleString(locale === 'vi' ? 'vi-VN' : 'en-US') : String(v ?? '-')
   const shortId = (id?: string) => (id ? `${id.slice(0, 8)}…${id.slice(-4)}` : '-')
 
   useEffect(() => {
@@ -137,7 +139,9 @@ export function ConsumableUsageHistory({
 
           <div className="flex gap-2">
             <div className="space-y-1.5">
-              <Label className="text-xs text-slate-500">Từ ngày</Label>
+              <Label className="text-xs text-slate-500">
+                {t('system_device_detail.consumable_history.from')}
+              </Label>
               <div className="relative">
                 <Input
                   type="date"
@@ -149,7 +153,9 @@ export function ConsumableUsageHistory({
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs text-slate-500">Đến ngày</Label>
+              <Label className="text-xs text-slate-500">
+                {t('system_device_detail.consumable_history.to')}
+              </Label>
               <div className="relative">
                 <Input
                   type="date"
@@ -178,7 +184,7 @@ export function ConsumableUsageHistory({
         </div>
 
         <div className="flex items-center gap-2">
-          <Label className="text-xs whitespace-nowrap text-slate-500">Hiển thị</Label>
+          <Label className="text-xs whitespace-nowrap text-slate-500">{t('common.display')}</Label>
           <Select value={String(limit)} onValueChange={(v) => setLimit(Number(v))}>
             <SelectTrigger className="h-9 w-[70px] bg-white">
               <SelectValue placeholder="20" />
@@ -264,7 +270,9 @@ export function ConsumableUsageHistory({
                   </TableCell>
                   <TableCell className="text-right text-slate-500">
                     {r.recordedAt
-                      ? format(new Date(r.recordedAt), 'dd/MM/yyyy HH:mm', { locale: vi })
+                      ? format(new Date(r.recordedAt), 'dd/MM/yyyy HH:mm', {
+                          locale: locale === 'vi' ? vi : enUS,
+                        })
                       : '-'}
                   </TableCell>
                 </TableRow>
@@ -275,7 +283,7 @@ export function ConsumableUsageHistory({
       </div>
 
       <div className="flex items-center justify-between border-t pt-4">
-        <div className="text-sm text-slate-500">Trang {page}</div>
+        <div className="text-sm text-slate-500">{t('common.page', { page: String(page) })}</div>
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
@@ -283,7 +291,7 @@ export function ConsumableUsageHistory({
             disabled={page <= 1 || loading}
             onClick={() => setPage((p) => Math.max(1, p - 1))}
           >
-            Trước
+            {t('pagination.prev')}
           </Button>
           <Button
             variant="outline"
@@ -291,7 +299,7 @@ export function ConsumableUsageHistory({
             disabled={loading || items.length < limit}
             onClick={() => setPage((p) => p + 1)}
           >
-            Sau
+            {t('pagination.next')}
           </Button>
         </div>
       </div>
@@ -312,14 +320,15 @@ export default function ConsumableHistoryModal({
   consumableId?: string
   title?: string
 }) {
+  const { t } = useLocale()
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] w-full max-w-5xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{title ?? 'Lịch sử vật tư'}</DialogTitle>
+          <DialogTitle>{title ?? t('consumable_history.title')}</DialogTitle>
           <DialogDescription>
-            Lịch sử sử dụng cho vật tư:{' '}
-            <span className="font-mono font-medium text-slate-900">{consumableId ?? '—'}</span>
+            {t('consumable_history.modal.description', { id: consumableId ?? '—' })}
           </DialogDescription>
         </DialogHeader>
         <div className="py-4">
@@ -327,7 +336,7 @@ export default function ConsumableHistoryModal({
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Đóng
+            {t('button.close')}
           </Button>
         </DialogFooter>
       </DialogContent>

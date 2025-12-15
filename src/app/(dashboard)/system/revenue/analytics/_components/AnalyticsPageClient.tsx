@@ -169,12 +169,10 @@ export default function AnalyticsPageClient() {
     grossProfitConverted?: number
     costAdjustmentDebit?: number
     costAdjustmentCredit?: number
-    costAdjustmentNet?: number
     totalCogsAfterAdjustment?: number
     grossProfitAfterAdjustment?: number
     costAdjustmentDebitConverted?: number
     costAdjustmentCreditConverted?: number
-    costAdjustmentNetConverted?: number
     totalCogsAfterAdjustmentConverted?: number
     grossProfitAfterAdjustmentConverted?: number
   } | null>(null)
@@ -207,12 +205,10 @@ export default function AnalyticsPageClient() {
       grossProfit: number
       costAdjustmentDebit?: number
       costAdjustmentCredit?: number
-      costAdjustmentNet?: number
       totalCogsAfterAdjustment?: number
       grossProfitAfterAdjustment?: number
       costAdjustmentDebitConverted?: number
       costAdjustmentCreditConverted?: number
-      costAdjustmentNetConverted?: number
       totalCogsAfterAdjustmentConverted?: number
       grossProfitAfterAdjustmentConverted?: number
       // Converted values (only for System Admin context)
@@ -1106,11 +1102,6 @@ export default function AnalyticsPageClient() {
                       enterpriseData.costAdjustmentCreditConverted,
                       useConverted
                     )
-                    const caNet = getDisplayValue(
-                      enterpriseData.costAdjustmentNet ?? 0,
-                      enterpriseData.costAdjustmentNetConverted,
-                      useConverted
-                    )
                     return (
                       <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
                         <Card className="border-orange-200 bg-orange-50">
@@ -1177,18 +1168,6 @@ export default function AnalyticsPageClient() {
                           <CardContent className="pt-1">
                             <div className="text-xl font-semibold text-emerald-900">
                               {formatCurrency(caCredit, enterpriseBaseCurrency)}
-                            </div>
-                          </CardContent>
-                        </Card>
-                        <Card className="border-amber-200 bg-amber-50">
-                          <CardHeader className="pb-1">
-                            <CardTitle className="text-xs font-semibold text-amber-700">
-                              {t('dashboard.metrics.cost_adjustment_net')}
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent className="pt-1">
-                            <div className="text-xl font-semibold text-amber-900">
-                              {formatCurrency(caNet, enterpriseBaseCurrency)}
                             </div>
                           </CardContent>
                         </Card>
@@ -1517,9 +1496,6 @@ export default function AnalyticsPageClient() {
                         {t('dashboard.metrics.cost_adjustment_credit')}
                       </th>
                       <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
-                        {t('dashboard.metrics.cost_adjustment_net')}
-                      </th>
-                      <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
                         {t('dashboard.metrics.total_cogs_after_adjustment')}
                       </th>
                       <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
@@ -1625,15 +1601,6 @@ export default function AnalyticsPageClient() {
                             {formatDual(
                               row.costAdjustmentCredit ?? 0,
                               row.costAdjustmentCreditConverted,
-                              currentCurrency,
-                              row.currency,
-                              'right'
-                            )}
-                          </td>
-                          <td className="px-4 py-2 text-right text-sm">
-                            {formatDual(
-                              row.costAdjustmentNet ?? 0,
-                              row.costAdjustmentNetConverted,
                               currentCurrency,
                               row.currency,
                               'right'
@@ -1839,20 +1806,6 @@ export default function AnalyticsPageClient() {
                                     {formatDual(
                                       customerDetailData.customer.costAdjustmentCredit ?? 0,
                                       customerDetailData.customer.costAdjustmentCreditConverted,
-                                      customerDetailBaseCurrency,
-                                      customerDetailData.customer.currency,
-                                      'left'
-                                    )}
-                                  </p>
-                                </div>
-                                <div>
-                                  <span className="text-muted-foreground">
-                                    {t('dashboard.metrics.cost_adjustment_net')}
-                                  </span>
-                                  <p className="font-semibold">
-                                    {formatDual(
-                                      customerDetailData.customer.costAdjustmentNet ?? 0,
-                                      customerDetailData.customer.costAdjustmentNetConverted,
                                       customerDetailBaseCurrency,
                                       customerDetailData.customer.currency,
                                       'left'
@@ -2222,8 +2175,6 @@ export default function AnalyticsPageClient() {
                                 p.costAdjustmentDebitConverted ?? p.costAdjustmentDebit ?? 0,
                               costAdjustmentCreditConverted:
                                 p.costAdjustmentCreditConverted ?? p.costAdjustmentCredit ?? 0,
-                              costAdjustmentNetConverted:
-                                p.costAdjustmentNetConverted ?? p.costAdjustmentNet ?? 0,
                               totalCogsAfterAdjustmentConverted:
                                 p.totalCogsAfterAdjustmentConverted ??
                                 p.totalCogsAfterAdjustment ??
@@ -2266,10 +2217,6 @@ export default function AnalyticsPageClient() {
                                 costAdjustmentCreditConverted: {
                                   label: t('dashboard.metrics.cost_adjustment_credit'),
                                   color: '#10b981',
-                                },
-                                costAdjustmentNetConverted: {
-                                  label: t('dashboard.metrics.cost_adjustment_net'),
-                                  color: '#f59e0b',
                                 },
                               }
                               const formatter = (v: unknown) =>
@@ -2327,7 +2274,6 @@ export default function AnalyticsPageClient() {
                                         'grossProfitAfterAdjustmentConverted',
                                         'costAdjustmentDebitConverted',
                                         'costAdjustmentCreditConverted',
-                                        'costAdjustmentNetConverted',
                                       ].map((key) => (
                                         <Bar
                                           key={key}
@@ -2377,10 +2323,6 @@ export default function AnalyticsPageClient() {
                               costAdjustmentCreditConverted: {
                                 label: t('dashboard.metrics.cost_adjustment_credit'),
                                 color: '#10b981',
-                              },
-                              costAdjustmentNetConverted: {
-                                label: t('dashboard.metrics.cost_adjustment_net'),
-                                color: '#f59e0b',
                               },
                             }
                             const formatter = (v: unknown) =>
@@ -2435,7 +2377,6 @@ export default function AnalyticsPageClient() {
                                       'grossProfitAfterAdjustmentConverted',
                                       'costAdjustmentDebitConverted',
                                       'costAdjustmentCreditConverted',
-                                      'costAdjustmentNetConverted',
                                     ].map((key) => (
                                       <Line
                                         key={key}
@@ -2493,9 +2434,6 @@ export default function AnalyticsPageClient() {
                             </th>
                             <th className="px-3 py-2 text-right font-semibold">
                               {t('dashboard.metrics.cost_adjustment_credit')}
-                            </th>
-                            <th className="px-3 py-2 text-right font-semibold">
-                              {t('dashboard.metrics.cost_adjustment_net')}
                             </th>
                             <th className="px-3 py-2 text-right font-semibold">
                               {t('dashboard.metrics.total_cogs_after_adjustment')}
@@ -2602,15 +2540,6 @@ export default function AnalyticsPageClient() {
                                 )}
                               </td>
                               <td className="px-3 py-2 text-right">
-                                {formatDual(
-                                  p.costAdjustmentNet ?? 0,
-                                  p.costAdjustmentNetConverted,
-                                  enterpriseBaseCurrency || customerDetailBaseCurrency,
-                                  p.currency,
-                                  'right'
-                                )}
-                              </td>
-                              <td className="px-3 py-2 text-right font-semibold">
                                 {formatDual(
                                   p.totalCogsAfterAdjustment ?? p.totalCogs,
                                   p.totalCogsAfterAdjustmentConverted ?? p.totalCogsConverted,

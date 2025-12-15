@@ -723,7 +723,7 @@ function UserRequestsTableContent({
           return (
             <div className="flex items-center gap-2">
               <Button
-                variant="default"
+                variant="secondary"
                 size="sm"
                 onClick={() => handleViewDetail(row.original.id)}
                 className="transition-all"

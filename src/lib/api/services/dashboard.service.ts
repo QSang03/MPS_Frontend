@@ -20,18 +20,30 @@ class DashboardService {
    * Get Admin Overview Dashboard
    * GET /api/dashboard/admin/overview (proxies to backend)
    *
-   * @param month - Month in format YYYY-MM (optional, defaults to current month)
+   * @param params - Parameters for the request
+   * @param params.month - Month in format YYYY-MM (optional, defaults to current month)
+   * @param params.lang - Language preference (optional, defaults to 'vi')
+   * @param params.baseCurrencyId - Base currency ID for conversion (optional)
    * @returns Admin overview data with KPIs, cost breakdown, top customers, and time series
    */
-  async getAdminOverview(month?: string): Promise<AdminOverviewData> {
+  async getAdminOverview(params?: {
+    month?: string
+    lang?: string
+    baseCurrencyId?: string
+  }): Promise<AdminOverviewData> {
     try {
-      console.log('[DashboardService] Fetching admin overview for month:', month)
+      const requestParams: Record<string, string> = {}
+      if (params?.month) requestParams.month = params.month
+      if (params?.lang) requestParams.lang = params.lang
+      if (params?.baseCurrencyId) requestParams.baseCurrencyId = params.baseCurrencyId
+
+      console.log('[DashboardService] Fetching admin overview with params:', requestParams)
 
       // Use internalApiClient (with auto token refresh interceptor)
       const response = await internalApiClient.get<AdminOverviewResponse>(
         '/api/dashboard/admin/overview',
         {
-          params: month ? { month } : undefined,
+          params: Object.keys(requestParams).length > 0 ? requestParams : undefined,
         }
       )
 

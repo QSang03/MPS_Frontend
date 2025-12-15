@@ -15,15 +15,21 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get month parameter
+    // Get query parameters
     const searchParams = request.nextUrl.searchParams
     const month = searchParams.get('month')
+    const lang = searchParams.get('lang') || 'vi'
+    const baseCurrencyId = searchParams.get('baseCurrencyId')
 
-    console.log('[api/dashboard/admin/overview] Fetching with month:', month)
+    const params: Record<string, string> = { lang }
+    if (month) params.month = month
+    if (baseCurrencyId) params.baseCurrencyId = baseCurrencyId
+
+    console.log('[api/dashboard/admin/overview] Fetching with params:', params)
 
     // Call backend API
     const response = await backendApiClient.get('/dashboard/admin/overview', {
-      params: month ? { month } : undefined,
+      params,
       headers: { Authorization: `Bearer ${accessToken}` },
     })
 
@@ -95,9 +101,15 @@ export async function GET(request: NextRequest) {
         // Retry request with new token
         const searchParams = request.nextUrl.searchParams
         const month = searchParams.get('month')
+        const lang = searchParams.get('lang') || 'vi'
+        const baseCurrencyId = searchParams.get('baseCurrencyId')
+
+        const params: Record<string, string> = { lang }
+        if (month) params.month = month
+        if (baseCurrencyId) params.baseCurrencyId = baseCurrencyId
 
         const retryResp = await backendApiClient.get('/dashboard/admin/overview', {
-          params: month ? { month } : undefined,
+          params,
           headers: { Authorization: `Bearer ${newAccessToken}` },
         })
 

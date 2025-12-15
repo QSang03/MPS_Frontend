@@ -279,7 +279,7 @@ export default function SlaTemplatesClient({ session }: { session?: Session | nu
                         {canUpdate && (
                           <Button
                             size="sm"
-                            variant="default"
+                            variant="secondary"
                             onClick={() => handleEdit(row.original)}
                             title={t('button.edit')}
                           >

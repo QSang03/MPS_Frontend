@@ -339,7 +339,10 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
               {t('dashboard.actions.devices')}
             </Button>
             <ServiceRequestFormModal customerId={overview.customerId}>
-              <Button className="h-10 rounded-full border-0 px-5 text-sm font-semibold shadow-sm">
+              <Button
+                variant="default"
+                className="h-10 rounded-full border-0 px-5 text-sm font-semibold shadow-sm"
+              >
                 <Send className="mr-2 h-4 w-4" />
                 {t('dashboard.actions.send_request')}
               </Button>

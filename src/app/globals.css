@@ -116,7 +116,7 @@
   --primary: #0066cc; /* Brand blue */
   --primary-foreground: #ffffff;
   --secondary: #19b3d9; /* Cyan 500 */
-  --secondary-foreground: #ffffff;
+  --secondary-foreground: #0c4a6e; /* Dark blue for secondary button text */
   --muted: #f3f4f6;
   --muted-foreground: #6b7280;
   --accent: #f3f4f6;

@@ -20,6 +20,8 @@ export async function GET(request: NextRequest, ctx: unknown) {
       if (s === '' || s === 'null' || s === 'undefined') continue
       paramsFromQuery[k] = s
     }
+    // Set default lang if not provided
+    if (!paramsFromQuery.lang) paramsFromQuery.lang = 'vi'
     const period = paramsFromQuery.period
     const year = paramsFromQuery.year
     const from = paramsFromQuery.from

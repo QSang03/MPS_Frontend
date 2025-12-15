@@ -386,7 +386,7 @@ export function DepartmentsTable() {
                           {canUpdate && (
                             <Button
                               size="sm"
-                              variant="default"
+                              variant="secondary"
                               onClick={() => openEdit(dept)}
                               className="transform rounded-lg transition-all duration-300"
                               title={t('button.edit')}

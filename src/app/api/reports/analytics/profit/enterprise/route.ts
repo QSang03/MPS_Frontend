@@ -12,6 +12,8 @@ export async function GET(request: NextRequest) {
       if (s === '' || s === 'null' || s === 'undefined') continue
       params[k] = s
     }
+    // Set default lang if not provided
+    if (!params.lang) params.lang = 'vi'
     // baseCurrencyId sẽ tự động được forward vì đã include trong params
 
     console.log('[API] Enterprise profit request:', params)

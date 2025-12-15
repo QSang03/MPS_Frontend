@@ -191,16 +191,16 @@ export function MonthlySeriesChart({
 
   const transformedData = points.map((point) => ({
     month: point.month,
-    revenueRental: point.revenueRental,
-    revenueRepair: point.revenueRepair,
-    revenuePageBW: point.revenuePageBW,
-    revenuePageColor: point.revenuePageColor,
-    totalRevenue: point.totalRevenue,
-    cogsConsumable: point.cogsConsumable,
-    cogsRepair: point.cogsRepair,
-    cogsRental: point.cogsRental,
-    totalCogs: point.totalCogs,
-    grossProfit: point.grossProfit,
+    revenueRental: point.revenueRental ?? 0,
+    revenueRepair: point.revenueRepair ?? 0,
+    revenuePageBW: point.revenuePageBW ?? 0,
+    revenuePageColor: point.revenuePageColor ?? 0,
+    totalRevenue: point.totalRevenue ?? 0,
+    cogsConsumable: point.cogsConsumable ?? 0,
+    cogsRepair: point.cogsRepair ?? 0,
+    cogsRental: point.cogsRental ?? 0,
+    totalCogs: point.totalCogs ?? 0,
+    grossProfit: point.grossProfit ?? 0,
   }))
 
   // Auto-detect chart type based on data points
@@ -277,121 +277,149 @@ export function MonthlySeriesChart({
         <CardContent>
           {/* Metric Toggle Buttons */}
           <div className="mb-4 flex flex-wrap gap-2">
-            {Object.entries(METRIC_CONFIG).map(([key, config]) => (
-              <Button
-                key={key}
-                variant={visibleMetrics.includes(key) ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => toggleMetric(key)}
-                className={cn(
-                  'transition-all',
-                  visibleMetrics.includes(key) && 'ring-2 ring-offset-2'
-                )}
-                style={{
-                  backgroundColor: visibleMetrics.includes(key) ? config.color : undefined,
-                  borderColor: config.color,
-                  color: visibleMetrics.includes(key) ? 'var(--foreground)' : config.color,
-                }}
-              >
-                <span
-                  className="mr-2 inline-block h-2 w-2 rounded-full"
+            {Object.entries(METRIC_CONFIG).map(([key, config]) => {
+              // Determine text color based on background color brightness
+              // Light colors (error-300, error-400) need dark text, dark colors need light text
+              const isLightColor =
+                config.color.includes('error-300') || config.color.includes('error-400')
+              const textColor = visibleMetrics.includes(key)
+                ? isLightColor
+                  ? 'var(--foreground)'
+                  : 'white'
+                : config.color
+              const dotColor = visibleMetrics.includes(key)
+                ? isLightColor
+                  ? 'var(--foreground)'
+                  : 'white'
+                : config.color
+
+              return (
+                <Button
+                  key={key}
+                  variant={visibleMetrics.includes(key) ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => toggleMetric(key)}
+                  className={cn(
+                    'transition-all',
+                    visibleMetrics.includes(key) && 'ring-2 ring-offset-2'
+                  )}
                   style={{
-                    backgroundColor: visibleMetrics.includes(key)
-                      ? 'var(--foreground)'
-                      : config.color,
+                    backgroundColor: visibleMetrics.includes(key) ? config.color : undefined,
+                    borderColor: config.color,
+                    color: textColor,
                   }}
-                />
-                {config.label}
-              </Button>
-            ))}
+                >
+                  <span
+                    className="mr-2 inline-block h-2 w-2 rounded-full"
+                    style={{
+                      backgroundColor: dotColor,
+                    }}
+                  />
+                  {config.label}
+                </Button>
+              )
+            })}
           </div>
 
           {/* Chart */}
-          <ResponsiveContainer width="100%" height={400}>
-            <Chart data={transformedData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-              <XAxis
-                dataKey="month"
-                stroke="var(--muted-foreground)"
-                fontSize={12}
-                tickLine={false}
-                axisLine={false}
-                dy={10}
-              />
-              <YAxis
-                stroke="var(--muted-foreground)"
-                fontSize={12}
-                tickLine={false}
-                axisLine={false}
-                tickFormatter={(value) =>
-                  new Intl.NumberFormat(locale === 'vi' ? 'vi-VN' : 'en-US', {
-                    notation: 'compact',
-                    compactDisplay: 'short',
-                  }).format(value)
-                }
-              />
-              <Tooltip
-                content={<CustomTooltip baseCurrency={baseCurrency} metricConfig={METRIC_CONFIG} />}
-              />
-              <Legend
-                verticalAlign="top"
-                height={36}
-                iconType="circle"
-                formatter={(value) => {
-                  const config = METRIC_CONFIG[value as keyof typeof METRIC_CONFIG]
-                  return (
-                    <span className="text-[13px] text-[var(--neutral-500)]">
-                      {config?.label || value}
-                    </span>
-                  )
-                }}
-              />
+          {transformedData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={400}>
+              <Chart data={transformedData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                <XAxis
+                  dataKey="month"
+                  stroke="var(--muted-foreground)"
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
+                  dy={10}
+                />
+                <YAxis
+                  stroke="var(--muted-foreground)"
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(value) =>
+                    new Intl.NumberFormat(locale === 'vi' ? 'vi-VN' : 'en-US', {
+                      notation: 'compact',
+                      compactDisplay: 'short',
+                    }).format(value)
+                  }
+                />
+                <Tooltip
+                  content={
+                    <CustomTooltip baseCurrency={baseCurrency} metricConfig={METRIC_CONFIG} />
+                  }
+                />
+                <Legend
+                  verticalAlign="top"
+                  height={36}
+                  iconType="circle"
+                  formatter={(value) => {
+                    const config = METRIC_CONFIG[value as keyof typeof METRIC_CONFIG]
+                    return (
+                      <span className="text-[13px] text-[var(--neutral-500)]">
+                        {config?.label || value}
+                      </span>
+                    )
+                  }}
+                />
 
-              {Object.entries(METRIC_CONFIG).map(([key, config]) => {
-                if (!visibleMetrics.includes(key)) return null
+                {Object.entries(METRIC_CONFIG).map(([key, config]) => {
+                  if (!visibleMetrics.includes(key)) return null
 
-                if (effectiveChartType === 'area') {
+                  if (effectiveChartType === 'area') {
+                    return (
+                      <Area
+                        key={key}
+                        name={config.label}
+                        type="monotone"
+                        dataKey={key}
+                        stroke={config.color}
+                        fill={config.color}
+                        fillOpacity={0.1}
+                        strokeWidth={config.strokeWidth}
+                        animationDuration={800}
+                        connectNulls={false}
+                      />
+                    )
+                  }
+
+                  if (effectiveChartType === 'bar') {
+                    return (
+                      <Bar
+                        key={key}
+                        name={config.label}
+                        dataKey={key}
+                        fill={config.color}
+                        radius={[2, 2, 0, 0]}
+                        animationDuration={800}
+                      />
+                    )
+                  }
+
                   return (
-                    <Area
+                    <Line
                       key={key}
+                      name={config.label}
                       type="monotone"
                       dataKey={key}
                       stroke={config.color}
-                      fill={config.color}
-                      fillOpacity={0.1}
                       strokeWidth={config.strokeWidth}
+                      dot={{ fill: config.color, r: 4, strokeWidth: 0 }}
+                      activeDot={{ r: 6, strokeWidth: 0 }}
                       animationDuration={800}
+                      connectNulls={false}
                     />
                   )
-                }
-
-                if (effectiveChartType === 'bar') {
-                  return (
-                    <Bar
-                      key={key}
-                      dataKey={key}
-                      fill={config.color}
-                      radius={[2, 2, 0, 0]}
-                      animationDuration={800}
-                    />
-                  )
-                }
-
-                return (
-                  <Line
-                    key={key}
-                    type="monotone"
-                    dataKey={key}
-                    stroke={config.color}
-                    strokeWidth={config.strokeWidth}
-                    dot={{ fill: config.color, r: 4, strokeWidth: 0 }}
-                    activeDot={{ r: 6, strokeWidth: 0 }}
-                    animationDuration={800}
-                  />
-                )
-              })}
-            </Chart>
-          </ResponsiveContainer>
+                })}
+              </Chart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex h-[400px] items-center justify-center text-sm text-gray-500">
+              {t('empty.no_data')}
+            </div>
+          )}
         </CardContent>
         <CardFooter className="flex justify-end gap-2 border-t border-gray-100 bg-gray-50/50 p-4">
           <Button

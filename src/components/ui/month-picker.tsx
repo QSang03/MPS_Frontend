@@ -310,7 +310,7 @@ export function MonthPicker({ value, onChange, onApply, className, placeholder }
           <Button variant="secondary" size="sm" onClick={cancel} className="h-7 px-2 text-xs">
             {t('cancel')}
           </Button>
-          <Button size="sm" onClick={apply} className="h-7 px-2 text-xs">
+          <Button variant="default" size="sm" onClick={apply} className="h-7 px-2 text-xs">
             {t('button.apply')}
           </Button>
         </div>

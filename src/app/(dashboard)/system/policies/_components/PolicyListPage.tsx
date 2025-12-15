@@ -455,10 +455,10 @@ function PolicyTable({
             {canUpdate && onEdit && (
               <Button
                 size="sm"
-                variant="default"
+                variant="secondary"
                 onClick={() => onEdit(row.original as Policy)}
                 title={t('button.edit')}
-                className="h-8 w-8 rounded-lg text-[var(--brand-600)] transition-all duration-300"
+                className="h-8 w-8 rounded-lg transition-all duration-300"
               >
                 <Edit className="h-4 w-4" />
               </Button>
@@ -475,7 +475,7 @@ function PolicyTable({
                     size="sm"
                     variant="destructive"
                     title={t('button.delete')}
-                    className="h-8 w-8 rounded-lg text-red-600 transition-all duration-300"
+                    className="h-8 w-8 rounded-lg transition-all duration-300"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>

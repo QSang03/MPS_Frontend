@@ -302,14 +302,14 @@ export function CustomerTable({
                   customer={customer}
                   onSaved={handleSaved}
                   trigger={
-                    <Button variant="default" size="sm" className="p-2">
+                    <Button variant="secondary" size="sm" className="p-2">
                       <Eye className="h-4 w-4" />
                     </Button>
                   }
                 />
               ) : (
                 <Button
-                  variant="default"
+                  variant="secondary"
                   size="sm"
                   onClick={() => {
                     setEditingAddressFor(customer.id)

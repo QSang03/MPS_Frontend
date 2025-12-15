@@ -18,6 +18,8 @@ export async function GET(request: NextRequest, ctx: unknown) {
       if (s === '' || s === 'null' || s === 'undefined') continue
       params[k] = s
     }
+    // Set default lang if not provided
+    if (!params.lang) params.lang = 'vi'
     const from = params.from
     const to = params.to
 

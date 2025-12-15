@@ -199,12 +199,6 @@ export function CostBreakdownChart({
                 </span>
               </div>
               <div className="flex justify-between gap-2">
-                <span>{t('dashboard.cost_breakdown.net')}</span>
-                <span className="font-semibold text-[var(--warning-700)]">
-                  {formatMoney(costBreakdown.costAdjustmentNet)}
-                </span>
-              </div>
-              <div className="flex justify-between gap-2">
                 <span>{t('dashboard.cost_breakdown.cogs_after')}</span>
                 <span className="font-semibold text-gray-900">
                   {formatMoney(costBreakdown.totalCogsAfterAdjustment)}

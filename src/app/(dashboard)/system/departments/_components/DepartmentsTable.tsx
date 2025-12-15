@@ -493,7 +493,7 @@ function DepartmentsTableContent({
             {canUpdate && (
               <Button
                 size="sm"
-                variant="default"
+                variant="secondary"
                 onClick={() => onEditDepartment(row.original)}
                 className="transition-all"
                 title="Chỉnh sửa"

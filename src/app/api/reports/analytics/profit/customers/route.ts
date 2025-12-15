@@ -12,6 +12,8 @@ export async function GET(request: NextRequest) {
       if (s === '' || s === 'null' || s === 'undefined') continue
       params[k] = s
     }
+    // Set default lang if not provided
+    if (!params.lang) params.lang = 'vi'
 
     console.log('[API] Customers profit request:', params)
 

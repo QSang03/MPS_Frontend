@@ -498,7 +498,7 @@ function RolesTableContent({
               {canUpdate && (
                 <Button
                   size="sm"
-                  variant="default"
+                  variant="secondary"
                   onClick={() => !isProtectedRole && onEditRole(row.original)}
                   className="transition-all"
                   title={isProtectedRole ? t('roles.table.protected_edit') : t('roles.table.edit')}

@@ -49,9 +49,9 @@ export type ProfitabilityTrendItem = {
   grossMargin?: number
   costAdjustmentDebit?: number
   costAdjustmentCredit?: number
-  costAdjustmentNet?: number
   totalCogsAfterAdjustment?: number
   grossProfitAfterAdjustment?: number
+  costAdjustmentFormula?: string // ⭐ MỚI
   currency?: CurrencyDataDto | null // ⭐ MỚI
   // Currency conversion fields - ⭐ MỚI
   revenueRentalConverted?: number
@@ -65,9 +65,9 @@ export type ProfitabilityTrendItem = {
   grossProfitConverted?: number
   costAdjustmentDebitConverted?: number
   costAdjustmentCreditConverted?: number
-  costAdjustmentNetConverted?: number
   totalCogsAfterAdjustmentConverted?: number
   grossProfitAfterAdjustmentConverted?: number
+  exchangeRate?: number // ⭐ MỚI
 }
 
 export type EnterpriseProfitResponse = {
@@ -82,12 +82,10 @@ export type EnterpriseProfitResponse = {
     customersCount: number
     costAdjustmentDebit?: number
     costAdjustmentCredit?: number
-    costAdjustmentNet?: number
     totalCogsAfterAdjustment?: number
     grossProfitAfterAdjustment?: number
     costAdjustmentDebitConverted?: number
     costAdjustmentCreditConverted?: number
-    costAdjustmentNetConverted?: number
     totalCogsAfterAdjustmentConverted?: number
     grossProfitAfterAdjustmentConverted?: number
     profitability?: ProfitabilityTrendItem[]
@@ -105,12 +103,10 @@ export type CustomerProfitItem = {
   devicesCount: number
   costAdjustmentDebit?: number
   costAdjustmentCredit?: number
-  costAdjustmentNet?: number
   totalCogsAfterAdjustment?: number
   grossProfitAfterAdjustment?: number
   costAdjustmentDebitConverted?: number
   costAdjustmentCreditConverted?: number
-  costAdjustmentNetConverted?: number
   totalCogsAfterAdjustmentConverted?: number
   grossProfitAfterAdjustmentConverted?: number
   currency?: CurrencyDataDto | null // ⭐ MỚI
@@ -140,12 +136,10 @@ export type DeviceProfitItem = {
   profit: number
   costAdjustmentDebit?: number
   costAdjustmentCredit?: number
-  costAdjustmentNet?: number
   totalCogsAfterAdjustment?: number
   profitAfterAdjustment?: number
   costAdjustmentDebitConverted?: number
   costAdjustmentCreditConverted?: number
-  costAdjustmentNetConverted?: number
   totalCogsAfterAdjustmentConverted?: number
   profitAfterAdjustmentConverted?: number
   currency?: CurrencyDataDto | null // ⭐ MỚI
@@ -167,12 +161,10 @@ export type CustomerDetailProfitResponse = {
       grossProfit: number
       costAdjustmentDebit?: number
       costAdjustmentCredit?: number
-      costAdjustmentNet?: number
       totalCogsAfterAdjustment?: number
       grossProfitAfterAdjustment?: number
       costAdjustmentDebitConverted?: number
       costAdjustmentCreditConverted?: number
-      costAdjustmentNetConverted?: number
       totalCogsAfterAdjustmentConverted?: number
       grossProfitAfterAdjustmentConverted?: number
       currency?: CurrencyDataDto | null // ⭐ MỚI
@@ -202,9 +194,9 @@ export type DeviceProfitabilityItem = {
   grossProfit: number
   costAdjustmentDebit?: number
   costAdjustmentCredit?: number
-  costAdjustmentNet?: number
   totalCogsAfterAdjustment?: number
   grossProfitAfterAdjustment?: number
+  costAdjustmentFormula?: string // ⭐ MỚI
   currency?: CurrencyDataDto | null // ⭐ MỚI
   // Currency conversion fields - ⭐ MỚI
   revenueRentalConverted?: number
@@ -218,9 +210,9 @@ export type DeviceProfitabilityItem = {
   grossProfitConverted?: number
   costAdjustmentDebitConverted?: number
   costAdjustmentCreditConverted?: number
-  costAdjustmentNetConverted?: number
   totalCogsAfterAdjustmentConverted?: number
   grossProfitAfterAdjustmentConverted?: number
+  exchangeRate?: number // ⭐ MỚI
 }
 
 export type DeviceProfitabilityResponse = {
@@ -232,6 +224,7 @@ export type DeviceProfitabilityResponse = {
       model: string
     }
     profitability: DeviceProfitabilityItem[]
+    baseCurrency?: CurrencyDataDto | null // ⭐ MỚI
   }
   message?: string
 }

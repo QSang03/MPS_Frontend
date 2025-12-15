@@ -340,9 +340,7 @@ export default function MonthlyCostsPage() {
   const totalCostAfterAdjustment =
     costData?.customer?.totalCostAfterAdjustment ?? costData?.customer?.totalCost ?? 0
   const costAdjustmentDebit = costData?.customer?.costAdjustmentDebit ?? 0
-  const costAdjustmentCredit = costData?.customer?.costAdjustmentCredit ?? 0
-  const costAdjustmentNet = costAdjustmentCredit - costAdjustmentDebit
-  const costRentalAdjusted = costRental + costAdjustmentNet
+  const costRentalAdjusted = costRental + costAdjustmentDebit
 
   return (
     <div className="min-h-screen from-slate-50 via-[var(--brand-50)] to-[var(--brand-50)] px-4 py-8 sm:px-6 lg:px-8 dark:from-slate-950 dark:via-[var(--brand-950)] dark:to-[var(--brand-950)]">
