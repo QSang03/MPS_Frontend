@@ -130,6 +130,8 @@
   "button.refresh": "Refresh",
   "button.search": "Search",
   "button.cancel": "Cancel",
+  "button.create": "Create",
+  "button.save": "Save",
   "department.update_success": "✅ Department updated successfully",
   "department.create_success": "✅ Department created successfully",
   "department.save_error": "❌ Error saving department",

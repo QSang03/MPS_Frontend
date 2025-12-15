@@ -107,6 +107,8 @@
   "button.refresh": "Làm mới dữ liệu",
   "button.search": "Tìm kiếm",
   "button.cancel": "Hủy",
+  "button.create": "Tạo",
+  "button.save": "Lưu",
   "department.update_success": "✅ Cập nhật bộ phận thành công",
   "department.create_success": "✅ Tạo bộ phận thành công",
   "department.save_error": "❌ Có lỗi khi lưu bộ phận",
