@@ -71,7 +71,7 @@ export function CostBreakdownChart({
   }
 
   const chartData = costBreakdown
-    ? [
+    ? ([
         {
           name: LABELS.rental,
           value: costBreakdown.rentalPercent,
@@ -92,7 +92,11 @@ export function CostBreakdownChart({
           value: costBreakdown.pageColorPercent,
           color: COLORS.pageColor,
         },
-      ].filter((item) => item.value !== undefined && item.value !== null)
+      ].filter((item) => item.value !== undefined && item.value !== null) as Array<{
+        name: string
+        value: number
+        color: string
+      }>)
     : []
 
   const formatMoney = (value: number | undefined) => {
@@ -176,7 +180,9 @@ export function CostBreakdownChart({
                 />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-xs text-[var(--neutral-500)]">{item.name}</p>
-                  <p className="text-sm font-semibold text-[#1F2937]">{item.value.toFixed(2)}%</p>
+                  <p className="text-sm font-semibold text-[#1F2937]">
+                    {item.value?.toFixed(2) ?? '0.00'}%
+                  </p>
                 </div>
               </div>
             ))}
