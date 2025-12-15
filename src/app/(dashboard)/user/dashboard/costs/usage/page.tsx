@@ -399,7 +399,11 @@ export default function UsagePage() {
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart
                         data={usageData.devices.map((d) => ({
-                          name: d.model || d.serialNumber || 'Unknown',
+                          name: d.model
+                            ? d.serialNumber
+                              ? `${d.model} (${d.serialNumber})`
+                              : d.model
+                            : d.serialNumber || 'Unknown',
                           totalPages: d.totalPages,
                           bwPages: d.totalBwPages,
                           colorPages: d.totalColorPages,
