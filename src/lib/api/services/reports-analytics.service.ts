@@ -108,7 +108,8 @@ export type EnterpriseProfitResponse = {
     totalRevenueConverted: number
     totalCogsConverted: number
     grossProfitConverted: number
-    profitability?: EnterpriseProfitabilityItem[]
+    // Profitability can be either cost breakdown (for period/range) or revenue breakdown (for year)
+    profitability?: (EnterpriseProfitabilityItem | ProfitabilityTrendItem)[]
     costAdjustmentDebitConverted?: number
     costAdjustmentCreditConverted?: number
     costAdjustmentFormula?: string
@@ -150,19 +151,12 @@ export type DeviceProfitItem = {
   revenue: number
   cogs: number
   profit: number
-  costAdjustmentDebit?: number
-  costAdjustmentCredit?: number
-  totalCogsAfterAdjustment?: number
-  profitAfterAdjustment?: number
-  costAdjustmentDebitConverted?: number
-  costAdjustmentCreditConverted?: number
-  totalCogsAfterAdjustmentConverted?: number
-  profitAfterAdjustmentConverted?: number
-  currency?: CurrencyDataDto | null // ⭐ MỚI
-  // Currency conversion fields - ⭐ MỚI
   revenueConverted?: number
   cogsConverted?: number
   profitConverted?: number
+  costAdjustmentDebitConverted?: number
+  costAdjustmentCreditConverted?: number
+  costAdjustmentFormula?: string
 }
 
 export type CustomerDetailProfitResponse = {
@@ -175,60 +169,26 @@ export type CustomerDetailProfitResponse = {
       totalRevenue: number
       totalCogs: number
       grossProfit: number
-      costAdjustmentDebit?: number
-      costAdjustmentCredit?: number
-      totalCogsAfterAdjustment?: number
-      grossProfitAfterAdjustment?: number
-      costAdjustmentDebitConverted?: number
-      costAdjustmentCreditConverted?: number
-      totalCogsAfterAdjustmentConverted?: number
-      grossProfitAfterAdjustmentConverted?: number
-      currency?: CurrencyDataDto | null // ⭐ MỚI
-      // Currency conversion fields - ⭐ MỚI
       totalRevenueConverted?: number
       totalCogsConverted?: number
       grossProfitConverted?: number
+      costAdjustmentDebitConverted?: number
+      costAdjustmentCreditConverted?: number
+      costAdjustmentFormula?: string
     }
     devices: DeviceProfitItem[]
-    profitability?: ProfitabilityTrendItem[]
-    baseCurrency?: CurrencyDataDto | null // ⭐ MỚI
+    // Profitability can be either cost breakdown (for period/range) or revenue breakdown (for year)
+    profitability?: (EnterpriseProfitabilityItem | ProfitabilityTrendItem)[]
+    baseCurrency?: CurrencyDataDto | null
   }
   message?: string
 }
 
-export type DeviceProfitabilityItem = {
-  month: string
-  revenueRental: number
-  revenueRepair: number
-  revenuePageBW: number
-  revenuePageColor: number
+// Device profitability item - revenue breakdown structure with revenuePages
+// API returns revenue breakdown (revenueRental, revenueRepair, revenuePageBW, revenuePageColor)
+// and COGS breakdown (cogsConsumable, cogsRepair, cogsRental), not cost breakdown
+export type DeviceProfitabilityItem = ProfitabilityTrendItem & {
   revenuePages?: number
-  totalRevenue: number
-  cogsConsumable: number
-  cogsRepair: number
-  totalCogs: number
-  grossProfit: number
-  costAdjustmentDebit?: number
-  costAdjustmentCredit?: number
-  totalCogsAfterAdjustment?: number
-  grossProfitAfterAdjustment?: number
-  costAdjustmentFormula?: string // ⭐ MỚI
-  currency?: CurrencyDataDto | null // ⭐ MỚI
-  // Currency conversion fields - ⭐ MỚI
-  revenueRentalConverted?: number
-  revenueRepairConverted?: number
-  revenuePageBWConverted?: number
-  revenuePageColorConverted?: number
-  totalRevenueConverted?: number
-  cogsConsumableConverted?: number
-  cogsRepairConverted?: number
-  totalCogsConverted?: number
-  grossProfitConverted?: number
-  costAdjustmentDebitConverted?: number
-  costAdjustmentCreditConverted?: number
-  totalCogsAfterAdjustmentConverted?: number
-  grossProfitAfterAdjustmentConverted?: number
-  exchangeRate?: number // ⭐ MỚI
 }
 
 export type DeviceProfitabilityResponse = {
@@ -552,7 +512,8 @@ export const reportsAnalyticsService = {
       from?: string
       to?: string
       year?: string
-      baseCurrencyId?: string // ⭐ MỚI
+      baseCurrencyId?: string
+      lang?: string // Language preference: 'vi' or 'en', default is 'vi'
     }
   ): Promise<CustomerDetailProfitResponse> {
     try {
@@ -609,7 +570,8 @@ export const reportsAnalyticsService = {
       from?: string
       to?: string
       year?: string
-      baseCurrencyId?: string // ⭐ MỚI
+      baseCurrencyId?: string
+      lang?: string // Language preference: 'vi' or 'en', default is 'vi'
     }
   ): Promise<DeviceProfitabilityResponse> {
     try {

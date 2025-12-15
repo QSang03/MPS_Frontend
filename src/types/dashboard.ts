@@ -59,10 +59,10 @@ export interface AdminOverviewKPIs {
  * Cost Breakdown by Category (in percentages)
  */
 export interface CostBreakdown {
-  rentalPercent?: number
-  repairPercent?: number
-  pageBWPercent?: number
-  pageColorPercent?: number
+  rentalPercent: number
+  repairPercent: number
+  pageBWPercent: number
+  pageColorPercent: number
   // Cost adjustments (original)
   costAdjustmentDebit?: number
   costAdjustmentCredit?: number
@@ -85,12 +85,13 @@ export interface TopCustomer {
   totalCogs: number // chi phí
   grossProfit: number // lợi nhuận gộp
   grossMargin: number // tỷ suất lợi nhuận gộp (%)
-  costAdjustmentDebit: number // điều chỉnh chi phí ghi nợ
-  costAdjustmentCredit: number // điều chỉnh chi phí ghi có
-  totalRevenueAfterAdjustment: number // doanh thu sau điều chỉnh
-  totalCogsAfterAdjustment: number // chi phí sau điều chỉnh
-  grossProfitAfterAdjustment: number // lợi nhuận gộp sau điều chỉnh
-  costAdjustmentFormula: string // công thức tính điều chỉnh
+  costAdjustmentDebit?: number // điều chỉnh chi phí ghi nợ
+  costAdjustmentCredit?: number // điều chỉnh chi phí ghi có
+  costAdjustmentFormula?: string // công thức tính điều chỉnh
+  // Optional fields for backward compatibility
+  totalRevenueAfterAdjustment?: number // doanh thu sau điều chỉnh
+  totalCogsAfterAdjustment?: number // chi phí sau điều chỉnh
+  grossProfitAfterAdjustment?: number // lợi nhuận gộp sau điều chỉnh
   // Converted values (if backend returns for admin/base currency)
   totalRevenueConverted?: number
   totalCogsConverted?: number

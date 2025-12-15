@@ -30,8 +30,8 @@ import {
   DeviceProfitItem,
   DeviceProfitabilityItem,
   ConsumableLifecycleItem,
-  ProfitabilityTrendItem,
   EnterpriseProfitabilityItem,
+  ProfitabilityTrendItem,
   reportsAnalyticsService,
 } from '@/lib/api/services/reports-analytics.service'
 import dynamic from 'next/dynamic'
@@ -178,7 +178,7 @@ export default function AnalyticsPageClient() {
     grossProfitAfterAdjustmentConverted?: number
   } | null>(null)
   const [enterpriseProfitability, setEnterpriseProfitability] = useState<
-    EnterpriseProfitabilityItem[] | null
+    (EnterpriseProfitabilityItem | ProfitabilityTrendItem)[] | null
   >(null)
   const [enterpriseBaseCurrency, setEnterpriseBaseCurrency] = useState<CurrencyDataDto | null>(null)
   const [showEnterpriseDetails, setShowEnterpriseDetails] = useState(false)
@@ -198,28 +198,22 @@ export default function AnalyticsPageClient() {
   const [customerDetailPeriod, setCustomerDetailPeriod] = useState('')
   const [customerDetailLoading, setCustomerDetailLoading] = useState(false)
   const [customerDetailData, setCustomerDetailData] = useState<{
+    period: string
     customer: {
       customerId: string
       name: string
       totalRevenue: number
       totalCogs: number
       grossProfit: number
-      costAdjustmentDebit?: number
-      costAdjustmentCredit?: number
-      totalCogsAfterAdjustment?: number
-      grossProfitAfterAdjustment?: number
-      costAdjustmentDebitConverted?: number
-      costAdjustmentCreditConverted?: number
-      totalCogsAfterAdjustmentConverted?: number
-      grossProfitAfterAdjustmentConverted?: number
-      // Converted values (only for System Admin context)
       totalRevenueConverted?: number
       totalCogsConverted?: number
       grossProfitConverted?: number
-      currency?: CurrencyDataDto | null
+      costAdjustmentDebitConverted?: number
+      costAdjustmentCreditConverted?: number
+      costAdjustmentFormula?: string
     }
     devices: DeviceProfitItem[]
-    profitability?: ProfitabilityTrendItem[]
+    profitability?: (EnterpriseProfitabilityItem | ProfitabilityTrendItem)[]
   } | null>(null)
   const [customerDetailBaseCurrency, setCustomerDetailBaseCurrency] =
     useState<CurrencyDataDto | null>(null)
@@ -240,6 +234,7 @@ export default function AnalyticsPageClient() {
       model: string
     }
     profitability: DeviceProfitabilityItem[]
+    baseCurrency?: CurrencyDataDto | null
   } | null>(null)
 
   // Consumable Lifecycle State
@@ -1343,14 +1338,22 @@ export default function AnalyticsPageClient() {
                             : (() => {
                                 const data = customerDetailData?.profitability ?? []
                                 if (!data || data.length === 0) return null
-                                const row = data[0]
+                                const row = data[0] as EnterpriseProfitabilityItem
                                 if (!row) return null
                                 return {
                                   month: row.month,
                                   totalRevenueConverted:
-                                    row.totalRevenueConverted ?? row.totalRevenue,
-                                  totalCogsConverted: row.totalCogsConverted ?? row.totalCogs,
-                                  grossProfitConverted: row.grossProfitConverted ?? row.grossProfit,
+                                    enterpriseData?.totalRevenueConverted ??
+                                    enterpriseData?.totalRevenue ??
+                                    0,
+                                  totalCogsConverted:
+                                    enterpriseData?.totalCogsConverted ??
+                                    enterpriseData?.totalCogs ??
+                                    0,
+                                  grossProfitConverted:
+                                    enterpriseData?.grossProfitConverted ??
+                                    enterpriseData?.grossProfit ??
+                                    0,
                                 }
                               })()
                         if (!single) return null
@@ -1454,14 +1457,58 @@ export default function AnalyticsPageClient() {
                         )
                       }
                       // For range/year mode
-                      // Enterprise profitability array has cost breakdown, not revenue
-                      // So we can't use it for revenue chart - show message or use top-level data
                       if (isEnterprise) {
-                        // Enterprise profitability array only has cost breakdown
-                        // For range/year, we'd need revenue breakdown which isn't available
-                        // So we'll show a message or use a different visualization
+                        // Check if profitability array has revenue breakdown (year mode) or cost breakdown (period/range mode)
+                        const data = enterpriseProfitability ?? []
+                        if (data.length > 0) {
+                          const firstRow = data[0]
+                          if (!firstRow) return null
+                          const isRevenueBreakdown = 'revenueRental' in firstRow
+                          const isCostBreakdown = 'costRental' in firstRow
+
+                          if (isRevenueBreakdown) {
+                            // Revenue breakdown - use profitability array (year mode)
+                            const transformedData = (data as ProfitabilityTrendItem[]).map(
+                              (row) => ({
+                                month: row.month,
+                                totalRevenue: row.totalRevenueConverted ?? row.totalRevenue,
+                                totalCogs: row.totalCogsConverted ?? row.totalCogs,
+                                grossProfit: row.grossProfitConverted ?? row.grossProfit,
+                              })
+                            )
+                            return (
+                              <TrendChart
+                                data={transformedData}
+                                height={300}
+                                showMargin
+                                baseCurrency={currentCurrency}
+                              />
+                            )
+                          } else if (isCostBreakdown) {
+                            // Cost breakdown - use profitability array (period/range mode)
+                            const transformedData = (data as EnterpriseProfitabilityItem[]).map(
+                              (row) => ({
+                                month: row.month,
+                                costRental: row.costRentalConverted ?? row.costRental,
+                                costRepair: row.costRepairConverted ?? row.costRepair,
+                                costPageBW: row.costPageBWConverted ?? row.costPageBW,
+                                costPageColor: row.costPageColorConverted ?? row.costPageColor,
+                                totalCost: row.totalCostConverted ?? row.totalCost,
+                              })
+                            )
+                            return (
+                              <TrendChart
+                                data={transformedData}
+                                height={300}
+                                showMargin
+                                baseCurrency={currentCurrency}
+                              />
+                            )
+                          }
+                        }
+
+                        // Fallback: use top-level data
                         if (!enterpriseData) return null
-                        // Use top-level data as single point (not ideal for range/year)
                         const single = {
                           month: enterpriseData.period,
                           totalRevenue:
@@ -1479,18 +1526,66 @@ export default function AnalyticsPageClient() {
                           />
                         )
                       } else {
-                        // Customer detail - use profitability array
-                        const data = customerDetailData?.profitability ?? []
-                        if (!data || data.length === 0) return null
-                        const transformedData = data.map((row) => ({
-                          month: row.month,
-                          totalRevenue: row.totalRevenueConverted ?? row.totalRevenue,
-                          totalCogs: row.totalCogsConverted ?? row.totalCogs,
-                          grossProfit: row.grossProfitConverted ?? row.grossProfit,
-                        }))
+                        // Customer detail - check profitability type
+                        if (!customerDetailData) return null
+                        const data = customerDetailData.profitability ?? []
+                        if (data.length > 0) {
+                          const firstRow = data[0]
+                          if (!firstRow) return null
+                          const isRevenueBreakdown = 'revenueRental' in firstRow
+                          const isCostBreakdown = 'costRental' in firstRow
+
+                          if (isRevenueBreakdown) {
+                            // Revenue breakdown - use profitability array (year mode)
+                            const transformedData = (data as ProfitabilityTrendItem[]).map(
+                              (row) => ({
+                                month: row.month,
+                                totalRevenue: row.totalRevenueConverted ?? row.totalRevenue,
+                                totalCogs: row.totalCogsConverted ?? row.totalCogs,
+                                grossProfit: row.grossProfitConverted ?? row.grossProfit,
+                              })
+                            )
+                            return (
+                              <TrendChart
+                                data={transformedData}
+                                height={300}
+                                showMargin
+                                baseCurrency={currentCurrency}
+                              />
+                            )
+                          } else if (isCostBreakdown) {
+                            // Cost breakdown - use profitability array (period/range mode)
+                            const transformedData = (data as EnterpriseProfitabilityItem[]).map(
+                              (row) => ({
+                                month: row.month,
+                                costRental: row.costRentalConverted ?? row.costRental,
+                                costRepair: row.costRepairConverted ?? row.costRepair,
+                                costPageBW: row.costPageBWConverted ?? row.costPageBW,
+                                costPageColor: row.costPageColorConverted ?? row.costPageColor,
+                                totalCost: row.totalCostConverted ?? row.totalCost,
+                              })
+                            )
+                            return (
+                              <TrendChart
+                                data={transformedData}
+                                height={300}
+                                showMargin
+                                baseCurrency={currentCurrency}
+                              />
+                            )
+                          }
+                        }
+
+                        // Fallback: use top-level customer data
+                        const single = {
+                          month: customerDetailData?.period || '',
+                          totalRevenue: customerDetailData?.customer.totalRevenueConverted || 0,
+                          totalCogs: customerDetailData?.customer.totalCogsConverted || 0,
+                          grossProfit: customerDetailData?.customer.grossProfitConverted || 0,
+                        }
                         return (
                           <TrendChart
-                            data={transformedData}
+                            data={[single]}
                             height={300}
                             showMargin
                             baseCurrency={currentCurrency}
@@ -1510,75 +1605,78 @@ export default function AnalyticsPageClient() {
                       <th className="px-4 py-2 text-left text-sm font-semibold text-gray-600">
                         {t('analytics.table.period')}
                       </th>
-                      {selectedCustomerId ? (
-                        // Customer detail - revenue breakdown
-                        <>
-                          <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
-                            {t('analytics.table.rental')}
-                          </th>
-                          <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
-                            {t('analytics.table.repair')}
-                          </th>
-                          <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
-                            {t('analytics.table.page_bw')}
-                          </th>
-                          <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
-                            {t('analytics.table.page_color')}
-                          </th>
-                          <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
-                            {t('analytics.table.total_revenue')}
-                          </th>
-                          <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
-                            {t('analytics.table.total_cogs')}
-                          </th>
-                          <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
-                            {t('analytics.table.profit')}
-                          </th>
-                          <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
-                            {t('analytics.table.margin')}
-                          </th>
-                          <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
-                            {t('dashboard.metrics.cost_adjustment_debit')}
-                          </th>
-                          <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
-                            {t('dashboard.metrics.cost_adjustment_credit')}
-                          </th>
-                          <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
-                            {t('dashboard.metrics.total_cogs_after_adjustment')}
-                          </th>
-                          <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
-                            {t('dashboard.metrics.gross_profit_after_adjustment')}
-                          </th>
-                        </>
-                      ) : (
-                        // Enterprise - cost breakdown
-                        <>
-                          <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
-                            {t('analytics.table.cost_rental')}
-                          </th>
-                          <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
-                            {t('analytics.table.cost_repair')}
-                          </th>
-                          <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
-                            {t('analytics.table.cost_page_bw')}
-                          </th>
-                          <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
-                            {t('analytics.table.cost_page_color')}
-                          </th>
-                          <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
-                            {t('analytics.table.total_cost')}
-                          </th>
-                          <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
-                            {t('dashboard.metrics.cost_adjustment_debit')}
-                          </th>
-                          <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
-                            {t('dashboard.metrics.cost_adjustment_credit')}
-                          </th>
-                          <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
-                            {t('dashboard.metrics.total_cost_after_adjustment')}
-                          </th>
-                        </>
-                      )}
+                      {(() => {
+                        // Detect profitability type from first row
+                        const data = selectedCustomerId
+                          ? (customerDetailData?.profitability ?? [])
+                          : (enterpriseProfitability ?? [])
+                        const firstRow = data[0]
+                        const isCostBreakdown = firstRow && 'costRental' in firstRow
+                        const isRevenueBreakdown = firstRow && 'revenueRental' in firstRow
+
+                        if (isCostBreakdown) {
+                          // Cost breakdown columns
+                          return (
+                            <>
+                              <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
+                                {t('analytics.table.cost_rental')}
+                              </th>
+                              <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
+                                {t('analytics.table.cost_repair')}
+                              </th>
+                              <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
+                                {t('analytics.table.cost_page_bw')}
+                              </th>
+                              <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
+                                {t('analytics.table.cost_page_color')}
+                              </th>
+                              <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
+                                {t('analytics.table.total_cost')}
+                              </th>
+                              <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
+                                {t('dashboard.metrics.cost_adjustment_debit')}
+                              </th>
+                              <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
+                                {t('dashboard.metrics.cost_adjustment_credit')}
+                              </th>
+                              <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
+                                {t('dashboard.metrics.total_cost_after_adjustment')}
+                              </th>
+                            </>
+                          )
+                        } else if (isRevenueBreakdown) {
+                          // Revenue breakdown columns
+                          return (
+                            <>
+                              <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
+                                {t('analytics.table.rental')}
+                              </th>
+                              <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
+                                {t('analytics.table.repair')}
+                              </th>
+                              <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
+                                {t('analytics.table.page_bw')}
+                              </th>
+                              <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
+                                {t('analytics.table.page_color')}
+                              </th>
+                              <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
+                                {t('analytics.table.total_revenue')}
+                              </th>
+                              <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
+                                {t('analytics.table.total_cogs')}
+                              </th>
+                              <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
+                                {t('analytics.table.profit')}
+                              </th>
+                              <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
+                                {t('analytics.table.margin')}
+                              </th>
+                            </>
+                          )
+                        }
+                        return null
+                      })()}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
@@ -1589,214 +1687,316 @@ export default function AnalyticsPageClient() {
                       const currentCurrency = selectedCustomerId
                         ? customerDetailBaseCurrency
                         : enterpriseBaseCurrency
-                      const isEnterprise = !selectedCustomerId
-                      const enterpriseRow = isEnterprise
-                        ? (row as EnterpriseProfitabilityItem)
-                        : null
-                      const customerRow = !isEnterprise ? (row as ProfitabilityTrendItem) : null
+                      // Detect type: check if row has costRental (cost breakdown) or revenueRental (revenue breakdown)
+                      const isCostBreakdown = 'costRental' in row
+                      const isRevenueBreakdown = 'revenueRental' in row
+
+                      const costRow = isCostBreakdown ? (row as EnterpriseProfitabilityItem) : null
+                      const revenueRow = isRevenueBreakdown ? (row as ProfitabilityTrendItem) : null
 
                       return (
                         <tr key={row.month}>
                           <td className="px-4 py-2 text-sm">{row.month}</td>
-                          {selectedCustomerId && customerRow ? (
-                            // Customer detail - revenue breakdown
+                          {selectedCustomerId && costRow ? (
+                            // Customer detail - cost breakdown
                             <>
                               <td className="px-4 py-2 text-right text-sm">
                                 {formatDual(
-                                  customerRow.revenueRental,
-                                  customerRow.revenueRentalConverted,
+                                  costRow.costRental,
+                                  costRow.costRentalConverted,
                                   currentCurrency,
-                                  customerRow.currency,
+                                  costRow.currency,
                                   'right'
                                 )}
                               </td>
                               <td className="px-4 py-2 text-right text-sm">
                                 {formatDual(
-                                  customerRow.revenueRepair,
-                                  customerRow.revenueRepairConverted,
+                                  costRow.costRepair,
+                                  costRow.costRepairConverted,
                                   currentCurrency,
-                                  customerRow.currency,
+                                  costRow.currency,
                                   'right'
                                 )}
                               </td>
                               <td className="px-4 py-2 text-right text-sm">
                                 {formatDual(
-                                  customerRow.revenuePageBW,
-                                  customerRow.revenuePageBWConverted,
+                                  costRow.costPageBW,
+                                  costRow.costPageBWConverted,
                                   currentCurrency,
-                                  customerRow.currency,
+                                  costRow.currency,
                                   'right'
                                 )}
                               </td>
                               <td className="px-4 py-2 text-right text-sm">
                                 {formatDual(
-                                  customerRow.revenuePageColor,
-                                  customerRow.revenuePageColorConverted,
+                                  costRow.costPageColor,
+                                  costRow.costPageColorConverted,
                                   currentCurrency,
-                                  customerRow.currency,
+                                  costRow.currency,
                                   'right'
                                 )}
                               </td>
                               <td className="px-4 py-2 text-right text-sm font-semibold">
                                 {formatDual(
-                                  customerRow.totalRevenue,
-                                  customerRow.totalRevenueConverted,
+                                  costRow.totalCost,
+                                  costRow.totalCostConverted,
                                   currentCurrency,
-                                  customerRow.currency,
+                                  costRow.currency,
                                   'right'
                                 )}
                               </td>
                               <td className="px-4 py-2 text-right text-sm">
                                 {formatDual(
-                                  customerRow.totalCogs,
-                                  customerRow.totalCogsConverted,
+                                  costRow.costAdjustmentDebit,
+                                  costRow.costAdjustmentDebitConverted,
                                   currentCurrency,
-                                  customerRow.currency,
-                                  'right'
-                                )}
-                              </td>
-                              <td
-                                className={`px-4 py-2 text-right text-sm font-semibold ${
-                                  (customerRow.grossProfitConverted ?? customerRow.grossProfit) >= 0
-                                    ? 'text-[var(--color-success-600)]'
-                                    : 'text-[var(--color-error-600)]'
-                                }`}
-                              >
-                                {formatDual(
-                                  customerRow.grossProfit,
-                                  customerRow.grossProfitConverted,
-                                  currentCurrency,
-                                  customerRow.currency,
-                                  'right'
-                                )}
-                              </td>
-                              <td className="px-4 py-2 text-right text-sm">
-                                {typeof customerRow.grossMargin === 'number'
-                                  ? `${customerRow.grossMargin.toFixed(1)}%`
-                                  : '-'}
-                              </td>
-                              <td className="px-4 py-2 text-right text-sm">
-                                {formatDual(
-                                  customerRow.costAdjustmentDebit ?? 0,
-                                  customerRow.costAdjustmentDebitConverted,
-                                  currentCurrency,
-                                  customerRow.currency,
+                                  costRow.currency,
                                   'right'
                                 )}
                               </td>
                               <td className="px-4 py-2 text-right text-sm">
                                 {formatDual(
-                                  customerRow.costAdjustmentCredit ?? 0,
-                                  customerRow.costAdjustmentCreditConverted,
+                                  costRow.costAdjustmentCredit,
+                                  costRow.costAdjustmentCreditConverted,
                                   currentCurrency,
-                                  customerRow.currency,
+                                  costRow.currency,
                                   'right'
                                 )}
                               </td>
                               <td className="px-4 py-2 text-right text-sm font-semibold">
                                 {formatDual(
-                                  customerRow.totalCogsAfterAdjustment ?? customerRow.totalCogs,
-                                  customerRow.totalCogsAfterAdjustmentConverted ??
-                                    customerRow.totalCogsConverted,
+                                  costRow.totalCostAfterAdjustment,
+                                  costRow.totalCostAfterAdjustmentConverted,
                                   currentCurrency,
-                                  customerRow.currency,
-                                  'right'
-                                )}
-                              </td>
-                              <td
-                                className={`px-4 py-2 text-right text-sm font-semibold ${
-                                  (customerRow.grossProfitAfterAdjustmentConverted ??
-                                    customerRow.grossProfitAfterAdjustment ??
-                                    customerRow.grossProfitConverted ??
-                                    customerRow.grossProfit) >= 0
-                                    ? 'text-[var(--color-success-600)]'
-                                    : 'text-[var(--color-error-600)]'
-                                }`}
-                              >
-                                {formatDual(
-                                  customerRow.grossProfitAfterAdjustment ?? customerRow.grossProfit,
-                                  customerRow.grossProfitAfterAdjustmentConverted ??
-                                    customerRow.grossProfitConverted,
-                                  currentCurrency,
-                                  customerRow.currency,
+                                  costRow.currency,
                                   'right'
                                 )}
                               </td>
                             </>
-                          ) : enterpriseRow ? (
+                          ) : selectedCustomerId && revenueRow ? (
+                            // Customer detail - revenue breakdown (when using year parameter)
+                            <>
+                              <td className="px-4 py-2 text-right text-sm">
+                                {formatDual(
+                                  revenueRow.revenueRental,
+                                  revenueRow.revenueRentalConverted,
+                                  currentCurrency,
+                                  revenueRow.currency,
+                                  'right'
+                                )}
+                              </td>
+                              <td className="px-4 py-2 text-right text-sm">
+                                {formatDual(
+                                  revenueRow.revenueRepair,
+                                  revenueRow.revenueRepairConverted,
+                                  currentCurrency,
+                                  revenueRow.currency,
+                                  'right'
+                                )}
+                              </td>
+                              <td className="px-4 py-2 text-right text-sm">
+                                {formatDual(
+                                  revenueRow.revenuePageBW,
+                                  revenueRow.revenuePageBWConverted,
+                                  currentCurrency,
+                                  revenueRow.currency,
+                                  'right'
+                                )}
+                              </td>
+                              <td className="px-4 py-2 text-right text-sm">
+                                {formatDual(
+                                  revenueRow.revenuePageColor,
+                                  revenueRow.revenuePageColorConverted,
+                                  currentCurrency,
+                                  revenueRow.currency,
+                                  'right'
+                                )}
+                              </td>
+                              <td className="px-4 py-2 text-right text-sm font-semibold">
+                                {formatDual(
+                                  revenueRow.totalRevenue,
+                                  revenueRow.totalRevenueConverted,
+                                  currentCurrency,
+                                  revenueRow.currency,
+                                  'right'
+                                )}
+                              </td>
+                              <td className="px-4 py-2 text-right text-sm">
+                                {formatDual(
+                                  revenueRow.totalCogs,
+                                  revenueRow.totalCogsConverted,
+                                  currentCurrency,
+                                  revenueRow.currency,
+                                  'right'
+                                )}
+                              </td>
+                              <td className="px-4 py-2 text-right text-sm font-semibold">
+                                {formatDual(
+                                  revenueRow.grossProfit,
+                                  revenueRow.grossProfitConverted,
+                                  currentCurrency,
+                                  revenueRow.currency,
+                                  'right'
+                                )}
+                              </td>
+                              <td className="px-4 py-2 text-right text-sm">
+                                {revenueRow.grossMargin !== undefined
+                                  ? `${revenueRow.grossMargin.toFixed(2)}%`
+                                  : '-'}
+                              </td>
+                            </>
+                          ) : costRow ? (
                             // Enterprise - cost breakdown
                             <>
                               <td className="px-4 py-2 text-right text-sm">
                                 {formatDual(
-                                  enterpriseRow.costRental,
-                                  enterpriseRow.costRentalConverted,
+                                  costRow.costRental,
+                                  costRow.costRentalConverted,
                                   currentCurrency,
-                                  enterpriseRow.currency,
+                                  costRow.currency,
                                   'right'
                                 )}
                               </td>
                               <td className="px-4 py-2 text-right text-sm">
                                 {formatDual(
-                                  enterpriseRow.costRepair,
-                                  enterpriseRow.costRepairConverted,
+                                  costRow.costRepair,
+                                  costRow.costRepairConverted,
                                   currentCurrency,
-                                  enterpriseRow.currency,
+                                  costRow.currency,
                                   'right'
                                 )}
                               </td>
                               <td className="px-4 py-2 text-right text-sm">
                                 {formatDual(
-                                  enterpriseRow.costPageBW,
-                                  enterpriseRow.costPageBWConverted,
+                                  costRow.costPageBW,
+                                  costRow.costPageBWConverted,
                                   currentCurrency,
-                                  enterpriseRow.currency,
+                                  costRow.currency,
                                   'right'
                                 )}
                               </td>
                               <td className="px-4 py-2 text-right text-sm">
                                 {formatDual(
-                                  enterpriseRow.costPageColor,
-                                  enterpriseRow.costPageColorConverted,
+                                  costRow.costPageColor,
+                                  costRow.costPageColorConverted,
                                   currentCurrency,
-                                  enterpriseRow.currency,
+                                  costRow.currency,
                                   'right'
                                 )}
                               </td>
                               <td className="px-4 py-2 text-right text-sm font-semibold">
                                 {formatDual(
-                                  enterpriseRow.totalCost,
-                                  enterpriseRow.totalCostConverted,
+                                  costRow.totalCost,
+                                  costRow.totalCostConverted,
                                   currentCurrency,
-                                  enterpriseRow.currency,
+                                  costRow.currency,
                                   'right'
                                 )}
                               </td>
                               <td className="px-4 py-2 text-right text-sm">
                                 {formatDual(
-                                  enterpriseRow.costAdjustmentDebit,
-                                  enterpriseRow.costAdjustmentDebitConverted,
+                                  costRow.costAdjustmentDebit,
+                                  costRow.costAdjustmentDebitConverted,
                                   currentCurrency,
-                                  enterpriseRow.currency,
+                                  costRow.currency,
                                   'right'
                                 )}
                               </td>
                               <td className="px-4 py-2 text-right text-sm">
                                 {formatDual(
-                                  enterpriseRow.costAdjustmentCredit,
-                                  enterpriseRow.costAdjustmentCreditConverted,
+                                  costRow.costAdjustmentCredit,
+                                  costRow.costAdjustmentCreditConverted,
                                   currentCurrency,
-                                  enterpriseRow.currency,
+                                  costRow.currency,
                                   'right'
                                 )}
                               </td>
                               <td className="px-4 py-2 text-right text-sm font-semibold">
                                 {formatDual(
-                                  enterpriseRow.totalCostAfterAdjustment,
-                                  enterpriseRow.totalCostAfterAdjustmentConverted,
+                                  costRow.totalCostAfterAdjustment,
+                                  costRow.totalCostAfterAdjustmentConverted,
                                   currentCurrency,
-                                  enterpriseRow.currency,
+                                  costRow.currency,
                                   'right'
                                 )}
+                              </td>
+                            </>
+                          ) : revenueRow ? (
+                            // Enterprise - revenue breakdown (when using year parameter)
+                            <>
+                              <td className="px-4 py-2 text-right text-sm">
+                                {formatDual(
+                                  revenueRow.revenueRental,
+                                  revenueRow.revenueRentalConverted,
+                                  currentCurrency,
+                                  revenueRow.currency,
+                                  'right'
+                                )}
+                              </td>
+                              <td className="px-4 py-2 text-right text-sm">
+                                {formatDual(
+                                  revenueRow.revenueRepair,
+                                  revenueRow.revenueRepairConverted,
+                                  currentCurrency,
+                                  revenueRow.currency,
+                                  'right'
+                                )}
+                              </td>
+                              <td className="px-4 py-2 text-right text-sm">
+                                {formatDual(
+                                  revenueRow.revenuePageBW,
+                                  revenueRow.revenuePageBWConverted,
+                                  currentCurrency,
+                                  revenueRow.currency,
+                                  'right'
+                                )}
+                              </td>
+                              <td className="px-4 py-2 text-right text-sm">
+                                {formatDual(
+                                  revenueRow.revenuePageColor,
+                                  revenueRow.revenuePageColorConverted,
+                                  currentCurrency,
+                                  revenueRow.currency,
+                                  'right'
+                                )}
+                              </td>
+                              <td className="px-4 py-2 text-right text-sm font-semibold">
+                                {formatDual(
+                                  revenueRow.totalRevenue,
+                                  revenueRow.totalRevenueConverted,
+                                  currentCurrency,
+                                  revenueRow.currency,
+                                  'right'
+                                )}
+                              </td>
+                              <td className="px-4 py-2 text-right text-sm">
+                                {formatDual(
+                                  revenueRow.totalCogs,
+                                  revenueRow.totalCogsConverted,
+                                  currentCurrency,
+                                  revenueRow.currency,
+                                  'right'
+                                )}
+                              </td>
+                              <td
+                                className={`px-4 py-2 text-right text-sm font-semibold ${
+                                  (revenueRow.grossProfitConverted ?? revenueRow.grossProfit) >= 0
+                                    ? 'text-[var(--color-success-600)]'
+                                    : 'text-[var(--color-error-600)]'
+                                }`}
+                              >
+                                {formatDual(
+                                  revenueRow.grossProfit,
+                                  revenueRow.grossProfitConverted,
+                                  currentCurrency,
+                                  revenueRow.currency,
+                                  'right'
+                                )}
+                              </td>
+                              <td className="px-4 py-2 text-right text-sm">
+                                {typeof revenueRow.grossMargin === 'number'
+                                  ? `${revenueRow.grossMargin.toFixed(1)}%`
+                                  : '-'}
                               </td>
                             </>
                           ) : null}
@@ -1912,12 +2112,10 @@ export default function AnalyticsPageClient() {
                                     {t('analytics.customer_detail.revenue')}
                                   </span>
                                   <p className="font-semibold">
-                                    {formatDual(
-                                      customerDetailData.customer.totalRevenue,
-                                      customerDetailData.customer.totalRevenueConverted,
-                                      customerDetailBaseCurrency,
-                                      customerDetailData.customer.currency,
-                                      'left'
+                                    {formatCurrency(
+                                      customerDetailData.customer.totalRevenueConverted ??
+                                        customerDetailData.customer.totalRevenue,
+                                      customerDetailBaseCurrency
                                     )}
                                   </p>
                                 </div>
@@ -1926,12 +2124,10 @@ export default function AnalyticsPageClient() {
                                     {t('analytics.customer_detail.cost')}
                                   </span>
                                   <p className="font-semibold">
-                                    {formatDual(
-                                      customerDetailData.customer.totalCogs,
-                                      customerDetailData.customer.totalCogsConverted,
-                                      customerDetailBaseCurrency,
-                                      customerDetailData.customer.currency,
-                                      'left'
+                                    {formatCurrency(
+                                      customerDetailData.customer.totalCogsConverted ??
+                                        customerDetailData.customer.totalCogs,
+                                      customerDetailBaseCurrency
                                     )}
                                   </p>
                                 </div>
@@ -1940,81 +2136,43 @@ export default function AnalyticsPageClient() {
                                     {t('analytics.customer_detail.profit')}
                                   </span>
                                   <p
-                                    className={`font-semibold ${customerDetailData.customer.grossProfit >= 0 ? 'text-[var(--color-success-600)]' : 'text-[var(--color-error-600)]'}`}
+                                    className={`font-semibold ${(customerDetailData.customer.grossProfitConverted ?? customerDetailData.customer.grossProfit) >= 0 ? 'text-[var(--color-success-600)]' : 'text-[var(--color-error-600)]'}`}
                                   >
-                                    {formatDual(
-                                      customerDetailData.customer.grossProfit,
-                                      customerDetailData.customer.grossProfitConverted,
-                                      customerDetailBaseCurrency,
-                                      customerDetailData.customer.currency,
-                                      'left'
-                                    )}
-                                  </p>
-                                </div>
-                                <div>
-                                  <span className="text-muted-foreground">
-                                    {t('dashboard.metrics.cost_adjustment_debit')}
-                                  </span>
-                                  <p className="font-semibold">
-                                    {formatDual(
-                                      customerDetailData.customer.costAdjustmentDebit ?? 0,
-                                      customerDetailData.customer.costAdjustmentDebitConverted,
-                                      customerDetailBaseCurrency,
-                                      customerDetailData.customer.currency,
-                                      'left'
-                                    )}
-                                  </p>
-                                </div>
-                                <div>
-                                  <span className="text-muted-foreground">
-                                    {t('dashboard.metrics.cost_adjustment_credit')}
-                                  </span>
-                                  <p className="font-semibold">
-                                    {formatDual(
-                                      customerDetailData.customer.costAdjustmentCredit ?? 0,
-                                      customerDetailData.customer.costAdjustmentCreditConverted,
-                                      customerDetailBaseCurrency,
-                                      customerDetailData.customer.currency,
-                                      'left'
-                                    )}
-                                  </p>
-                                </div>
-                                <div>
-                                  <span className="text-muted-foreground">
-                                    {t('dashboard.metrics.total_cogs_after_adjustment')}
-                                  </span>
-                                  <p className="font-semibold">
-                                    {formatDual(
-                                      customerDetailData.customer.totalCogsAfterAdjustment ??
-                                        customerDetailData.customer.totalCogs,
-                                      customerDetailData.customer
-                                        .totalCogsAfterAdjustmentConverted ??
-                                        customerDetailData.customer.totalCogsConverted,
-                                      customerDetailBaseCurrency,
-                                      customerDetailData.customer.currency,
-                                      'left'
-                                    )}
-                                  </p>
-                                </div>
-                                <div>
-                                  <span className="text-muted-foreground">
-                                    {t('dashboard.metrics.gross_profit_after_adjustment')}
-                                  </span>
-                                  <p
-                                    className={`font-semibold ${(customerDetailData.customer.grossProfitAfterAdjustment ?? customerDetailData.customer.grossProfit) >= 0 ? 'text-[var(--color-success-600)]' : 'text-[var(--color-error-600)]'}`}
-                                  >
-                                    {formatDual(
-                                      customerDetailData.customer.grossProfitAfterAdjustment ??
+                                    {formatCurrency(
+                                      customerDetailData.customer.grossProfitConverted ??
                                         customerDetailData.customer.grossProfit,
-                                      customerDetailData.customer
-                                        .grossProfitAfterAdjustmentConverted ??
-                                        customerDetailData.customer.grossProfitConverted,
-                                      customerDetailBaseCurrency,
-                                      customerDetailData.customer.currency,
-                                      'left'
+                                      customerDetailBaseCurrency
                                     )}
                                   </p>
                                 </div>
+                                {customerDetailData.customer.costAdjustmentDebitConverted !==
+                                  undefined && (
+                                  <div>
+                                    <span className="text-muted-foreground">
+                                      {t('dashboard.metrics.cost_adjustment_debit')}
+                                    </span>
+                                    <p className="font-semibold">
+                                      {formatCurrency(
+                                        customerDetailData.customer.costAdjustmentDebitConverted,
+                                        customerDetailBaseCurrency
+                                      )}
+                                    </p>
+                                  </div>
+                                )}
+                                {customerDetailData.customer.costAdjustmentCreditConverted !==
+                                  undefined && (
+                                  <div>
+                                    <span className="text-muted-foreground">
+                                      {t('dashboard.metrics.cost_adjustment_credit')}
+                                    </span>
+                                    <p className="font-semibold">
+                                      {formatCurrency(
+                                        customerDetailData.customer.costAdjustmentCreditConverted,
+                                        customerDetailBaseCurrency
+                                      )}
+                                    </p>
+                                  </div>
+                                )}
                               </div>
                             </CardContent>
                           </Card>
@@ -2024,39 +2182,447 @@ export default function AnalyticsPageClient() {
                               {(() => {
                                 const d = customerDetailData.profitability
                                 if (!d || d.length === 0) return null
-                                const data = d
-                                if (globalMode === 'period' && data.length === 1) {
-                                  const row = data[0]
+
+                                // Detect type: check if first row has costRental (cost breakdown) or revenueRental (revenue breakdown)
+                                const firstRow = d[0]
+                                if (!firstRow) return null
+                                const isCostBreakdown = 'costRental' in firstRow
+                                const isRevenueBreakdown = 'revenueRental' in firstRow
+
+                                if (globalMode === 'period' && d.length === 1) {
+                                  const row = d[0]
                                   if (!row) return null
-                                  const single = {
-                                    month: row.month,
-                                    totalRevenue: getDisplayValue(
-                                      row.totalRevenue,
-                                      row.totalRevenueConverted,
-                                      useConverted
-                                    ),
-                                    totalCogs: getDisplayValue(
-                                      row.totalCogs,
-                                      row.totalCogsConverted,
-                                      useConverted
-                                    ),
-                                    grossProfit: getDisplayValue(
-                                      row.grossProfit,
-                                      row.grossProfitConverted,
-                                      useConverted
-                                    ),
+
+                                  if (isCostBreakdown) {
+                                    // Cost breakdown
+                                    const costRow = row as EnterpriseProfitabilityItem
+                                    const single = {
+                                      month: costRow.month,
+                                      costRental: getDisplayValue(
+                                        costRow.costRental,
+                                        costRow.costRentalConverted,
+                                        useConverted
+                                      ),
+                                      costRepair: getDisplayValue(
+                                        costRow.costRepair,
+                                        costRow.costRepairConverted,
+                                        useConverted
+                                      ),
+                                      costPageBW: getDisplayValue(
+                                        costRow.costPageBW,
+                                        costRow.costPageBWConverted,
+                                        useConverted
+                                      ),
+                                      costPageColor: getDisplayValue(
+                                        costRow.costPageColor,
+                                        costRow.costPageColorConverted,
+                                        useConverted
+                                      ),
+                                      totalCost: getDisplayValue(
+                                        costRow.totalCost,
+                                        costRow.totalCostConverted,
+                                        useConverted
+                                      ),
+                                    }
+                                    const chartConfig: ChartConfig = {
+                                      costRental: {
+                                        label: t('analytics.table.cost_rental'),
+                                        color: '#3b82f6',
+                                      },
+                                      costRepair: {
+                                        label: t('analytics.table.cost_repair'),
+                                        color: '#f59e0b',
+                                      },
+                                      costPageBW: {
+                                        label: t('analytics.table.cost_page_bw'),
+                                        color: '#8b5cf6',
+                                      },
+                                      costPageColor: {
+                                        label: t('analytics.table.cost_page_color'),
+                                        color: '#ec4899',
+                                      },
+                                      totalCost: {
+                                        label: t('analytics.table.total_cost'),
+                                        color: '#ef4444',
+                                      },
+                                    }
+                                    const formatter = (v: unknown) =>
+                                      typeof v === 'number'
+                                        ? formatCurrency(Number(v), customerDetailBaseCurrency)
+                                        : String(v ?? '-')
+                                    return (
+                                      <ChartContainer
+                                        config={chartConfig}
+                                        className="h-[300px] w-full"
+                                      >
+                                        <ResponsiveContainer width="100%" height={300}>
+                                          <BarChart accessibilityLayer data={[single]}>
+                                            <CartesianGrid
+                                              vertical={false}
+                                              strokeDasharray="3 3"
+                                              className="stroke-border/40"
+                                            />
+                                            <XAxis
+                                              dataKey="month"
+                                              tickLine={false}
+                                              axisLine={false}
+                                              tickMargin={10}
+                                              tick={{ fill: 'hsl(var(--foreground))' }}
+                                            />
+                                            <YAxis
+                                              tickLine={false}
+                                              axisLine={false}
+                                              tickMargin={10}
+                                              tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                                              tickFormatter={(v) => {
+                                                const num = Number(v)
+                                                if (num >= 1000000)
+                                                  return `${(num / 1000000).toFixed(1)}M`
+                                                if (num >= 1000)
+                                                  return `${(num / 1000).toFixed(1)}K`
+                                                return Intl.NumberFormat('vi-VN').format(num)
+                                              }}
+                                            />
+                                            <ChartTooltip
+                                              content={
+                                                <ChartTooltipContent
+                                                  indicator="dot"
+                                                  formatter={(v) =>
+                                                    typeof v === 'number'
+                                                      ? formatter(v)
+                                                      : String(v ?? '-')
+                                                  }
+                                                />
+                                              }
+                                            />
+                                            <ChartLegend content={<ChartLegendContent />} />
+                                            <Bar
+                                              dataKey="costRental"
+                                              fill="var(--color-costRental)"
+                                              radius={[6, 6, 0, 0]}
+                                            >
+                                              <LabelList
+                                                dataKey="costRental"
+                                                position="top"
+                                                formatter={(v) => formatter(v)}
+                                                className="fill-foreground text-xs font-medium"
+                                              />
+                                            </Bar>
+                                            <Bar
+                                              dataKey="costRepair"
+                                              fill="var(--color-costRepair)"
+                                              radius={[6, 6, 0, 0]}
+                                            >
+                                              <LabelList
+                                                dataKey="costRepair"
+                                                position="top"
+                                                formatter={(v) => formatter(v)}
+                                                className="fill-foreground text-xs font-medium"
+                                              />
+                                            </Bar>
+                                            <Bar
+                                              dataKey="costPageBW"
+                                              fill="var(--color-costPageBW)"
+                                              radius={[6, 6, 0, 0]}
+                                            >
+                                              <LabelList
+                                                dataKey="costPageBW"
+                                                position="top"
+                                                formatter={(v) => formatter(v)}
+                                                className="fill-foreground text-xs font-medium"
+                                              />
+                                            </Bar>
+                                            <Bar
+                                              dataKey="costPageColor"
+                                              fill="var(--color-costPageColor)"
+                                              radius={[6, 6, 0, 0]}
+                                            >
+                                              <LabelList
+                                                dataKey="costPageColor"
+                                                position="top"
+                                                formatter={(v) => formatter(v)}
+                                                className="fill-foreground text-xs font-medium"
+                                              />
+                                            </Bar>
+                                            <Bar
+                                              dataKey="totalCost"
+                                              fill="var(--color-totalCost)"
+                                              radius={[6, 6, 0, 0]}
+                                            >
+                                              <LabelList
+                                                dataKey="totalCost"
+                                                position="top"
+                                                formatter={(v) => formatter(v)}
+                                                className="fill-foreground text-xs font-medium"
+                                              />
+                                            </Bar>
+                                          </BarChart>
+                                        </ResponsiveContainer>
+                                      </ChartContainer>
+                                    )
+                                  } else if (isRevenueBreakdown) {
+                                    // Revenue breakdown - show detailed revenue breakdown
+                                    const revenueRow = row as ProfitabilityTrendItem
+                                    const single = {
+                                      month: revenueRow.month,
+                                      revenueRental: getDisplayValue(
+                                        revenueRow.revenueRental,
+                                        revenueRow.revenueRentalConverted,
+                                        useConverted
+                                      ),
+                                      revenueRepair: getDisplayValue(
+                                        revenueRow.revenueRepair,
+                                        revenueRow.revenueRepairConverted,
+                                        useConverted
+                                      ),
+                                      revenuePageBW: getDisplayValue(
+                                        revenueRow.revenuePageBW,
+                                        revenueRow.revenuePageBWConverted,
+                                        useConverted
+                                      ),
+                                      revenuePageColor: getDisplayValue(
+                                        revenueRow.revenuePageColor,
+                                        revenueRow.revenuePageColorConverted,
+                                        useConverted
+                                      ),
+                                      totalRevenue: getDisplayValue(
+                                        revenueRow.totalRevenue,
+                                        revenueRow.totalRevenueConverted,
+                                        useConverted
+                                      ),
+                                    }
+                                    const chartConfig: ChartConfig = {
+                                      revenueRental: {
+                                        label: t('analytics.table.revenue_rental'),
+                                        color: '#3b82f6',
+                                      },
+                                      revenueRepair: {
+                                        label: t('analytics.table.revenue_repair'),
+                                        color: '#f59e0b',
+                                      },
+                                      revenuePageBW: {
+                                        label: t('analytics.table.revenue_page_bw'),
+                                        color: '#8b5cf6',
+                                      },
+                                      revenuePageColor: {
+                                        label: t('analytics.table.revenue_page_color'),
+                                        color: '#ec4899',
+                                      },
+                                      totalRevenue: {
+                                        label: t('analytics.total_revenue'),
+                                        color: '#10b981',
+                                      },
+                                    }
+                                    const formatter = (v: unknown) =>
+                                      typeof v === 'number'
+                                        ? formatCurrency(Number(v), customerDetailBaseCurrency)
+                                        : String(v ?? '-')
+                                    return (
+                                      <ChartContainer
+                                        config={chartConfig}
+                                        className="h-[300px] w-full"
+                                      >
+                                        <ResponsiveContainer width="100%" height={300}>
+                                          <BarChart accessibilityLayer data={[single]}>
+                                            <CartesianGrid
+                                              vertical={false}
+                                              strokeDasharray="3 3"
+                                              className="stroke-border/40"
+                                            />
+                                            <XAxis
+                                              dataKey="month"
+                                              tickLine={false}
+                                              axisLine={false}
+                                              tickMargin={10}
+                                              tick={{ fill: 'hsl(var(--foreground))' }}
+                                            />
+                                            <YAxis
+                                              tickLine={false}
+                                              axisLine={false}
+                                              tickMargin={10}
+                                              tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                                              tickFormatter={(v) => {
+                                                const num = Number(v)
+                                                if (num >= 1000000)
+                                                  return `${(num / 1000000).toFixed(1)}M`
+                                                if (num >= 1000)
+                                                  return `${(num / 1000).toFixed(1)}K`
+                                                return Intl.NumberFormat('vi-VN').format(num)
+                                              }}
+                                            />
+                                            <ChartTooltip
+                                              content={
+                                                <ChartTooltipContent
+                                                  indicator="dot"
+                                                  formatter={(v) =>
+                                                    typeof v === 'number'
+                                                      ? formatter(v)
+                                                      : String(v ?? '-')
+                                                  }
+                                                />
+                                              }
+                                            />
+                                            <ChartLegend content={<ChartLegendContent />} />
+                                            <Bar
+                                              dataKey="revenueRental"
+                                              fill="var(--color-revenueRental)"
+                                              radius={[6, 6, 0, 0]}
+                                            >
+                                              <LabelList
+                                                dataKey="revenueRental"
+                                                position="top"
+                                                formatter={(v) => formatter(v)}
+                                                className="fill-foreground text-xs font-medium"
+                                              />
+                                            </Bar>
+                                            <Bar
+                                              dataKey="revenueRepair"
+                                              fill="var(--color-revenueRepair)"
+                                              radius={[6, 6, 0, 0]}
+                                            >
+                                              <LabelList
+                                                dataKey="revenueRepair"
+                                                position="top"
+                                                formatter={(v) => formatter(v)}
+                                                className="fill-foreground text-xs font-medium"
+                                              />
+                                            </Bar>
+                                            <Bar
+                                              dataKey="revenuePageBW"
+                                              fill="var(--color-revenuePageBW)"
+                                              radius={[6, 6, 0, 0]}
+                                            >
+                                              <LabelList
+                                                dataKey="revenuePageBW"
+                                                position="top"
+                                                formatter={(v) => formatter(v)}
+                                                className="fill-foreground text-xs font-medium"
+                                              />
+                                            </Bar>
+                                            <Bar
+                                              dataKey="revenuePageColor"
+                                              fill="var(--color-revenuePageColor)"
+                                              radius={[6, 6, 0, 0]}
+                                            >
+                                              <LabelList
+                                                dataKey="revenuePageColor"
+                                                position="top"
+                                                formatter={(v) => formatter(v)}
+                                                className="fill-foreground text-xs font-medium"
+                                              />
+                                            </Bar>
+                                            <Bar
+                                              dataKey="totalRevenue"
+                                              fill="var(--color-totalRevenue)"
+                                              radius={[6, 6, 0, 0]}
+                                            >
+                                              <LabelList
+                                                dataKey="totalRevenue"
+                                                position="top"
+                                                formatter={(v) => formatter(v)}
+                                                className="fill-foreground text-xs font-medium"
+                                              />
+                                            </Bar>
+                                          </BarChart>
+                                        </ResponsiveContainer>
+                                      </ChartContainer>
+                                    )
                                   }
+                                  return null
+                                }
+
+                                // For range/year mode - transform data based on type
+                                if (isCostBreakdown) {
+                                  // Cost breakdown
+                                  const transformedData = (d as EnterpriseProfitabilityItem[]).map(
+                                    (row) => ({
+                                      month: row.month,
+                                      costRental: getDisplayValue(
+                                        row.costRental,
+                                        row.costRentalConverted,
+                                        useConverted
+                                      ),
+                                      costRepair: getDisplayValue(
+                                        row.costRepair,
+                                        row.costRepairConverted,
+                                        useConverted
+                                      ),
+                                      costPageBW: getDisplayValue(
+                                        row.costPageBW,
+                                        row.costPageBWConverted,
+                                        useConverted
+                                      ),
+                                      costPageColor: getDisplayValue(
+                                        row.costPageColor,
+                                        row.costPageColorConverted,
+                                        useConverted
+                                      ),
+                                      totalCost: getDisplayValue(
+                                        row.totalCost,
+                                        row.totalCostConverted,
+                                        useConverted
+                                      ),
+                                    })
+                                  )
+                                  return (
+                                    <TrendChart
+                                      data={transformedData}
+                                      height={300}
+                                      showMargin
+                                      baseCurrency={customerDetailBaseCurrency}
+                                    />
+                                  )
+                                } else if (isRevenueBreakdown) {
+                                  // Revenue breakdown - show detailed revenue breakdown with custom chart
+                                  const transformedData = (d as ProfitabilityTrendItem[]).map(
+                                    (row) => ({
+                                      month: row.month,
+                                      revenueRental: getDisplayValue(
+                                        row.revenueRental,
+                                        row.revenueRentalConverted,
+                                        useConverted
+                                      ),
+                                      revenueRepair: getDisplayValue(
+                                        row.revenueRepair,
+                                        row.revenueRepairConverted,
+                                        useConverted
+                                      ),
+                                      revenuePageBW: getDisplayValue(
+                                        row.revenuePageBW,
+                                        row.revenuePageBWConverted,
+                                        useConverted
+                                      ),
+                                      revenuePageColor: getDisplayValue(
+                                        row.revenuePageColor,
+                                        row.revenuePageColorConverted,
+                                        useConverted
+                                      ),
+                                      totalRevenue: getDisplayValue(
+                                        row.totalRevenue,
+                                        row.totalRevenueConverted,
+                                        useConverted
+                                      ),
+                                    })
+                                  )
                                   const chartConfig: ChartConfig = {
-                                    totalRevenue: {
-                                      label: t('analytics.total_revenue'),
+                                    revenueRental: {
+                                      label: t('analytics.table.revenue_rental'),
                                       color: '#3b82f6',
                                     },
-                                    totalCogs: {
-                                      label: t('analytics.table.total_cogs'),
+                                    revenueRepair: {
+                                      label: t('analytics.table.revenue_repair'),
                                       color: '#f59e0b',
                                     },
-                                    grossProfit: {
-                                      label: t('analytics.gross_profit'),
+                                    revenuePageBW: {
+                                      label: t('analytics.table.revenue_page_bw'),
+                                      color: '#8b5cf6',
+                                    },
+                                    revenuePageColor: {
+                                      label: t('analytics.table.revenue_page_color'),
+                                      color: '#ec4899',
+                                    },
+                                    totalRevenue: {
+                                      label: t('analytics.total_revenue'),
                                       color: '#10b981',
                                     },
                                   }
@@ -2070,7 +2636,7 @@ export default function AnalyticsPageClient() {
                                       className="h-[300px] w-full"
                                     >
                                       <ResponsiveContainer width="100%" height={300}>
-                                        <BarChart accessibilityLayer data={[single]}>
+                                        <BarChart accessibilityLayer data={transformedData}>
                                           <CartesianGrid
                                             vertical={false}
                                             strokeDasharray="3 3"
@@ -2110,73 +2676,36 @@ export default function AnalyticsPageClient() {
                                           />
                                           <ChartLegend content={<ChartLegendContent />} />
                                           <Bar
+                                            dataKey="revenueRental"
+                                            fill="var(--color-revenueRental)"
+                                            radius={[6, 6, 0, 0]}
+                                          />
+                                          <Bar
+                                            dataKey="revenueRepair"
+                                            fill="var(--color-revenueRepair)"
+                                            radius={[6, 6, 0, 0]}
+                                          />
+                                          <Bar
+                                            dataKey="revenuePageBW"
+                                            fill="var(--color-revenuePageBW)"
+                                            radius={[6, 6, 0, 0]}
+                                          />
+                                          <Bar
+                                            dataKey="revenuePageColor"
+                                            fill="var(--color-revenuePageColor)"
+                                            radius={[6, 6, 0, 0]}
+                                          />
+                                          <Bar
                                             dataKey="totalRevenue"
                                             fill="var(--color-totalRevenue)"
                                             radius={[6, 6, 0, 0]}
-                                          >
-                                            <LabelList
-                                              dataKey="totalRevenue"
-                                              position="top"
-                                              formatter={(v) => formatter(v)}
-                                              className="fill-foreground text-xs font-medium"
-                                            />
-                                          </Bar>
-                                          <Bar
-                                            dataKey="totalCogs"
-                                            fill="var(--color-totalCogs)"
-                                            radius={[6, 6, 0, 0]}
-                                          >
-                                            <LabelList
-                                              dataKey="totalCogs"
-                                              position="top"
-                                              formatter={(v) => formatter(v)}
-                                              className="fill-foreground text-xs font-medium"
-                                            />
-                                          </Bar>
-                                          <Bar
-                                            dataKey="grossProfit"
-                                            fill="var(--color-grossProfit)"
-                                            radius={[6, 6, 0, 0]}
-                                          >
-                                            <LabelList
-                                              dataKey="grossProfit"
-                                              position="top"
-                                              formatter={(v) => formatter(v)}
-                                              className="fill-foreground text-xs font-medium"
-                                            />
-                                          </Bar>
+                                          />
                                         </BarChart>
                                       </ResponsiveContainer>
                                     </ChartContainer>
                                   )
                                 }
-                                // Transform data to use converted values if available
-                                const transformedData = data.map((row) => ({
-                                  month: row.month,
-                                  totalRevenue: getDisplayValue(
-                                    row.totalRevenue,
-                                    row.totalRevenueConverted,
-                                    useConverted
-                                  ),
-                                  totalCogs: getDisplayValue(
-                                    row.totalCogs,
-                                    row.totalCogsConverted,
-                                    useConverted
-                                  ),
-                                  grossProfit: getDisplayValue(
-                                    row.grossProfit,
-                                    row.grossProfitConverted,
-                                    useConverted
-                                  ),
-                                }))
-                                return (
-                                  <TrendChart
-                                    data={transformedData}
-                                    height={300}
-                                    showMargin
-                                    baseCurrency={customerDetailBaseCurrency}
-                                  />
-                                )
+                                return null
                               })()}
                             </div>
                           )}
@@ -2216,32 +2745,23 @@ export default function AnalyticsPageClient() {
                                       <td className="px-4 py-3 text-sm">{d.model}</td>
                                       <td className="px-4 py-3 text-sm">{d.serialNumber}</td>
                                       <td className="px-4 py-3 text-right text-sm">
-                                        {formatDual(
-                                          d.revenue,
-                                          d.revenueConverted,
-                                          customerDetailBaseCurrency,
-                                          d.currency,
-                                          'right'
+                                        {formatCurrency(
+                                          d.revenueConverted ?? d.revenue,
+                                          customerDetailBaseCurrency
                                         )}
                                       </td>
                                       <td className="px-4 py-3 text-right text-sm">
-                                        {formatDual(
-                                          d.cogs,
-                                          d.cogsConverted,
-                                          customerDetailBaseCurrency,
-                                          d.currency,
-                                          'right'
+                                        {formatCurrency(
+                                          d.cogsConverted ?? d.cogs,
+                                          customerDetailBaseCurrency
                                         )}
                                       </td>
                                       <td
                                         className={`px-4 py-3 text-right text-sm font-semibold ${deviceProfit >= 0 ? 'text-[var(--color-success-600)]' : 'text-[var(--color-error-600)]'}`}
                                       >
-                                        {formatDual(
-                                          d.profit,
-                                          d.profitConverted,
-                                          customerDetailBaseCurrency,
-                                          d.currency,
-                                          'right'
+                                        {formatCurrency(
+                                          d.profitConverted ?? d.profit,
+                                          customerDetailBaseCurrency
                                         )}
                                       </td>
                                       <td className="px-4 py-3 text-center">
@@ -2335,55 +2855,85 @@ export default function AnalyticsPageClient() {
                         <Suspense fallback={<Skeleton className="h-[360px] w-full rounded-lg" />}>
                           {(() => {
                             const chartCurrency =
-                              enterpriseBaseCurrency || customerDetailBaseCurrency
+                              enterpriseBaseCurrency ||
+                              customerDetailBaseCurrency ||
+                              deviceData.baseCurrency
+                            const useConverted = !!chartCurrency
+
+                            const getDisplayValue = (original: number, converted?: number) => {
+                              return useConverted && converted !== undefined ? converted : original
+                            }
+
                             const chartData = deviceData.profitability.map((p) => ({
-                              ...p,
-                              costAdjustmentDebitConverted:
-                                p.costAdjustmentDebitConverted ?? p.costAdjustmentDebit ?? 0,
-                              costAdjustmentCreditConverted:
-                                p.costAdjustmentCreditConverted ?? p.costAdjustmentCredit ?? 0,
-                              totalCogsAfterAdjustmentConverted:
-                                p.totalCogsAfterAdjustmentConverted ??
-                                p.totalCogsAfterAdjustment ??
-                                p.totalCogsConverted ??
-                                p.totalCogs,
-                              grossProfitAfterAdjustmentConverted:
-                                p.grossProfitAfterAdjustmentConverted ??
-                                p.grossProfitAfterAdjustment ??
-                                p.grossProfitConverted ??
-                                p.grossProfit,
+                              month: p.month,
+                              revenueRental: getDisplayValue(
+                                p.revenueRental,
+                                p.revenueRentalConverted
+                              ),
+                              revenueRepair: getDisplayValue(
+                                p.revenueRepair,
+                                p.revenueRepairConverted
+                              ),
+                              revenuePageBW: getDisplayValue(
+                                p.revenuePageBW,
+                                p.revenuePageBWConverted
+                              ),
+                              revenuePageColor: getDisplayValue(
+                                p.revenuePageColor,
+                                p.revenuePageColorConverted
+                              ),
+                              totalRevenue: getDisplayValue(
+                                p.totalRevenue,
+                                p.totalRevenueConverted
+                              ),
+                              cogsConsumable: getDisplayValue(
+                                p.cogsConsumable,
+                                p.cogsConsumableConverted
+                              ),
+                              cogsRepair: getDisplayValue(p.cogsRepair, p.cogsRepairConverted),
+                              totalCogs: getDisplayValue(p.totalCogs, p.totalCogsConverted),
+                              grossProfit: getDisplayValue(p.grossProfit, p.grossProfitConverted),
+                              costAdjustmentDebit: getDisplayValue(
+                                p.costAdjustmentDebit ?? 0,
+                                p.costAdjustmentDebitConverted
+                              ),
+                              costAdjustmentCredit: getDisplayValue(
+                                p.costAdjustmentCredit ?? 0,
+                                p.costAdjustmentCreditConverted
+                              ),
+                              revenuePages: p.revenuePages,
                             }))
 
                             if (globalMode === 'period' && chartData.length === 1) {
                               const single = chartData[0]
                               const chartConfig: ChartConfig = {
-                                totalRevenueConverted: {
-                                  label: t('analytics.total_revenue'),
+                                revenueRental: {
+                                  label: t('analytics.table.revenue_rental'),
                                   color: '#3b82f6',
                                 },
-                                totalCogsConverted: {
-                                  label: t('analytics.total_cogs'),
+                                revenueRepair: {
+                                  label: t('analytics.table.revenue_repair'),
                                   color: '#f59e0b',
                                 },
-                                grossProfitConverted: {
-                                  label: t('analytics.gross_profit'),
+                                revenuePageBW: {
+                                  label: t('analytics.table.revenue_page_bw'),
+                                  color: '#8b5cf6',
+                                },
+                                revenuePageColor: {
+                                  label: t('analytics.table.revenue_page_color'),
+                                  color: '#ec4899',
+                                },
+                                totalRevenue: {
+                                  label: t('analytics.total_revenue'),
                                   color: '#10b981',
                                 },
-                                totalCogsAfterAdjustmentConverted: {
-                                  label: t('dashboard.metrics.total_cogs_after_adjustment'),
-                                  color: '#f97316',
-                                },
-                                grossProfitAfterAdjustmentConverted: {
-                                  label: t('dashboard.metrics.gross_profit_after_adjustment'),
-                                  color: '#0ea5e9',
-                                },
-                                costAdjustmentDebitConverted: {
-                                  label: t('dashboard.metrics.cost_adjustment_debit'),
+                                cogsConsumable: {
+                                  label: t('analytics.table.total_cogs'),
                                   color: '#ef4444',
                                 },
-                                costAdjustmentCreditConverted: {
-                                  label: t('dashboard.metrics.cost_adjustment_credit'),
-                                  color: '#10b981',
+                                grossProfit: {
+                                  label: t('analytics.gross_profit'),
+                                  color: '#06b6d4',
                                 },
                               }
                               const formatter = (v: unknown) =>
@@ -2434,13 +2984,13 @@ export default function AnalyticsPageClient() {
                                       />
                                       <ChartLegend content={<ChartLegendContent />} />
                                       {[
-                                        'totalRevenueConverted',
-                                        'totalCogsConverted',
-                                        'grossProfitConverted',
-                                        'totalCogsAfterAdjustmentConverted',
-                                        'grossProfitAfterAdjustmentConverted',
-                                        'costAdjustmentDebitConverted',
-                                        'costAdjustmentCreditConverted',
+                                        'revenueRental',
+                                        'revenueRepair',
+                                        'revenuePageBW',
+                                        'revenuePageColor',
+                                        'totalRevenue',
+                                        'cogsConsumable',
+                                        'grossProfit',
                                       ].map((key) => (
                                         <Bar
                                           key={key}
@@ -2463,33 +3013,33 @@ export default function AnalyticsPageClient() {
                             }
 
                             const chartConfig: ChartConfig = {
-                              totalRevenueConverted: {
-                                label: t('analytics.total_revenue'),
+                              revenueRental: {
+                                label: t('analytics.table.revenue_rental'),
                                 color: '#3b82f6',
                               },
-                              totalCogsConverted: {
-                                label: t('analytics.total_cogs'),
+                              revenueRepair: {
+                                label: t('analytics.table.revenue_repair'),
                                 color: '#f59e0b',
                               },
-                              grossProfitConverted: {
-                                label: t('analytics.gross_profit'),
+                              revenuePageBW: {
+                                label: t('analytics.table.revenue_page_bw'),
+                                color: '#8b5cf6',
+                              },
+                              revenuePageColor: {
+                                label: t('analytics.table.revenue_page_color'),
+                                color: '#ec4899',
+                              },
+                              totalRevenue: {
+                                label: t('analytics.total_revenue'),
                                 color: '#10b981',
                               },
-                              totalCogsAfterAdjustmentConverted: {
-                                label: t('dashboard.metrics.total_cogs_after_adjustment'),
-                                color: '#f97316',
-                              },
-                              grossProfitAfterAdjustmentConverted: {
-                                label: t('dashboard.metrics.gross_profit_after_adjustment'),
-                                color: '#0ea5e9',
-                              },
-                              costAdjustmentDebitConverted: {
-                                label: t('dashboard.metrics.cost_adjustment_debit'),
+                              cogsConsumable: {
+                                label: t('analytics.table.total_cogs'),
                                 color: '#ef4444',
                               },
-                              costAdjustmentCreditConverted: {
-                                label: t('dashboard.metrics.cost_adjustment_credit'),
-                                color: '#10b981',
+                              grossProfit: {
+                                label: t('analytics.gross_profit'),
+                                color: '#06b6d4',
                               },
                             }
                             const formatter = (v: unknown) =>
@@ -2497,10 +3047,14 @@ export default function AnalyticsPageClient() {
                                 ? formatCurrency(Number(v), chartCurrency)
                                 : String(v ?? '-')
 
+                            // Auto-detect: use BarChart if only 1 data point, otherwise use LineChart
+                            const useBarChart = chartData.length === 1
+                            const ChartComponent = useBarChart ? BarChart : LineChart
+
                             return (
                               <ChartContainer config={chartConfig} className="h-full w-full">
                                 <ResponsiveContainer width="100%" height="100%">
-                                  <LineChart accessibilityLayer data={chartData}>
+                                  <ChartComponent accessibilityLayer data={chartData}>
                                     <CartesianGrid
                                       vertical={false}
                                       strokeDasharray="3 3"
@@ -2537,26 +3091,42 @@ export default function AnalyticsPageClient() {
                                     />
                                     <ChartLegend content={<ChartLegendContent />} />
                                     {[
-                                      'totalRevenueConverted',
-                                      'totalCogsConverted',
-                                      'grossProfitConverted',
-                                      'totalCogsAfterAdjustmentConverted',
-                                      'grossProfitAfterAdjustmentConverted',
-                                      'costAdjustmentDebitConverted',
-                                      'costAdjustmentCreditConverted',
-                                    ].map((key) => (
-                                      <Line
-                                        key={key}
-                                        type="monotone"
-                                        dataKey={key}
-                                        stroke={`var(--color-${key})`}
-                                        strokeWidth={
-                                          key.includes('total') || key.includes('gross') ? 3 : 2
-                                        }
-                                        dot={false}
-                                      />
-                                    ))}
-                                  </LineChart>
+                                      'revenueRental',
+                                      'revenueRepair',
+                                      'revenuePageBW',
+                                      'revenuePageColor',
+                                      'totalRevenue',
+                                      'cogsConsumable',
+                                      'grossProfit',
+                                    ].map((key) =>
+                                      useBarChart ? (
+                                        <Bar
+                                          key={key}
+                                          dataKey={key}
+                                          fill={`var(--color-${key})`}
+                                          radius={[6, 6, 0, 0]}
+                                        >
+                                          <LabelList
+                                            dataKey={key}
+                                            position="top"
+                                            formatter={(v) => formatter(v)}
+                                            className="fill-foreground text-xs font-medium"
+                                          />
+                                        </Bar>
+                                      ) : (
+                                        <Line
+                                          key={key}
+                                          type="monotone"
+                                          dataKey={key}
+                                          stroke={`var(--color-${key})`}
+                                          strokeWidth={
+                                            key.includes('total') || key.includes('gross') ? 3 : 2
+                                          }
+                                          dot={false}
+                                        />
+                                      )
+                                    )}
+                                  </ChartComponent>
                                 </ResponsiveContainer>
                               </ChartContainer>
                             )
@@ -2573,168 +3143,118 @@ export default function AnalyticsPageClient() {
                               {t('analytics.device.table.month')}
                             </th>
                             <th className="px-3 py-2 text-right font-semibold">
-                              {t('analytics.device.table.rental')}
+                              {t('analytics.table.revenue_rental')}
                             </th>
                             <th className="px-3 py-2 text-right font-semibold">
-                              {t('analytics.device.table.repair')}
+                              {t('analytics.table.revenue_repair')}
                             </th>
                             <th className="px-3 py-2 text-right font-semibold">
-                              {t('analytics.device.table.page_bw')}
+                              {t('analytics.table.revenue_page_bw')}
                             </th>
                             <th className="px-3 py-2 text-right font-semibold">
-                              {t('analytics.device.table.page_color')}
+                              {t('analytics.table.revenue_page_color')}
                             </th>
                             <th className="px-3 py-2 text-right font-semibold">
-                              {t('analytics.device.table.total_revenue')}
+                              {t('analytics.total_revenue')}
                             </th>
                             <th className="px-3 py-2 text-right font-semibold">
-                              {t('analytics.device.table.cost_consumable')}
+                              {t('analytics.table.total_cogs')}
                             </th>
                             <th className="px-3 py-2 text-right font-semibold">
-                              {t('analytics.device.table.cost_repair')}
+                              {t('analytics.gross_profit')}
                             </th>
-                            <th className="px-3 py-2 text-right font-semibold">
-                              {t('analytics.device.table.profit')}
-                            </th>
-                            <th className="px-3 py-2 text-right font-semibold">
-                              {t('dashboard.metrics.cost_adjustment_debit')}
-                            </th>
-                            <th className="px-3 py-2 text-right font-semibold">
-                              {t('dashboard.metrics.cost_adjustment_credit')}
-                            </th>
-                            <th className="px-3 py-2 text-right font-semibold">
-                              {t('dashboard.metrics.total_cogs_after_adjustment')}
-                            </th>
-                            <th className="px-3 py-2 text-right font-semibold">
-                              {t('dashboard.metrics.gross_profit_after_adjustment')}
-                            </th>
+                            {deviceData.profitability.some((p) => p.revenuePages !== undefined) && (
+                              <th className="px-3 py-2 text-right font-semibold">
+                                {t('analytics.device.table.revenue_pages')}
+                              </th>
+                            )}
                           </tr>
                         </thead>
                         <tbody className="divide-y">
-                          {deviceData.profitability.map((p) => (
-                            <tr key={p.month}>
-                              <td className="px-3 py-2">{p.month}</td>
-                              <td className="px-3 py-2 text-right">
-                                {formatDual(
-                                  p.revenueRental,
-                                  p.revenueRentalConverted,
-                                  enterpriseBaseCurrency || customerDetailBaseCurrency,
-                                  p.currency,
-                                  'right'
+                          {deviceData.profitability.map((p) => {
+                            const currentCurrency =
+                              enterpriseBaseCurrency ||
+                              customerDetailBaseCurrency ||
+                              deviceData.baseCurrency ||
+                              null
+                            return (
+                              <tr key={p.month}>
+                                <td className="px-3 py-2">{p.month}</td>
+                                <td className="px-3 py-2 text-right">
+                                  {formatDual(
+                                    p.revenueRental,
+                                    p.revenueRentalConverted,
+                                    currentCurrency,
+                                    p.currency ?? null,
+                                    'right'
+                                  )}
+                                </td>
+                                <td className="px-3 py-2 text-right">
+                                  {formatDual(
+                                    p.revenueRepair,
+                                    p.revenueRepairConverted,
+                                    currentCurrency,
+                                    p.currency ?? null,
+                                    'right'
+                                  )}
+                                </td>
+                                <td className="px-3 py-2 text-right">
+                                  {formatDual(
+                                    p.revenuePageBW,
+                                    p.revenuePageBWConverted,
+                                    currentCurrency,
+                                    p.currency ?? null,
+                                    'right'
+                                  )}
+                                </td>
+                                <td className="px-3 py-2 text-right">
+                                  {formatDual(
+                                    p.revenuePageColor,
+                                    p.revenuePageColorConverted,
+                                    currentCurrency,
+                                    p.currency ?? null,
+                                    'right'
+                                  )}
+                                </td>
+                                <td className="px-3 py-2 text-right font-semibold">
+                                  {formatDual(
+                                    p.totalRevenue,
+                                    p.totalRevenueConverted,
+                                    currentCurrency,
+                                    p.currency ?? null,
+                                    'right'
+                                  )}
+                                </td>
+                                <td className="px-3 py-2 text-right font-semibold">
+                                  {formatDual(
+                                    p.totalCogs,
+                                    p.totalCogsConverted,
+                                    currentCurrency,
+                                    p.currency ?? null,
+                                    'right'
+                                  )}
+                                </td>
+                                <td className="px-3 py-2 text-right font-semibold">
+                                  {formatDual(
+                                    p.grossProfit,
+                                    p.grossProfitConverted,
+                                    currentCurrency,
+                                    p.currency ?? null,
+                                    'right'
+                                  )}
+                                </td>
+                                {deviceData.profitability.some(
+                                  (item) => item.revenuePages !== undefined
+                                ) && (
+                                  <td className="px-3 py-2 text-right">
+                                    {p.revenuePages !== undefined
+                                      ? Intl.NumberFormat('vi-VN').format(p.revenuePages)
+                                      : '-'}
+                                  </td>
                                 )}
-                              </td>
-                              <td className="px-3 py-2 text-right">
-                                {formatDual(
-                                  p.revenueRepair,
-                                  p.revenueRepairConverted,
-                                  enterpriseBaseCurrency || customerDetailBaseCurrency,
-                                  p.currency,
-                                  'right'
-                                )}
-                              </td>
-                              <td className="px-3 py-2 text-right">
-                                {formatDual(
-                                  p.revenuePageBW,
-                                  p.revenuePageBWConverted,
-                                  enterpriseBaseCurrency || customerDetailBaseCurrency,
-                                  p.currency,
-                                  'right'
-                                )}
-                              </td>
-                              <td className="px-3 py-2 text-right">
-                                {formatDual(
-                                  p.revenuePageColor,
-                                  p.revenuePageColorConverted,
-                                  enterpriseBaseCurrency || customerDetailBaseCurrency,
-                                  p.currency,
-                                  'right'
-                                )}
-                              </td>
-                              <td className="px-3 py-2 text-right font-semibold">
-                                {formatDual(
-                                  p.totalRevenue,
-                                  p.totalRevenueConverted,
-                                  enterpriseBaseCurrency || customerDetailBaseCurrency,
-                                  p.currency,
-                                  'right'
-                                )}
-                              </td>
-                              <td className="px-3 py-2 text-right">
-                                {formatDual(
-                                  p.cogsConsumable,
-                                  p.cogsConsumableConverted,
-                                  enterpriseBaseCurrency || customerDetailBaseCurrency,
-                                  p.currency,
-                                  'right'
-                                )}
-                              </td>
-                              <td className="px-3 py-2 text-right">
-                                {formatDual(
-                                  p.cogsRepair,
-                                  p.cogsRepairConverted,
-                                  enterpriseBaseCurrency || customerDetailBaseCurrency,
-                                  p.currency,
-                                  'right'
-                                )}
-                              </td>
-                              <td
-                                className={`px-3 py-2 text-right font-semibold ${p.grossProfit >= 0 ? 'text-[var(--color-success-600)]' : 'text-[var(--color-error-600)]'}`}
-                              >
-                                {formatDual(
-                                  p.grossProfit,
-                                  p.grossProfitConverted,
-                                  enterpriseBaseCurrency || customerDetailBaseCurrency,
-                                  p.currency,
-                                  'right'
-                                )}
-                              </td>
-                              <td className="px-3 py-2 text-right">
-                                {formatDual(
-                                  p.costAdjustmentDebit ?? 0,
-                                  p.costAdjustmentDebitConverted,
-                                  enterpriseBaseCurrency || customerDetailBaseCurrency,
-                                  p.currency,
-                                  'right'
-                                )}
-                              </td>
-                              <td className="px-3 py-2 text-right">
-                                {formatDual(
-                                  p.costAdjustmentCredit ?? 0,
-                                  p.costAdjustmentCreditConverted,
-                                  enterpriseBaseCurrency || customerDetailBaseCurrency,
-                                  p.currency,
-                                  'right'
-                                )}
-                              </td>
-                              <td className="px-3 py-2 text-right">
-                                {formatDual(
-                                  p.totalCogsAfterAdjustment ?? p.totalCogs,
-                                  p.totalCogsAfterAdjustmentConverted ?? p.totalCogsConverted,
-                                  enterpriseBaseCurrency || customerDetailBaseCurrency,
-                                  p.currency,
-                                  'right'
-                                )}
-                              </td>
-                              <td
-                                className={`px-3 py-2 text-right font-semibold ${
-                                  (p.grossProfitAfterAdjustmentConverted ??
-                                    p.grossProfitAfterAdjustment ??
-                                    p.grossProfitConverted ??
-                                    p.grossProfit) >= 0
-                                    ? 'text-[var(--color-success-600)]'
-                                    : 'text-[var(--color-error-600)]'
-                                }`}
-                              >
-                                {formatDual(
-                                  p.grossProfitAfterAdjustment ?? p.grossProfit,
-                                  p.grossProfitAfterAdjustmentConverted ?? p.grossProfitConverted,
-                                  enterpriseBaseCurrency || customerDetailBaseCurrency,
-                                  p.currency,
-                                  'right'
-                                )}
-                              </td>
-                            </tr>
-                          ))}
+                              </tr>
+                            )
+                          })}
                         </tbody>
                       </table>
                     </div>
