@@ -211,7 +211,7 @@ export default function MonthlyCostsPage() {
             monthMap.set(item.month, {
               costRental:
                 existing.costRental +
-                Number(item.costRental || 0) +
+                Number(item.costRental || 0) -
                 Number(item.costAdjustmentDebit || 0) +
                 Number(item.costAdjustmentCredit || 0),
               costRepair: existing.costRepair + Number(item.costRepair || 0),
@@ -303,7 +303,16 @@ export default function MonthlyCostsPage() {
       try {
         const res = await reportsAnalyticsService.getDeviceCost(deviceId, params)
         if (res.success && res.data) {
-          setDeviceCostSeries(res.data.cost)
+          const normalizedCost =
+            res.data.cost?.map((item) => ({
+              ...item,
+              costRental:
+                Number(item.costRental || 0) -
+                Number(item.costAdjustmentDebit || 0) +
+                Number(item.costAdjustmentCredit || 0),
+            })) ?? null
+
+          setDeviceCostSeries(normalizedCost)
           setDeviceCurrency(res.data.baseCurrency || res.data.currency || null)
         } else {
           setDeviceCostSeries(null)
@@ -340,7 +349,8 @@ export default function MonthlyCostsPage() {
   const totalCostAfterAdjustment =
     costData?.customer?.totalCostAfterAdjustment ?? costData?.customer?.totalCost ?? 0
   const costAdjustmentDebit = costData?.customer?.costAdjustmentDebit ?? 0
-  const costRentalAdjusted = costRental + costAdjustmentDebit
+  const costAdjustmentCredit = costData?.customer?.costAdjustmentCredit ?? 0
+  const costRentalAdjusted = costRental - costAdjustmentDebit + costAdjustmentCredit
 
   return (
     <div className="min-h-screen from-slate-50 via-[var(--brand-50)] to-[var(--brand-50)] px-4 py-8 sm:px-6 lg:px-8 dark:from-slate-950 dark:via-[var(--brand-950)] dark:to-[var(--brand-950)]">
@@ -583,7 +593,7 @@ export default function MonthlyCostsPage() {
                             data={[
                               {
                                 name: labels.costRental,
-                                value: costData.customer.costRental,
+                                value: costRentalAdjusted,
                                 color: 'var(--color-success-500)',
                               },
                               {
@@ -637,10 +647,9 @@ export default function MonthlyCostsPage() {
                     <div className="flex items-center gap-2">
                       <div className="h-4 w-4 rounded bg-[var(--color-success-500)]"></div>
                       <span className="text-sm">
-                        {labels.costRental}:{' '}
-                        {formatCurrency(costData.customer.costRental, displayCurrency)} (
+                        {labels.costRental}: {formatCurrency(costRentalAdjusted, displayCurrency)} (
                         {totalCost > 0
-                          ? ((costData.customer.costRental / totalCost) * 100).toFixed(1)
+                          ? ((costRentalAdjusted / totalCost) * 100).toFixed(1)
                           : '0.0'}
                         %)
                       </span>
