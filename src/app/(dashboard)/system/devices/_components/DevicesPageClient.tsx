@@ -687,7 +687,7 @@ function DevicesTableContent({
                   <>
                     {customer?.code === 'SYS' && (
                       <Button
-                        variant="default"
+                        variant="secondary"
                         size="sm"
                         className="h-7 w-7 p-0"
                         onClick={() => {
@@ -696,7 +696,7 @@ function DevicesTableContent({
                         }}
                         title={`${t('button.edit')} ${t('customer')}`}
                       >
-                        <Edit2 className="h-3.5 w-3.5 text-rose-600" />
+                        <Edit2 className="h-3.5 w-3.5" />
                       </Button>
                     )}
                     {customer?.code && customer.code !== 'SYS' && (
@@ -714,7 +714,7 @@ function DevicesTableContent({
                             disabled={updatingCustomer}
                             title={t('devices.unassign')}
                           >
-                            <X className="h-3.5 w-3.5 text-red-600" />
+                            <X className="h-3.5 w-3.5" />
                           </Button>
                         }
                       />

@@ -594,13 +594,13 @@ function UsersTableContent({
             {canUpdate && (
               <Button
                 size="sm"
-                variant="outline"
+                variant="secondary"
                 onClick={() => {
                   const isProtectedUser =
                     String(row.original.email || '').toLowerCase() === 'duongnvq@nguyenkimvn.vn'
                   if (!isProtectedUser) onEditUser(row.original)
                 }}
-                className="transition-all hover:bg-[var(--brand-100)] hover:text-[var(--brand-700)]"
+                className="transition-all"
                 title={
                   String(row.original.email || '').toLowerCase() === 'duongnvq@nguyenkimvn.vn'
                     ? t('user.protected_edit')

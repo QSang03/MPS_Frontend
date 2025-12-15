@@ -159,7 +159,7 @@ export default function NotificationsListClient() {
                   {getNotificationTarget(n) && (
                     <Button
                       size="sm"
-                      variant="default"
+                      variant="secondary"
                       onClick={(e) => {
                         e.stopPropagation()
                         const target = getNotificationTarget(n)

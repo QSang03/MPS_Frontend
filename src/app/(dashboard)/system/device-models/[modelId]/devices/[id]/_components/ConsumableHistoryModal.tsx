@@ -442,8 +442,7 @@ export default function ConsumableHistoryModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <SystemModalLayout
-        title={t('consumable_history.modal.title')}
-        description={t('consumable_history.modal.description', { title })}
+        title={t('consumable_history.modal.title_with_id', { id: title })}
         icon={FileText}
         variant="view"
         maxWidth="!max-w-[75vw]"

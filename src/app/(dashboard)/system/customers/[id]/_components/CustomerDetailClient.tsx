@@ -821,9 +821,9 @@ export default function CustomerDetailClient({ customerId }: Props) {
                 <TooltipTrigger asChild>
                   <Link href={`/system/devices/${device.device.id}`}>
                     <Button
-                      variant="default"
+                      variant="secondary"
                       size="sm"
-                      className="h-8 w-8 p-0 text-sky-600"
+                      className="h-8 w-8 p-0"
                       aria-label={t('customer.detail.device.view')}
                     >
                       <Eye className="h-4 w-4" />
@@ -951,9 +951,9 @@ export default function CustomerDetailClient({ customerId }: Props) {
                   <TooltipTrigger asChild>
                     <Link href={`/system/devices/${device.id}`}>
                       <Button
-                        variant="default"
+                        variant="secondary"
                         size="sm"
-                        className="h-8 w-8 p-0 text-sky-600"
+                        className="h-8 w-8 p-0"
                         aria-label={t('customer.detail.device.view')}
                       >
                         <Eye className="h-4 w-4" />
@@ -1507,9 +1507,9 @@ export default function CustomerDetailClient({ customerId }: Props) {
                                     <Tooltip>
                                       <TooltipTrigger asChild>
                                         <Button
-                                          variant="default"
+                                          variant="secondary"
                                           size="sm"
-                                          className="h-8 w-8 p-0 text-emerald-600"
+                                          className="h-8 w-8 p-0"
                                           onClick={() =>
                                             setCreateBillingContract({
                                               id: contract.id,
@@ -1530,9 +1530,9 @@ export default function CustomerDetailClient({ customerId }: Props) {
                                     <Tooltip>
                                       <TooltipTrigger asChild>
                                         <Button
-                                          variant="default"
+                                          variant="secondary"
                                           size="sm"
-                                          className="h-8 w-8 p-0 text-slate-600"
+                                          className="h-8 w-8 p-0"
                                           onClick={() => setEditingContract(contract)}
                                           aria-label={t('customer.detail.contracts.edit')}
                                         >
@@ -1548,9 +1548,9 @@ export default function CustomerDetailClient({ customerId }: Props) {
                                     <Tooltip>
                                       <TooltipTrigger asChild>
                                         <Button
-                                          variant="default"
+                                          variant="secondary"
                                           size="sm"
-                                          className="h-8 w-8 p-0 text-sky-600"
+                                          className="h-8 w-8 p-0"
                                           onClick={() => {
                                             setAttachModalContractId(contract.id)
                                             setAttachModalOpen(true)

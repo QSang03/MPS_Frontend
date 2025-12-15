@@ -2294,6 +2294,7 @@
   "system_device_detail.consumable_history.table.percentage": "Tỷ lệ",
   "consumable_history.title": "Lịch sử sử dụng vật tư",
   "consumable_history.description": "Xem chi tiết lịch sử sử dụng, lọc và xuất dữ liệu.",
+  "consumable_history.modal.title_with_id": "Lịch sử sử dụng vật tư — {id}",
   "consumable_history.modal.description": "Lịch sử sử dụng cho vật tư: {id}",
   "consumable_history.empty_title": "Chưa có lịch sử",
   "consumable_history.empty_description": "Tải ảnh usage page hoặc thêm bản ghi để xem lịch sử tại đây.",

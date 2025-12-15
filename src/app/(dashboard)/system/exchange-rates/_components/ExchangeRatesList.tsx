@@ -282,7 +282,7 @@ export function ExchangeRatesList({
           <div className="flex gap-2">
             {canUpdate && (
               <Button
-                variant="outline"
+                variant="secondary"
                 size="sm"
                 className="gap-2"
                 onClick={() => handleEdit(row.original)}
@@ -293,9 +293,9 @@ export function ExchangeRatesList({
             )}
             {canDelete && (
               <Button
-                variant="outline"
+                variant="destructive"
                 size="sm"
-                className="gap-2 text-[var(--color-error-500)] hover:text-[var(--color-error-600)]"
+                className="gap-2"
                 onClick={() => handleDelete(row.original)}
               >
                 <Trash2 className="h-4 w-4" />

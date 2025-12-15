@@ -771,8 +771,8 @@ function ServiceRequestsTableContent({
           <Button
             asChild
             size="sm"
-            variant="outline"
-            className="h-8 min-w-[120px] justify-center gap-1 rounded-lg border-gray-200 px-2 text-xs font-medium text-[var(--brand-700)] hover:bg-[var(--brand-50)] hover:text-[var(--brand-800)]"
+            variant="secondary"
+            className="h-8 min-w-[120px] justify-center gap-1 rounded-lg px-2 text-xs font-medium"
           >
             <Link href={`/system/service-requests/${row.original.id}`}>
               <FileText className="h-3 w-3" />

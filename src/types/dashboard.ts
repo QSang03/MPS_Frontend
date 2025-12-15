@@ -59,10 +59,10 @@ export interface AdminOverviewKPIs {
  * Cost Breakdown by Category (in percentages)
  */
 export interface CostBreakdown {
-  rentalPercent: number
-  repairPercent: number
-  pageBWPercent: number
-  pageColorPercent: number
+  rentalPercent?: number
+  repairPercent?: number
+  pageBWPercent?: number
+  pageColorPercent?: number
   // Cost adjustments (original)
   costAdjustmentDebit?: number
   costAdjustmentCredit?: number
