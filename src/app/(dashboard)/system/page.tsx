@@ -17,14 +17,7 @@ import { ContractsModal } from './_components/ContractsModal'
 import ContractDetailModal from './_components/ContractDetailModal'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import {
-  AlertCircle,
-  RefreshCw,
-  PlayCircle,
-  FileText,
-  LayoutDashboard,
-  ChevronRight,
-} from 'lucide-react'
+import { AlertCircle, RefreshCw, PlayCircle, LayoutDashboard, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import internalApiClient from '@/lib/api/internal-client'
@@ -270,17 +263,6 @@ export default function CustomerAdminDashboard() {
           </>
         }
         icon={<LayoutDashboard className="h-7 w-7" />}
-        actions={
-          <>
-            <Button
-              variant="outline"
-              className="h-10 rounded-full px-5 text-sm font-semibold shadow-sm hover:bg-[var(--accent)]"
-            >
-              <FileText className="mr-2 h-4 w-4" />
-              {t('dashboard.overview.actions.view_report')}
-            </Button>
-          </>
-        }
       />
 
       {/* Date Range Selector + Aggregation Button */}
