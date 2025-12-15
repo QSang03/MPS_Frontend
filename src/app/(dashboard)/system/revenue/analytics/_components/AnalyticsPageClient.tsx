@@ -2927,7 +2927,7 @@ export default function AnalyticsPageClient() {
                                   label: t('analytics.total_revenue'),
                                   color: '#10b981',
                                 },
-                                cogsConsumable: {
+                                totalCogs: {
                                   label: t('analytics.table.total_cogs'),
                                   color: '#ef4444',
                                 },
@@ -2989,7 +2989,7 @@ export default function AnalyticsPageClient() {
                                         'revenuePageBW',
                                         'revenuePageColor',
                                         'totalRevenue',
-                                        'cogsConsumable',
+                                        'totalCogs',
                                         'grossProfit',
                                       ].map((key) => (
                                         <Bar
@@ -3033,7 +3033,7 @@ export default function AnalyticsPageClient() {
                                 label: t('analytics.total_revenue'),
                                 color: '#10b981',
                               },
-                              cogsConsumable: {
+                              totalCogs: {
                                 label: t('analytics.table.total_cogs'),
                                 color: '#ef4444',
                               },
@@ -3096,7 +3096,7 @@ export default function AnalyticsPageClient() {
                                       'revenuePageBW',
                                       'revenuePageColor',
                                       'totalRevenue',
-                                      'cogsConsumable',
+                                      'totalCogs',
                                       'grossProfit',
                                     ].map((key) =>
                                       useBarChart ? (
@@ -3163,11 +3163,6 @@ export default function AnalyticsPageClient() {
                             <th className="px-3 py-2 text-right font-semibold">
                               {t('analytics.gross_profit')}
                             </th>
-                            {deviceData.profitability.some((p) => p.revenuePages !== undefined) && (
-                              <th className="px-3 py-2 text-right font-semibold">
-                                {t('analytics.device.table.revenue_pages')}
-                              </th>
-                            )}
                           </tr>
                         </thead>
                         <tbody className="divide-y">
@@ -3243,15 +3238,6 @@ export default function AnalyticsPageClient() {
                                     'right'
                                   )}
                                 </td>
-                                {deviceData.profitability.some(
-                                  (item) => item.revenuePages !== undefined
-                                ) && (
-                                  <td className="px-3 py-2 text-right">
-                                    {p.revenuePages !== undefined
-                                      ? Intl.NumberFormat('vi-VN').format(p.revenuePages)
-                                      : '-'}
-                                  </td>
-                                )}
                               </tr>
                             )
                           })}
