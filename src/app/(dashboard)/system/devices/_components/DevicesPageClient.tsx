@@ -952,9 +952,9 @@ function DevicesTableContent({
               {!isHistorical && (
                 <ActionGuard pageId="devices" actionId="set-a4-pricing">
                   <Button
-                    variant="outline"
+                    variant="secondary"
                     size="sm"
-                    className="h-7 w-7 bg-[var(--brand-50)] p-0 text-[var(--brand-600)] hover:bg-[var(--brand-100)]"
+                    className="h-7 w-7 p-0"
                     onClick={() => {
                       setA4ModalDevice(device)
                       setA4ModalOpen(true)
@@ -966,9 +966,9 @@ function DevicesTableContent({
                 </ActionGuard>
               )}
               <Button
-                variant="default"
+                variant="secondary"
                 size="sm"
-                className="h-7 w-7 p-0 text-slate-600"
+                className="h-7 w-7 p-0"
                 onClick={() => {
                   setA4HistoryDevice(device)
                   setA4HistoryOpen(true)

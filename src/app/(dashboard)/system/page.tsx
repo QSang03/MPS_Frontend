@@ -63,7 +63,15 @@ export default function CustomerAdminDashboard() {
   usePageTitle(t('dashboard.overview.title'))
 
   // Fetch admin overview data
-  const { data: overviewData, isLoading, isError, error, refetch } = useAdminOverview(selectedMonth)
+  const {
+    data: overviewData,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useAdminOverview({
+    month: selectedMonth,
+  })
 
   // Prefer baseCurrency from API; fallback to customer.defaultCurrency if provided
   const displayCurrency = overviewData?.baseCurrency || overviewData?.customer?.defaultCurrency

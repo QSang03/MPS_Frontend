@@ -370,7 +370,7 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
             <DialogTrigger asChild>
               <div>
                 <Button
-                  variant="default"
+                  variant="secondary"
                   size="sm"
                   className="h-8 w-8 rounded-full p-0"
                   aria-label={t('devices.pricing.assign')}

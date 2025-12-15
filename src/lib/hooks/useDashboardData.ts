@@ -16,12 +16,16 @@ import type {
 /**
  * Hook: Fetch Admin Overview Dashboard
  *
- * @param month - Month in format YYYY-MM (optional)
+ * @param params - Admin overview parameters
  * @param options - React Query options
  * @returns Query result with admin overview data
  */
 export function useAdminOverview(
-  month?: string,
+  params?: {
+    month?: string
+    lang?: string
+    baseCurrencyId?: string
+  },
   options?: {
     enabled?: boolean
     refetchInterval?: number
@@ -29,8 +33,8 @@ export function useAdminOverview(
   }
 ): UseQueryResult<AdminOverviewData, Error> {
   return useQuery({
-    queryKey: ['dashboard', 'admin-overview', month],
-    queryFn: () => dashboardService.getAdminOverview(month),
+    queryKey: ['dashboard', 'admin-overview', params?.month, params?.lang, params?.baseCurrencyId],
+    queryFn: () => dashboardService.getAdminOverview(params),
     staleTime: options?.staleTime ?? 5 * 60 * 1000, // 5 minutes default
     refetchInterval: options?.refetchInterval ?? 60 * 1000, // Auto-refetch every 1 minute
     refetchOnMount: true, // Always refetch when component mounts

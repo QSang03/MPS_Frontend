@@ -215,7 +215,7 @@ export function ConsumablesTable({
           </div>
         ),
         cell: ({ row }) => (
-          <Button variant="default" size="sm" asChild className="transition-all">
+          <Button variant="secondary" size="sm" asChild className="transition-all">
             <Link href={`/system/consumables/${String(row.original.id ?? '')}`}>Chi tiết</Link>
           </Button>
         ),

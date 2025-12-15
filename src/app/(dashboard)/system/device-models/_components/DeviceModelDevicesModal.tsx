@@ -228,7 +228,7 @@ export default function DeviceModelDevicesModal({
                           </td>
                           <td className="px-4 py-3 text-right">
                             <Link href={`/system/devices/${d.id}`}>
-                              <Button variant="default" size="sm" className="transition-all">
+                              <Button variant="secondary" size="sm" className="transition-all">
                                 <Eye className="h-4 w-4" />
                               </Button>
                             </Link>
