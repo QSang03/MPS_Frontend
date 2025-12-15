@@ -733,7 +733,7 @@ function UserRequestsTableContent({
               </Button>
               {canClose && (
                 <Button
-                  variant="outline"
+                  variant="secondary"
                   size="sm"
                   onClick={() => openCloseDialog(row.original.id)}
                 >

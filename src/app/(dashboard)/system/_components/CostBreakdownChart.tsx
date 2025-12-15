@@ -70,28 +70,30 @@ export function CostBreakdownChart({
     )
   }
 
-  const chartData = [
-    {
-      name: LABELS.rental,
-      value: costBreakdown.rentalPercent,
-      color: COLORS.rental,
-    },
-    {
-      name: LABELS.repair,
-      value: costBreakdown.repairPercent,
-      color: COLORS.repair,
-    },
-    {
-      name: LABELS.pageBW,
-      value: costBreakdown.pageBWPercent,
-      color: COLORS.pageBW,
-    },
-    {
-      name: LABELS.pageColor,
-      value: costBreakdown.pageColorPercent,
-      color: COLORS.pageColor,
-    },
-  ]
+  const chartData = costBreakdown
+    ? [
+        {
+          name: LABELS.rental,
+          value: costBreakdown.rentalPercent,
+          color: COLORS.rental,
+        },
+        {
+          name: LABELS.repair,
+          value: costBreakdown.repairPercent,
+          color: COLORS.repair,
+        },
+        {
+          name: LABELS.pageBW,
+          value: costBreakdown.pageBWPercent,
+          color: COLORS.pageBW,
+        },
+        {
+          name: LABELS.pageColor,
+          value: costBreakdown.pageColorPercent,
+          color: COLORS.pageColor,
+        },
+      ].filter((item) => item.value !== undefined && item.value !== null)
+    : []
 
   const formatMoney = (value: number | undefined) => {
     if (value === undefined) return '—'
