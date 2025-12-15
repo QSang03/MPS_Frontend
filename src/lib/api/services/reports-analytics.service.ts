@@ -70,6 +70,31 @@ export type ProfitabilityTrendItem = {
   exchangeRate?: number // ⭐ MỚI
 }
 
+// Enterprise profitability item - cost breakdown structure
+export type EnterpriseProfitabilityItem = {
+  costRental: number
+  costRepair: number
+  costPageBW: number
+  costPageColor: number
+  totalCost: number
+  costAdjustmentDebit: number
+  costAdjustmentCredit: number
+  totalCostAfterAdjustment: number
+  costAdjustmentFormula: string
+  currency: CurrencyDataDto | null
+  costRentalConverted: number
+  costRepairConverted: number
+  costPageBWConverted: number
+  costPageColorConverted: number
+  totalCostConverted: number
+  costAdjustmentDebitConverted: number
+  costAdjustmentCreditConverted: number
+  totalCostAfterAdjustmentConverted: number
+  baseCurrency: CurrencyDataDto | null
+  exchangeRate: number
+  month: string
+}
+
 export type EnterpriseProfitResponse = {
   success: boolean
   data?: {
@@ -80,16 +105,14 @@ export type EnterpriseProfitResponse = {
     grossMargin: number
     devicesCount: number
     customersCount: number
-    costAdjustmentDebit?: number
-    costAdjustmentCredit?: number
-    totalCogsAfterAdjustment?: number
-    grossProfitAfterAdjustment?: number
+    totalRevenueConverted: number
+    totalCogsConverted: number
+    grossProfitConverted: number
+    profitability?: EnterpriseProfitabilityItem[]
     costAdjustmentDebitConverted?: number
     costAdjustmentCreditConverted?: number
-    totalCogsAfterAdjustmentConverted?: number
-    grossProfitAfterAdjustmentConverted?: number
-    profitability?: ProfitabilityTrendItem[]
-    baseCurrency?: CurrencyDataDto | null // ⭐ MỚI
+    costAdjustmentFormula?: string
+    baseCurrency?: CurrencyDataDto | null
   }
   message?: string
 }
@@ -101,19 +124,12 @@ export type CustomerProfitItem = {
   totalCogs: number
   grossProfit: number
   devicesCount: number
-  costAdjustmentDebit?: number
-  costAdjustmentCredit?: number
-  totalCogsAfterAdjustment?: number
-  grossProfitAfterAdjustment?: number
+  totalRevenueConverted: number
+  totalCogsConverted: number
+  grossProfitConverted: number
   costAdjustmentDebitConverted?: number
   costAdjustmentCreditConverted?: number
-  totalCogsAfterAdjustmentConverted?: number
-  grossProfitAfterAdjustmentConverted?: number
-  currency?: CurrencyDataDto | null // ⭐ MỚI
-  // Currency conversion fields - ⭐ MỚI
-  totalRevenueConverted?: number
-  totalCogsConverted?: number
-  grossProfitConverted?: number
+  costAdjustmentFormula?: string
 }
 
 export type CustomersProfitResponse = {
@@ -121,8 +137,8 @@ export type CustomersProfitResponse = {
   data?: {
     period: string
     customers: CustomerProfitItem[]
-    profitability?: ProfitabilityTrendItem[]
-    baseCurrency?: CurrencyDataDto | null // ⭐ MỚI
+    profitability?: EnterpriseProfitabilityItem[]
+    baseCurrency?: CurrencyDataDto | null
   }
   message?: string
 }
@@ -448,7 +464,8 @@ export const reportsAnalyticsService = {
     from?: string
     to?: string
     year?: string
-    baseCurrencyId?: string // ⭐ MỚI
+    baseCurrencyId?: string
+    lang?: string // Language preference: 'vi' or 'en', default is 'vi'
   }): Promise<EnterpriseProfitResponse> {
     try {
       const resp = await getWithDedupe<EnterpriseProfitResponse>(
@@ -493,7 +510,8 @@ export const reportsAnalyticsService = {
     from?: string
     to?: string
     year?: string
-    baseCurrencyId?: string // ⭐ MỚI
+    baseCurrencyId?: string
+    lang?: string // Language preference: 'vi' or 'en', default is 'vi'
   }): Promise<CustomersProfitResponse> {
     try {
       const resp = await getWithDedupe<CustomersProfitResponse>(

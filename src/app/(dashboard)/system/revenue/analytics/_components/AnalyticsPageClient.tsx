@@ -31,6 +31,7 @@ import {
   DeviceProfitabilityItem,
   ConsumableLifecycleItem,
   ProfitabilityTrendItem,
+  EnterpriseProfitabilityItem,
   reportsAnalyticsService,
 } from '@/lib/api/services/reports-analytics.service'
 import dynamic from 'next/dynamic'
@@ -177,7 +178,7 @@ export default function AnalyticsPageClient() {
     grossProfitAfterAdjustmentConverted?: number
   } | null>(null)
   const [enterpriseProfitability, setEnterpriseProfitability] = useState<
-    ProfitabilityTrendItem[] | null
+    EnterpriseProfitabilityItem[] | null
   >(null)
   const [enterpriseBaseCurrency, setEnterpriseBaseCurrency] = useState<CurrencyDataDto | null>(null)
   const [showEnterpriseDetails, setShowEnterpriseDetails] = useState(false)
@@ -301,10 +302,7 @@ export default function AnalyticsPageClient() {
         const res = await reportsAnalyticsService.getEnterpriseProfit(cleaned)
         if (res.success && res.data) {
           setEnterpriseData(res.data)
-          setEnterpriseProfitability(
-            (res.data as unknown as { profitability?: ProfitabilityTrendItem[] }).profitability ??
-              null
-          )
+          setEnterpriseProfitability(res.data.profitability ?? null)
           // Save baseCurrency from API response
           if (res.data.baseCurrency) {
             setEnterpriseBaseCurrency(res.data.baseCurrency)
@@ -1321,23 +1319,41 @@ export default function AnalyticsPageClient() {
                 <div className="mt-4">
                   <Suspense fallback={<Skeleton className="h-64 w-full rounded-lg" />}>
                     {(() => {
-                      const data = selectedCustomerId
-                        ? (customerDetailData?.profitability ?? [])
-                        : (enterpriseProfitability ?? [])
-                      if (!data || data.length === 0) return null
+                      // For enterprise, use top-level data for chart (has revenue/cogs/profit)
+                      // For customer detail, use profitability array (has revenue breakdown)
+                      const isEnterprise = !selectedCustomerId
                       const currentCurrency = selectedCustomerId
                         ? customerDetailBaseCurrency
                         : enterpriseBaseCurrency
+
                       if (globalMode === 'period') {
-                        // Render as a bar chart with totals for single period
-                        const row = data[0]
-                        if (!row) return null
-                        const single = {
-                          month: row.month,
-                          totalRevenueConverted: row.totalRevenueConverted ?? row.totalRevenue, // Fallback if needed, though API guarantees converted
-                          totalCogsConverted: row.totalCogsConverted ?? row.totalCogs,
-                          grossProfitConverted: row.grossProfitConverted ?? row.grossProfit,
-                        }
+                        // Get single data for chart
+                        const single =
+                          isEnterprise && enterpriseData
+                            ? {
+                                month: enterpriseData.period,
+                                totalRevenueConverted:
+                                  enterpriseData.totalRevenueConverted ??
+                                  enterpriseData.totalRevenue,
+                                totalCogsConverted:
+                                  enterpriseData.totalCogsConverted ?? enterpriseData.totalCogs,
+                                grossProfitConverted:
+                                  enterpriseData.grossProfitConverted ?? enterpriseData.grossProfit,
+                              }
+                            : (() => {
+                                const data = customerDetailData?.profitability ?? []
+                                if (!data || data.length === 0) return null
+                                const row = data[0]
+                                if (!row) return null
+                                return {
+                                  month: row.month,
+                                  totalRevenueConverted:
+                                    row.totalRevenueConverted ?? row.totalRevenue,
+                                  totalCogsConverted: row.totalCogsConverted ?? row.totalCogs,
+                                  grossProfitConverted: row.grossProfitConverted ?? row.grossProfit,
+                                }
+                              })()
+                        if (!single) return null
                         // Local chart config used to theme the chart
                         const chartConfig: ChartConfig = {
                           totalRevenueConverted: {
@@ -1437,21 +1453,50 @@ export default function AnalyticsPageClient() {
                           </ChartContainer>
                         )
                       }
-                      // Transform data to use converted values if available
-                      const transformedData = data.map((row) => ({
-                        month: row.month,
-                        totalRevenue: row.totalRevenueConverted ?? row.totalRevenue,
-                        totalCogs: row.totalCogsConverted ?? row.totalCogs,
-                        grossProfit: row.grossProfitConverted ?? row.grossProfit,
-                      }))
-                      return (
-                        <TrendChart
-                          data={transformedData}
-                          height={300}
-                          showMargin
-                          baseCurrency={currentCurrency}
-                        />
-                      )
+                      // For range/year mode
+                      // Enterprise profitability array has cost breakdown, not revenue
+                      // So we can't use it for revenue chart - show message or use top-level data
+                      if (isEnterprise) {
+                        // Enterprise profitability array only has cost breakdown
+                        // For range/year, we'd need revenue breakdown which isn't available
+                        // So we'll show a message or use a different visualization
+                        if (!enterpriseData) return null
+                        // Use top-level data as single point (not ideal for range/year)
+                        const single = {
+                          month: enterpriseData.period,
+                          totalRevenue:
+                            enterpriseData.totalRevenueConverted ?? enterpriseData.totalRevenue,
+                          totalCogs: enterpriseData.totalCogsConverted ?? enterpriseData.totalCogs,
+                          grossProfit:
+                            enterpriseData.grossProfitConverted ?? enterpriseData.grossProfit,
+                        }
+                        return (
+                          <TrendChart
+                            data={[single]}
+                            height={300}
+                            showMargin
+                            baseCurrency={currentCurrency}
+                          />
+                        )
+                      } else {
+                        // Customer detail - use profitability array
+                        const data = customerDetailData?.profitability ?? []
+                        if (!data || data.length === 0) return null
+                        const transformedData = data.map((row) => ({
+                          month: row.month,
+                          totalRevenue: row.totalRevenueConverted ?? row.totalRevenue,
+                          totalCogs: row.totalCogsConverted ?? row.totalCogs,
+                          grossProfit: row.grossProfitConverted ?? row.grossProfit,
+                        }))
+                        return (
+                          <TrendChart
+                            data={transformedData}
+                            height={300}
+                            showMargin
+                            baseCurrency={currentCurrency}
+                          />
+                        )
+                      }
                     })()}
                   </Suspense>
                 </div>
@@ -1465,42 +1510,75 @@ export default function AnalyticsPageClient() {
                       <th className="px-4 py-2 text-left text-sm font-semibold text-gray-600">
                         {t('analytics.table.period')}
                       </th>
-                      <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
-                        {t('analytics.table.rental')}
-                      </th>
-                      <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
-                        {t('analytics.table.repair')}
-                      </th>
-                      <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
-                        {t('analytics.table.page_bw')}
-                      </th>
-                      <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
-                        {t('analytics.table.page_color')}
-                      </th>
-                      <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
-                        {t('analytics.table.total_revenue')}
-                      </th>
-                      <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
-                        {t('analytics.table.total_cogs')}
-                      </th>
-                      <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
-                        {t('analytics.table.profit')}
-                      </th>
-                      <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
-                        {t('analytics.table.margin')}
-                      </th>
-                      <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
-                        {t('dashboard.metrics.cost_adjustment_debit')}
-                      </th>
-                      <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
-                        {t('dashboard.metrics.cost_adjustment_credit')}
-                      </th>
-                      <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
-                        {t('dashboard.metrics.total_cogs_after_adjustment')}
-                      </th>
-                      <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
-                        {t('dashboard.metrics.gross_profit_after_adjustment')}
-                      </th>
+                      {selectedCustomerId ? (
+                        // Customer detail - revenue breakdown
+                        <>
+                          <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
+                            {t('analytics.table.rental')}
+                          </th>
+                          <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
+                            {t('analytics.table.repair')}
+                          </th>
+                          <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
+                            {t('analytics.table.page_bw')}
+                          </th>
+                          <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
+                            {t('analytics.table.page_color')}
+                          </th>
+                          <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
+                            {t('analytics.table.total_revenue')}
+                          </th>
+                          <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
+                            {t('analytics.table.total_cogs')}
+                          </th>
+                          <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
+                            {t('analytics.table.profit')}
+                          </th>
+                          <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
+                            {t('analytics.table.margin')}
+                          </th>
+                          <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
+                            {t('dashboard.metrics.cost_adjustment_debit')}
+                          </th>
+                          <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
+                            {t('dashboard.metrics.cost_adjustment_credit')}
+                          </th>
+                          <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
+                            {t('dashboard.metrics.total_cogs_after_adjustment')}
+                          </th>
+                          <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
+                            {t('dashboard.metrics.gross_profit_after_adjustment')}
+                          </th>
+                        </>
+                      ) : (
+                        // Enterprise - cost breakdown
+                        <>
+                          <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
+                            {t('analytics.table.cost_rental')}
+                          </th>
+                          <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
+                            {t('analytics.table.cost_repair')}
+                          </th>
+                          <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
+                            {t('analytics.table.cost_page_bw')}
+                          </th>
+                          <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
+                            {t('analytics.table.cost_page_color')}
+                          </th>
+                          <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
+                            {t('analytics.table.total_cost')}
+                          </th>
+                          <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
+                            {t('dashboard.metrics.cost_adjustment_debit')}
+                          </th>
+                          <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
+                            {t('dashboard.metrics.cost_adjustment_credit')}
+                          </th>
+                          <th className="px-4 py-2 text-right text-sm font-semibold text-gray-600">
+                            {t('dashboard.metrics.total_cost_after_adjustment')}
+                          </th>
+                        </>
+                      )}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
@@ -1511,128 +1589,217 @@ export default function AnalyticsPageClient() {
                       const currentCurrency = selectedCustomerId
                         ? customerDetailBaseCurrency
                         : enterpriseBaseCurrency
+                      const isEnterprise = !selectedCustomerId
+                      const enterpriseRow = isEnterprise
+                        ? (row as EnterpriseProfitabilityItem)
+                        : null
+                      const customerRow = !isEnterprise ? (row as ProfitabilityTrendItem) : null
+
                       return (
                         <tr key={row.month}>
                           <td className="px-4 py-2 text-sm">{row.month}</td>
-                          <td className="px-4 py-2 text-right text-sm">
-                            {formatDual(
-                              row.revenueRental,
-                              row.revenueRentalConverted,
-                              currentCurrency,
-                              row.currency,
-                              'right'
-                            )}
-                          </td>
-                          <td className="px-4 py-2 text-right text-sm">
-                            {formatDual(
-                              row.revenueRepair,
-                              row.revenueRepairConverted,
-                              currentCurrency,
-                              row.currency,
-                              'right'
-                            )}
-                          </td>
-                          <td className="px-4 py-2 text-right text-sm">
-                            {formatDual(
-                              row.revenuePageBW,
-                              row.revenuePageBWConverted,
-                              currentCurrency,
-                              row.currency,
-                              'right'
-                            )}
-                          </td>
-                          <td className="px-4 py-2 text-right text-sm">
-                            {formatDual(
-                              row.revenuePageColor,
-                              row.revenuePageColorConverted,
-                              currentCurrency,
-                              row.currency,
-                              'right'
-                            )}
-                          </td>
-                          <td className="px-4 py-2 text-right text-sm font-semibold">
-                            {formatDual(
-                              row.totalRevenue,
-                              row.totalRevenueConverted,
-                              currentCurrency,
-                              row.currency,
-                              'right'
-                            )}
-                          </td>
-                          <td className="px-4 py-2 text-right text-sm">
-                            {formatDual(
-                              row.totalCogs,
-                              row.totalCogsConverted,
-                              currentCurrency,
-                              row.currency,
-                              'right'
-                            )}
-                          </td>
-                          <td
-                            className={`px-4 py-2 text-right text-sm font-semibold ${
-                              (row.grossProfitConverted ?? row.grossProfit) >= 0
-                                ? 'text-[var(--color-success-600)]'
-                                : 'text-[var(--color-error-600)]'
-                            }`}
-                          >
-                            {formatDual(
-                              row.grossProfit,
-                              row.grossProfitConverted,
-                              currentCurrency,
-                              row.currency,
-                              'right'
-                            )}
-                          </td>
-                          <td className="px-4 py-2 text-right text-sm">
-                            {typeof row.grossMargin === 'number'
-                              ? `${row.grossMargin.toFixed(1)}%`
-                              : '-'}
-                          </td>
-                          <td className="px-4 py-2 text-right text-sm">
-                            {formatDual(
-                              row.costAdjustmentDebit ?? 0,
-                              row.costAdjustmentDebitConverted,
-                              currentCurrency,
-                              row.currency,
-                              'right'
-                            )}
-                          </td>
-                          <td className="px-4 py-2 text-right text-sm">
-                            {formatDual(
-                              row.costAdjustmentCredit ?? 0,
-                              row.costAdjustmentCreditConverted,
-                              currentCurrency,
-                              row.currency,
-                              'right'
-                            )}
-                          </td>
-                          <td className="px-4 py-2 text-right text-sm font-semibold">
-                            {formatDual(
-                              row.totalCogsAfterAdjustment ?? row.totalCogs,
-                              row.totalCogsAfterAdjustmentConverted ?? row.totalCogsConverted,
-                              currentCurrency,
-                              row.currency,
-                              'right'
-                            )}
-                          </td>
-                          <td
-                            className={`px-4 py-2 text-right text-sm font-semibold ${
-                              (row.grossProfitAfterAdjustmentConverted ??
-                                row.grossProfitAfterAdjustment ??
-                                row.grossProfitConverted ??
-                                row.grossProfit) >= 0
-                                ? 'text-[var(--color-success-600)]'
-                                : 'text-[var(--color-error-600)]'
-                            }`}
-                          >
-                            {formatDual(
-                              row.grossProfitAfterAdjustment ?? row.grossProfit,
-                              row.grossProfitAfterAdjustmentConverted ?? row.grossProfitConverted,
-                              currentCurrency,
-                              row.currency,
-                              'right'
-                            )}
-                          </td>
+                          {selectedCustomerId && customerRow ? (
+                            // Customer detail - revenue breakdown
+                            <>
+                              <td className="px-4 py-2 text-right text-sm">
+                                {formatDual(
+                                  customerRow.revenueRental,
+                                  customerRow.revenueRentalConverted,
+                                  currentCurrency,
+                                  customerRow.currency,
+                                  'right'
+                                )}
+                              </td>
+                              <td className="px-4 py-2 text-right text-sm">
+                                {formatDual(
+                                  customerRow.revenueRepair,
+                                  customerRow.revenueRepairConverted,
+                                  currentCurrency,
+                                  customerRow.currency,
+                                  'right'
+                                )}
+                              </td>
+                              <td className="px-4 py-2 text-right text-sm">
+                                {formatDual(
+                                  customerRow.revenuePageBW,
+                                  customerRow.revenuePageBWConverted,
+                                  currentCurrency,
+                                  customerRow.currency,
+                                  'right'
+                                )}
+                              </td>
+                              <td className="px-4 py-2 text-right text-sm">
+                                {formatDual(
+                                  customerRow.revenuePageColor,
+                                  customerRow.revenuePageColorConverted,
+                                  currentCurrency,
+                                  customerRow.currency,
+                                  'right'
+                                )}
+                              </td>
+                              <td className="px-4 py-2 text-right text-sm font-semibold">
+                                {formatDual(
+                                  customerRow.totalRevenue,
+                                  customerRow.totalRevenueConverted,
+                                  currentCurrency,
+                                  customerRow.currency,
+                                  'right'
+                                )}
+                              </td>
+                              <td className="px-4 py-2 text-right text-sm">
+                                {formatDual(
+                                  customerRow.totalCogs,
+                                  customerRow.totalCogsConverted,
+                                  currentCurrency,
+                                  customerRow.currency,
+                                  'right'
+                                )}
+                              </td>
+                              <td
+                                className={`px-4 py-2 text-right text-sm font-semibold ${
+                                  (customerRow.grossProfitConverted ?? customerRow.grossProfit) >= 0
+                                    ? 'text-[var(--color-success-600)]'
+                                    : 'text-[var(--color-error-600)]'
+                                }`}
+                              >
+                                {formatDual(
+                                  customerRow.grossProfit,
+                                  customerRow.grossProfitConverted,
+                                  currentCurrency,
+                                  customerRow.currency,
+                                  'right'
+                                )}
+                              </td>
+                              <td className="px-4 py-2 text-right text-sm">
+                                {typeof customerRow.grossMargin === 'number'
+                                  ? `${customerRow.grossMargin.toFixed(1)}%`
+                                  : '-'}
+                              </td>
+                              <td className="px-4 py-2 text-right text-sm">
+                                {formatDual(
+                                  customerRow.costAdjustmentDebit ?? 0,
+                                  customerRow.costAdjustmentDebitConverted,
+                                  currentCurrency,
+                                  customerRow.currency,
+                                  'right'
+                                )}
+                              </td>
+                              <td className="px-4 py-2 text-right text-sm">
+                                {formatDual(
+                                  customerRow.costAdjustmentCredit ?? 0,
+                                  customerRow.costAdjustmentCreditConverted,
+                                  currentCurrency,
+                                  customerRow.currency,
+                                  'right'
+                                )}
+                              </td>
+                              <td className="px-4 py-2 text-right text-sm font-semibold">
+                                {formatDual(
+                                  customerRow.totalCogsAfterAdjustment ?? customerRow.totalCogs,
+                                  customerRow.totalCogsAfterAdjustmentConverted ??
+                                    customerRow.totalCogsConverted,
+                                  currentCurrency,
+                                  customerRow.currency,
+                                  'right'
+                                )}
+                              </td>
+                              <td
+                                className={`px-4 py-2 text-right text-sm font-semibold ${
+                                  (customerRow.grossProfitAfterAdjustmentConverted ??
+                                    customerRow.grossProfitAfterAdjustment ??
+                                    customerRow.grossProfitConverted ??
+                                    customerRow.grossProfit) >= 0
+                                    ? 'text-[var(--color-success-600)]'
+                                    : 'text-[var(--color-error-600)]'
+                                }`}
+                              >
+                                {formatDual(
+                                  customerRow.grossProfitAfterAdjustment ?? customerRow.grossProfit,
+                                  customerRow.grossProfitAfterAdjustmentConverted ??
+                                    customerRow.grossProfitConverted,
+                                  currentCurrency,
+                                  customerRow.currency,
+                                  'right'
+                                )}
+                              </td>
+                            </>
+                          ) : enterpriseRow ? (
+                            // Enterprise - cost breakdown
+                            <>
+                              <td className="px-4 py-2 text-right text-sm">
+                                {formatDual(
+                                  enterpriseRow.costRental,
+                                  enterpriseRow.costRentalConverted,
+                                  currentCurrency,
+                                  enterpriseRow.currency,
+                                  'right'
+                                )}
+                              </td>
+                              <td className="px-4 py-2 text-right text-sm">
+                                {formatDual(
+                                  enterpriseRow.costRepair,
+                                  enterpriseRow.costRepairConverted,
+                                  currentCurrency,
+                                  enterpriseRow.currency,
+                                  'right'
+                                )}
+                              </td>
+                              <td className="px-4 py-2 text-right text-sm">
+                                {formatDual(
+                                  enterpriseRow.costPageBW,
+                                  enterpriseRow.costPageBWConverted,
+                                  currentCurrency,
+                                  enterpriseRow.currency,
+                                  'right'
+                                )}
+                              </td>
+                              <td className="px-4 py-2 text-right text-sm">
+                                {formatDual(
+                                  enterpriseRow.costPageColor,
+                                  enterpriseRow.costPageColorConverted,
+                                  currentCurrency,
+                                  enterpriseRow.currency,
+                                  'right'
+                                )}
+                              </td>
+                              <td className="px-4 py-2 text-right text-sm font-semibold">
+                                {formatDual(
+                                  enterpriseRow.totalCost,
+                                  enterpriseRow.totalCostConverted,
+                                  currentCurrency,
+                                  enterpriseRow.currency,
+                                  'right'
+                                )}
+                              </td>
+                              <td className="px-4 py-2 text-right text-sm">
+                                {formatDual(
+                                  enterpriseRow.costAdjustmentDebit,
+                                  enterpriseRow.costAdjustmentDebitConverted,
+                                  currentCurrency,
+                                  enterpriseRow.currency,
+                                  'right'
+                                )}
+                              </td>
+                              <td className="px-4 py-2 text-right text-sm">
+                                {formatDual(
+                                  enterpriseRow.costAdjustmentCredit,
+                                  enterpriseRow.costAdjustmentCreditConverted,
+                                  currentCurrency,
+                                  enterpriseRow.currency,
+                                  'right'
+                                )}
+                              </td>
+                              <td className="px-4 py-2 text-right text-sm font-semibold">
+                                {formatDual(
+                                  enterpriseRow.totalCostAfterAdjustment,
+                                  enterpriseRow.totalCostAfterAdjustmentConverted,
+                                  currentCurrency,
+                                  enterpriseRow.currency,
+                                  'right'
+                                )}
+                              </td>
+                            </>
+                          ) : null}
                         </tr>
                       )
                     })}
