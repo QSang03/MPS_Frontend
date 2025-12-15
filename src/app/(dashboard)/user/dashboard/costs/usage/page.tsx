@@ -10,12 +10,19 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle as DialogTitleUI,
+} from '@/components/ui/dialog'
 import MonthPicker from '@/components/ui/month-picker'
 import { Button } from '@/components/ui/button'
 import { Loader2, FileText, Calendar } from 'lucide-react'
 import { reportsAnalyticsService } from '@/lib/api/services/reports-analytics.service'
 import type { UsageTrendItem, DeviceUsageItem } from '@/lib/api/services/reports-analytics.service'
 import { Skeleton } from '@/components/ui/skeleton'
+import DeviceUsageHistory from '@/components/device/DeviceUsageHistory'
 import { toast } from 'sonner'
 import {
   ResponsiveContainer,
@@ -71,6 +78,8 @@ export default function UsagePage() {
     devices: DeviceUsageItem[]
     usage?: UsageTrendItem[]
   } | null>(null)
+  const [selectedDevice, setSelectedDevice] = useState<DeviceUsageItem | null>(null)
+  const [deviceDialogOpen, setDeviceDialogOpen] = useState(false)
 
   function getCurrentMonth(): string {
     const now = new Date()
@@ -496,11 +505,29 @@ export default function UsagePage() {
                       </TableHeader>
                       <TableBody>
                         {usageData.devices.map((d) => (
-                          <TableRow key={d.deviceId}>
+                          <TableRow
+                            key={d.deviceId}
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => {
+                              setSelectedDevice(d)
+                              setDeviceDialogOpen(true)
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                setSelectedDevice(d)
+                                setDeviceDialogOpen(true)
+                              }
+                            }}
+                            className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800"
+                          >
                             <TableCell className="font-medium">
                               <div className="flex flex-col">
                                 <span className="text-slate-900 dark:text-white">
                                   {d.model ?? '—'}
+                                </span>
+                                <span className="text-xs text-slate-500">
+                                  {d.serialNumber ?? ''}
                                 </span>
                               </div>
                             </TableCell>
@@ -521,6 +548,44 @@ export default function UsagePage() {
                         ))}
                       </TableBody>
                     </Table>
+
+                    {/* Device usage dialog */}
+                    <Dialog
+                      open={deviceDialogOpen}
+                      onOpenChange={(open) => {
+                        setDeviceDialogOpen(open)
+                        if (!open) setSelectedDevice(null)
+                      }}
+                    >
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitleUI>
+                            {selectedDevice
+                              ? `${selectedDevice.model ?? 'Device'} (${selectedDevice.serialNumber})`
+                              : 'Device'}
+                          </DialogTitleUI>
+                        </DialogHeader>
+                        {selectedDevice && (
+                          <div className="mt-2">
+                            <DeviceUsageHistory
+                              deviceId={selectedDevice.deviceId}
+                              device={{
+                                id: selectedDevice.deviceId,
+                                serialNumber: selectedDevice.serialNumber,
+                                model: selectedDevice.model,
+                                // fill minimal required fields
+                                location: '',
+                                createdAt: new Date().toISOString(),
+                                updatedAt: new Date().toISOString(),
+                                totalPagesUsed: selectedDevice.totalPages,
+                                customerId: '',
+                                status: '',
+                              }}
+                            />
+                          </div>
+                        )}
+                      </DialogContent>
+                    </Dialog>
                   </div>
                 ) : (
                   <div className="py-12 text-center">
