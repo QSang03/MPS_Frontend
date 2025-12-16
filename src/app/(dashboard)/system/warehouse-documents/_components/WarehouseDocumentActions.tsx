@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { warehouseDocumentsClientService } from '@/lib/api/services/warehouse-documents-client.service'
 import type { WarehouseDocument } from '@/types/models'
+import { ActionGuard } from '@/components/shared/ActionGuard'
 
 interface Props {
   warehouseDocument: WarehouseDocument
@@ -65,28 +66,34 @@ export function WarehouseDocumentActions({ warehouseDocument }: Props) {
       <DropdownMenuContent align="end">
         <DropdownMenuLabel>Actions</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-          <Link href={`/system/warehouse-documents/${warehouseDocument.id}`}>
-            <Eye className="mr-2 h-4 w-4" />
-            Xem chi tiết
-          </Link>
-        </DropdownMenuItem>
+        <ActionGuard pageId="warehouse-documents" actionId="view-detail" fallback={null}>
+          <DropdownMenuItem asChild>
+            <Link href={`/system/warehouse-documents/${warehouseDocument.id}`}>
+              <Eye className="mr-2 h-4 w-4" />
+              Xem chi tiết
+            </Link>
+          </DropdownMenuItem>
+        </ActionGuard>
         {warehouseDocument.status === 'DRAFT' && (
           <>
-            <DropdownMenuItem
-              onSelect={(e) => e.preventDefault()}
-              onClick={() => confirmMutation.mutate()}
-            >
-              <Check className="mr-2 h-4 w-4" />
-              Xác nhận
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onSelect={(e) => e.preventDefault()}
-              onClick={() => cancelMutation.mutate()}
-            >
-              <X className="mr-2 h-4 w-4" />
-              Hủy
-            </DropdownMenuItem>
+            <ActionGuard pageId="warehouse-documents" actionId="update-status" fallback={null}>
+              <DropdownMenuItem
+                onSelect={(e) => e.preventDefault()}
+                onClick={() => confirmMutation.mutate()}
+              >
+                <Check className="mr-2 h-4 w-4" />
+                Xác nhận
+              </DropdownMenuItem>
+            </ActionGuard>
+            <ActionGuard pageId="warehouse-documents" actionId="cancel" fallback={null}>
+              <DropdownMenuItem
+                onSelect={(e) => e.preventDefault()}
+                onClick={() => cancelMutation.mutate()}
+              >
+                <X className="mr-2 h-4 w-4" />
+                Hủy
+              </DropdownMenuItem>
+            </ActionGuard>
           </>
         )}
       </DropdownMenuContent>

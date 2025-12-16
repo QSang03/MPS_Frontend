@@ -21,22 +21,26 @@ export default function ConsumableTypesPage() {
         icon={<Package className="h-8 w-8" />}
         actions={
           <>
-            <ImportExcelModal
-              trigger={
-                <Button variant="outline" className="hover:bg-[var(--accent)]">
-                  <Upload className="mr-2 h-4 w-4" />
-                  {t('consumable_types.import.button')}
-                </Button>
-              }
-            />
-            <BulkAssignModal
-              trigger={
-                <Button variant="outline" className="hover:bg-[var(--accent)]">
-                  <Link2 className="mr-2 h-4 w-4" />
-                  {t('consumable_types.actions.bulk_assign')}
-                </Button>
-              }
-            />
+            <ActionGuard pageId="consumable-types" actionId="import-excel">
+              <ImportExcelModal
+                trigger={
+                  <Button variant="outline" className="hover:bg-[var(--accent)]">
+                    <Upload className="mr-2 h-4 w-4" />
+                    {t('consumable_types.import.button')}
+                  </Button>
+                }
+              />
+            </ActionGuard>
+            <ActionGuard pageId="consumable-types" actionId="bulk-assign">
+              <BulkAssignModal
+                trigger={
+                  <Button variant="outline" className="hover:bg-[var(--accent)]">
+                    <Link2 className="mr-2 h-4 w-4" />
+                    {t('consumable_types.actions.bulk_assign')}
+                  </Button>
+                }
+              />
+            </ActionGuard>
             <ActionGuard pageId="consumable-types" actionId="create">
               <ConsumableTypeFormModal
                 mode="create"

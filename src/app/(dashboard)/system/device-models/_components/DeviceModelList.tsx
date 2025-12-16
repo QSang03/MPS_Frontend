@@ -22,7 +22,6 @@ import DeviceModelFormModal from './DeviceModelFormModal'
 import { ConsumableCompatibilityModal } from './ConsumableCompatibilityModal'
 import type { DeviceModel } from '@/types/models/device-model'
 import deviceModelsClientService from '@/lib/api/services/device-models-client.service'
-import { useActionPermission } from '@/lib/hooks/useActionPermission'
 import { ActionGuard } from '@/components/shared/ActionGuard'
 import { useDeviceModelsQuery } from '@/lib/hooks/queries/useDeviceModelsQuery'
 import { useQueryClient } from '@tanstack/react-query'
@@ -59,7 +58,6 @@ interface DeviceModelStats {
 
 export default function DeviceModelList() {
   const { t } = useLocale()
-  const { can } = useActionPermission('device-models')
 
   const [searchInput, setSearchInput] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
@@ -147,10 +145,6 @@ export default function DeviceModelList() {
     setSorting({ sortBy: 'createdAt', sortOrder: 'desc' })
   }
 
-  // Memoize permission checks to avoid re-renders
-  const canFilterByManufacturer = can('filter-by-manufacturer')
-  const canFilterByType = can('filter-by-type')
-
   return (
     <div className="space-y-6">
       <StatsCards
@@ -207,7 +201,6 @@ export default function DeviceModelList() {
             <Select
               value={manufacturerFilter}
               onValueChange={(value) => setManufacturerFilter(value)}
-              disabled={!canFilterByManufacturer}
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder={t('device_model.filter.manufacturer_placeholder')} />
@@ -226,11 +219,7 @@ export default function DeviceModelList() {
 
           <div>
             <label className="mb-2 block text-sm font-medium">{t('filters.device_type')}</label>
-            <Select
-              value={typeFilter}
-              onValueChange={(value) => setTypeFilter(value)}
-              disabled={!canFilterByType}
-            >
+            <Select value={typeFilter} onValueChange={(value) => setTypeFilter(value)}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder={t('device_model.filter.type_placeholder')} />
               </SelectTrigger>
@@ -488,12 +477,18 @@ function DeviceModelsTableContent({
         ),
         enableSorting: true,
         cell: ({ row }) => (
-          <Link
-            href={`/system/device-models/${encodeURIComponent(row.original.id)}`}
-            className="font-semibold text-[var(--brand-600)] hover:text-[var(--brand-700)] hover:underline"
+          <ActionGuard
+            pageId="device-models"
+            actionId="view-device-model-detail"
+            fallback={<span className="font-semibold">{row.original.name || '-'}</span>}
           >
-            {row.original.name || '-'}
-          </Link>
+            <Link
+              href={`/system/device-models/${encodeURIComponent(row.original.id)}`}
+              className="font-semibold text-[var(--brand-600)] hover:text-[var(--brand-700)] hover:underline"
+            >
+              {row.original.name || '-'}
+            </Link>
+          </ActionGuard>
         ),
       },
       {
@@ -609,22 +604,28 @@ function DeviceModelsTableContent({
         header: t('device_model.table.compatibility'),
         enableSorting: false,
         cell: ({ row }) => (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() =>
-              setCompatibilityModal({
-                open: true,
-                deviceModelId: row.original.id,
-                deviceModelName: row.original.name || 'N/A',
-              })
-            }
-            className="gap-2"
+          <ActionGuard
+            pageId="device-models"
+            actionId="manage-compatible-consumables"
+            fallback={null}
           >
-            <Package className="h-4 w-4" />
-            {t('device_model.button.manage')}
-          </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                setCompatibilityModal({
+                  open: true,
+                  deviceModelId: row.original.id,
+                  deviceModelName: row.original.name || 'N/A',
+                })
+              }
+              className="gap-2"
+            >
+              <Package className="h-4 w-4" />
+              {t('device_model.button.manage')}
+            </Button>
+          </ActionGuard>
         ),
       },
       {

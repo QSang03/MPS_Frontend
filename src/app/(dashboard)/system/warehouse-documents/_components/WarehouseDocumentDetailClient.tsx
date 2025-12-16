@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/table'
 import { formatDateTime, formatCurrencyWithSymbol } from '@/lib/utils/formatters'
 import { warehouseDocumentsClientService } from '@/lib/api/services/warehouse-documents-client.service'
-import { PermissionGuard } from '@/components/shared/PermissionGuard'
+import { ActionGuard } from '@/components/shared/ActionGuard'
 import type { Session } from '@/lib/auth/session'
 import type { WarehouseDocument } from '@/types/models'
 import { Check, X, ArrowLeft } from 'lucide-react'
@@ -28,7 +28,7 @@ interface Props {
   session: Session | null
 }
 
-export function WarehouseDocumentDetailClient({ id, session }: Props) {
+export function WarehouseDocumentDetailClient({ id }: Props) {
   const router = useRouter()
   const queryClient = useQueryClient()
   const [isProcessing, setIsProcessing] = useState(false)
@@ -111,37 +111,29 @@ export function WarehouseDocumentDetailClient({ id, session }: Props) {
           </div>
         </div>
         <div className="flex gap-2">
-          <PermissionGuard
-            session={session}
-            action="update"
-            resource={{ type: 'warehouse-documents', customerId: detail.customerId }}
-          >
-            {detail.status === 'DRAFT' && (
-              <Button
-                onClick={() => confirmMutation.mutate()}
-                disabled={isProcessing}
-                className="flex items-center gap-2"
-              >
-                <Check className="h-4 w-4" /> Xác nhận
-              </Button>
-            )}
-          </PermissionGuard>
-          <PermissionGuard
-            session={session}
-            action="update"
-            resource={{ type: 'warehouse-documents', customerId: detail.customerId }}
-          >
-            {detail.status === 'DRAFT' && (
-              <Button
-                variant="destructive"
-                onClick={() => cancelMutation.mutate()}
-                disabled={isProcessing}
-                className="flex items-center gap-2"
-              >
-                <X className="h-4 w-4" /> Hủy
-              </Button>
-            )}
-          </PermissionGuard>
+          {detail.status === 'DRAFT' && (
+            <>
+              <ActionGuard pageId="warehouse-documents" actionId="update-status">
+                <Button
+                  onClick={() => confirmMutation.mutate()}
+                  disabled={isProcessing}
+                  className="flex items-center gap-2"
+                >
+                  <Check className="h-4 w-4" /> Xác nhận
+                </Button>
+              </ActionGuard>
+              <ActionGuard pageId="warehouse-documents" actionId="cancel">
+                <Button
+                  variant="destructive"
+                  onClick={() => cancelMutation.mutate()}
+                  disabled={isProcessing}
+                  className="flex items-center gap-2"
+                >
+                  <X className="h-4 w-4" /> Hủy
+                </Button>
+              </ActionGuard>
+            </>
+          )}
         </div>
       </div>
 

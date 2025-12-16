@@ -13,6 +13,7 @@ import { useLocale } from '@/components/providers/LocaleProvider'
 import { TableSkeleton } from '@/components/system/TableSkeleton'
 import { ConsumableTypeTable } from './ConsumableTypeTable'
 import { useQueryClient } from '@tanstack/react-query'
+import { ActionGuard } from '@/components/shared/ActionGuard'
 
 interface ConsumableTypeStats {
   total: number
@@ -155,19 +156,21 @@ export function ConsumableTypeList() {
       </Suspense>
 
       {editStockModal && (
-        <EditStockModal
-          open={editStockModal.open}
-          onOpenChange={(open) => {
-            if (!open) {
-              setEditStockModal(null)
-            }
-          }}
-          stockId={editStockModal.stockId}
-          consumableName={editStockModal.consumableName}
-          currentQuantity={editStockModal.quantity}
-          currentThreshold={editStockModal.threshold}
-          onSave={handleSaveStock}
-        />
+        <ActionGuard pageId="consumable-types" actionId="edit-stock">
+          <EditStockModal
+            open={editStockModal.open}
+            onOpenChange={(open) => {
+              if (!open) {
+                setEditStockModal(null)
+              }
+            }}
+            stockId={editStockModal.stockId}
+            consumableName={editStockModal.consumableName}
+            currentQuantity={editStockModal.quantity}
+            currentThreshold={editStockModal.threshold}
+            onSave={handleSaveStock}
+          />
+        </ActionGuard>
       )}
     </div>
   )

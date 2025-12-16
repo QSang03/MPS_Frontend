@@ -72,6 +72,7 @@ import { useLocale } from '@/components/providers/LocaleProvider'
 import { CreateBillingModal } from './CreateBillingModal'
 // Using `mps_user_role` localStorage for UI gating simplifies client-side role logic
 import { InvoicesList } from './InvoicesList'
+import CustomerFormModal from '@/app/(dashboard)/system/customers/_components/CustomerFormModal'
 // removed unused Invoice type import (was causing lint error)
 
 type Props = {
@@ -686,9 +687,11 @@ export default function CustomerDetailClient({ customerId }: Props) {
           </ActionGuard>
         </td>
         <td className="py-4 pr-4 pl-4 text-right">
-          <span className="text-sm font-semibold whitespace-nowrap text-slate-700">
-            {formatPrice(device.monthlyRent, device.currency)}
-          </span>
+          <ActionGuard pageId="customers" actionId="device-contract-rent-view">
+            <span className="text-sm font-semibold whitespace-nowrap text-slate-700">
+              {formatPrice(device.monthlyRent, device.currency)}
+            </span>
+          </ActionGuard>
         </td>
         <td className="px-4 py-4 text-right">
           <span className="text-sm font-medium whitespace-nowrap text-slate-600">
@@ -741,17 +744,18 @@ export default function CustomerDetailClient({ customerId }: Props) {
         <td className="px-4 py-4">
           {device.device?.id && (
             <div className="flex items-center justify-end gap-1.5">
-              <DeviceFormModal
-                mode="edit"
-                device={device.device}
-                compact
-                onSaved={() => {
-                  loadOverview()
-                }}
-              />
-              {/* Allow system admin to see assign-pricing even if backend nav doesn't include the action */}
-              {isAdminForUI ? (
-                !isCustomerManager ? (
+              <ActionGuard pageId="customers" actionId="device-update">
+                <DeviceFormModal
+                  mode="edit"
+                  device={device.device}
+                  compact
+                  onSaved={() => {
+                    loadOverview()
+                  }}
+                />
+              </ActionGuard>
+              <ActionGuard pageId="customers" actionId="device-pricing-update">
+                {!isCustomerManager ? (
                   <DevicePricingModal
                     device={device.device}
                     compact
@@ -759,58 +763,50 @@ export default function CustomerDetailClient({ customerId }: Props) {
                       loadOverview()
                     }}
                   />
-                ) : null
-              ) : (
-                <ActionGuard pageId="devices" actionId="assign-pricing">
-                  {!isCustomerManager ? (
-                    <DevicePricingModal
-                      device={device.device}
-                      compact
-                      onSaved={() => {
-                        loadOverview()
+                ) : null}
+              </ActionGuard>
+              <ActionGuard pageId="customers" actionId="a4-equivalent-create">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 w-8 border-[var(--brand-200)] bg-[var(--brand-50)] p-0 text-[var(--brand-600)] transition-colors hover:border-[var(--brand-300)] hover:bg-[var(--brand-100)]"
+                      onClick={() => {
+                        setA4ModalDevice(device)
+                        setA4ModalOpen(true)
                       }}
-                    />
-                  ) : null}
-                </ActionGuard>
-              )}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-8 w-8 border-[var(--brand-200)] bg-[var(--brand-50)] p-0 text-[var(--brand-600)] transition-colors hover:border-[var(--brand-300)] hover:bg-[var(--brand-100)]"
-                    onClick={() => {
-                      setA4ModalDevice(device)
-                      setA4ModalOpen(true)
-                    }}
-                    title={t('customer.detail.device.a4_snapshot.title')}
-                  >
-                    <BarChart3 className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent sideOffset={4}>
-                  {t('customer.detail.device.a4_snapshot.tooltip')}
-                </TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="h-8 w-8 p-0 text-slate-600"
-                    onClick={() => {
-                      setA4HistoryDevice(device)
-                      setA4HistoryOpen(true)
-                    }}
-                    title={t('customer.detail.device.a4_history.title')}
-                  >
-                    <RefreshCw className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent sideOffset={4}>
-                  {t('customer.detail.device.a4_history.tooltip')}
-                </TooltipContent>
-              </Tooltip>
+                      title={t('customer.detail.device.a4_snapshot.title')}
+                    >
+                      <BarChart3 className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent sideOffset={4}>
+                    {t('customer.detail.device.a4_snapshot.tooltip')}
+                  </TooltipContent>
+                </Tooltip>
+              </ActionGuard>
+              <ActionGuard pageId="customers" actionId="a4-equivalent-view">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="h-8 w-8 p-0 text-slate-600"
+                      onClick={() => {
+                        setA4HistoryDevice(device)
+                        setA4HistoryOpen(true)
+                      }}
+                      title={t('customer.detail.device.a4_history.title')}
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent sideOffset={4}>
+                    {t('customer.detail.device.a4_history.tooltip')}
+                  </TooltipContent>
+                </Tooltip>
+              </ActionGuard>
               <ActionGuard pageId="customers" actionId="view-contract-devices">
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -1111,6 +1107,26 @@ export default function CustomerDetailClient({ customerId }: Props) {
           <p className="mt-1 text-sm text-slate-500">{t('customer.detail.subtitle')}</p>
         </div>
         <div className="flex items-center gap-2">
+          <ActionGuard pageId="customers" actionId="update-customer-detail">
+            {customerInfo && (
+              <CustomerFormModal
+                mode="edit"
+                customer={customerInfo}
+                onSaved={(updated) => {
+                  if (updated) {
+                    setCustomerInfo(updated)
+                    loadCustomerInfo()
+                  }
+                }}
+                trigger={
+                  <Button variant="secondary" size="sm" className="gap-2">
+                    <Edit className="h-4 w-4" />
+                    {t('customer.detail.edit')}
+                  </Button>
+                }
+              />
+            )}
+          </ActionGuard>
           <Link href="/system/customers">
             <Button variant="outline" size="sm" className="gap-2">
               <ArrowRight className="h-4 w-4 rotate-180" />
@@ -1499,8 +1515,7 @@ export default function CustomerDetailClient({ customerId }: Props) {
                                 <td className="px-4 py-5 text-right align-top">
                                   <div className="flex items-center justify-end gap-2">
                                     {/* Re-render contract-level actions here (moved from header) */}
-                                    {/* Only show Create billing button to system admin on FE */}
-                                    {isAdminForUI && (
+                                    <ActionGuard pageId="customers" actionId="invoice-create">
                                       <Tooltip>
                                         <TooltipTrigger asChild>
                                           <Button
@@ -1524,7 +1539,7 @@ export default function CustomerDetailClient({ customerId }: Props) {
                                           {t('customer.detail.contracts.create_billing')}
                                         </TooltipContent>
                                       </Tooltip>
-                                    )}
+                                    </ActionGuard>
                                     <ActionGuard pageId="customers" actionId="contract-update">
                                       <Tooltip>
                                         <TooltipTrigger asChild>
@@ -2102,7 +2117,9 @@ export default function CustomerDetailClient({ customerId }: Props) {
           </TabsContent>
 
           <TabsContent value="invoices" className="space-y-4">
-            <InvoicesList customerId={customerId} />
+            <ActionGuard pageId="customers" actionId="invoice-view">
+              <InvoicesList customerId={customerId} />
+            </ActionGuard>
           </TabsContent>
         </Tabs>
       </motion.div>

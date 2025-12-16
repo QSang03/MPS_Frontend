@@ -187,7 +187,7 @@ export function MaintenanceHistoryTab({ deviceId }: MaintenanceHistoryTabProps) 
                 <RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin')} />
                 {t('button.refresh')}
               </Button>
-              <ActionGuard pageId="user-devices" actionId="create-maintenance-history">
+              <ActionGuard pageId="devices" actionId="create-maintenance-by-device">
                 <MaintenanceHistoryFormModal
                   mode="create"
                   deviceId={deviceId}
@@ -360,8 +360,8 @@ export function MaintenanceHistoryTab({ deviceId }: MaintenanceHistoryTabProps) 
                               </Tooltip>
                             )}
                             <ActionGuard
-                              pageId="user-devices"
-                              actionId="update-maintenance-history"
+                              pageId="devices"
+                              actionId="update-maintenance-history-detail"
                             >
                               <MaintenanceHistoryFormModal
                                 mode="edit"
@@ -372,8 +372,8 @@ export function MaintenanceHistoryTab({ deviceId }: MaintenanceHistoryTabProps) 
                               />
                             </ActionGuard>
                             <ActionGuard
-                              pageId="user-devices"
-                              actionId="delete-maintenance-history"
+                              pageId="devices"
+                              actionId="delete-maintenance-history-detail"
                             >
                               <Button
                                 variant="outline"

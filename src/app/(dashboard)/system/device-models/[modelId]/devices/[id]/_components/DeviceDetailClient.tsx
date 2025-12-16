@@ -609,121 +609,123 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
           </div>
         </div>
 
-        <DeviceHeader
-          device={{
-            name: device?.serialNumber ?? '---',
-            model: device?.deviceModel?.name ?? device?.model ?? '',
-            iconUrl: undefined,
-            active: Boolean(device?.isActive),
-          }}
-          onPrimaryAction={() => {
-            setCreateInstalledAt(null)
-            setCreateInstalledAtInput('')
-            setShowCreateConsumable(true)
-          }}
-          rightContent={
-            <>
-              {getStatusBadge(device.isActive)}
-              {renderStatusChip()}
-              <ActionGuard pageId="devices" actionId="set-a4-pricing">
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setA4ModalOpen(true)}
-                  className="gap-2 bg-white text-black"
-                  title={t('system_device_detail.a4_snapshot.edit_tooltip')}
-                >
-                  <BarChart3 className="h-4 w-4 text-black" />
-                  A4
-                </Button>
-              </ActionGuard>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => {
-                  setA4HistoryOpen(true)
-                }}
-                className="ml-2 gap-2 bg-white text-black"
-                title={t('system_device_detail.a4_snapshot.history_tooltip')}
-              >
-                <FileText className="h-4 w-4 text-black" />
-                {t('common.history')}
-              </Button>
-              {Boolean(device?.isActive) ? (
-                <ActionGuard pageId="devices" actionId="update">
+        <ActionGuard pageId="devices" actionId="install-consumable" fallback={null}>
+          <DeviceHeader
+            device={{
+              name: device?.serialNumber ?? '---',
+              model: device?.deviceModel?.name ?? device?.model ?? '',
+              iconUrl: undefined,
+              active: Boolean(device?.isActive),
+            }}
+            onPrimaryAction={() => {
+              setCreateInstalledAt(null)
+              setCreateInstalledAtInput('')
+              setShowCreateConsumable(true)
+            }}
+            rightContent={
+              <>
+                {getStatusBadge(device.isActive)}
+                {renderStatusChip()}
+                <ActionGuard pageId="devices" actionId="set-a4-pricing">
                   <Button
                     variant="secondary"
                     size="sm"
-                    onClick={() => setShowEdit(true)}
-                    className="gap-2"
+                    onClick={() => setA4ModalOpen(true)}
+                    className="gap-2 bg-white text-black"
+                    title={t('system_device_detail.a4_snapshot.edit_tooltip')}
                   >
-                    <Edit className="h-4 w-4" />
-                    {t('common.edit')}
+                    <BarChart3 className="h-4 w-4 text-black" />
+                    A4
                   </Button>
                 </ActionGuard>
-              ) : (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div>
-                      <Button variant="secondary" size="sm" disabled className="gap-2">
-                        <Edit className="h-4 w-4" />
-                        {t('common.edit')}
-                      </Button>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent sideOffset={4}>
-                    {t('user_device_detail.inactive_reason', {
-                      reason: device?.inactiveReason ?? t('user_device_detail.reason_unknown'),
-                    })}
-                  </TooltipContent>
-                </Tooltip>
-              )}
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    setA4HistoryOpen(true)
+                  }}
+                  className="ml-2 gap-2 bg-white text-black"
+                  title={t('system_device_detail.a4_snapshot.history_tooltip')}
+                >
+                  <FileText className="h-4 w-4 text-black" />
+                  {t('common.history')}
+                </Button>
+                {Boolean(device?.isActive) ? (
+                  <ActionGuard pageId="devices" actionId="update">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => setShowEdit(true)}
+                      className="gap-2"
+                    >
+                      <Edit className="h-4 w-4" />
+                      {t('common.edit')}
+                    </Button>
+                  </ActionGuard>
+                ) : (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div>
+                        <Button variant="secondary" size="sm" disabled className="gap-2">
+                          <Edit className="h-4 w-4" />
+                          {t('common.edit')}
+                        </Button>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent sideOffset={4}>
+                      {t('user_device_detail.inactive_reason', {
+                        reason: device?.inactiveReason ?? t('user_device_detail.reason_unknown'),
+                      })}
+                    </TooltipContent>
+                  </Tooltip>
+                )}
 
-              {Boolean(device?.isActive) ? (
-                <ActionGuard pageId="devices" actionId="delete">
-                  <DeleteDialog
-                    title={t('user_device_detail.delete.title')}
-                    description={t('user_device_detail.delete.description')}
-                    onConfirm={async () => {
-                      try {
-                        await devicesClientService.delete(deviceId)
-                        toast.success(t('device.delete_success'))
-                        if (backHref) router.push(backHref)
-                        else if (modelId) router.push(`/system/device-models/${modelId}`)
-                        else router.push('/system/device-models')
-                      } catch (err) {
-                        console.error('Delete device failed', err)
-                        toast.error(t('device.delete_error'))
+                {Boolean(device?.isActive) ? (
+                  <ActionGuard pageId="devices" actionId="delete">
+                    <DeleteDialog
+                      title={t('user_device_detail.delete.title')}
+                      description={t('user_device_detail.delete.description')}
+                      onConfirm={async () => {
+                        try {
+                          await devicesClientService.delete(deviceId)
+                          toast.success(t('device.delete_success'))
+                          if (backHref) router.push(backHref)
+                          else if (modelId) router.push(`/system/device-models/${modelId}`)
+                          else router.push('/system/device-models')
+                        } catch (err) {
+                          console.error('Delete device failed', err)
+                          toast.error(t('device.delete_error'))
+                        }
+                      }}
+                      trigger={
+                        <Button variant="destructive" size="sm" className="gap-2">
+                          <Trash2 className="h-4 w-4" />
+                          {t('common.delete')}
+                        </Button>
                       }
-                    }}
-                    trigger={
-                      <Button variant="destructive" size="sm" className="gap-2">
-                        <Trash2 className="h-4 w-4" />
-                        {t('common.delete')}
-                      </Button>
-                    }
-                  />
-                </ActionGuard>
-              ) : (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div>
-                      <Button variant="destructive" size="sm" disabled className="gap-2">
-                        <Trash2 className="h-4 w-4" />
-                        {t('common.delete')}
-                      </Button>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent sideOffset={4}>
-                    {t('user_device_detail.inactive_reason', {
-                      reason: device?.inactiveReason ?? t('user_device_detail.reason_unknown'),
-                    })}
-                  </TooltipContent>
-                </Tooltip>
-              )}
-            </>
-          }
-        />
+                    />
+                  </ActionGuard>
+                ) : (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div>
+                        <Button variant="destructive" size="sm" disabled className="gap-2">
+                          <Trash2 className="h-4 w-4" />
+                          {t('common.delete')}
+                        </Button>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent sideOffset={4}>
+                      {t('user_device_detail.inactive_reason', {
+                        reason: device?.inactiveReason ?? t('user_device_detail.reason_unknown'),
+                      })}
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+              </>
+            }
+          />
+        </ActionGuard>
       </div>
 
       {/* Tabs */}
@@ -1216,567 +1218,437 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
         </TabsContent>
 
         {/* Consumables Tab */}
-        <TabsContent value="consumables" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <Package className="h-5 w-5 text-emerald-600" />
-                    {t('system_device_detail.consumables.installed.title')}
-                  </CardTitle>
-                  <CardDescription className="mt-1">
-                    {t('system_device_detail.consumables.installed.description')}
-                  </CardDescription>
-                </div>
-                <div className="flex items-center gap-2">
-                  <ActionGuard pageId="devices" actionId="create-consumable">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={async () => {
-                        try {
-                          setShowAttachFromOrphaned(true)
-                          const cid = device?.customerId
-                          if (!cid) {
-                            toast.error(t('system_device_detail.no_customer'))
-                            return
-                          }
-                          setConsumablesLoading(true)
-                          const list = await consumablesClientService.list({
-                            customerId: cid,
-                            isOrphaned: true,
-                          })
-                          let items: Consumable[] = []
-                          const rawList = list as unknown
-                          if (Array.isArray(rawList)) {
-                            items = rawList as Consumable[]
-                          } else if (typeof rawList === 'object' && rawList !== null) {
-                            const maybeItems = (rawList as Record<string, unknown>)['items']
-                            if (Array.isArray(maybeItems)) items = maybeItems as Consumable[]
-                          }
-                          setOrphanedList(items)
-                        } catch (e) {
-                          console.error('Load orphaned consumables failed', e)
-                          toast.error(t('system_device_detail.consumables.load_orphaned_error'))
-                        } finally {
-                          setConsumablesLoading(false)
-                        }
-                      }}
-                    >
-                      {t('system_device_detail.consumables.select_from_orphaned')}
-                    </Button>
-                  </ActionGuard>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {consumablesLoading ? (
-                <div className="flex items-center justify-center p-8">
-                  <Loader2 className="h-8 w-8 animate-spin text-[var(--brand-600)]" />
-                </div>
-              ) : installedConsumables.length === 0 ? (
-                <div className="text-muted-foreground p-8 text-center">
-                  <Package className="mx-auto mb-3 h-12 w-12 opacity-20" />
-                  <p>{t('system_device_detail.consumables.empty')}</p>
-                </div>
-              ) : (
-                <div className="overflow-hidden rounded-lg border">
-                  <table className="w-full">
-                    <thead className="bg-gray-100">
-                      <tr>
-                        <th className="px-4 py-3 text-left text-xs font-semibold">#</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold">
-                          {t('system_device_detail.consumables.table.name')}
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold">
-                          {t('table.serial')}
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold">
-                          {t('filters.status_label')}
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold">
-                          {t('system_device_detail.consumables.table.available_pages')}
-                        </th>
-                        <th className="px-4 py-3 text-right text-xs font-semibold">
-                          {t('system_device_detail.consumables.table.installed_date')}
-                        </th>
-                        <th className="px-4 py-3 text-center text-xs font-semibold">
-                          {t('table.actions')}
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y">
-                      {installedConsumables.map((c: DeviceConsumable, idx: number) => {
-                        const cons = (c.consumable ?? c) as Consumable | DeviceConsumable
-                        // detect ink color word in the consumable name (Cyan/Black/Yellow/Magenta)
-                        const _inkName = (cons?.consumableType?.name ??
-                          cons?.serialNumber ??
-                          '') as string
-                        const _inkMatch = _inkName.match(/\b(Cyan|Black|Yellow|Magenta)\b/i)
-                        const _inkKey = _inkMatch ? String(_inkMatch[1]).toLowerCase() : ''
-                        const _inkColorClass =
-                          _inkKey === 'cyan'
-                            ? 'bg-cyan-500'
-                            : _inkKey === 'black'
-                              ? 'bg-neutral-800'
-                              : _inkKey === 'yellow'
-                                ? 'bg-yellow-400'
-                                : _inkKey === 'magenta'
-                                  ? 'bg-pink-500'
-                                  : ''
-                        // Prefer latestUsageHistory from API if available (contains
-                        // percentage/remaining/capacity). Fall back to explicit
-                        // consumable remaining or compute from capacity - actualPagesPrinted.
-                        const latestHistory =
-                          (c as DeviceConsumable & { latestUsageHistory?: LatestUsageHistory })
-                            .latestUsageHistory ??
-                          (cons as Consumable & { latestUsageHistory?: LatestUsageHistory })
-                            .latestUsageHistory
-                        const latestRemaining =
-                          latestHistory && typeof latestHistory.remaining === 'number'
-                            ? latestHistory.remaining
-                            : undefined
-                        const latestCapacity =
-                          latestHistory && typeof latestHistory.capacity === 'number'
-                            ? latestHistory.capacity
-                            : undefined
-                        const latestPercentage =
-                          latestHistory && typeof latestHistory.percentage === 'number'
-                            ? latestHistory.percentage
-                            : undefined
-
-                        const explicitRemaining =
-                          typeof cons?.remaining === 'number' ? cons.remaining : undefined
-                        const actualPrinted =
-                          typeof (c as DeviceConsumable).actualPagesPrinted === 'number'
-                            ? ((c as DeviceConsumable).actualPagesPrinted as number)
-                            : undefined
-                        const capacityFromConsumable =
-                          typeof cons?.capacity === 'number' ? cons.capacity : undefined
-
-                        const capacityNum = latestCapacity ?? capacityFromConsumable
-
-                        const derivedRemaining =
-                          latestRemaining !== undefined
-                            ? latestRemaining
-                            : explicitRemaining !== undefined
-                              ? explicitRemaining
-                              : capacityNum !== undefined && actualPrinted !== undefined
-                                ? Math.max(0, capacityNum - actualPrinted)
-                                : undefined
-
-                        const usagePercent = (() => {
-                          if (typeof latestPercentage === 'number')
-                            return Math.round(latestPercentage)
-                          if (
-                            typeof derivedRemaining === 'number' &&
-                            typeof capacityNum === 'number' &&
-                            capacityNum > 0
-                          ) {
-                            return Math.round((derivedRemaining / capacityNum) * 100)
-                          }
-                          return null
-                        })()
-
-                        return (
-                          <tr
-                            key={(c.id ?? cons?.id ?? idx) as string | number}
-                            className="hover:bg-muted/30 transition-colors"
-                          >
-                            <td className="px-4 py-3 text-sm">{idx + 1}</td>
-                            <td className="px-4 py-3 align-top">
-                              <div className="flex flex-col gap-1">
-                                <div className="flex items-center justify-between">
-                                  <div className="font-medium">
-                                    {cons?.consumableType?.name ?? cons?.serialNumber ?? '—'}
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    {usagePercent !== null ? (
-                                      <div className="text-sm font-semibold">{usagePercent}%</div>
-                                    ) : (
-                                      <div className="text-muted-foreground text-sm">--</div>
-                                    )}
-                                    {usagePercent !== null && usagePercent <= 10 ? (
-                                      <AlertCircle className="h-4 w-4 text-yellow-500" />
-                                    ) : null}
-                                    {typeof c?.warningPercentage === 'number' ? (
-                                      <Badge
-                                        variant="outline"
-                                        className="ml-2 bg-yellow-50 text-yellow-700"
-                                      >
-                                        {t('system_device_detail.consumables.warning_badge', {
-                                          percentage: c.warningPercentage,
-                                        })}
-                                      </Badge>
-                                    ) : null}
-                                  </div>
-                                </div>
-
-                                <div className="h-3 w-full overflow-hidden rounded bg-gray-100">
-                                  <div
-                                    className={cn('h-full rounded transition-all', _inkColorClass)}
-                                    style={{ width: `${usagePercent ?? 0}%` }}
-                                  />
-                                </div>
-                              </div>
-                            </td>
-                            <td className="px-4 py-3">
-                              <code className="rounded bg-gray-100 px-2 py-1 text-sm">
-                                {cons?.serialNumber ?? cons?.consumableType?.id ?? '-'}
-                              </code>
-                            </td>
-                            <td className="px-4 py-3">
-                              <div className="space-y-1">
-                                {(() => {
-                                  const statusText =
-                                    typeof c?.isActive === 'boolean'
-                                      ? c.isActive
-                                        ? hasStatus(cons)
-                                          ? (cons.status ?? 'ACTIVE')
-                                          : 'ACTIVE'
-                                        : 'EMPTY'
-                                      : hasStatus(cons)
-                                        ? (cons.status ?? 'EMPTY')
-                                        : 'EMPTY'
-
-                                  const statusClass =
-                                    statusText === 'ACTIVE'
-                                      ? 'bg-green-500 hover:bg-green-600'
-                                      : statusText === 'LOW'
-                                        ? 'bg-yellow-500 hover:bg-yellow-600'
-                                        : statusText === 'EMPTY'
-                                          ? 'bg-gray-400 hover:bg-gray-500'
-                                          : statusText === 'EXPIRED'
-                                            ? 'bg-red-500 hover:bg-red-600'
-                                            : 'bg-gray-400'
-
-                                  return (
-                                    <Badge
-                                      variant="default"
-                                      className={cn(
-                                        'flex items-center gap-1.5 px-3 py-1',
-                                        statusClass
-                                      )}
-                                    >
-                                      {statusText}
-                                    </Badge>
-                                  )
-                                })()}
-                              </div>
-                            </td>
-
-                            <td className="px-4 py-3 text-sm">
-                              {(() => {
-                                // prefer A4-normalized numbers from latestHistory when available
-                                const preferredRemaining =
-                                  latestHistory && typeof latestHistory.remainingA4 === 'number'
-                                    ? latestHistory.remainingA4
-                                    : (latestRemaining ?? derivedRemaining)
-
-                                const preferredCapacity =
-                                  latestHistory && typeof latestHistory.capacityA4 === 'number'
-                                    ? latestHistory.capacityA4
-                                    : (latestCapacity ?? capacityNum)
-
-                                if (typeof preferredRemaining === 'number') {
-                                  return (
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-sm">
-                                        {preferredRemaining}/{preferredCapacity ?? '-'}{' '}
-                                        {cons?.consumableType?.unit ?? ''}
-                                      </span>
-                                      {typeof usagePercent === 'number' && usagePercent < 1 ? (
-                                        <Tooltip>
-                                          <TooltipTrigger asChild>
-                                            <span className="ml-1 cursor-help rounded-full bg-red-100 px-1.5 py-0.5 text-xs font-bold text-red-600">
-                                              !
-                                            </span>
-                                          </TooltipTrigger>
-                                          <TooltipContent sideOffset={4}>
-                                            {t('system_device_detail.consumables.low_ink_tooltip')}
-                                          </TooltipContent>
-                                        </Tooltip>
-                                      ) : null}
-                                    </div>
-                                  )
-                                }
-
-                                return <span className="text-muted-foreground">-</span>
-                              })()}
-                            </td>
-
-                            <td className="text-muted-foreground px-4 py-3 text-right text-sm">
-                              {typeof c?.installedAt === 'string' && c.installedAt
-                                ? new Date(c.installedAt).toLocaleDateString(
-                                    locale === 'vi' ? 'vi-VN' : 'en-US'
-                                  )
-                                : hasExpiryDate(cons) &&
-                                    typeof cons.expiryDate === 'string' &&
-                                    cons.expiryDate
-                                  ? new Date(cons.expiryDate).toLocaleDateString(
-                                      locale === 'vi' ? 'vi-VN' : 'en-US'
-                                    )
-                                  : '—'}
-                            </td>
-                            <td className="px-4 py-3 text-center">
-                              <div className="flex items-center justify-center gap-2">
-                                <Button
-                                  size="sm"
-                                  variant="secondary"
-                                  onClick={() => {
-                                    // open modal to show consumable history for this consumable
-                                    const selectedId = cons?.id ?? c?.id
-                                    if (selectedId) {
-                                      setSelectedConsumableId(String(selectedId))
-                                      setShowConsumableHistoryModal(true)
-                                    } else {
-                                      toast.error(
-                                        t('system_device_detail.consumables.not_found_id')
-                                      )
-                                    }
-                                  }}
-                                  className="gap-2"
-                                >
-                                  {t('system_device_detail.consumables.history')}
-                                </Button>
-
-                                <ActionGuard pageId="devices" actionId="edit-consumable">
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => {
-                                      const consumableData = cons ?? c
-                                      setEditingConsumable(consumableData as DeviceConsumable)
-                                      setEditSerialNumber(consumableData?.serialNumber ?? '')
-                                      setEditBatchNumber(consumableData?.batchNumber ?? '')
-                                      setEditCapacity(consumableData?.capacity ?? '')
-                                      setEditRemaining(consumableData?.remaining ?? '')
-                                      const expiryDateValue =
-                                        hasExpiryDate(consumableData) && consumableData.expiryDate
-                                          ? new Date(consumableData.expiryDate)
-                                              .toISOString()
-                                              .split('T')[0]
-                                          : ''
-                                      setEditExpiryDate(expiryDateValue ?? '')
-                                      setEditConsumableStatus(
-                                        hasStatus(consumableData)
-                                          ? (consumableData.status ?? 'ACTIVE')
-                                          : 'ACTIVE'
-                                      )
-                                      // device-level fields
-                                      setEditInstalledAt(c?.installedAt ?? null)
-                                      setEditInstalledAtInput(
-                                        formatISOToLocalDatetime(c?.installedAt ?? null)
-                                      )
-                                      // removed editInstalledAtError clearing
-                                      setEditRemovedAt(c?.removedAt ?? null)
-                                      const prefilledPages = c?.actualPagesPrinted ?? ''
-                                      setEditActualPagesPrinted(prefilledPages)
-                                      // mark error if prefilled value exceeds max so user sees it immediately
-                                      setEditActualPagesPrintedError(
-                                        typeof prefilledPages === 'number' &&
-                                          prefilledPages > MAX_ACTUAL_PAGES
-                                          ? t('system_device_detail.consumables.pages_max_error', {
-                                              max: MAX_ACTUAL_PAGES.toLocaleString('en-US'),
-                                            })
-                                          : null
-                                      )
-                                      // clear any edit price error so the UI focuses on the pages error
-                                      if (
-                                        typeof prefilledPages === 'number' &&
-                                        prefilledPages > MAX_ACTUAL_PAGES
-                                      ) {
-                                        setEditPriceError(null)
-                                      }
-
-                                      // Always default checkbox to unchecked
-                                      setEditShowRemovedAt(false)
-
-                                      // Set price and currency fields
-                                      const existingPrice = hasPrice(c) ? c.price : undefined
-                                      setEditPrice(existingPrice ?? '')
-                                      setEditCurrencyId(c.currencyId || null)
-
-                                      setShowEditConsumable(true)
-                                    }}
-                                    className="gap-2"
-                                  >
-                                    <Edit className="h-4 w-4" />
-                                    {t('common.edit')}
-                                  </Button>
-                                </ActionGuard>
-                                <ActionGuard
-                                  pageId="devices"
-                                  actionId="set-consumable-warning"
-                                  fallback={null}
-                                >
-                                  <Button
-                                    size="sm"
-                                    variant="secondary"
-                                    onClick={() => {
-                                      setWarningTarget(c)
-                                      setWarningPercentageEdit(
-                                        typeof c?.warningPercentage === 'number'
-                                          ? c!.warningPercentage!
-                                          : ''
-                                      )
-                                      setShowWarningDialog(true)
-                                    }}
-                                    className="gap-2"
-                                  >
-                                    <Bell className="h-4 w-4" />
-                                    {t('system_device_detail.consumables.warning')}
-                                  </Button>
-                                </ActionGuard>
-                              </div>
-                            </td>
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <ActionGuard pageId="devices" actionId="view-compatible-consumables">
+        <ActionGuard
+          pageId="devices"
+          actionId="view-device-consumables"
+          fallback={
+            <div className="text-muted-foreground py-8 text-center">
+              Không có quyền xem vật tư thiết bị
+            </div>
+          }
+        >
+          <TabsContent value="consumables" className="space-y-6">
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle className="flex items-center gap-2">
-                      <Sparkles className="h-5 w-5 text-amber-600" />
-                      {t('system_device_detail.compatible.title')}
+                      <Package className="h-5 w-5 text-emerald-600" />
+                      {t('system_device_detail.consumables.installed.title')}
                     </CardTitle>
                     <CardDescription className="mt-1">
-                      {t('system_device_detail.compatible.description')}
+                      {t('system_device_detail.consumables.installed.description')}
                     </CardDescription>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <ActionGuard pageId="devices" actionId="create-consumable">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={async () => {
+                          try {
+                            setShowAttachFromOrphaned(true)
+                            const cid = device?.customerId
+                            if (!cid) {
+                              toast.error(t('system_device_detail.no_customer'))
+                              return
+                            }
+                            setConsumablesLoading(true)
+                            const list = await consumablesClientService.list({
+                              customerId: cid,
+                              isOrphaned: true,
+                            })
+                            let items: Consumable[] = []
+                            const rawList = list as unknown
+                            if (Array.isArray(rawList)) {
+                              items = rawList as Consumable[]
+                            } else if (typeof rawList === 'object' && rawList !== null) {
+                              const maybeItems = (rawList as Record<string, unknown>)['items']
+                              if (Array.isArray(maybeItems)) items = maybeItems as Consumable[]
+                            }
+                            setOrphanedList(items)
+                          } catch (e) {
+                            console.error('Load orphaned consumables failed', e)
+                            toast.error(t('system_device_detail.consumables.load_orphaned_error'))
+                          } finally {
+                            setConsumablesLoading(false)
+                          }
+                        }}
+                      >
+                        {t('system_device_detail.consumables.select_from_orphaned')}
+                      </Button>
+                    </ActionGuard>
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
                 {consumablesLoading ? (
                   <div className="flex items-center justify-center p-8">
-                    <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                    <Loader2 className="h-8 w-8 animate-spin text-[var(--brand-600)]" />
                   </div>
-                ) : compatibleConsumables.length === 0 ? (
+                ) : installedConsumables.length === 0 ? (
                   <div className="text-muted-foreground p-8 text-center">
-                    <AlertCircle className="mx-auto mb-3 h-12 w-12 opacity-20" />
-                    <p>{t('system_device_detail.compatible.empty')}</p>
+                    <Package className="mx-auto mb-3 h-12 w-12 opacity-20" />
+                    <p>{t('system_device_detail.consumables.empty')}</p>
                   </div>
                 ) : (
                   <div className="overflow-hidden rounded-lg border">
                     <table className="w-full">
-                      <thead className="bg-gradient-to-r from-amber-50 to-orange-50">
+                      <thead className="bg-gray-100">
                         <tr>
-                          <th className="px-4 py-3 text-left text-sm font-semibold">#</th>
-                          <th className="px-4 py-3 text-left text-sm font-semibold">
-                            {t('system_device_detail.compatible.table.name')}
+                          <th className="px-4 py-3 text-left text-xs font-semibold">#</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold">
+                            {t('system_device_detail.consumables.table.name')}
                           </th>
-                          <th className="px-4 py-3 text-left text-sm font-semibold">
-                            {t('system_device_detail.compatible.table.part')}
+                          <th className="px-4 py-3 text-left text-xs font-semibold">
+                            {t('table.serial')}
                           </th>
-                          <th className="px-4 py-3 text-left text-sm font-semibold">
-                            {t('system_device_detail.compatible.table.machine_line')}
+                          <th className="px-4 py-3 text-left text-xs font-semibold">
+                            {t('filters.status_label')}
                           </th>
-                          <th className="px-4 py-3 text-right text-sm font-semibold">
-                            {t('system_device_detail.compatible.table.customer_stock')}
+                          <th className="px-4 py-3 text-left text-xs font-semibold">
+                            {t('system_device_detail.consumables.table.available_pages')}
                           </th>
-                          <th className="px-4 py-3 text-right text-sm font-semibold">
-                            {t('system_device_detail.compatible.table.system_stock')}
+                          <th className="px-4 py-3 text-right text-xs font-semibold">
+                            {t('system_device_detail.consumables.table.installed_date')}
                           </th>
-                          <th className="px-4 py-3 text-right text-sm font-semibold">
-                            {t('system_device_detail.compatible.table.actions')}
+                          <th className="px-4 py-3 text-center text-xs font-semibold">
+                            {t('table.actions')}
                           </th>
                         </tr>
                       </thead>
                       <tbody className="divide-y">
-                        {compatibleConsumables.map((ct: CompatibleConsumable, idx: number) => {
-                          // ct can be either the raw wrapper { consumableType, stockItem, customerStockQuantity }
-                          // or a plain ConsumableType. Normalize to support both.
-                          const type =
-                            'consumableType' in ct && ct.consumableType
-                              ? ct.consumableType
-                              : (ct as ConsumableType)
-                          const partNumber = type?.partNumber ?? '-'
-                          // unit is unused in this view; omit to avoid lint warning
-                          const compatibleLine = type?.compatibleMachineLine ?? '-'
-                          const customerQty =
-                            'customerStockQuantity' in ct ? ct.customerStockQuantity : undefined
-                          const systemQty =
-                            'stockItem' in ct && ct.stockItem ? ct.stockItem.quantity : undefined
+                        {installedConsumables.map((c: DeviceConsumable, idx: number) => {
+                          const cons = (c.consumable ?? c) as Consumable | DeviceConsumable
+                          // detect ink color word in the consumable name (Cyan/Black/Yellow/Magenta)
+                          const _inkName = (cons?.consumableType?.name ??
+                            cons?.serialNumber ??
+                            '') as string
+                          const _inkMatch = _inkName.match(/\b(Cyan|Black|Yellow|Magenta)\b/i)
+                          const _inkKey = _inkMatch ? String(_inkMatch[1]).toLowerCase() : ''
+                          const _inkColorClass =
+                            _inkKey === 'cyan'
+                              ? 'bg-cyan-500'
+                              : _inkKey === 'black'
+                                ? 'bg-neutral-800'
+                                : _inkKey === 'yellow'
+                                  ? 'bg-yellow-400'
+                                  : _inkKey === 'magenta'
+                                    ? 'bg-pink-500'
+                                    : ''
+                          // Prefer latestUsageHistory from API if available (contains
+                          // percentage/remaining/capacity). Fall back to explicit
+                          // consumable remaining or compute from capacity - actualPagesPrinted.
+                          const latestHistory =
+                            (c as DeviceConsumable & { latestUsageHistory?: LatestUsageHistory })
+                              .latestUsageHistory ??
+                            (cons as Consumable & { latestUsageHistory?: LatestUsageHistory })
+                              .latestUsageHistory
+                          const latestRemaining =
+                            latestHistory && typeof latestHistory.remaining === 'number'
+                              ? latestHistory.remaining
+                              : undefined
+                          const latestCapacity =
+                            latestHistory && typeof latestHistory.capacity === 'number'
+                              ? latestHistory.capacity
+                              : undefined
+                          const latestPercentage =
+                            latestHistory && typeof latestHistory.percentage === 'number'
+                              ? latestHistory.percentage
+                              : undefined
+
+                          const explicitRemaining =
+                            typeof cons?.remaining === 'number' ? cons.remaining : undefined
+                          const actualPrinted =
+                            typeof (c as DeviceConsumable).actualPagesPrinted === 'number'
+                              ? ((c as DeviceConsumable).actualPagesPrinted as number)
+                              : undefined
+                          const capacityFromConsumable =
+                            typeof cons?.capacity === 'number' ? cons.capacity : undefined
+
+                          const capacityNum = latestCapacity ?? capacityFromConsumable
+
+                          const derivedRemaining =
+                            latestRemaining !== undefined
+                              ? latestRemaining
+                              : explicitRemaining !== undefined
+                                ? explicitRemaining
+                                : capacityNum !== undefined && actualPrinted !== undefined
+                                  ? Math.max(0, capacityNum - actualPrinted)
+                                  : undefined
+
+                          const usagePercent = (() => {
+                            if (typeof latestPercentage === 'number')
+                              return Math.round(latestPercentage)
+                            if (
+                              typeof derivedRemaining === 'number' &&
+                              typeof capacityNum === 'number' &&
+                              capacityNum > 0
+                            ) {
+                              return Math.round((derivedRemaining / capacityNum) * 100)
+                            }
+                            return null
+                          })()
 
                           return (
                             <tr
-                              key={type?.id ?? idx}
+                              key={(c.id ?? cons?.id ?? idx) as string | number}
                               className="hover:bg-muted/30 transition-colors"
                             >
                               <td className="px-4 py-3 text-sm">{idx + 1}</td>
-                              <td className="px-4 py-3 font-medium">{type?.name || '—'}</td>
+                              <td className="px-4 py-3 align-top">
+                                <div className="flex flex-col gap-1">
+                                  <div className="flex items-center justify-between">
+                                    <div className="font-medium">
+                                      {cons?.consumableType?.name ?? cons?.serialNumber ?? '—'}
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      {usagePercent !== null ? (
+                                        <div className="text-sm font-semibold">{usagePercent}%</div>
+                                      ) : (
+                                        <div className="text-muted-foreground text-sm">--</div>
+                                      )}
+                                      {usagePercent !== null && usagePercent <= 10 ? (
+                                        <AlertCircle className="h-4 w-4 text-yellow-500" />
+                                      ) : null}
+                                      {typeof c?.warningPercentage === 'number' ? (
+                                        <Badge
+                                          variant="outline"
+                                          className="ml-2 bg-yellow-50 text-yellow-700"
+                                        >
+                                          {t('system_device_detail.consumables.warning_badge', {
+                                            percentage: c.warningPercentage,
+                                          })}
+                                        </Badge>
+                                      ) : null}
+                                    </div>
+                                  </div>
+
+                                  <div className="h-3 w-full overflow-hidden rounded bg-gray-100">
+                                    <div
+                                      className={cn(
+                                        'h-full rounded transition-all',
+                                        _inkColorClass
+                                      )}
+                                      style={{ width: `${usagePercent ?? 0}%` }}
+                                    />
+                                  </div>
+                                </div>
+                              </td>
                               <td className="px-4 py-3">
                                 <code className="rounded bg-gray-100 px-2 py-1 text-sm">
-                                  {partNumber}
+                                  {cons?.serialNumber ?? cons?.consumableType?.id ?? '-'}
                                 </code>
                               </td>
-                              <td className="text-muted-foreground px-4 py-3 text-sm">
-                                {compatibleLine}
+                              <td className="px-4 py-3">
+                                <div className="space-y-1">
+                                  {(() => {
+                                    const statusText =
+                                      typeof c?.isActive === 'boolean'
+                                        ? c.isActive
+                                          ? hasStatus(cons)
+                                            ? (cons.status ?? 'ACTIVE')
+                                            : 'ACTIVE'
+                                          : 'EMPTY'
+                                        : hasStatus(cons)
+                                          ? (cons.status ?? 'EMPTY')
+                                          : 'EMPTY'
+
+                                    const statusClass =
+                                      statusText === 'ACTIVE'
+                                        ? 'bg-green-500 hover:bg-green-600'
+                                        : statusText === 'LOW'
+                                          ? 'bg-yellow-500 hover:bg-yellow-600'
+                                          : statusText === 'EMPTY'
+                                            ? 'bg-gray-400 hover:bg-gray-500'
+                                            : statusText === 'EXPIRED'
+                                              ? 'bg-red-500 hover:bg-red-600'
+                                              : 'bg-gray-400'
+
+                                    return (
+                                      <Badge
+                                        variant="default"
+                                        className={cn(
+                                          'flex items-center gap-1.5 px-3 py-1',
+                                          statusClass
+                                        )}
+                                      >
+                                        {statusText}
+                                      </Badge>
+                                    )
+                                  })()}
+                                </div>
                               </td>
 
-                              <td className="px-4 py-3 text-right text-sm">
-                                {customerQty !== null && customerQty !== undefined
-                                  ? String(customerQty)
-                                  : '—'}
+                              <td className="px-4 py-3 text-sm">
+                                {(() => {
+                                  // prefer A4-normalized numbers from latestHistory when available
+                                  const preferredRemaining =
+                                    latestHistory && typeof latestHistory.remainingA4 === 'number'
+                                      ? latestHistory.remainingA4
+                                      : (latestRemaining ?? derivedRemaining)
+
+                                  const preferredCapacity =
+                                    latestHistory && typeof latestHistory.capacityA4 === 'number'
+                                      ? latestHistory.capacityA4
+                                      : (latestCapacity ?? capacityNum)
+
+                                  if (typeof preferredRemaining === 'number') {
+                                    return (
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-sm">
+                                          {preferredRemaining}/{preferredCapacity ?? '-'}{' '}
+                                          {cons?.consumableType?.unit ?? ''}
+                                        </span>
+                                        {typeof usagePercent === 'number' && usagePercent < 1 ? (
+                                          <Tooltip>
+                                            <TooltipTrigger asChild>
+                                              <span className="ml-1 cursor-help rounded-full bg-red-100 px-1.5 py-0.5 text-xs font-bold text-red-600">
+                                                !
+                                              </span>
+                                            </TooltipTrigger>
+                                            <TooltipContent sideOffset={4}>
+                                              {t(
+                                                'system_device_detail.consumables.low_ink_tooltip'
+                                              )}
+                                            </TooltipContent>
+                                          </Tooltip>
+                                        ) : null}
+                                      </div>
+                                    )
+                                  }
+
+                                  return <span className="text-muted-foreground">-</span>
+                                })()}
                               </td>
-                              <td className="px-4 py-3 text-right text-sm">
-                                {systemQty !== null && systemQty !== undefined
-                                  ? String(systemQty)
-                                  : '—'}
+
+                              <td className="text-muted-foreground px-4 py-3 text-right text-sm">
+                                {typeof c?.installedAt === 'string' && c.installedAt
+                                  ? new Date(c.installedAt).toLocaleDateString(
+                                      locale === 'vi' ? 'vi-VN' : 'en-US'
+                                    )
+                                  : hasExpiryDate(cons) &&
+                                      typeof cons.expiryDate === 'string' &&
+                                      cons.expiryDate
+                                    ? new Date(cons.expiryDate).toLocaleDateString(
+                                        locale === 'vi' ? 'vi-VN' : 'en-US'
+                                      )
+                                    : '—'}
                               </td>
-                              <td className="px-4 py-3 text-right">
-                                {Boolean(device?.isActive) ? (
-                                  <ActionGuard pageId="devices" actionId="create-consumable">
+                              <td className="px-4 py-3 text-center">
+                                <div className="flex items-center justify-center gap-2">
+                                  <Button
+                                    size="sm"
+                                    variant="secondary"
+                                    onClick={() => {
+                                      // open modal to show consumable history for this consumable
+                                      const selectedId = cons?.id ?? c?.id
+                                      if (selectedId) {
+                                        setSelectedConsumableId(String(selectedId))
+                                        setShowConsumableHistoryModal(true)
+                                      } else {
+                                        toast.error(
+                                          t('system_device_detail.consumables.not_found_id')
+                                        )
+                                      }
+                                    }}
+                                    className="gap-2"
+                                  >
+                                    {t('system_device_detail.consumables.history')}
+                                  </Button>
+
+                                  <ActionGuard pageId="devices" actionId="edit-consumable">
                                     <Button
                                       size="sm"
+                                      variant="outline"
                                       onClick={() => {
-                                        setSelectedConsumableType(type)
-                                        setSerialNumber('')
-                                        setBatchNumber('')
-                                        setCapacity('')
-                                        setRemaining('')
-                                        setCreateInstalledAt(null)
-                                        setCreateInstalledAtInput('')
-                                        // removed createInstalledAtError clearing
-                                        setCreateActualPagesPrinted('')
-                                        setCreatePrice('')
-                                        setShowCreateConsumable(true)
+                                        const consumableData = cons ?? c
+                                        setEditingConsumable(consumableData as DeviceConsumable)
+                                        setEditSerialNumber(consumableData?.serialNumber ?? '')
+                                        setEditBatchNumber(consumableData?.batchNumber ?? '')
+                                        setEditCapacity(consumableData?.capacity ?? '')
+                                        setEditRemaining(consumableData?.remaining ?? '')
+                                        const expiryDateValue =
+                                          hasExpiryDate(consumableData) && consumableData.expiryDate
+                                            ? new Date(consumableData.expiryDate)
+                                                .toISOString()
+                                                .split('T')[0]
+                                            : ''
+                                        setEditExpiryDate(expiryDateValue ?? '')
+                                        setEditConsumableStatus(
+                                          hasStatus(consumableData)
+                                            ? (consumableData.status ?? 'ACTIVE')
+                                            : 'ACTIVE'
+                                        )
+                                        // device-level fields
+                                        setEditInstalledAt(c?.installedAt ?? null)
+                                        setEditInstalledAtInput(
+                                          formatISOToLocalDatetime(c?.installedAt ?? null)
+                                        )
+                                        // removed editInstalledAtError clearing
+                                        setEditRemovedAt(c?.removedAt ?? null)
+                                        const prefilledPages = c?.actualPagesPrinted ?? ''
+                                        setEditActualPagesPrinted(prefilledPages)
+                                        // mark error if prefilled value exceeds max so user sees it immediately
+                                        setEditActualPagesPrintedError(
+                                          typeof prefilledPages === 'number' &&
+                                            prefilledPages > MAX_ACTUAL_PAGES
+                                            ? t(
+                                                'system_device_detail.consumables.pages_max_error',
+                                                {
+                                                  max: MAX_ACTUAL_PAGES.toLocaleString('en-US'),
+                                                }
+                                              )
+                                            : null
+                                        )
+                                        // clear any edit price error so the UI focuses on the pages error
+                                        if (
+                                          typeof prefilledPages === 'number' &&
+                                          prefilledPages > MAX_ACTUAL_PAGES
+                                        ) {
+                                          setEditPriceError(null)
+                                        }
+
+                                        // Always default checkbox to unchecked
+                                        setEditShowRemovedAt(false)
+
+                                        // Set price and currency fields
+                                        const existingPrice = hasPrice(c) ? c.price : undefined
+                                        setEditPrice(existingPrice ?? '')
+                                        setEditCurrencyId(c.currencyId || null)
+
+                                        setShowEditConsumable(true)
                                       }}
                                       className="gap-2"
                                     >
-                                      <Plus className="h-4 w-4" />
-                                      {t('common.add')}
+                                      <Edit className="h-4 w-4" />
+                                      {t('common.edit')}
                                     </Button>
                                   </ActionGuard>
-                                ) : (
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <div>
-                                        <Button size="sm" disabled className="gap-2">
-                                          <Plus className="h-4 w-4" />
-                                          {t('common.add')}
-                                        </Button>
-                                      </div>
-                                    </TooltipTrigger>
-                                    <TooltipContent sideOffset={4}>
-                                      {t('user_device_detail.inactive_reason', {
-                                        reason:
-                                          device?.inactiveReason ??
-                                          t('user_device_detail.reason_unknown'),
-                                      })}
-                                    </TooltipContent>
-                                  </Tooltip>
-                                )}
+                                  <ActionGuard
+                                    pageId="devices"
+                                    actionId="set-consumable-warning"
+                                    fallback={null}
+                                  >
+                                    <Button
+                                      size="sm"
+                                      variant="secondary"
+                                      onClick={() => {
+                                        setWarningTarget(c)
+                                        setWarningPercentageEdit(
+                                          typeof c?.warningPercentage === 'number'
+                                            ? c!.warningPercentage!
+                                            : ''
+                                        )
+                                        setShowWarningDialog(true)
+                                      }}
+                                      className="gap-2"
+                                    >
+                                      <Bell className="h-4 w-4" />
+                                      {t('system_device_detail.consumables.warning')}
+                                    </Button>
+                                  </ActionGuard>
+                                </div>
                               </td>
                             </tr>
                           )
@@ -1787,38 +1659,216 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                 )}
               </CardContent>
             </Card>
-          </ActionGuard>
-        </TabsContent>
+
+            <ActionGuard pageId="devices" actionId="view-compatible-consumables">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <Sparkles className="h-5 w-5 text-amber-600" />
+                        {t('system_device_detail.compatible.title')}
+                      </CardTitle>
+                      <CardDescription className="mt-1">
+                        {t('system_device_detail.compatible.description')}
+                      </CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {consumablesLoading ? (
+                    <div className="flex items-center justify-center p-8">
+                      <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                    </div>
+                  ) : compatibleConsumables.length === 0 ? (
+                    <div className="text-muted-foreground p-8 text-center">
+                      <AlertCircle className="mx-auto mb-3 h-12 w-12 opacity-20" />
+                      <p>{t('system_device_detail.compatible.empty')}</p>
+                    </div>
+                  ) : (
+                    <div className="overflow-hidden rounded-lg border">
+                      <table className="w-full">
+                        <thead className="bg-gradient-to-r from-amber-50 to-orange-50">
+                          <tr>
+                            <th className="px-4 py-3 text-left text-sm font-semibold">#</th>
+                            <th className="px-4 py-3 text-left text-sm font-semibold">
+                              {t('system_device_detail.compatible.table.name')}
+                            </th>
+                            <th className="px-4 py-3 text-left text-sm font-semibold">
+                              {t('system_device_detail.compatible.table.part')}
+                            </th>
+                            <th className="px-4 py-3 text-left text-sm font-semibold">
+                              {t('system_device_detail.compatible.table.machine_line')}
+                            </th>
+                            <th className="px-4 py-3 text-right text-sm font-semibold">
+                              {t('system_device_detail.compatible.table.customer_stock')}
+                            </th>
+                            <th className="px-4 py-3 text-right text-sm font-semibold">
+                              {t('system_device_detail.compatible.table.system_stock')}
+                            </th>
+                            <th className="px-4 py-3 text-right text-sm font-semibold">
+                              {t('system_device_detail.compatible.table.actions')}
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y">
+                          {compatibleConsumables.map((ct: CompatibleConsumable, idx: number) => {
+                            // ct can be either the raw wrapper { consumableType, stockItem, customerStockQuantity }
+                            // or a plain ConsumableType. Normalize to support both.
+                            const type =
+                              'consumableType' in ct && ct.consumableType
+                                ? ct.consumableType
+                                : (ct as ConsumableType)
+                            const partNumber = type?.partNumber ?? '-'
+                            // unit is unused in this view; omit to avoid lint warning
+                            const compatibleLine = type?.compatibleMachineLine ?? '-'
+                            const customerQty =
+                              'customerStockQuantity' in ct ? ct.customerStockQuantity : undefined
+                            const systemQty =
+                              'stockItem' in ct && ct.stockItem ? ct.stockItem.quantity : undefined
+
+                            return (
+                              <tr
+                                key={type?.id ?? idx}
+                                className="hover:bg-muted/30 transition-colors"
+                              >
+                                <td className="px-4 py-3 text-sm">{idx + 1}</td>
+                                <td className="px-4 py-3 font-medium">{type?.name || '—'}</td>
+                                <td className="px-4 py-3">
+                                  <code className="rounded bg-gray-100 px-2 py-1 text-sm">
+                                    {partNumber}
+                                  </code>
+                                </td>
+                                <td className="text-muted-foreground px-4 py-3 text-sm">
+                                  {compatibleLine}
+                                </td>
+
+                                <td className="px-4 py-3 text-right text-sm">
+                                  {customerQty !== null && customerQty !== undefined
+                                    ? String(customerQty)
+                                    : '—'}
+                                </td>
+                                <td className="px-4 py-3 text-right text-sm">
+                                  {systemQty !== null && systemQty !== undefined
+                                    ? String(systemQty)
+                                    : '—'}
+                                </td>
+                                <td className="px-4 py-3 text-right">
+                                  {Boolean(device?.isActive) ? (
+                                    <ActionGuard pageId="devices" actionId="create-consumable">
+                                      <Button
+                                        size="sm"
+                                        onClick={() => {
+                                          setSelectedConsumableType(type)
+                                          setSerialNumber('')
+                                          setBatchNumber('')
+                                          setCapacity('')
+                                          setRemaining('')
+                                          setCreateInstalledAt(null)
+                                          setCreateInstalledAtInput('')
+                                          // removed createInstalledAtError clearing
+                                          setCreateActualPagesPrinted('')
+                                          setCreatePrice('')
+                                          setShowCreateConsumable(true)
+                                        }}
+                                        className="gap-2"
+                                      >
+                                        <Plus className="h-4 w-4" />
+                                        {t('common.add')}
+                                      </Button>
+                                    </ActionGuard>
+                                  ) : (
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <div>
+                                          <Button size="sm" disabled className="gap-2">
+                                            <Plus className="h-4 w-4" />
+                                            {t('common.add')}
+                                          </Button>
+                                        </div>
+                                      </TooltipTrigger>
+                                      <TooltipContent sideOffset={4}>
+                                        {t('user_device_detail.inactive_reason', {
+                                          reason:
+                                            device?.inactiveReason ??
+                                            t('user_device_detail.reason_unknown'),
+                                        })}
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  )}
+                                </td>
+                              </tr>
+                            )
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </ActionGuard>
+          </TabsContent>
+        </ActionGuard>
 
         {/* Maintenance Tab */}
-        <TabsContent value="maintenance" className="space-y-6">
-          <MaintenanceHistoryTab deviceId={deviceId} />
-        </TabsContent>
+        <ActionGuard
+          pageId="devices"
+          actionId="view-maintenance-by-device"
+          fallback={
+            <div className="text-muted-foreground py-8 text-center">
+              Không có quyền xem lịch sử bảo trì theo thiết bị
+            </div>
+          }
+        >
+          <TabsContent value="maintenance" className="space-y-6">
+            <MaintenanceHistoryTab deviceId={deviceId} />
+          </TabsContent>
+        </ActionGuard>
 
         {/* History Tab - Consumable Usage History */}
-        <TabsContent value="history" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="h-5 w-5 text-emerald-600" />
-                {t('system_device_detail.consumable_history.title')}
-              </CardTitle>
-              <CardDescription>
-                {t('system_device_detail.consumable_history.description')}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ConsumableUsageHistory
-                deviceId={deviceId}
-                consumableId={selectedConsumableId ?? undefined}
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
+        <ActionGuard
+          pageId="devices"
+          actionId="view-consumable-usage-history"
+          fallback={
+            <div className="text-muted-foreground py-8 text-center">
+              Không có quyền xem lịch sử sử dụng vật tư
+            </div>
+          }
+        >
+          <TabsContent value="history" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5 text-emerald-600" />
+                  {t('system_device_detail.consumable_history.title')}
+                </CardTitle>
+                <CardDescription>
+                  {t('system_device_detail.consumable_history.description')}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ConsumableUsageHistory
+                  deviceId={deviceId}
+                  consumableId={selectedConsumableId ?? undefined}
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </ActionGuard>
 
-        <TabsContent value="usage-history" className="space-y-6">
-          <DeviceUsageHistory deviceId={deviceId} device={device} />
-        </TabsContent>
+        <ActionGuard
+          pageId="devices"
+          actionId="view-usage-history"
+          fallback={
+            <div className="text-muted-foreground py-8 text-center">
+              Không có quyền xem lịch sử sử dụng
+            </div>
+          }
+        >
+          <TabsContent value="usage-history" className="space-y-6">
+            <DeviceUsageHistory deviceId={deviceId} device={device} />
+          </TabsContent>
+        </ActionGuard>
       </Tabs>
 
       {/* Edit Modal - Modern Design */}
@@ -2187,305 +2237,307 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
       </AlertDialog>
 
       {/* Create Consumable Modal - Modern Design */}
-      <Dialog open={showCreateConsumable} onOpenChange={setShowCreateConsumable}>
-        <SystemModalLayout
-          title={t('system_device_detail.consumables.create_modal.title')}
-          description={t('system_device_detail.consumables.create_modal.description', {
-            serial: device.serialNumber,
-          })}
-          icon={Plus}
-          variant="create"
-          maxWidth="!max-w-[60vw]"
-          footer={
-            <>
-              <Button
-                variant="outline"
-                onClick={() => setShowCreateConsumable(false)}
-                className="min-w-[100px]"
-              >
-                {t('common.cancel')}
-              </Button>
-              <Button
-                onClick={async () => {
-                  if (!selectedConsumableType) return
-                  // Wrap the create+install logic into a function so we can optionally
-                  // prompt the user for serial confirmation when a serial is provided.
-                  const runCreateAndInstall = async () => {
-                    try {
-                      setCreatingConsumable(true)
-                      // Validate actual pages before attempting to create & install
-                      if (
-                        typeof createActualPagesPrinted === 'number' &&
-                        createActualPagesPrinted > MAX_ACTUAL_PAGES
-                      ) {
+      <ActionGuard pageId="devices" actionId="install-consumable">
+        <Dialog open={showCreateConsumable} onOpenChange={setShowCreateConsumable}>
+          <SystemModalLayout
+            title={t('system_device_detail.consumables.create_modal.title')}
+            description={t('system_device_detail.consumables.create_modal.description', {
+              serial: device.serialNumber,
+            })}
+            icon={Plus}
+            variant="create"
+            maxWidth="!max-w-[60vw]"
+            footer={
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowCreateConsumable(false)}
+                  className="min-w-[100px]"
+                >
+                  {t('common.cancel')}
+                </Button>
+                <Button
+                  onClick={async () => {
+                    if (!selectedConsumableType) return
+                    // Wrap the create+install logic into a function so we can optionally
+                    // prompt the user for serial confirmation when a serial is provided.
+                    const runCreateAndInstall = async () => {
+                      try {
+                        setCreatingConsumable(true)
+                        // Validate actual pages before attempting to create & install
+                        if (
+                          typeof createActualPagesPrinted === 'number' &&
+                          createActualPagesPrinted > MAX_ACTUAL_PAGES
+                        ) {
+                          setCreateActualPagesPrintedError(
+                            t('system_device_detail.consumables.pages_max_error', {
+                              max: MAX_ACTUAL_PAGES.toLocaleString('en-US'),
+                            })
+                          )
+                          // clear any price error so the user sees the page error only
+                          setCreatePriceError(null)
+                          setCreatingConsumable(false)
+                          return
+                        }
+                        // Removed incomplete datetime validation: accept partial input
+                        const dto: CreateConsumableDto = {
+                          consumableTypeId: selectedConsumableType.id,
+                          deviceId: deviceId,
+                          serialNumber: serialNumber || undefined,
+                          batchNumber: batchNumber || undefined,
+                          capacity: capacity || undefined,
+                          remaining: remaining || undefined,
+                          // expiryDate removed per spec
+                          customerId: device?.customerId || undefined,
+                        }
+
+                        const created = await consumablesClientService.create(dto)
+                        if (!created || !created.id) {
+                          toast.error(t('system_device_detail.consumables.create_error'))
+                          return
+                        }
+
+                        // Prepare install payload per API: installedAt, actualPagesPrinted, price, currencyId
+                        let installPayload: Partial<UpdateDeviceConsumableDto> = {}
+                        if (createInstalledAt) installPayload.installedAt = createInstalledAt
+                        if (typeof createActualPagesPrinted === 'number')
+                          installPayload.actualPagesPrinted = createActualPagesPrinted
+
+                        // Set price and currencyId (allow zero)
+                        if (typeof createPrice === 'number') {
+                          const priceErr = validateDecimal3010(createPrice)
+                          if (priceErr) {
+                            setCreatePriceError(priceErr)
+                            setCreateActualPagesPrintedError(null)
+                            setCreatingConsumable(false)
+                            return
+                          }
+                          const formatted = formatDecimal3010(createPrice)
+                          if (formatted !== undefined) {
+                            installPayload.price = formatted
+                            setCreatePriceError(null)
+                          } else {
+                            installPayload.price = createPrice
+                            setCreatePriceError(null)
+                          }
+                        }
+                        if (createCurrencyId) {
+                          installPayload.currencyId = createCurrencyId
+                        }
+                        if (createCurrencyCode) {
+                          installPayload.currencyCode = createCurrencyCode
+                        }
+
+                        installPayload = removeEmpty(installPayload)
+
+                        await devicesClientService.installConsumableWithPayload(
+                          deviceId,
+                          created.id,
+                          installPayload
+                        )
+
+                        toast.success(t('system_device_detail.consumables.install_success'))
+                        setShowCreateConsumable(false)
+
+                        setConsumablesLoading(true)
+                        const [installed, compatibleRaw] = await Promise.all([
+                          devicesClientService.getConsumables(deviceId).catch(() => []),
+                          internalApiClient
+                            .get(
+                              `/api/device-models/${modelId ?? device.deviceModel?.id ?? ''}/compatible-consumables`
+                            )
+                            .then((r) => r.data?.data ?? [])
+                            .catch(() => []),
+                        ])
+                        setInstalledConsumables(Array.isArray(installed) ? installed : [])
+                        setCompatibleConsumables(Array.isArray(compatibleRaw) ? compatibleRaw : [])
+                      } catch (err) {
+                        console.error('Create/install consumable failed', err)
+                        // Surface clear stock error if backend returns insufficient stock details
+                        const respData = (err as { response?: { data?: unknown } })?.response
+                          ?.data as
+                          | {
+                              error?: string
+                              message?: string
+                              details?: { available?: number; required?: number }
+                            }
+                          | undefined
+                        if (respData?.error === 'messages.consumable.insufficientStock') {
+                          const available = respData.details?.available ?? 0
+                          const required = respData.details?.required ?? 0
+                          toast.error(
+                            t('system_device_detail.consumables.insufficient_stock', {
+                              required,
+                              available,
+                            })
+                          )
+                        } else {
+                          toast.error(
+                            respData?.message ||
+                              (respData?.error && typeof respData.error === 'string'
+                                ? respData.error
+                                : t('system_device_detail.consumables.create_install_error'))
+                          )
+                        }
+                      } finally {
+                        setCreatingConsumable(false)
+                        setConsumablesLoading(false)
+                        createAndInstallRef.current = null
+                      }
+                    }
+
+                    // Assign the fn to the ref so the confirm dialog can run it on confirm.
+                    createAndInstallRef.current = runCreateAndInstall
+
+                    // If serialNumber is present, prompt confirmation because it cannot be edited later.
+                    if (serialNumber) {
+                      setShowConsumableSerialWarning(true)
+                      return
+                    }
+
+                    // No serial: run immediately.
+                    await runCreateAndInstall()
+                  }}
+                  disabled={creatingConsumable || Boolean(createActualPagesPrintedError)}
+                  className="min-w-[120px] bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700"
+                >
+                  {creatingConsumable ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {t('system_device_detail.consumables.creating')}
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="mr-2 h-4 w-4" />
+                      {t('system_device_detail.consumables.create_install_button')}
+                    </>
+                  )}
+                </Button>
+              </>
+            }
+          >
+            <div className="space-y-5">
+              <div className="rounded-lg border border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50 p-4">
+                <p className="text-muted-foreground mb-1 text-sm font-medium">
+                  {t('system_device_detail.consumables.type_label')}
+                </p>
+                <p className="text-lg font-bold text-emerald-700">
+                  {selectedConsumableType?.name ?? '—'}
+                </p>
+                {selectedConsumableType?.description && (
+                  <p className="text-muted-foreground mt-1 text-sm">
+                    {selectedConsumableType.description}
+                  </p>
+                )}
+              </div>
+
+              <Separator />
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div>
+                  <Label className="text-base font-semibold">{t('table.serial')}</Label>
+                  <Input
+                    value={serialNumber}
+                    onChange={(e) => setSerialNumber(e.target.value)}
+                    placeholder="SN123456"
+                    className="mt-2 h-11"
+                  />
+                </div>
+                {/* Batch removed per spec */}
+                {/* Capacity input removed per request */}
+                {/* Remaining input removed per request */}
+                {/* Expiry date removed per spec */}
+
+                <div>
+                  <Label className="text-base font-semibold">
+                    {t('system_device_detail.consumables.install_time')}
+                  </Label>
+                  <DateTimeLocalPicker
+                    id="create-installedAt"
+                    value={createInstalledAtInput}
+                    onChange={(value) => {
+                      setCreateInstalledAtInput(value)
+                      if (!value) {
+                        setCreateInstalledAt(null)
+                      }
+                    }}
+                    onISOChange={(iso) => {
+                      // Accept ISO value or clear it; do not block on incomplete input
+                      if (iso) setCreateInstalledAt(iso)
+                      else setCreateInstalledAt(null)
+                    }}
+                  />
+                  {/* removed incomplete-datetime error display */}
+                </div>
+                <div>
+                  <Label className="text-base font-semibold">
+                    {t('system_device_detail.consumables.actual_pages')}
+                  </Label>
+                  <Input
+                    type="number"
+                    value={createActualPagesPrinted?.toString() ?? ''}
+                    onChange={(e) => {
+                      const v = e.target.value ? Number(e.target.value) : ''
+                      setCreateActualPagesPrinted(v)
+                      // validate immediately and show error inline
+                      if (typeof v === 'number' && v > MAX_ACTUAL_PAGES) {
                         setCreateActualPagesPrintedError(
                           t('system_device_detail.consumables.pages_max_error', {
                             max: MAX_ACTUAL_PAGES.toLocaleString('en-US'),
                           })
                         )
-                        // clear any price error so the user sees the page error only
+                        // clear any price error so the UI focuses on the pages error
                         setCreatePriceError(null)
-                        setCreatingConsumable(false)
-                        return
-                      }
-                      // Removed incomplete datetime validation: accept partial input
-                      const dto: CreateConsumableDto = {
-                        consumableTypeId: selectedConsumableType.id,
-                        deviceId: deviceId,
-                        serialNumber: serialNumber || undefined,
-                        batchNumber: batchNumber || undefined,
-                        capacity: capacity || undefined,
-                        remaining: remaining || undefined,
-                        // expiryDate removed per spec
-                        customerId: device?.customerId || undefined,
-                      }
-
-                      const created = await consumablesClientService.create(dto)
-                      if (!created || !created.id) {
-                        toast.error(t('system_device_detail.consumables.create_error'))
-                        return
-                      }
-
-                      // Prepare install payload per API: installedAt, actualPagesPrinted, price, currencyId
-                      let installPayload: Partial<UpdateDeviceConsumableDto> = {}
-                      if (createInstalledAt) installPayload.installedAt = createInstalledAt
-                      if (typeof createActualPagesPrinted === 'number')
-                        installPayload.actualPagesPrinted = createActualPagesPrinted
-
-                      // Set price and currencyId (allow zero)
-                      if (typeof createPrice === 'number') {
-                        const priceErr = validateDecimal3010(createPrice)
-                        if (priceErr) {
-                          setCreatePriceError(priceErr)
-                          setCreateActualPagesPrintedError(null)
-                          setCreatingConsumable(false)
-                          return
-                        }
-                        const formatted = formatDecimal3010(createPrice)
-                        if (formatted !== undefined) {
-                          installPayload.price = formatted
-                          setCreatePriceError(null)
-                        } else {
-                          installPayload.price = createPrice
-                          setCreatePriceError(null)
-                        }
-                      }
-                      if (createCurrencyId) {
-                        installPayload.currencyId = createCurrencyId
-                      }
-                      if (createCurrencyCode) {
-                        installPayload.currencyCode = createCurrencyCode
-                      }
-
-                      installPayload = removeEmpty(installPayload)
-
-                      await devicesClientService.installConsumableWithPayload(
-                        deviceId,
-                        created.id,
-                        installPayload
-                      )
-
-                      toast.success(t('system_device_detail.consumables.install_success'))
-                      setShowCreateConsumable(false)
-
-                      setConsumablesLoading(true)
-                      const [installed, compatibleRaw] = await Promise.all([
-                        devicesClientService.getConsumables(deviceId).catch(() => []),
-                        internalApiClient
-                          .get(
-                            `/api/device-models/${modelId ?? device.deviceModel?.id ?? ''}/compatible-consumables`
-                          )
-                          .then((r) => r.data?.data ?? [])
-                          .catch(() => []),
-                      ])
-                      setInstalledConsumables(Array.isArray(installed) ? installed : [])
-                      setCompatibleConsumables(Array.isArray(compatibleRaw) ? compatibleRaw : [])
-                    } catch (err) {
-                      console.error('Create/install consumable failed', err)
-                      // Surface clear stock error if backend returns insufficient stock details
-                      const respData = (err as { response?: { data?: unknown } })?.response
-                        ?.data as
-                        | {
-                            error?: string
-                            message?: string
-                            details?: { available?: number; required?: number }
-                          }
-                        | undefined
-                      if (respData?.error === 'messages.consumable.insufficientStock') {
-                        const available = respData.details?.available ?? 0
-                        const required = respData.details?.required ?? 0
-                        toast.error(
-                          t('system_device_detail.consumables.insufficient_stock', {
-                            required,
-                            available,
-                          })
-                        )
                       } else {
-                        toast.error(
-                          respData?.message ||
-                            (respData?.error && typeof respData.error === 'string'
-                              ? respData.error
-                              : t('system_device_detail.consumables.create_install_error'))
-                        )
+                        setCreateActualPagesPrintedError(null)
                       }
-                    } finally {
-                      setCreatingConsumable(false)
-                      setConsumablesLoading(false)
-                      createAndInstallRef.current = null
-                    }
-                  }
-
-                  // Assign the fn to the ref so the confirm dialog can run it on confirm.
-                  createAndInstallRef.current = runCreateAndInstall
-
-                  // If serialNumber is present, prompt confirmation because it cannot be edited later.
-                  if (serialNumber) {
-                    setShowConsumableSerialWarning(true)
-                    return
-                  }
-
-                  // No serial: run immediately.
-                  await runCreateAndInstall()
-                }}
-                disabled={creatingConsumable || Boolean(createActualPagesPrintedError)}
-                className="min-w-[120px] bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700"
-              >
-                {creatingConsumable ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {t('system_device_detail.consumables.creating')}
-                  </>
-                ) : (
-                  <>
-                    <Plus className="mr-2 h-4 w-4" />
-                    {t('system_device_detail.consumables.create_install_button')}
-                  </>
-                )}
-              </Button>
-            </>
-          }
-        >
-          <div className="space-y-5">
-            <div className="rounded-lg border border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50 p-4">
-              <p className="text-muted-foreground mb-1 text-sm font-medium">
-                {t('system_device_detail.consumables.type_label')}
-              </p>
-              <p className="text-lg font-bold text-emerald-700">
-                {selectedConsumableType?.name ?? '—'}
-              </p>
-              {selectedConsumableType?.description && (
-                <p className="text-muted-foreground mt-1 text-sm">
-                  {selectedConsumableType.description}
-                </p>
-              )}
-            </div>
-
-            <Separator />
-
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div>
-                <Label className="text-base font-semibold">{t('table.serial')}</Label>
-                <Input
-                  value={serialNumber}
-                  onChange={(e) => setSerialNumber(e.target.value)}
-                  placeholder="SN123456"
-                  className="mt-2 h-11"
-                />
-              </div>
-              {/* Batch removed per spec */}
-              {/* Capacity input removed per request */}
-              {/* Remaining input removed per request */}
-              {/* Expiry date removed per spec */}
-
-              <div>
-                <Label className="text-base font-semibold">
-                  {t('system_device_detail.consumables.install_time')}
-                </Label>
-                <DateTimeLocalPicker
-                  id="create-installedAt"
-                  value={createInstalledAtInput}
-                  onChange={(value) => {
-                    setCreateInstalledAtInput(value)
-                    if (!value) {
-                      setCreateInstalledAt(null)
-                    }
-                  }}
-                  onISOChange={(iso) => {
-                    // Accept ISO value or clear it; do not block on incomplete input
-                    if (iso) setCreateInstalledAt(iso)
-                    else setCreateInstalledAt(null)
-                  }}
-                />
-                {/* removed incomplete-datetime error display */}
-              </div>
-              <div>
-                <Label className="text-base font-semibold">
-                  {t('system_device_detail.consumables.actual_pages')}
-                </Label>
-                <Input
-                  type="number"
-                  value={createActualPagesPrinted?.toString() ?? ''}
-                  onChange={(e) => {
-                    const v = e.target.value ? Number(e.target.value) : ''
-                    setCreateActualPagesPrinted(v)
-                    // validate immediately and show error inline
-                    if (typeof v === 'number' && v > MAX_ACTUAL_PAGES) {
-                      setCreateActualPagesPrintedError(
-                        t('system_device_detail.consumables.pages_max_error', {
-                          max: MAX_ACTUAL_PAGES.toLocaleString('en-US'),
-                        })
-                      )
-                      // clear any price error so the UI focuses on the pages error
-                      setCreatePriceError(null)
-                    } else {
-                      setCreateActualPagesPrintedError(null)
-                    }
-                  }}
-                  max="2000000000"
-                  placeholder="0"
-                  className="mt-2 h-11"
-                />
-                {createActualPagesPrintedError && (
-                  <p className="mt-1 text-sm text-red-600">{createActualPagesPrintedError}</p>
-                )}
-              </div>
-              <div>
-                <Label className="text-base font-semibold">Giá</Label>
-                <Label className="text-base font-semibold">{t('device.price_label')}</Label>
-                <Input
-                  type="number"
-                  step="any"
-                  value={createPrice?.toString() ?? ''}
-                  onChange={(e) => {
-                    const value = e.target.value ? Number(e.target.value) : ''
-                    setCreatePrice(value)
-                  }}
-                  placeholder={t('device.price_placeholder')}
-                  className="mt-2 h-11"
-                />
-                {createPriceError && createPrice !== '' && createPrice !== undefined && (
-                  <p className="mt-1 text-sm text-red-600">{createPriceError}</p>
-                )}
-              </div>
-              <div>
-                <Label className="text-base font-semibold">{t('currency.label')}</Label>
-                <CurrencySelector
-                  label={t('currency.label')}
-                  value={createCurrencyId}
-                  onChange={(value) => {
-                    setCreateCurrencyId(value)
-                    if (!value) setCreateCurrencyCode(null)
-                  }}
-                  onSelect={(currency) => setCreateCurrencyCode(currency?.code || null)}
-                  optional
-                  placeholder={t('currency.select.placeholder_with_default')}
-                  customerId={customerId}
-                />
+                    }}
+                    max="2000000000"
+                    placeholder="0"
+                    className="mt-2 h-11"
+                  />
+                  {createActualPagesPrintedError && (
+                    <p className="mt-1 text-sm text-red-600">{createActualPagesPrintedError}</p>
+                  )}
+                </div>
+                <div>
+                  <Label className="text-base font-semibold">Giá</Label>
+                  <Label className="text-base font-semibold">{t('device.price_label')}</Label>
+                  <Input
+                    type="number"
+                    step="any"
+                    value={createPrice?.toString() ?? ''}
+                    onChange={(e) => {
+                      const value = e.target.value ? Number(e.target.value) : ''
+                      setCreatePrice(value)
+                    }}
+                    placeholder={t('device.price_placeholder')}
+                    className="mt-2 h-11"
+                  />
+                  {createPriceError && createPrice !== '' && createPrice !== undefined && (
+                    <p className="mt-1 text-sm text-red-600">{createPriceError}</p>
+                  )}
+                </div>
+                <div>
+                  <Label className="text-base font-semibold">{t('currency.label')}</Label>
+                  <CurrencySelector
+                    label={t('currency.label')}
+                    value={createCurrencyId}
+                    onChange={(value) => {
+                      setCreateCurrencyId(value)
+                      if (!value) setCreateCurrencyCode(null)
+                    }}
+                    onSelect={(currency) => setCreateCurrencyCode(currency?.code || null)}
+                    optional
+                    placeholder={t('currency.select.placeholder_with_default')}
+                    customerId={customerId}
+                  />
+                </div>
               </div>
             </div>
-          </div>
-        </SystemModalLayout>
-      </Dialog>
+          </SystemModalLayout>
+        </Dialog>
+      </ActionGuard>
 
       {/* Attach From Orphaned Modal */}
       <Dialog open={showAttachFromOrphaned} onOpenChange={setShowAttachFromOrphaned}>

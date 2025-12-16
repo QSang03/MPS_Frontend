@@ -306,12 +306,34 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
       .slice(0, 5) || []
 
   // Custom tooltip for top devices to ensure correct payload is shown
-  const TopDeviceTooltip = ({ active, payload }: { active?: boolean; payload?: any }) => {
+  type TooltipPayloadItem = {
+    payload?: {
+      fullData?: { deviceModelName?: string }
+      value?: number
+      name?: string
+    }
+    value?: number
+    name?: string
+  }
+
+  const TopDeviceTooltip = ({
+    active,
+    payload,
+  }: {
+    active?: boolean
+    payload?: TooltipPayloadItem[]
+  }) => {
     if (!active || !payload || !payload.length) return null
-    const data = payload[0].payload || payload[0]
-    const full = data?.fullData || {}
-    const value = data?.value ?? 0
-    const title = full?.deviceModelName || data?.name || ''
+    const payloadItem = payload[0]
+    if (!payloadItem) return null
+    const data = payloadItem.payload || payloadItem
+    const full = data && 'fullData' in data ? data.fullData : undefined
+    const value = data && 'value' in data ? (data.value ?? 0) : (payloadItem.value ?? 0)
+    const title =
+      full?.deviceModelName ||
+      (data && 'name' in data ? data.name : undefined) ||
+      payloadItem.name ||
+      ''
 
     return (
       <div
@@ -384,56 +406,58 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
       {/* KPI Cards */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 lg:gap-6">
         {/* Cost Card */}
-        <Card
-          className="group relative cursor-pointer overflow-hidden rounded-2xl border border-l-[4px] border-slate-100/80 border-l-[var(--brand-500)] bg-white/90 backdrop-blur-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_12px_30px_rgba(15,23,42,0.12)]"
-          onClick={() => scrollToSection('cost-breakdown')}
-        >
-          <CardContent className="p-4 md:p-5">
-            <div className="flex items-start gap-4">
-              <div>
-                <p className="text-[11px] font-medium tracking-wider text-[var(--neutral-500)] uppercase md:text-xs">
-                  {t('dashboard.cost.month_title')}
-                </p>
-                <div className="mt-2 flex items-baseline gap-2">
-                  <div className="text-2xl font-bold text-[var(--foreground)] md:text-[28px] lg:text-[32px]">
-                    {formatCurrency(k.totalCost ?? 0)}
+        <ActionGuard pageId="user-dashboard" actionId="view-costs">
+          <Card
+            className="group relative cursor-pointer overflow-hidden rounded-2xl border border-l-[4px] border-slate-100/80 border-l-[var(--brand-500)] bg-white/90 backdrop-blur-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_12px_30px_rgba(15,23,42,0.12)]"
+            onClick={() => scrollToSection('cost-breakdown')}
+          >
+            <CardContent className="p-4 md:p-5">
+              <div className="flex items-start gap-4">
+                <div>
+                  <p className="text-[11px] font-medium tracking-wider text-[var(--neutral-500)] uppercase md:text-xs">
+                    {t('dashboard.cost.month_title')}
+                  </p>
+                  <div className="mt-2 flex items-baseline gap-2">
+                    <div className="text-2xl font-bold text-[var(--foreground)] md:text-[28px] lg:text-[32px]">
+                      {formatCurrency(k.totalCost ?? 0)}
+                    </div>
+                  </div>
+                  <div className="mt-1 flex items-center text-xs font-medium">
+                    {k.costChangePercent !== undefined && k.costChangePercent >= 0 ? (
+                      <>
+                        <TrendingUp className="mr-1 h-3 w-3 text-[var(--color-success-500)]" />
+                        <span className="text-[var(--color-success-500)]">
+                          +{k.costChangePercent.toFixed(1)}%
+                        </span>
+                      </>
+                    ) : k.costChangePercent !== undefined ? (
+                      <>
+                        <TrendingDown className="mr-1 h-3 w-3 text-[var(--error-500)]" />
+                        <span className="text-[var(--error-500)]">
+                          {k.costChangePercent.toFixed(1)}%
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <TrendingUp className="mr-1 h-3 w-3 text-[var(--color-success-500)]" />
+                        <span className="text-[var(--color-success-500)]">0.0%</span>
+                      </>
+                    )}
+                    <span className="ml-1 text-[var(--neutral-500)]">
+                      {t('dashboard.compare_to_last_month')}
+                    </span>
                   </div>
                 </div>
-                <div className="mt-1 flex items-center text-xs font-medium">
-                  {k.costChangePercent !== undefined && k.costChangePercent >= 0 ? (
-                    <>
-                      <TrendingUp className="mr-1 h-3 w-3 text-[var(--color-success-500)]" />
-                      <span className="text-[var(--color-success-500)]">
-                        +{k.costChangePercent.toFixed(1)}%
-                      </span>
-                    </>
-                  ) : k.costChangePercent !== undefined ? (
-                    <>
-                      <TrendingDown className="mr-1 h-3 w-3 text-[var(--error-500)]" />
-                      <span className="text-[var(--error-500)]">
-                        {k.costChangePercent.toFixed(1)}%
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <TrendingUp className="mr-1 h-3 w-3 text-[var(--color-success-500)]" />
-                      <span className="text-[var(--color-success-500)]">0.0%</span>
-                    </>
-                  )}
-                  <span className="ml-1 text-[var(--neutral-500)]">
-                    {t('dashboard.compare_to_last_month')}
-                  </span>
+                <div className="ml-auto flex flex-col items-end gap-4">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-transparent bg-[var(--brand-50)] text-[var(--brand-500)] md:h-12 md:w-12">
+                    <DollarSign className="h-5 w-5 md:h-6 md:w-6" />
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-slate-400 transition-transform group-hover:translate-x-1" />
                 </div>
               </div>
-              <div className="ml-auto flex flex-col items-end gap-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-transparent bg-[var(--brand-50)] text-[var(--brand-500)] md:h-12 md:w-12">
-                  <DollarSign className="h-5 w-5 md:h-6 md:w-6" />
-                </div>
-                <ChevronRight className="h-4 w-4 text-slate-400 transition-transform group-hover:translate-x-1" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </ActionGuard>
 
         {/* BW Pages Card */}
         <Card
@@ -617,253 +641,265 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
         </Card>
 
         {/* Top Devices Chart */}
-        <Card className="shadow-card flex flex-col">
-          <CardHeader>
-            <CardTitle className="text-lg font-bold">{t('dashboard.top_devices.title')}</CardTitle>
-            <CardDescription>{t('dashboard.top_devices.description')}</CardDescription>
-          </CardHeader>
-          <CardContent className="min-h-[250px] flex-1 md:min-h-[300px] lg:min-h-[400px]">
-            {deviceData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart layout="vertical" data={deviceData} margin={{ left: 0, right: 60 }}>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    horizontal={true}
-                    vertical={false}
-                    stroke="var(--border)"
-                  />
-                  <XAxis type="number" hide />
-                  <YAxis
-                    dataKey="name"
-                    type="category"
-                    width={120}
-                    tick={{ fontSize: 12, fill: 'var(--foreground)', fontWeight: 500 }}
-                    axisLine={false}
-                    tickLine={false}
-                    tickFormatter={(value) =>
-                      value.length > 15 ? `${value.substring(0, 15)}...` : value
-                    }
-                  />
-                  <Tooltip
-                    cursor={{ fill: 'var(--muted)' }}
-                    contentStyle={{
-                      borderRadius: '8px',
-                      border: 'none',
-                      boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
-                    }}
-                    content={<TopDeviceTooltip />}
-                  />
-                  <Bar
-                    dataKey="value"
-                    name={t('dashboard.cost_label')}
-                    radius={[0, 4, 4, 0]}
-                    barSize={36}
-                  >
-                    {deviceData.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={`rgba(59, 130, 246, ${1 - index * 0.15})`}
-                      />
-                    ))}
-                    <LabelList
-                      dataKey="value"
-                      position="right"
-                      formatter={(label: React.ReactNode) => {
-                        const n =
-                          typeof label === 'number' || typeof label === 'string'
-                            ? Number(label)
-                            : Number(String(label))
-                        return formatCurrency(n)
-                      }}
-                      style={{ fontSize: '12px', fontWeight: 'bold', fill: '#4b5563' }}
+        <ActionGuard pageId="user-dashboard" actionId="view-costs">
+          <Card className="shadow-card flex flex-col">
+            <CardHeader>
+              <CardTitle className="text-lg font-bold">
+                {t('dashboard.top_devices.title')}
+              </CardTitle>
+              <CardDescription>{t('dashboard.top_devices.description')}</CardDescription>
+            </CardHeader>
+            <CardContent className="min-h-[250px] flex-1 md:min-h-[300px] lg:min-h-[400px]">
+              {deviceData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart layout="vertical" data={deviceData} margin={{ left: 0, right: 60 }}>
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      horizontal={true}
+                      vertical={false}
+                      stroke="var(--border)"
                     />
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+                    <XAxis type="number" hide />
+                    <YAxis
+                      dataKey="name"
+                      type="category"
+                      width={120}
+                      tick={{ fontSize: 12, fill: 'var(--foreground)', fontWeight: 500 }}
+                      axisLine={false}
+                      tickLine={false}
+                      tickFormatter={(value) =>
+                        value.length > 15 ? `${value.substring(0, 15)}...` : value
+                      }
+                    />
+                    <Tooltip
+                      cursor={{ fill: 'var(--muted)' }}
+                      contentStyle={{
+                        borderRadius: '8px',
+                        border: 'none',
+                        boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+                      }}
+                      content={<TopDeviceTooltip />}
+                    />
+                    <Bar
+                      dataKey="value"
+                      name={t('dashboard.cost_label')}
+                      radius={[0, 4, 4, 0]}
+                      barSize={36}
+                    >
+                      {deviceData.map((entry, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={`rgba(59, 130, 246, ${1 - index * 0.15})`}
+                        />
+                      ))}
+                      <LabelList
+                        dataKey="value"
+                        position="right"
+                        formatter={(label: React.ReactNode) => {
+                          const n =
+                            typeof label === 'number' || typeof label === 'string'
+                              ? Number(label)
+                              : Number(String(label))
+                          return formatCurrency(n)
+                        }}
+                        style={{ fontSize: '12px', fontWeight: 'bold', fill: '#4b5563' }}
+                      />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <EmptyState
+                  title={t('empty.no_data.title')}
+                  description={t('dashboard.empty.top_devices_description')}
+                  className="h-full border-none bg-transparent py-0"
+                />
+              )}
+            </CardContent>
+          </Card>
+        </ActionGuard>
+      </div>
+
+      {/* Top Devices List (Detailed) */}
+      <ActionGuard pageId="user-dashboard" actionId="view-costs">
+        <Card className="shadow-card" id="cost-breakdown">
+          <CardHeader>
+            <CardTitle className="text-lg font-bold">
+              {t('dashboard.top_devices.details_title')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {overview.topDevices && overview.topDevices.length > 0 ? (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {overview.topDevices.map((d, idx) => {
+                  const idKey = d.deviceId ?? `idx-${idx}`
+                  const expanded = expandedDeviceId === idKey
+
+                  return (
+                    <div
+                      key={idKey}
+                      className={`group relative flex flex-col rounded-xl border bg-white p-4 transition-all hover:shadow-md ${expanded ? 'col-span-full ring-2 ring-[var(--brand-500)] ring-offset-2 sm:col-span-2 lg:col-span-2' : ''} ${idx >= 3 ? 'hidden sm:flex' : 'flex'}`}
+                    >
+                      <div className="mb-4 flex items-start justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--brand-50)] text-[var(--brand-600)]">
+                            <Printer className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <div
+                              className="line-clamp-1 font-bold text-gray-900"
+                              title={d.deviceModelName || d.serialNumber}
+                            >
+                              {d.deviceModelName || d.serialNumber || '—'}
+                            </div>
+                            <div className="text-muted-foreground text-xs">
+                              {d.partNumber ?? '—'}
+                            </div>
+                          </div>
+                        </div>
+                        {idx === 0 && (
+                          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-yellow-100 text-xs font-bold text-yellow-700">
+                            #1
+                          </div>
+                        )}
+                        {idx === 1 && (
+                          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-700">
+                            #2
+                          </div>
+                        )}
+                        {idx === 2 && (
+                          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-orange-100 text-xs font-bold text-orange-700">
+                            #3
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="mt-auto">
+                        <div className="flex items-end justify-between">
+                          <div>
+                            <p className="text-muted-foreground text-xs">
+                              {t('dashboard.totals.total_cost')}
+                            </p>
+                            <p className="text-lg font-bold text-[var(--brand-600)]">
+                              {formatCurrency(
+                                getDisplayValue(
+                                  d.totalRevenue,
+                                  d.totalRevenueConverted,
+                                  useConverted
+                                )
+                              )}
+                            </p>
+                          </div>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => setExpandedDeviceId(expanded ? null : idKey)}
+                            className="h-8 w-8 rounded-full p-0"
+                          >
+                            {expanded ? (
+                              <ChevronUp className="h-4 w-4" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+
+                      {expanded && (
+                        <div className="animate-in fade-in slide-in-from-top-2 mt-4 border-t pt-4 duration-200">
+                          <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-sm">
+                            <div className="space-y-1">
+                              <div className="text-muted-foreground flex items-center text-xs">
+                                <Wrench className="mr-1.5 h-3 w-3" />
+                                {t('dashboard.detail.rental_repair')}
+                              </div>
+                              <div className="font-medium">
+                                {d.revenueRental || d.revenueRepair
+                                  ? formatCurrency(
+                                      getDisplayValue(
+                                        d.revenueRental,
+                                        d.revenueRentalConverted,
+                                        useConverted
+                                      ) +
+                                        getDisplayValue(
+                                          d.revenueRepair,
+                                          d.revenueRepairConverted,
+                                          useConverted
+                                        )
+                                    )
+                                  : '—'}
+                              </div>
+                            </div>
+
+                            <div className="space-y-1">
+                              <div className="text-muted-foreground flex items-center text-xs">
+                                <FileText className="mr-1.5 h-3 w-3" />
+                                {t('dashboard.detail.pages_bw')}
+                              </div>
+                              <div className="font-medium">
+                                {d.revenuePageBW
+                                  ? formatCurrency(
+                                      getDisplayValue(
+                                        d.revenuePageBW,
+                                        d.revenuePageBWConverted,
+                                        useConverted
+                                      )
+                                    )
+                                  : '—'}
+                              </div>
+                            </div>
+
+                            <div className="space-y-1">
+                              <div className="text-muted-foreground flex items-center text-xs">
+                                <Palette className="mr-1.5 h-3 w-3" />
+                                {t('dashboard.detail.pages_color')}
+                              </div>
+                              <div className="font-medium">
+                                {d.revenuePageColor
+                                  ? formatCurrency(
+                                      getDisplayValue(
+                                        d.revenuePageColor,
+                                        d.revenuePageColorConverted,
+                                        useConverted
+                                      )
+                                    )
+                                  : '—'}
+                              </div>
+                            </div>
+
+                            <div className="col-span-2 mt-2 rounded-r-md border-t border-l-4 border-l-[var(--brand-500)] bg-slate-50 pt-2 pl-3">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center text-sm font-semibold text-gray-700">
+                                  <DollarSign className="mr-1.5 h-4 w-4" />
+                                  {t('dashboard.totals.total_cost')}
+                                </div>
+                                <div className="text-base font-bold text-[var(--brand-700)]">
+                                  {formatCurrency(
+                                    getDisplayValue(
+                                      d.totalRevenue,
+                                      d.totalRevenueConverted,
+                                      useConverted
+                                    )
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
             ) : (
               <EmptyState
-                title={t('empty.no_data.title')}
-                description={t('dashboard.empty.top_devices_description')}
-                className="h-full border-none bg-transparent py-0"
+                title={t('dashboard.top_devices.empty_title')}
+                description={t('dashboard.top_devices.empty_description')}
+                className="border-none bg-transparent py-8"
               />
             )}
           </CardContent>
         </Card>
-      </div>
-
-      {/* Top Devices List (Detailed) */}
-      <Card className="shadow-card" id="cost-breakdown">
-        <CardHeader>
-          <CardTitle className="text-lg font-bold">
-            {t('dashboard.top_devices.details_title')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {overview.topDevices && overview.topDevices.length > 0 ? (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {overview.topDevices.map((d, idx) => {
-                const idKey = d.deviceId ?? `idx-${idx}`
-                const expanded = expandedDeviceId === idKey
-
-                return (
-                  <div
-                    key={idKey}
-                    className={`group relative flex flex-col rounded-xl border bg-white p-4 transition-all hover:shadow-md ${expanded ? 'col-span-full ring-2 ring-[var(--brand-500)] ring-offset-2 sm:col-span-2 lg:col-span-2' : ''} ${idx >= 3 ? 'hidden sm:flex' : 'flex'}`}
-                  >
-                    <div className="mb-4 flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--brand-50)] text-[var(--brand-600)]">
-                          <Printer className="h-5 w-5" />
-                        </div>
-                        <div>
-                          <div
-                            className="line-clamp-1 font-bold text-gray-900"
-                            title={d.deviceModelName || d.serialNumber}
-                          >
-                            {d.deviceModelName || d.serialNumber || '—'}
-                          </div>
-                          <div className="text-muted-foreground text-xs">{d.partNumber ?? '—'}</div>
-                        </div>
-                      </div>
-                      {idx === 0 && (
-                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-yellow-100 text-xs font-bold text-yellow-700">
-                          #1
-                        </div>
-                      )}
-                      {idx === 1 && (
-                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-700">
-                          #2
-                        </div>
-                      )}
-                      {idx === 2 && (
-                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-orange-100 text-xs font-bold text-orange-700">
-                          #3
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="mt-auto">
-                      <div className="flex items-end justify-between">
-                        <div>
-                          <p className="text-muted-foreground text-xs">
-                            {t('dashboard.totals.total_cost')}
-                          </p>
-                          <p className="text-lg font-bold text-[var(--brand-600)]">
-                            {formatCurrency(
-                              getDisplayValue(d.totalRevenue, d.totalRevenueConverted, useConverted)
-                            )}
-                          </p>
-                        </div>
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => setExpandedDeviceId(expanded ? null : idKey)}
-                          className="h-8 w-8 rounded-full p-0"
-                        >
-                          {expanded ? (
-                            <ChevronUp className="h-4 w-4" />
-                          ) : (
-                            <ChevronDown className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-
-                    {expanded && (
-                      <div className="animate-in fade-in slide-in-from-top-2 mt-4 border-t pt-4 duration-200">
-                        <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-sm">
-                          <div className="space-y-1">
-                            <div className="text-muted-foreground flex items-center text-xs">
-                              <Wrench className="mr-1.5 h-3 w-3" />
-                              {t('dashboard.detail.rental_repair')}
-                            </div>
-                            <div className="font-medium">
-                              {d.revenueRental || d.revenueRepair
-                                ? formatCurrency(
-                                    getDisplayValue(
-                                      d.revenueRental,
-                                      d.revenueRentalConverted,
-                                      useConverted
-                                    ) +
-                                      getDisplayValue(
-                                        d.revenueRepair,
-                                        d.revenueRepairConverted,
-                                        useConverted
-                                      )
-                                  )
-                                : '—'}
-                            </div>
-                          </div>
-
-                          <div className="space-y-1">
-                            <div className="text-muted-foreground flex items-center text-xs">
-                              <FileText className="mr-1.5 h-3 w-3" />
-                              {t('dashboard.detail.pages_bw')}
-                            </div>
-                            <div className="font-medium">
-                              {d.revenuePageBW
-                                ? formatCurrency(
-                                    getDisplayValue(
-                                      d.revenuePageBW,
-                                      d.revenuePageBWConverted,
-                                      useConverted
-                                    )
-                                  )
-                                : '—'}
-                            </div>
-                          </div>
-
-                          <div className="space-y-1">
-                            <div className="text-muted-foreground flex items-center text-xs">
-                              <Palette className="mr-1.5 h-3 w-3" />
-                              {t('dashboard.detail.pages_color')}
-                            </div>
-                            <div className="font-medium">
-                              {d.revenuePageColor
-                                ? formatCurrency(
-                                    getDisplayValue(
-                                      d.revenuePageColor,
-                                      d.revenuePageColorConverted,
-                                      useConverted
-                                    )
-                                  )
-                                : '—'}
-                            </div>
-                          </div>
-
-                          <div className="col-span-2 mt-2 rounded-r-md border-t border-l-4 border-l-[var(--brand-500)] bg-slate-50 pt-2 pl-3">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center text-sm font-semibold text-gray-700">
-                                <DollarSign className="mr-1.5 h-4 w-4" />
-                                {t('dashboard.totals.total_cost')}
-                              </div>
-                              <div className="text-base font-bold text-[var(--brand-700)]">
-                                {formatCurrency(
-                                  getDisplayValue(
-                                    d.totalRevenue,
-                                    d.totalRevenueConverted,
-                                    useConverted
-                                  )
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          ) : (
-            <EmptyState
-              title={t('dashboard.top_devices.empty_title')}
-              description={t('dashboard.top_devices.empty_description')}
-              className="border-none bg-transparent py-8"
-            />
-          )}
-        </CardContent>
-      </Card>
+      </ActionGuard>
     </UserPageLayout>
   )
 }

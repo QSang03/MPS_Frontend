@@ -280,18 +280,22 @@ export default function ContractDevicesSection({
                       </ActionGuard>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="text-sm font-semibold whitespace-nowrap text-[var(--brand-700)]">
-                        {d.monthlyRent != null
-                          ? formatCurrencyWithSymbol(d.monthlyRent, d.currency)
-                          : '—'}
-                      </span>
+                      <ActionGuard pageId="customers" actionId="device-contract-rent-view">
+                        <span className="text-sm font-semibold whitespace-nowrap text-[var(--brand-700)]">
+                          {d.monthlyRent != null
+                            ? formatCurrencyWithSymbol(d.monthlyRent, d.currency)
+                            : '—'}
+                        </span>
+                      </ActionGuard>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="text-sm font-semibold whitespace-nowrap text-orange-700">
-                        {d.monthlyRentCogs != null
-                          ? formatCurrencyWithSymbol(d.monthlyRentCogs, d.currency)
-                          : '—'}
-                      </span>
+                      <ActionGuard pageId="customers" actionId="device-contract-rent-view">
+                        <span className="text-sm font-semibold whitespace-nowrap text-orange-700">
+                          {d.monthlyRentCogs != null
+                            ? formatCurrencyWithSymbol(d.monthlyRentCogs, d.currency)
+                            : '—'}
+                        </span>
+                      </ActionGuard>
                     </td>
                     <td className="px-4 py-3">
                       <span className="text-sm whitespace-nowrap text-gray-700">

@@ -1,6 +1,7 @@
 import { DeviceDetailClient } from '@/app/(dashboard)/system/device-models/[modelId]/devices/[id]/_components/DeviceDetailClient'
 import { QueryProvider } from '@/components/providers/QueryProvider'
 import { devicesClientService } from '@/lib/api/services/devices-client.service'
+import { ActionGuard } from '@/components/shared/ActionGuard'
 
 interface Props {
   // Align with Next's generated PageProps which may treat `params` as a Promise<any>.
@@ -51,12 +52,22 @@ export default async function DevicePage({ params }: Props) {
 
   return (
     <QueryProvider>
-      <DeviceDetailClient
-        deviceId={id}
-        modelId={modelId}
-        backHref="/system/devices"
-        showA4={showA4}
-      />
+      <ActionGuard
+        pageId="devices"
+        actionId="view-device-detail"
+        fallback={
+          <div className="text-muted-foreground py-8 text-center">
+            Không có quyền xem chi tiết thiết bị
+          </div>
+        }
+      >
+        <DeviceDetailClient
+          deviceId={id}
+          modelId={modelId}
+          backHref="/system/devices"
+          showA4={showA4}
+        />
+      </ActionGuard>
     </QueryProvider>
   )
 }

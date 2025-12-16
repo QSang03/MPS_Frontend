@@ -64,6 +64,8 @@ export type LoginActionState = {
     customerName?: string
     roleName?: string
     roleId?: string
+    userId?: string
+    customerId?: string
   }
 } | null
 
@@ -115,6 +117,14 @@ export async function login(
     const role: UserRole = roleName // UserRole is now string type
     const isDefaultCustomer = data?.isDefaultCustomer || false
 
+    // Debug: Log roleId to see what we're getting from backend
+    console.log('[Auth] Extracted roleId from response:', {
+      roleId,
+      fromRoleId: data?.user?.roleId,
+      fromRoleIdField: data?.user?.role?.id,
+      userObject: data?.user,
+    })
+
     // Save to localStorage for persistence across page refreshes
     if (typeof window !== 'undefined') {
       try {
@@ -122,7 +132,15 @@ export async function login(
         localStorage.setItem('mps_is_default_customer', String(isDefaultCustomer))
         localStorage.setItem('mps_user_id', data?.user?.id || '')
         localStorage.setItem('mps_customer_id', data?.user?.customerId || '')
-        if (roleId) localStorage.setItem('mps_role_id', roleId)
+        // Always set mps_role_id if roleId exists (even if it's an empty string, we'll handle it)
+        if (roleId) {
+          localStorage.setItem('mps_role_id', String(roleId))
+          console.log('[Auth] Set mps_role_id to localStorage:', roleId)
+        } else {
+          // Remove mps_role_id if roleId is null/undefined
+          localStorage.removeItem('mps_role_id')
+          console.log('[Auth] Removed mps_role_id from localStorage (roleId is null/undefined)')
+        }
 
         // Resolve customer name from the API payload without using `any`.
         const customerName = resolveCustomerName(data)
@@ -159,6 +177,9 @@ export async function login(
         // Include role name for client-side UI persistence
         roleName: String(roleName).toLowerCase(),
         roleId: roleId || undefined,
+        // Include userId and customerId for client-side localStorage
+        userId: data?.user?.id || undefined,
+        customerId: data?.user?.customerId || undefined,
       },
     }
   } catch (error: unknown) {

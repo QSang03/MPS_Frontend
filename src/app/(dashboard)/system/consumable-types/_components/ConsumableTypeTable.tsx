@@ -26,7 +26,6 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useLocale } from '@/components/providers/LocaleProvider'
-import { useActionPermission } from '@/lib/hooks/useActionPermission'
 import { ActionGuard } from '@/components/shared/ActionGuard'
 import { cn } from '@/lib/utils'
 import { TableWrapper } from '@/components/system/TableWrapper'
@@ -60,7 +59,6 @@ export function ConsumableTypeTable({
   renderColumnVisibilityMenu,
   onOpenEditStockModal,
 }: ConsumableTypeTableProps) {
-  const { can } = useActionPermission('consumable-types')
   const queryClient = useQueryClient()
   const [sorting, setSorting] = useState<{ sortBy?: string; sortOrder?: 'asc' | 'desc' }>({
     sortBy: 'createdAt',
@@ -214,7 +212,7 @@ export function ConsumableTypeTable({
               >
                 {m.stockItem.quantity}
               </span>
-              {can('edit-stock') && (
+              <ActionGuard pageId="consumable-types" actionId="edit-stock" fallback={null}>
                 <Button
                   size="sm"
                   variant="secondary"
@@ -230,7 +228,7 @@ export function ConsumableTypeTable({
                 >
                   <Pencil className="h-3 w-3 text-gray-500" />
                 </Button>
-              )}
+              </ActionGuard>
             </div>
           ) : (
             <span className="text-sm text-gray-400">—</span>
@@ -303,7 +301,7 @@ export function ConsumableTypeTable({
         enableSorting: false,
       },
     ],
-    [page, pageSize, can, deletingId, onOpenEditStockModal, handleSaved, handleDelete, t]
+    [page, pageSize, deletingId, onOpenEditStockModal, handleSaved, handleDelete, t]
   )
 
   return (

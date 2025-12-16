@@ -24,6 +24,7 @@ import { AddConsumableModal } from './AddConsumableModal'
 import { DeleteDialog } from '@/components/shared/DeleteDialog'
 import { cn } from '@/lib/utils'
 import { useLocale } from '@/components/providers/LocaleProvider'
+import { ActionGuard } from '@/components/shared/ActionGuard'
 
 interface ConsumableCompatibilityModalProps {
   deviceModelId: string
@@ -200,18 +201,20 @@ export function ConsumableCompatibilityModal({
                   </div>
                 )}
 
-                <Button
-                  onClick={() => {
-                    // hide outer modal content (keep component mounted) then open add modal
-                    setHideOuter(true)
-                    setAddModalOpen(true)
-                  }}
-                  size="sm"
-                  className="gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700"
-                >
-                  <Plus className="h-4 w-4" />
-                  {t('device_model.compatibility.add_button')}
-                </Button>
+                <ActionGuard pageId="device-models" actionId="add-compatible-consumable">
+                  <Button
+                    onClick={() => {
+                      // hide outer modal content (keep component mounted) then open add modal
+                      setHideOuter(true)
+                      setAddModalOpen(true)
+                    }}
+                    size="sm"
+                    className="gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700"
+                  >
+                    <Plus className="h-4 w-4" />
+                    {t('device_model.compatibility.add_button')}
+                  </Button>
+                </ActionGuard>
               </div>
 
               {/* Table */}
@@ -296,16 +299,26 @@ export function ConsumableCompatibilityModal({
                             </Badge>
                           </td>
                           <td className="px-4 py-3 text-right">
-                            <DeleteDialog
-                              title={t('common.confirm_delete')}
-                              description={t('device_model.compatibility.delete_confirmation')}
-                              onConfirm={() => removeCompatibility(c.id)}
-                              trigger={
-                                <Button variant="destructive" size="sm" className="transition-all">
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              }
-                            />
+                            <ActionGuard
+                              pageId="device-models"
+                              actionId="remove-compatible-consumable"
+                              fallback={null}
+                            >
+                              <DeleteDialog
+                                title={t('common.confirm_delete')}
+                                description={t('device_model.compatibility.delete_confirmation')}
+                                onConfirm={() => removeCompatibility(c.id)}
+                                trigger={
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    className="transition-all"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                }
+                              />
+                            </ActionGuard>
                           </td>
                         </tr>
                       ))

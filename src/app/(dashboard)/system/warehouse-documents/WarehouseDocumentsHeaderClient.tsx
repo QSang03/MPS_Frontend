@@ -6,6 +6,7 @@ import { Box, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { SystemPageHeader } from '@/components/system/SystemPageHeader'
 import { useLocale } from '@/components/providers/LocaleProvider'
+import { ActionGuard } from '@/components/shared/ActionGuard'
 
 export default function WarehouseDocumentsHeaderClient() {
   const { t } = useLocale()
@@ -17,12 +18,14 @@ export default function WarehouseDocumentsHeaderClient() {
       icon={<Box className="h-5 w-5" />}
       actions={
         <div className="flex gap-2">
-          <Link href="/system/warehouse-documents/new">
-            <Button variant="default">
-              <Plus className="mr-2 h-4 w-4" />
-              {t('warehouse.create')}
-            </Button>
-          </Link>
+          <ActionGuard pageId="warehouse-documents" actionId="create">
+            <Link href="/system/warehouse-documents/new">
+              <Button variant="default">
+                <Plus className="mr-2 h-4 w-4" />
+                {t('warehouse.create')}
+              </Button>
+            </Link>
+          </ActionGuard>
         </div>
       }
     />

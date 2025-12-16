@@ -38,7 +38,28 @@ export const BASIC_PERMISSIONS: NavRequiredPermissions = {
     { resource: 'resource-types', action: 'read' }, // Get resource types (for rule builder)
   ],
 }
-
+export const USER_PERMISSIONS: NavRequiredPermissions = {
+  strategy: 'any',
+  resources: [
+    { resource: 'notifications', action: 'read' }, // Get all notifications
+    { resource: 'notifications.unread-count', action: 'read' }, // Get unread notification count
+    { resource: 'notifications.read', action: 'update' }, // Mark notification as read
+    { resource: 'notifications.read-all', action: 'update' }, // Mark all notifications as read
+    { resource: 'navigation', action: 'read' }, // Get navigation data
+    { resource: 'navigation-config', action: 'read' }, // Get navigation configuration
+    { resource: 'currencies', action: 'read' }, // Get currencies list (base currencies)
+    { resource: 'policy-conditions', action: 'read' }, // Get policy conditions (for rule builder)
+    { resource: 'resource-types', action: 'read' }, // Get resource types (for rule builder)
+  ],
+}
+// Merge helper to ensure user-scoped navigation items always include basic USER_PERMISSIONS
+export const addUserPermissions = (required?: NavRequiredPermissions): NavRequiredPermissions => {
+  if (!required) return { strategy: 'all', resources: [...USER_PERMISSIONS.resources] }
+  return {
+    strategy: required.strategy,
+    resources: [...USER_PERMISSIONS.resources, ...required.resources],
+  }
+}
 // Helper function to merge basic permissions with additional permissions
 export const withBasicPermissions = (
   additionalResources: NavPermissionResource[]
@@ -76,10 +97,10 @@ export const USER_NAVIGATION_PAYLOAD: NavItemPayload[] = [
     description: 'Tổng quan',
     descriptionEn: 'Overview',
     descriptionVi: 'Tổng quan',
-    requiredPermissions: {
+    requiredPermissions: addUserPermissions({
       strategy: 'all',
       resources: [{ resource: 'dashboard.overview', action: 'read' }],
-    },
+    }),
     actions: [
       {
         id: 'view-devices',
@@ -107,6 +128,20 @@ export const USER_NAVIGATION_PAYLOAD: NavItemPayload[] = [
           ],
         },
       },
+      {
+        id: 'view-costs',
+        label: 'Xem chi phí',
+        labelEn: 'View costs',
+        labelVi: 'Xem chi phí',
+        icon: 'Send',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [
+            { resource: 'reports.analytics.cost.customer', action: 'read' },
+            { resource: 'reports.analytics.cost.devices', action: 'read' },
+          ],
+        },
+      },
     ],
   },
   {
@@ -118,7 +153,7 @@ export const USER_NAVIGATION_PAYLOAD: NavItemPayload[] = [
     icon: 'Printer',
     route: '/user/devices',
     description: 'Thiết bị của tôi',
-    requiredPermissions: {
+    requiredPermissions: addUserPermissions({
       strategy: 'all',
       resources: [
         { resource: 'devices', action: 'read' },
@@ -129,7 +164,7 @@ export const USER_NAVIGATION_PAYLOAD: NavItemPayload[] = [
         { resource: 'reports.usage.pages.monthly', action: 'read' },
         { resource: 'maintenance-histories.devices', action: 'read' },
       ],
-    },
+    }),
     actions: [
       {
         id: 'update',
@@ -287,19 +322,15 @@ export const USER_NAVIGATION_PAYLOAD: NavItemPayload[] = [
     route: '/user/dashboard/costs/monthly',
     description: 'Báo cáo chi phí theo tháng',
     descriptionEn: 'Monthly cost report',
-    requiredPermissions: {
+    requiredPermissions: addUserPermissions({
       strategy: 'any',
       resources: [
-        // Monthly costs (customer)
         { resource: 'reports.analytics.cost.customer', action: 'read' },
-        // Device cost series (used for trends & aggregation)
         { resource: 'reports.analytics.cost.devices', action: 'read' },
-        // Usage tab (customer)
         { resource: 'reports.analytics.usage.customer', action: 'read' },
-        // Device usage history dialog inside usage tab
         { resource: 'devices.usage-history', action: 'read' },
       ],
-    },
+    }),
     actions: [
       {
         id: 'view-monthly-tab',
@@ -378,10 +409,10 @@ export const USER_NAVIGATION_PAYLOAD: NavItemPayload[] = [
     icon: 'FileText',
     route: '/user/contracts',
     description: 'Hợp đồng của tôi',
-    requiredPermissions: {
+    requiredPermissions: addUserPermissions({
       strategy: 'all',
       resources: [{ resource: 'contracts', action: 'read' }],
-    },
+    }),
     actions: [
       {
         id: 'create',
@@ -423,10 +454,10 @@ export const USER_NAVIGATION_PAYLOAD: NavItemPayload[] = [
     icon: 'ShoppingCart',
     route: '/user/consumables',
     description: 'Vật tư tiêu hao liên quan đến khách hàng',
-    requiredPermissions: {
+    requiredPermissions: addUserPermissions({
       strategy: 'all',
       resources: [{ resource: 'consumables', action: 'read' }],
-    },
+    }),
     actions: [
       {
         id: 'create',
@@ -455,10 +486,10 @@ export const USER_NAVIGATION_PAYLOAD: NavItemPayload[] = [
     icon: 'Package',
     route: '/user/warehouse-documents',
     description: 'Quản lý chứng từ kho (user)',
-    requiredPermissions: {
+    requiredPermissions: addUserPermissions({
       strategy: 'all',
       resources: [{ resource: 'warehouse-documents', action: 'read' }],
-    },
+    }),
     actions: [
       {
         id: 'create',
@@ -488,7 +519,7 @@ export const USER_NAVIGATION_PAYLOAD: NavItemPayload[] = [
     icon: 'FileText',
     route: '/user/my-requests',
     description: 'Theo dõi yêu cầu bảo trì của tôi',
-    requiredPermissions: {
+    requiredPermissions: addUserPermissions({
       // This page contains multiple tabs (service requests, purchase requests, SLA)
       // so allow access if user can read at least one.
       strategy: 'any',
@@ -497,7 +528,7 @@ export const USER_NAVIGATION_PAYLOAD: NavItemPayload[] = [
         { resource: 'purchase-requests', action: 'read' },
         { resource: 'slas', action: 'read' },
       ],
-    },
+    }),
     actions: [
       {
         id: 'view-service-requests',
@@ -601,7 +632,6 @@ export const USER_NAVIGATION_PAYLOAD: NavItemPayload[] = [
       },
     ],
   },
-
   /* Departments (user-scoped) removed — hidden per request */
   {
     id: 'users',
@@ -612,10 +642,10 @@ export const USER_NAVIGATION_PAYLOAD: NavItemPayload[] = [
     icon: 'Users',
     route: '/user/users',
     description: 'Quản lý người dùng (user-scoped)',
-    requiredPermissions: {
+    requiredPermissions: addUserPermissions({
       strategy: 'all',
       resources: [{ resource: 'users', action: 'read' }],
-    },
+    }),
     actions: [
       {
         id: 'read',
@@ -1361,13 +1391,11 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
     labelVi: 'Mẫu thiết bị',
     icon: 'Building2',
     route: '/system/device-models',
-    requiredPermissions: {
-      strategy: 'all',
-      resources: [
-        { resource: 'device-models', action: 'read' },
-        { resource: 'consumable-types', action: 'read' },
-      ],
-    },
+    requiredPermissions: withBasicPermissions([
+      { resource: 'device-models', action: 'read' },
+      { resource: 'devices', action: 'read' },
+      { resource: 'consumable-types', action: 'read' },
+    ]),
     actions: [
       {
         id: 'create',
@@ -1400,28 +1428,6 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
         requiredPermissions: {
           strategy: 'all',
           resources: [{ resource: 'device-models', action: 'delete' }],
-        },
-      },
-      {
-        id: 'filter-by-manufacturer',
-        label: 'Lọc theo hãng',
-        labelEn: 'Filter by manufacturer',
-        labelVi: 'Lọc theo hãng',
-        icon: 'Filter',
-        requiredPermissions: {
-          strategy: 'all',
-          resources: [{ resource: 'device-models', action: 'read' }],
-        },
-      },
-      {
-        id: 'filter-by-type',
-        label: 'Lọc theo loại',
-        labelEn: 'Filter by type',
-        labelVi: 'Lọc theo loại',
-        icon: 'Filter',
-        requiredPermissions: {
-          strategy: 'all',
-          resources: [{ resource: 'device-models', action: 'read' }],
         },
       },
       {
@@ -1493,10 +1499,10 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
     labelVi: 'Loại vật tư tiêu hao',
     icon: 'ShoppingCart',
     route: '/system/consumable-types',
-    requiredPermissions: {
-      strategy: 'all',
-      resources: [{ resource: 'consumable-types', action: 'read' }],
-    },
+    requiredPermissions: withBasicPermissions([
+      { resource: 'consumable-types', action: 'read' },
+      { resource: 'customers', action: 'read' },
+    ]),
     actions: [
       {
         id: 'create',
@@ -1562,6 +1568,17 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
         },
       },
       {
+        id: 'bulk-assign',
+        label: 'Gán hàng loạt vật tư',
+        labelEn: 'Bulk assign consumables',
+        labelVi: 'Gán hàng loạt vật tư',
+        icon: 'Link2',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'consumables', action: 'create' }],
+        },
+      },
+      {
         id: 'view-consumable-type-detail',
         label: 'Xem chi tiết loại vật tư',
         icon: 'Eye',
@@ -1597,10 +1614,10 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
     labelVi: 'Chứng từ kho',
     icon: 'Package',
     route: '/system/warehouse-documents',
-    requiredPermissions: {
-      strategy: 'all',
-      resources: [{ resource: 'warehouse-documents', action: 'read' }],
-    },
+    requiredPermissions: withBasicPermissions([
+      { resource: 'warehouse-documents', action: 'read' },
+      { resource: 'customers', action: 'read' },
+    ]),
     actions: [
       {
         id: 'create',
@@ -1610,7 +1627,10 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
         icon: 'Plus',
         requiredPermissions: {
           strategy: 'all',
-          resources: [{ resource: 'warehouse-documents', action: 'create' }],
+          resources: [
+            { resource: 'warehouse-documents', action: 'create' },
+            { resource: 'consumable-types', action: 'read' },
+          ],
         },
       },
       {
@@ -1621,7 +1641,10 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
         icon: 'CheckCircle',
         requiredPermissions: {
           strategy: 'all',
-          resources: [{ resource: 'warehouse-documents.status', action: 'update' }],
+          resources: [
+            { resource: 'warehouse-documents.status', action: 'update' },
+            { resource: 'consumable-types', action: 'read' },
+          ],
         },
       },
       {
@@ -1632,7 +1655,10 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
         icon: 'XCircle',
         requiredPermissions: {
           strategy: 'all',
-          resources: [{ resource: 'warehouse-documents.cancel', action: 'update' }],
+          resources: [
+            { resource: 'warehouse-documents.cancel', action: 'update' },
+            { resource: 'consumable-types', action: 'read' },
+          ],
         },
       },
       {
@@ -1643,7 +1669,10 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
         icon: 'Eye',
         requiredPermissions: {
           strategy: 'all',
-          resources: [{ resource: 'warehouse-documents', action: 'read' }],
+          resources: [
+            { resource: 'warehouse-documents', action: 'read' },
+            { resource: 'consumable-types', action: 'read' },
+          ],
         },
       },
     ],
@@ -1657,13 +1686,10 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
     route: '/system/requests',
     description: 'Tổng hợp service request và purchase request',
     descriptionEn: 'Aggregate service requests and purchase requests',
-    requiredPermissions: {
-      strategy: 'all',
-      resources: [
-        { resource: 'service-requests', action: 'read' },
-        { resource: 'purchase-requests', action: 'read' },
-      ],
-    },
+    requiredPermissions: withBasicPermissions([
+      { resource: 'service-requests', action: 'read' },
+      { resource: 'purchase-requests', action: 'read' },
+    ]),
     actions: [
       {
         id: 'create',
@@ -2235,12 +2261,87 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
         },
       },
       {
-        id: 'delete-customer-detail',
-        label: 'Xóa khách hàng',
-        icon: 'Trash2',
+        id: 'invoice-create',
+        label: 'Tạo hóa đơn',
+        icon: 'Plus',
         requiredPermissions: {
           strategy: 'all',
-          resources: [{ resource: 'customers', action: 'delete' }],
+          resources: [{ resource: 'reports.invoices', action: 'create' }],
+        },
+      },
+      {
+        id: 'invoice-view',
+        label: 'Xem hóa đơn',
+        icon: 'Eye',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'reports.invoices', action: 'read' }],
+        },
+      },
+      {
+        id: 'device-update',
+        label: 'Cập nhật thiết bị',
+        icon: 'Edit',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'devices', action: 'update' }],
+        },
+      },
+      {
+        id: 'device-pricing-update',
+        label: 'Cập nhật giá thiết bị',
+        icon: 'DollarSign',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'devices.pricing', action: 'update' }],
+        },
+      },
+      {
+        id: 'device-pricing-view',
+        label: 'Xem giá thiết bị',
+        icon: 'Eye',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [
+            { resource: 'devices.pricing', action: 'read' },
+            { resource: 'devices.pricing.active', action: 'read' },
+          ],
+        },
+      },
+      {
+        id: 'device-contract-rent-view',
+        label: 'Xem giá thuê hợp đồng',
+        icon: 'Eye',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'devices.contract-monthly-rent', action: 'read' }],
+        },
+      },
+      {
+        id: 'device-contract-rent-update',
+        label: 'Cập nhật giá thuê hợp đồng',
+        icon: 'Edit',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'devices.contract-monthly-rent', action: 'update' }],
+        },
+      },
+      {
+        id: 'a4-equivalent-create',
+        label: 'Tạo A4 equivalent',
+        icon: 'Plus',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'reports.usage.a4-equivalent', action: 'create' }],
+        },
+      },
+      {
+        id: 'a4-equivalent-view',
+        label: 'Xem A4 equivalent',
+        icon: 'Eye',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'reports.usage.a4-equivalent', action: 'read' }],
         },
       },
     ],

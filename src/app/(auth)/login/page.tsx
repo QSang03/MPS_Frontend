@@ -61,6 +61,47 @@ export default function LoginPage() {
             // ignore
           }
         }
+        // Persist roleId to localStorage
+        if (typeof window !== 'undefined') {
+          try {
+            if (state.success.roleId) {
+              localStorage.setItem('mps_role_id', state.success.roleId)
+              console.log('[LoginPage] Set mps_role_id to localStorage:', state.success.roleId)
+            } else {
+              localStorage.removeItem('mps_role_id')
+              console.log('[LoginPage] Removed mps_role_id from localStorage (roleId is undefined)')
+            }
+          } catch {
+            // ignore
+          }
+        }
+        // Persist userId to localStorage
+        if (typeof window !== 'undefined' && state.success.userId) {
+          try {
+            localStorage.setItem('mps_user_id', state.success.userId)
+          } catch {
+            // ignore
+          }
+        }
+        // Persist customerId to localStorage
+        if (typeof window !== 'undefined' && state.success.customerId) {
+          try {
+            localStorage.setItem('mps_customer_id', state.success.customerId)
+          } catch {
+            // ignore
+          }
+        }
+        // Persist isDefaultCustomer to localStorage
+        if (
+          typeof window !== 'undefined' &&
+          typeof state.success.isDefaultCustomer !== 'undefined'
+        ) {
+          try {
+            localStorage.setItem('mps_is_default_customer', String(state.success.isDefaultCustomer))
+          } catch {
+            // ignore
+          }
+        }
       } catch {
         // ignore
       }

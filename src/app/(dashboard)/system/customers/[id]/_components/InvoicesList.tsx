@@ -21,6 +21,7 @@ import type { InvoiceListItem, InvoiceStatus } from '@/types/models/invoice'
 import { cn } from '@/lib/utils'
 import { getPublicUrl } from '@/lib/utils/publicUrl'
 import { useLocale } from '@/components/providers/LocaleProvider'
+import { ActionGuard } from '@/components/shared/ActionGuard'
 
 interface InvoicesListProps {
   customerId: string
@@ -282,35 +283,39 @@ export function InvoicesList({ customerId, contractId }: InvoicesListProps) {
                       </td>
                       <td className="px-4 py-4">
                         <div className="flex items-center justify-end gap-1.5">
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            className="h-8 w-8 p-0"
-                            onClick={() => {
-                              // TODO: Open invoice detail modal
-                              console.log('View invoice:', invoice.invoiceId)
-                            }}
-                            aria-label={t('invoices.action.view')}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          {invoice.pdfUrl && (
+                          <ActionGuard pageId="customers" actionId="invoice-view">
                             <Button
                               variant="secondary"
                               size="sm"
                               className="h-8 w-8 p-0"
                               onClick={() => {
-                                // Normalize the PDF URL to use NEXT_PUBLIC_API_URL
-                                const pdf = getPublicUrl(invoice.pdfUrl)
-                                if (pdf) {
-                                  window.open(pdf, '_blank')
-                                }
+                                // TODO: Open invoice detail modal
+                                console.log('View invoice:', invoice.invoiceId)
                               }}
-                              aria-label={t('invoices.action.download_pdf')}
+                              aria-label={t('invoices.action.view')}
                             >
-                              <Download className="h-4 w-4" />
+                              <Eye className="h-4 w-4" />
                             </Button>
-                          )}
+                          </ActionGuard>
+                          <ActionGuard pageId="customers" actionId="invoice-view">
+                            {invoice.pdfUrl && (
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                                onClick={() => {
+                                  // Normalize the PDF URL to use NEXT_PUBLIC_API_URL
+                                  const pdf = getPublicUrl(invoice.pdfUrl)
+                                  if (pdf) {
+                                    window.open(pdf, '_blank')
+                                  }
+                                }}
+                                aria-label={t('invoices.action.download_pdf')}
+                              >
+                                <Download className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </ActionGuard>
                         </div>
                       </td>
                     </motion.tr>

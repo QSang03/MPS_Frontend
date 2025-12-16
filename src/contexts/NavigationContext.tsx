@@ -9,6 +9,7 @@ import {
   type NavActionPayload,
   type NavItemPayload,
 } from '@/constants/navigation'
+import type { NavigationConfig } from '@/types/navigation-config'
 import Cookies from 'js-cookie'
 
 interface NavigationSubmenu {
@@ -162,45 +163,200 @@ export function NavigationProvider({ children }: { children: ReactNode }) {
       const roleId = getCurrentRoleId()
       const isActive = true
 
-      const isConfigMatchRole = (cfg: { roleId?: string | null }, currentRoleId: string | null) => {
-        if (currentRoleId) {
-          return cfg.roleId === currentRoleId
+      console.log('[NavigationContext] Loading configs for:', { customerId, roleId, isActive })
+
+      // Helper to check if config matches user's roleId
+      // STRICT MATCHING: Only accept configs that match exactly
+      const isRoleMatch = (cfgRoleId: string | null | undefined): boolean => {
+        if (roleId) {
+          // User has roleId: config must have same roleId or be null (generic config for all roles)
+          return cfgRoleId === roleId || cfgRoleId === null || cfgRoleId === undefined
+        } else {
+          // User has no roleId: only accept configs with roleId = null (generic configs)
+          // Reject configs with specific roleId as they don't match the user
+          return cfgRoleId === null || cfgRoleId === undefined
         }
-        // When user has no roleId, only accept configs that do NOT target a specific role
-        return !cfg.roleId
       }
 
-      // Try to get config for this customer first
-      let config = null
+      // Collect all matching configs with priority
+      const allConfigs: Array<{
+        config: NavigationConfig
+        priority: number
+      }> = []
+
+      // Get configs for this customer (if customerId exists)
       if (customerId) {
-        const result = await navigationConfigService.getAll({
+        console.log(
+          '[NavigationContext] Fetching customer-specific configs for customerId:',
+          customerId
+        )
+        const customerResult = await navigationConfigService.getAll({
           customerId,
           isActive,
-          roleId: roleId ?? undefined,
-          limit: 1,
+          limit: 100, // Get all configs for this customer
         })
-        if (result.data && result.data.length > 0) {
-          config = result.data.find((c) => isConfigMatchRole(c, roleId)) ?? null
+        console.log('[NavigationContext] Customer-specific result:', {
+          count: customerResult.data?.length || 0,
+          configs: customerResult.data?.map((c) => ({
+            name: c.name,
+            customerId: c.customerId,
+            roleId: c.roleId,
+          })),
+        })
+        if (customerResult.data && customerResult.data.length > 0) {
+          customerResult.data.forEach((cfg) => {
+            // CRITICAL: Only accept configs with customerId matching the user's customerId
+            // Reject configs that have a different customerId (they shouldn't be in customer-specific results)
+            if (cfg.customerId !== customerId) {
+              console.log(
+                '[NavigationContext] Customer config rejected - customerId mismatch:',
+                cfg.name,
+                {
+                  cfgCustomerId: cfg.customerId,
+                  userCustomerId: customerId,
+                }
+              )
+              return
+            }
+
+            const roleMatches = isRoleMatch(cfg.roleId)
+            console.log('[NavigationContext] Checking config:', {
+              name: cfg.name,
+              cfgRoleId: cfg.roleId,
+              userRoleId: roleId,
+              roleMatches,
+            })
+            // Only include configs that match roleId
+            if (!roleMatches) {
+              console.log('[NavigationContext] Config rejected - roleId mismatch:', cfg.name)
+              return
+            }
+
+            // Calculate priority: higher number = higher priority
+            let priority = 0
+            // customerId matches (already filtered by query) - highest priority
+            priority += 100
+            // roleId matches exactly
+            if (roleId && cfg.roleId === roleId) {
+              priority += 50 // customerId match + roleId match = 150 (highest)
+            } else if (!roleId && !cfg.roleId) {
+              // Both are null
+              priority += 50 // customerId match + no roleId = 150 (highest)
+            } else if (roleId && !cfg.roleId) {
+              // User has roleId but config doesn't target specific role (lower priority)
+              priority += 10 // customerId match + generic role = 110
+            } else if (!roleId && cfg.roleId) {
+              // User has no roleId but config has specific roleId (lowest priority for customer-specific)
+              priority += 5 // customerId match + config has roleId but user doesn't = 105
+            }
+            allConfigs.push({ config: cfg, priority })
+          })
         }
+      } else {
+        console.log('[NavigationContext] No customerId found, skipping customer-specific configs')
       }
 
-      // If no customer-specific config, try to get default config (customerId = null)
-      if (!config) {
-        const defaultResult = await navigationConfigService.getAll({
-          customerId: null,
-          isActive,
-          roleId: roleId ?? undefined,
-          limit: 1,
+      // Get default configs (customerId = null) - only if no customer-specific config found
+      // But we still need to check all to find the best match
+      console.log('[NavigationContext] Fetching default configs (customerId=null)')
+      const defaultResult = await navigationConfigService.getAll({
+        customerId: null,
+        isActive,
+        limit: 100, // Get all default configs
+      })
+      console.log('[NavigationContext] Default configs result:', {
+        count: defaultResult.data?.length || 0,
+        configs: defaultResult.data?.map((c) => ({
+          name: c.name,
+          customerId: c.customerId,
+          roleId: c.roleId,
+        })),
+      })
+      if (defaultResult.data && defaultResult.data.length > 0) {
+        defaultResult.data.forEach((cfg) => {
+          // CRITICAL: Only accept configs with customerId = null (true default configs)
+          // Reject configs that have a different customerId (they shouldn't be in default results)
+          if (cfg.customerId !== null && cfg.customerId !== undefined) {
+            console.log('[NavigationContext] Default config rejected - has customerId:', cfg.name, {
+              cfgCustomerId: cfg.customerId,
+              userCustomerId: customerId,
+            })
+            return
+          }
+
+          const roleMatches = isRoleMatch(cfg.roleId)
+          console.log('[NavigationContext] Checking default config:', {
+            name: cfg.name,
+            cfgRoleId: cfg.roleId,
+            userRoleId: roleId,
+            roleMatches,
+          })
+          // Only include configs that match roleId
+          if (!roleMatches) {
+            console.log('[NavigationContext] Default config rejected - roleId mismatch:', cfg.name)
+            return
+          }
+
+          // Calculate priority: higher number = higher priority
+          let priority = 0
+          // customerId is null (default config) - lower priority than customer-specific
+          priority += 0
+          // roleId matches exactly
+          if (roleId && cfg.roleId === roleId) {
+            priority += 30 // customerId null + roleId match = 30 (lower than customer-specific)
+          } else if (!roleId && !cfg.roleId) {
+            // Both are null
+            priority += 30 // customerId null + no roleId = 30
+          } else if (roleId && !cfg.roleId) {
+            // User has roleId but config doesn't target specific role (lower priority)
+            priority += 5 // customerId null + generic role = 5 (lowest)
+          } else if (!roleId && cfg.roleId) {
+            // User has no roleId but config has specific roleId (very low priority)
+            priority += 1 // customerId null + config has roleId but user doesn't = 1 (very low)
+          }
+          allConfigs.push({ config: cfg, priority })
         })
-        if (defaultResult.data && defaultResult.data.length > 0) {
-          config = defaultResult.data.find((c) => isConfigMatchRole(c, roleId)) ?? null
-        }
       }
 
-      // Return config items if found
-      if (config && config.config && Array.isArray(config.config.items)) {
-        console.log('[NavigationContext] Using config from backend:', config.name)
-        return config.config.items
+      console.log('[NavigationContext] Total matching configs found:', allConfigs.length)
+
+      // Sort by priority (descending) and select the highest priority config
+      if (allConfigs.length > 0) {
+        allConfigs.sort((a, b) => {
+          // Primary sort: by priority (descending)
+          if (b.priority !== a.priority) {
+            return b.priority - a.priority
+          }
+          // Secondary sort: prefer configs with customerId (if priority equal)
+          const aHasCustomerId = a.config.customerId ? 1 : 0
+          const bHasCustomerId = b.config.customerId ? 1 : 0
+          return bHasCustomerId - aHasCustomerId
+        })
+
+        // Log all configs for debugging
+        console.log(
+          '[NavigationContext] Available configs:',
+          allConfigs.map((c) => ({
+            name: c.config.name,
+            customerId: c.config.customerId,
+            roleId: c.config.roleId,
+            priority: c.priority,
+          }))
+        )
+
+        const selectedConfig = allConfigs[0]?.config
+
+        // Return config items if found
+        if (selectedConfig && selectedConfig.config && Array.isArray(selectedConfig.config.items)) {
+          console.log('[NavigationContext] Selected config from backend:', selectedConfig.name, {
+            customerId: selectedConfig.customerId,
+            roleId: selectedConfig.roleId,
+            priority: allConfigs[0]?.priority,
+          })
+          return selectedConfig.config.items
+        }
+      } else {
+        console.log('[NavigationContext] No matching configs found after filtering')
       }
     } catch (err) {
       console.error('[NavigationContext] Failed to load config from backend:', err)

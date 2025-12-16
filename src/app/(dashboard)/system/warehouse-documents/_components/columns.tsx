@@ -8,6 +8,7 @@ import { formatRelativeTime } from '@/lib/utils/formatters'
 import { WarehouseDocumentStatus } from '@/types/models/warehouse-document'
 import { WarehouseDocumentActions } from './WarehouseDocumentActions'
 import type { WarehouseDocumentType } from '@/types/models/warehouse-document'
+import { ActionGuard } from '@/components/shared/ActionGuard'
 
 const statusColorMap: Record<WarehouseDocumentStatus, string> = {
   ['DRAFT']: 'bg-amber-100 text-amber-800',
@@ -24,12 +25,18 @@ export const getColumns = (type?: WarehouseDocumentType, t?: (k: string) => stri
       accessorKey: 'documentNumber',
       header: t ? t('warehouse_document.field.document_number') : 'Số chứng từ',
       cell: ({ row }) => (
-        <Link
-          href={`/system/warehouse-documents/${row.original.id}`}
-          className="font-mono font-medium hover:underline"
+        <ActionGuard
+          pageId="warehouse-documents"
+          actionId="view-detail"
+          fallback={<span className="font-mono font-medium">{row.original.documentNumber}</span>}
         >
-          {row.original.documentNumber}
-        </Link>
+          <Link
+            href={`/system/warehouse-documents/${row.original.id}`}
+            className="font-mono font-medium hover:underline"
+          >
+            {row.original.documentNumber}
+          </Link>
+        </ActionGuard>
       ),
     },
     {

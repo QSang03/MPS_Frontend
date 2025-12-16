@@ -10,7 +10,6 @@ import {
   type ReactNode,
 } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useActionPermission } from '@/lib/hooks/useActionPermission'
 import type { Device } from '@/types/models/device'
 import type { Customer } from '@/types/models/customer'
 import type { ColumnDef } from '@tanstack/react-table'
@@ -75,7 +74,6 @@ import type { DeviceStatusValue } from '@/constants/status'
 type DeviceStats = { total: number; active: number; inactive: number }
 
 export default function DevicesPageClient() {
-  const { can } = useActionPermission('devices')
   const { t } = useLocale()
 
   // NOTE: This component uses a per-row check for session role via IIFE calls with useNavigation.
@@ -274,7 +272,7 @@ export default function DevicesPageClient() {
             </div>
           </div>
 
-          {can('filter-by-customer') && (
+          <ActionGuard pageId="devices" actionId="filter-by-customer" fallback={null}>
             <div>
               <Label className="mb-2 block text-sm font-medium text-gray-700">
                 {t('devices.filter.customer')}
@@ -299,7 +297,7 @@ export default function DevicesPageClient() {
                 </SelectContent>
               </Select>
             </div>
-          )}
+          </ActionGuard>
 
           <div>
             <Label className="mb-2 block text-sm font-medium text-gray-700">
@@ -404,17 +402,12 @@ function AssignPricingButton({
     return role === 'system-admin' || role === 'system_admin' || role === 'systemadmin'
   })()
 
-  // Hook to check action permission (from nav context)
-  const { can: canAction } = useActionPermission('devices')
-  const hasAssignPricingPermission = canAction('assign-pricing')
-
   // Debug: show assigned state in dev console
   if (process.env.NODE_ENV !== 'production') {
     console.debug('AssignPricingButton', {
       sessionRole,
       isCustomerManager,
       isSystemAdmin,
-      hasAssignPricingPermission,
     })
   }
 
@@ -427,9 +420,7 @@ function AssignPricingButton({
 
   return (
     <ActionGuard pageId="devices" actionId="assign-pricing">
-      {!isCustomerManager && hasAssignPricingPermission ? (
-        <DevicePricingModal device={device} compact onSaved={onSaved} />
-      ) : null}
+      {!isCustomerManager ? <DevicePricingModal device={device} compact onSaved={onSaved} /> : null}
     </ActionGuard>
   )
 }

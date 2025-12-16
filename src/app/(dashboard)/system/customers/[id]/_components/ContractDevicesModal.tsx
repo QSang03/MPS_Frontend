@@ -661,42 +661,44 @@ export default function ContractDevicesModal({
               </div>
 
               {/* Pricing Inputs */}
-              <div className="rounded-lg border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-4">
-                <div className="mb-3 flex items-center gap-2">
-                  <Info className="h-4 w-4 text-slate-600" />
-                  <h4 className="text-sm font-semibold text-slate-700">Thông tin giá</h4>
-                </div>
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                  <div>
-                    <label className="mb-1.5 block text-xs font-medium text-slate-600">
-                      Giá thuê/tháng (VNĐ)
-                    </label>
-                    <Input
-                      type="number"
-                      value={monthlyRent}
-                      onChange={(e) => setMonthlyRent(e.target.value)}
-                      className="h-10"
-                      placeholder="Ví dụ: 500000"
-                    />
+              <ActionGuard pageId="customers" actionId="device-contract-rent-update">
+                <div className="rounded-lg border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-4">
+                  <div className="mb-3 flex items-center gap-2">
+                    <Info className="h-4 w-4 text-slate-600" />
+                    <h4 className="text-sm font-semibold text-slate-700">Thông tin giá</h4>
                   </div>
-                  <div>
-                    <label className="mb-1.5 block text-xs font-medium text-slate-600">
-                      Chi phí vận hành/tháng (VNĐ)
-                    </label>
-                    <Input
-                      type="number"
-                      value={monthlyRentCogs}
-                      onChange={(e) => setMonthlyRentCogs(e.target.value)}
-                      className="h-10"
-                      placeholder="Ví dụ: 300000"
-                    />
+                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                    <div>
+                      <label className="mb-1.5 block text-xs font-medium text-slate-600">
+                        Giá thuê/tháng (VNĐ)
+                      </label>
+                      <Input
+                        type="number"
+                        value={monthlyRent}
+                        onChange={(e) => setMonthlyRent(e.target.value)}
+                        className="h-10"
+                        placeholder="Ví dụ: 500000"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1.5 block text-xs font-medium text-slate-600">
+                        Chi phí vận hành/tháng (VNĐ)
+                      </label>
+                      <Input
+                        type="number"
+                        value={monthlyRentCogs}
+                        onChange={(e) => setMonthlyRentCogs(e.target.value)}
+                        className="h-10"
+                        placeholder="Ví dụ: 300000"
+                      />
+                    </div>
                   </div>
+                  <p className="mt-2 text-xs text-slate-500">
+                    Để trống nếu không muốn cập nhật giá. Giá sẽ được áp dụng cho tất cả thiết bị đã
+                    chọn.
+                  </p>
                 </div>
-                <p className="mt-2 text-xs text-slate-500">
-                  Để trống nếu không muốn cập nhật giá. Giá sẽ được áp dụng cho tất cả thiết bị đã
-                  chọn.
-                </p>
-              </div>
+              </ActionGuard>
 
               {/* Selected Count */}
               {selectedToAttach.length > 0 && (
