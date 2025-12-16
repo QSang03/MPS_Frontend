@@ -63,6 +63,7 @@ export type LoginActionState = {
     isDefaultCustomer?: boolean
     customerName?: string
     roleName?: string
+    roleId?: string
   }
 } | null
 
@@ -110,6 +111,7 @@ export async function login(
 
     // Get role from backend (data.user.role.name)
     const roleName = data?.user?.role?.name || 'User'
+    const roleId = data?.user?.roleId || data?.user?.role?.id || null
     const role: UserRole = roleName // UserRole is now string type
     const isDefaultCustomer = data?.isDefaultCustomer || false
 
@@ -120,6 +122,7 @@ export async function login(
         localStorage.setItem('mps_is_default_customer', String(isDefaultCustomer))
         localStorage.setItem('mps_user_id', data?.user?.id || '')
         localStorage.setItem('mps_customer_id', data?.user?.customerId || '')
+        if (roleId) localStorage.setItem('mps_role_id', roleId)
 
         // Resolve customer name from the API payload without using `any`.
         const customerName = resolveCustomerName(data)
@@ -147,7 +150,7 @@ export async function login(
     // Return success state with flags for UI redirect
     return {
       success: {
-        message: 'Đăng nhập thành công!',
+        message: 'Login successful!',
         isDefaultPassword: data?.isDefaultPassword || false,
         isDefaultCustomer: data?.isDefaultCustomer || false,
         // include customer name so client can persist it when server action
@@ -155,13 +158,14 @@ export async function login(
         customerName: resolveCustomerName(data),
         // Include role name for client-side UI persistence
         roleName: String(roleName).toLowerCase(),
+        roleId: roleId || undefined,
       },
     }
   } catch (error: unknown) {
     console.error('Login error:', error)
 
     // Try to extract error message from API response
-    let errorMessage = 'Đăng nhập thất bại. Vui lòng kiểm tra thông tin đăng nhập.'
+    let errorMessage = 'Login failed. Please check your credentials.'
 
     if (error && typeof error === 'object' && 'response' in error) {
       const axiosError = error as {
@@ -173,13 +177,13 @@ export async function login(
         // Translate common error messages to Vietnamese
         const message = responseData.message
         if (message === 'Invalid credentials') {
-          errorMessage = 'Đăng nhập thất bại. Vui lòng kiểm tra thông tin đăng nhập.'
+          errorMessage = 'Login failed. Please check your credentials.'
         } else if (message === 'User not found') {
-          errorMessage = 'Không tìm thấy người dùng với email này'
+          errorMessage = 'User with this email not found'
         } else if (message === 'Account is disabled') {
-          errorMessage = 'Tài khoản đã bị vô hiệu hóa'
+          errorMessage = 'Account is disabled'
         } else if (message === 'Too many login attempts') {
-          errorMessage = 'Quá nhiều lần đăng nhập thất bại. Vui lòng thử lại sau'
+          errorMessage = 'Too many failed login attempts. Please try again later.'
         } else {
           errorMessage = message
         }

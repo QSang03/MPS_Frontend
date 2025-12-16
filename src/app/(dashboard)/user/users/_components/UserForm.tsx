@@ -32,6 +32,7 @@ import removeEmpty from '@/lib/utils/clean'
 import { usersClientService } from '@/lib/api/services/users-client.service'
 import { useRoleAttributeSchema } from '@/lib/hooks/useRoleAttributeSchema'
 import type { User, UserRole } from '@/types/users'
+import { useActionPermission } from '@/lib/hooks/useActionPermission'
 
 type BackendDetails = {
   errors?: Array<{ field?: string; message?: string }>
@@ -51,6 +52,11 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
   const router = useRouter()
   const queryClient = useQueryClient()
   const { t } = useLocale()
+
+  const { can } = useActionPermission('users')
+  const canCreate = can('create')
+  const canUpdate = can('update')
+  const canSubmit = mode === 'create' ? canCreate : canUpdate
 
   const form = useForm<UserFormData>({
     resolver: zodResolver(userSchema),
@@ -76,7 +82,7 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
   const { data: roles = [], isLoading: isLoadingRoles } = useQuery({
     queryKey: ['roles'],
     queryFn: async () => (await rolesClientService.getRoles({ page: 1, limit: 100 })).data,
-    enabled: true,
+    enabled: canSubmit,
   })
 
   // Watch selected role to get its schema (use useWatch to avoid incompatible-library warning)
@@ -263,6 +269,10 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
   })
 
   const onSubmit = (data: UserFormData) => {
+    if (!canSubmit) {
+      toast.error(t('common.no_permission'))
+      return
+    }
     // Validate attributes if schema exists
     if (attributeSchema) {
       const validation = validateAttributes(attributes)
@@ -287,6 +297,16 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
   }
 
   const isPending = createMutation.isPending || updateMutation.isPending
+  const isDisabled = isPending || !canSubmit
+
+  if (!canSubmit) {
+    return (
+      <div className="rounded-md border p-4 text-sm">
+        <div className="font-medium">{t('error.forbidden.title')}</div>
+        <div className="text-muted-foreground mt-1">{t('error.forbidden.description')}</div>
+      </div>
+    )
+  }
 
   return (
     <Form {...form}>
@@ -313,7 +333,7 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
                     type="email"
                     placeholder={t('user.email_placeholder')}
                     {...field}
-                    disabled={isPending}
+                    disabled={isDisabled}
                   />
                 </FormControl>
                 <FormDescription>{t('user.field.email_description')}</FormDescription>
@@ -332,7 +352,7 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
                 <Input
                   placeholder={t('user.placeholder.fullName')}
                   {...field}
-                  disabled={isPending}
+                  disabled={isDisabled}
                 />
               </FormControl>
               <FormDescription>{t('user.field.fullName_description')}</FormDescription>
@@ -381,16 +401,16 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
             values={attributes}
             onChange={setAttributes}
             errors={attributeErrors}
-            disabled={isPending}
+            disabled={isDisabled}
           />
         )}
 
         <div className="flex gap-4">
-          <Button type="submit" disabled={isPending}>
+          <Button type="submit" disabled={isDisabled}>
             {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {mode === 'create' ? t('user.button.create') : t('button.update')}
           </Button>
-          <Button type="button" variant="outline" onClick={onSuccess} disabled={isPending}>
+          <Button type="button" variant="outline" onClick={onSuccess} disabled={isDisabled}>
             {t('cancel')}
           </Button>
         </div>

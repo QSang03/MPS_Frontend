@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { useLocale } from '@/components/providers/LocaleProvider'
+import { ActionGuard } from '@/components/shared/ActionGuard'
+import { useActionPermission } from '@/lib/hooks/useActionPermission'
 import {
   Select,
   SelectContent,
@@ -49,6 +51,9 @@ type TimeFilter = { period?: string; from?: string; to?: string; year?: string }
 
 export default function UsagePage() {
   const { t, locale } = useLocale()
+  const { can } = useActionPermission('user-costs')
+  const canLoadUsageData = can('load-usage-data')
+  const canViewDeviceUsageHistory = can('view-device-usage-history')
 
   const formatNumber = (n?: number | null) => {
     if (n === undefined || n === null || Number.isNaN(Number(n))) return '-'
@@ -109,6 +114,7 @@ export default function UsagePage() {
   }, [mode, period, from, to, year])
 
   const loadUsage = useCallback(async () => {
+    if (!canLoadUsageData) return
     const params = buildTimeForMode()
     if (mode === 'period' && !params.period) {
       toast.warning('Vui lòng chọn tháng')
@@ -146,11 +152,12 @@ export default function UsagePage() {
     } finally {
       setLoading(false)
     }
-  }, [buildTimeForMode, mode])
+  }, [buildTimeForMode, canLoadUsageData, mode])
 
   useEffect(() => {
+    if (!canLoadUsageData) return
     void loadUsage()
-  }, [loadUsage])
+  }, [loadUsage, canLoadUsageData])
 
   return (
     <div className="min-h-screen from-slate-50 via-[var(--brand-50)] to-[var(--brand-50)] px-4 py-8 sm:px-6 lg:px-8 dark:from-slate-950 dark:via-[var(--brand-950)] dark:to-[var(--brand-950)]">
@@ -218,10 +225,12 @@ export default function UsagePage() {
                       onChange={(e) => setYear(e.target.value)}
                     />
                   )}
-                  <Button onClick={loadUsage} disabled={loading}>
-                    {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                    {t('page.user.costs.load_data')}
-                  </Button>
+                  <ActionGuard pageId="user-costs" actionId="load-usage-data">
+                    <Button onClick={loadUsage} disabled={loading}>
+                      {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                      {t('page.user.costs.load_data')}
+                    </Button>
+                  </ActionGuard>
                 </div>
               </Card>
             </div>
@@ -504,48 +513,57 @@ export default function UsagePage() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {usageData.devices.map((d) => (
-                          <TableRow
-                            key={d.deviceId}
-                            role="button"
-                            tabIndex={0}
-                            onClick={() => {
-                              setSelectedDevice(d)
-                              setDeviceDialogOpen(true)
-                            }}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' || e.key === ' ') {
-                                setSelectedDevice(d)
-                                setDeviceDialogOpen(true)
+                        {usageData.devices.map((d) => {
+                          const openDevice = () => {
+                            if (!canViewDeviceUsageHistory) return
+                            setSelectedDevice(d)
+                            setDeviceDialogOpen(true)
+                          }
+
+                          return (
+                            <TableRow
+                              key={d.deviceId}
+                              role={canViewDeviceUsageHistory ? 'button' : undefined}
+                              tabIndex={canViewDeviceUsageHistory ? 0 : -1}
+                              onClick={canViewDeviceUsageHistory ? openDevice : undefined}
+                              onKeyDown={(e) => {
+                                if (!canViewDeviceUsageHistory) return
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                  openDevice()
+                                }
+                              }}
+                              className={
+                                canViewDeviceUsageHistory
+                                  ? 'cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800'
+                                  : ''
                               }
-                            }}
-                            className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800"
-                          >
-                            <TableCell className="font-medium">
-                              <div className="flex flex-col">
-                                <span className="text-slate-900 dark:text-white">
-                                  {d.model ?? '—'}
-                                </span>
-                                <span className="text-xs text-slate-500">
-                                  {d.serialNumber ?? ''}
-                                </span>
-                              </div>
-                            </TableCell>
-                            <TableCell>{d.serialNumber ?? '—'}</TableCell>
-                            <TableCell className="text-right font-bold">
-                              {formatNumber(d.totalPages)}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              {formatNumber(d.totalBwPages)}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              {formatNumber(d.totalColorPages)}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              {formatNumber(d.totalPagesA4)}
-                            </TableCell>
-                          </TableRow>
-                        ))}
+                            >
+                              <TableCell className="font-medium">
+                                <div className="flex flex-col">
+                                  <span className="text-slate-900 dark:text-white">
+                                    {d.model ?? '—'}
+                                  </span>
+                                  <span className="text-xs text-slate-500">
+                                    {d.serialNumber ?? ''}
+                                  </span>
+                                </div>
+                              </TableCell>
+                              <TableCell>{d.serialNumber ?? '—'}</TableCell>
+                              <TableCell className="text-right font-bold">
+                                {formatNumber(d.totalPages)}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                {formatNumber(d.totalBwPages)}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                {formatNumber(d.totalColorPages)}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                {formatNumber(d.totalPagesA4)}
+                              </TableCell>
+                            </TableRow>
+                          )
+                        })}
                       </TableBody>
                     </Table>
 
@@ -566,23 +584,25 @@ export default function UsagePage() {
                           </DialogTitleUI>
                         </DialogHeader>
                         {selectedDevice && (
-                          <div className="mt-2">
-                            <DeviceUsageHistory
-                              deviceId={selectedDevice.deviceId}
-                              device={{
-                                id: selectedDevice.deviceId,
-                                serialNumber: selectedDevice.serialNumber,
-                                model: selectedDevice.model,
-                                // fill minimal required fields
-                                location: '',
-                                createdAt: new Date().toISOString(),
-                                updatedAt: new Date().toISOString(),
-                                totalPagesUsed: selectedDevice.totalPages,
-                                customerId: '',
-                                status: '',
-                              }}
-                            />
-                          </div>
+                          <ActionGuard pageId="user-costs" actionId="view-device-usage-history">
+                            <div className="mt-2">
+                              <DeviceUsageHistory
+                                deviceId={selectedDevice.deviceId}
+                                device={{
+                                  id: selectedDevice.deviceId,
+                                  serialNumber: selectedDevice.serialNumber,
+                                  model: selectedDevice.model,
+                                  // fill minimal required fields
+                                  location: '',
+                                  createdAt: new Date().toISOString(),
+                                  updatedAt: new Date().toISOString(),
+                                  totalPagesUsed: selectedDevice.totalPages,
+                                  customerId: '',
+                                  status: '',
+                                }}
+                              />
+                            </div>
+                          </ActionGuard>
                         )}
                       </DialogContent>
                     </Dialog>

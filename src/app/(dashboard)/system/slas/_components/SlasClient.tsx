@@ -56,8 +56,8 @@ import { slasClientService } from '@/lib/api/services/slas-client.service'
 import type { SLA } from '@/types/models/sla'
 import { Priority } from '@/constants/status'
 import { formatDateTime, formatRelativeTime } from '@/lib/utils/formatters'
-import { useActionPermission } from '@/lib/hooks/useActionPermission'
 import { useSlasQuery } from '@/lib/hooks/queries/useSlasQuery'
+import { ActionGuard } from '@/components/shared/ActionGuard'
 
 interface SlasClientProps {
   session?: Session | null
@@ -115,7 +115,6 @@ export default function SlasClient({ session }: SlasClientProps) {
   void session
   const queryClient = useQueryClient()
   const { t } = useLocale()
-  const { canCreate, canUpdate, canDelete } = useActionPermission('slas')
 
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 })
   const [searchTerm, setSearchTerm] = useState('')
@@ -299,7 +298,7 @@ export default function SlasClient({ session }: SlasClientProps) {
                 {t('common.back')}
               </Button>
             </Link>
-            {canCreate && (
+            <ActionGuard pageId="slas" actionId="create">
               <Button
                 onClick={handleCreateClick}
                 className="min-w-[120px] bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
@@ -307,7 +306,7 @@ export default function SlasClient({ session }: SlasClientProps) {
                 <Plus className="mr-2 h-4 w-4" />
                 {t('sla.create_new')}
               </Button>
-            )}
+            </ActionGuard>
           </>
         }
       />
@@ -361,14 +360,16 @@ export default function SlasClient({ session }: SlasClientProps) {
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium">{t('sla.filter.customer')}</label>
-            <CustomerSelect
-              value={customerFilter}
-              onChange={(value) => {
-                setCustomerFilter(value)
-                setPagination((prev) => ({ ...prev, pageIndex: 0 }))
-              }}
-              placeholder={t('sla.filter.customer_placeholder')}
-            />
+            <ActionGuard pageId="slas" actionId="filter-by-customer">
+              <CustomerSelect
+                value={customerFilter}
+                onChange={(value) => {
+                  setCustomerFilter(value)
+                  setPagination((prev) => ({ ...prev, pageIndex: 0 }))
+                }}
+                placeholder={t('sla.filter.customer_placeholder')}
+              />
+            </ActionGuard>
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium">{t('sla.filter.priority')}</label>
@@ -429,8 +430,6 @@ export default function SlasClient({ session }: SlasClientProps) {
             onSortingChange={setSorting}
             onStatsChange={setStats}
             renderColumnVisibilityMenu={setColumnVisibilityMenu}
-            canUpdate={canUpdate}
-            canDelete={canDelete}
             onEdit={handleEditClick}
             onDelete={handleDelete}
           />
@@ -463,8 +462,6 @@ interface SlasTableContentProps {
   onSortingChange: (sorting: { sortBy?: string; sortOrder?: 'asc' | 'desc' }) => void
   onStatsChange: (stats: SlaStats) => void
   renderColumnVisibilityMenu: (menu: ReactNode | null) => void
-  canUpdate: boolean
-  canDelete: boolean
   onEdit: (sla: SLA) => void
   onDelete: (id: string) => Promise<void> | void
 }
@@ -481,8 +478,6 @@ function SlasTableContent({
   onSortingChange,
   onStatsChange,
   renderColumnVisibilityMenu,
-  canUpdate,
-  canDelete,
   onEdit,
   onDelete,
 }: SlasTableContentProps) {
@@ -674,7 +669,7 @@ function SlasTableContent({
         ),
         cell: ({ row }) => (
           <div className="flex justify-end gap-2">
-            {canUpdate && (
+            <ActionGuard pageId="slas" actionId="update">
               <Button
                 variant="secondary"
                 size="sm"
@@ -684,8 +679,8 @@ function SlasTableContent({
               >
                 <Edit3 className="h-4 w-4" />
               </Button>
-            )}
-            {canDelete && (
+            </ActionGuard>
+            <ActionGuard pageId="slas" actionId="delete">
               <DeleteDialog
                 title={t('sla.delete.title', { name: row.original.name })}
                 description={t('sla.delete.description')}
@@ -703,12 +698,12 @@ function SlasTableContent({
                   </Button>
                 }
               />
-            )}
+            </ActionGuard>
           </div>
         ),
       },
     ],
-    [canDelete, canUpdate, onDelete, onEdit, pagination.pageIndex, pagination.pageSize, t]
+    [onDelete, onEdit, pagination.pageIndex, pagination.pageSize, t]
   )
 
   return (
@@ -774,13 +769,13 @@ class SlasTableErrorBoundary extends Component<{ children: ReactNode }, { error:
       const message =
         err?.response?.data?.message ||
         err?.message ||
-        'Có lỗi xảy ra khi tải danh sách SLA. Vui lòng thử lại.'
+        'An error occurred while loading SLA list. Please try again.'
 
       if (status === 401 || status === 403) {
         return (
           <Card>
             <CardHeader>
-              <CardTitle>{'Không có quyền truy cập SLA'}</CardTitle>
+              <CardTitle>{'No access to SLA'}</CardTitle>
               <CardDescription>{message}</CardDescription>
             </CardHeader>
           </Card>
@@ -790,7 +785,7 @@ class SlasTableErrorBoundary extends Component<{ children: ReactNode }, { error:
       return (
         <Card>
           <CardHeader>
-            <CardTitle>{'Lỗi tải SLA'}</CardTitle>
+            <CardTitle>{'Failed to load SLA'}</CardTitle>
             <CardDescription>{message}</CardDescription>
           </CardHeader>
         </Card>

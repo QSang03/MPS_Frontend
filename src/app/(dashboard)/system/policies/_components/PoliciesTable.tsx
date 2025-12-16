@@ -44,13 +44,10 @@ import {
 } from 'lucide-react'
 import { DeleteDialog } from '@/components/shared/DeleteDialog'
 import { PolicyFormModal } from './PolicyFormModal'
-import { useActionPermission } from '@/lib/hooks/useActionPermission'
 import { ActionGuard } from '@/components/shared/ActionGuard'
 import { useLocale } from '@/components/providers/LocaleProvider'
 
 export function PoliciesTable() {
-  // Permission checks
-  const { canUpdate, canDelete } = useActionPermission('policies')
   const { t, locale } = useLocale()
 
   const [search, setSearch] = useState('')
@@ -491,7 +488,7 @@ export function PoliciesTable() {
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
-                          {canUpdate && (
+                          <ActionGuard pageId="policies" actionId="update">
                             <Button
                               size="sm"
                               variant="secondary"
@@ -509,8 +506,8 @@ export function PoliciesTable() {
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
-                          )}
-                          {canDelete && (
+                          </ActionGuard>
+                          <ActionGuard pageId="policies" actionId="delete">
                             <DeleteDialog
                               title={t('policies.delete_confirm_title')}
                               description={t('policies.delete_confirmation', {
@@ -533,7 +530,7 @@ export function PoliciesTable() {
                                 </Button>
                               }
                             />
-                          )}
+                          </ActionGuard>
                         </div>
                       </TableCell>
                     </TableRow>

@@ -24,6 +24,7 @@ import { useLocale } from '@/components/providers/LocaleProvider'
 interface ContractsModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  canViewContractDetail?: boolean
 }
 
 interface Contract {
@@ -70,6 +71,7 @@ export function ContractsModal({
   open,
   onOpenChange,
   onOpenContractDetail,
+  canViewContractDetail = false,
 }: ContractsModalProps & { onOpenContractDetail?: (id: string) => void }) {
   const { t, locale } = useLocale()
   const [page, setPage] = useState(1)
@@ -196,10 +198,16 @@ export function ContractsModal({
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
-                className="group cursor-pointer rounded-lg border-2 border-gray-200 bg-white p-4 transition-all hover:border-[var(--brand-300)] hover:shadow-lg"
+                className={cn(
+                  'group rounded-lg border-2 border-gray-200 bg-white p-4 transition-all',
+                  canViewContractDetail
+                    ? 'cursor-pointer hover:border-[var(--brand-300)] hover:shadow-lg'
+                    : 'cursor-not-allowed opacity-60'
+                )}
                 onClick={() => {
-                  // delegate opening detail to parent so parent can close this modal
-                  if (typeof onOpenContractDetail === 'function') onOpenContractDetail(contract.id)
+                  if (canViewContractDetail && typeof onOpenContractDetail === 'function') {
+                    onOpenContractDetail(contract.id)
+                  }
                 }}
               >
                 <div className="flex items-start gap-4">

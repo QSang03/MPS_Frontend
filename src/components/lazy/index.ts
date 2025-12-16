@@ -66,7 +66,7 @@ export const ReportHistory = lazy(() =>
 // Dashboard components
 export const KPICards = lazy(() =>
   import('@/app/(dashboard)/system/_components/KPICards').then((m) => ({
-    default: m.KPICards,
+    default: m.default,
   }))
 )
 

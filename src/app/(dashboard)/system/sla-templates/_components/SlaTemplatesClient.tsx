@@ -15,7 +15,6 @@ import { SystemPageHeader } from '@/components/system/SystemPageHeader'
 import { SystemModalLayout } from '@/components/system/SystemModalLayout'
 import { FilterSection } from '@/components/system/FilterSection'
 import SlaTemplateFormDialog from './SlaTemplateFormDialog'
-import { useActionPermission } from '@/lib/hooks/useActionPermission'
 import { ActionGuard } from '@/components/shared/ActionGuard'
 import { slaTemplatesClientService } from '@/lib/api/services/sla-templates-client.service'
 import type { SLATemplate } from '@/types/models/sla-template'
@@ -47,7 +46,6 @@ export default function SlaTemplatesClient({ session }: { session?: Session | nu
   const [applyCustomerId, setApplyCustomerId] = useState<string | null>(null)
   const [applySkipExisting, setApplySkipExisting] = useState(false)
   const [applySubmitting, setApplySubmitting] = useState(false)
-  const { canCreate, canUpdate, canDelete, can: canAction } = useActionPermission('sla-templates')
 
   const { data, isLoading } = useQuery({
     queryKey: [
@@ -218,12 +216,12 @@ export default function SlaTemplatesClient({ session }: { session?: Session | nu
         subtitle={t('page.sla.subtitle')}
         icon={<Zap className="h-6 w-6" />}
         actions={
-          canCreate ? (
+          <ActionGuard pageId="sla-templates" actionId="create">
             <Button onClick={handleCreate}>
               <Plus className="mr-2 h-4 w-4" />
               {t('page.sla.create')}
             </Button>
-          ) : null
+          </ActionGuard>
         }
       />
 
@@ -237,6 +235,7 @@ export default function SlaTemplatesClient({ session }: { session?: Session | nu
             title={t('filters.general')}
             onReset={() => setSearch('')}
             activeFilters={activeFilters}
+            className="mb-4"
           >
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               <div className="space-y-2">
@@ -276,7 +275,7 @@ export default function SlaTemplatesClient({ session }: { session?: Session | nu
                     header: t('table.actions'),
                     cell: ({ row }) => (
                       <div className="flex items-center justify-end gap-2">
-                        {canUpdate && (
+                        <ActionGuard pageId="sla-templates" actionId="update">
                           <Button
                             size="sm"
                             variant="secondary"
@@ -285,9 +284,9 @@ export default function SlaTemplatesClient({ session }: { session?: Session | nu
                           >
                             <Edit3 className="h-4 w-4" />
                           </Button>
-                        )}
+                        </ActionGuard>
 
-                        {canDelete && (
+                        <ActionGuard pageId="sla-templates" actionId="delete">
                           <DeleteDialog
                             title={t('sla.delete_confirm_title')}
                             description={t('sla.delete_confirmation')}
@@ -300,22 +299,17 @@ export default function SlaTemplatesClient({ session }: { session?: Session | nu
                               </Button>
                             }
                           />
-                        )}
-                        {(canCreate || canAction('apply')) && (
-                          <ActionGuard
-                            pageId="sla-templates"
-                            actionId={canAction('apply') ? 'apply' : 'create'}
+                        </ActionGuard>
+                        <ActionGuard pageId="sla-templates" actionId="apply">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => openApplyDialog(row.original.id)}
+                            title={t('button.apply')}
                           >
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => openApplyDialog(row.original.id)}
-                              title={t('button.apply')}
-                            >
-                              <FileText className="h-4 w-4" />
-                            </Button>
-                          </ActionGuard>
-                        )}
+                            <FileText className="h-4 w-4" />
+                          </Button>
+                        </ActionGuard>
                       </div>
                     ),
                   },

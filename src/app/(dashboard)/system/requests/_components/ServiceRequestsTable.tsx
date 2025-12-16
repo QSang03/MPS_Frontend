@@ -36,6 +36,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { CustomerSelect } from '@/components/shared/CustomerSelect'
+import { ActionGuard } from '@/components/shared/ActionGuard'
 import { SearchableSelect } from '@/app/(dashboard)/system/policies/_components/RuleBuilder/SearchableSelect'
 import { formatDateTime } from '@/lib/utils/formatters'
 import { serviceRequestsClientService } from '@/lib/api/services/service-requests-client.service'
@@ -290,11 +291,13 @@ export function ServiceRequestsTable() {
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium">{t('requests.service.filter.customer')}</label>
-            <CustomerSelect
-              value={customerFilter}
-              onChange={(id) => setCustomerFilter(id)}
-              placeholder={t('requests.service.filter.customer_placeholder')}
-            />
+            <ActionGuard pageId="customer-requests" actionId="filter-by-customer">
+              <CustomerSelect
+                value={customerFilter}
+                onChange={(id) => setCustomerFilter(id)}
+                placeholder={t('requests.service.filter.customer_placeholder')}
+              />
+            </ActionGuard>
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium">{t('requests.service.filter.device')}</label>
@@ -308,14 +311,16 @@ export function ServiceRequestsTable() {
             <label className="text-sm font-medium">
               {t('requests.service.filter.assigned_to')}
             </label>
-            <SearchableSelect
-              field="user.id"
-              operator="$eq"
-              value={assignedToFilter}
-              onChange={(v) => setAssignedToFilter(String(v ?? ''))}
-              placeholder={t('requests.service.filter.assigned_to_placeholder')}
-              fetchParams={customerFilter ? { customerId: customerFilter } : undefined}
-            />
+            <ActionGuard pageId="customer-requests" actionId="filter-by-assigned-user">
+              <SearchableSelect
+                field="user.id"
+                operator="$eq"
+                value={assignedToFilter}
+                onChange={(v) => setAssignedToFilter(String(v ?? ''))}
+                placeholder={t('requests.service.filter.assigned_to_placeholder')}
+                fetchParams={customerFilter ? { customerId: customerFilter } : undefined}
+              />
+            </ActionGuard>
           </div>
         </div>
       </FilterSection>
@@ -689,62 +694,64 @@ function ServiceRequestsTableContent({
           }
 
           return (
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className={cn(
-                    'h-8 max-w-[140px] min-w-[120px] text-xs',
-                    isUpdating && 'cursor-not-allowed opacity-50'
-                  )}
-                  disabled={isUpdating}
-                >
-                  {isUpdating ? (
-                    <>
-                      <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                      <span>{t('service_request.updating')}</span>
-                    </>
-                  ) : (
-                    <>
-                      <StatusBadge
-                        serviceStatus={row.original.status}
-                        className="h-5 justify-center px-2 text-xs"
-                      />
-                      <span className="ml-1 text-xs">▼</span>
-                    </>
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-56 p-2" align="start">
-                <div className="space-y-1">
-                  <div className="px-2 py-1.5 text-xs font-semibold text-gray-700">
-                    {t('service_request.change_state')}
+            <ActionGuard pageId="customer-requests" actionId="update-service-status">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={cn(
+                      'h-8 max-w-[140px] min-w-[120px] text-xs',
+                      isUpdating && 'cursor-not-allowed opacity-50'
+                    )}
+                    disabled={isUpdating}
+                  >
+                    {isUpdating ? (
+                      <>
+                        <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                        <span>{t('service_request.updating')}</span>
+                      </>
+                    ) : (
+                      <>
+                        <StatusBadge
+                          serviceStatus={row.original.status}
+                          className="h-5 justify-center px-2 text-xs"
+                        />
+                        <span className="ml-1 text-xs">▼</span>
+                      </>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-56 p-2" align="start">
+                  <div className="space-y-1">
+                    <div className="px-2 py-1.5 text-xs font-semibold text-gray-700">
+                      {t('service_request.change_state')}
+                    </div>
+                    <div className="grid grid-cols-1 gap-1">
+                      {allowed.map((status) => {
+                        const disp = SERVICE_REQUEST_STATUS_DISPLAY[status]
+                        return (
+                          <Button
+                            key={status}
+                            variant="secondary"
+                            size="sm"
+                            className="h-auto justify-start py-2 text-xs"
+                            onClick={() => handleStatusChange(row.original.id, status)}
+                          >
+                            <div className="flex flex-col text-left">
+                              <span className="font-medium">
+                                → {disp.labelKey ? t(disp.labelKey) : disp.label}
+                              </span>
+                              <span className="text-muted-foreground text-[10px]">{status}</span>
+                            </div>
+                          </Button>
+                        )
+                      })}
+                    </div>
                   </div>
-                  <div className="grid grid-cols-1 gap-1">
-                    {allowed.map((status) => {
-                      const disp = SERVICE_REQUEST_STATUS_DISPLAY[status]
-                      return (
-                        <Button
-                          key={status}
-                          variant="secondary"
-                          size="sm"
-                          className="h-auto justify-start py-2 text-xs"
-                          onClick={() => handleStatusChange(row.original.id, status)}
-                        >
-                          <div className="flex flex-col text-left">
-                            <span className="font-medium">
-                              → {disp.labelKey ? t(disp.labelKey) : disp.label}
-                            </span>
-                            <span className="text-muted-foreground text-[10px]">{status}</span>
-                          </div>
-                        </Button>
-                      )
-                    })}
-                  </div>
-                </div>
-              </PopoverContent>
-            </Popover>
+                </PopoverContent>
+              </Popover>
+            </ActionGuard>
           )
         },
       },

@@ -22,6 +22,7 @@ interface CostBreakdownChartProps {
   isLoading?: boolean
   onViewDetails?: () => void
   onExport?: () => void
+  canExport?: boolean
   baseCurrency?: CurrencyDataDto | null
 }
 
@@ -39,6 +40,7 @@ export function CostBreakdownChart({
   isLoading,
   onViewDetails,
   onExport,
+  canExport = false,
   baseCurrency,
 }: CostBreakdownChartProps) {
   const { t } = useLocale()
@@ -229,15 +231,17 @@ export function CostBreakdownChart({
                 <ExternalLink className="mr-2 h-4 w-4" />
                 {t('dashboard.cost_breakdown.view_details')}
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex-1 border-gray-200 text-[#6B7280] hover:bg-white hover:text-[#1F2937]"
-                onClick={onExport}
-              >
-                <FileDown className="mr-2 h-4 w-4" />
-                {t('dashboard.cost_breakdown.export')}
-              </Button>
+              {canExport && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 border-gray-200 text-[#6B7280] hover:bg-white hover:text-[#1F2937]"
+                  onClick={onExport}
+                >
+                  <FileDown className="mr-2 h-4 w-4" />
+                  {t('dashboard.cost_breakdown.export')}
+                </Button>
+              )}
             </div>
           </div>
         </CardFooter>

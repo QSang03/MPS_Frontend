@@ -17,10 +17,12 @@ export const customersClientService = {
     data: Customer[]
     pagination?: ListPagination
   }> {
+    // Backend only accepts limit up to 100
+    const limit = params?.limit ? Math.min(params.limit, 100) : 100
     const response = await internalApiClient.get<ApiListResponse<Customer>>('/api/customers', {
       params: {
         page: params?.page ?? 1,
-        limit: params?.limit ?? 100,
+        limit,
         ...(params?.search ? { search: params.search } : {}),
         sortBy: params?.sortBy,
         sortOrder: params?.sortOrder,

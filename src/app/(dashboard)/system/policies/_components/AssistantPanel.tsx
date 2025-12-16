@@ -7,6 +7,7 @@ import { Loader2, ShieldCheck, ShieldAlert, AlertTriangle } from 'lucide-react'
 import type { PolicyAssistantAnalysis, Policy } from '@/types/policies'
 import { TestScenarioTable } from './TestScenarioTable'
 import { AIAssistantPanel } from './AIAssistantPanel'
+import { ActionGuard } from '@/components/shared/ActionGuard'
 import { useLocale } from '@/components/providers/LocaleProvider'
 
 interface AssistantPanelProps {
@@ -45,12 +46,14 @@ export function AssistantPanel({
             >
               {t('policies.assistant.tab.analysis')}
             </TabsTrigger>
-            <TabsTrigger
-              value="chat"
-              className="ring-offset-background focus-visible:ring-ring data-[state=active]:bg-background data-[state=active]:text-foreground inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium whitespace-nowrap transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm"
-            >
-              {t('policies.assistant.tab.chat')}
-            </TabsTrigger>
+            <ActionGuard pageId="policies" actionId="use-policy-assistant-chat">
+              <TabsTrigger
+                value="chat"
+                className="ring-offset-background focus-visible:ring-ring data-[state=active]:bg-background data-[state=active]:text-foreground inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium whitespace-nowrap transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm"
+              >
+                {t('policies.assistant.tab.chat')}
+              </TabsTrigger>
+            </ActionGuard>
           </TabsList>
         </div>
 
@@ -228,9 +231,11 @@ export function AssistantPanel({
           )}
         </TabsContent>
 
-        <TabsContent value="chat" className="flex-1">
-          <AIAssistantPanel onUseSuggestion={onUseSuggestion} onAutoAnalyze={onAnalyze} />
-        </TabsContent>
+        <ActionGuard pageId="policies" actionId="use-policy-assistant-chat">
+          <TabsContent value="chat" className="flex-1">
+            <AIAssistantPanel onUseSuggestion={onUseSuggestion} onAutoAnalyze={onAnalyze} />
+          </TabsContent>
+        </ActionGuard>
       </Tabs>
     </Card>
   )

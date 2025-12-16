@@ -59,12 +59,18 @@ import { Priority } from '@/constants/status'
 import slasClientService from '@/lib/api/services/slas-client.service'
 import { removeEmpty } from '@/lib/utils/clean'
 import { useLocale } from '@/components/providers/LocaleProvider'
+import { useActionPermission } from '@/lib/hooks/useActionPermission'
 
 interface ServiceRequestFormModalProps {
   customerId: string
   onSuccess?: () => void
   children?: ReactNode
   preselectedDeviceId?: string
+  /**
+   * Optional: enforce permissions using a navigation pageId.
+   * If omitted, the modal behaves as before (no permission gating).
+   */
+  permissionPageId?: string
 }
 
 // priorityConfig sẽ được tạo trong component để có thể sử dụng t()
@@ -77,11 +83,31 @@ export function ServiceRequestFormModal({
   onSuccess,
   children,
   preselectedDeviceId,
+  permissionPageId,
 }: ServiceRequestFormModalProps) {
   const { t } = useLocale()
   const [open, setOpen] = useState(false)
   const [mode, setMode] = useState<'SERVICE' | 'PURCHASE'>('SERVICE')
   const queryClient = useQueryClient()
+
+  const perm = useActionPermission(permissionPageId ?? '')
+  const enforcePermissions = Boolean(permissionPageId)
+  const canCreateServiceRequest = !enforcePermissions || perm.can('create-service-request')
+  const canCreatePurchaseRequest = !enforcePermissions || perm.can('create-purchase-request')
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (nextOpen && enforcePermissions && !canCreateServiceRequest && !canCreatePurchaseRequest) {
+      toast.error(t('error.forbidden.description'))
+      return
+    }
+
+    if (nextOpen) {
+      if (!canCreateServiceRequest && canCreatePurchaseRequest) setMode('PURCHASE')
+      else setMode('SERVICE')
+    }
+
+    setOpen(nextOpen)
+  }
 
   const priorityConfig = {
     [Priority.LOW]: {
@@ -126,6 +152,10 @@ export function ServiceRequestFormModal({
   const { data: devicesData, isLoading: devicesLoading } = useQuery({
     queryKey: ['devices', customerId],
     queryFn: () => devicesClientService.getAll({ page: 1, limit: 100, customerId }),
+    enabled:
+      open &&
+      !!customerId &&
+      (!enforcePermissions || canCreateServiceRequest || canCreatePurchaseRequest),
   })
 
   const form = useForm<ServiceRequestFormData>({
@@ -209,6 +239,17 @@ export function ServiceRequestFormModal({
   })
 
   const onSubmit = (data: ServiceRequestFormData) => {
+    if (enforcePermissions) {
+      if (mode === 'SERVICE' && !canCreateServiceRequest) {
+        toast.error(t('error.forbidden.description'))
+        return
+      }
+      if (mode === 'PURCHASE' && !canCreatePurchaseRequest) {
+        toast.error(t('error.forbidden.description'))
+        return
+      }
+    }
+
     if (mode === 'SERVICE') {
       // Guard: If creating a SERVICE request and there are no active SLAs available, block
       if (!slasLoading && availableSlas.length === 0) {
@@ -292,14 +333,22 @@ export function ServiceRequestFormModal({
     queryKey: ['compatible-consumables', deviceModelId],
     queryFn: () =>
       deviceModelId ? deviceModelsClientService.getCompatibleConsumables(deviceModelId) : [],
-    enabled: !!deviceModelId && mode === 'PURCHASE',
+    enabled:
+      open &&
+      !!deviceModelId &&
+      mode === 'PURCHASE' &&
+      (!enforcePermissions || canCreatePurchaseRequest),
   })
 
   // Fetch SLAs for this customer to show detailed priority options in SERVICE mode
   const { data: slasData, isLoading: slasLoading } = useQuery({
     queryKey: ['slas', { customerId }],
     queryFn: () => slasClientService.getAll({ page: 1, limit: 100, customerId }),
-    enabled: !!customerId && mode === 'SERVICE',
+    enabled:
+      open &&
+      !!customerId &&
+      mode === 'SERVICE' &&
+      (!enforcePermissions || canCreateServiceRequest),
   })
 
   // Only use active SLAs and derive available priorities
@@ -339,7 +388,7 @@ export function ServiceRequestFormModal({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       {children ? (
         <DialogTrigger asChild>{children}</DialogTrigger>
       ) : (
@@ -471,22 +520,24 @@ export function ServiceRequestFormModal({
                     <button
                       type="button"
                       onClick={() => setMode('SERVICE')}
+                      disabled={!canCreateServiceRequest}
                       className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
                         mode === 'SERVICE'
                           ? 'bg-white text-[var(--brand-600)] shadow dark:bg-slate-800 dark:text-[var(--brand-400)]'
                           : 'text-slate-600 hover:text-slate-800 dark:text-slate-300 dark:hover:text-white'
-                      }`}
+                      } disabled:cursor-not-allowed disabled:opacity-50`}
                     >
                       {t('user_service_request.mode.service')}
                     </button>
                     <button
                       type="button"
                       onClick={() => setMode('PURCHASE')}
+                      disabled={!canCreatePurchaseRequest}
                       className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
                         mode === 'PURCHASE'
                           ? 'bg-white text-[var(--brand-600)] shadow dark:bg-slate-800 dark:text-[var(--brand-400)]'
                           : 'text-slate-600 hover:text-slate-800 dark:text-slate-300 dark:hover:text-white'
-                      }`}
+                      } disabled:cursor-not-allowed disabled:opacity-50`}
                     >
                       {t('user_service_request.mode.purchase')}
                     </button>
@@ -833,6 +884,9 @@ export function ServiceRequestFormModal({
                       disabled={
                         createServiceMutation.isPending ||
                         createPurchaseMutation.isPending ||
+                        (enforcePermissions &&
+                          ((mode === 'SERVICE' && !canCreateServiceRequest) ||
+                            (mode === 'PURCHASE' && !canCreatePurchaseRequest))) ||
                         // If creating SERVICE and SLAs are loaded but none are available, disable
                         (mode === 'SERVICE' && !slasLoading && availableSlas.length === 0)
                       }

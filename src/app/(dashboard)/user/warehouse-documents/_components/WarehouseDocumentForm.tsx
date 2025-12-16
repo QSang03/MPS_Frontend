@@ -37,6 +37,7 @@ import ConsumableTypeSelect from '@/components/shared/ConsumableTypeSelect'
 import CustomerSelect from '@/components/shared/CustomerSelect'
 import { CurrencySelector } from '@/components/currency/CurrencySelector'
 import type { WarehouseDocument } from '@/types/models/warehouse-document'
+import { useActionPermission } from '@/lib/hooks/useActionPermission'
 
 interface Props {
   initialData?: WarehouseDocument | null
@@ -47,6 +48,8 @@ export function WarehouseDocumentForm({ initialData, onSuccess }: Props) {
   const router = useRouter()
   const queryClient = useQueryClient()
   const { t } = useLocale()
+  const { can } = useActionPermission('user-warehouse-documents')
+  const canCreate = can('create')
 
   const form = useForm<CreateWarehouseDocumentForm>({
     resolver: zodResolver(createWarehouseDocumentSchema),
@@ -106,6 +109,11 @@ export function WarehouseDocumentForm({ initialData, onSuccess }: Props) {
   })
 
   const onSubmit = (dto: CreateWarehouseDocumentForm) => {
+    if (!canCreate) {
+      toast.error(t('common.no_permission'))
+      return
+    }
+
     // Ràng buộc chặt chẽ: loại bỏ giá trị không phù hợp trước khi gửi
     const cleaned: CreateWarehouseDocumentForm = { ...dto }
 
@@ -122,6 +130,8 @@ export function WarehouseDocumentForm({ initialData, onSuccess }: Props) {
   }
 
   const isPending = createMutation.isPending
+
+  if (!canCreate) return null
 
   return (
     <Form {...form}>

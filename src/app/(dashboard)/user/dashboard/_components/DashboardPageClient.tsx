@@ -40,6 +40,7 @@ import {
   Cell,
 } from 'recharts'
 import { dashboardClientService } from '@/lib/api/services/dashboard-client.service'
+import { ActionGuard } from '@/components/shared/ActionGuard'
 import { getClientUserProfile } from '@/lib/auth/client-auth'
 import { ServiceRequestFormModal } from '@/app/(dashboard)/user/my-requests/_components/ServiceRequestFormModal'
 import MonthPicker from '@/components/ui/month-picker'
@@ -330,23 +331,31 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
         actions={
           <>
             <MonthPicker value={month} onChange={handleMonthChange} />
-            <Button
-              variant="secondary"
-              className="h-10 rounded-full border-white/30 bg-white/10 px-5 text-sm font-semibold backdrop-blur hover:bg-white/20"
-              onClick={() => router.push(ROUTES.USER_MY_DEVICES)}
-            >
-              <FileBarChart className="mr-2 h-4 w-4" />
-              {t('dashboard.actions.devices')}
-            </Button>
-            <ServiceRequestFormModal customerId={overview.customerId}>
+            <ActionGuard pageId="user-dashboard" actionId="view-devices">
               <Button
-                variant="default"
-                className="h-10 rounded-full border-0 px-5 text-sm font-semibold shadow-sm"
+                variant="secondary"
+                className="h-10 rounded-full border-white/30 bg-white/10 px-5 text-sm font-semibold backdrop-blur hover:bg-white/20"
+                onClick={() => router.push(ROUTES.USER_MY_DEVICES)}
               >
-                <Send className="mr-2 h-4 w-4" />
-                {t('dashboard.actions.send_request')}
+                <FileBarChart className="mr-2 h-4 w-4" />
+                {t('dashboard.actions.devices')}
               </Button>
-            </ServiceRequestFormModal>
+            </ActionGuard>
+
+            <ActionGuard pageId="user-dashboard" actionId="create-service-request">
+              <ServiceRequestFormModal
+                customerId={overview.customerId}
+                permissionPageId="user-dashboard"
+              >
+                <Button
+                  variant="default"
+                  className="h-10 rounded-full border-0 px-5 text-sm font-semibold shadow-sm"
+                >
+                  <Send className="mr-2 h-4 w-4" />
+                  {t('dashboard.actions.send_request')}
+                </Button>
+              </ServiceRequestFormModal>
+            </ActionGuard>
           </>
         }
       />

@@ -12,6 +12,7 @@ import { toast } from 'sonner'
 import { Loader2, Send, MessageSquare } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import { useLocale } from '../providers/LocaleProvider'
+import { ActionGuard } from '@/components/shared/ActionGuard'
 
 interface Props {
   purchaseRequestId: string
@@ -152,36 +153,38 @@ export default function PurchaseRequestMessages({ purchaseRequestId, currentUser
       </div>
 
       {/* Input Area */}
-      <div className="bg-background border-t p-3">
-        <div className="relative flex items-end gap-2">
-          <Textarea
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            onKeyDown={onKeyDown}
-            placeholder={t('purchase_request.messages.placeholder')}
-            className="bg-muted/30 max-h-[120px] min-h-[44px] resize-none py-3 pr-12 focus-visible:ring-1 focus-visible:ring-offset-0"
-            rows={1}
-          />
-          <Button
-            size="icon"
-            onClick={onSend}
-            disabled={createMessage.isPending || draft.trim().length === 0}
-            className={cn(
-              'absolute right-1 bottom-1 h-9 w-9 transition-all',
-              draft.trim().length > 0
-                ? 'bg-[var(--btn-primary)] hover:bg-[var(--btn-primary-hover)]'
-                : 'bg-slate-200 text-slate-400 hover:bg-slate-200 dark:bg-slate-800'
-            )}
-          >
-            {createMessage.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Send className="h-4 w-4" />
-            )}
-            <span className="sr-only">{t('common.send')}</span>
-          </Button>
+      <ActionGuard pageId="customer-requests" actionId="send-purchase-message">
+        <div className="bg-background border-t p-3">
+          <div className="relative flex items-end gap-2">
+            <Textarea
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={onKeyDown}
+              placeholder={t('purchase_request.messages.placeholder')}
+              className="bg-muted/30 max-h-[120px] min-h-[44px] resize-none py-3 pr-12 focus-visible:ring-1 focus-visible:ring-offset-0"
+              rows={1}
+            />
+            <Button
+              size="icon"
+              onClick={onSend}
+              disabled={createMessage.isPending || draft.trim().length === 0}
+              className={cn(
+                'absolute right-1 bottom-1 h-9 w-9 transition-all',
+                draft.trim().length > 0
+                  ? 'bg-[var(--btn-primary)] hover:bg-[var(--btn-primary-hover)]'
+                  : 'bg-slate-200 text-slate-400 hover:bg-slate-200 dark:bg-slate-800'
+              )}
+            >
+              {createMessage.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
+              <span className="sr-only">{t('common.send')}</span>
+            </Button>
+          </div>
         </div>
-      </div>
+      </ActionGuard>
     </div>
   )
 }

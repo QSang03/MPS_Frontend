@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { QueryProvider } from '@/components/providers/QueryProvider'
-import LocaleProvider from '@/components/providers/LocaleProvider'
 import { useLocale } from '@/components/providers/LocaleProvider'
 import Link from 'next/link'
 import {
@@ -132,7 +131,7 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
         }
       } catch (err) {
         console.error('Failed to load device (user view)', err)
-        setError('Không thể tải thông tin thiết bị')
+        setError(t('user_device_detail.error.load_device'))
       } finally {
         if (mounted) setLoading(false)
       }
@@ -142,7 +141,7 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
     return () => {
       mounted = false
     }
-  }, [deviceId])
+  }, [deviceId, t])
 
   useEffect(() => {
     const range = getDefaultDateRange()
@@ -366,7 +365,7 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
               className="gap-2"
             >
               <Edit className="h-4 w-4 text-black dark:text-white" />
-              Chỉnh sửa
+              {t('common.edit')}
             </Button>
           </ActionGuard>
         ) : (
@@ -1415,9 +1414,7 @@ export default function DeviceDetailClient(props: Props) {
   // provider is safe and avoids hook-time detection edge cases.
   return (
     <QueryProvider>
-      <LocaleProvider>
-        <DeviceDetailClientInner {...props} />
-      </LocaleProvider>
+      <DeviceDetailClientInner {...props} />
     </QueryProvider>
   )
 }

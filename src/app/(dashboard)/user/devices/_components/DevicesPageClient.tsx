@@ -44,6 +44,7 @@ import {
   Edit2,
   X,
   FileText,
+  Scan,
 } from 'lucide-react'
 import { ServiceRequestFormModal } from '@/app/(dashboard)/user/my-requests/_components/ServiceRequestFormModal'
 import { STATUS_DISPLAY, STATUS_ALLOWED_FOR_INACTIVE } from '@/constants/status'
@@ -102,7 +103,7 @@ export default function DevicesPageClient() {
   const [toggleTargetDevice, setToggleTargetDevice] = useState<Device | null>(null)
   const [toggleTargetActive, setToggleTargetActive] = useState<boolean>(false)
   const [a4ModalOpen, setA4ModalOpen] = useState(false)
-  const [a4ModalDevice] = useState<Device | null>(null)
+  const [a4ModalDevice, setA4ModalDevice] = useState<Device | null>(null)
   const [a4HistoryOpen, setA4HistoryOpen] = useState(false)
   const [a4HistoryDevice, setA4HistoryDevice] = useState<Device | null>(null)
   const router = useRouter()
@@ -470,7 +471,7 @@ export default function DevicesPageClient() {
         subtitle={t('page.user_devices.subtitle')}
         icon={<Monitor className="h-6 w-6 text-black dark:text-white" />}
         actions={
-          <ActionGuard pageId="devices" actionId="create">
+          <ActionGuard pageId="user-devices" actionId="create">
             <DeviceFormModal
               mode="create"
               onSaved={() => {
@@ -770,7 +771,7 @@ export default function DevicesPageClient() {
                             ) : (
                               <span className="text-muted-foreground">—</span>
                             )}
-                            <ActionGuard pageId="devices" actionId="assign-customer">
+                            <ActionGuard pageId="user-devices" actionId="assign-customer">
                               {!isHistoricalDevice(d) && (
                                 <>
                                   {(
@@ -959,46 +960,48 @@ export default function DevicesPageClient() {
                               )
                             })()}
 
-                            {d.isActive ? (
-                              <button
-                                type="button"
-                                aria-label="On"
-                                title={t('status.active')}
-                                className="inline-flex items-center justify-center rounded-full bg-[var(--color-success-500)] p-1.5 text-white hover:bg-[var(--color-success-600)]"
-                                onClick={() => {
-                                  setToggleTargetDevice(d)
-                                  setToggleTargetActive(false)
-                                  setToggleModalOpen(true)
-                                }}
-                              >
-                                <Power className="h-3 w-3" />
-                              </button>
-                            ) : (
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <button
-                                    type="button"
-                                    aria-label="Off"
-                                    title={t('devices.toggle_active.pause')}
-                                    className="inline-flex items-center justify-center rounded-full bg-gray-300 p-1.5 text-gray-700 hover:bg-gray-400"
-                                    onClick={() => {
-                                      setToggleTargetDevice(d)
-                                      setToggleTargetActive(true)
-                                      setToggleModalOpen(true)
-                                    }}
-                                  >
-                                    <Power className="h-3 w-3" />
-                                  </button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <div className="max-w-xs text-xs">
-                                    {t('user_devices.inactive_reason')}:{' '}
-                                    {(d as unknown as { inactiveReason?: string }).inactiveReason ||
-                                      '—'}
-                                  </div>
-                                </TooltipContent>
-                              </Tooltip>
-                            )}
+                            <ActionGuard pageId="user-devices" actionId="toggle-active">
+                              {d.isActive ? (
+                                <button
+                                  type="button"
+                                  aria-label="On"
+                                  title={t('status.active')}
+                                  className="inline-flex items-center justify-center rounded-full bg-[var(--color-success-500)] p-1.5 text-white hover:bg-[var(--color-success-600)]"
+                                  onClick={() => {
+                                    setToggleTargetDevice(d)
+                                    setToggleTargetActive(false)
+                                    setToggleModalOpen(true)
+                                  }}
+                                >
+                                  <Power className="h-3 w-3" />
+                                </button>
+                              ) : (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <button
+                                      type="button"
+                                      aria-label="Off"
+                                      title={t('devices.toggle_active.pause')}
+                                      className="inline-flex items-center justify-center rounded-full bg-gray-300 p-1.5 text-gray-700 hover:bg-gray-400"
+                                      onClick={() => {
+                                        setToggleTargetDevice(d)
+                                        setToggleTargetActive(true)
+                                        setToggleModalOpen(true)
+                                      }}
+                                    >
+                                      <Power className="h-3 w-3" />
+                                    </button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <div className="max-w-xs text-xs">
+                                      {t('user_devices.inactive_reason')}:{' '}
+                                      {(d as unknown as { inactiveReason?: string })
+                                        .inactiveReason || '—'}
+                                    </div>
+                                  </TooltipContent>
+                                </Tooltip>
+                              )}
+                            </ActionGuard>
                           </div>
                         </TableCell>
                       )}
@@ -1023,7 +1026,7 @@ export default function DevicesPageClient() {
                                 </TooltipContent>
                               </Tooltip>
                             ) : (
-                              <ActionGuard pageId="devices" actionId="update">
+                              <ActionGuard pageId="user-devices" actionId="update">
                                 <DeviceFormModal
                                   mode="edit"
                                   device={d}
@@ -1037,35 +1040,54 @@ export default function DevicesPageClient() {
                             )}
 
                             {/* Create Service Request for this device */}
-                            <ServiceRequestFormModal
-                              customerId={
-                                (d as unknown as { customer?: { id?: string } })?.customer?.id ?? ''
-                              }
-                              preselectedDeviceId={d.id}
-                              onSuccess={() => fetchDevices()}
-                            >
+                            <ActionGuard pageId="user-devices" actionId="create-service-request">
+                              <ServiceRequestFormModal
+                                customerId={
+                                  (d as unknown as { customer?: { id?: string } })?.customer?.id ??
+                                  ''
+                                }
+                                preselectedDeviceId={d.id}
+                                onSuccess={() => fetchDevices()}
+                              >
+                                <Button
+                                  variant="default"
+                                  size="sm"
+                                  className="h-8 w-8 p-0 text-black dark:text-white"
+                                  title={t('user_devices.action.create_request')}
+                                  disabled={isHistoricalDevice(d)}
+                                >
+                                  <FileText className="h-4 w-4 text-black dark:text-white" />
+                                </Button>
+                              </ServiceRequestFormModal>
+                            </ActionGuard>
+                            <ActionGuard pageId="user-devices" actionId="create-a4-snapshot">
                               <Button
                                 variant="default"
                                 size="sm"
                                 className="h-8 w-8 p-0 text-black dark:text-white"
-                                title={t('user_devices.action.create_request')}
-                                disabled={isHistoricalDevice(d)}
+                                title={t('user_devices.action.create_a4_snapshot')}
+                                onClick={() => {
+                                  setA4ModalDevice(d)
+                                  setA4ModalOpen(true)
+                                }}
+                              >
+                                <Scan className="h-4 w-4 text-black dark:text-white" />
+                              </Button>
+                            </ActionGuard>
+                            <ActionGuard pageId="user-devices" actionId="view-a4-history">
+                              <Button
+                                variant="default"
+                                size="sm"
+                                className="h-8 w-8 p-0 text-black dark:text-white"
+                                title={t('user_devices.action.view_a4_history')}
+                                onClick={() => {
+                                  setA4HistoryDevice(d)
+                                  setA4HistoryOpen(true)
+                                }}
                               >
                                 <FileText className="h-4 w-4 text-black dark:text-white" />
                               </Button>
-                            </ServiceRequestFormModal>
-                            <Button
-                              variant="default"
-                              size="sm"
-                              className="h-8 w-8 p-0 text-black dark:text-white"
-                              title={t('user_devices.action.view_a4_history')}
-                              onClick={() => {
-                                setA4HistoryDevice(d)
-                                setA4HistoryOpen(true)
-                              }}
-                            >
-                              <FileText className="h-4 w-4 text-black dark:text-white" />
-                            </Button>
+                            </ActionGuard>
                           </div>
                         </TableCell>
                       )}

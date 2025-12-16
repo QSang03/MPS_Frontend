@@ -24,6 +24,8 @@ import {
 } from 'recharts'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useLocale } from '@/components/providers/LocaleProvider'
+import { ActionGuard } from '@/components/shared/ActionGuard'
+import { useActionPermission } from '@/lib/hooks/useActionPermission'
 import {
   ChevronRight,
   DollarSign,
@@ -60,6 +62,9 @@ type TimeFilter = { period?: string; from?: string; to?: string; year?: string }
 
 export default function MonthlyCostsPage() {
   const { t } = useLocale()
+  const { can } = useActionPermission('user-costs')
+  const canLoadCostData = can('load-cost-data')
+  const canViewDeviceCostTrend = can('view-device-cost-trend')
   const labels = {
     totalCostAfterAdjustment:
       t('page.user.costs.monthly.kpi.total_cost_after_adjustment') || 'Tổng chi phí sau điều chỉnh',
@@ -243,6 +248,7 @@ export default function MonthlyCostsPage() {
   )
 
   const loadCost = useCallback(async () => {
+    if (!canLoadCostData) return
     const params = buildTimeForMode()
     if (mode === 'period' && !params.period) {
       toast.warning(t('analytics.warning.choose_month'))
@@ -266,7 +272,9 @@ export default function MonthlyCostsPage() {
         setBaseCurrency(res.data.baseCurrency || null)
 
         // Load aggregated cost series for range/year modes, or when period mode with selected device
-        if (
+        if (!canViewDeviceCostTrend) {
+          setAggregatedCostSeries(null)
+        } else if (
           (mode === 'range' || mode === 'year' || (mode === 'period' && selectedDeviceId)) &&
           res.data.devices.length > 0
         ) {
@@ -295,10 +303,19 @@ export default function MonthlyCostsPage() {
     } finally {
       setLoading(false)
     }
-  }, [buildTimeForMode, mode, loadAggregatedCostSeries, t, selectedDeviceId])
+  }, [
+    buildTimeForMode,
+    canLoadCostData,
+    canViewDeviceCostTrend,
+    mode,
+    loadAggregatedCostSeries,
+    t,
+    selectedDeviceId,
+  ])
 
   const loadDeviceCost = useCallback(
     async (deviceId: string) => {
+      if (!canViewDeviceCostTrend) return
       const params = buildTimeForMode()
       try {
         const res = await reportsAnalyticsService.getDeviceCost(deviceId, params)
@@ -324,20 +341,28 @@ export default function MonthlyCostsPage() {
         setDeviceCurrency(null)
       }
     },
-    [buildTimeForMode]
+    [buildTimeForMode, canViewDeviceCostTrend]
   )
 
   useEffect(() => {
+    if (!canLoadCostData) return
     void loadCost()
-  }, [loadCost])
+  }, [loadCost, canLoadCostData])
 
   useEffect(() => {
+    if (!canViewDeviceCostTrend && selectedDeviceId) {
+      setSelectedDeviceId(null)
+    }
+  }, [canViewDeviceCostTrend, selectedDeviceId])
+
+  useEffect(() => {
+    if (!canViewDeviceCostTrend) return
     if (selectedDeviceId) {
       void loadDeviceCost(selectedDeviceId)
     } else {
       setDeviceCostSeries(null)
     }
-  }, [selectedDeviceId, mode, period, from, to, year, loadDeviceCost])
+  }, [selectedDeviceId, mode, period, from, to, year, loadDeviceCost, canViewDeviceCostTrend])
 
   const displayCurrency =
     baseCurrency || costData?.baseCurrency || costData?.customer?.currency || null
@@ -426,10 +451,12 @@ export default function MonthlyCostsPage() {
                       onChange={(e) => setYear(e.target.value)}
                     />
                   )}
-                  <Button onClick={loadCost} disabled={loading}>
-                    {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                    {t('analytics.load_data')}
-                  </Button>
+                  <ActionGuard pageId="user-costs" actionId="load-cost-data">
+                    <Button onClick={loadCost} disabled={loading}>
+                      {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                      {t('analytics.load_data')}
+                    </Button>
+                  </ActionGuard>
                 </div>
               </Card>
             </div>
@@ -793,15 +820,17 @@ export default function MonthlyCostsPage() {
                                 {Number.isFinite(costShare) ? `${costShare.toFixed(1)}%` : '0%'}
                               </TableCell>
                               <TableCell>
-                                <Button
-                                  variant="outline"
-                                  size="icon"
-                                  onClick={() => {
-                                    setSelectedDeviceId(d.deviceId)
-                                  }}
-                                >
-                                  <ChevronRight className="h-4 w-4" />
-                                </Button>
+                                <ActionGuard pageId="user-costs" actionId="view-device-cost-trend">
+                                  <Button
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={() => {
+                                      setSelectedDeviceId(d.deviceId)
+                                    }}
+                                  >
+                                    <ChevronRight className="h-4 w-4" />
+                                  </Button>
+                                </ActionGuard>
                               </TableCell>
                             </TableRow>
                           )
@@ -842,32 +871,34 @@ export default function MonthlyCostsPage() {
                       <span className="text-sm text-slate-600 dark:text-slate-400">
                         {t('page.user.costs.monthly.trends.select_device')}:
                       </span>
-                      <Select
-                        value={selectedDeviceId || 'all'}
-                        onValueChange={(value) =>
-                          setSelectedDeviceId(value === 'all' ? null : value)
-                        }
-                      >
-                        <SelectTrigger className="w-48">
-                          <SelectValue
-                            placeholder={t(
-                              'page.user.costs.monthly.trends.select_device_placeholder'
-                            )}
-                          />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">
-                            ---{' '}
-                            {t('page.user.costs.monthly.trends.all_devices') || 'Tất cả thiết bị'}{' '}
-                            ---
-                          </SelectItem>
-                          {costData?.devices?.map((device) => (
-                            <SelectItem key={device.deviceId} value={device.deviceId}>
-                              {device.model} - {device.serialNumber}
+                      <ActionGuard pageId="user-costs" actionId="view-device-cost-trend">
+                        <Select
+                          value={selectedDeviceId || 'all'}
+                          onValueChange={(value) =>
+                            setSelectedDeviceId(value === 'all' ? null : value)
+                          }
+                        >
+                          <SelectTrigger className="w-48">
+                            <SelectValue
+                              placeholder={t(
+                                'page.user.costs.monthly.trends.select_device_placeholder'
+                              )}
+                            />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">
+                              ---{' '}
+                              {t('page.user.costs.monthly.trends.all_devices') || 'Tất cả thiết bị'}{' '}
+                              ---
                             </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                            {costData?.devices?.map((device) => (
+                              <SelectItem key={device.deviceId} value={device.deviceId}>
+                                {device.model} - {device.serialNumber}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </ActionGuard>
                     </div>
                   </div>
                 </CardHeader>

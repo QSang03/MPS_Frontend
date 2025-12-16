@@ -37,6 +37,7 @@ interface MonthlySeriesChartProps {
   isLoading?: boolean
   onViewDetails?: () => void
   onExport?: () => void
+  canExport?: boolean
   baseCurrency?: CurrencyDataDto | null
 }
 
@@ -103,6 +104,7 @@ export function MonthlySeriesChart({
   isLoading,
   onViewDetails,
   onExport,
+  canExport = false,
   baseCurrency,
 }: MonthlySeriesChartProps) {
   const { t, locale } = useLocale()
@@ -422,15 +424,17 @@ export function MonthlySeriesChart({
           )}
         </CardContent>
         <CardFooter className="flex justify-end gap-2 border-t border-gray-100 bg-gray-50/50 p-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onExport}
-            className="gap-2 border-gray-200 text-[var(--neutral-500)] hover:bg-white hover:text-[var(--foreground)]"
-          >
-            <FileText className="h-4 w-4" />
-            {t('dashboard.monthly_trend.export')}
-          </Button>
+          {canExport && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onExport}
+              className="gap-2 border-gray-200 text-[var(--neutral-500)] hover:bg-white hover:text-[var(--foreground)]"
+            >
+              <FileText className="h-4 w-4" />
+              {t('dashboard.monthly_trend.export')}
+            </Button>
+          )}
           <Button
             size="sm"
             onClick={onViewDetails}

@@ -21,6 +21,7 @@ import type { AdminOverviewData } from '@/types/dashboard'
 interface RecentActivityProps {
   onViewAll?: () => void
   recentRequests?: AdminOverviewData['recentRequests']
+  canViewAll?: boolean
 }
 
 // We'll construct recent activity from incoming props if provided
@@ -32,7 +33,11 @@ const iconMap = {
   notification: AlertCircle,
 }
 
-export function RecentActivity({ onViewAll, recentRequests }: RecentActivityProps) {
+export function RecentActivity({
+  onViewAll,
+  recentRequests,
+  canViewAll = false,
+}: RecentActivityProps) {
   const router = useRouter()
   const [isClient, setIsClient] = useState(false)
   const { t, locale } = useLocale()
@@ -158,10 +163,12 @@ export function RecentActivity({ onViewAll, recentRequests }: RecentActivityProp
         </div>
       </CardContent>
       <CardFooter className="flex justify-end border-t bg-gray-50/50 p-4">
-        <Button size="sm" onClick={onViewAll} className="gap-2">
-          {t('dashboard.recent_activity.view_all')}
-          <ArrowRight className="h-4 w-4" />
-        </Button>
+        {canViewAll && (
+          <Button size="sm" onClick={onViewAll} className="gap-2">
+            {t('dashboard.recent_activity.view_all')}
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+        )}
       </CardFooter>
     </Card>
   )

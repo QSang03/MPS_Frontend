@@ -45,7 +45,6 @@ import {
 import { formatDate } from '@/lib/utils/formatters'
 import { EditUserModal } from './EditUserModal'
 import { UserFormModal } from './UserFormModal'
-import { useActionPermission } from '@/lib/hooks/useActionPermission'
 import { ActionGuard } from '@/components/shared/ActionGuard'
 import { DeleteDialog } from '@/components/shared/DeleteDialog'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
@@ -59,7 +58,6 @@ import type { ColumnDef } from '@tanstack/react-table'
 type UsersStats = { total: number; active: number; inactive: number }
 
 export function UsersTable() {
-  const { canUpdate, canDelete } = useActionPermission('users')
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
@@ -320,42 +318,46 @@ export function UsersTable() {
 
           <div className="space-y-2">
             <label className="text-sm font-bold text-gray-700">🎭 {t('user.role')}</label>
-            <Select
-              value={filters.roleId}
-              onValueChange={(value) => setFilters((prev) => ({ ...prev, roleId: value }))}
-            >
-              <SelectTrigger className="w-full rounded-lg border-2 border-gray-200 transition-all focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)]">
-                <SelectValue placeholder={t('placeholder.select_role')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t('placeholder.all_roles')}</SelectItem>
-                {roles.map((role: UserRole) => (
-                  <SelectItem key={role.id} value={role.id}>
-                    {role.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <ActionGuard pageId="users" actionId="filter-by-role">
+              <Select
+                value={filters.roleId}
+                onValueChange={(value) => setFilters((prev) => ({ ...prev, roleId: value }))}
+              >
+                <SelectTrigger className="w-full rounded-lg border-2 border-gray-200 transition-all focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)]">
+                  <SelectValue placeholder={t('placeholder.select_role')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t('placeholder.all_roles')}</SelectItem>
+                  {roles.map((role: UserRole) => (
+                    <SelectItem key={role.id} value={role.id}>
+                      {role.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </ActionGuard>
           </div>
 
           <div className="space-y-2">
             <label className="text-sm font-bold text-gray-700">🏪 {t('customer')}</label>
-            <Select
-              value={filters.customerId}
-              onValueChange={(value) => setFilters((prev) => ({ ...prev, customerId: value }))}
-            >
-              <SelectTrigger className="w-full rounded-lg border-2 border-gray-200 transition-all focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)]">
-                <SelectValue placeholder={t('placeholder.select_customer_code')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t('placeholder.all_customers')}</SelectItem>
-                {availableCustomerCodes.map((code) => (
-                  <SelectItem key={code} value={customerCodeToId[code] || code}>
-                    {code}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <ActionGuard pageId="users" actionId="filter-by-customer">
+              <Select
+                value={filters.customerId}
+                onValueChange={(value) => setFilters((prev) => ({ ...prev, customerId: value }))}
+              >
+                <SelectTrigger className="w-full rounded-lg border-2 border-gray-200 transition-all focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)]">
+                  <SelectValue placeholder={t('placeholder.select_customer_code')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t('placeholder.all_customers')}</SelectItem>
+                  {availableCustomerCodes.map((code) => (
+                    <SelectItem key={code} value={customerCodeToId[code] || code}>
+                      {code}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </ActionGuard>
           </div>
 
           {/* create button moved to page header */}
@@ -379,8 +381,6 @@ export function UsersTable() {
           onResetPassword={handleResetPassword}
           onDeleteUser={handleDeleteUser}
           renderColumnVisibilityMenu={setColumnVisibilityMenu}
-          canUpdate={canUpdate}
-          canDelete={canDelete}
           searchInput={searchInput}
           filtersState={filters}
           sortVersion={sortVersion}
@@ -411,8 +411,6 @@ interface UsersTableContentProps {
   onResetPassword: (userId: string) => Promise<void>
   onDeleteUser: (userId: string) => Promise<void>
   renderColumnVisibilityMenu: (menu: ReactNode | null) => void
-  canUpdate: boolean
-  canDelete: boolean
   searchInput: string
   filtersState: UserFilters
   sortVersion?: number
@@ -430,8 +428,6 @@ function UsersTableContent({
   onResetPassword,
   onDeleteUser,
   renderColumnVisibilityMenu,
-  canUpdate,
-  canDelete,
   searchInput,
   filtersState,
   sortVersion,
@@ -591,7 +587,7 @@ function UsersTableContent({
         enableSorting: false,
         cell: ({ row }) => (
           <div className="flex items-center justify-end gap-1.5">
-            {canUpdate && (
+            <ActionGuard pageId="users" actionId="update">
               <Button
                 size="sm"
                 variant="secondary"
@@ -612,30 +608,32 @@ function UsersTableContent({
               >
                 <Edit className="h-4 w-4" />
               </Button>
-            )}
-            <ConfirmDialog
-              title={t('user.reset_password')}
-              description={t('user.reset_password_confirmation').replace(
-                '{email}',
-                row.original.email
-              )}
-              confirmLabel={t('confirm.reset')}
-              cancelLabel={t('cancel')}
-              onConfirm={async () => {
-                await onResetPassword(row.original.id)
-              }}
-              trigger={
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="transition-all hover:bg-[var(--brand-100)] hover:text-[var(--brand-700)]"
-                  title={t('user.reset_password')}
-                >
-                  <RotateCcw className="h-4 w-4" />
-                </Button>
-              }
-            />
-            {canDelete && (
+            </ActionGuard>
+            <ActionGuard pageId="users" actionId="reset-password">
+              <ConfirmDialog
+                title={t('user.reset_password')}
+                description={t('user.reset_password_confirmation').replace(
+                  '{email}',
+                  row.original.email
+                )}
+                confirmLabel={t('confirm.reset')}
+                cancelLabel={t('cancel')}
+                onConfirm={async () => {
+                  await onResetPassword(row.original.id)
+                }}
+                trigger={
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="transition-all hover:bg-[var(--brand-100)] hover:text-[var(--brand-700)]"
+                    title={t('user.reset_password')}
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                  </Button>
+                }
+              />
+            </ActionGuard>
+            <ActionGuard pageId="users" actionId="delete">
               <DeleteDialog
                 title={t('user.delete')}
                 description={t('user.delete_confirmation').replace('{email}', row.original.email)}
@@ -660,21 +658,12 @@ function UsersTableContent({
                   </Button>
                 }
               />
-            )}
+            </ActionGuard>
           </div>
         ),
       },
     ]
-  }, [
-    pagination.page,
-    pagination.limit,
-    canUpdate,
-    canDelete,
-    onEditUser,
-    onResetPassword,
-    onDeleteUser,
-    t,
-  ])
+  }, [pagination.page, pagination.limit, onEditUser, onResetPassword, onDeleteUser, t])
 
   return (
     <TableWrapper<User>

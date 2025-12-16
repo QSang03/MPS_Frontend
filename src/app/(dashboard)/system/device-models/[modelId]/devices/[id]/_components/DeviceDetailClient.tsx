@@ -73,7 +73,6 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { consumablesClientService } from '@/lib/api/services/consumables-client.service'
 import type { CreateConsumableDto } from '@/lib/api/services/consumables-client.service'
 import { ActionGuard } from '@/components/shared/ActionGuard'
-import { useActionPermission } from '@/lib/hooks/useActionPermission'
 import { cn } from '@/lib/utils'
 import { Separator } from '@/components/ui/separator'
 import { removeEmpty } from '@/lib/utils/clean'
@@ -175,8 +174,6 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
   const [activeTab, setActiveTab] = useState('overview')
   const router = useRouter()
   // NOTE: debugNav removed — temporary debug code cleaned up
-  const { can } = useActionPermission('devices')
-  const canShowWarningButton = can('set-consumable-warning') || can('edit-consumable')
 
   // Note: Use ActionGuard component for permission checks in JSX to keep behavior consistent.
 
@@ -817,393 +814,405 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
 
           {/* Usage Statistics */}
           {/* Monthly Usage Pages */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <BarChart3 className="h-5 w-5 text-[var(--brand-600)]" />
-                    {t('user_device_detail.monthly_usage.title')}
-                  </CardTitle>
-                  <CardDescription>
-                    {t('user_device_detail.monthly_usage.description')}
-                  </CardDescription>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => refetchMonthlyUsage()}
-                  className="gap-2"
-                  disabled={monthlyUsageLoading}
-                >
-                  <RefreshCw className={cn('h-4 w-4', monthlyUsageLoading && 'animate-spin')} />
-                  {t('button.refresh')}
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Date Range Filters */}
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
-                <div className="flex-1">
-                  <Label className="text-sm font-medium">
-                    {t('user_device_detail.monthly_usage.from_month')}
-                  </Label>
-                  <Input
-                    type="month"
-                    value={usageFromMonth}
-                    max={currentMonth}
-                    onChange={(e) => {
-                      const next = e.target.value
-                      const clamped = clampMonthRange(next, usageToMonth, 'from')
-                      // Ensure we don't allow months in the future
-                      const from =
-                        clamped.from && clamped.from > currentMonth ? currentMonth : clamped.from
-                      const to = clamped.to && clamped.to > currentMonth ? currentMonth : clamped.to
-                      setUsageFromMonth(from)
-                      setUsageToMonth(to)
-                    }}
-                    className="mt-1"
-                  />
-                </div>
-                <div className="flex-1">
-                  <Label className="text-sm font-medium">
-                    {t('user_device_detail.monthly_usage.to_month')}
-                  </Label>
-                  <Input
-                    type="month"
-                    value={usageToMonth}
-                    max={currentMonth}
-                    onChange={(e) => {
-                      const next = e.target.value
-                      const clamped = clampMonthRange(usageFromMonth, next, 'to')
-                      // Ensure we don't allow months in the future
-                      const from =
-                        clamped.from && clamped.from > currentMonth ? currentMonth : clamped.from
-                      const to = clamped.to && clamped.to > currentMonth ? currentMonth : clamped.to
-                      setUsageFromMonth(from)
-                      setUsageToMonth(to)
-                    }}
-                    className="mt-1"
-                  />
-                </div>
-                <Button
-                  onClick={() => {
-                    const range = getDefaultDateRange()
-                    setUsageFromMonth(range.fromMonth)
-                    setUsageToMonth(range.toMonth)
-                  }}
-                  variant="outline"
-                  size="sm"
-                  className="gap-2"
-                >
-                  {t('user_device_detail.monthly_usage.default')}
-                </Button>
-              </div>
-
-              {/* Monthly Usage Table */}
-              {monthlyUsageLoading ? (
-                <div className="flex items-center justify-center p-8">
-                  <Loader2 className="h-8 w-8 animate-spin text-[var(--brand-600)]" />
-                </div>
-              ) : monthlyUsageError ? (
-                <div className="text-muted-foreground p-8 text-center">
-                  <AlertCircle className="mx-auto mb-3 h-12 w-12 text-red-500 opacity-20" />
-                  <p className="text-red-600">{t('user_device_detail.error.load_data')}</p>
+          <ActionGuard pageId="devices" actionId="view-device-usage-reports">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <BarChart3 className="h-5 w-5 text-[var(--brand-600)]" />
+                      {t('user_device_detail.monthly_usage.title')}
+                    </CardTitle>
+                    <CardDescription>
+                      {t('user_device_detail.monthly_usage.description')}
+                    </CardDescription>
+                  </div>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => refetchMonthlyUsage()}
-                    className="mt-4"
+                    className="gap-2"
+                    disabled={monthlyUsageLoading}
                   >
-                    {t('button.retry')}
+                    <RefreshCw className={cn('h-4 w-4', monthlyUsageLoading && 'animate-spin')} />
+                    {t('button.refresh')}
                   </Button>
                 </div>
-              ) : !customerId ? (
-                <div className="text-muted-foreground p-8 text-center">
-                  <AlertCircle className="mx-auto mb-3 h-12 w-12 opacity-20" />
-                  <p>{t('system_device_detail.no_customer')}</p>
-                </div>
-              ) : monthlyUsageItems.length === 0 ? (
-                <div className="text-muted-foreground p-8 text-center">
-                  <BarChart3 className="mx-auto mb-3 h-12 w-12 opacity-20" />
-                  <p>{t('user_device_detail.monthly_usage.empty')}</p>
-                </div>
-              ) : (
-                <div className="overflow-hidden rounded-lg border">
-                  <div className="overflow-x-auto">
-                    <table className="w-full min-w-[900px]">
-                      <thead className="bg-gray-100">
-                        <tr>
-                          <th className="px-4 py-3 text-left text-xs font-semibold">
-                            {t('user_device_detail.table.month')}
-                          </th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold">
-                            {t('user_device_detail.table.model_name')}
-                          </th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold">
-                            {t('user_device_detail.table.serial')}
-                          </th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold">
-                            {t('user_device_detail.table.part_number')}
-                          </th>
-                          {showStandardColumns && (
-                            <>
-                              <th className="px-4 py-3 text-right text-xs font-semibold">
-                                {t('user_device_detail.table.bw_pages')}
-                              </th>
-                              <th className="px-4 py-3 text-right text-xs font-semibold">
-                                {t('user_device_detail.table.color_pages')}
-                              </th>
-                              <th className="px-4 py-3 text-right text-xs font-semibold">
-                                {t('user_device_detail.table.total_pages')}
-                              </th>
-                            </>
-                          )}
-                          {showA4Columns && (
-                            <>
-                              <th className="px-4 py-3 text-right text-xs font-semibold">
-                                {t('user_device_detail.table.bw_pages_a4')}
-                              </th>
-                              <th className="px-4 py-3 text-right text-xs font-semibold">
-                                {t('user_device_detail.table.color_pages_a4')}
-                              </th>
-                              <th className="px-4 py-3 text-right text-xs font-semibold">
-                                {t('user_device_detail.table.total_pages_a4')}
-                              </th>
-                            </>
-                          )}
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y">
-                        {monthlyUsageItems
-                          .sort((a, b) => b.month.localeCompare(a.month))
-                          .map((item, idx) => {
-                            // Format month: YYYY-MM -> Tháng MM/YYYY
-                            const [year, month] = item.month.split('-')
-                            const monthDisplay = t('user_device_detail.table.month_display', {
-                              month: month ?? '',
-                              year: year ?? '',
-                            })
-
-                            return (
-                              <tr
-                                key={`${item.deviceId}-${item.month}-${idx}`}
-                                className="hover:bg-muted/30 transition-colors"
-                              >
-                                <td className="px-4 py-3 font-medium">{monthDisplay}</td>
-                                <td className="px-4 py-3 text-sm">{item.deviceModelName || '-'}</td>
-                                <td className="px-4 py-3 font-mono text-sm">
-                                  {item.serialNumber || '-'}
-                                </td>
-                                <td className="px-4 py-3 text-sm">{item.partNumber || '-'}</td>
-                                {showStandardColumns && (
-                                  <td className="px-4 py-3 text-right text-sm">
-                                    {(() => {
-                                      const hasUsageData =
-                                        item &&
-                                        ((item.bwPages !== null && item.bwPages !== undefined) ||
-                                          (item.colorPages !== null &&
-                                            item.colorPages !== undefined) ||
-                                          (item.totalPages !== null &&
-                                            item.totalPages !== undefined))
-                                      const formatted = formatPageCount(item.bwPages, hasUsageData)
-                                      return formatted.tooltip ? (
-                                        <Tooltip>
-                                          <TooltipTrigger asChild>
-                                            <span>{formatted.display}</span>
-                                          </TooltipTrigger>
-                                          <TooltipContent sideOffset={4}>
-                                            {formatted.tooltip}
-                                          </TooltipContent>
-                                        </Tooltip>
-                                      ) : (
-                                        <span>{formatted.display}</span>
-                                      )
-                                    })()}
-                                  </td>
-                                )}
-                                {showStandardColumns && (
-                                  <td className="px-4 py-3 text-right text-sm">
-                                    {(() => {
-                                      const hasUsageData =
-                                        item &&
-                                        ((item.bwPages !== null && item.bwPages !== undefined) ||
-                                          (item.colorPages !== null &&
-                                            item.colorPages !== undefined) ||
-                                          (item.totalPages !== null &&
-                                            item.totalPages !== undefined))
-                                      const formatted = formatPageCount(
-                                        item.colorPages,
-                                        hasUsageData
-                                      )
-                                      return formatted.tooltip ? (
-                                        <Tooltip>
-                                          <TooltipTrigger asChild>
-                                            <span>{formatted.display}</span>
-                                          </TooltipTrigger>
-                                          <TooltipContent sideOffset={4}>
-                                            {formatted.tooltip}
-                                          </TooltipContent>
-                                        </Tooltip>
-                                      ) : (
-                                        <span>{formatted.display}</span>
-                                      )
-                                    })()}
-                                  </td>
-                                )}
-                                {showStandardColumns && (
-                                  <td className="px-4 py-3 text-right text-sm font-semibold">
-                                    {(() => {
-                                      const hasUsageData =
-                                        item &&
-                                        ((item.bwPages !== null && item.bwPages !== undefined) ||
-                                          (item.colorPages !== null &&
-                                            item.colorPages !== undefined) ||
-                                          (item.totalPages !== null &&
-                                            item.totalPages !== undefined))
-                                      const formatted = formatPageCount(
-                                        item.totalPages,
-                                        hasUsageData
-                                      )
-                                      return formatted.tooltip ? (
-                                        <Tooltip>
-                                          <TooltipTrigger asChild>
-                                            <span>{formatted.display}</span>
-                                          </TooltipTrigger>
-                                          <TooltipContent sideOffset={4}>
-                                            {formatted.tooltip}
-                                          </TooltipContent>
-                                        </Tooltip>
-                                      ) : (
-                                        <span>{formatted.display}</span>
-                                      )
-                                    })()}
-                                  </td>
-                                )}
-                                {(() => {
-                                  if (!showA4Columns) return null
-                                  return (
-                                    <td className="px-4 py-3 text-right text-sm text-[var(--brand-600)]">
-                                      {(() => {
-                                        const hasUsageData =
-                                          item &&
-                                          ((item.bwPagesA4 !== null &&
-                                            item.bwPagesA4 !== undefined) ||
-                                            (item.colorPagesA4 !== null &&
-                                              item.colorPagesA4 !== undefined) ||
-                                            (item.totalPagesA4 !== null &&
-                                              item.totalPagesA4 !== undefined) ||
-                                            (item.bwPages !== null && item.bwPages !== undefined) ||
-                                            (item.colorPages !== null &&
-                                              item.colorPages !== undefined) ||
-                                            (item.totalPages !== null &&
-                                              item.totalPages !== undefined))
-                                        const formatted = formatPageCount(
-                                          item.bwPagesA4,
-                                          hasUsageData
-                                        )
-                                        return formatted.tooltip ? (
-                                          <Tooltip>
-                                            <TooltipTrigger asChild>
-                                              <span>{formatted.display}</span>
-                                            </TooltipTrigger>
-                                            <TooltipContent sideOffset={4}>
-                                              {formatted.tooltip}
-                                            </TooltipContent>
-                                          </Tooltip>
-                                        ) : (
-                                          <span>{formatted.display}</span>
-                                        )
-                                      })()}
-                                    </td>
-                                  )
-                                })()}
-                                {(() => {
-                                  if (!showA4Columns) return null
-                                  return (
-                                    <td className="px-4 py-3 text-right text-sm text-[var(--brand-600)]">
-                                      {(() => {
-                                        const hasUsageData =
-                                          item &&
-                                          ((item.bwPagesA4 !== null &&
-                                            item.bwPagesA4 !== undefined) ||
-                                            (item.colorPagesA4 !== null &&
-                                              item.colorPagesA4 !== undefined) ||
-                                            (item.totalPagesA4 !== null &&
-                                              item.totalPagesA4 !== undefined) ||
-                                            (item.bwPages !== null && item.bwPages !== undefined) ||
-                                            (item.colorPages !== null &&
-                                              item.colorPages !== undefined) ||
-                                            (item.totalPages !== null &&
-                                              item.totalPages !== undefined))
-                                        const formatted = formatPageCount(
-                                          item.colorPagesA4,
-                                          hasUsageData
-                                        )
-                                        return formatted.tooltip ? (
-                                          <Tooltip>
-                                            <TooltipTrigger asChild>
-                                              <span>{formatted.display}</span>
-                                            </TooltipTrigger>
-                                            <TooltipContent sideOffset={4}>
-                                              {formatted.tooltip}
-                                            </TooltipContent>
-                                          </Tooltip>
-                                        ) : (
-                                          <span>{formatted.display}</span>
-                                        )
-                                      })()}
-                                    </td>
-                                  )
-                                })()}
-                                {(() => {
-                                  if (!showA4Columns) return null
-                                  return (
-                                    <td className="px-4 py-3 text-right text-sm font-semibold text-[var(--brand-600)]">
-                                      {(() => {
-                                        const hasUsageData =
-                                          item &&
-                                          ((item.bwPagesA4 !== null &&
-                                            item.bwPagesA4 !== undefined) ||
-                                            (item.colorPagesA4 !== null &&
-                                              item.colorPagesA4 !== undefined) ||
-                                            (item.totalPagesA4 !== null &&
-                                              item.totalPagesA4 !== undefined) ||
-                                            (item.bwPages !== null && item.bwPages !== undefined) ||
-                                            (item.colorPages !== null &&
-                                              item.colorPages !== undefined) ||
-                                            (item.totalPages !== null &&
-                                              item.totalPages !== undefined))
-                                        const formatted = formatPageCount(
-                                          item.totalPagesA4,
-                                          hasUsageData
-                                        )
-                                        return formatted.tooltip ? (
-                                          <Tooltip>
-                                            <TooltipTrigger asChild>
-                                              <span>{formatted.display}</span>
-                                            </TooltipTrigger>
-                                            <TooltipContent sideOffset={4}>
-                                              {formatted.tooltip}
-                                            </TooltipContent>
-                                          </Tooltip>
-                                        ) : (
-                                          <span>{formatted.display}</span>
-                                        )
-                                      })()}
-                                    </td>
-                                  )
-                                })()}
-                              </tr>
-                            )
-                          })}
-                      </tbody>
-                    </table>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Date Range Filters */}
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+                  <div className="flex-1">
+                    <Label className="text-sm font-medium">
+                      {t('user_device_detail.monthly_usage.from_month')}
+                    </Label>
+                    <Input
+                      type="month"
+                      value={usageFromMonth}
+                      max={currentMonth}
+                      onChange={(e) => {
+                        const next = e.target.value
+                        const clamped = clampMonthRange(next, usageToMonth, 'from')
+                        // Ensure we don't allow months in the future
+                        const from =
+                          clamped.from && clamped.from > currentMonth ? currentMonth : clamped.from
+                        const to =
+                          clamped.to && clamped.to > currentMonth ? currentMonth : clamped.to
+                        setUsageFromMonth(from)
+                        setUsageToMonth(to)
+                      }}
+                      className="mt-1"
+                    />
                   </div>
+                  <div className="flex-1">
+                    <Label className="text-sm font-medium">
+                      {t('user_device_detail.monthly_usage.to_month')}
+                    </Label>
+                    <Input
+                      type="month"
+                      value={usageToMonth}
+                      max={currentMonth}
+                      onChange={(e) => {
+                        const next = e.target.value
+                        const clamped = clampMonthRange(usageFromMonth, next, 'to')
+                        // Ensure we don't allow months in the future
+                        const from =
+                          clamped.from && clamped.from > currentMonth ? currentMonth : clamped.from
+                        const to =
+                          clamped.to && clamped.to > currentMonth ? currentMonth : clamped.to
+                        setUsageFromMonth(from)
+                        setUsageToMonth(to)
+                      }}
+                      className="mt-1"
+                    />
+                  </div>
+                  <Button
+                    onClick={() => {
+                      const range = getDefaultDateRange()
+                      setUsageFromMonth(range.fromMonth)
+                      setUsageToMonth(range.toMonth)
+                    }}
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                  >
+                    {t('user_device_detail.monthly_usage.default')}
+                  </Button>
                 </div>
-              )}
-            </CardContent>
-          </Card>
+
+                {/* Monthly Usage Table */}
+                {monthlyUsageLoading ? (
+                  <div className="flex items-center justify-center p-8">
+                    <Loader2 className="h-8 w-8 animate-spin text-[var(--brand-600)]" />
+                  </div>
+                ) : monthlyUsageError ? (
+                  <div className="text-muted-foreground p-8 text-center">
+                    <AlertCircle className="mx-auto mb-3 h-12 w-12 text-red-500 opacity-20" />
+                    <p className="text-red-600">{t('user_device_detail.error.load_data')}</p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => refetchMonthlyUsage()}
+                      className="mt-4"
+                    >
+                      {t('button.retry')}
+                    </Button>
+                  </div>
+                ) : !customerId ? (
+                  <div className="text-muted-foreground p-8 text-center">
+                    <AlertCircle className="mx-auto mb-3 h-12 w-12 opacity-20" />
+                    <p>{t('system_device_detail.no_customer')}</p>
+                  </div>
+                ) : monthlyUsageItems.length === 0 ? (
+                  <div className="text-muted-foreground p-8 text-center">
+                    <BarChart3 className="mx-auto mb-3 h-12 w-12 opacity-20" />
+                    <p>{t('user_device_detail.monthly_usage.empty')}</p>
+                  </div>
+                ) : (
+                  <div className="overflow-hidden rounded-lg border">
+                    <div className="overflow-x-auto">
+                      <table className="w-full min-w-[900px]">
+                        <thead className="bg-gray-100">
+                          <tr>
+                            <th className="px-4 py-3 text-left text-xs font-semibold">
+                              {t('user_device_detail.table.month')}
+                            </th>
+                            <th className="px-4 py-3 text-left text-xs font-semibold">
+                              {t('user_device_detail.table.model_name')}
+                            </th>
+                            <th className="px-4 py-3 text-left text-xs font-semibold">
+                              {t('user_device_detail.table.serial')}
+                            </th>
+                            <th className="px-4 py-3 text-left text-xs font-semibold">
+                              {t('user_device_detail.table.part_number')}
+                            </th>
+                            {showStandardColumns && (
+                              <>
+                                <th className="px-4 py-3 text-right text-xs font-semibold">
+                                  {t('user_device_detail.table.bw_pages')}
+                                </th>
+                                <th className="px-4 py-3 text-right text-xs font-semibold">
+                                  {t('user_device_detail.table.color_pages')}
+                                </th>
+                                <th className="px-4 py-3 text-right text-xs font-semibold">
+                                  {t('user_device_detail.table.total_pages')}
+                                </th>
+                              </>
+                            )}
+                            {showA4Columns && (
+                              <>
+                                <th className="px-4 py-3 text-right text-xs font-semibold">
+                                  {t('user_device_detail.table.bw_pages_a4')}
+                                </th>
+                                <th className="px-4 py-3 text-right text-xs font-semibold">
+                                  {t('user_device_detail.table.color_pages_a4')}
+                                </th>
+                                <th className="px-4 py-3 text-right text-xs font-semibold">
+                                  {t('user_device_detail.table.total_pages_a4')}
+                                </th>
+                              </>
+                            )}
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y">
+                          {monthlyUsageItems
+                            .sort((a, b) => b.month.localeCompare(a.month))
+                            .map((item, idx) => {
+                              // Format month: YYYY-MM -> Tháng MM/YYYY
+                              const [year, month] = item.month.split('-')
+                              const monthDisplay = t('user_device_detail.table.month_display', {
+                                month: month ?? '',
+                                year: year ?? '',
+                              })
+
+                              return (
+                                <tr
+                                  key={`${item.deviceId}-${item.month}-${idx}`}
+                                  className="hover:bg-muted/30 transition-colors"
+                                >
+                                  <td className="px-4 py-3 font-medium">{monthDisplay}</td>
+                                  <td className="px-4 py-3 text-sm">
+                                    {item.deviceModelName || '-'}
+                                  </td>
+                                  <td className="px-4 py-3 font-mono text-sm">
+                                    {item.serialNumber || '-'}
+                                  </td>
+                                  <td className="px-4 py-3 text-sm">{item.partNumber || '-'}</td>
+                                  {showStandardColumns && (
+                                    <td className="px-4 py-3 text-right text-sm">
+                                      {(() => {
+                                        const hasUsageData =
+                                          item &&
+                                          ((item.bwPages !== null && item.bwPages !== undefined) ||
+                                            (item.colorPages !== null &&
+                                              item.colorPages !== undefined) ||
+                                            (item.totalPages !== null &&
+                                              item.totalPages !== undefined))
+                                        const formatted = formatPageCount(
+                                          item.bwPages,
+                                          hasUsageData
+                                        )
+                                        return formatted.tooltip ? (
+                                          <Tooltip>
+                                            <TooltipTrigger asChild>
+                                              <span>{formatted.display}</span>
+                                            </TooltipTrigger>
+                                            <TooltipContent sideOffset={4}>
+                                              {formatted.tooltip}
+                                            </TooltipContent>
+                                          </Tooltip>
+                                        ) : (
+                                          <span>{formatted.display}</span>
+                                        )
+                                      })()}
+                                    </td>
+                                  )}
+                                  {showStandardColumns && (
+                                    <td className="px-4 py-3 text-right text-sm">
+                                      {(() => {
+                                        const hasUsageData =
+                                          item &&
+                                          ((item.bwPages !== null && item.bwPages !== undefined) ||
+                                            (item.colorPages !== null &&
+                                              item.colorPages !== undefined) ||
+                                            (item.totalPages !== null &&
+                                              item.totalPages !== undefined))
+                                        const formatted = formatPageCount(
+                                          item.colorPages,
+                                          hasUsageData
+                                        )
+                                        return formatted.tooltip ? (
+                                          <Tooltip>
+                                            <TooltipTrigger asChild>
+                                              <span>{formatted.display}</span>
+                                            </TooltipTrigger>
+                                            <TooltipContent sideOffset={4}>
+                                              {formatted.tooltip}
+                                            </TooltipContent>
+                                          </Tooltip>
+                                        ) : (
+                                          <span>{formatted.display}</span>
+                                        )
+                                      })()}
+                                    </td>
+                                  )}
+                                  {showStandardColumns && (
+                                    <td className="px-4 py-3 text-right text-sm font-semibold">
+                                      {(() => {
+                                        const hasUsageData =
+                                          item &&
+                                          ((item.bwPages !== null && item.bwPages !== undefined) ||
+                                            (item.colorPages !== null &&
+                                              item.colorPages !== undefined) ||
+                                            (item.totalPages !== null &&
+                                              item.totalPages !== undefined))
+                                        const formatted = formatPageCount(
+                                          item.totalPages,
+                                          hasUsageData
+                                        )
+                                        return formatted.tooltip ? (
+                                          <Tooltip>
+                                            <TooltipTrigger asChild>
+                                              <span>{formatted.display}</span>
+                                            </TooltipTrigger>
+                                            <TooltipContent sideOffset={4}>
+                                              {formatted.tooltip}
+                                            </TooltipContent>
+                                          </Tooltip>
+                                        ) : (
+                                          <span>{formatted.display}</span>
+                                        )
+                                      })()}
+                                    </td>
+                                  )}
+                                  {(() => {
+                                    if (!showA4Columns) return null
+                                    return (
+                                      <td className="px-4 py-3 text-right text-sm text-[var(--brand-600)]">
+                                        {(() => {
+                                          const hasUsageData =
+                                            item &&
+                                            ((item.bwPagesA4 !== null &&
+                                              item.bwPagesA4 !== undefined) ||
+                                              (item.colorPagesA4 !== null &&
+                                                item.colorPagesA4 !== undefined) ||
+                                              (item.totalPagesA4 !== null &&
+                                                item.totalPagesA4 !== undefined) ||
+                                              (item.bwPages !== null &&
+                                                item.bwPages !== undefined) ||
+                                              (item.colorPages !== null &&
+                                                item.colorPages !== undefined) ||
+                                              (item.totalPages !== null &&
+                                                item.totalPages !== undefined))
+                                          const formatted = formatPageCount(
+                                            item.bwPagesA4,
+                                            hasUsageData
+                                          )
+                                          return formatted.tooltip ? (
+                                            <Tooltip>
+                                              <TooltipTrigger asChild>
+                                                <span>{formatted.display}</span>
+                                              </TooltipTrigger>
+                                              <TooltipContent sideOffset={4}>
+                                                {formatted.tooltip}
+                                              </TooltipContent>
+                                            </Tooltip>
+                                          ) : (
+                                            <span>{formatted.display}</span>
+                                          )
+                                        })()}
+                                      </td>
+                                    )
+                                  })()}
+                                  {(() => {
+                                    if (!showA4Columns) return null
+                                    return (
+                                      <td className="px-4 py-3 text-right text-sm text-[var(--brand-600)]">
+                                        {(() => {
+                                          const hasUsageData =
+                                            item &&
+                                            ((item.bwPagesA4 !== null &&
+                                              item.bwPagesA4 !== undefined) ||
+                                              (item.colorPagesA4 !== null &&
+                                                item.colorPagesA4 !== undefined) ||
+                                              (item.totalPagesA4 !== null &&
+                                                item.totalPagesA4 !== undefined) ||
+                                              (item.bwPages !== null &&
+                                                item.bwPages !== undefined) ||
+                                              (item.colorPages !== null &&
+                                                item.colorPages !== undefined) ||
+                                              (item.totalPages !== null &&
+                                                item.totalPages !== undefined))
+                                          const formatted = formatPageCount(
+                                            item.colorPagesA4,
+                                            hasUsageData
+                                          )
+                                          return formatted.tooltip ? (
+                                            <Tooltip>
+                                              <TooltipTrigger asChild>
+                                                <span>{formatted.display}</span>
+                                              </TooltipTrigger>
+                                              <TooltipContent sideOffset={4}>
+                                                {formatted.tooltip}
+                                              </TooltipContent>
+                                            </Tooltip>
+                                          ) : (
+                                            <span>{formatted.display}</span>
+                                          )
+                                        })()}
+                                      </td>
+                                    )
+                                  })()}
+                                  {(() => {
+                                    if (!showA4Columns) return null
+                                    return (
+                                      <td className="px-4 py-3 text-right text-sm font-semibold text-[var(--brand-600)]">
+                                        {(() => {
+                                          const hasUsageData =
+                                            item &&
+                                            ((item.bwPagesA4 !== null &&
+                                              item.bwPagesA4 !== undefined) ||
+                                              (item.colorPagesA4 !== null &&
+                                                item.colorPagesA4 !== undefined) ||
+                                              (item.totalPagesA4 !== null &&
+                                                item.totalPagesA4 !== undefined) ||
+                                              (item.bwPages !== null &&
+                                                item.bwPages !== undefined) ||
+                                              (item.colorPages !== null &&
+                                                item.colorPages !== undefined) ||
+                                              (item.totalPages !== null &&
+                                                item.totalPages !== undefined))
+                                          const formatted = formatPageCount(
+                                            item.totalPagesA4,
+                                            hasUsageData
+                                          )
+                                          return formatted.tooltip ? (
+                                            <Tooltip>
+                                              <TooltipTrigger asChild>
+                                                <span>{formatted.display}</span>
+                                              </TooltipTrigger>
+                                              <TooltipContent sideOffset={4}>
+                                                {formatted.tooltip}
+                                              </TooltipContent>
+                                            </Tooltip>
+                                          ) : (
+                                            <span>{formatted.display}</span>
+                                          )
+                                        })()}
+                                      </td>
+                                    )
+                                  })()}
+                                </tr>
+                              )
+                            })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </ActionGuard>
         </TabsContent>
 
         {/* Consumables Tab */}
@@ -1221,7 +1230,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                   </CardDescription>
                 </div>
                 <div className="flex items-center gap-2">
-                  <ActionGuard pageId="consumables" actionId="create">
+                  <ActionGuard pageId="devices" actionId="create-consumable">
                     <Button
                       variant="outline"
                       size="sm"
@@ -1597,7 +1606,11 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                                     {t('common.edit')}
                                   </Button>
                                 </ActionGuard>
-                                {canShowWarningButton ? (
+                                <ActionGuard
+                                  pageId="devices"
+                                  actionId="set-consumable-warning"
+                                  fallback={null}
+                                >
                                   <Button
                                     size="sm"
                                     variant="secondary"
@@ -1615,7 +1628,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                                     <Bell className="h-4 w-4" />
                                     {t('system_device_detail.consumables.warning')}
                                   </Button>
-                                ) : null}
+                                </ActionGuard>
                               </div>
                             </td>
                           </tr>
@@ -1628,148 +1641,153 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <Sparkles className="h-5 w-5 text-amber-600" />
-                    {t('system_device_detail.compatible.title')}
-                  </CardTitle>
-                  <CardDescription className="mt-1">
-                    {t('system_device_detail.compatible.description')}
-                  </CardDescription>
+          <ActionGuard pageId="devices" actionId="view-compatible-consumables">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <Sparkles className="h-5 w-5 text-amber-600" />
+                      {t('system_device_detail.compatible.title')}
+                    </CardTitle>
+                    <CardDescription className="mt-1">
+                      {t('system_device_detail.compatible.description')}
+                    </CardDescription>
+                  </div>
                 </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {consumablesLoading ? (
-                <div className="flex items-center justify-center p-8">
-                  <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-                </div>
-              ) : compatibleConsumables.length === 0 ? (
-                <div className="text-muted-foreground p-8 text-center">
-                  <AlertCircle className="mx-auto mb-3 h-12 w-12 opacity-20" />
-                  <p>{t('system_device_detail.compatible.empty')}</p>
-                </div>
-              ) : (
-                <div className="overflow-hidden rounded-lg border">
-                  <table className="w-full">
-                    <thead className="bg-gradient-to-r from-amber-50 to-orange-50">
-                      <tr>
-                        <th className="px-4 py-3 text-left text-sm font-semibold">#</th>
-                        <th className="px-4 py-3 text-left text-sm font-semibold">
-                          {t('system_device_detail.compatible.table.name')}
-                        </th>
-                        <th className="px-4 py-3 text-left text-sm font-semibold">
-                          {t('system_device_detail.compatible.table.part')}
-                        </th>
-                        <th className="px-4 py-3 text-left text-sm font-semibold">
-                          {t('system_device_detail.compatible.table.machine_line')}
-                        </th>
-                        <th className="px-4 py-3 text-right text-sm font-semibold">
-                          {t('system_device_detail.compatible.table.customer_stock')}
-                        </th>
-                        <th className="px-4 py-3 text-right text-sm font-semibold">
-                          {t('system_device_detail.compatible.table.system_stock')}
-                        </th>
-                        <th className="px-4 py-3 text-right text-sm font-semibold">
-                          {t('system_device_detail.compatible.table.actions')}
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y">
-                      {compatibleConsumables.map((ct: CompatibleConsumable, idx: number) => {
-                        // ct can be either the raw wrapper { consumableType, stockItem, customerStockQuantity }
-                        // or a plain ConsumableType. Normalize to support both.
-                        const type =
-                          'consumableType' in ct && ct.consumableType
-                            ? ct.consumableType
-                            : (ct as ConsumableType)
-                        const partNumber = type?.partNumber ?? '-'
-                        // unit is unused in this view; omit to avoid lint warning
-                        const compatibleLine = type?.compatibleMachineLine ?? '-'
-                        const customerQty =
-                          'customerStockQuantity' in ct ? ct.customerStockQuantity : undefined
-                        const systemQty =
-                          'stockItem' in ct && ct.stockItem ? ct.stockItem.quantity : undefined
+              </CardHeader>
+              <CardContent>
+                {consumablesLoading ? (
+                  <div className="flex items-center justify-center p-8">
+                    <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                  </div>
+                ) : compatibleConsumables.length === 0 ? (
+                  <div className="text-muted-foreground p-8 text-center">
+                    <AlertCircle className="mx-auto mb-3 h-12 w-12 opacity-20" />
+                    <p>{t('system_device_detail.compatible.empty')}</p>
+                  </div>
+                ) : (
+                  <div className="overflow-hidden rounded-lg border">
+                    <table className="w-full">
+                      <thead className="bg-gradient-to-r from-amber-50 to-orange-50">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-sm font-semibold">#</th>
+                          <th className="px-4 py-3 text-left text-sm font-semibold">
+                            {t('system_device_detail.compatible.table.name')}
+                          </th>
+                          <th className="px-4 py-3 text-left text-sm font-semibold">
+                            {t('system_device_detail.compatible.table.part')}
+                          </th>
+                          <th className="px-4 py-3 text-left text-sm font-semibold">
+                            {t('system_device_detail.compatible.table.machine_line')}
+                          </th>
+                          <th className="px-4 py-3 text-right text-sm font-semibold">
+                            {t('system_device_detail.compatible.table.customer_stock')}
+                          </th>
+                          <th className="px-4 py-3 text-right text-sm font-semibold">
+                            {t('system_device_detail.compatible.table.system_stock')}
+                          </th>
+                          <th className="px-4 py-3 text-right text-sm font-semibold">
+                            {t('system_device_detail.compatible.table.actions')}
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {compatibleConsumables.map((ct: CompatibleConsumable, idx: number) => {
+                          // ct can be either the raw wrapper { consumableType, stockItem, customerStockQuantity }
+                          // or a plain ConsumableType. Normalize to support both.
+                          const type =
+                            'consumableType' in ct && ct.consumableType
+                              ? ct.consumableType
+                              : (ct as ConsumableType)
+                          const partNumber = type?.partNumber ?? '-'
+                          // unit is unused in this view; omit to avoid lint warning
+                          const compatibleLine = type?.compatibleMachineLine ?? '-'
+                          const customerQty =
+                            'customerStockQuantity' in ct ? ct.customerStockQuantity : undefined
+                          const systemQty =
+                            'stockItem' in ct && ct.stockItem ? ct.stockItem.quantity : undefined
 
-                        return (
-                          <tr key={type?.id ?? idx} className="hover:bg-muted/30 transition-colors">
-                            <td className="px-4 py-3 text-sm">{idx + 1}</td>
-                            <td className="px-4 py-3 font-medium">{type?.name || '—'}</td>
-                            <td className="px-4 py-3">
-                              <code className="rounded bg-gray-100 px-2 py-1 text-sm">
-                                {partNumber}
-                              </code>
-                            </td>
-                            <td className="text-muted-foreground px-4 py-3 text-sm">
-                              {compatibleLine}
-                            </td>
+                          return (
+                            <tr
+                              key={type?.id ?? idx}
+                              className="hover:bg-muted/30 transition-colors"
+                            >
+                              <td className="px-4 py-3 text-sm">{idx + 1}</td>
+                              <td className="px-4 py-3 font-medium">{type?.name || '—'}</td>
+                              <td className="px-4 py-3">
+                                <code className="rounded bg-gray-100 px-2 py-1 text-sm">
+                                  {partNumber}
+                                </code>
+                              </td>
+                              <td className="text-muted-foreground px-4 py-3 text-sm">
+                                {compatibleLine}
+                              </td>
 
-                            <td className="px-4 py-3 text-right text-sm">
-                              {customerQty !== null && customerQty !== undefined
-                                ? String(customerQty)
-                                : '—'}
-                            </td>
-                            <td className="px-4 py-3 text-right text-sm">
-                              {systemQty !== null && systemQty !== undefined
-                                ? String(systemQty)
-                                : '—'}
-                            </td>
-                            <td className="px-4 py-3 text-right">
-                              {Boolean(device?.isActive) ? (
-                                <ActionGuard pageId="devices" actionId="create-consumable">
-                                  <Button
-                                    size="sm"
-                                    onClick={() => {
-                                      setSelectedConsumableType(type)
-                                      setSerialNumber('')
-                                      setBatchNumber('')
-                                      setCapacity('')
-                                      setRemaining('')
-                                      setCreateInstalledAt(null)
-                                      setCreateInstalledAtInput('')
-                                      // removed createInstalledAtError clearing
-                                      setCreateActualPagesPrinted('')
-                                      setCreatePrice('')
-                                      setShowCreateConsumable(true)
-                                    }}
-                                    className="gap-2"
-                                  >
-                                    <Plus className="h-4 w-4" />
-                                    {t('common.add')}
-                                  </Button>
-                                </ActionGuard>
-                              ) : (
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <div>
-                                      <Button size="sm" disabled className="gap-2">
-                                        <Plus className="h-4 w-4" />
-                                        {t('common.add')}
-                                      </Button>
-                                    </div>
-                                  </TooltipTrigger>
-                                  <TooltipContent sideOffset={4}>
-                                    {t('user_device_detail.inactive_reason', {
-                                      reason:
-                                        device?.inactiveReason ??
-                                        t('user_device_detail.reason_unknown'),
-                                    })}
-                                  </TooltipContent>
-                                </Tooltip>
-                              )}
-                            </td>
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                              <td className="px-4 py-3 text-right text-sm">
+                                {customerQty !== null && customerQty !== undefined
+                                  ? String(customerQty)
+                                  : '—'}
+                              </td>
+                              <td className="px-4 py-3 text-right text-sm">
+                                {systemQty !== null && systemQty !== undefined
+                                  ? String(systemQty)
+                                  : '—'}
+                              </td>
+                              <td className="px-4 py-3 text-right">
+                                {Boolean(device?.isActive) ? (
+                                  <ActionGuard pageId="devices" actionId="create-consumable">
+                                    <Button
+                                      size="sm"
+                                      onClick={() => {
+                                        setSelectedConsumableType(type)
+                                        setSerialNumber('')
+                                        setBatchNumber('')
+                                        setCapacity('')
+                                        setRemaining('')
+                                        setCreateInstalledAt(null)
+                                        setCreateInstalledAtInput('')
+                                        // removed createInstalledAtError clearing
+                                        setCreateActualPagesPrinted('')
+                                        setCreatePrice('')
+                                        setShowCreateConsumable(true)
+                                      }}
+                                      className="gap-2"
+                                    >
+                                      <Plus className="h-4 w-4" />
+                                      {t('common.add')}
+                                    </Button>
+                                  </ActionGuard>
+                                ) : (
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <div>
+                                        <Button size="sm" disabled className="gap-2">
+                                          <Plus className="h-4 w-4" />
+                                          {t('common.add')}
+                                        </Button>
+                                      </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent sideOffset={4}>
+                                      {t('user_device_detail.inactive_reason', {
+                                        reason:
+                                          device?.inactiveReason ??
+                                          t('user_device_detail.reason_unknown'),
+                                      })}
+                                    </TooltipContent>
+                                  </Tooltip>
+                                )}
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </ActionGuard>
         </TabsContent>
 
         {/* Maintenance Tab */}

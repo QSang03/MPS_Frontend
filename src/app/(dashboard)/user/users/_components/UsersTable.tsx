@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, startTransition } from 'react'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { usersClientService } from '@/lib/api/services/users-client.service'
@@ -63,8 +63,13 @@ import { StatusBadge } from '@/components/ui/StatusBadge'
 export function UsersTable() {
   const { t } = useLocale()
   const { can } = useActionPermission('users')
+  const canReadUsers = can('read')
+  const canCreate = can('create')
   const canUpdate = can('update')
   const canDelete = can('delete')
+  const canResetPassword = can('reset-password')
+  const canFilterByRole = can('filter-by-role')
+  const canFilterByCustomer = can('filter-by-customer')
 
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -109,17 +114,18 @@ export function UsersTable() {
         page: pagination.page,
         limit: pagination.limit,
         search: filters.search,
-        roleId: filters.roleId !== 'all' ? filters.roleId : undefined,
+        roleId: canFilterByRole && filters.roleId !== 'all' ? filters.roleId : undefined,
         departmentId: filters.departmentId !== 'all' ? filters.departmentId : undefined,
-        customerId: filters.customerId !== 'all' ? filters.customerId : undefined,
+        customerId:
+          canFilterByCustomer && filters.customerId !== 'all' ? filters.customerId : undefined,
       }),
+    enabled: canReadUsers,
   })
 
-  const rolesPerm = useActionPermission('roles')
-  const customersPerm = useActionPermission('customers')
-
-  const canReadRoles = rolesPerm.can('read')
-  const canReadCustomers = customersPerm.can('read')
+  // Important: user-scoped navigation may not have separate `roles`/`customers` pages.
+  // Gate auxiliary API calls using the current page's action permissions.
+  const canReadRoles = canFilterByRole
+  const canReadCustomers = canFilterByCustomer
 
   const { data: roles = [], isLoading: isLoadingRoles } = useQuery({
     queryKey: ['roles'],
@@ -167,12 +173,25 @@ export function UsersTable() {
   }, [customers])
 
   useEffect(() => {
+    // If user can't use role/customer filters, keep state clean and avoid “URL-only” filtering.
+    startTransition(() => {
+      setFilters((prev) => {
+        const next = { ...prev }
+        if (!canFilterByRole && next.roleId !== 'all') next.roleId = 'all'
+        if (!canFilterByCustomer && next.customerId !== 'all') next.customerId = 'all'
+        return next
+      })
+    })
+  }, [canFilterByRole, canFilterByCustomer])
+
+  useEffect(() => {
     const params = new URLSearchParams()
     if (filters.search) params.set('search', filters.search)
-    if (filters.roleId && filters.roleId !== 'all') params.set('roleId', filters.roleId)
+    if (canFilterByRole && filters.roleId && filters.roleId !== 'all')
+      params.set('roleId', filters.roleId)
     if (filters.departmentId && filters.departmentId !== 'all')
       params.set('departmentId', filters.departmentId)
-    if (filters.customerId && filters.customerId !== 'all')
+    if (canFilterByCustomer && filters.customerId && filters.customerId !== 'all')
       params.set('customerId', filters.customerId)
     if (pagination.page > 1) params.set('page', pagination.page.toString())
     if (pagination.limit !== 10) params.set('limit', pagination.limit.toString())
@@ -184,7 +203,7 @@ export function UsersTable() {
         : window.location.search
       if (currentQS !== queryString) router.replace(newURL, { scroll: false })
     }
-  }, [filters, pagination, pathname, router])
+  }, [filters, pagination, pathname, router, canFilterByRole, canFilterByCustomer])
 
   useEffect(() => {
     const handle = setTimeout(() => setFilters((prev) => ({ ...prev, search: searchInput })), 700)
@@ -244,6 +263,15 @@ export function UsersTable() {
 
   const paginationInfo = usersData?.pagination || { page: 1, limit: 10, total: 0, totalPages: 1 }
   const isLoading = isLoadingUsers || isLoadingRoles || isLoadingCustomers
+
+  if (!canReadUsers) {
+    return (
+      <div className="bg-card rounded-lg border p-6">
+        <h2 className="text-lg font-semibold">{t('error.forbidden.title')}</h2>
+        <p className="text-muted-foreground mt-2 text-sm">{t('error.forbidden.description')}</p>
+      </div>
+    )
+  }
 
   if (isLoading) {
     return <LoadingState text={t('loading.users')} />
@@ -443,10 +471,15 @@ export function UsersTable() {
                       <EmptyState
                         title={t('empty.users.title')}
                         description={t('empty.users.description')}
-                        action={{
-                          label: t('page.users.create'),
-                          onClick: () => document.getElementById('create-user-trigger')?.click(),
-                        }}
+                        action={
+                          canCreate
+                            ? {
+                                label: t('page.users.create'),
+                                onClick: () =>
+                                  document.getElementById('create-user-trigger')?.click(),
+                              }
+                            : undefined
+                        }
                         className="border-none bg-transparent py-0"
                       />
                     </TableCell>
@@ -507,34 +540,40 @@ export function UsersTable() {
                                 {t('button.edit')}
                               </DropdownMenuItem>
                             )}
-                            <ConfirmDialog
-                              title={t('user.reset_password')}
-                              description={t('user.reset_password_confirmation').replace(
-                                '{email}',
-                                user.email
-                              )}
-                              confirmLabel={t('confirm.reset')}
-                              cancelLabel={t('cancel')}
-                              onConfirm={async () => {
-                                try {
-                                  await usersClientService.resetPassword(user.id)
-                                  await queryClient.invalidateQueries({ queryKey: ['users'] })
-                                  toast.success(t('user.reset_password_success'))
-                                } catch (err) {
-                                  console.error('Reset user password error', err)
-                                  toast.error(t('user.reset_password_error'))
+                            {canResetPassword ? (
+                              <ConfirmDialog
+                                title={t('user.reset_password')}
+                                description={t('user.reset_password_confirmation').replace(
+                                  '{email}',
+                                  user.email
+                                )}
+                                confirmLabel={t('confirm.reset')}
+                                cancelLabel={t('cancel')}
+                                onConfirm={async () => {
+                                  if (!canResetPassword) {
+                                    toast.error(t('common.no_permission'))
+                                    return
+                                  }
+                                  try {
+                                    await usersClientService.resetPassword(user.id)
+                                    await queryClient.invalidateQueries({ queryKey: ['users'] })
+                                    toast.success(t('user.reset_password_success'))
+                                  } catch (err) {
+                                    console.error('Reset user password error', err)
+                                    toast.error(t('user.reset_password_error'))
+                                  }
+                                }}
+                                trigger={
+                                  <DropdownMenuItem
+                                    className="cursor-pointer"
+                                    onSelect={(e) => e.preventDefault()}
+                                  >
+                                    <RotateCcw className="mr-2 h-4 w-4" />
+                                    {t('user.reset_password')}
+                                  </DropdownMenuItem>
                                 }
-                              }}
-                              trigger={
-                                <DropdownMenuItem
-                                  className="cursor-pointer"
-                                  onSelect={(e) => e.preventDefault()}
-                                >
-                                  <RotateCcw className="mr-2 h-4 w-4" />
-                                  {t('user.reset_password')}
-                                </DropdownMenuItem>
-                              }
-                            />
+                              />
+                            ) : null}
 
                             {canDelete && (
                               <DeleteDialog
@@ -544,6 +583,10 @@ export function UsersTable() {
                                   user.email
                                 )}
                                 onConfirm={async () => {
+                                  if (!canDelete) {
+                                    toast.error(t('common.no_permission'))
+                                    return
+                                  }
                                   try {
                                     await usersClientService.deleteUser(user.id)
                                     await queryClient.invalidateQueries({ queryKey: ['users'] })

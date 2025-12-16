@@ -9,6 +9,7 @@ import { useLocale } from '@/components/providers/LocaleProvider'
 import { FileText } from 'lucide-react'
 import ContractDevicesSection from '../../_components/ContractDevicesSection'
 import { toast } from 'sonner'
+import { ActionGuard } from '@/components/shared/ActionGuard'
 
 interface Props {
   contractId: string
@@ -77,7 +78,9 @@ export default function ContractDetailClient({ contractId }: Props) {
         </div>
       </div>
 
-      <ContractDevicesSection contractId={contract.id} />
+      <ActionGuard pageId="user-contracts" actionId="view-contract-devices">
+        <ContractDevicesSection contractId={contract.id} />
+      </ActionGuard>
       {/* devices list (read-only) rendered above; user cannot assign or edit */}
     </div>
   )

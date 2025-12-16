@@ -35,6 +35,7 @@ import { Calendar } from '@/components/ui/calendar'
 import { cn } from '@/lib/utils'
 import { SystemModalLayout } from '@/components/system/SystemModalLayout'
 import type { Device } from '@/types/models/device'
+import { ActionGuard } from '@/components/shared/ActionGuard'
 
 type FormState = {
   customerId: string
@@ -244,6 +245,7 @@ function SearchSelect({
 
 export default function CostAdjustmentsPage() {
   const { t, locale } = useLocale()
+
   const [items, setItems] = useState<CostAdjustmentVoucher[]>([])
   const [loading, setLoading] = useState(false)
   const [loadingForm, setLoadingForm] = useState(false)
@@ -667,9 +669,15 @@ export default function CostAdjustmentsPage() {
         id: 'actions',
         cell: ({ row }) => (
           <div className="text-center">
-            <Button variant="secondary" size="icon" onClick={() => openEdit(row.original.id)}>
-              <Edit3 className="h-4 w-4" />
-            </Button>
+            <ActionGuard
+              pageId="cost-adjustments"
+              actionId="update-cost-adjustment"
+              fallback={<div className="text-muted-foreground text-xs">-</div>}
+            >
+              <Button variant="secondary" size="icon" onClick={() => openEdit(row.original.id)}>
+                <Edit3 className="h-4 w-4" />
+              </Button>
+            </ActionGuard>
           </div>
         ),
       },
@@ -685,10 +693,16 @@ export default function CostAdjustmentsPage() {
         actions={
           <Dialog open={modalOpen} onOpenChange={setModalOpen}>
             <DialogTrigger asChild>
-              <Button onClick={openCreate}>
-                <Plus className="mr-2 h-4 w-4" />
-                {t('cost_adjustments.create')}
-              </Button>
+              <ActionGuard
+                pageId="cost-adjustments"
+                actionId="create-cost-adjustment"
+                fallback={null}
+              >
+                <Button onClick={openCreate}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  {t('cost_adjustments.create')}
+                </Button>
+              </ActionGuard>
             </DialogTrigger>
             <SystemModalLayout
               title={

@@ -28,6 +28,7 @@ import {
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { CustomerSelect } from '@/components/shared/CustomerSelect'
+import { ActionGuard } from '@/components/shared/ActionGuard'
 import { Priority } from '@/constants/status'
 import type { SLA } from '@/types/models/sla'
 
@@ -169,12 +170,14 @@ export function SlaFormDialog({
                   <FormItem>
                     <FormLabel>Khách hàng</FormLabel>
                     <FormControl>
-                      <CustomerSelect
-                        value={field.value}
-                        onChange={field.onChange}
-                        disabled={isSubmitting}
-                        placeholder="Chọn khách hàng"
-                      />
+                      <ActionGuard pageId="slas" actionId="read-customer-for-sla">
+                        <CustomerSelect
+                          value={field.value}
+                          onChange={field.onChange}
+                          disabled={isSubmitting}
+                          placeholder="Chọn khách hàng"
+                        />
+                      </ActionGuard>
                     </FormControl>
                     <FormMessage />
                   </FormItem>

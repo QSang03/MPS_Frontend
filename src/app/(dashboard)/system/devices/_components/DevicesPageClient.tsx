@@ -635,14 +635,16 @@ function DevicesTableContent({
         ),
         enableSorting: true,
         cell: ({ row }) => (
-          <code
-            role="button"
-            title={t('button.view')}
-            onClick={() => router.push(`/system/devices/${row.original.id}`)}
-            className="cursor-pointer rounded bg-[var(--brand-50)] px-2 py-1 text-sm font-semibold text-[var(--brand-700)]"
-          >
-            {row.original.serialNumber || '—'}
-          </code>
+          <ActionGuard pageId="devices" actionId="read">
+            <code
+              role="button"
+              title={t('button.view')}
+              onClick={() => router.push(`/system/devices/${row.original.id}`)}
+              className="cursor-pointer rounded bg-[var(--brand-50)] px-2 py-1 text-sm font-semibold text-[var(--brand-700)]"
+            >
+              {row.original.serialNumber || '—'}
+            </code>
+          </ActionGuard>
         ),
       },
       {
@@ -700,24 +702,26 @@ function DevicesTableContent({
                       </Button>
                     )}
                     {customer?.code && customer.code !== 'SYS' && (
-                      <DeleteDialog
-                        title={t('devices.remove_customer.title', {
-                          serial: device.serialNumber || device.id,
-                        })}
-                        description={t('devices.remove_customer.description')}
-                        onConfirm={async () => handleRemoveCustomer(device.id)}
-                        trigger={
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            className="h-7 w-7 p-0"
-                            disabled={updatingCustomer}
-                            title={t('devices.unassign')}
-                          >
-                            <X className="h-3.5 w-3.5" />
-                          </Button>
-                        }
-                      />
+                      <ActionGuard pageId="devices" actionId="return-to-warehouse">
+                        <DeleteDialog
+                          title={t('devices.remove_customer.title', {
+                            serial: device.serialNumber || device.id,
+                          })}
+                          description={t('devices.remove_customer.description')}
+                          onConfirm={async () => handleRemoveCustomer(device.id)}
+                          trigger={
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              className="h-7 w-7 p-0"
+                              disabled={updatingCustomer}
+                              title={t('devices.unassign')}
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </Button>
+                          }
+                        />
+                      </ActionGuard>
                     )}
                   </>
                 )}
@@ -859,49 +863,51 @@ function DevicesTableContent({
                 </Badge>
                 <OwnershipBadge device={device} />
               </div>
-              {device.isActive ? (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  type="button"
-                  aria-label="On"
-                  title={t('devices.toggle_active.title')}
-                  className="h-7 w-7 p-0 transition-all"
-                  onClick={() => {
-                    setToggleTargetDevice(device)
-                    setToggleTargetActive(false)
-                    setToggleModalOpen(true)
-                  }}
-                >
-                  <Power className="h-4 w-4" />
-                </Button>
-              ) : (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      type="button"
-                      aria-label="Off"
-                      title={t('devices.toggle_paused.title')}
-                      className="h-7 w-7 p-0 transition-all"
-                      onClick={() => {
-                        setToggleTargetDevice(device)
-                        setToggleTargetActive(true)
-                        setToggleModalOpen(true)
-                      }}
-                    >
-                      <Power className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <div className="max-w-xs text-xs">
-                      {t('devices.inactive_reason')}{' '}
-                      {(device as unknown as { inactiveReason?: string }).inactiveReason || '—'}
-                    </div>
-                  </TooltipContent>
-                </Tooltip>
-              )}
+              <ActionGuard pageId="devices" actionId="toggle-active">
+                {device.isActive ? (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    type="button"
+                    aria-label="On"
+                    title={t('devices.toggle_active.title')}
+                    className="h-7 w-7 p-0 transition-all"
+                    onClick={() => {
+                      setToggleTargetDevice(device)
+                      setToggleTargetActive(false)
+                      setToggleModalOpen(true)
+                    }}
+                  >
+                    <Power className="h-4 w-4" />
+                  </Button>
+                ) : (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        type="button"
+                        aria-label="Off"
+                        title={t('devices.toggle_paused.title')}
+                        className="h-7 w-7 p-0 transition-all"
+                        onClick={() => {
+                          setToggleTargetDevice(device)
+                          setToggleTargetActive(true)
+                          setToggleModalOpen(true)
+                        }}
+                      >
+                        <Power className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <div className="max-w-xs text-xs">
+                        {t('devices.inactive_reason')}{' '}
+                        {(device as unknown as { inactiveReason?: string }).inactiveReason || '—'}
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+              </ActionGuard>
             </div>
           )
         },

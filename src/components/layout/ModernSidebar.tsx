@@ -24,6 +24,7 @@ import {
   Trash2,
   Filter,
   UserPlus,
+  User,
   Tag,
   Bell,
   Eye,
@@ -35,6 +36,9 @@ import {
   MonitorSmartphone,
   Upload,
   Calculator,
+  DollarSign,
+  Coins,
+  Menu,
 } from 'lucide-react'
 import { NAVIGATION_PAYLOAD, USER_NAVIGATION_PAYLOAD } from '@/constants/navigation'
 import { Dialog, DialogTrigger, DialogContent } from '@/components/ui/dialog'
@@ -57,6 +61,7 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   Trash2,
   Filter,
   UserPlus,
+  User,
   Tag,
   Bell,
   Eye,
@@ -69,6 +74,9 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   Zap,
   Upload,
   Calculator,
+  DollarSign,
+  Coins,
+  Menu,
 }
 
 // Icon mapping helper - map our string icon names to lucide-react components
@@ -137,6 +145,31 @@ export function ModernSidebar({ session }: SidebarProps) {
 
   const { items: navItems, loading: navLoading } = useNavigation()
 
+  // Hard-hide some nav entries regardless of permission (UI declutter)
+  const hiddenNavKeys = new Set(
+    [
+      'exchange-rates',
+      'notifications',
+      'currencies',
+      'profile',
+      '/system/exchange-rates',
+      '/system/notifications',
+      '/system/currencies',
+      '/user/profile',
+      'tỷ giá',
+      'thông báo',
+      'tiền tệ',
+      'hồ sơ',
+    ].map((v) => v.toLowerCase())
+  )
+  const shouldHideNav = (it: Record<string, unknown>) => {
+    const id = String(it?.id ?? '').toLowerCase()
+    const name = String(it?.name ?? '').toLowerCase()
+    const label = String(it?.label ?? '').toLowerCase()
+    const route = String((it?.route as string) || (it?.href as string) || '').toLowerCase()
+    return [id, name, label, route].some((val) => val && hiddenNavKeys.has(val))
+  }
+
   // Build navigation list used by the sidebar.
   // Important behaviour:
   // - While nav is loading, don't render the static NAVIGATION_PAYLOAD (avoid briefly showing items the user may not have access to).
@@ -165,6 +198,7 @@ export function ModernSidebar({ session }: SidebarProps) {
 
   const navigation = (source as Array<Record<string, unknown>>)
     .filter(Boolean)
+    .filter((it) => !shouldHideNav(it))
     // Items from backend are already filtered in NavigationContext (hasAccess === false items and actions are removed)
     // So we can use them directly without additional filtering
     .map((it) => {
@@ -336,7 +370,7 @@ export function ModernSidebar({ session }: SidebarProps) {
         {/* Navigation - Enhanced with grouping */}
         <nav className="scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 flex-1 overflow-y-auto px-4 py-4">
           {(() => {
-            // Group items by semantic section based on route prefix
+            // Group items by semantic section based on nav id/name (UI-only grouping)
             type Item = {
               label: string
               href: string
@@ -345,88 +379,118 @@ export function ModernSidebar({ session }: SidebarProps) {
               submenu?: unknown
             }
 
-            // System sections (admin)
-            const systemSections: {
-              key: string
-              title: string
-              matcher: (href: string) => boolean
-            }[] = [
-              { key: 'overview', title: t('nav.overview'), matcher: (h) => h === '/system' },
+            const translateOr = (key: string, fallback: string) => {
+              const v = t(key)
+              return v !== key ? v : fallback
+            }
+
+            // System (SYS) group mapping
+            const systemSections: { key: string; title: string; ids: string[] }[] = [
+              {
+                key: 'overview',
+                title: translateOr('nav.overview', 'Tổng quan'),
+                ids: ['dashboard'],
+              },
               {
                 key: 'devices',
-                title: t('nav.devices'),
-                matcher: (h) =>
-                  h.startsWith('/system/devices') || h.startsWith('/system/device-models'),
+                title: translateOr('nav.devices', 'Thiết bị'),
+                ids: ['devices', 'device-models'],
               },
               {
                 key: 'consumables',
-                title: t('nav.consumables'),
-                matcher: (h) =>
-                  h.startsWith('/system/consumables') ||
-                  h.startsWith('/system/consumable-types') ||
-                  h.startsWith('/system/warehouse-documents'),
+                title: translateOr('nav.consumables', 'Vật tư'),
+                ids: ['consumable-types', 'warehouse-documents'],
               },
               {
                 key: 'customers',
-                title: t('nav.customers'),
-                matcher: (h) => h.startsWith('/system/customers'),
+                title: translateOr('nav.customers', 'Khách hàng'),
+                ids: ['customers'],
               },
               {
                 key: 'reports',
-                title: t('nav.reports'),
-                matcher: (h) => h.startsWith('/system/reports') || h.startsWith('/system/revenue'),
+                title: translateOr('nav.reports', 'Báo cáo'),
+                ids: ['revenue', 'usage-page'],
               },
             ]
 
-            // User sections
-            const userSections: {
-              key: string
-              title: string
-              matcher: (href: string) => boolean
-            }[] = [
+            // Non-SYS (user) group mapping
+            const userSections: { key: string; title: string; ids: string[] }[] = [
               {
                 key: 'overview',
-                title: t('nav.overview'),
-                matcher: (h) => h === '/user/dashboard',
-              },
-              {
-                key: 'costs',
-                title: t('nav.costs'),
-                matcher: (h) =>
-                  h.startsWith('/user/dashboard/costs') || h.startsWith('/user/costs'),
+                title: translateOr('nav.overview', 'Tổng quan'),
+                ids: ['user-dashboard'],
               },
               {
                 key: 'devices',
-                title: t('nav.devices'),
-                matcher: (h) => h.startsWith('/user/devices'),
+                title: translateOr('nav.devices', 'Thiết bị'),
+                ids: ['user-devices'],
               },
+              { key: 'users', title: translateOr('nav.users', 'Người dùng'), ids: ['users'] },
+              { key: 'costs', title: translateOr('nav.costs', 'Chi phí'), ids: ['user-costs'] },
               {
                 key: 'consumables',
-                title: t('nav.consumables'),
-                matcher: (h) =>
-                  h.startsWith('/user/consumables') || h.startsWith('/user/warehouse-documents'),
+                title: translateOr('nav.consumables', 'Vật tư'),
+                ids: ['user-consumables', 'user-warehouse-documents'],
               },
               {
                 key: 'contracts',
-                title: t('nav.contracts'),
-                matcher: (h) => h.startsWith('/user/contracts'),
+                title: translateOr('nav.contracts', 'Hợp đồng'),
+                ids: ['user-contracts'],
               },
-              { key: 'users', title: t('nav.users'), matcher: (h) => h.startsWith('/user/users') },
             ]
 
-            // Prefer user sections when session role is 'user' OR when the navigation contains /user routes.
-            const hasUserRoutes = navigation.some(
-              (n) => typeof n.href === 'string' && (n.href as string).startsWith('/user')
+            // Prefer user sections only when role is 'user'; tránh lẫn route user trong payload SYS
+            const sections = isUserRole ? userSections : systemSections
+            const idToSection = new Map<string, string>()
+            sections.forEach((s) =>
+              s.ids.forEach((id) => {
+                if (!id) return
+                idToSection.set(id.toLowerCase(), s.key)
+              })
             )
-            const sections = isUserRole || hasUserRoutes ? userSections : systemSections
             const grouped = new Map<string, Item[]>()
             const otherKey = 'others'
-            const getSectionKey = (href: string) => {
-              const found = sections.find((s) => s.matcher(href))
-              return found ? found.key : otherKey
+            const getSectionKey = (navId?: string, navName?: string, href?: string) => {
+              const lowerId = navId?.toLowerCase()
+              const lowerName = navName?.toLowerCase()
+              const found =
+                (lowerId && idToSection.get(lowerId)) || (lowerName && idToSection.get(lowerName))
+              if (found) return found
+
+              // Fallback theo route prefix (đề phòng backend không gửi id)
+              const h = (href || '').toLowerCase()
+              if (isUserRole) {
+                if (h.startsWith('/user/dashboard')) return 'overview'
+                if (h.startsWith('/user/devices')) return 'devices'
+                if (h.startsWith('/user/users')) return 'users'
+                if (h.startsWith('/user/dashboard/costs') || h.startsWith('/user/costs'))
+                  return 'costs'
+                if (h.startsWith('/user/consumables') || h.startsWith('/user/warehouse-documents'))
+                  return 'consumables'
+                if (h.startsWith('/user/contracts')) return 'contracts'
+              } else {
+                if (h === '/system' || h.startsWith('/system/dashboard')) return 'overview'
+                if (h.startsWith('/system/devices') || h.startsWith('/system/device-models'))
+                  return 'devices'
+                if (
+                  h.startsWith('/system/consumables') ||
+                  h.startsWith('/system/consumable-types') ||
+                  h.startsWith('/system/warehouse-documents')
+                )
+                  return 'consumables'
+                if (h.startsWith('/system/customers')) return 'customers'
+                if (
+                  h.startsWith('/system/revenue') ||
+                  h.startsWith('/system/reports') ||
+                  h.startsWith('/system/usage')
+                )
+                  return 'reports'
+              }
+              return otherKey
             }
             navigation.forEach((item) => {
-              const key = getSectionKey(item.href)
+              const raw = item.raw as { id?: string; name?: string } | undefined
+              const key = getSectionKey(raw?.id, raw?.name, item.href as string)
               const arr = grouped.get(key) ?? []
               arr.push(item as unknown as Item)
               grouped.set(key, arr)
@@ -437,7 +501,7 @@ export function ModernSidebar({ session }: SidebarProps) {
             let renderIndex = 0
             return orderedKeys.map((key) => {
               const sectionMeta = sections.find((s) => s.key === key)
-              const title = sectionMeta?.title ?? t(`nav.${key}`)
+              const title = sectionMeta?.title ?? translateOr(`nav.${key}`, t('nav.others'))
               const items = grouped.get(key) ?? []
               return (
                 <div key={key} className="mb-4">

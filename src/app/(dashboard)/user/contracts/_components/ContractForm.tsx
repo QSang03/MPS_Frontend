@@ -39,6 +39,8 @@ import { removeEmpty } from '@/lib/utils/clean'
 import { cn } from '@/lib/utils'
 import ContractDevicesSection from './ContractDevicesSection'
 import { getPublicUrl } from '@/lib/utils/publicUrl'
+import { useActionPermission } from '@/lib/hooks/useActionPermission'
+import { ActionGuard } from '@/components/shared/ActionGuard'
 
 interface ContractFormProps {
   initial?: Partial<ContractFormData>
@@ -50,6 +52,7 @@ const CONTRACT_PDF_MAX_MB = Math.round(CONTRACT_PDF_MAX_BYTES / (1024 * 1024))
 export function ContractForm({ initial, onSuccess }: ContractFormProps) {
   const queryClient = useQueryClient()
   const { t } = useLocale()
+  const { canCreate, canUpdate } = useActionPermission('user-contracts')
 
   const normalizeDateToYYYYMMDD = (date?: string | null) => {
     if (!date) return undefined
@@ -156,6 +159,20 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
       toast.error(t('validation.fields_error'))
       return
     }
+
+    const existingId = (initial as unknown as { id?: string })?.id
+    if (existingId) {
+      if (!canUpdate) {
+        toast.error(t('common.no_permission'))
+        return
+      }
+    } else {
+      if (!canCreate) {
+        toast.error(t('common.no_permission'))
+        return
+      }
+    }
+
     try {
       const copy: Record<string, unknown> = { ...data }
       const start = copy.startDate as string | undefined
@@ -187,9 +204,8 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
         payload.pdfFile = pdfFile
       }
 
-      const id = (initial as unknown as { id?: string })?.id
-      if (id) {
-        updateMutation.mutate({ id, payload })
+      if (existingId) {
+        updateMutation.mutate({ id: existingId, payload })
       } else {
         createMutation.mutate(payload)
       }
@@ -813,7 +829,13 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
 
         {/* Contract devices management (only available when editing an existing contract) */}
         <div>
-          <ContractDevicesSection contractId={id} />
+          {id ? (
+            <ActionGuard pageId="user-contracts" actionId="view-contract-devices">
+              <ContractDevicesSection contractId={id} />
+            </ActionGuard>
+          ) : (
+            <ContractDevicesSection contractId={id} />
+          )}
         </div>
       </form>
     </Form>

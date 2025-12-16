@@ -190,7 +190,7 @@ export default function ConsumablesPageClient() {
     inactive: consumables.filter((c) => String(c.status) !== 'ACTIVE').length,
   }
 
-  const { can } = useActionPermission('consumables')
+  const { can } = useActionPermission('user-consumables')
 
   const handleRefresh = () => {
     void loadConsumables(page)
@@ -347,7 +347,7 @@ export default function ConsumablesPageClient() {
             >
               <RefreshCw className={`${loading ? 'animate-spin' : ''} h-5 w-5`} />
             </Button>
-            <ActionGuard pageId="consumables" actionId="create">
+            <ActionGuard pageId="user-consumables" actionId="create">
               <BulkAssignModal
                 trigger={
                   <Button variant="outline" className="hover:bg-[var(--accent)]">

@@ -197,4 +197,14 @@ export const API_ENDPOINTS = {
     BY_DEVICE: (deviceId: string) => `/maintenance-histories/devices/${deviceId}`,
     CREATE_BY_DEVICE: (deviceId: string) => `/maintenance-histories/devices/${deviceId}`,
   },
+
+  // Navigation Config
+  NAVIGATION_CONFIG: {
+    LIST: '/navigation-config',
+    DETAIL: (id: string) => `/navigation-config/${id}`,
+    CREATE: '/navigation-config',
+    UPDATE: (id: string) => `/navigation-config/${id}`,
+    DELETE: (id: string) => `/navigation-config/${id}`,
+    BY_NAME: (name: string) => `/navigation-config/name/${encodeURIComponent(name)}`,
+  },
 } as const

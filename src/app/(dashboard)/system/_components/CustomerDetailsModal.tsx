@@ -139,113 +139,125 @@ export function CustomerDetailsModal({
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.2 }}
             >
-              <div className="mt-6 space-y-3">
-                {(topCustomers ?? []).map((customer, index) => {
-                  // Helper to get display value (converted if available, else original)
-                  const getDisplayValue = (
-                    original: number,
-                    converted: number | undefined,
-                    useConverted: boolean
-                  ): number => {
-                    if (useConverted && converted !== undefined) return converted
-                    return original
-                  }
+              <div className="mt-6">
+                {(topCustomers ?? []).length === 0 ? (
+                  <div className="flex h-40 items-center justify-center text-gray-500">
+                    <div className="text-center">
+                      <Building2 className="mx-auto mb-2 h-12 w-12 text-gray-300" />
+                      <p>{t('dashboard.top_customers.empty')}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {(topCustomers ?? []).map((customer, index) => {
+                      // Helper to get display value (converted if available, else original)
+                      const getDisplayValue = (
+                        original: number,
+                        converted: number | undefined,
+                        useConverted: boolean
+                      ): number => {
+                        if (useConverted && converted !== undefined) return converted
+                        return original
+                      }
 
-                  // Use converted values if baseCurrency is available (System Admin context)
-                  const useConverted = !!baseCurrency
+                      // Use converted values if baseCurrency is available (System Admin context)
+                      const useConverted = !!baseCurrency
 
-                  const revenue = getDisplayValue(
-                    customer.totalRevenue,
-                    customer.totalRevenueConverted,
-                    useConverted
-                  )
-                  const cogs = getDisplayValue(
-                    customer.totalCogs,
-                    customer.totalCogsConverted,
-                    useConverted
-                  )
-                  const profit = getDisplayValue(
-                    customer.grossProfit,
-                    customer.grossProfitConverted,
-                    useConverted
-                  )
+                      const revenue = getDisplayValue(
+                        customer.totalRevenue,
+                        customer.totalRevenueConverted,
+                        useConverted
+                      )
+                      const cogs = getDisplayValue(
+                        customer.totalCogs,
+                        customer.totalCogsConverted,
+                        useConverted
+                      )
+                      const profit = getDisplayValue(
+                        customer.grossProfit,
+                        customer.grossProfitConverted,
+                        useConverted
+                      )
 
-                  const totalRevenue = (topCustomers ?? []).reduce(
-                    (sum, c) =>
-                      sum + getDisplayValue(c.totalRevenue, c.totalRevenueConverted, useConverted),
-                    0
-                  )
-                  const percentage = totalRevenue > 0 ? (revenue / totalRevenue) * 100 : 0
+                      const totalRevenue = (topCustomers ?? []).reduce(
+                        (sum, c) =>
+                          sum +
+                          getDisplayValue(c.totalRevenue, c.totalRevenueConverted, useConverted),
+                        0
+                      )
+                      const percentage = totalRevenue > 0 ? (revenue / totalRevenue) * 100 : 0
 
-                  return (
-                    <motion.div
-                      key={customer.customerId}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                      onClick={() => setSelectedCustomerId(customer.customerId)}
-                      className={cn(
-                        'group cursor-pointer rounded-lg border-2 p-4 transition-all hover:shadow-lg',
-                        index < 3 && 'border-2',
-                        index === 0 && 'border-yellow-300 bg-yellow-50/70 hover:bg-yellow-50',
-                        index === 1 && 'border-gray-300 bg-gray-50/70 hover:bg-gray-50',
-                        index === 2 && 'border-orange-300 bg-orange-50/70 hover:bg-orange-50',
-                        index >= 3 &&
-                          'border-gray-200 hover:border-[var(--brand-300)] hover:bg-[var(--brand-50)]/30'
-                      )}
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[var(--brand-500)] to-[var(--brand-600)] text-lg font-bold text-white">
-                          #{index + 1}
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <p className="font-bold text-gray-900">{customer.customerName}</p>
-                            {index < 3 && (
-                              <Badge
+                      return (
+                        <motion.div
+                          key={customer.customerId}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.05 }}
+                          onClick={() => setSelectedCustomerId(customer.customerId)}
+                          className={cn(
+                            'group cursor-pointer rounded-lg border-2 p-4 transition-all hover:shadow-lg',
+                            index < 3 && 'border-2',
+                            index === 0 && 'border-yellow-300 bg-yellow-50/70 hover:bg-yellow-50',
+                            index === 1 && 'border-gray-300 bg-gray-50/70 hover:bg-gray-50',
+                            index === 2 && 'border-orange-300 bg-orange-50/70 hover:bg-orange-50',
+                            index >= 3 &&
+                              'border-gray-200 hover:border-[var(--brand-300)] hover:bg-[var(--brand-50)]/30'
+                          )}
+                        >
+                          <div className="flex items-center gap-4">
+                            <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[var(--brand-500)] to-[var(--brand-600)] text-lg font-bold text-white">
+                              #{index + 1}
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <p className="font-bold text-gray-900">{customer.customerName}</p>
+                                {index < 3 && (
+                                  <Badge
+                                    className={cn(
+                                      index === 0 && 'bg-yellow-500',
+                                      index === 1 && 'bg-gray-400',
+                                      index === 2 && 'bg-orange-500'
+                                    )}
+                                  >
+                                    {t('dashboard.top_customers.rank', { rank: index + 1 })}
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-xs text-gray-500">
+                                {t('dashboard.top_customers.id_label', { id: customer.customerId })}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-lg font-bold text-gray-900">
+                                {formatCurrency(revenue, baseCurrency || customer.baseCurrency)}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {t('dashboard.top_customers.cost_label')}:{' '}
+                                {formatCurrency(cogs, baseCurrency || customer.baseCurrency)}
+                              </p>
+                              <p
                                 className={cn(
-                                  index === 0 && 'bg-yellow-500',
-                                  index === 1 && 'bg-gray-400',
-                                  index === 2 && 'bg-orange-500'
+                                  'text-xs font-semibold',
+                                  profit >= 0
+                                    ? 'text-[var(--color-success-600)]'
+                                    : 'text-[var(--error-600)]'
                                 )}
                               >
-                                {t('dashboard.top_customers.rank', { rank: index + 1 })}
-                              </Badge>
-                            )}
+                                {t('dashboard.top_customers.profit_label')}:{' '}
+                                {formatCurrency(profit, baseCurrency || customer.baseCurrency)}
+                              </p>
+                              <p className="mt-1 text-xs text-gray-400">
+                                {t('dashboard.top_customers.revenue_percentage', {
+                                  value: percentage.toFixed(1),
+                                })}
+                              </p>
+                            </div>
                           </div>
-                          <p className="text-xs text-gray-500">
-                            {t('dashboard.top_customers.id_label', { id: customer.customerId })}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-lg font-bold text-gray-900">
-                            {formatCurrency(revenue, baseCurrency || customer.baseCurrency)}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {t('dashboard.top_customers.cost_label')}:{' '}
-                            {formatCurrency(cogs, baseCurrency || customer.baseCurrency)}
-                          </p>
-                          <p
-                            className={cn(
-                              'text-xs font-semibold',
-                              profit >= 0
-                                ? 'text-[var(--color-success-600)]'
-                                : 'text-[var(--error-600)]'
-                            )}
-                          >
-                            {t('dashboard.top_customers.profit_label')}:{' '}
-                            {formatCurrency(profit, baseCurrency || customer.baseCurrency)}
-                          </p>
-                          <p className="mt-1 text-xs text-gray-400">
-                            {t('dashboard.top_customers.revenue_percentage', {
-                              value: percentage.toFixed(1),
-                            })}
-                          </p>
-                        </div>
-                      </div>
-                    </motion.div>
-                  )
-                })}
+                        </motion.div>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
             </motion.div>
           ) : (

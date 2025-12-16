@@ -40,6 +40,7 @@ import type { PurchaseRequest } from '@/types/models/purchase-request'
 import type { Customer } from '@/types/models/customer'
 import { usePurchaseRequestsQuery } from '@/lib/hooks/queries/usePurchaseRequestsQuery'
 import { useLocale } from '@/components/providers/LocaleProvider'
+import { useActionPermission } from '@/lib/hooks/useActionPermission'
 
 type PurchaseRequestRow = PurchaseRequest & {
   customer?: Customer
@@ -124,6 +125,8 @@ interface UserPurchaseRequestsTableProps {
 export function UserPurchaseRequestsTable({ defaultCustomerId }: UserPurchaseRequestsTableProps) {
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 })
   const { t } = useLocale()
+  const { can } = useActionPermission('user-my-requests')
+  const canFilterCustomer = can('filter-by-customer')
   const statusOptions = [
     { label: t('requests.purchase.timeline.pending'), value: PurchaseRequestStatus.PENDING },
     { label: t('requests.purchase.timeline.approved'), value: PurchaseRequestStatus.APPROVED },
@@ -249,14 +252,18 @@ export function UserPurchaseRequestsTable({ defaultCustomerId }: UserPurchaseReq
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">{t('requests.purchase.filter.customer')}</label>
-            <CustomerSelect
-              value={customerFilter}
-              onChange={(id) => setCustomerFilter(id)}
-              placeholder={t('requests.purchase.filter.customer_placeholder')}
-            />
-          </div>
+          {canFilterCustomer && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
+                {t('requests.purchase.filter.customer')}
+              </label>
+              <CustomerSelect
+                value={customerFilter}
+                onChange={(id) => setCustomerFilter(id)}
+                placeholder={t('requests.purchase.filter.customer_placeholder')}
+              />
+            </div>
+          )}
         </div>
       </FilterSection>
 

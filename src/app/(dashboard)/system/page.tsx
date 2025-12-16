@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation'
 import { usePageTitle } from '@/lib/hooks/usePageTitle'
 import { useLocale } from '@/components/providers/LocaleProvider'
 import { useAdminOverview, useCurrentMonth } from '@/lib/hooks/useDashboardData'
-import { KPICards } from './_components/KPICards'
+import { useNavigation } from '@/contexts/NavigationContext'
+import KPICards from './_components/KPICards'
 import { CostBreakdownChart } from './_components/CostBreakdownChart'
 import { MonthlySeriesChart } from './_components/MonthlySeriesChart'
 import { TopCustomersTable } from './_components/TopCustomersTable'
@@ -53,7 +54,18 @@ export default function CustomerAdminDashboard() {
   const [selectedContractId, setSelectedContractId] = useState<string | null>(null)
   const [isAggregating, setIsAggregating] = useState(false)
   const { t } = useLocale()
+  const { hasActionAccess } = useNavigation()
   usePageTitle(t('dashboard.overview.title'))
+
+  // Check permissions for dashboard actions
+  const canAggregateMonthly = hasActionAccess('dashboard', 'aggregate-monthly-revenue')
+  const canViewTopCustomers = hasActionAccess('dashboard', 'view-dashboard-customer-overview') // Nút xem tất cả chỗ top khách hàng
+  const canViewContracts = hasActionAccess('dashboard', 'view-contracts')
+  const canViewContractDetail = hasActionAccess('dashboard', 'view-contract-detail') // Click statcard hợp đồng
+  const canViewServiceRequests = hasActionAccess('dashboard', 'view-service-requests') // Nút xem tất cả chỗ Hoạt động gần đây
+  const canExportMonthlyPdf = hasActionAccess('dashboard', 'export-monthly-pdf')
+  const canExportMonthlyCsv = hasActionAccess('dashboard', 'export-monthly-csv')
+  const canViewCustomers = hasActionAccess('dashboard', 'view-customers')
 
   // Fetch admin overview data
   const {
@@ -99,7 +111,7 @@ export default function CustomerAdminDashboard() {
 
   // Export handlers
   const handleExportCostBreakdown = async () => {
-    if (!overviewData?.costBreakdown) return
+    if (!overviewData?.costBreakdown || !canExportMonthlyPdf) return
     try {
       const resp = await internalApiClient.get('/api/reports/monthly/export/pdf', {
         params: {
@@ -188,7 +200,7 @@ export default function CustomerAdminDashboard() {
   }
 
   const handleExportTopCustomers = async () => {
-    if (!overviewData?.topCustomers) return
+    if (!overviewData?.topCustomers || !canExportMonthlyCsv) return
 
     try {
       const resp = await internalApiClient.get('/api/reports/monthly/export/csv', {
@@ -268,14 +280,16 @@ export default function CustomerAdminDashboard() {
       {/* Date Range Selector + Aggregation Button */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <DateRangeSelector defaultMonth={selectedMonth} onChange={handleMonthChange} />
-        <Button
-          onClick={handleMonthlyAggregation}
-          disabled={isAggregating}
-          className="bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
-        >
-          <PlayCircle className="mr-2 h-4 w-4" />
-          {isAggregating ? t('dashboard.aggregation.running') : t('dashboard.aggregation.button')}
-        </Button>
+        {canAggregateMonthly && (
+          <Button
+            onClick={handleMonthlyAggregation}
+            disabled={isAggregating}
+            className="bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
+          >
+            <PlayCircle className="mr-2 h-4 w-4" />
+            {isAggregating ? t('dashboard.aggregation.running') : t('dashboard.aggregation.button')}
+          </Button>
+        )}
       </div>
 
       {/* KPI Cards - 8 Cards Grid */}
@@ -284,6 +298,8 @@ export default function CustomerAdminDashboard() {
         isLoading={isLoading}
         onRevenueClick={() => setShowCustomersModal(true)}
         onContractsClick={() => setShowContractsModal(true)}
+        canViewCustomers={canViewCustomers}
+        canViewContracts={canViewContracts}
         baseCurrency={displayCurrency}
       />
 
@@ -305,6 +321,7 @@ export default function CustomerAdminDashboard() {
           setSelectedContractId(id)
           setShowContractDetail(true)
         }}
+        canViewContractDetail={canViewContractDetail}
       />
 
       {/* Contract Detail Modal (rendered at page level so it can stay open when list modal is closed) */}
@@ -328,6 +345,7 @@ export default function CustomerAdminDashboard() {
           isLoading={isLoading}
           onViewDetails={() => router.push('/system/reports')}
           onExport={handleExportCostBreakdown}
+          canExport={canExportMonthlyPdf}
           baseCurrency={displayCurrency}
         />
         <AlertsSummary
@@ -345,6 +363,7 @@ export default function CustomerAdminDashboard() {
         isLoading={isLoading}
         onViewDetails={() => router.push('/system/reports')}
         onExport={handleExportMonthlySeries}
+        canExport={canExportMonthlyPdf}
         baseCurrency={displayCurrency}
       />
 
@@ -355,11 +374,14 @@ export default function CustomerAdminDashboard() {
           isLoading={isLoading}
           onViewAll={() => router.push('/system/customers')}
           onExport={handleExportTopCustomers}
+          canExport={canExportMonthlyCsv}
+          canViewAll={canViewTopCustomers}
           baseCurrency={displayCurrency}
         />
         <RecentActivity
           onViewAll={() => router.push('/system/requests')}
           recentRequests={overviewData?.recentRequests}
+          canViewAll={canViewServiceRequests}
         />
       </div>
     </SystemPageLayout>

@@ -26,6 +26,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import CustomerSelect from '@/components/shared/CustomerSelect'
+import { ActionGuard } from '@/components/shared/ActionGuard'
 import { DynamicAttributesFields } from '@/components/shared/DynamicAttributesFields'
 import { userSchema, type UserFormData } from '@/lib/validations/user.schema'
 import removeEmpty from '@/lib/utils/clean'
@@ -473,12 +474,14 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
             <FormItem>
               <FormLabel>Khách hàng</FormLabel>
               <FormControl>
-                <CustomerSelect
-                  {...field}
-                  value={(field.value as string) || ''}
-                  onChange={(id: string) => field.onChange(id)}
-                  disabled={isPending}
-                />
+                <ActionGuard pageId="users" actionId="read-customer-for-user">
+                  <CustomerSelect
+                    {...field}
+                    value={(field.value as string) || ''}
+                    onChange={(id: string) => field.onChange(id)}
+                    disabled={isPending}
+                  />
+                </ActionGuard>
               </FormControl>
               <FormDescription>Khách hàng mà tài khoản thuộc về (tùy chọn)</FormDescription>
             </FormItem>

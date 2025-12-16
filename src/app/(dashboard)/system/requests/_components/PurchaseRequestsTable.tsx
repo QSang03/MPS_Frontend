@@ -37,6 +37,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { CustomerSelect } from '@/components/shared/CustomerSelect'
+import { ActionGuard } from '@/components/shared/ActionGuard'
 import { formatCurrency, formatDateTime, formatRelativeTime } from '@/lib/utils/formatters'
 import { cn } from '@/lib/utils/cn'
 import { purchaseRequestsClientService } from '@/lib/api/services/purchase-requests-client.service'
@@ -257,11 +258,13 @@ export function PurchaseRequestsTable() {
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium">{t('requests.purchase.filter.customer')}</label>
-            <CustomerSelect
-              value={customerFilter}
-              onChange={setCustomerFilter}
-              placeholder={t('requests.purchase.filter.customer_placeholder')}
-            />
+            <ActionGuard pageId="customer-requests" actionId="filter-by-customer">
+              <CustomerSelect
+                value={customerFilter}
+                onChange={setCustomerFilter}
+                placeholder={t('requests.purchase.filter.customer_placeholder')}
+              />
+            </ActionGuard>
           </div>
         </div>
       </FilterSection>
@@ -628,60 +631,62 @@ function PurchaseRequestsTableContent({
           }
 
           return (
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className={cn(
-                    'h-9 min-w-[120px] text-xs',
-                    isUpdating && 'cursor-not-allowed opacity-50'
-                  )}
-                  disabled={isUpdating}
-                >
-                  {isUpdating ? (
-                    <>
-                      <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                      <span>{t('service_request.updating')}</span>
-                    </>
-                  ) : (
-                    <>
-                      <Badge className={cn('text-xs', statusBadgeMap[row.original.status])}>
-                        {statusOptions.find((opt) => opt.value === row.original.status)?.label ||
-                          row.original.status}
-                      </Badge>
-                      <span className="ml-1 text-xs">▼</span>
-                    </>
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-56 p-2" align="start">
-                <div className="space-y-1">
-                  <div className="px-2 py-1.5 text-xs font-semibold text-gray-700">
-                    {t('service_request.change_state')}
+            <ActionGuard pageId="customer-requests" actionId="update-purchase-status">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={cn(
+                      'h-9 min-w-[120px] text-xs',
+                      isUpdating && 'cursor-not-allowed opacity-50'
+                    )}
+                    disabled={isUpdating}
+                  >
+                    {isUpdating ? (
+                      <>
+                        <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                        <span>{t('service_request.updating')}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Badge className={cn('text-xs', statusBadgeMap[row.original.status])}>
+                          {statusOptions.find((opt) => opt.value === row.original.status)?.label ||
+                            row.original.status}
+                        </Badge>
+                        <span className="ml-1 text-xs">▼</span>
+                      </>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-56 p-2" align="start">
+                  <div className="space-y-1">
+                    <div className="px-2 py-1.5 text-xs font-semibold text-gray-700">
+                      {t('service_request.change_state')}
+                    </div>
+                    <div className="grid grid-cols-1 gap-1">
+                      {allowed.map((status) => {
+                        const disp = PURCHASE_REQUEST_STATUS_DISPLAY[status]
+                        return (
+                          <Button
+                            key={status}
+                            size="sm"
+                            variant="secondary"
+                            className="h-auto justify-start py-2 text-xs"
+                            onClick={() => handleStatusChange(row.original.id, status)}
+                          >
+                            <div className="flex flex-col text-left">
+                              <span className="font-medium">→ {disp.label}</span>
+                              <span className="text-muted-foreground text-[10px]">{status}</span>
+                            </div>
+                          </Button>
+                        )
+                      })}
+                    </div>
                   </div>
-                  <div className="grid grid-cols-1 gap-1">
-                    {allowed.map((status) => {
-                      const disp = PURCHASE_REQUEST_STATUS_DISPLAY[status]
-                      return (
-                        <Button
-                          key={status}
-                          size="sm"
-                          variant="secondary"
-                          className="h-auto justify-start py-2 text-xs"
-                          onClick={() => handleStatusChange(row.original.id, status)}
-                        >
-                          <div className="flex flex-col text-left">
-                            <span className="font-medium">→ {disp.label}</span>
-                            <span className="text-muted-foreground text-[10px]">{status}</span>
-                          </div>
-                        </Button>
-                      )
-                    })}
-                  </div>
-                </div>
-              </PopoverContent>
-            </Popover>
+                </PopoverContent>
+              </Popover>
+            </ActionGuard>
           )
         },
       },

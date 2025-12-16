@@ -65,8 +65,6 @@ import ContractForm from './ContractForm'
 import { contractsClientService } from '@/lib/api/services/contracts-client.service'
 import { toast } from 'sonner'
 import { DeleteDialog } from '@/components/shared/DeleteDialog'
-// Cookies is no longer required in this file; role is read from localStorage.
-import { useActionPermission } from '@/lib/hooks/useActionPermission'
 import { VN } from '@/constants/vietnamese'
 import { cn } from '@/lib/utils'
 import { DetailInfoCard } from '@/components/system/DetailInfoCard'
@@ -92,7 +90,6 @@ type DeviceConsumableLocal = {
 
 export default function CustomerDetailClient({ customerId }: Props) {
   const { t } = useLocale()
-  const { can: canContractAction } = useActionPermission('customers')
   const canDeleteContract = canContractAction('contract-delete')
   const canUpdateContract = canContractAction('contract-update')
   const canCreateContract = canContractAction('contract-create')

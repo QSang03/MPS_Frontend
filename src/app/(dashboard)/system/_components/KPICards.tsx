@@ -30,6 +30,8 @@ interface KPICardsProps {
   isLoading: boolean
   onRevenueClick?: () => void
   onContractsClick?: () => void
+  canViewCustomers?: boolean
+  canViewContracts?: boolean
   baseCurrency?: CurrencyDataDto | null
 }
 
@@ -54,11 +56,13 @@ function formatCurrency(amount: number, currency?: CurrencyDataDto | null): stri
   }).format(amount)
 }
 
-export function KPICards({
+export default function KPICards({
   kpis,
   isLoading,
   onRevenueClick,
   onContractsClick,
+  canViewCustomers = false,
+  canViewContracts = false,
   baseCurrency,
 }: KPICardsProps) {
   const { t } = useLocale()
@@ -137,7 +141,7 @@ export function KPICards({
       iconBg: 'bg-[var(--brand-50)]',
       iconColor: 'text-[var(--brand-500)]',
       trend: costChangePercent > 0 ? 'up' : costChangePercent < 0 ? 'down' : 'neutral',
-      onClick: onRevenueClick,
+      onClick: canViewCustomers ? onRevenueClick : undefined,
     },
   ]
 
@@ -169,7 +173,7 @@ export function KPICards({
       borderColor: 'border-[var(--brand-500)]',
       iconBg: 'bg-[var(--brand-50)]',
       iconColor: 'text-[var(--brand-500)]',
-      onClick: onContractsClick,
+      onClick: canViewContracts ? onContractsClick : undefined,
     },
     {
       id: 'customers',

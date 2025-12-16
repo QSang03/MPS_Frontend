@@ -48,6 +48,11 @@ export function ActionGuard({
 }: ActionGuardProps) {
   const { hasAccess, can } = useActionPermission(pageId)
 
+  // Ensure page access before checking action access
+  if (!hasAccess && !pageOnly) {
+    return <>{fallback}</>
+  }
+
   // Check page access only
   if (pageOnly) {
     return hasAccess ? <>{children}</> : <>{fallback}</>

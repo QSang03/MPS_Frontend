@@ -15,6 +15,7 @@ import type { Department } from '@/types/users'
 import type { Customer } from '@/types/models/customer'
 import type { User } from '@/types/users'
 import { useLocale } from '@/components/providers/LocaleProvider'
+import { ActionGuard } from '@/components/shared/ActionGuard'
 
 type SelectableItem = UserRole | Department | Customer | User
 
@@ -96,6 +97,15 @@ const FIELD_CONFIG: Record<
   },
 }
 
+// Helper function to get actionId from field
+function getActionIdFromField(field: string): string {
+  if (field.startsWith('role.')) return 'read-role'
+  if (field.startsWith('department.')) return 'read-department'
+  if (field.startsWith('user.')) return 'read-user'
+  if (field.startsWith('customer.')) return 'read-customer'
+  return 'read' // fallback
+}
+
 export function SearchableSelect({
   field,
   operator,
@@ -106,6 +116,7 @@ export function SearchableSelect({
   fetchParams,
 }: SearchableSelectProps) {
   const config = FIELD_CONFIG[field]
+  const actionId = getActionIdFromField(field)
 
   const isMultiSelect = operator === '$in' || operator === '$nin'
   const [query, setQuery] = useState('')
@@ -206,85 +217,87 @@ export function SearchableSelect({
   if (!config) return null
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          disabled={disabled}
-          className="w-full justify-between"
-        >
-          <span className="truncate">{displayText}</span>
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
-        <div className="p-2">
-          <Input
-            placeholder={t('policies.form.search_placeholder')}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="h-9"
-          />
-        </div>
-        <div className="max-h-[300px] overflow-auto">
-          {loading ? (
-            <div className="flex items-center justify-center p-4">
-              <Loader2 className="h-4 w-4 animate-spin" />
-            </div>
-          ) : items.length === 0 ? (
-            <div className="p-4 text-center text-sm text-gray-500">
-              {t('policies.form.no_results')}
-            </div>
-          ) : (
-            <div className="p-1">
-              {items.map((item) => {
-                const itemValue = getItemValue(item)
-                const isSelected = selectedValues.includes(itemValue)
-                return (
-                  <div
-                    key={itemValue}
-                    onClick={() => handleSelect(item)}
-                    className={`flex cursor-pointer items-center justify-between rounded px-2 py-1.5 text-sm hover:bg-gray-100 ${
-                      isSelected ? 'bg-gray-100' : ''
-                    }`}
-                  >
-                    <span>{getDisplayValue(item)}</span>
-                    {isSelected && isMultiSelect && (
-                      <X
-                        className="h-4 w-4"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleRemove(itemValue)
-                        }}
-                      />
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </div>
-        {isMultiSelect && selectedValues.length > 0 && (
-          <div className="border-t p-2">
-            <div className="flex flex-wrap gap-1">
-              {selectedItems
-                .filter((item): item is SelectableItem => item !== undefined)
-                .map((item) => {
+    <ActionGuard pageId="policies" actionId={actionId}>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            disabled={disabled}
+            className="w-full justify-between"
+          >
+            <span className="truncate">{displayText}</span>
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+          <div className="p-2">
+            <Input
+              placeholder={t('policies.form.search_placeholder')}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="h-9"
+            />
+          </div>
+          <div className="max-h-[300px] overflow-auto">
+            {loading ? (
+              <div className="flex items-center justify-center p-4">
+                <Loader2 className="h-4 w-4 animate-spin" />
+              </div>
+            ) : items.length === 0 ? (
+              <div className="p-4 text-center text-sm text-gray-500">
+                {t('policies.form.no_results')}
+              </div>
+            ) : (
+              <div className="p-1">
+                {items.map((item) => {
                   const itemValue = getItemValue(item)
+                  const isSelected = selectedValues.includes(itemValue)
                   return (
-                    <Badge key={itemValue} variant="secondary" className="text-xs">
-                      {getDisplayValue(item)}
-                      <X
-                        className="ml-1 h-3 w-3 cursor-pointer"
-                        onClick={() => handleRemove(itemValue)}
-                      />
-                    </Badge>
+                    <div
+                      key={itemValue}
+                      onClick={() => handleSelect(item)}
+                      className={`flex cursor-pointer items-center justify-between rounded px-2 py-1.5 text-sm hover:bg-gray-100 ${
+                        isSelected ? 'bg-gray-100' : ''
+                      }`}
+                    >
+                      <span>{getDisplayValue(item)}</span>
+                      {isSelected && isMultiSelect && (
+                        <X
+                          className="h-4 w-4"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleRemove(itemValue)
+                          }}
+                        />
+                      )}
+                    </div>
                   )
                 })}
-            </div>
+              </div>
+            )}
           </div>
-        )}
-      </PopoverContent>
-    </Popover>
+          {isMultiSelect && selectedValues.length > 0 && (
+            <div className="border-t p-2">
+              <div className="flex flex-wrap gap-1">
+                {selectedItems
+                  .filter((item): item is SelectableItem => item !== undefined)
+                  .map((item) => {
+                    const itemValue = getItemValue(item)
+                    return (
+                      <Badge key={itemValue} variant="secondary" className="text-xs">
+                        {getDisplayValue(item)}
+                        <X
+                          className="ml-1 h-3 w-3 cursor-pointer"
+                          onClick={() => handleRemove(itemValue)}
+                        />
+                      </Badge>
+                    )
+                  })}
+              </div>
+            </div>
+          )}
+        </PopoverContent>
+      </Popover>
+    </ActionGuard>
   )
 }

@@ -12,18 +12,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Forward query params từ client (exclude lang param as backend doesn't need it)
+    // Forward query params từ client
     const searchParams = request.nextUrl.searchParams
     const params: Record<string, string> = {}
     searchParams.forEach((value, key) => {
-      // Skip lang param - backend doesn't accept it for this endpoint
-      if (key !== 'lang') {
-        params[key] = value
-      }
+      params[key] = value
     })
 
     // Gọi backend API trực tiếp
-    const response = await backendApiClient.get(API_ENDPOINTS.CUSTOMERS, {
+    const response = await backendApiClient.get(API_ENDPOINTS.NAVIGATION_CONFIG.LIST, {
       params,
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -33,7 +30,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(response.data)
   } catch (error: unknown) {
     const err = error as { message?: string; response?: { status?: number } } | undefined
-    console.error('API Route /api/customers error:', error)
+    console.error('API Route /api/navigation-config GET error:', error)
     return NextResponse.json(
       { error: err?.message || 'Internal Server Error' },
       { status: err?.response?.status || 500 }
@@ -50,7 +47,7 @@ export async function POST(request: NextRequest) {
 
     reqBody = await request.json()
 
-    const response = await backendApiClient.post(API_ENDPOINTS.CUSTOMERS, reqBody, {
+    const response = await backendApiClient.post(API_ENDPOINTS.NAVIGATION_CONFIG.CREATE, reqBody, {
       headers: { Authorization: `Bearer ${accessToken}` },
     })
 
@@ -63,7 +60,10 @@ export async function POST(request: NextRequest) {
           config?: { data?: unknown }
         }
       | undefined
-    console.error('API Route /api/customers POST error:', err?.response?.status || err?.message)
+    console.error(
+      'API Route /api/navigation-config POST error:',
+      err?.response?.status || err?.message
+    )
 
     if (err?.response?.status === 401) {
       try {
@@ -121,9 +121,13 @@ export async function POST(request: NextRequest) {
               ? JSON.parse(String(err.config.data))
               : {}
 
-        const retryResp = await backendApiClient.post(API_ENDPOINTS.CUSTOMERS, originalBody, {
-          headers: { Authorization: `Bearer ${newAccessToken}` },
-        })
+        const retryResp = await backendApiClient.post(
+          API_ENDPOINTS.NAVIGATION_CONFIG.CREATE,
+          originalBody,
+          {
+            headers: { Authorization: `Bearer ${newAccessToken}` },
+          }
+        )
         return NextResponse.json(retryResp.data)
       } catch (retryErr: unknown) {
         const rerr = retryErr as { message?: string } | undefined

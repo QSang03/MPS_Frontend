@@ -296,31 +296,33 @@ export function CustomerTable({
           return (
             <div className="flex items-center gap-2">
               <span className="block max-w-[260px] truncate">{first}</span>
-              {addresses.length > 1 ? (
-                <CustomerFormModal
-                  mode="edit"
-                  customer={customer}
-                  onSaved={handleSaved}
-                  trigger={
-                    <Button variant="secondary" size="sm" className="p-2">
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                  }
-                />
-              ) : (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => {
-                    setEditingAddressFor(customer.id)
-                    setEditingAddressValue(first === '—' ? '' : String(first))
-                  }}
-                  className="transition-all"
-                  aria-label={t('customer.address.edit')}
-                >
-                  <Edit className="h-4 w-4" />
-                </Button>
-              )}
+              <ActionGuard pageId="customers" actionId="update">
+                {addresses.length > 1 ? (
+                  <CustomerFormModal
+                    mode="edit"
+                    customer={customer}
+                    onSaved={handleSaved}
+                    trigger={
+                      <Button variant="secondary" size="sm" className="p-2">
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    }
+                  />
+                ) : (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => {
+                      setEditingAddressFor(customer.id)
+                      setEditingAddressValue(first === '—' ? '' : String(first))
+                    }}
+                    className="transition-all"
+                    aria-label={t('customer.address.edit')}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                )}
+              </ActionGuard>
             </div>
           )
         },
@@ -380,15 +382,17 @@ export function CustomerTable({
           const isSysCustomer = (customer.code ?? '').toUpperCase() === 'SYS'
           return (
             <div className="flex items-center justify-end gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => void loadConsumablesForCustomer(customer)}
-                className="transition-all hover:bg-[var(--brand-100)] hover:text-[var(--brand-700)]"
-              >
-                <Package className="mr-2 h-4 w-4" />
-                {t('nav.consumables')}
-              </Button>
+              <ActionGuard pageId="customers" actionId="view-consumables">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void loadConsumablesForCustomer(customer)}
+                  className="transition-all hover:bg-[var(--brand-100)] hover:text-[var(--brand-700)]"
+                >
+                  <Package className="mr-2 h-4 w-4" />
+                  {t('nav.consumables')}
+                </Button>
+              </ActionGuard>
 
               {/* Create device for this customer */}
               <ActionGuard pageId="devices" actionId="create">

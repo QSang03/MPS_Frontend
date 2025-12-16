@@ -24,6 +24,8 @@ interface TopCustomersTableProps {
   isLoading?: boolean
   onViewAll?: () => void
   onExport?: () => void
+  canExport?: boolean
+  canViewAll?: boolean
   baseCurrency?: CurrencyDataDto | null
 }
 
@@ -42,6 +44,8 @@ export function TopCustomersTable({
   isLoading,
   onViewAll,
   onExport,
+  canExport = false,
+  canViewAll = false,
   baseCurrency,
 }: TopCustomersTableProps) {
   const { t } = useLocale()
@@ -256,23 +260,27 @@ export function TopCustomersTable({
           )}
         </CardContent>
         <CardFooter className="flex justify-end gap-2 border-t border-gray-100 bg-gray-50/50 p-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onExport}
-            className="gap-2 border-gray-200 text-[#6B7280] hover:bg-white hover:text-[var(--brand-700)]"
-          >
-            <Download className="h-4 w-4" />
-            {t('dashboard.top_customers.export')}
-          </Button>
-          <Button
-            size="sm"
-            onClick={onViewAll}
-            className="gap-2 bg-[var(--btn-primary)] hover:bg-[var(--btn-primary-hover)]"
-          >
-            <Users className="h-4 w-4" />
-            {t('dashboard.top_customers.view_all')}
-          </Button>
+          {canExport && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onExport}
+              className="gap-2 border-gray-200 text-[#6B7280] hover:bg-white hover:text-[var(--brand-700)]"
+            >
+              <Download className="h-4 w-4" />
+              {t('dashboard.top_customers.export')}
+            </Button>
+          )}
+          {canViewAll && (
+            <Button
+              size="sm"
+              onClick={onViewAll}
+              className="gap-2 bg-[var(--btn-primary)] hover:bg-[var(--btn-primary-hover)]"
+            >
+              <Users className="h-4 w-4" />
+              {t('dashboard.top_customers.view_all')}
+            </Button>
+          )}
         </CardFooter>
       </Card>
     </motion.div>

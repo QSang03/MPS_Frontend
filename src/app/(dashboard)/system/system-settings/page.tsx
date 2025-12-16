@@ -19,7 +19,6 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 import SystemSettingFormModal from './_components/SystemSettingFormModal'
 import SystemSettingDetailModal from './_components/SystemSettingDetailModal'
-import { useActionPermission } from '@/lib/hooks/useActionPermission'
 import { ActionGuard } from '@/components/shared/ActionGuard'
 import { Settings, Search, Eye, RefreshCw, Edit } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -31,7 +30,6 @@ import { StatsCards } from '@/components/system/StatsCard'
 import { useLocale } from '@/components/providers/LocaleProvider'
 
 export default function SystemSettingsPage() {
-  const { can } = useActionPermission('system-settings')
   const [query, setQuery] = useState<SystemSettingQuery>({
     page: 1,
     limit: 10,
@@ -195,44 +193,40 @@ export default function SystemSettingsPage() {
           </div>
 
           {/* Filter by type */}
-          {can('filter-by-type') && (
-            <div className="space-y-2">
-              <label className="text-sm font-medium">{t('system_settings.type_label')}</label>
-              <Select value={query.type || 'all'} onValueChange={handleTypeFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder={t('placeholder.all')} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t('placeholder.all')}</SelectItem>
-                  <SelectItem value={SystemSettingType.STRING}>STRING</SelectItem>
-                  <SelectItem value={SystemSettingType.NUMBER}>NUMBER</SelectItem>
-                  <SelectItem value={SystemSettingType.BOOLEAN}>BOOLEAN</SelectItem>
-                  <SelectItem value={SystemSettingType.JSON}>JSON</SelectItem>
-                  <SelectItem value={SystemSettingType.SECRET}>SECRET</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          )}
+          <div className="w-full space-y-2">
+            <label className="text-sm font-medium">{t('system_settings.type_label')}</label>
+            <Select value={query.type || 'all'} onValueChange={handleTypeFilter}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder={t('placeholder.all')} />
+              </SelectTrigger>
+              <SelectContent className="w-full">
+                <SelectItem value="all">{t('placeholder.all')}</SelectItem>
+                <SelectItem value={SystemSettingType.STRING}>STRING</SelectItem>
+                <SelectItem value={SystemSettingType.NUMBER}>NUMBER</SelectItem>
+                <SelectItem value={SystemSettingType.BOOLEAN}>BOOLEAN</SelectItem>
+                <SelectItem value={SystemSettingType.JSON}>JSON</SelectItem>
+                <SelectItem value={SystemSettingType.SECRET}>SECRET</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
           {/* Filter by editable */}
-          {can('filter-by-status') && (
-            <div className="space-y-2">
-              <label className="text-sm font-medium">{t('system_settings.status_label')}</label>
-              <Select
-                value={query.isEditable === undefined ? 'all' : query.isEditable ? 'true' : 'false'}
-                onValueChange={handleEditableFilter}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={t('placeholder.all')} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t('placeholder.all')}</SelectItem>
-                  <SelectItem value="true">{t('system_settings.stats.editable')}</SelectItem>
-                  <SelectItem value="false">{t('system_settings.stats.read_only')}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          )}
+          <div className="w-full space-y-2">
+            <label className="text-sm font-medium">{t('system_settings.status_label')}</label>
+            <Select
+              value={query.isEditable === undefined ? 'all' : query.isEditable ? 'true' : 'false'}
+              onValueChange={handleEditableFilter}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder={t('placeholder.all')} />
+              </SelectTrigger>
+              <SelectContent className="w-full">
+                <SelectItem value="all">{t('placeholder.all')}</SelectItem>
+                <SelectItem value="true">{t('system_settings.stats.editable')}</SelectItem>
+                <SelectItem value="false">{t('system_settings.stats.read_only')}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </FilterSection>
 

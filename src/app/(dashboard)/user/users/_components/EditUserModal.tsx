@@ -32,6 +32,7 @@ import type { UserRole } from '@/types/users'
 import type { User as UserType } from '@/types/users'
 import { toast } from 'sonner'
 import { useLocale } from '@/components/providers/LocaleProvider'
+import { useActionPermission } from '@/lib/hooks/useActionPermission'
 
 // moved into component to allow translated messages
 
@@ -59,6 +60,10 @@ export function EditUserModal({
   customerCodes = [],
   customerCodeToId = {},
 }: EditUserModalProps) {
+  const { can } = useActionPermission('users')
+  const canUpdateUser = can('update')
+  const canReadRoles = can('filter-by-role')
+
   const [isLoading, setIsLoading] = useState(false)
   const [roles, setRoles] = useState<UserRole[]>([])
 
@@ -118,8 +123,8 @@ export function EditUserModal({
   }, [t])
 
   useEffect(() => {
-    if (isOpen) loadRoles()
-  }, [isOpen, loadRoles])
+    if (isOpen && canUpdateUser && canReadRoles) loadRoles()
+  }, [isOpen, loadRoles, canUpdateUser, canReadRoles])
 
   // watch role and derive attribute schema
   const selectedRoleId = useWatch({ control: form.control, name: 'roleId' })
@@ -133,6 +138,11 @@ export function EditUserModal({
 
   const onSubmit = async (data: EditUserFormData) => {
     if (!user) return
+
+    if (!canUpdateUser) {
+      toast.error(t('common.no_permission'))
+      return
+    }
 
     setIsLoading(true)
     try {

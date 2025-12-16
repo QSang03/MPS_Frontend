@@ -41,7 +41,7 @@ import {
   Settings,
 } from 'lucide-react'
 import { DeleteDialog } from '@/components/shared/DeleteDialog'
-import { useActionPermission } from '@/lib/hooks/useActionPermission'
+import { ActionGuard } from '@/components/shared/ActionGuard'
 import { FilterSection } from '@/components/system/FilterSection'
 import { StatsCards } from '@/components/system/StatsCard'
 import { TableSkeleton } from '@/components/system/TableSkeleton'
@@ -60,7 +60,6 @@ interface RolesStats {
 
 export function RolesTable({ onCreateTrigger, onCreateTriggerReset }: RolesTableProps = {}) {
   const { t } = useLocale()
-  const { canUpdate, canDelete } = useActionPermission('roles')
   const queryClient = useQueryClient()
 
   const [search, setSearch] = useState('')
@@ -281,8 +280,6 @@ export function RolesTable({ onCreateTrigger, onCreateTriggerReset }: RolesTable
           renderColumnVisibilityMenu={setColumnVisibilityMenu}
           onEditRole={handleEdit}
           onDeleteRole={handleDelete}
-          canUpdate={canUpdate}
-          canDelete={canDelete}
           searchValue={search}
           onCreateRole={handleOpenCreate}
         />
@@ -311,8 +308,6 @@ interface RolesTableContentProps {
   onEditRole: (role: UserRole) => void
   onDeleteRole: (roleId: string) => Promise<void> | void
   onCreateRole: () => void
-  canUpdate: boolean
-  canDelete: boolean
   searchValue: string
 }
 
@@ -329,8 +324,6 @@ function RolesTableContent({
   onEditRole,
   onDeleteRole,
   onCreateRole,
-  canUpdate,
-  canDelete,
   searchValue,
 }: RolesTableContentProps) {
   const { t, locale } = useLocale()
@@ -495,7 +488,7 @@ function RolesTableContent({
           ]).has(String(row.original.name))
           return (
             <div className="flex items-center justify-end gap-1.5">
-              {canUpdate && (
+              <ActionGuard pageId="roles" actionId="update">
                 <Button
                   size="sm"
                   variant="secondary"
@@ -506,8 +499,8 @@ function RolesTableContent({
                 >
                   <Edit className="h-4 w-4" />
                 </Button>
-              )}
-              {canDelete && (
+              </ActionGuard>
+              <ActionGuard pageId="roles" actionId="delete">
                 <DeleteDialog
                   title={t('roles.table.delete_title')}
                   description={t('roles.table.delete_description', { name: row.original.name })}
@@ -530,13 +523,13 @@ function RolesTableContent({
                     </Button>
                   }
                 />
-              )}
+              </ActionGuard>
             </div>
           )
         },
       },
     ]
-  }, [pagination, canUpdate, canDelete, onEditRole, onDeleteRole, t, locale])
+  }, [pagination, onEditRole, onDeleteRole, t, locale])
 
   return (
     <TableWrapper<UserRole>

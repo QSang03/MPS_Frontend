@@ -46,8 +46,8 @@ export default function ContractsPageClient() {
   const { t } = useLocale()
   type ContractWithDoc = Contract &
     Partial<Record<'documentUrl' | 'document_url' | 'pdfUrl' | 'pdf_url', string>>
-  const { canCreate, canUpdate, canDelete } = useActionPermission('contracts')
-  const hasAnyAction = Boolean(canCreate || canUpdate || canDelete)
+  const { canCreate, canDelete } = useActionPermission('user-contracts')
+  const hasAnyAction = Boolean(canCreate || canDelete)
   const router = useRouter()
 
   const extractApiMessage = (err: unknown): string | undefined => {
@@ -248,7 +248,7 @@ export default function ContractsPageClient() {
                 <RefreshCcw className="h-4 w-4" />
                 {t('button.refresh')}
               </Button>
-              <ActionGuard pageId="contracts" actionId="create">
+              <ActionGuard pageId="user-contracts" actionId="create">
                 <ContractFormModal
                   trigger={
                     <Button
@@ -445,7 +445,7 @@ export default function ContractsPageClient() {
                           <>
                             <FileText className="h-12 w-12 opacity-20" />
                             <p>{t('empty.contracts.empty')}</p>
-                            <ActionGuard pageId="contracts" actionId="create">
+                            <ActionGuard pageId="user-contracts" actionId="create">
                               <ContractFormModal
                                 onCreated={(c) => c && setContracts((prev) => [c, ...prev])}
                               />

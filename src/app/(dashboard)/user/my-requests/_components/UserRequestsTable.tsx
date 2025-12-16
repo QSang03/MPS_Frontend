@@ -53,6 +53,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog'
+import { useActionPermission } from '@/lib/hooks/useActionPermission'
 
 type ServiceRequestRow = ServiceRequest
 
@@ -81,6 +82,8 @@ interface UserRequestsTableProps {
 export function UserRequestsTable({ defaultCustomerId }: UserRequestsTableProps) {
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 })
   const { t } = useLocale()
+  const { can } = useActionPermission('user-my-requests')
+  const canFilterCustomer = can('filter-by-customer')
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<ServiceRequestStatus | 'all'>('all')
   const [priorityFilter, setPriorityFilter] = useState<Priority | 'all'>('all')
@@ -263,14 +266,16 @@ export function UserRequestsTable({ defaultCustomerId }: UserRequestsTableProps)
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">{t('requests.service.filter.customer')}</label>
-            <CustomerSelect
-              value={customerFilter}
-              onChange={(id) => setCustomerFilter(id)}
-              placeholder={t('requests.service.filter.customer_placeholder')}
-            />
-          </div>
+          {canFilterCustomer && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium">{t('requests.service.filter.customer')}</label>
+              <CustomerSelect
+                value={customerFilter}
+                onChange={(id) => setCustomerFilter(id)}
+                placeholder={t('requests.service.filter.customer_placeholder')}
+              />
+            </div>
+          )}
         </div>
       </FilterSection>
 
@@ -328,6 +333,8 @@ function UserRequestsTableContent({
 }: UserRequestsTableContentProps) {
   const [isPending, startTransition] = useTransition()
   const { t } = useLocale()
+  const { can } = useActionPermission('user-my-requests')
+  const canCloseRequests = can('close-service-request') || can('bulk-close-service-requests')
   const [sortVersion, setSortVersion] = useState(0)
   const router = useRouter()
   const [closeReason, setCloseReason] = useState('')
@@ -389,13 +396,24 @@ function UserRequestsTableContent({
     [router]
   )
 
-  const openCloseDialog = (id: string) => {
-    setClosingRequestId(id)
-    setCloseReason('')
-    setIsCloseDialogOpen(true)
-  }
+  const openCloseDialog = useCallback(
+    (id: string) => {
+      if (!canCloseRequests) {
+        toast({ title: t('requests.service.close.cannot_close'), variant: 'destructive' })
+        return
+      }
+      setClosingRequestId(id)
+      setCloseReason('')
+      setIsCloseDialogOpen(true)
+    },
+    [canCloseRequests, t, toast]
+  )
 
   const handleConfirmClose = async () => {
+    if (!canCloseRequests) {
+      toast({ title: t('requests.service.close.cannot_close'), variant: 'destructive' })
+      return
+    }
     if (!closingRequestId || !closeReason.trim()) {
       toast({
         title: t('requests.service.close.missing_reason'),
@@ -432,11 +450,19 @@ function UserRequestsTableContent({
   }
 
   const openBulkCloseDialog = () => {
+    if (!canCloseRequests) {
+      toast({ title: t('requests.service.close.cannot_close'), variant: 'destructive' })
+      return
+    }
     setBulkCloseReason('')
     setIsBulkCloseDialogOpen(true)
   }
 
   const handleConfirmBulkClose = async () => {
+    if (!canCloseRequests) {
+      toast({ title: t('requests.service.close.cannot_close'), variant: 'destructive' })
+      return
+    }
     if (selectedIds.length === 0) {
       toast({ title: t('requests.service.close.select_one'), variant: 'destructive' })
       return
@@ -510,8 +536,9 @@ function UserRequestsTableContent({
               <Checkbox
                 checked={allSelected}
                 aria-checked={someSelected ? 'mixed' : allSelected}
-                disabled={selectableIdsOnPage.length === 0}
+                disabled={!canCloseRequests || selectableIdsOnPage.length === 0}
                 onCheckedChange={(v) => {
+                  if (!canCloseRequests) return
                   if (v) {
                     // select all selectable on current page
                     setSelectedIds((prev) => Array.from(new Set([...prev, ...selectableIdsOnPage])))
@@ -526,7 +553,7 @@ function UserRequestsTableContent({
         },
         cell: ({ row }) => {
           const id = row.original.id
-          const disabled = row.original.status === ServiceRequestStatus.CLOSED
+          const disabled = !canCloseRequests || row.original.status === ServiceRequestStatus.CLOSED
           return (
             <div>
               <Checkbox
@@ -731,7 +758,7 @@ function UserRequestsTableContent({
                 <Eye className="mr-2 h-4 w-4" />
                 {t('requests.service.table.detail')}
               </Button>
-              {canClose && (
+              {canClose && canCloseRequests && (
                 <Button
                   variant="secondary"
                   size="sm"
@@ -745,7 +772,16 @@ function UserRequestsTableContent({
         },
       },
     ],
-    [pagination.pageIndex, pagination.pageSize, selectedIds, requests, handleViewDetail, t]
+    [
+      pagination.pageIndex,
+      pagination.pageSize,
+      selectedIds,
+      requests,
+      handleViewDetail,
+      openCloseDialog,
+      t,
+      canCloseRequests,
+    ]
   )
 
   return (
@@ -757,14 +793,16 @@ function UserRequestsTableContent({
         totalCount={totalCount}
         actions={
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={openBulkCloseDialog}
-              disabled={selectedIds.length === 0}
-            >
-              {t('requests.service.close.bulk_action', { count: selectedIds.length })}
-            </Button>
+            {canCloseRequests && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={openBulkCloseDialog}
+                disabled={selectedIds.length === 0}
+              >
+                {t('requests.service.close.bulk_action', { count: selectedIds.length })}
+              </Button>
+            )}
           </div>
         }
         pageIndex={pagination.pageIndex}
