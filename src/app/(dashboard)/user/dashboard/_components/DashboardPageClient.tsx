@@ -305,6 +305,27 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
       .sort((a, b) => b.value - a.value)
       .slice(0, 5) || []
 
+  // Custom tooltip for top devices to ensure correct payload is shown
+  const TopDeviceTooltip = ({ active, payload }: { active?: boolean; payload?: any }) => {
+    if (!active || !payload || !payload.length) return null
+    const data = payload[0].payload || payload[0]
+    const full = data?.fullData || {}
+    const value = data?.value ?? 0
+    const title = full?.deviceModelName || data?.name || ''
+
+    return (
+      <div
+        style={{ borderRadius: 8, boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', padding: 12 }}
+        className="bg-white"
+      >
+        <div style={{ fontWeight: 700, marginBottom: 6 }}>{title}</div>
+        <div style={{ color: '#4b5563' }}>
+          {t('dashboard.totals.total_cost')} : {formatCurrency(value)}
+        </div>
+      </div>
+    )
+  }
+
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id)
     if (element) {
@@ -630,7 +651,7 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
                       border: 'none',
                       boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
                     }}
-                    formatter={(value: number) => formatCurrency(value)}
+                    content={<TopDeviceTooltip />}
                   />
                   <Bar
                     dataKey="value"

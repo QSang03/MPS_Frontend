@@ -20,6 +20,7 @@ import {
   TrendingUp,
 } from 'lucide-react'
 import { useActionPermission } from '@/lib/hooks/useActionPermission'
+import { ActionGuard } from '@/components/shared/ActionGuard'
 
 interface Props {
   contractId?: string | null
@@ -263,18 +264,20 @@ export default function ContractDevicesSection({
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="text-sm font-medium text-gray-900">
-                        {d.device?.id ? (
-                          <Link
-                            href={`/system/devices/${d.device.id}`}
-                            className="text-[var(--brand-600)] hover:underline"
-                          >
-                            {d.device?.deviceModel?.name ?? d.device?.model ?? '—'}
-                          </Link>
-                        ) : (
-                          (d.device?.deviceModel?.name ?? d.device?.model ?? '—')
-                        )}
-                      </span>
+                      <ActionGuard pageId="customers" actionId="view-contract-devices">
+                        <span className="text-sm font-medium text-gray-900">
+                          {d.device?.id ? (
+                            <Link
+                              href={`/system/devices/${d.device.id}`}
+                              className="text-[var(--brand-600)] hover:underline"
+                            >
+                              {d.device?.deviceModel?.name ?? d.device?.model ?? '—'}
+                            </Link>
+                          ) : (
+                            (d.device?.deviceModel?.name ?? d.device?.model ?? '—')
+                          )}
+                        </span>
+                      </ActionGuard>
                     </td>
                     <td className="px-4 py-3">
                       <span className="text-sm font-semibold whitespace-nowrap text-[var(--brand-700)]">

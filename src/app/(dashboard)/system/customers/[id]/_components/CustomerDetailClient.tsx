@@ -90,11 +90,6 @@ type DeviceConsumableLocal = {
 
 export default function CustomerDetailClient({ customerId }: Props) {
   const { t } = useLocale()
-  const canDeleteContract = canContractAction('contract-delete')
-  const canUpdateContract = canContractAction('contract-update')
-  const canCreateContract = canContractAction('contract-create')
-  const canAttachDevices = canContractAction('contract-attach-devices')
-  const canDetachDevices = canContractAction('contract-detach-devices')
   const [overview, setOverview] = useState<CustomerOverview | null>(null)
   const [loadingOverview, setLoadingOverview] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -661,32 +656,34 @@ export default function CustomerDetailClient({ customerId }: Props) {
       >
         <td className="px-4 py-4 text-center text-xs text-slate-300">│</td>
         <td className="py-4 pr-4 pl-6">
-          <div className="font-mono text-sm font-semibold text-slate-800">
-            {device.device?.id ? (
-              <Link
-                href={`/system/devices/${device.device.id}`}
-                className="text-sky-600 hover:underline"
-              >
-                {device.device?.serialNumber ?? '—'}
-              </Link>
-            ) : (
-              (device.device?.serialNumber ?? '—')
-            )}
-          </div>
-          <div className="line-clamp-1 text-xs text-slate-500">
-            {device.device?.id ? (
-              <Link
-                href={`/system/devices/${device.device.id}`}
-                className="text-sky-600 hover:underline"
-              >
-                {device.device?.deviceModel?.name ??
-                  device.device?.model ??
-                  t('customer.detail.device.unknown_model')}
-              </Link>
-            ) : (
-              (device.device?.deviceModel?.name ?? device.device?.model ?? 'Không rõ model')
-            )}
-          </div>
+          <ActionGuard pageId="customers" actionId="view-contract-devices">
+            <div className="font-mono text-sm font-semibold text-slate-800">
+              {device.device?.id ? (
+                <Link
+                  href={`/system/devices/${device.device.id}`}
+                  className="text-sky-600 hover:underline"
+                >
+                  {device.device?.serialNumber ?? '—'}
+                </Link>
+              ) : (
+                (device.device?.serialNumber ?? '—')
+              )}
+            </div>
+            <div className="line-clamp-1 text-xs text-slate-500">
+              {device.device?.id ? (
+                <Link
+                  href={`/system/devices/${device.device.id}`}
+                  className="text-sky-600 hover:underline"
+                >
+                  {device.device?.deviceModel?.name ??
+                    device.device?.model ??
+                    t('customer.detail.device.unknown_model')}
+                </Link>
+              ) : (
+                (device.device?.deviceModel?.name ?? device.device?.model ?? 'Không rõ model')
+              )}
+            </div>
+          </ActionGuard>
         </td>
         <td className="py-4 pr-4 pl-4 text-right">
           <span className="text-sm font-semibold whitespace-nowrap text-slate-700">
@@ -814,22 +811,24 @@ export default function CustomerDetailClient({ customerId }: Props) {
                   {t('customer.detail.device.a4_history.tooltip')}
                 </TooltipContent>
               </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Link href={`/system/devices/${device.device.id}`}>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      className="h-8 w-8 p-0"
-                      aria-label={t('customer.detail.device.view')}
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                  </Link>
-                </TooltipTrigger>
-                <TooltipContent sideOffset={4}>{t('customer.detail.device.view')}</TooltipContent>
-              </Tooltip>
-              {canDetachDevices && (
+              <ActionGuard pageId="customers" actionId="view-contract-devices">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Link href={`/system/devices/${device.device.id}`}>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        aria-label={t('customer.detail.device.view')}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent sideOffset={4}>{t('customer.detail.device.view')}</TooltipContent>
+                </Tooltip>
+              </ActionGuard>
+              <ActionGuard pageId="customers" actionId="contract-detach-devices">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
@@ -850,7 +849,7 @@ export default function CustomerDetailClient({ customerId }: Props) {
                     {t('customer.detail.device.detach')}
                   </TooltipContent>
                 </Tooltip>
-              )}
+              </ActionGuard>
             </div>
           )}
         </td>
@@ -1168,921 +1167,938 @@ export default function CustomerDetailClient({ customerId }: Props) {
           </div>
 
           <TabsContent value="contracts" className="space-y-4">
-            <Card className="border-slate-200 shadow-lg">
-              <CardHeader className="space-y-4 border-b border-slate-100 bg-gradient-to-br from-white to-slate-50/50">
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                  <div>
-                    <CardTitle className="flex items-center gap-2.5 text-2xl text-slate-900">
-                      <div className="rounded-lg bg-sky-100 p-2">
-                        <Package className="h-5 w-5 text-sky-600" />
-                      </div>
-                      {t('customer.detail.contracts.title')}
-                    </CardTitle>
-                    <CardDescription className="mt-2">
-                      {t('customer.detail.contracts.description')}
-                    </CardDescription>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {canCreateContract && (
-                      <Button
-                        size="sm"
-                        onClick={() => setCreateContractOpen(true)}
-                        className="gap-2 bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] shadow-sm hover:from-[var(--brand-700)] hover:to-[var(--brand-700)]"
-                      >
-                        <Plus className="h-4 w-4" />
-                        {t('customer.detail.contracts.create')}
-                      </Button>
-                    )}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={toggleAllContracts}
-                      disabled={!contracts.length}
-                      className="gap-2"
-                    >
-                      {isAllExpanded ? (
-                        <>
-                          <ChevronUp className="h-4 w-4" />
-                          {t('customer.detail.contracts.collapse')}
-                        </>
-                      ) : (
-                        <>
-                          <ChevronDown className="h-4 w-4" />
-                          {t('customer.detail.contracts.expand_all')}
-                        </>
-                      )}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowFilters(!showFilters)}
-                      className={cn(
-                        'gap-2',
-                        hasActiveFilters && 'border-sky-300 bg-sky-50 text-sky-700'
-                      )}
-                    >
-                      <Filter className="h-4 w-4" />
-                      {t('customer.detail.contracts.filters')}
-                      {hasActiveFilters && (
-                        <Badge
-                          variant="secondary"
-                          className="ml-1 h-5 w-5 rounded-full p-0 text-xs"
+            <ActionGuard pageId="customers" actionId="view-customer-contracts">
+              <Card className="border-slate-200 shadow-lg">
+                <CardHeader className="space-y-4 border-b border-slate-100 bg-gradient-to-br from-white to-slate-50/50">
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2.5 text-2xl text-slate-900">
+                        <div className="rounded-lg bg-sky-100 p-2">
+                          <Package className="h-5 w-5 text-sky-600" />
+                        </div>
+                        {t('customer.detail.contracts.title')}
+                      </CardTitle>
+                      <CardDescription className="mt-2">
+                        {t('customer.detail.contracts.description')}
+                      </CardDescription>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <ActionGuard pageId="customers" actionId="contract-create">
+                        <Button
+                          size="sm"
+                          onClick={() => setCreateContractOpen(true)}
+                          className="gap-2 bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] shadow-sm hover:from-[var(--brand-700)] hover:to-[var(--brand-700)]"
                         >
-                          !
-                        </Badge>
-                      )}
-                    </Button>
+                          <Plus className="h-4 w-4" />
+                          {t('customer.detail.contracts.create')}
+                        </Button>
+                      </ActionGuard>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={toggleAllContracts}
+                        disabled={!contracts.length}
+                        className="gap-2"
+                      >
+                        {isAllExpanded ? (
+                          <>
+                            <ChevronUp className="h-4 w-4" />
+                            {t('customer.detail.contracts.collapse')}
+                          </>
+                        ) : (
+                          <>
+                            <ChevronDown className="h-4 w-4" />
+                            {t('customer.detail.contracts.expand_all')}
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowFilters(!showFilters)}
+                        className={cn(
+                          'gap-2',
+                          hasActiveFilters && 'border-sky-300 bg-sky-50 text-sky-700'
+                        )}
+                      >
+                        <Filter className="h-4 w-4" />
+                        {t('customer.detail.contracts.filters')}
+                        {hasActiveFilters && (
+                          <Badge
+                            variant="secondary"
+                            className="ml-1 h-5 w-5 rounded-full p-0 text-xs"
+                          >
+                            !
+                          </Badge>
+                        )}
+                      </Button>
+                    </div>
                   </div>
-                </div>
 
-                {/* Filter Panel */}
-                <AnimatePresence>
-                  {showFilters && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="overflow-hidden"
-                    >
-                      <div className="rounded-lg border border-slate-200 bg-white p-4">
-                        <div className="grid gap-4 md:grid-cols-4">
-                          <div className="relative">
-                            <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                            <Input
-                              value={search}
-                              onChange={(event) => setSearch(event.target.value)}
-                              placeholder={t('customer.detail.contracts.search_placeholder')}
-                              className="pl-9"
-                            />
-                          </div>
+                  {/* Filter Panel */}
+                  <AnimatePresence>
+                    {showFilters && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="rounded-lg border border-slate-200 bg-white p-4">
+                          <div className="grid gap-4 md:grid-cols-4">
+                            <div className="relative">
+                              <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                              <Input
+                                value={search}
+                                onChange={(event) => setSearch(event.target.value)}
+                                placeholder={t('customer.detail.contracts.search_placeholder')}
+                                className="pl-9"
+                              />
+                            </div>
 
-                          <select
-                            value={statusFilter ?? ''}
-                            onChange={(e) => {
-                              setStatusFilter(e.target.value ? e.target.value : undefined)
-                              setPage(1)
-                            }}
-                            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm transition-colors focus:border-sky-500 focus:ring-2 focus:ring-sky-200 focus:outline-none"
-                          >
-                            <option value="">
-                              {t('customer.detail.contracts.filter.all_status')}
-                            </option>
-                            <option value="PENDING">
-                              {t('customer.detail.contracts.filter.status.pending')}
-                            </option>
-                            <option value="ACTIVE">
-                              {t('customer.detail.contracts.filter.status.active')}
-                            </option>
-                            <option value="EXPIRED">
-                              {t('customer.detail.contracts.filter.status.expired')}
-                            </option>
-                            <option value="TERMINATED">
-                              {t('customer.detail.contracts.filter.status.terminated')}
-                            </option>
-                          </select>
-
-                          <select
-                            value={typeFilter ?? ''}
-                            onChange={(e) => {
-                              setTypeFilter(e.target.value ? e.target.value : undefined)
-                              setPage(1)
-                            }}
-                            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm transition-colors focus:border-sky-500 focus:ring-2 focus:ring-sky-200 focus:outline-none"
-                          >
-                            <option value="">
-                              {t('customer.detail.contracts.filter.all_types')}
-                            </option>
-                            <option value="MPS_CLICK_CHARGE">MPS Click Charge</option>
-                            <option value="MPS_CONSUMABLE">MPS Consumable</option>
-                            <option value="CMPS_CLICK_CHARGE">cMPS Click Charge</option>
-                            <option value="CMPS_CONSUMABLE">cMPS Consumable</option>
-                            <option value="PARTS_REPAIR_SERVICE">Parts & Repair</option>
-                          </select>
-
-                          <div className="flex items-center gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() =>
-                                setSortOrder((prev) => (prev === 'desc' ? 'asc' : 'desc'))
-                              }
-                              className="flex-1 gap-2"
-                            >
-                              <RefreshCw className="h-4 w-4" />
-                              {sortOrder === 'desc'
-                                ? t('customer.detail.contracts.sort.newest')
-                                : t('customer.detail.contracts.sort.oldest')}
-                            </Button>
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                              onClick={() => {
-                                setSearch('')
-                                setDebouncedSearch('')
-                                setStatusFilter(undefined)
-                                setTypeFilter(undefined)
+                            <select
+                              value={statusFilter ?? ''}
+                              onChange={(e) => {
+                                setStatusFilter(e.target.value ? e.target.value : undefined)
                                 setPage(1)
                               }}
-                              disabled={!hasActiveFilters}
-                              className="gap-2"
+                              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm transition-colors focus:border-sky-500 focus:ring-2 focus:ring-sky-200 focus:outline-none"
                             >
-                              <X className="h-4 w-4" />
-                              {t('customer.detail.contracts.clear')}
-                            </Button>
+                              <option value="">
+                                {t('customer.detail.contracts.filter.all_status')}
+                              </option>
+                              <option value="PENDING">
+                                {t('customer.detail.contracts.filter.status.pending')}
+                              </option>
+                              <option value="ACTIVE">
+                                {t('customer.detail.contracts.filter.status.active')}
+                              </option>
+                              <option value="EXPIRED">
+                                {t('customer.detail.contracts.filter.status.expired')}
+                              </option>
+                              <option value="TERMINATED">
+                                {t('customer.detail.contracts.filter.status.terminated')}
+                              </option>
+                            </select>
+
+                            <select
+                              value={typeFilter ?? ''}
+                              onChange={(e) => {
+                                setTypeFilter(e.target.value ? e.target.value : undefined)
+                                setPage(1)
+                              }}
+                              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm transition-colors focus:border-sky-500 focus:ring-2 focus:ring-sky-200 focus:outline-none"
+                            >
+                              <option value="">
+                                {t('customer.detail.contracts.filter.all_types')}
+                              </option>
+                              <option value="MPS_CLICK_CHARGE">MPS Click Charge</option>
+                              <option value="MPS_CONSUMABLE">MPS Consumable</option>
+                              <option value="CMPS_CLICK_CHARGE">cMPS Click Charge</option>
+                              <option value="CMPS_CONSUMABLE">cMPS Consumable</option>
+                              <option value="PARTS_REPAIR_SERVICE">Parts & Repair</option>
+                            </select>
+
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                  setSortOrder((prev) => (prev === 'desc' ? 'asc' : 'desc'))
+                                }
+                                className="flex-1 gap-2"
+                              >
+                                <RefreshCw className="h-4 w-4" />
+                                {sortOrder === 'desc'
+                                  ? t('customer.detail.contracts.sort.newest')
+                                  : t('customer.detail.contracts.sort.oldest')}
+                              </Button>
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => {
+                                  setSearch('')
+                                  setDebouncedSearch('')
+                                  setStatusFilter(undefined)
+                                  setTypeFilter(undefined)
+                                  setPage(1)
+                                }}
+                                disabled={!hasActiveFilters}
+                                className="gap-2"
+                              >
+                                <X className="h-4 w-4" />
+                                {t('customer.detail.contracts.clear')}
+                              </Button>
+                            </div>
                           </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </CardHeader>
+
+                <CardContent className="p-0">
+                  {error ? (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="m-6 rounded-xl border border-rose-200 bg-gradient-to-br from-rose-50 to-red-50 p-6 text-sm text-rose-700"
+                    >
+                      <div className="flex items-start gap-3">
+                        <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0" />
+                        <div>
+                          <p className="font-semibold">{t('customer.detail.error.title')}</p>
+                          <p className="mt-1">{error}</p>
                         </div>
                       </div>
                     </motion.div>
-                  )}
-                </AnimatePresence>
-              </CardHeader>
-
-              <CardContent className="p-0">
-                {error ? (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="m-6 rounded-xl border border-rose-200 bg-gradient-to-br from-rose-50 to-red-50 p-6 text-sm text-rose-700"
-                  >
-                    <div className="flex items-start gap-3">
-                      <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0" />
-                      <div>
-                        <p className="font-semibold">{t('customer.detail.error.title')}</p>
-                        <p className="mt-1">{error}</p>
+                  ) : loadingOverview ? (
+                    <div className="flex flex-col items-center justify-center gap-4 py-16">
+                      <div className="relative">
+                        <Loader2 className="h-12 w-12 animate-spin text-sky-500" />
+                        <div className="absolute inset-0 h-12 w-12 animate-ping rounded-full bg-sky-400 opacity-20" />
                       </div>
-                    </div>
-                  </motion.div>
-                ) : loadingOverview ? (
-                  <div className="flex flex-col items-center justify-center gap-4 py-16">
-                    <div className="relative">
-                      <Loader2 className="h-12 w-12 animate-spin text-sky-500" />
-                      <div className="absolute inset-0 h-12 w-12 animate-ping rounded-full bg-sky-400 opacity-20" />
-                    </div>
-                    <p className="text-sm font-medium text-slate-600">
-                      {t('customer.detail.contracts.loading')}
-                    </p>
-                  </div>
-                ) : contracts.length === 0 && unassignedDevices.length === 0 ? (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="m-6 flex flex-col items-center justify-center gap-4 rounded-xl border-2 border-dashed border-slate-300 bg-slate-50/50 py-20 text-center"
-                  >
-                    <div className="rounded-full bg-slate-100 p-4">
-                      <PackageSearch className="h-10 w-10 text-slate-400" />
-                    </div>
-                    <div>
-                      <p className="text-lg font-semibold text-slate-700">
-                        {t('customer.detail.contracts.empty.title')}
-                      </p>
-                      <p className="mt-1 text-sm text-slate-500">
-                        {t('customer.detail.contracts.empty.description')}
+                      <p className="text-sm font-medium text-slate-600">
+                        {t('customer.detail.contracts.loading')}
                       </p>
                     </div>
-                  </motion.div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full min-w-[1200px] table-auto">
-                      <thead className="border-b border-slate-200 bg-gradient-to-r from-slate-50 to-slate-100/50">
-                        <tr>
-                          <th className="w-12 px-4 py-4 text-center text-xs font-semibold tracking-wide text-slate-600 uppercase">
-                            &nbsp;
-                          </th>
-                          <th className="min-w-[200px] py-4 pr-4 pl-6 text-left text-xs font-semibold tracking-wide text-slate-600 uppercase">
-                            {t('customer.detail.table.device_contract')}
-                          </th>
-                          <th className="w-28 py-4 pr-4 pl-4 text-right text-xs font-semibold tracking-wide text-slate-600 uppercase">
-                            {t('customer.detail.table.monthly_rent')}
-                          </th>
-                          <th className="w-24 px-4 py-4 text-right text-xs font-semibold tracking-wide text-slate-600 uppercase">
-                            {t('customer.detail.table.price_bw')}
-                          </th>
-                          <th className="w-24 px-4 py-4 text-right text-xs font-semibold tracking-wide text-slate-600 uppercase">
-                            {t('customer.detail.table.price_color')}
-                          </th>
-                          <th className="w-28 px-4 py-4 text-right text-xs font-semibold tracking-wide text-slate-600 uppercase">
-                            {t('customer.detail.table.total')}
-                          </th>
-                          <th className="w-24 px-4 py-4 text-right text-xs font-semibold tracking-wide text-slate-600 uppercase">
-                            {t('customer.detail.table.color')}
-                          </th>
-                          <th className="w-24 px-4 py-4 text-right text-xs font-semibold tracking-wide text-slate-600 uppercase">
-                            {t('customer.detail.table.bw')}
-                          </th>
-                          <th className="min-w-[150px] px-4 py-4 text-left text-xs font-semibold tracking-wide text-slate-600 uppercase">
-                            {t('customer.detail.table.location')}
-                          </th>
-                          <th className="w-28 px-4 py-4 text-left text-xs font-semibold tracking-wide text-slate-600 uppercase">
-                            {t('customer.detail.table.status')}
-                          </th>
-                          <th className="w-32 px-4 py-4 text-right text-xs font-semibold tracking-wide text-slate-600 uppercase">
-                            {t('customer.detail.table.actions')}
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {contracts.map((contract, idx) => (
-                          <Fragment key={contract.id}>
-                            <motion.tr
-                              initial={{ opacity: 0, y: -10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ delay: idx * 0.05 }}
-                              className="border-t border-slate-200 bg-gradient-to-r from-[var(--brand-50)]/50 via-[var(--brand-50)]/30 to-[var(--brand-50)]/50"
-                            >
-                              <td className="px-4 py-5 align-top">
-                                <Checkbox
-                                  aria-label={t('customer.detail.contracts.checkbox', {
-                                    number: contract.contractNumber,
-                                  })}
-                                />
-                              </td>
-                              <td colSpan={7} className="px-6 py-5">
-                                <div className="flex flex-col gap-2.5">
-                                  <div className="flex flex-wrap items-center gap-2.5">
-                                    <span className="text-base font-bold text-sky-700">
-                                      {contract.contractNumber}
-                                    </span>
+                  ) : contracts.length === 0 && unassignedDevices.length === 0 ? (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="m-6 flex flex-col items-center justify-center gap-4 rounded-xl border-2 border-dashed border-slate-300 bg-slate-50/50 py-20 text-center"
+                    >
+                      <div className="rounded-full bg-slate-100 p-4">
+                        <PackageSearch className="h-10 w-10 text-slate-400" />
+                      </div>
+                      <div>
+                        <p className="text-lg font-semibold text-slate-700">
+                          {t('customer.detail.contracts.empty.title')}
+                        </p>
+                        <p className="mt-1 text-sm text-slate-500">
+                          {t('customer.detail.contracts.empty.description')}
+                        </p>
+                      </div>
+                    </motion.div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full min-w-[1200px] table-auto">
+                        <thead className="border-b border-slate-200 bg-gradient-to-r from-slate-50 to-slate-100/50">
+                          <tr>
+                            <th className="w-12 px-4 py-4 text-center text-xs font-semibold tracking-wide text-slate-600 uppercase">
+                              &nbsp;
+                            </th>
+                            <th className="min-w-[200px] py-4 pr-4 pl-6 text-left text-xs font-semibold tracking-wide text-slate-600 uppercase">
+                              {t('customer.detail.table.device_contract')}
+                            </th>
+                            <th className="w-28 py-4 pr-4 pl-4 text-right text-xs font-semibold tracking-wide text-slate-600 uppercase">
+                              {t('customer.detail.table.monthly_rent')}
+                            </th>
+                            <th className="w-24 px-4 py-4 text-right text-xs font-semibold tracking-wide text-slate-600 uppercase">
+                              {t('customer.detail.table.price_bw')}
+                            </th>
+                            <th className="w-24 px-4 py-4 text-right text-xs font-semibold tracking-wide text-slate-600 uppercase">
+                              {t('customer.detail.table.price_color')}
+                            </th>
+                            <th className="w-28 px-4 py-4 text-right text-xs font-semibold tracking-wide text-slate-600 uppercase">
+                              {t('customer.detail.table.total')}
+                            </th>
+                            <th className="w-24 px-4 py-4 text-right text-xs font-semibold tracking-wide text-slate-600 uppercase">
+                              {t('customer.detail.table.color')}
+                            </th>
+                            <th className="w-24 px-4 py-4 text-right text-xs font-semibold tracking-wide text-slate-600 uppercase">
+                              {t('customer.detail.table.bw')}
+                            </th>
+                            <th className="min-w-[150px] px-4 py-4 text-left text-xs font-semibold tracking-wide text-slate-600 uppercase">
+                              {t('customer.detail.table.location')}
+                            </th>
+                            <th className="w-28 px-4 py-4 text-left text-xs font-semibold tracking-wide text-slate-600 uppercase">
+                              {t('customer.detail.table.status')}
+                            </th>
+                            <th className="w-32 px-4 py-4 text-right text-xs font-semibold tracking-wide text-slate-600 uppercase">
+                              {t('customer.detail.table.actions')}
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {contracts.map((contract, idx) => (
+                            <Fragment key={contract.id}>
+                              <motion.tr
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: idx * 0.05 }}
+                                className="border-t border-slate-200 bg-gradient-to-r from-[var(--brand-50)]/50 via-[var(--brand-50)]/30 to-[var(--brand-50)]/50"
+                              >
+                                <td className="px-4 py-5 align-top">
+                                  <Checkbox
+                                    aria-label={t('customer.detail.contracts.checkbox', {
+                                      number: contract.contractNumber,
+                                    })}
+                                  />
+                                </td>
+                                <td colSpan={7} className="px-6 py-5">
+                                  <div className="flex flex-col gap-2.5">
+                                    <div className="flex flex-wrap items-center gap-2.5">
+                                      <span className="text-base font-bold text-sky-700">
+                                        {contract.contractNumber}
+                                      </span>
+                                      <Badge
+                                        variant="outline"
+                                        className={cn(
+                                          'text-xs font-medium',
+                                          getTypeColor(contract.type)
+                                        )}
+                                      >
+                                        {contract.type}
+                                      </Badge>
+                                      <Badge
+                                        className={cn(
+                                          'border-0 text-xs font-medium text-white shadow-sm',
+                                          getStatusColor(contract.status)
+                                        )}
+                                      >
+                                        {getStatusLabel(contract.status)}
+                                      </Badge>
+                                      {/* Contract-level action buttons moved to actions column */}
+                                    </div>
+                                    <div className="flex items-center gap-4 text-xs text-slate-600">
+                                      <span className="flex items-center gap-1.5">
+                                        <span className="font-medium">
+                                          {t('customer.detail.contracts.effective')}:
+                                        </span>
+                                        {formatDateRange(contract.startDate, contract.endDate)}
+                                      </span>
+                                    </div>
+                                    {contract.description && (
+                                      <p className="line-clamp-1 text-xs text-slate-500">
+                                        {contract.description}
+                                      </p>
+                                    )}
+                                  </div>
+                                </td>
+                                <td className="px-4 py-5 text-sm text-slate-600">
+                                  {contract.customer?.name}
+                                </td>
+                                <td className="px-4 py-5">
+                                  {(contract.contractDevices?.length ?? 0) > 0 ? (
                                     <Badge
                                       variant="outline"
-                                      className={cn(
-                                        'text-xs font-medium',
-                                        getTypeColor(contract.type)
-                                      )}
+                                      className="border-slate-300 bg-slate-100 text-xs font-medium text-slate-800"
                                     >
-                                      {contract.type}
+                                      {t('customer.detail.contracts.device_count', {
+                                        count: contract.contractDevices?.length ?? 0,
+                                      })}
                                     </Badge>
-                                    <Badge
-                                      className={cn(
-                                        'border-0 text-xs font-medium text-white shadow-sm',
-                                        getStatusColor(contract.status)
-                                      )}
-                                    >
-                                      {getStatusLabel(contract.status)}
-                                    </Badge>
-                                    {/* Contract-level action buttons moved to actions column */}
-                                  </div>
-                                  <div className="flex items-center gap-4 text-xs text-slate-600">
-                                    <span className="flex items-center gap-1.5">
-                                      <span className="font-medium">
-                                        {t('customer.detail.contracts.effective')}:
-                                      </span>
-                                      {formatDateRange(contract.startDate, contract.endDate)}
+                                  ) : (
+                                    <span className="text-xs text-slate-400">
+                                      {t('customer.detail.contracts.no_devices')}
                                     </span>
-                                  </div>
-                                  {contract.description && (
-                                    <p className="line-clamp-1 text-xs text-slate-500">
-                                      {contract.description}
-                                    </p>
                                   )}
-                                </div>
-                              </td>
-                              <td className="px-4 py-5 text-sm text-slate-600">
-                                {contract.customer?.name}
-                              </td>
-                              <td className="px-4 py-5">
-                                {(contract.contractDevices?.length ?? 0) > 0 ? (
-                                  <Badge
-                                    variant="outline"
-                                    className="border-slate-300 bg-slate-100 text-xs font-medium text-slate-800"
-                                  >
-                                    {t('customer.detail.contracts.device_count', {
-                                      count: contract.contractDevices?.length ?? 0,
-                                    })}
-                                  </Badge>
-                                ) : (
-                                  <span className="text-xs text-slate-400">
-                                    {t('customer.detail.contracts.no_devices')}
-                                  </span>
-                                )}
-                              </td>
-                              <td className="px-4 py-5 text-right align-top">
-                                <div className="flex items-center justify-end gap-2">
-                                  {/* Re-render contract-level actions here (moved from header) */}
-                                  {/* Only show Create billing button to system admin on FE */}
-                                  {isAdminForUI && (
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <Button
-                                          variant="secondary"
-                                          size="sm"
-                                          className="h-8 w-8 p-0"
-                                          onClick={() =>
-                                            setCreateBillingContract({
-                                              id: contract.id,
-                                              number: contract.contractNumber,
-                                            })
-                                          }
-                                          aria-label={t('customer.detail.contracts.create_billing')}
-                                        >
-                                          <Receipt className="h-4 w-4" />
-                                        </Button>
-                                      </TooltipTrigger>
-                                      <TooltipContent sideOffset={4}>
-                                        {t('customer.detail.contracts.create_billing')}
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  )}
-                                  {canUpdateContract && (
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <Button
-                                          variant="secondary"
-                                          size="sm"
-                                          className="h-8 w-8 p-0"
-                                          onClick={() => setEditingContract(contract)}
-                                          aria-label={t('customer.detail.contracts.edit')}
-                                        >
-                                          <Edit className="h-4 w-4" />
-                                        </Button>
-                                      </TooltipTrigger>
-                                      <TooltipContent sideOffset={4}>
-                                        {t('customer.detail.contracts.edit')}
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  )}
-                                  {canAttachDevices && (
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <Button
-                                          variant="secondary"
-                                          size="sm"
-                                          className="h-8 w-8 p-0"
-                                          onClick={() => {
-                                            setAttachModalContractId(contract.id)
-                                            setAttachModalOpen(true)
+                                </td>
+                                <td className="px-4 py-5 text-right align-top">
+                                  <div className="flex items-center justify-end gap-2">
+                                    {/* Re-render contract-level actions here (moved from header) */}
+                                    {/* Only show Create billing button to system admin on FE */}
+                                    {isAdminForUI && (
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Button
+                                            variant="secondary"
+                                            size="sm"
+                                            className="h-8 w-8 p-0"
+                                            onClick={() =>
+                                              setCreateBillingContract({
+                                                id: contract.id,
+                                                number: contract.contractNumber,
+                                              })
+                                            }
+                                            aria-label={t(
+                                              'customer.detail.contracts.create_billing'
+                                            )}
+                                          >
+                                            <Receipt className="h-4 w-4" />
+                                          </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent sideOffset={4}>
+                                          {t('customer.detail.contracts.create_billing')}
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    )}
+                                    <ActionGuard pageId="customers" actionId="contract-update">
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Button
+                                            variant="secondary"
+                                            size="sm"
+                                            className="h-8 w-8 p-0"
+                                            onClick={() => setEditingContract(contract)}
+                                            aria-label={t('customer.detail.contracts.edit')}
+                                          >
+                                            <Edit className="h-4 w-4" />
+                                          </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent sideOffset={4}>
+                                          {t('customer.detail.contracts.edit')}
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </ActionGuard>
+                                    <ActionGuard
+                                      pageId="customers"
+                                      actionId="contract-attach-devices"
+                                    >
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Button
+                                            variant="secondary"
+                                            size="sm"
+                                            className="h-8 w-8 p-0"
+                                            onClick={() => {
+                                              setAttachModalContractId(contract.id)
+                                              setAttachModalOpen(true)
+                                            }}
+                                            aria-label={t(
+                                              'customer.detail.contracts.attach_device'
+                                            )}
+                                          >
+                                            <MonitorSmartphone className="h-4 w-4" />
+                                          </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent sideOffset={4}>
+                                          {t('customer.detail.contracts.attach_device')}
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </ActionGuard>
+                                    <ActionGuard pageId="customers" actionId="contract-delete">
+                                      <Tooltip>
+                                        <DeleteDialog
+                                          title={t('customer.detail.contracts.delete.title')}
+                                          description={t(
+                                            'customer.detail.contracts.delete.description',
+                                            { number: contract.contractNumber }
+                                          )}
+                                          onConfirm={async () => {
+                                            try {
+                                              await contractsClientService.delete(contract.id)
+                                              await loadOverview()
+                                              toast.success(
+                                                t('customer.detail.contracts.delete.success')
+                                              )
+                                            } catch (err: unknown) {
+                                              console.error('Delete contract error', err)
+                                              const apiMsg = extractApiMessage(err)
+                                              toast.error(
+                                                apiMsg ||
+                                                  t('customer.detail.contracts.delete.error')
+                                              )
+                                            }
                                           }}
-                                          aria-label={t('customer.detail.contracts.attach_device')}
-                                        >
-                                          <MonitorSmartphone className="h-4 w-4" />
-                                        </Button>
-                                      </TooltipTrigger>
-                                      <TooltipContent sideOffset={4}>
-                                        {t('customer.detail.contracts.attach_device')}
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  )}
-                                  {canDeleteContract && (
-                                    <Tooltip>
-                                      <DeleteDialog
-                                        title={t('customer.detail.contracts.delete.title')}
-                                        description={t(
-                                          'customer.detail.contracts.delete.description',
-                                          { number: contract.contractNumber }
-                                        )}
-                                        onConfirm={async () => {
-                                          try {
-                                            await contractsClientService.delete(contract.id)
-                                            await loadOverview()
-                                            toast.success(
-                                              t('customer.detail.contracts.delete.success')
-                                            )
-                                          } catch (err: unknown) {
-                                            console.error('Delete contract error', err)
-                                            const apiMsg = extractApiMessage(err)
-                                            toast.error(
-                                              apiMsg || t('customer.detail.contracts.delete.error')
-                                            )
+                                          trigger={
+                                            <TooltipTrigger asChild>
+                                              <Button
+                                                variant="destructive"
+                                                size="sm"
+                                                className="h-8 w-8 p-0 text-rose-600"
+                                                aria-label={t(
+                                                  'customer.detail.contracts.delete.label'
+                                                )}
+                                              >
+                                                <Trash2 className="h-4 w-4" />
+                                              </Button>
+                                            </TooltipTrigger>
                                           }
-                                        }}
-                                        trigger={
-                                          <TooltipTrigger asChild>
-                                            <Button
-                                              variant="destructive"
-                                              size="sm"
-                                              className="h-8 w-8 p-0 text-rose-600"
-                                              aria-label={t(
-                                                'customer.detail.contracts.delete.label'
-                                              )}
-                                            >
-                                              <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                          </TooltipTrigger>
-                                        }
-                                      />
-                                      <TooltipContent sideOffset={4}>
-                                        {t('customer.detail.contracts.delete.label')}
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  )}
+                                        />
+                                        <TooltipContent sideOffset={4}>
+                                          {t('customer.detail.contracts.delete.label')}
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </ActionGuard>
 
-                                  {/* Expand/collapse chevron */}
+                                    {/* Expand/collapse chevron */}
+                                    <Button
+                                      variant="secondary"
+                                      size="icon"
+                                      onClick={() => toggleContract(contract.id)}
+                                      className="h-8 w-8 transition-transform hover:bg-slate-100"
+                                    >
+                                      <motion.div
+                                        animate={{
+                                          rotate: expandedContracts.has(contract.id) ? 180 : 0,
+                                        }}
+                                        transition={{ duration: 0.2 }}
+                                      >
+                                        <ChevronDown className="h-4 w-4" />
+                                      </motion.div>
+                                    </Button>
+                                  </div>
+                                </td>
+                              </motion.tr>
+                              <AnimatePresence>
+                                {expandedContracts.has(contract.id) &&
+                                  renderContractDevices(contract)}
+                              </AnimatePresence>
+                            </Fragment>
+                          ))}
+                          {renderUnassignedDevices(unassignedDevices)}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </CardContent>
+
+                {pagination && contracts.length > 0 && (
+                  <div className="flex flex-wrap items-center justify-between gap-4 border-t border-slate-100 bg-slate-50/50 px-6 py-4">
+                    <div className="text-sm text-slate-600">
+                      {t('customer.detail.pagination.page', {
+                        current: pagination.page,
+                        total: pagination.totalPages,
+                      })}{' '}
+                      •{' '}
+                      {t('customer.detail.pagination.total', {
+                        count: formatInteger(pagination.total),
+                      })}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={page <= 1}
+                        onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                        className="gap-2"
+                      >
+                        <ChevronUp className="h-4 w-4 rotate-90" />
+                        {t('customer.detail.pagination.previous')}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={pagination.totalPages ? page >= pagination.totalPages : false}
+                        onClick={() =>
+                          setPage((prev) =>
+                            pagination.totalPages
+                              ? Math.min(pagination.totalPages, prev + 1)
+                              : prev + 1
+                          )
+                        }
+                        className="gap-2"
+                      >
+                        {t('customer.detail.pagination.next')}
+                        <ChevronDown className="h-4 w-4 -rotate-90" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </Card>
+            </ActionGuard>
+          </TabsContent>
+
+          <TabsContent value="inventory" className="space-y-4">
+            <ActionGuard pageId="customers" actionId="view-customer-consumables">
+              <Card className="border-slate-200 shadow-lg">
+                <CardHeader className="border-b border-slate-100 bg-gradient-to-br from-white to-amber-50/30">
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2.5 text-2xl text-slate-900">
+                        <div className="rounded-lg bg-amber-100 p-2">
+                          <PackageSearch className="h-5 w-5 text-amber-600" />
+                        </div>
+                        {t('customer.detail.inventory.title')}
+                      </CardTitle>
+                      <CardDescription className="mt-2">
+                        {t('customer.detail.inventory.description')}
+                      </CardDescription>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Badge
+                        variant="outline"
+                        className="border-amber-300 bg-amber-50 text-amber-700"
+                      >
+                        {t('customer.detail.inventory.count', {
+                          count:
+                            consumablesData?.pagination?.total ??
+                            consumablesData?.items.length ??
+                            0,
+                        })}
+                      </Badge>
+                      {groupedConsumables.length > 0 && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={toggleAllConsumableTypes}
+                          className="gap-2"
+                        >
+                          {expandedConsumableTypes.size === groupedConsumables.length ? (
+                            <>
+                              <ChevronUp className="h-4 w-4" />
+                              {t('customer.detail.inventory.collapse')}
+                            </>
+                          ) : (
+                            <>
+                              <ChevronDown className="h-4 w-4" />
+                              {t('customer.detail.inventory.expand_all')}
+                            </>
+                          )}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3 pt-4">
+                    <div className="relative min-w-[250px] flex-1">
+                      <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                      <Input
+                        value={consumablesSearch}
+                        onChange={(event) => setConsumablesSearch(event.target.value)}
+                        placeholder={t('customer.detail.inventory.search_placeholder')}
+                        className="pl-9"
+                      />
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setConsumablesSortOrder((prev) => (prev === 'desc' ? 'asc' : 'desc'))
+                      }
+                      className="gap-2"
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                      {consumablesSortOrder === 'desc'
+                        ? t('customer.detail.inventory.sort.newest')
+                        : t('customer.detail.inventory.sort.oldest')}
+                    </Button>
+                  </div>
+                </CardHeader>
+
+                <CardContent className="p-0">
+                  {consumablesError ? (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="m-6 rounded-xl border border-rose-200 bg-gradient-to-br from-rose-50 to-red-50 p-6 text-sm text-rose-700"
+                    >
+                      <div className="flex items-start gap-3">
+                        <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0" />
+                        <div>
+                          <p className="font-semibold">{t('customer.detail.error.title')}</p>
+                          <p className="mt-1">{consumablesError}</p>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ) : consumablesLoading ? (
+                    <div className="flex flex-col items-center justify-center gap-4 py-16">
+                      <div className="relative">
+                        <Loader2 className="h-12 w-12 animate-spin text-amber-500" />
+                        <div className="absolute inset-0 h-12 w-12 animate-ping rounded-full bg-amber-400 opacity-20" />
+                      </div>
+                      <p className="text-sm font-medium text-slate-600">
+                        {t('customer.detail.inventory.loading')}
+                      </p>
+                    </div>
+                  ) : !consumablesData || groupedConsumables.length === 0 ? (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="m-6 flex flex-col items-center justify-center gap-4 rounded-xl border-2 border-dashed border-amber-300 bg-amber-50/50 py-20 text-center"
+                    >
+                      <div className="rounded-full bg-amber-100 p-4">
+                        <Package className="h-10 w-10 text-amber-500" />
+                      </div>
+                      <div>
+                        <p className="text-lg font-semibold text-amber-900">
+                          {t('customer.detail.inventory.empty.title')}
+                        </p>
+                        <p className="mt-1 text-sm text-amber-700">
+                          {t('customer.detail.inventory.empty.description')}
+                        </p>
+                      </div>
+                    </motion.div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full table-auto">
+                        <thead className="border-b border-slate-200 bg-gradient-to-r from-amber-50 to-orange-50/50">
+                          <tr>
+                            <th className="w-12 px-4 py-4 text-center text-xs font-semibold tracking-wide text-amber-900 uppercase">
+                              &nbsp;
+                            </th>
+                            <th className="px-6 py-4 text-left text-xs font-semibold tracking-wide text-amber-900 uppercase">
+                              Part Number
+                            </th>
+                            <th className="px-6 py-4 text-left text-xs font-semibold tracking-wide text-amber-900 uppercase">
+                              {t('customer.detail.inventory.table.name')}
+                            </th>
+                            <th className="px-6 py-4 text-left text-xs font-semibold tracking-wide text-amber-900 uppercase">
+                              {t('customer.detail.inventory.table.compatible_line')}
+                            </th>
+                            <th className="px-6 py-4 text-left text-xs font-semibold tracking-wide text-amber-900 uppercase">
+                              {t('customer.detail.inventory.table.capacity')}
+                            </th>
+                            <th className="px-6 py-4 text-left text-xs font-semibold tracking-wide text-amber-900 uppercase">
+                              {t('customer.detail.inventory.table.usage_status')}
+                            </th>
+                            <th className="px-6 py-4 text-left text-xs font-semibold tracking-wide text-amber-900 uppercase">
+                              {t('customer.detail.inventory.table.status')}
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {groupedConsumables.map((group, groupIdx) => (
+                            <Fragment key={group.typeId}>
+                              <motion.tr
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: groupIdx * 0.05 }}
+                                className="bg-gradient-to-r from-amber-50/50 via-orange-50/30 to-yellow-50/50"
+                              >
+                                <td className="px-4 py-5 text-center">
                                   <Button
                                     variant="secondary"
                                     size="icon"
-                                    onClick={() => toggleContract(contract.id)}
-                                    className="h-8 w-8 transition-transform hover:bg-slate-100"
+                                    className="h-8 w-8 transition-transform"
+                                    onClick={() => toggleConsumableType(group.typeId)}
                                   >
                                     <motion.div
                                       animate={{
-                                        rotate: expandedContracts.has(contract.id) ? 180 : 0,
+                                        rotate: expandedConsumableTypes.has(group.typeId) ? 180 : 0,
                                       }}
                                       transition={{ duration: 0.2 }}
                                     >
                                       <ChevronDown className="h-4 w-4" />
                                     </motion.div>
                                   </Button>
-                                </div>
-                              </td>
-                            </motion.tr>
-                            <AnimatePresence>
-                              {expandedContracts.has(contract.id) &&
-                                renderContractDevices(contract)}
-                            </AnimatePresence>
-                          </Fragment>
-                        ))}
-                        {renderUnassignedDevices(unassignedDevices)}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </CardContent>
+                                </td>
+                                <td className="px-6 py-5">
+                                  <Badge
+                                    variant="outline"
+                                    className="border-amber-300 bg-amber-100 font-mono text-sm text-amber-900"
+                                  >
+                                    {group.type?.partNumber ?? '—'}
+                                  </Badge>
+                                </td>
+                                <td className="px-6 py-5">
+                                  <div className="font-semibold text-amber-900">
+                                    {group.type?.name ??
+                                      t('customer.detail.inventory.unknown_name')}
+                                  </div>
+                                </td>
+                                <td className="px-6 py-5 text-sm text-amber-800">
+                                  {(() => {
+                                    const machineLine = String(
+                                      group.type?.compatibleMachineLine ?? ''
+                                    ).trim()
+                                    if (machineLine) return machineLine
+                                    return (
+                                      group.type?.compatibleDeviceModels
+                                        ?.map((model) => model?.name)
+                                        .filter(Boolean)
+                                        .join(', ') || '—'
+                                    )
+                                  })()}
+                                </td>
+                                <td className="px-6 py-5 text-sm text-amber-800">
+                                  {group.type?.capacity
+                                    ? t('customer.detail.inventory.capacity', {
+                                        pages: formatInteger(group.type.capacity),
+                                      })
+                                    : '—'}
+                                </td>
+                                <td className="px-6 py-5">
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <Badge
+                                      variant="outline"
+                                      className="border-slate-300 bg-slate-100 text-xs text-slate-700"
+                                    >
+                                      {t('customer.detail.inventory.usage.total', {
+                                        count: group.total,
+                                      })}
+                                    </Badge>
+                                    <Badge
+                                      variant="outline"
+                                      className="border-emerald-300 bg-emerald-100 text-xs text-emerald-700"
+                                    >
+                                      {t('customer.detail.inventory.usage.used', {
+                                        count: group.used,
+                                      })}
+                                    </Badge>
+                                    <Badge
+                                      variant="outline"
+                                      className="border-blue-300 bg-blue-100 text-xs text-blue-700"
+                                    >
+                                      {t('customer.detail.inventory.usage.available', {
+                                        count: group.available,
+                                      })}
+                                    </Badge>
+                                  </div>
+                                </td>
+                                <td className="px-6 py-5">
+                                  <Badge
+                                    variant="outline"
+                                    className="border-amber-300 bg-amber-100 text-amber-800"
+                                  >
+                                    {t('customer.detail.inventory.count', { count: group.total })}
+                                  </Badge>
+                                </td>
+                              </motion.tr>
+                              <AnimatePresence>
+                                {expandedConsumableTypes.has(group.typeId) &&
+                                  group.items.map((item, itemIdx) => (
+                                    <motion.tr
+                                      key={item.id}
+                                      initial={{ opacity: 0, x: -10 }}
+                                      animate={{ opacity: 1, x: 0 }}
+                                      transition={{ delay: itemIdx * 0.03 }}
+                                      className="group hover:bg-amber-50/30"
+                                    >
+                                      <td className="px-4 py-4 text-center text-xs text-slate-300">
+                                        │
+                                      </td>
+                                      <td className="px-6 py-4">
+                                        <Badge variant="outline" className="font-mono text-xs">
+                                          {item.consumableType?.partNumber ?? '—'}
+                                        </Badge>
+                                      </td>
+                                      <td className="px-6 py-4">
+                                        <div className="font-medium text-slate-800">
+                                          {item.consumableType?.name ??
+                                            t('customer.detail.inventory.unknown_name')}
+                                        </div>
+                                        <p className="mt-0.5 text-xs text-slate-500">
+                                          {t('customer.detail.inventory.serial')}:{' '}
+                                          {item.serialNumber ?? '—'}
+                                        </p>
+                                        {/* If this consumable is installed on a device, show extra info */}
+                                        {(() => {
+                                          const deviceConsumables = (
+                                            item as unknown as {
+                                              deviceConsumables?: DeviceConsumableLocal[]
+                                            }
+                                          ).deviceConsumables
+                                          const activeDc =
+                                            deviceConsumables?.find((d) => d?.isActive) ??
+                                            deviceConsumables?.[0]
+                                          if (!activeDc) return null
+                                          const installedDevice = findDeviceById(activeDc.deviceId)
+                                          return (
+                                            <p className="mt-1 text-xs text-slate-500">
+                                              {t('customer.detail.inventory.installed_at')}:{' '}
+                                              {installedDevice ? (
+                                                <Link
+                                                  href={`/system/devices/${installedDevice.id}`}
+                                                  className="text-sky-600 hover:underline"
+                                                >
+                                                  {installedDevice?.serialNumber ??
+                                                    installedDevice?.id}
+                                                </Link>
+                                              ) : activeDc.deviceId ? (
+                                                <Link
+                                                  href={`/system/devices/${activeDc.deviceId}`}
+                                                  className="text-sky-600 hover:underline"
+                                                >
+                                                  {activeDc.deviceId}
+                                                </Link>
+                                              ) : (
+                                                '—'
+                                              )}{' '}
+                                              •{' '}
+                                              {formatDate(
+                                                activeDc.installedAt ?? activeDc.createdAt
+                                              )}{' '}
+                                              • {t('customer.detail.inventory.printed')}:{' '}
+                                              {formatInteger(
+                                                activeDc.actualPagesPrinted ?? undefined
+                                              )}{' '}
+                                              {t('customer.detail.inventory.pages')} •{' '}
+                                              {t('customer.detail.inventory.warning')}:{' '}
+                                              {activeDc.warningPercentage != null
+                                                ? `${activeDc.warningPercentage}%`
+                                                : '—'}
+                                            </p>
+                                          )
+                                        })()}
+                                      </td>
+                                      <td className="px-6 py-4 text-sm text-slate-600">
+                                        {(() => {
+                                          const machineLine = String(
+                                            item.consumableType?.compatibleMachineLine ?? ''
+                                          ).trim()
+                                          if (machineLine) return machineLine
+                                          return (
+                                            item.consumableType?.compatibleDeviceModels
+                                              ?.map((model) => model?.name)
+                                              .filter(Boolean)
+                                              .join(', ') || '—'
+                                          )
+                                        })()}
+                                      </td>
+                                      <td className="px-6 py-4 text-sm text-slate-600">
+                                        {item.consumableType?.capacity
+                                          ? t('customer.detail.inventory.capacity', {
+                                              pages: formatInteger(item.consumableType.capacity),
+                                            })
+                                          : '—'}
+                                      </td>
+                                      <td className="px-6 py-4">{renderUsageBadge(item)}</td>
+                                      <td className="px-6 py-4 text-sm text-slate-600">
+                                        {item.status ?? '—'}
+                                      </td>
+                                    </motion.tr>
+                                  ))}
+                              </AnimatePresence>
+                            </Fragment>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </CardContent>
 
-              {pagination && contracts.length > 0 && (
-                <div className="flex flex-wrap items-center justify-between gap-4 border-t border-slate-100 bg-slate-50/50 px-6 py-4">
-                  <div className="text-sm text-slate-600">
-                    {t('customer.detail.pagination.page', {
-                      current: pagination.page,
-                      total: pagination.totalPages,
-                    })}{' '}
-                    •{' '}
-                    {t('customer.detail.pagination.total', {
-                      count: formatInteger(pagination.total),
-                    })}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={page <= 1}
-                      onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-                      className="gap-2"
-                    >
-                      <ChevronUp className="h-4 w-4 rotate-90" />
-                      {t('customer.detail.pagination.previous')}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={pagination.totalPages ? page >= pagination.totalPages : false}
-                      onClick={() =>
-                        setPage((prev) =>
-                          pagination.totalPages
-                            ? Math.min(pagination.totalPages, prev + 1)
-                            : prev + 1
-                        )
-                      }
-                      className="gap-2"
-                    >
-                      {t('customer.detail.pagination.next')}
-                      <ChevronDown className="h-4 w-4 -rotate-90" />
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="inventory" className="space-y-4">
-            <Card className="border-slate-200 shadow-lg">
-              <CardHeader className="border-b border-slate-100 bg-gradient-to-br from-white to-amber-50/30">
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                  <div>
-                    <CardTitle className="flex items-center gap-2.5 text-2xl text-slate-900">
-                      <div className="rounded-lg bg-amber-100 p-2">
-                        <PackageSearch className="h-5 w-5 text-amber-600" />
-                      </div>
-                      {t('customer.detail.inventory.title')}
-                    </CardTitle>
-                    <CardDescription className="mt-2">
-                      {t('customer.detail.inventory.description')}
-                    </CardDescription>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Badge
-                      variant="outline"
-                      className="border-amber-300 bg-amber-50 text-amber-700"
-                    >
-                      {t('customer.detail.inventory.count', {
-                        count:
-                          consumablesData?.pagination?.total ?? consumablesData?.items.length ?? 0,
+                {consumablesData?.pagination && consumablesData.pagination.totalPages > 1 && (
+                  <div className="flex flex-wrap items-center justify-between gap-4 border-t border-slate-100 bg-amber-50/30 px-6 py-4">
+                    <div className="text-sm text-slate-600">
+                      {t('customer.detail.pagination.page', {
+                        current: consumablesData.pagination.page,
+                        total: consumablesData.pagination.totalPages,
+                      })}{' '}
+                      •{' '}
+                      {t('customer.detail.pagination.total', {
+                        count: formatInteger(consumablesData.pagination.total),
                       })}
-                    </Badge>
-                    {groupedConsumables.length > 0 && (
+                    </div>
+                    <div className="flex items-center gap-2">
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={toggleAllConsumableTypes}
+                        disabled={consumablesPage <= 1}
+                        onClick={() => setConsumablesPage((prev) => Math.max(1, prev - 1))}
                         className="gap-2"
                       >
-                        {expandedConsumableTypes.size === groupedConsumables.length ? (
-                          <>
-                            <ChevronUp className="h-4 w-4" />
-                            {t('customer.detail.inventory.collapse')}
-                          </>
-                        ) : (
-                          <>
-                            <ChevronDown className="h-4 w-4" />
-                            {t('customer.detail.inventory.expand_all')}
-                          </>
-                        )}
+                        <ChevronUp className="h-4 w-4 rotate-90" />
+                        {t('customer.detail.pagination.previous')}
                       </Button>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-3 pt-4">
-                  <div className="relative min-w-[250px] flex-1">
-                    <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                    <Input
-                      value={consumablesSearch}
-                      onChange={(event) => setConsumablesSearch(event.target.value)}
-                      placeholder={t('customer.detail.inventory.search_placeholder')}
-                      className="pl-9"
-                    />
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      setConsumablesSortOrder((prev) => (prev === 'desc' ? 'asc' : 'desc'))
-                    }
-                    className="gap-2"
-                  >
-                    <RefreshCw className="h-4 w-4" />
-                    {consumablesSortOrder === 'desc'
-                      ? t('customer.detail.inventory.sort.newest')
-                      : t('customer.detail.inventory.sort.oldest')}
-                  </Button>
-                </div>
-              </CardHeader>
-
-              <CardContent className="p-0">
-                {consumablesError ? (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="m-6 rounded-xl border border-rose-200 bg-gradient-to-br from-rose-50 to-red-50 p-6 text-sm text-rose-700"
-                  >
-                    <div className="flex items-start gap-3">
-                      <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0" />
-                      <div>
-                        <p className="font-semibold">{t('customer.detail.error.title')}</p>
-                        <p className="mt-1">{consumablesError}</p>
-                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={
+                          consumablesData.pagination.totalPages
+                            ? consumablesPage >= consumablesData.pagination.totalPages
+                            : false
+                        }
+                        onClick={() =>
+                          setConsumablesPage((prev) =>
+                            consumablesData.pagination?.totalPages
+                              ? Math.min(consumablesData.pagination.totalPages, prev + 1)
+                              : prev + 1
+                          )
+                        }
+                        className="gap-2"
+                      >
+                        {t('customer.detail.pagination.next')}
+                        <ChevronDown className="h-4 w-4 -rotate-90" />
+                      </Button>
                     </div>
-                  </motion.div>
-                ) : consumablesLoading ? (
-                  <div className="flex flex-col items-center justify-center gap-4 py-16">
-                    <div className="relative">
-                      <Loader2 className="h-12 w-12 animate-spin text-amber-500" />
-                      <div className="absolute inset-0 h-12 w-12 animate-ping rounded-full bg-amber-400 opacity-20" />
-                    </div>
-                    <p className="text-sm font-medium text-slate-600">
-                      {t('customer.detail.inventory.loading')}
-                    </p>
-                  </div>
-                ) : !consumablesData || groupedConsumables.length === 0 ? (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="m-6 flex flex-col items-center justify-center gap-4 rounded-xl border-2 border-dashed border-amber-300 bg-amber-50/50 py-20 text-center"
-                  >
-                    <div className="rounded-full bg-amber-100 p-4">
-                      <Package className="h-10 w-10 text-amber-500" />
-                    </div>
-                    <div>
-                      <p className="text-lg font-semibold text-amber-900">
-                        {t('customer.detail.inventory.empty.title')}
-                      </p>
-                      <p className="mt-1 text-sm text-amber-700">
-                        {t('customer.detail.inventory.empty.description')}
-                      </p>
-                    </div>
-                  </motion.div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full table-auto">
-                      <thead className="border-b border-slate-200 bg-gradient-to-r from-amber-50 to-orange-50/50">
-                        <tr>
-                          <th className="w-12 px-4 py-4 text-center text-xs font-semibold tracking-wide text-amber-900 uppercase">
-                            &nbsp;
-                          </th>
-                          <th className="px-6 py-4 text-left text-xs font-semibold tracking-wide text-amber-900 uppercase">
-                            Part Number
-                          </th>
-                          <th className="px-6 py-4 text-left text-xs font-semibold tracking-wide text-amber-900 uppercase">
-                            {t('customer.detail.inventory.table.name')}
-                          </th>
-                          <th className="px-6 py-4 text-left text-xs font-semibold tracking-wide text-amber-900 uppercase">
-                            {t('customer.detail.inventory.table.compatible_line')}
-                          </th>
-                          <th className="px-6 py-4 text-left text-xs font-semibold tracking-wide text-amber-900 uppercase">
-                            {t('customer.detail.inventory.table.capacity')}
-                          </th>
-                          <th className="px-6 py-4 text-left text-xs font-semibold tracking-wide text-amber-900 uppercase">
-                            {t('customer.detail.inventory.table.usage_status')}
-                          </th>
-                          <th className="px-6 py-4 text-left text-xs font-semibold tracking-wide text-amber-900 uppercase">
-                            {t('customer.detail.inventory.table.status')}
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {groupedConsumables.map((group, groupIdx) => (
-                          <Fragment key={group.typeId}>
-                            <motion.tr
-                              initial={{ opacity: 0, y: -10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ delay: groupIdx * 0.05 }}
-                              className="bg-gradient-to-r from-amber-50/50 via-orange-50/30 to-yellow-50/50"
-                            >
-                              <td className="px-4 py-5 text-center">
-                                <Button
-                                  variant="secondary"
-                                  size="icon"
-                                  className="h-8 w-8 transition-transform"
-                                  onClick={() => toggleConsumableType(group.typeId)}
-                                >
-                                  <motion.div
-                                    animate={{
-                                      rotate: expandedConsumableTypes.has(group.typeId) ? 180 : 0,
-                                    }}
-                                    transition={{ duration: 0.2 }}
-                                  >
-                                    <ChevronDown className="h-4 w-4" />
-                                  </motion.div>
-                                </Button>
-                              </td>
-                              <td className="px-6 py-5">
-                                <Badge
-                                  variant="outline"
-                                  className="border-amber-300 bg-amber-100 font-mono text-sm text-amber-900"
-                                >
-                                  {group.type?.partNumber ?? '—'}
-                                </Badge>
-                              </td>
-                              <td className="px-6 py-5">
-                                <div className="font-semibold text-amber-900">
-                                  {group.type?.name ?? t('customer.detail.inventory.unknown_name')}
-                                </div>
-                              </td>
-                              <td className="px-6 py-5 text-sm text-amber-800">
-                                {(() => {
-                                  const machineLine = String(
-                                    group.type?.compatibleMachineLine ?? ''
-                                  ).trim()
-                                  if (machineLine) return machineLine
-                                  return (
-                                    group.type?.compatibleDeviceModels
-                                      ?.map((model) => model?.name)
-                                      .filter(Boolean)
-                                      .join(', ') || '—'
-                                  )
-                                })()}
-                              </td>
-                              <td className="px-6 py-5 text-sm text-amber-800">
-                                {group.type?.capacity
-                                  ? t('customer.detail.inventory.capacity', {
-                                      pages: formatInteger(group.type.capacity),
-                                    })
-                                  : '—'}
-                              </td>
-                              <td className="px-6 py-5">
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <Badge
-                                    variant="outline"
-                                    className="border-slate-300 bg-slate-100 text-xs text-slate-700"
-                                  >
-                                    {t('customer.detail.inventory.usage.total', {
-                                      count: group.total,
-                                    })}
-                                  </Badge>
-                                  <Badge
-                                    variant="outline"
-                                    className="border-emerald-300 bg-emerald-100 text-xs text-emerald-700"
-                                  >
-                                    {t('customer.detail.inventory.usage.used', {
-                                      count: group.used,
-                                    })}
-                                  </Badge>
-                                  <Badge
-                                    variant="outline"
-                                    className="border-blue-300 bg-blue-100 text-xs text-blue-700"
-                                  >
-                                    {t('customer.detail.inventory.usage.available', {
-                                      count: group.available,
-                                    })}
-                                  </Badge>
-                                </div>
-                              </td>
-                              <td className="px-6 py-5">
-                                <Badge
-                                  variant="outline"
-                                  className="border-amber-300 bg-amber-100 text-amber-800"
-                                >
-                                  {t('customer.detail.inventory.count', { count: group.total })}
-                                </Badge>
-                              </td>
-                            </motion.tr>
-                            <AnimatePresence>
-                              {expandedConsumableTypes.has(group.typeId) &&
-                                group.items.map((item, itemIdx) => (
-                                  <motion.tr
-                                    key={item.id}
-                                    initial={{ opacity: 0, x: -10 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: itemIdx * 0.03 }}
-                                    className="group hover:bg-amber-50/30"
-                                  >
-                                    <td className="px-4 py-4 text-center text-xs text-slate-300">
-                                      │
-                                    </td>
-                                    <td className="px-6 py-4">
-                                      <Badge variant="outline" className="font-mono text-xs">
-                                        {item.consumableType?.partNumber ?? '—'}
-                                      </Badge>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                      <div className="font-medium text-slate-800">
-                                        {item.consumableType?.name ??
-                                          t('customer.detail.inventory.unknown_name')}
-                                      </div>
-                                      <p className="mt-0.5 text-xs text-slate-500">
-                                        {t('customer.detail.inventory.serial')}:{' '}
-                                        {item.serialNumber ?? '—'}
-                                      </p>
-                                      {/* If this consumable is installed on a device, show extra info */}
-                                      {(() => {
-                                        const deviceConsumables = (
-                                          item as unknown as {
-                                            deviceConsumables?: DeviceConsumableLocal[]
-                                          }
-                                        ).deviceConsumables
-                                        const activeDc =
-                                          deviceConsumables?.find((d) => d?.isActive) ??
-                                          deviceConsumables?.[0]
-                                        if (!activeDc) return null
-                                        const installedDevice = findDeviceById(activeDc.deviceId)
-                                        return (
-                                          <p className="mt-1 text-xs text-slate-500">
-                                            {t('customer.detail.inventory.installed_at')}:{' '}
-                                            {installedDevice ? (
-                                              <Link
-                                                href={`/system/devices/${installedDevice.id}`}
-                                                className="text-sky-600 hover:underline"
-                                              >
-                                                {installedDevice?.serialNumber ??
-                                                  installedDevice?.id}
-                                              </Link>
-                                            ) : activeDc.deviceId ? (
-                                              <Link
-                                                href={`/system/devices/${activeDc.deviceId}`}
-                                                className="text-sky-600 hover:underline"
-                                              >
-                                                {activeDc.deviceId}
-                                              </Link>
-                                            ) : (
-                                              '—'
-                                            )}{' '}
-                                            •{' '}
-                                            {formatDate(activeDc.installedAt ?? activeDc.createdAt)}{' '}
-                                            • {t('customer.detail.inventory.printed')}:{' '}
-                                            {formatInteger(
-                                              activeDc.actualPagesPrinted ?? undefined
-                                            )}{' '}
-                                            {t('customer.detail.inventory.pages')} •{' '}
-                                            {t('customer.detail.inventory.warning')}:{' '}
-                                            {activeDc.warningPercentage != null
-                                              ? `${activeDc.warningPercentage}%`
-                                              : '—'}
-                                          </p>
-                                        )
-                                      })()}
-                                    </td>
-                                    <td className="px-6 py-4 text-sm text-slate-600">
-                                      {(() => {
-                                        const machineLine = String(
-                                          item.consumableType?.compatibleMachineLine ?? ''
-                                        ).trim()
-                                        if (machineLine) return machineLine
-                                        return (
-                                          item.consumableType?.compatibleDeviceModels
-                                            ?.map((model) => model?.name)
-                                            .filter(Boolean)
-                                            .join(', ') || '—'
-                                        )
-                                      })()}
-                                    </td>
-                                    <td className="px-6 py-4 text-sm text-slate-600">
-                                      {item.consumableType?.capacity
-                                        ? t('customer.detail.inventory.capacity', {
-                                            pages: formatInteger(item.consumableType.capacity),
-                                          })
-                                        : '—'}
-                                    </td>
-                                    <td className="px-6 py-4">{renderUsageBadge(item)}</td>
-                                    <td className="px-6 py-4 text-sm text-slate-600">
-                                      {item.status ?? '—'}
-                                    </td>
-                                  </motion.tr>
-                                ))}
-                            </AnimatePresence>
-                          </Fragment>
-                        ))}
-                      </tbody>
-                    </table>
                   </div>
                 )}
-              </CardContent>
-
-              {consumablesData?.pagination && consumablesData.pagination.totalPages > 1 && (
-                <div className="flex flex-wrap items-center justify-between gap-4 border-t border-slate-100 bg-amber-50/30 px-6 py-4">
-                  <div className="text-sm text-slate-600">
-                    {t('customer.detail.pagination.page', {
-                      current: consumablesData.pagination.page,
-                      total: consumablesData.pagination.totalPages,
-                    })}{' '}
-                    •{' '}
-                    {t('customer.detail.pagination.total', {
-                      count: formatInteger(consumablesData.pagination.total),
-                    })}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={consumablesPage <= 1}
-                      onClick={() => setConsumablesPage((prev) => Math.max(1, prev - 1))}
-                      className="gap-2"
-                    >
-                      <ChevronUp className="h-4 w-4 rotate-90" />
-                      {t('customer.detail.pagination.previous')}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={
-                        consumablesData.pagination.totalPages
-                          ? consumablesPage >= consumablesData.pagination.totalPages
-                          : false
-                      }
-                      onClick={() =>
-                        setConsumablesPage((prev) =>
-                          consumablesData.pagination?.totalPages
-                            ? Math.min(consumablesData.pagination.totalPages, prev + 1)
-                            : prev + 1
-                        )
-                      }
-                      className="gap-2"
-                    >
-                      {t('customer.detail.pagination.next')}
-                      <ChevronDown className="h-4 w-4 -rotate-90" />
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </Card>
+              </Card>
+            </ActionGuard>
           </TabsContent>
 
           <TabsContent value="invoices" className="space-y-4">

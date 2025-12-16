@@ -26,6 +26,7 @@ import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
 import { useLocale } from '@/components/providers/LocaleProvider'
 import { cn } from '@/lib/utils'
+import { ActionGuard } from '@/components/shared/ActionGuard'
 
 import type { ContractDevice } from '@/types/models/contract-device'
 
@@ -576,16 +577,18 @@ export default function ContractDevicesModal({
                                 </div>
                               </td>
                               <td className="px-4 py-3 text-sm text-slate-700">
-                                {device.id ? (
-                                  <Link
-                                    href={`/system/devices/${device.id}`}
-                                    className="text-sky-600 hover:underline"
-                                  >
-                                    {device.deviceModel?.name ?? device.model ?? '—'}
-                                  </Link>
-                                ) : (
-                                  (device.deviceModel?.name ?? device.model ?? '—')
-                                )}
+                                <ActionGuard pageId="customers" actionId="view-contract-devices">
+                                  {device.id ? (
+                                    <Link
+                                      href={`/system/devices/${device.id}`}
+                                      className="text-sky-600 hover:underline"
+                                    >
+                                      {device.deviceModel?.name ?? device.model ?? '—'}
+                                    </Link>
+                                  ) : (
+                                    (device.deviceModel?.name ?? device.model ?? '—')
+                                  )}
+                                </ActionGuard>
                               </td>
                               <td className="px-4 py-3">
                                 {isAttached ? (

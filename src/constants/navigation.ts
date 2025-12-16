@@ -2217,30 +2217,12 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
         },
       },
       {
-        id: 'view-customer-overview',
-        label: 'Xem tổng quan khách hàng',
-        icon: 'Eye',
-        requiredPermissions: {
-          strategy: 'all',
-          resources: [{ resource: 'customers.overview', action: 'read' }],
-        },
-      },
-      {
         id: 'view-customer-consumables',
         label: 'Xem vật tư khách hàng',
         icon: 'Package',
         requiredPermissions: {
           strategy: 'all',
           resources: [{ resource: 'customers.consumables', action: 'read' }],
-        },
-      },
-      {
-        id: 'view-customer-detail',
-        label: 'Xem chi tiết khách hàng',
-        icon: 'Eye',
-        requiredPermissions: {
-          strategy: 'all',
-          resources: [{ resource: 'customers', action: 'read' }],
         },
       },
       {
