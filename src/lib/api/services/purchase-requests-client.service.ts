@@ -8,11 +8,10 @@ import type {
 import type { ApiListResponse, ListPagination } from '@/types/api'
 import { PurchaseRequestStatus } from '@/constants/status'
 
-type PurchaseRequestItemPayload = {
+export type PurchaseRequestItemPayload = {
   consumableTypeId: string
   quantity: number
   unitPrice?: number
-  notes?: string
 }
 
 export const purchaseRequestsClientService = {
@@ -89,7 +88,7 @@ export const purchaseRequestsClientService = {
   async updateItem(
     requestId: string,
     itemId: string,
-    patch: Partial<PurchaseRequestItemPayload>
+    patch: Omit<Partial<PurchaseRequestItemPayload>, 'consumableTypeId'> // consumableTypeId không được update, notes không được support
   ): Promise<PurchaseRequest | null> {
     const response = await internalApiClient.patch(
       `/api/purchase-requests/${requestId}/items/${itemId}`,

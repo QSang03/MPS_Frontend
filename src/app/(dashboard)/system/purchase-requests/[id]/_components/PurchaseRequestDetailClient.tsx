@@ -483,9 +483,6 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
                           <TableHead className="text-right">
                             {t('purchase_request.items.table.total_price')}
                           </TableHead>
-                          <TableHead className="w-[25%]">
-                            {t('purchase_request.items.table.notes')}
-                          </TableHead>
                           <TableHead className="w-[120px]">
                             {t('purchase_request.items.table.actions')}
                           </TableHead>
@@ -511,9 +508,6 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
                             </TableCell>
                             <TableCell className="text-right font-medium text-emerald-600 tabular-nums">
                               {formatCurrency(toNumber(item.totalPrice), detail.currency)}
-                            </TableCell>
-                            <TableCell className="text-muted-foreground max-w-[200px] truncate text-xs">
-                              {item.notes ?? '—'}
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-1">

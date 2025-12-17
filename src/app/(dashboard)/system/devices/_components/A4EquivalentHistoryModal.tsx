@@ -45,6 +45,21 @@ export function A4EquivalentUsageHistory({
     totalBlackWhitePagesA4?: number
     recordedAt?: string
     createdAt?: string
+    device?: {
+      id: string
+      serialNumber: string
+      name: string
+      deviceModel?: {
+        id: string
+        name: string
+        manufacturer?: string
+        deviceType?: string
+        isActive?: boolean
+        useA4Counter?: boolean
+        createdAt?: string
+        updatedAt?: string
+      }
+    }
   }
 
   const { t } = useLocale()
@@ -159,7 +174,18 @@ export function A4EquivalentUsageHistory({
     {
       accessorKey: 'deviceId',
       header: 'Device',
-      cell: (ctx) => <span className="font-mono text-xs">{shortId(ctx.getValue() as string)}</span>,
+      cell: (ctx) => {
+        const row = ctx.row.original
+        if (row.device) {
+          const deviceModelName = row.device.deviceModel?.name || ''
+          const serialNumber = row.device.serialNumber || ''
+          const displayText = deviceModelName
+            ? `${deviceModelName} (${serialNumber})`
+            : serialNumber || shortId(row.deviceId)
+          return <span className="text-xs">{displayText}</span>
+        }
+        return <span className="font-mono text-xs">{shortId(ctx.getValue() as string)}</span>
+      },
     },
     // Standard counters (non-A4)
     ...(computedShowMode === 'a4'
@@ -398,11 +424,53 @@ export default function A4EquivalentHistoryModal({
   showA4?: boolean | 'auto'
 }) {
   const { t } = useLocale()
+  const [deviceInfo, setDeviceInfo] = useState<{
+    deviceModelName?: string
+    serialNumber?: string
+  } | null>(null)
+
+  useEffect(() => {
+    if (!deviceId || !open) {
+      setDeviceInfo(null)
+      return
+    }
+
+    let isMounted = true
+    ;(async () => {
+      try {
+        const { devicesClientService } = await import('@/lib/api/services/devices-client.service')
+        const device = await devicesClientService.getById(deviceId)
+        if (!isMounted) return
+        if (device) {
+          setDeviceInfo({
+            deviceModelName: device.deviceModel?.name,
+            serialNumber: device.serialNumber,
+          })
+        }
+      } catch {
+        // Unable to fetch device; keep deviceInfo as null
+      }
+    })()
+    return () => {
+      isMounted = false
+    }
+  }, [deviceId, open])
+
+  const getDescription = () => {
+    if (deviceInfo && deviceInfo.deviceModelName && deviceInfo.serialNumber) {
+      return `${t('consumable.history.description')}: ${deviceInfo.deviceModelName} (${deviceInfo.serialNumber})`
+    }
+    if (deviceInfo && deviceInfo.serialNumber) {
+      return `${t('consumable.history.description')}: ${deviceInfo.serialNumber}`
+    }
+    return `${t('consumable.history.description')}: ${deviceId ?? customerId ?? '—'}`
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <SystemModalLayout
         title={title ?? t('devices.a4_history.title')}
-        description={`${t('consumable.history.description')}: ${deviceId ?? customerId ?? '—'}`}
+        description={getDescription()}
         icon={FileText}
         variant="view"
         footer={

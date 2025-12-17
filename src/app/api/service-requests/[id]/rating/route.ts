@@ -8,35 +8,7 @@ interface RouteParams {
   params: Promise<{ id: string }>
 }
 
-// GET maintenance history by ID
-export async function GET(_request: NextRequest, { params }: RouteParams) {
-  try {
-    const { id } = await params
-    const cookieStore = await cookies()
-    const accessToken = cookieStore.get('access_token')?.value
-    if (!accessToken) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-    const response = await backendApiClient.get(API_ENDPOINTS.MAINTENANCE_HISTORIES.DETAIL(id), {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    })
-    return NextResponse.json(response.data)
-  } catch (error: unknown) {
-    const err = error as
-      | { message?: string; response?: { status?: number; data?: unknown } }
-      | undefined
-    if (err?.response?.data && typeof err.response.data === 'object') {
-      return NextResponse.json(err.response.data as Record<string, unknown>, {
-        status: err.response?.status || 500,
-      })
-    }
-    return NextResponse.json(
-      { error: err?.message || 'Internal Server Error' },
-      { status: err?.response?.status || 500 }
-    )
-  }
-}
-
-// UPDATE maintenance history
+// RATE service request (customer rating)
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
   const { id } = await params
   let originalBody: unknown = undefined
@@ -45,23 +17,12 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     const accessToken = cookieStore.get('access_token')?.value
     if (!accessToken) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const contentType = (request.headers.get('content-type') || '').toLowerCase()
-    // If it's multipart/form-data (contains images), forward as multipart
-    if (contentType.includes('multipart/form-data')) {
-      const formData = await request.formData()
-      return await forwardMultipart({ id, formData, accessToken })
-    }
-
     originalBody = await request.json()
     const cleaned = removeEmpty(originalBody as Record<string, unknown>)
 
-    const resp = await backendApiClient.patch(
-      API_ENDPOINTS.MAINTENANCE_HISTORIES.UPDATE(id),
-      cleaned,
-      {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      }
-    )
+    const resp = await backendApiClient.patch(API_ENDPOINTS.SERVICE_REQUESTS.RATING(id), cleaned, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
     return NextResponse.json(resp.data)
   } catch (error: unknown) {
     const err = error as
@@ -123,7 +84,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
               : {}
         const cleanedRetry = removeEmpty(bodyForRetry as Record<string, unknown>)
         const retryResp = await backendApiClient.patch(
-          API_ENDPOINTS.MAINTENANCE_HISTORIES.UPDATE(id),
+          API_ENDPOINTS.SERVICE_REQUESTS.RATING(id),
           cleanedRetry,
           {
             headers: { Authorization: `Bearer ${newAccessToken}` },
@@ -149,70 +110,4 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       { status: err?.response?.status || 500 }
     )
   }
-}
-
-// DELETE maintenance history
-export async function DELETE(_request: NextRequest, { params }: RouteParams) {
-  const { id } = await params
-  try {
-    const cookieStore = await cookies()
-    const accessToken = cookieStore.get('access_token')?.value
-    if (!accessToken) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-    const response = await backendApiClient.delete(API_ENDPOINTS.MAINTENANCE_HISTORIES.DELETE(id), {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    })
-    return NextResponse.json(response.data)
-  } catch (error: unknown) {
-    const err = error as
-      | { message?: string; response?: { status?: number; data?: unknown } }
-      | undefined
-    if (err?.response?.data && typeof err.response.data === 'object') {
-      return NextResponse.json(err.response.data as Record<string, unknown>, {
-        status: err.response?.status || 500,
-      })
-    }
-    return NextResponse.json(
-      { error: err?.message || 'Internal Server Error' },
-      { status: err?.response?.status || 500 }
-    )
-  }
-}
-
-async function forwardMultipart({
-  id,
-  formData,
-  accessToken,
-}: {
-  id: string
-  formData: FormData
-  accessToken: string
-}) {
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL
-  if (!baseUrl) {
-    console.error('NEXT_PUBLIC_API_URL is not configured')
-    return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
-  }
-
-  const endpoint = `${baseUrl}${API_ENDPOINTS.MAINTENANCE_HISTORIES.UPDATE(id)}`
-
-  const cloned = new FormData()
-  formData.forEach((value, key) => {
-    if (typeof File !== 'undefined' && value instanceof File) {
-      cloned.append(key, value, value.name)
-    } else {
-      cloned.append(key, value as string)
-    }
-  })
-
-  const resp = await fetch(endpoint, {
-    method: 'PATCH',
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-    body: cloned,
-  })
-
-  const data = await resp.json().catch(() => null)
-  return NextResponse.json(data ?? {}, { status: resp.status })
 }

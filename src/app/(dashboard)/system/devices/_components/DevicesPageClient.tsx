@@ -947,7 +947,7 @@ function DevicesTableContent({
               )}
               {!isHistorical && <AssignPricingButton device={device} onSaved={invalidateDevices} />}
               {!isHistorical && (
-                <ActionGuard pageId="devices" actionId="set-a4-pricing">
+                <ActionGuard pageId="devices" actionId="assign-pricing">
                   <Button
                     variant="secondary"
                     size="sm"

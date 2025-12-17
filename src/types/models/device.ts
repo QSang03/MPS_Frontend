@@ -102,6 +102,22 @@ export interface DevicePricing {
 }
 
 /**
+ * Device Page Printing Cost (for device page printing cost endpoints)
+ */
+export interface DevicePagePrintingCost {
+  id?: string
+  deviceId: string
+  costPerBWPage?: number | null
+  costPerColorPage?: number | null
+  currencyId?: string | null
+  currency?: import('./currency').CurrencyDataDto | null
+  currentExchangeRate?: number | null
+  effectiveFrom?: string | null
+  createdAt?: string
+  updatedAt?: string
+}
+
+/**
  * Device statistics
  */
 export interface DeviceStats {

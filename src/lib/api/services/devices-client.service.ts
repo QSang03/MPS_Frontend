@@ -332,4 +332,65 @@ export const devicesClientService = {
       throw err
     }
   },
+
+  // Get active page printing cost for a device at a specific point in time (optional `at` ISO string)
+  async getActivePagePrintingCost(id: string, at?: string) {
+    try {
+      const response = await internalApiClient.get(
+        `/api/devices/${id}/page-printing-costs/active`,
+        {
+          params: { at },
+        }
+      )
+      const body = response.data
+      if (!body) return null
+      if (body.data) return body.data
+      return body
+    } catch (err: unknown) {
+      try {
+        const e = err as { response?: { status?: number } }
+        if (e?.response?.status === 404) {
+          return null
+        }
+      } catch {
+        // ignore
+      }
+      console.error('[devicesClientService.getActivePagePrintingCost] error:', err)
+      throw err
+    }
+  },
+
+  // Upsert (create or update) device page printing cost
+  async upsertPagePrintingCost(
+    id: string,
+    dto: {
+      costPerBWPage?: number
+      costPerColorPage?: number
+      currencyId?: string
+      currencyCode?: string
+      effectiveFrom?: string
+    }
+  ) {
+    try {
+      const response = await internalApiClient.post(`/api/devices/${id}/page-printing-costs`, dto)
+      const body = response.data
+      if (!body) return null
+      if (body.data) return body.data
+      return body
+    } catch (err: unknown) {
+      try {
+        const e = err as { response?: { data?: unknown; status?: number }; message?: string }
+        console.error('[devicesClientService.upsertPagePrintingCost] Full error:', {
+          status: e?.response?.status,
+          errorBody: e?.response?.data,
+          message: e?.message,
+          deviceId: id,
+          dto,
+        })
+      } catch {
+        console.error('[devicesClientService.upsertPagePrintingCost] error:', err)
+      }
+      throw err
+    }
+  },
 }

@@ -93,6 +93,7 @@ export const API_ENDPOINTS = {
     COSTS: (id: string) => `/service-requests/${id}/costs`,
     MESSAGES: (id: string) => `/service-requests/${id}/messages`,
     ASSIGN: (id: string) => `/service-requests/${id}/assign`,
+    RATING: (id: string) => `/service-requests/${id}/rating`,
   },
 
   // Purchase Requests
@@ -189,6 +190,12 @@ export const API_ENDPOINTS = {
     DETAIL: (id: string) => `/cost-adjustments/${id}`,
   },
 
+  // Cost Calculation
+  COST_CALCULATION: {
+    LIST: '/cost-calculation',
+    TEMPLATE: '/cost-calculation/template',
+  },
+
   // Maintenance Histories
   MAINTENANCE_HISTORIES: {
     LIST: '/maintenance-histories',
@@ -196,6 +203,7 @@ export const API_ENDPOINTS = {
     CREATE: '/maintenance-histories',
     UPDATE: (id: string) => `/maintenance-histories/${id}`,
     DELETE: (id: string) => `/maintenance-histories/${id}`,
+    RATE: (id: string) => `/maintenance-histories/${id}/rate`,
     BY_DEVICE: (deviceId: string) => `/maintenance-histories/devices/${deviceId}`,
     CREATE_BY_DEVICE: (deviceId: string) => `/maintenance-histories/devices/${deviceId}`,
   },

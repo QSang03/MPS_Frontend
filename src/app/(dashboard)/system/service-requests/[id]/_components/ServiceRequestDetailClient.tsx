@@ -37,6 +37,7 @@ import {
 } from 'lucide-react'
 import { formatDateTime } from '@/lib/utils/formatters'
 import ServiceRequestMessages from '@/components/service-request/ServiceRequestMessages'
+import { ServiceRequestRatingDisplay } from '@/components/service-request/ServiceRequestRatingDisplay'
 import {
   Table,
   TableBody,
@@ -441,7 +442,27 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
               </CardContent>
             </Card>
 
-            {/* 2. Conversation Card */}
+            {/* 2. Rating Card */}
+            {(data.status === ServiceRequestStatus.RESOLVED ||
+              data.status === ServiceRequestStatus.CLOSED) &&
+              data.satisfactionScore && (
+                <Card className="border-none shadow-sm ring-1 ring-slate-200 dark:ring-slate-800">
+                  <CardHeader className="bg-slate-50/50 pb-3 dark:bg-slate-900/50">
+                    <CardTitle className="flex items-center gap-2 text-base font-medium">
+                      <FileText className="text-muted-foreground h-4 w-4" />
+                      {t('requests.service.detail.rating_title')}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-4">
+                    <ServiceRequestRatingDisplay
+                      satisfactionScore={data.satisfactionScore}
+                      customerFeedback={data.customerFeedback}
+                    />
+                  </CardContent>
+                </Card>
+              )}
+
+            {/* 3. Conversation Card */}
             <ActionGuard pageId="customer-requests" actionId="service-messages">
               <Card className="flex h-[600px] flex-col border-none shadow-sm ring-1 ring-slate-200 dark:ring-slate-800">
                 <CardHeader className="pb-3">
@@ -465,7 +486,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
               </Card>
             </ActionGuard>
 
-            {/* 3. Costs Card */}
+            {/* 4. Costs Card */}
             <ActionGuard pageId="customer-requests" actionId="service-costs">
               <Card className="border-none shadow-sm ring-1 ring-slate-200 dark:ring-slate-800">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">

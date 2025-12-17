@@ -348,7 +348,8 @@ export function CustomerDetailsModal({
                           )}
                         </p>
                         <p className="text-xs text-gray-500">
-                          {formatNumber(customerDetails.kpis.totalBWPages)} BW •{' '}
+                          {formatNumber(customerDetails.kpis.totalBWPages)}{' '}
+                          {t('analytics.bw_label')} •{' '}
                           {formatNumber(customerDetails.kpis.totalColorPages)}{' '}
                           {t('dashboard.customer_detail.color')}
                         </p>

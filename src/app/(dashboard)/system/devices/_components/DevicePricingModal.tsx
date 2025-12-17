@@ -25,6 +25,8 @@ interface DevicePricingForm {
   monthlyRentCogs: string
   effectiveFrom: string
   effectiveFromISO?: string | null | undefined
+  costPerBWPage: string
+  costPerColorPage: string
 }
 
 interface Props {
@@ -65,6 +67,8 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
     monthlyRentCogs: '',
     effectiveFrom: '',
     effectiveFromISO: undefined,
+    costPerBWPage: '',
+    costPerColorPage: '',
   })
   const [currencyId, setCurrencyId] = useState<string | null>(null)
   // store current effectiveFrom from backend (ISO) to enforce new > old
@@ -79,15 +83,25 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
       setLoading(true)
       try {
         const at = new Date().toISOString()
-        const [pricingRes, contractRentResult] = await Promise.all([
+        const [pricingRes, contractRentResult, pagePrintingCostRes] = await Promise.all([
           devicesClientService.getActivePricing(device.id, at),
           devicesClientService
             .getContractMonthlyRent(device.id)
             .then((data) => ({ data, error: null as null | unknown }))
             .catch((error) => ({ data: null, error })),
+          devicesClientService
+            .getActivePagePrintingCost(device.id, at)
+            .then((data) => ({ data, error: null as null | unknown }))
+            .catch((error) => ({ data: null, error })),
         ])
         if (cancelled) return
 
+        // Build form state object first, then set once
+        const formUpdates: Partial<DevicePricingForm> = {}
+        let newCurrencyId: string | null = null
+        let newCurrentEffectiveFromISO: string | null = null
+
+        // Handle pricing data
         const data = pricingRes || null
         if (
           data &&
@@ -103,32 +117,66 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
             data.pricePerColorPage !== undefined && data.pricePerColorPage !== null
               ? String(data.pricePerColorPage)
               : ''
-          setForm({
-            pricePerBWPage: bw,
-            pricePerColorPage: color,
-            monthlyRent: '',
-            monthlyRentCogs: '',
-            effectiveFrom: isoToLocalDatetimeInput(data.effectiveFrom),
-          })
+          formUpdates.pricePerBWPage = bw
+          formUpdates.pricePerColorPage = color
+          formUpdates.monthlyRent = ''
+          formUpdates.monthlyRentCogs = ''
+          formUpdates.effectiveFrom = isoToLocalDatetimeInput(data.effectiveFrom)
+
           // Set currency from response if available
           if (data.currencyId || (data as { currency?: { id?: string } }).currency?.id) {
-            setCurrencyId(
+            newCurrencyId =
               data.currencyId || (data as { currency?: { id?: string } }).currency?.id || null
-            )
           }
           // Defensive typed access to an external API response
           const pricingData = data as { effectiveFrom?: string | null } | null
-          setCurrentEffectiveFromISO(pricingData?.effectiveFrom ?? null)
+          newCurrentEffectiveFromISO = pricingData?.effectiveFrom ?? null
         } else {
-          setForm({
-            pricePerBWPage: '',
-            pricePerColorPage: '',
-            monthlyRent: '',
-            monthlyRentCogs: '',
-            effectiveFrom: '',
-          })
-          setCurrencyId(null)
-          setCurrentEffectiveFromISO(null)
+          formUpdates.pricePerBWPage = ''
+          formUpdates.pricePerColorPage = ''
+          formUpdates.monthlyRent = ''
+          formUpdates.monthlyRentCogs = ''
+          formUpdates.effectiveFrom = ''
+          newCurrencyId = null
+          newCurrentEffectiveFromISO = null
+        }
+
+        // Handle page printing cost
+        const pagePrintingCostData = pagePrintingCostRes.data
+        if (pagePrintingCostData) {
+          const costBw =
+            pagePrintingCostData.costPerBWPage !== undefined &&
+            pagePrintingCostData.costPerBWPage !== null
+              ? String(pagePrintingCostData.costPerBWPage)
+              : '0'
+          const costColor =
+            pagePrintingCostData.costPerColorPage !== undefined &&
+            pagePrintingCostData.costPerColorPage !== null
+              ? String(pagePrintingCostData.costPerColorPage)
+              : '0'
+          formUpdates.costPerBWPage = costBw
+          formUpdates.costPerColorPage = costColor
+
+          // Use cost currency if pricing currency is not set
+          if (
+            (pagePrintingCostData.currencyId ||
+              (pagePrintingCostData as { currency?: { id?: string } }).currency?.id) &&
+            !newCurrencyId
+          ) {
+            newCurrencyId =
+              pagePrintingCostData.currencyId ||
+              (pagePrintingCostData as { currency?: { id?: string } }).currency?.id ||
+              null
+          }
+          // Use cost effectiveFrom if pricing effectiveFrom is not set
+          const costData = pagePrintingCostData as { effectiveFrom?: string | null } | null
+          if (costData?.effectiveFrom && !newCurrentEffectiveFromISO) {
+            newCurrentEffectiveFromISO = costData.effectiveFrom
+          }
+        } else {
+          // Default to 0 if no cost data
+          formUpdates.costPerBWPage = '0'
+          formUpdates.costPerColorPage = '0'
         }
 
         // Handle contract monthly rent info
@@ -151,29 +199,32 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
         }
 
         if (contractRentRes && contractRentRes.monthlyRent !== undefined) {
-          setForm((prev) => ({
-            ...prev,
-            monthlyRent: String(contractRentRes.monthlyRent),
-            monthlyRentCogs:
-              contractRentRes.monthlyRentCogs !== undefined &&
-              contractRentRes.monthlyRentCogs !== null
-                ? String(contractRentRes.monthlyRentCogs)
-                : '',
-          }))
+          formUpdates.monthlyRent = String(contractRentRes.monthlyRent)
+          formUpdates.monthlyRentCogs =
+            contractRentRes.monthlyRentCogs !== undefined &&
+            contractRentRes.monthlyRentCogs !== null
+              ? String(contractRentRes.monthlyRentCogs)
+              : ''
           setCanEditMonthlyRent(true)
           setContractRentError(null)
           // Set currency from response
           // Use contract rent currency if pricing currency is not set
-          if ((contractRentRes.currencyId || contractRentRes.currency?.id) && !currencyId) {
-            setCurrencyId(contractRentRes.currencyId || contractRentRes.currency?.id || null)
+          if ((contractRentRes.currencyId || contractRentRes.currency?.id) && !newCurrencyId) {
+            newCurrencyId = contractRentRes.currencyId || contractRentRes.currency?.id || null
           }
         } else {
-          setForm((prev) => ({ ...prev, monthlyRent: '', monthlyRentCogs: '' }))
+          if (!formUpdates.monthlyRent) formUpdates.monthlyRent = ''
+          if (!formUpdates.monthlyRentCogs) formUpdates.monthlyRentCogs = ''
           setCanEditMonthlyRent(false)
           setContractRentError(
             contractRentErrMessage || t('devices.pricing.contract_rent_missing_edit_blocked')
           )
         }
+
+        // Set all form state in one batch
+        setForm((prev) => ({ ...prev, ...formUpdates }))
+        setCurrencyId(newCurrencyId)
+        setCurrentEffectiveFromISO(newCurrentEffectiveFromISO)
       } catch (err) {
         console.error('Failed to load active pricing', err)
         toast.error(t('devices.pricing.error.load_failed'))
@@ -338,6 +389,77 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
         }
       }
 
+      // Validate and update page printing cost
+      const costPayload: {
+        costPerBWPage?: number
+        costPerColorPage?: number
+        currencyId?: string
+        currencyCode?: string
+        effectiveFrom?: string
+      } = {}
+
+      // Validate and set B/W cost
+      if (form.costPerBWPage !== '' && form.costPerBWPage !== '0') {
+        const validationError = validateDecimal3010(form.costPerBWPage)
+        if (validationError) {
+          toast.error(validationError)
+          setSubmitting(false)
+          return
+        }
+        const parsed = parseNum(form.costPerBWPage)
+        if (!Number.isFinite(parsed) || parsed < 0) {
+          toast.error(t('devices.pricing.error.invalid_cost'))
+          setSubmitting(false)
+          return
+        }
+        costPayload.costPerBWPage = parsed
+        if (currencyId) costPayload.currencyId = currencyId
+      } else if (form.costPerBWPage === '0') {
+        costPayload.costPerBWPage = 0
+        if (currencyId) costPayload.currencyId = currencyId
+      }
+
+      // Validate and set Color cost
+      if (form.costPerColorPage !== '' && form.costPerColorPage !== '0') {
+        const validationError = validateDecimal3010(form.costPerColorPage)
+        if (validationError) {
+          toast.error(validationError)
+          setSubmitting(false)
+          return
+        }
+        const parsed = parseNum(form.costPerColorPage)
+        if (!Number.isFinite(parsed) || parsed < 0) {
+          toast.error(t('devices.pricing.error.invalid_cost'))
+          setSubmitting(false)
+          return
+        }
+        costPayload.costPerColorPage = parsed
+        if (currencyId) costPayload.currencyId = currencyId
+      } else if (form.costPerColorPage === '0') {
+        costPayload.costPerColorPage = 0
+        if (currencyId) costPayload.currencyId = currencyId
+      }
+
+      // Use the same effectiveFrom as pricing (already validated above)
+      if (ef) {
+        costPayload.effectiveFrom = ef
+      }
+
+      // Upsert page printing cost if we have any cost data
+      if (
+        costPayload.costPerBWPage !== undefined ||
+        costPayload.costPerColorPage !== undefined ||
+        costPayload.effectiveFrom !== undefined
+      ) {
+        try {
+          await devicesClientService.upsertPagePrintingCost(device.id, costPayload)
+        } catch (err) {
+          console.error('Failed to update page printing cost', err)
+          // Don't fail the whole operation if cost update fails
+          toast.warning(t('devices.pricing.update_partial_success'))
+        }
+      }
+
       toast.success(t('devices.pricing.update_success'))
       setOpen(false)
       onSaved?.()
@@ -489,6 +611,43 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
                     className="h-11 text-base"
                     disabled={!canEditMonthlyRent}
                   />
+                </div>
+              </div>
+              <Separator />
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-base font-semibold">
+                    {t('devices.pricing.cost_label')}
+                  </Label>
+                  <p className="text-muted-foreground mt-1 text-xs">
+                    {t('devices.pricing.cost_description')}
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-5">
+                  <div className="space-y-2">
+                    <Label>{t('devices.pricing.cost_bw')}</Label>
+                    <Input
+                      type="number"
+                      step="any"
+                      inputMode="decimal"
+                      value={form.costPerBWPage}
+                      onChange={(e) => setForm((s) => ({ ...s, costPerBWPage: e.target.value }))}
+                      placeholder={t('devices.pricing.placeholder.price')}
+                      className="h-11 text-base"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{t('devices.pricing.cost_color')}</Label>
+                    <Input
+                      type="number"
+                      step="any"
+                      inputMode="decimal"
+                      value={form.costPerColorPage}
+                      onChange={(e) => setForm((s) => ({ ...s, costPerColorPage: e.target.value }))}
+                      placeholder={t('devices.pricing.placeholder.price')}
+                      className="h-11 text-base"
+                    />
+                  </div>
                 </div>
               </div>
               <Separator />

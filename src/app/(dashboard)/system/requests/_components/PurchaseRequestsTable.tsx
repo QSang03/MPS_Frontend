@@ -165,7 +165,7 @@ export function PurchaseRequestsTable() {
   const activeFilters: Array<{ label: string; value: string; onRemove: () => void }> = []
   if (search) {
     activeFilters.push({
-      label: `${t('filters.search')}: "${search}"`,
+      label: t('filters.search', { query: search }),
       value: search,
       onRemove: () => setSearch(''),
     })

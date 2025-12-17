@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Star, Loader2 } from 'lucide-react'
 import { serviceRequestsClientService } from '@/lib/api/services/service-requests-client.service'
-import type { CreateServiceRequestRatingDto } from '@/types/models'
+import type { RateServiceRequestDto } from '@/types/models'
 
 interface ServiceRequestRatingFormProps {
   serviceRequestId: string
@@ -28,7 +28,7 @@ export function ServiceRequestRatingForm({
   const [hoveredRating, setHoveredRating] = useState<number>(0)
 
   const ratingMutation = useMutation({
-    mutationFn: (payload: CreateServiceRequestRatingDto) =>
+    mutationFn: (payload: RateServiceRequestDto) =>
       serviceRequestsClientService.updateRating(serviceRequestId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['service-requests', 'detail', serviceRequestId] })
@@ -48,7 +48,7 @@ export function ServiceRequestRatingForm({
       return
     }
 
-    const payload: CreateServiceRequestRatingDto = {
+    const payload: RateServiceRequestDto = {
       satisfactionScore: rating,
       customerFeedback: feedback.trim() || undefined,
     }

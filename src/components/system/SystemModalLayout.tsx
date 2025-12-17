@@ -46,7 +46,7 @@ export function SystemModalLayout({
         // Sử dụng headerColors[variant] thay vì hardcode màu
         className={cn('relative overflow-hidden bg-gradient-to-r p-0', headerColors[variant])}
       >
-        <div className="absolute inset-0 bg-black/10"></div>
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-black/10"></div>
         <div className="relative z-10 px-6 py-5 text-white">
           <div className="flex items-center gap-3">
             {Icon && <Icon className="h-6 w-6" />}

@@ -18,6 +18,7 @@ import {
   CalendarCheck,
   Settings,
   Eye,
+  Star,
 } from 'lucide-react'
 import { useLocale } from '@/components/providers/LocaleProvider'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
@@ -54,6 +55,8 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog'
 import { useActionPermission } from '@/lib/hooks/useActionPermission'
+import { ActionGuard } from '@/components/shared/ActionGuard'
+import { ServiceRequestRatingModal } from '@/components/service-request/ServiceRequestRatingModal'
 
 type ServiceRequestRow = ServiceRequest
 
@@ -335,6 +338,7 @@ function UserRequestsTableContent({
   const { t } = useLocale()
   const { can } = useActionPermission('user-my-requests')
   const canCloseRequests = can('close-service-request') || can('bulk-close-service-requests')
+  const canRateRequests = can('rate-service-request')
   const [sortVersion, setSortVersion] = useState(0)
   const router = useRouter()
   const [closeReason, setCloseReason] = useState('')
@@ -735,6 +739,53 @@ function UserRequestsTableContent({
         cell: ({ row }) => <div className="text-sm">{formatDateTime(row.original.createdAt)}</div>,
       },
       {
+        accessorKey: 'satisfactionScore',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <Star className="h-4 w-4 text-gray-600" />
+            {t('requests.service.table.satisfaction_score')}
+          </div>
+        ),
+        cell: ({ row }) => {
+          const score = row.original.satisfactionScore
+          const feedback = row.original.customerFeedback
+
+          if (!score || score === 0) {
+            return <span className="text-muted-foreground text-sm">—</span>
+          }
+
+          const renderStars = (satisfactionScore: number) => {
+            return Array.from({ length: 5 }, (_, i) => (
+              <Star
+                key={i}
+                className={`h-3 w-3 ${
+                  i < satisfactionScore ? 'fill-current text-yellow-400' : 'text-gray-300'
+                }`}
+              />
+            ))
+          }
+
+          return (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center gap-1">
+                    {renderStars(score)}
+                    <span className="text-xs text-gray-600">{score}/5</span>
+                  </div>
+                </TooltipTrigger>
+                {feedback && (
+                  <TooltipContent side="right" className="max-w-xs">
+                    <p className="font-medium">{t('requests.service.rating.customer_feedback')}</p>
+                    <p className="text-sm">{feedback}</p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
+          )
+        },
+      },
+      {
         id: 'actions',
         header: () => (
           <div className="flex items-center gap-2">
@@ -746,6 +797,10 @@ function UserRequestsTableContent({
           const canClose =
             row.original.status !== ServiceRequestStatus.CLOSED &&
             row.original.status !== ServiceRequestStatus.RESOLVED
+          const canRate =
+            (row.original.status === ServiceRequestStatus.RESOLVED ||
+              row.original.status === ServiceRequestStatus.CLOSED) &&
+            !row.original.satisfactionScore
 
           return (
             <div className="flex items-center gap-2">
@@ -767,6 +822,18 @@ function UserRequestsTableContent({
                   {t('requests.service.table.close')}
                 </Button>
               )}
+              {canRate && canRateRequests && (
+                <ActionGuard pageId="user-my-requests" actionId="rate-service-request">
+                  <ServiceRequestRatingModal
+                    serviceRequest={row.original}
+                    onRated={() => {
+                      // Refetch will be handled by the modal's queryClient.invalidateQueries
+                      setSortVersion((v) => v + 1)
+                    }}
+                    compact
+                  />
+                </ActionGuard>
+              )}
             </div>
           )
         },
@@ -781,6 +848,7 @@ function UserRequestsTableContent({
       openCloseDialog,
       t,
       canCloseRequests,
+      canRateRequests,
     ]
   )
 

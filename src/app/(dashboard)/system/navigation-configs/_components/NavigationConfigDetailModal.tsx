@@ -55,8 +55,20 @@ export default function NavigationConfigDetailModal({ config, open, onOpenChange
                 <label className="text-sm font-medium text-gray-700">
                   {t('navigation_config.fields.customer')}
                 </label>
-                <div className="mt-1">
-                  {config.customerId ? (
+                <div className="mt-1 space-y-1">
+                  {config.customer ? (
+                    <>
+                      <Badge variant="outline" className="block w-fit">
+                        {config.customer.name || config.customer.code || config.customerId}
+                      </Badge>
+                      {config.customer.code && (
+                        <p className="text-xs text-gray-500">Code: {config.customer.code}</p>
+                      )}
+                      {config.customer.contactEmail && (
+                        <p className="text-xs text-gray-500">{config.customer.contactEmail}</p>
+                      )}
+                    </>
+                  ) : config.customerId ? (
                     <Badge variant="outline">{config.customerId}</Badge>
                   ) : (
                     <Badge variant="secondary">{t('navigation_config.default_display')}</Badge>
@@ -68,8 +80,17 @@ export default function NavigationConfigDetailModal({ config, open, onOpenChange
                 <label className="text-sm font-medium text-gray-700">
                   {t('navigation_config.fields.role')}
                 </label>
-                <div className="mt-1">
-                  {config.roleId ? (
+                <div className="mt-1 space-y-1">
+                  {config.role ? (
+                    <>
+                      <Badge variant="outline" className="block w-fit">
+                        {config.role.name || config.roleId}
+                      </Badge>
+                      {config.role.description && (
+                        <p className="text-xs text-gray-500">{config.role.description}</p>
+                      )}
+                    </>
+                  ) : config.roleId ? (
                     <Badge variant="outline">{config.roleId}</Badge>
                   ) : (
                     <Badge variant="secondary">{t('navigation_config.default_display')}</Badge>

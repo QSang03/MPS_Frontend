@@ -25,19 +25,17 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
 import { ConsumableTypeSelect } from '@/components/shared/ConsumableTypeSelect'
 import { purchaseRequestsClientService } from '@/lib/api/services/purchase-requests-client.service'
 import type { PurchaseRequestItem } from '@/types/models/purchase-request'
+import type { PurchaseRequestItemPayload } from '@/lib/api/services/purchase-requests-client.service'
 import { z } from 'zod'
 
 type ItemFormData = {
   consumableTypeId: string
   quantity: number
   unitPrice?: number
-  notes?: string
 }
-
 interface PurchaseRequestItemFormModalProps {
   purchaseRequestId: string
   item?: PurchaseRequestItem
@@ -56,12 +54,11 @@ export function PurchaseRequestItemFormModal({
   const { t } = useLocale()
   const queryClient = useQueryClient()
 
-  // Create schema with translations
+  // Create schema with translations - backend chỉ support consumableTypeId, quantity, unitPrice
   const translatedSchema = z.object({
     consumableTypeId: z.string().min(1, t('purchase_request.items.consumable_type_validation')),
     quantity: z.number().min(0.01, t('purchase_request.items.quantity_validation')),
     unitPrice: z.number().min(0, t('purchase_request.items.unit_price_validation')).optional(),
-    notes: z.string().optional(),
   })
 
   const form = useForm<ItemFormData>({
@@ -70,7 +67,6 @@ export function PurchaseRequestItemFormModal({
       consumableTypeId: item?.consumableTypeId || '',
       quantity: item?.quantity || 1,
       unitPrice: item?.unitPrice || 0,
-      notes: item?.notes || '',
     },
   })
 
@@ -80,13 +76,11 @@ export function PurchaseRequestItemFormModal({
       form.setValue('consumableTypeId', item.consumableTypeId, { shouldValidate: true })
       form.setValue('quantity', Number(item.quantity), { shouldValidate: true })
       form.setValue('unitPrice', Number(item.unitPrice || 0), { shouldValidate: true })
-      form.setValue('notes', item.notes || '', { shouldValidate: true })
     } else if (mode === 'create') {
       // Reset to empty for create mode
       form.setValue('consumableTypeId', '', { shouldValidate: true })
       form.setValue('quantity', 1, { shouldValidate: true })
       form.setValue('unitPrice', 0, { shouldValidate: true })
-      form.setValue('notes', '', { shouldValidate: true })
     }
   }, [item, mode, form])
 
@@ -108,7 +102,7 @@ export function PurchaseRequestItemFormModal({
   })
 
   const updateMutation = useMutation({
-    mutationFn: (data: ItemFormData) =>
+    mutationFn: (data: Omit<Partial<PurchaseRequestItemPayload>, 'consumableTypeId'>) =>
       purchaseRequestsClientService.updateItem(purchaseRequestId, item!.id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -135,12 +129,11 @@ export function PurchaseRequestItemFormModal({
         unitPrice: Number(unitPrice || 0),
       })
     } else {
-      // PATCH chấp nhận tất cả fields bao gồm notes
-      // Đảm bảo tất cả number fields là number
+      // PATCH chỉ chấp nhận: quantity, unitPrice (không có consumableTypeId vì là foreign key, không có notes vì backend không support)
+      const { quantity, unitPrice } = data
       updateMutation.mutate({
-        ...data,
-        quantity: Number(data.quantity),
-        unitPrice: Number(data.unitPrice || 0),
+        quantity: Number(quantity),
+        unitPrice: Number(unitPrice || 0),
       })
     }
   }
@@ -171,13 +164,20 @@ export function PurchaseRequestItemFormModal({
               name="consumableTypeId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t('purchase_request.items.consumable_type_required')}</FormLabel>
+                  <FormLabel>
+                    {t('purchase_request.items.consumable_type_required')}
+                    {mode === 'edit' && (
+                      <span className="text-muted-foreground ml-2 text-sm font-normal">
+                        (không thể thay đổi)
+                      </span>
+                    )}
+                  </FormLabel>
                   <FormControl>
                     <ConsumableTypeSelect
                       value={field.value}
                       onChange={(value) => field.onChange(value)}
                       placeholder={t('purchase_request.items.consumable_type_placeholder')}
-                      disabled={isLoading}
+                      disabled={isLoading || mode === 'edit'} // Note: consumableTypeId không được phép update vì là foreign key
                     />
                   </FormControl>
                   <FormMessage />
@@ -228,28 +228,6 @@ export function PurchaseRequestItemFormModal({
                 )}
               />
             </div>
-
-            {mode === 'edit' && (
-              <FormField
-                control={form.control}
-                name="notes"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('purchase_request.items.notes_label')}</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder={t('purchase_request.items.notes_placeholder')}
-                        className="resize-none"
-                        rows={3}
-                        {...field}
-                        disabled={isLoading}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
 
             <DialogFooter>
               <Button

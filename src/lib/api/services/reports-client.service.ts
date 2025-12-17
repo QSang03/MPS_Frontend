@@ -175,6 +175,21 @@ export const reportsClientService = {
         totalBlackWhitePagesA4?: number
         recordedAt?: string
         createdAt?: string
+        device?: {
+          id: string
+          serialNumber: string
+          name: string
+          deviceModel?: {
+            id: string
+            name: string
+            manufacturer?: string
+            deviceType?: string
+            isActive?: boolean
+            useA4Counter?: boolean
+            createdAt?: string
+            updatedAt?: string
+          }
+        }
       }>
       pagination?: { page: number; limit: number; total: number; totalPages: number }
     }

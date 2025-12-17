@@ -56,14 +56,20 @@ export default function NavigationConfigTable({ configs, onView, onEdit, onDelet
               <TableCell className="font-medium">{config.name}</TableCell>
               <TableCell className="max-w-xs truncate">{config.description || '-'}</TableCell>
               <TableCell>
-                {config.customerId ? (
+                {config.customer ? (
+                  <Badge variant="outline">
+                    {config.customer.name || config.customer.code || config.customerId}
+                  </Badge>
+                ) : config.customerId ? (
                   <Badge variant="outline">{config.customerId}</Badge>
                 ) : (
                   <Badge variant="secondary">{t('navigation_config.default_display')}</Badge>
                 )}
               </TableCell>
               <TableCell>
-                {config.roleId ? (
+                {config.role ? (
+                  <Badge variant="outline">{config.role.name || config.roleId}</Badge>
+                ) : config.roleId ? (
                   <Badge variant="outline">{config.roleId}</Badge>
                 ) : (
                   <Badge variant="secondary">{t('navigation_config.default_display')}</Badge>

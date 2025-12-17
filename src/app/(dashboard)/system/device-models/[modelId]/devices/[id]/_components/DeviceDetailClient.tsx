@@ -626,7 +626,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
               <>
                 {getStatusBadge(device.isActive)}
                 {renderStatusChip()}
-                <ActionGuard pageId="devices" actionId="set-a4-pricing">
+                <ActionGuard pageId="devices" actionId="assign-pricing">
                   <Button
                     variant="secondary"
                     size="sm"

@@ -20,6 +20,7 @@ import {
   CalendarCheck,
   Settings,
   FileText,
+  Star,
 } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { StatusBadge } from '@/components/shared/StatusBadge'
@@ -137,7 +138,7 @@ export function ServiceRequestsTable() {
   const activeFilters: Array<{ label: string; value: string; onRemove: () => void }> = []
   if (search) {
     activeFilters.push({
-      label: `${t('filters.search')}: "${search}"`,
+      label: t('filters.search', { query: search }),
       value: search,
       onRemove: () => setSearch(''),
     })
@@ -765,6 +766,53 @@ function ServiceRequestsTableContent({
           </div>
         ),
         cell: ({ row }) => <div className="text-sm">{formatDateTime(row.original.createdAt)}</div>,
+      },
+      {
+        accessorKey: 'satisfactionScore',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <Star className="h-4 w-4 text-gray-500" />
+            {t('requests.service.table.satisfaction_score')}
+          </div>
+        ),
+        cell: ({ row }) => {
+          const score = row.original.satisfactionScore
+          const feedback = row.original.customerFeedback
+
+          if (!score || score === 0) {
+            return <span className="text-muted-foreground text-sm">—</span>
+          }
+
+          const renderStars = (satisfactionScore: number) => {
+            return Array.from({ length: 5 }, (_, i) => (
+              <Star
+                key={i}
+                className={`h-3 w-3 ${
+                  i < satisfactionScore ? 'fill-current text-yellow-400' : 'text-gray-300'
+                }`}
+              />
+            ))
+          }
+
+          return (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center gap-1">
+                    {renderStars(score)}
+                    <span className="text-xs text-gray-600">{score}/5</span>
+                  </div>
+                </TooltipTrigger>
+                {feedback && (
+                  <TooltipContent side="right" className="max-w-xs">
+                    <p className="font-medium">{t('requests.service.rating.customer_feedback')}</p>
+                    <p className="text-sm">{feedback}</p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
+          )
+        },
       },
       {
         id: 'actions',

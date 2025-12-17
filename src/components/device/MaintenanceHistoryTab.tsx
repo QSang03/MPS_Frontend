@@ -1,7 +1,9 @@
 'use client'
 
 import { useState } from 'react'
+import { usePathname } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
+import Image from 'next/image'
 import {
   Wrench,
   AlertCircle,
@@ -25,6 +27,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,10 +42,18 @@ import { toast } from 'sonner'
 import { useLocale } from '@/components/providers/LocaleProvider'
 import { maintenanceHistoriesClientService } from '@/lib/api/services/maintenance-histories-client.service'
 import { MaintenanceHistoryFormModal } from './MaintenanceHistoryFormModal'
+import { MaintenanceHistoryRatingModal } from './MaintenanceHistoryRatingModal'
 import type { MaintenanceHistory } from '@/types/models'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { cn } from '@/lib/utils'
 import { ActionGuard } from '@/components/shared/ActionGuard'
+
+// Helper to convert backend relative URLs to full URLs
+const getFullImageUrl = (url: string) => {
+  if (url.startsWith('http')) return url
+  const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
+  return `${backendUrl}${url}`
+}
 
 interface MaintenanceHistoryTabProps {
   deviceId: string
@@ -51,6 +62,9 @@ interface MaintenanceHistoryTabProps {
 export function MaintenanceHistoryTab({ deviceId }: MaintenanceHistoryTabProps) {
   const { t } = useLocale()
   const queryClient = useQueryClient()
+  const pathname = usePathname()
+  // Auto-detect pageId based on pathname: /user/... -> 'user-devices', otherwise 'devices'
+  const pageId = pathname?.includes('/user/') ? 'user-devices' : 'devices'
   const [page, setPage] = useState(1)
   const [limit, setLimit] = useState(10)
   const [search, setSearch] = useState('')
@@ -58,6 +72,14 @@ export function MaintenanceHistoryTab({ deviceId }: MaintenanceHistoryTabProps) 
   const [minSatisfaction, setMinSatisfaction] = useState<number | 'ALL'>('ALL')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [deleteDialog, setDeleteDialog] = useState<{
+    open: boolean
+    item: MaintenanceHistory | null
+  }>({
+    open: false,
+    item: null,
+  })
+
+  const [attachmentsModal, setAttachmentsModal] = useState<{
     open: boolean
     item: MaintenanceHistory | null
   }>({
@@ -187,7 +209,7 @@ export function MaintenanceHistoryTab({ deviceId }: MaintenanceHistoryTabProps) 
                 <RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin')} />
                 {t('button.refresh')}
               </Button>
-              <ActionGuard pageId="devices" actionId="create-maintenance-by-device">
+              <ActionGuard pageId={pageId} actionId="create-maintenance-by-device">
                 <MaintenanceHistoryFormModal
                   mode="create"
                   deviceId={deviceId}
@@ -350,7 +372,12 @@ export function MaintenanceHistoryTab({ deviceId }: MaintenanceHistoryTabProps) 
                             {item.attachmentUrls.length > 0 && (
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <Button variant="outline" size="icon" className="h-8 w-8">
+                                  <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    onClick={() => setAttachmentsModal({ open: true, item })}
+                                  >
                                     <Eye className="h-4 w-4" />
                                   </Button>
                                 </TooltipTrigger>
@@ -360,7 +387,7 @@ export function MaintenanceHistoryTab({ deviceId }: MaintenanceHistoryTabProps) 
                               </Tooltip>
                             )}
                             <ActionGuard
-                              pageId="devices"
+                              pageId={pageId}
                               actionId="update-maintenance-history-detail"
                             >
                               <MaintenanceHistoryFormModal
@@ -371,8 +398,15 @@ export function MaintenanceHistoryTab({ deviceId }: MaintenanceHistoryTabProps) 
                                 compact
                               />
                             </ActionGuard>
+                            <ActionGuard pageId={pageId} actionId="rate-maintenance-history">
+                              <MaintenanceHistoryRatingModal
+                                maintenanceHistory={item}
+                                onRated={() => refetch()}
+                                compact
+                              />
+                            </ActionGuard>
                             <ActionGuard
-                              pageId="devices"
+                              pageId={pageId}
                               actionId="delete-maintenance-history-detail"
                             >
                               <Button
@@ -476,6 +510,34 @@ export function MaintenanceHistoryTab({ deviceId }: MaintenanceHistoryTabProps) 
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Attachments Modal */}
+      <Dialog
+        open={attachmentsModal.open}
+        onOpenChange={(open) => setAttachmentsModal({ open, item: null })}
+      >
+        <DialogContent className="max-h-[80vh] max-w-4xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {t('maintenance_history.attachments')} - {attachmentsModal.item?.description}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {attachmentsModal.item?.attachmentUrls.map((url, index) => (
+              <div key={index} className="group relative">
+                <Image
+                  src={getFullImageUrl(url)}
+                  alt={`Attachment ${index + 1}`}
+                  width={300}
+                  height={200}
+                  className="h-48 w-full rounded-lg border object-cover"
+                  unoptimized
+                />
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -3,6 +3,7 @@ import type {
   MaintenanceHistory,
   CreateMaintenanceHistoryDto,
   UpdateMaintenanceHistoryDto,
+  RateMaintenanceHistoryDto,
 } from '@/types/models'
 import type { ApiListResponse, ListPagination } from '@/types/api'
 
@@ -145,8 +146,29 @@ export const maintenanceHistoriesClientService = {
     return response.data?.data ?? null
   },
 
-  async update(id: string, dto: UpdateMaintenanceHistoryDto): Promise<MaintenanceHistory | null> {
+  async update(
+    id: string,
+    dto: UpdateMaintenanceHistoryDto | FormData
+  ): Promise<MaintenanceHistory | null> {
+    // Debug log to help trace update calls
+    console.debug(
+      '[maintenanceHistoriesClientService] update called, payload is FormData?',
+      typeof FormData !== 'undefined' && dto instanceof FormData
+    )
+    // If payload is FormData (contains files), send as multipart/form-data
+    if (typeof FormData !== 'undefined' && dto instanceof FormData) {
+      const response = await internalApiClient.patch(`/api/maintenance-histories/${id}`, dto, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      return response.data?.data ?? null
+    }
+
     const response = await internalApiClient.patch(`/api/maintenance-histories/${id}`, dto)
+    return response.data?.data ?? null
+  },
+
+  async rate(id: string, dto: RateMaintenanceHistoryDto): Promise<MaintenanceHistory | null> {
+    const response = await internalApiClient.patch(`/api/maintenance-histories/${id}/rate`, dto)
     return response.data?.data ?? null
   },
 

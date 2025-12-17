@@ -22,8 +22,6 @@ export interface CreateMaintenanceHistoryDto {
   description: string
   staffName: string
   attachmentUrls?: string[]
-  satisfactionScore: number
-  customerFeedback?: string
 }
 
 export interface UpdateMaintenanceHistoryDto {
@@ -32,7 +30,10 @@ export interface UpdateMaintenanceHistoryDto {
   description?: string
   staffName?: string
   attachmentUrls?: string[]
-  satisfactionScore?: number
+}
+
+export interface RateMaintenanceHistoryDto {
+  satisfactionScore: number
   customerFeedback?: string
 }
 

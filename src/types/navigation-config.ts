@@ -1,4 +1,6 @@
 import type { NavItemPayload } from '@/constants/navigation'
+import type { Customer } from '@/types/models/customer'
+import type { UserRole } from '@/types/users'
 
 export interface NavigationConfig {
   id: string
@@ -12,6 +14,8 @@ export interface NavigationConfig {
   isActive: boolean
   customerId?: string | null
   roleId?: string | null
+  customer?: Customer | null
+  role?: UserRole | null
   createdAt: string
   updatedAt: string
 }

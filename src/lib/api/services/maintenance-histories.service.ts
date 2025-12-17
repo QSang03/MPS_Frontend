@@ -4,6 +4,7 @@ import type {
   MaintenanceHistory,
   CreateMaintenanceHistoryDto,
   UpdateMaintenanceHistoryDto,
+  RateMaintenanceHistoryDto,
   MaintenanceHistoryFilters,
 } from '@/types/models'
 import type { PaginatedResponse, PaginationParams } from '@/types/api'
@@ -97,6 +98,17 @@ export const maintenanceHistoriesService = {
   async update(id: string, dto: UpdateMaintenanceHistoryDto): Promise<MaintenanceHistory> {
     const { data } = await apiClient.patch<{ success: boolean; data: MaintenanceHistory }>(
       API_ENDPOINTS.MAINTENANCE_HISTORIES.UPDATE(id),
+      dto
+    )
+    return data.data
+  },
+
+  /**
+   * Rate maintenance history (customer rating)
+   */
+  async rate(id: string, dto: RateMaintenanceHistoryDto): Promise<MaintenanceHistory> {
+    const { data } = await apiClient.patch<{ success: boolean; data: MaintenanceHistory }>(
+      API_ENDPOINTS.MAINTENANCE_HISTORIES.RATE(id),
       dto
     )
     return data.data

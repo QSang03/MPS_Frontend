@@ -26,13 +26,27 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'http',
+        hostname: 'localhost',
+        port: '3000',
+        pathname: '/public/uploads/**',
+      },
+      {
+        protocol: 'http',
         hostname: '192.168.117.18',
         port: '3000',
+        pathname: '/public/uploads/**',
       },
       {
         protocol: 'http',
         hostname: '192.168.117.210',
         port: '3000',
+        pathname: '/public/uploads/**',
+      },
+      {
+        protocol: 'http',
+        hostname: '192.168.117.25',
+        port: '3000',
+        pathname: '/public/uploads/**',
       },
     ],
   },

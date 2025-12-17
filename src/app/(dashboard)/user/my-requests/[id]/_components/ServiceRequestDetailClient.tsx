@@ -18,8 +18,9 @@ import {
 } from '@/components/ui/table'
 import { formatCurrency, formatDateTime } from '@/lib/utils/formatters'
 import ServiceRequestMessages from '@/components/service-request/ServiceRequestMessages'
-import { ServiceRequestRatingForm } from '@/components/service-request/ServiceRequestRatingForm'
 import { ServiceRequestRatingDisplay } from '@/components/service-request/ServiceRequestRatingDisplay'
+import { ServiceRequestRatingModal } from '@/components/service-request/ServiceRequestRatingModal'
+import { ActionGuard } from '@/components/shared/ActionGuard'
 import { serviceRequestsClientService } from '@/lib/api/services/service-requests-client.service'
 import { ServiceRequestStatus, Priority } from '@/constants/status'
 import type { Session } from '@/lib/auth/session'
@@ -205,6 +206,18 @@ export function ServiceRequestDetailClient({ id }: Props) {
               <ArrowLeft className="mr-1 h-4 w-4" />
               {t('common.back')}
             </Button>
+            {/* Rating Button */}
+            {(detail.status === ServiceRequestStatus.RESOLVED ||
+              detail.status === ServiceRequestStatus.CLOSED) && (
+              <ActionGuard pageId="user-my-requests" actionId="rate-service-request">
+                <ServiceRequestRatingModal
+                  serviceRequest={detail}
+                  onRated={() => {
+                    queryClient.invalidateQueries({ queryKey: ['service-requests', 'detail', id] })
+                  }}
+                />
+              </ActionGuard>
+            )}
           </div>
           <h1 className="flex items-center gap-3 text-2xl font-bold tracking-tight md:text-3xl">
             {detail.title ?? 'Yêu cầu dịch vụ'}
@@ -386,12 +399,33 @@ export function ServiceRequestDetailClient({ id }: Props) {
             detail.status === ServiceRequestStatus.CLOSED) && (
             <div className="space-y-4">
               {detail.satisfactionScore ? (
-                <ServiceRequestRatingDisplay
-                  satisfactionScore={detail.satisfactionScore}
-                  customerFeedback={detail.customerFeedback}
-                />
+                <div className="space-y-3">
+                  <ServiceRequestRatingDisplay
+                    satisfactionScore={detail.satisfactionScore}
+                    customerFeedback={detail.customerFeedback}
+                  />
+                  <ActionGuard pageId="user-my-requests" actionId="rate-service-request">
+                    <ServiceRequestRatingModal
+                      serviceRequest={detail}
+                      onRated={() => {
+                        queryClient.invalidateQueries({
+                          queryKey: ['service-requests', 'detail', id],
+                        })
+                      }}
+                    />
+                  </ActionGuard>
+                </div>
               ) : (
-                <ServiceRequestRatingForm serviceRequestId={id} />
+                <ActionGuard pageId="user-my-requests" actionId="rate-service-request">
+                  <ServiceRequestRatingModal
+                    serviceRequest={detail}
+                    onRated={() => {
+                      queryClient.invalidateQueries({
+                        queryKey: ['service-requests', 'detail', id],
+                      })
+                    }}
+                  />
+                </ActionGuard>
               )}
             </div>
           )}

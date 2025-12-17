@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
@@ -9,17 +9,10 @@ import { SystemModalLayout } from '@/components/system/SystemModalLayout'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from '@/components/ui/select'
-import { Loader2, Plus, Edit, Upload, X, Star } from 'lucide-react'
+import { Loader2, Plus, Edit, Upload, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { useLocale } from '@/components/providers/LocaleProvider'
-import { maintenanceHistoriesService } from '@/lib/api/services/maintenance-histories.service'
+import { maintenanceHistoriesClientService } from '@/lib/api/services/maintenance-histories-client.service'
 import type {
   MaintenanceHistory,
   CreateMaintenanceHistoryDto,
@@ -40,9 +33,7 @@ const buildInitialForm = (deviceId: string) => ({
   maintenanceDate: new Date().toISOString().split('T')[0],
   description: '',
   staffName: '',
-  attachmentUrls: [] as string[],
-  satisfactionScore: 5,
-  customerFeedback: '',
+  attachmentFiles: [] as File[],
 })
 
 export function MaintenanceHistoryFormModal({
@@ -58,11 +49,14 @@ export function MaintenanceHistoryFormModal({
   const [open, setOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [formData, setFormData] = useState(() => buildInitialForm(deviceId))
+  const attachmentFilesRef = useRef<File[]>([])
 
   // Reset form when modal opens/closes
   useEffect(() => {
     if (open) {
       if (mode === 'edit' && maintenanceHistory) {
+        // For edit mode, we don't have files, only URLs. Files are only for new uploads.
+        const newFiles: File[] = []
         setFormData({
           deviceId: maintenanceHistory.deviceId,
           maintenanceDate: maintenanceHistory.maintenanceDate
@@ -70,19 +64,20 @@ export function MaintenanceHistoryFormModal({
             : '',
           description: maintenanceHistory.description,
           staffName: maintenanceHistory.staffName,
-          attachmentUrls: maintenanceHistory.attachmentUrls,
-          satisfactionScore: maintenanceHistory.satisfactionScore,
-          customerFeedback: maintenanceHistory.customerFeedback || '',
+          attachmentFiles: newFiles,
         })
+        attachmentFilesRef.current = newFiles
       } else {
+        const newFiles = buildInitialForm(deviceId).attachmentFiles
         setFormData(buildInitialForm(deviceId))
+        attachmentFilesRef.current = newFiles
       }
     }
   }, [open, mode, maintenanceHistory, deviceId])
 
   const createMutation = useMutation({
-    mutationFn: (data: CreateMaintenanceHistoryDto) =>
-      maintenanceHistoriesService.createByDeviceId(deviceId, data),
+    mutationFn: (data: CreateMaintenanceHistoryDto | FormData) =>
+      maintenanceHistoriesClientService.createByDeviceId(deviceId, data),
     onSuccess: () => {
       toast.success(t('maintenance_history.create_success'))
       queryClient.invalidateQueries({ queryKey: ['maintenance-histories', deviceId] })
@@ -95,8 +90,8 @@ export function MaintenanceHistoryFormModal({
   })
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdateMaintenanceHistoryDto }) =>
-      maintenanceHistoriesService.update(id, data),
+    mutationFn: ({ id, data }: { id: string; data: UpdateMaintenanceHistoryDto | FormData }) =>
+      maintenanceHistoriesClientService.update(id, data),
     onSuccess: () => {
       toast.success(t('maintenance_history.update_success'))
       queryClient.invalidateQueries({ queryKey: ['maintenance-histories', deviceId] })
@@ -113,24 +108,31 @@ export function MaintenanceHistoryFormModal({
     setSubmitting(true)
 
     try {
-      const submitData = {
-        deviceId,
-        maintenanceDate: formData.maintenanceDate
+      // Create FormData for multipart upload
+      const formDataToSend = new FormData()
+
+      // Add basic fields
+      formDataToSend.append('deviceId', deviceId)
+      formDataToSend.append(
+        'maintenanceDate',
+        formData.maintenanceDate
           ? new Date(formData.maintenanceDate).toISOString()
-          : new Date().toISOString(),
-        description: formData.description.trim(),
-        staffName: formData.staffName.trim(),
-        attachmentUrls: formData.attachmentUrls,
-        satisfactionScore: formData.satisfactionScore,
-        customerFeedback: formData.customerFeedback.trim() || undefined,
-      }
+          : new Date().toISOString()
+      )
+      formDataToSend.append('description', formData.description.trim())
+      formDataToSend.append('staffName', formData.staffName.trim())
+
+      // Add files with field name 'images'
+      formData.attachmentFiles.forEach((file) => {
+        formDataToSend.append('images', file)
+      })
 
       if (mode === 'create') {
-        await createMutation.mutateAsync(submitData)
+        await createMutation.mutateAsync(formDataToSend)
       } else if (maintenanceHistory) {
         await updateMutation.mutateAsync({
           id: maintenanceHistory.id,
-          data: submitData,
+          data: formDataToSend,
         })
       }
     } catch {
@@ -142,29 +144,28 @@ export function MaintenanceHistoryFormModal({
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (files) {
-      // For now, just simulate file upload. In real implementation, upload to server first
-      const urls = Array.from(files).map((file) => `/public/uploads/images/${file.name}`)
-      setFormData((prev) => ({
-        ...prev,
-        attachmentUrls: [...prev.attachmentUrls, ...urls],
-      }))
+      const newFiles = Array.from(files)
+
+      setFormData((prev) => {
+        const updatedFiles = [...prev.attachmentFiles, ...newFiles]
+        attachmentFilesRef.current = updatedFiles
+        return {
+          ...prev,
+          attachmentFiles: updatedFiles,
+        }
+      })
     }
   }
 
   const removeAttachment = (index: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      attachmentUrls: prev.attachmentUrls.filter((_, i) => i !== index),
-    }))
-  }
-
-  const renderStars = (score: number) => {
-    return Array.from({ length: 5 }, (_, i) => (
-      <Star
-        key={i}
-        className={`h-4 w-4 ${i < score ? 'fill-current text-yellow-400' : 'text-gray-300'}`}
-      />
-    ))
+    setFormData((prev) => {
+      const newFiles = prev.attachmentFiles.filter((_, i) => i !== index)
+      attachmentFilesRef.current = newFiles
+      return {
+        ...prev,
+        attachmentFiles: newFiles,
+      }
+    })
   }
 
   const isSubmitting = submitting || createMutation.isPending || updateMutation.isPending
@@ -254,47 +255,6 @@ export function MaintenanceHistoryFormModal({
             />
           </div>
 
-          {/* Satisfaction Score */}
-          <div className="space-y-2">
-            <Label>
-              {t('maintenance_history.satisfaction_score')} <span className="text-red-500">*</span>
-            </Label>
-            <Select
-              value={String(formData.satisfactionScore)}
-              onValueChange={(value) =>
-                setFormData((prev) => ({ ...prev, satisfactionScore: Number(value) }))
-              }
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {[5, 4, 3, 2, 1].map((score) => (
-                  <SelectItem key={score} value={String(score)}>
-                    <div className="flex items-center gap-2">
-                      <div className="flex">{renderStars(score)}</div>
-                      <span>{t(`maintenance_history.satisfaction_score_${score}`)}</span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Customer Feedback */}
-          <div className="space-y-2">
-            <Label htmlFor="customerFeedback">{t('maintenance_history.customer_feedback')}</Label>
-            <Textarea
-              id="customerFeedback"
-              value={formData.customerFeedback}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, customerFeedback: e.target.value }))
-              }
-              placeholder={t('placeholder.optional')}
-              rows={2}
-            />
-          </div>
-
           {/* Attachments */}
           <div className="space-y-2">
             <Label>{t('maintenance_history.attachments')}</Label>
@@ -314,32 +274,37 @@ export function MaintenanceHistoryFormModal({
                 </div>
               </Label>
 
-              {formData.attachmentUrls.length > 0 && (
+              {formData.attachmentFiles.length > 0 && (
                 <div className="space-y-2">
                   <Label className="text-sm font-medium">
                     {t('maintenance_history.view_attachments')}:
                   </Label>
                   <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
-                    {formData.attachmentUrls.map((url, index) => (
-                      <div key={index} className="group relative overflow-hidden rounded border">
-                        <Image
-                          src={url}
-                          alt={`Attachment ${index + 1}`}
-                          fill
-                          className="object-cover"
-                          sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                        />
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="icon"
-                          className="absolute -top-2 -right-2 z-10 h-6 w-6 opacity-0 transition-opacity group-hover:opacity-100"
-                          onClick={() => removeAttachment(index)}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    ))}
+                    {formData.attachmentFiles.map((file, index) => {
+                      const previewUrl = URL.createObjectURL(file)
+                      return (
+                        <div key={index} className="group relative overflow-hidden rounded border">
+                          <Image
+                            src={previewUrl}
+                            alt={`Attachment ${index + 1}`}
+                            width={96}
+                            height={96}
+                            className="h-24 w-full object-cover"
+                            unoptimized
+                            onLoad={() => URL.revokeObjectURL(previewUrl)}
+                          />
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="icon"
+                            className="absolute -top-2 -right-2 z-10 h-6 w-6 opacity-0 transition-opacity group-hover:opacity-100"
+                            onClick={() => removeAttachment(index)}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      )
+                    })}
                   </div>
                 </div>
               )}

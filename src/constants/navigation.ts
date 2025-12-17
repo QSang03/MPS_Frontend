@@ -177,7 +177,6 @@ export const USER_NAVIGATION_PAYLOAD: NavItemPayload[] = [
           resources: [{ resource: 'devices', action: 'update' }],
         },
       },
-
       {
         id: 'toggle-active',
         label: 'Bật/Tắt thiết bị',
@@ -234,18 +233,18 @@ export const USER_NAVIGATION_PAYLOAD: NavItemPayload[] = [
         },
       },
       {
-        id: 'create-maintenance-history',
-        label: 'Tạo lịch sử bảo trì',
-        labelEn: 'Create maintenance history',
-        labelVi: 'Tạo lịch sử bảo trì',
-        icon: 'Plus',
+        id: 'rate-maintenance-history',
+        label: 'Đánh giá lịch sử bảo trì',
+        labelEn: 'Rate maintenance history',
+        labelVi: 'Đánh giá lịch sử bảo trì',
+        icon: 'Star',
         requiredPermissions: {
           strategy: 'all',
-          resources: [{ resource: 'maintenance-histories.devices', action: 'create' }],
+          resources: [{ resource: 'maintenance-histories.rate', action: 'update' }],
         },
       },
       {
-        id: 'update-maintenance-history',
+        id: 'update-maintenance-history-detail',
         label: 'Cập nhật lịch sử bảo trì',
         labelEn: 'Update maintenance history',
         labelVi: 'Cập nhật lịch sử bảo trì',
@@ -256,7 +255,7 @@ export const USER_NAVIGATION_PAYLOAD: NavItemPayload[] = [
         },
       },
       {
-        id: 'delete-maintenance-history',
+        id: 'delete-maintenance-history-detail',
         label: 'Xóa lịch sử bảo trì',
         labelEn: 'Delete maintenance history',
         labelVi: 'Xóa lịch sử bảo trì',
@@ -628,6 +627,17 @@ export const USER_NAVIGATION_PAYLOAD: NavItemPayload[] = [
         requiredPermissions: {
           strategy: 'all',
           resources: [{ resource: 'service-requests.status', action: 'update' }],
+        },
+      },
+      {
+        id: 'rate-service-request',
+        label: 'Đánh giá yêu cầu dịch vụ',
+        labelEn: 'Rate service request',
+        labelVi: 'Đánh giá yêu cầu dịch vụ',
+        icon: 'Star',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'service-requests.rating', action: 'update' }],
         },
       },
     ],
@@ -1017,6 +1027,42 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
     ],
   },
   {
+    id: 'cost-calculation',
+    label: 'Tính toán chi phí',
+    labelEn: 'Cost calculation',
+    labelVi: 'Tính toán chi phí',
+    icon: 'Calculator',
+    route: '/system/cost-calculation',
+    description: 'Tải lên file vật tư và xem lịch sử tính toán chi phí',
+    descriptionEn: 'Upload material file and view cost calculation history',
+    descriptionVi: 'Tải lên file vật tư và xem lịch sử tính toán chi phí',
+    requiredPermissions: withBasicPermissions([{ resource: 'cost-calculation', action: 'read' }]),
+    actions: [
+      {
+        id: 'list-cost-calculation',
+        label: 'Xem lịch sử tính toán',
+        labelEn: 'View history',
+        labelVi: 'Xem lịch sử tính toán',
+        icon: 'List',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'cost-calculation', action: 'read' }],
+        },
+      },
+      {
+        id: 'create-cost-calculation',
+        label: 'Tải lên file để tính toán',
+        labelEn: 'Upload file for calculation',
+        labelVi: 'Tải lên file để tính toán',
+        icon: 'Upload',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'cost-calculation', action: 'create' }],
+        },
+      },
+    ],
+  },
+  {
     id: 'devices',
     name: 'devices',
     label: 'Thiết bị',
@@ -1156,12 +1202,23 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
         },
       },
       {
-        id: 'set-a4-pricing',
-        label: 'Gán giá A4',
-        icon: 'BarChart3',
+        id: 'assign-pricing',
+        label: 'Gán giá thiết bị',
+        labelEn: 'Assign device pricing',
+        labelVi: 'Gán giá thiết bị',
+        icon: 'DollarSign',
         requiredPermissions: {
           strategy: 'all',
-          resources: [{ resource: 'devices.pricing', action: 'update' }],
+          resources: [
+            { resource: 'devices.pricing', action: 'update' },
+            { resource: 'devices.pricing', action: 'read' },
+            { resource: 'devices.pricing.active', action: 'read' },
+            { resource: 'devices.contract-monthly-rent', action: 'update' },
+            { resource: 'devices.contract-monthly-rent', action: 'read' },
+            { resource: 'devices.page-printing-costs', action: 'update' },
+            { resource: 'devices.page-printing-costs', action: 'read' },
+            { resource: 'devices.page-printing-costs.active', action: 'read' },
+          ],
         },
       },
       {
@@ -2290,10 +2347,21 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
       {
         id: 'device-pricing-update',
         label: 'Cập nhật giá thiết bị',
+        labelEn: 'Update device pricing',
+        labelVi: 'Cập nhật giá thiết bị',
         icon: 'DollarSign',
         requiredPermissions: {
           strategy: 'all',
-          resources: [{ resource: 'devices.pricing', action: 'update' }],
+          resources: [
+            { resource: 'devices.pricing', action: 'update' },
+            { resource: 'devices.pricing', action: 'read' },
+            { resource: 'devices.pricing.active', action: 'read' },
+            { resource: 'devices.contract-monthly-rent', action: 'update' },
+            { resource: 'devices.contract-monthly-rent', action: 'read' },
+            { resource: 'devices.page-printing-costs', action: 'update' },
+            { resource: 'devices.page-printing-costs', action: 'read' },
+            { resource: 'devices.page-printing-costs.active', action: 'read' },
+          ],
         },
       },
       {

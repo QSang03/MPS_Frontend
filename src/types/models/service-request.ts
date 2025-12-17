@@ -215,7 +215,7 @@ export interface CreateServiceRequestCostDto {
 /**
  * Service request rating DTO
  */
-export interface CreateServiceRequestRatingDto {
+export interface RateServiceRequestDto {
   satisfactionScore: number
   customerFeedback?: string
 }
