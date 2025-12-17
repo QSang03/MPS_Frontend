@@ -399,7 +399,7 @@ export function ModernSidebar({ session }: SidebarProps) {
               {
                 key: 'consumables',
                 title: translateOr('nav.consumables', 'Vật tư'),
-                ids: ['consumable-types', 'warehouse-documents'],
+                ids: ['consumable-types', 'warehouse-documents', 'consumables'],
               },
               {
                 key: 'customers',
