@@ -569,14 +569,16 @@ export default function DevicesPageClient() {
 
                   if (searchDebounceRef.current) window.clearTimeout(searchDebounceRef.current)
                   searchDebounceRef.current = window.setTimeout(() => {
-                    fetchDevices(v?.trim() ? v : undefined)
+                    const trimmed = v.trim()
+                    fetchDevices(trimmed ? trimmed : undefined)
                   }, 2000)
                 }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     const v = (e.target as HTMLInputElement).value
                     if (searchDebounceRef.current) window.clearTimeout(searchDebounceRef.current)
-                    fetchDevices(v?.trim() ? v : undefined)
+                    const trimmed = v.trim()
+                    fetchDevices(trimmed ? trimmed : undefined)
                   }
                 }}
                 className="pl-9"

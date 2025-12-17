@@ -297,8 +297,8 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
   const deviceData =
     overview.topDevices
       ?.map((d, index) => ({
-        id: String(d.deviceId ?? d.serialNumber ?? index),
-        name: d.deviceModelName || d.serialNumber || 'Unknown',
+        id: String(d.deviceId ?? d.serialNumber?.trim() ?? index),
+        name: d.deviceModelName || d.serialNumber?.trim() || 'Unknown',
         value: getDisplayValue(d.totalRevenue, d.totalRevenueConverted, useConverted),
         fullData: d,
         rank: index + 1,

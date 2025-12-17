@@ -31,6 +31,7 @@ export const createDeviceSchema = (t?: (key: string) => string) => {
   return z.object({
     serialNumber: z
       .string()
+      .trim()
       .min(1, loc('device.serial.required'))
       .min(5, loc('device.serial.min'))
       .max(50, loc('device.serial.max'))

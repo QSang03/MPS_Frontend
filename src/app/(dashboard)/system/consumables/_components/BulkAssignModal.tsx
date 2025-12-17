@@ -279,7 +279,7 @@ export default function BulkAssignModal({ trigger }: BulkAssignModalProps) {
       setSubmitting(true)
       const items = rows.map((r) => ({
         consumableTypeId,
-        serialNumber: r.serialNumber || undefined,
+        serialNumber: r.serialNumber?.trim() || undefined,
         expiryDate: r.expiryDate ? new Date(r.expiryDate).toISOString() : undefined,
       }))
       const res = await consumablesClientService.bulkCreate({ customerId, items })
@@ -304,7 +304,7 @@ export default function BulkAssignModal({ trigger }: BulkAssignModalProps) {
     // If any rows contain a serial number, prompt confirmation
     const items = rows.map((r) => ({
       consumableTypeId,
-      serialNumber: r.serialNumber || undefined,
+      serialNumber: r.serialNumber?.trim() || undefined,
       expiryDate: r.expiryDate ? new Date(r.expiryDate).toISOString() : undefined,
     }))
     const hasSerial = items.some((it) => !!it.serialNumber)
@@ -449,6 +449,15 @@ export default function BulkAssignModal({ trigger }: BulkAssignModalProps) {
                               setRows((cur) => {
                                 const next = [...cur]
                                 next[idx] = { ...next[idx], serialNumber: v }
+                                return next
+                              })
+                            }}
+                            onBlur={(e) => {
+                              const trimmed = e.target.value.trim()
+                              if (trimmed === (r.serialNumber ?? '')) return
+                              setRows((cur) => {
+                                const next = [...cur]
+                                next[idx] = { ...next[idx], serialNumber: trimmed }
                                 return next
                               })
                             }}

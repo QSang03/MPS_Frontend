@@ -579,7 +579,7 @@ export default function UsagePage() {
                         <DialogHeader>
                           <DialogTitleUI>
                             {selectedDevice
-                              ? `${selectedDevice.model ?? 'Device'} (${selectedDevice.serialNumber})`
+                              ? `${selectedDevice.model ?? 'Device'} (${String(selectedDevice.serialNumber ?? '').trim()})`
                               : 'Device'}
                           </DialogTitleUI>
                         </DialogHeader>
@@ -590,7 +590,7 @@ export default function UsagePage() {
                                 deviceId={selectedDevice.deviceId}
                                 device={{
                                   id: selectedDevice.deviceId,
-                                  serialNumber: selectedDevice.serialNumber,
+                                  serialNumber: String(selectedDevice.serialNumber ?? '').trim(),
                                   model: selectedDevice.model,
                                   // fill minimal required fields
                                   location: '',

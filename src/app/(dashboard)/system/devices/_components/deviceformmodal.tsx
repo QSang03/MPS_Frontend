@@ -302,7 +302,7 @@ export default function DeviceFormModal({
       // Build payload
       let payload: Record<string, unknown> = {
         deviceModelId: form.deviceModelId || undefined,
-        serialNumber: form.serialNumber,
+        serialNumber: String(form.serialNumber ?? '').trim(),
         ipAddress: form.ipAddress || undefined,
         macAddress: form.macAddress || undefined,
         firmware: form.firmware || undefined,
