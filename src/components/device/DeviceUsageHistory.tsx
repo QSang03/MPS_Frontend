@@ -47,9 +47,16 @@ type ConsumableTypeWithSeries = DeviceConsumableTypeUsage
 interface DeviceUsageHistoryProps {
   deviceId: string
   device?: Device | null
+  initialFromDate?: string
+  initialToDate?: string
 }
 
-export default function DeviceUsageHistory({ deviceId, device }: DeviceUsageHistoryProps) {
+export default function DeviceUsageHistory({
+  deviceId,
+  device,
+  initialFromDate,
+  initialToDate,
+}: DeviceUsageHistoryProps) {
   const { t } = useLocale()
   // Get date range constraints from ownership period if device is historical
   const ownershipDateRange = useMemo(() => {
@@ -60,17 +67,15 @@ export default function DeviceUsageHistory({ deviceId, device }: DeviceUsageHist
   }, [device])
 
   const [fromDate, setFromDate] = useState<string>(() => {
-    if (ownershipDateRange) {
-      return ownershipDateRange.minDate
-    }
+    if (ownershipDateRange) return ownershipDateRange.minDate
+    if (initialFromDate) return initialFromDate
     const d = new Date()
     d.setMonth(d.getMonth() - 1) // default: last 1 month
     return d.toISOString().slice(0, 10)
   })
   const [toDate, setToDate] = useState<string>(() => {
-    if (ownershipDateRange) {
-      return ownershipDateRange.maxDate
-    }
+    if (ownershipDateRange) return ownershipDateRange.maxDate
+    if (initialToDate) return initialToDate
     return new Date().toISOString().slice(0, 10)
   })
   const [loading, setLoading] = useState(false)
@@ -85,6 +90,16 @@ export default function DeviceUsageHistory({ deviceId, device }: DeviceUsageHist
     if (Number.isNaN(d.getTime())) return '—'
     return d.toLocaleString()
   }, [])
+
+  useEffect(() => {
+    if (ownershipDateRange) {
+      setFromDate(ownershipDateRange.minDate)
+      setToDate(ownershipDateRange.maxDate)
+      return
+    }
+    if (initialFromDate) setFromDate(initialFromDate)
+    if (initialToDate) setToDate(initialToDate)
+  }, [ownershipDateRange, initialFromDate, initialToDate])
 
   const load = useCallback(async () => {
     if (!deviceId) return
@@ -109,9 +124,6 @@ export default function DeviceUsageHistory({ deviceId, device }: DeviceUsageHist
     setError(null)
     setLoading(true)
     try {
-      const q = new URLSearchParams()
-      q.set('fromDate', fromDate)
-      q.set('toDate', toDate)
       // Use devicesClientService wrapper for consistent behavior
       const res = await devicesClientService.getUsageHistory(deviceId, {
         fromDate,

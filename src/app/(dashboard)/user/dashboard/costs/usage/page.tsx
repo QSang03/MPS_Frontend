@@ -49,6 +49,56 @@ export default function UsagePage() {
   const canLoadUsageData = can('load-usage-data')
   const canViewDeviceUsageHistory = can('view-device-usage-history')
 
+  const toIsoDate = (y: number, m: number, d: number) => {
+    const mm = String(m).padStart(2, '0')
+    const dd = String(d).padStart(2, '0')
+    return `${y}-${mm}-${dd}`
+  }
+
+  const parseYearMonth = (ym: string): { y: number; m: number } | null => {
+    const match = /^\d{4}-\d{2}$/.exec(ym)
+    if (!match) return null
+    const [yStr, mStr] = ym.split('-')
+    const y = Number(yStr)
+    const m = Number(mStr)
+    if (!Number.isFinite(y) || !Number.isFinite(m) || m < 1 || m > 12) return null
+    return { y, m }
+  }
+
+  const getDeviceHistoryDateRange = (): { fromDate?: string; toDate?: string } => {
+    if (mode === 'period') {
+      const parsed = period ? parseYearMonth(period) : null
+      if (!parsed) return {}
+      const lastDay = new Date(parsed.y, parsed.m, 0).getDate()
+      return {
+        fromDate: toIsoDate(parsed.y, parsed.m, 1),
+        toDate: toIsoDate(parsed.y, parsed.m, lastDay),
+      }
+    }
+
+    if (mode === 'range') {
+      const parsedFrom = from ? parseYearMonth(from) : null
+      const parsedTo = to ? parseYearMonth(to) : null
+      if (!parsedFrom || !parsedTo) return {}
+      const lastDay = new Date(parsedTo.y, parsedTo.m, 0).getDate()
+      return {
+        fromDate: toIsoDate(parsedFrom.y, parsedFrom.m, 1),
+        toDate: toIsoDate(parsedTo.y, parsedTo.m, lastDay),
+      }
+    }
+
+    if (mode === 'year') {
+      const y = Number(year)
+      if (!Number.isFinite(y) || y < 1900) return {}
+      return {
+        fromDate: `${String(y)}-01-01`,
+        toDate: `${String(y)}-12-31`,
+      }
+    }
+
+    return {}
+  }
+
   const formatNumber = (n?: number | null) => {
     if (n === undefined || n === null || Number.isNaN(Number(n))) return '-'
     const fmt = locale === 'vi' ? 'vi-VN' : 'en-US'
@@ -547,6 +597,8 @@ export default function UsagePage() {
                             setExpandedDeviceId((prev) => (prev === d.deviceId ? null : d.deviceId))
                           }
 
+                          const deviceHistoryRange = getDeviceHistoryDateRange()
+
                           return (
                             <Fragment key={d.deviceId}>
                               <TableRow
@@ -599,6 +651,8 @@ export default function UsagePage() {
                                     >
                                       <DeviceUsageHistory
                                         deviceId={d.deviceId}
+                                        initialFromDate={deviceHistoryRange.fromDate}
+                                        initialToDate={deviceHistoryRange.toDate}
                                         device={{
                                           id: d.deviceId,
                                           serialNumber: String(d.serialNumber ?? '').trim(),
