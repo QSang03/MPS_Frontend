@@ -397,6 +397,41 @@ export default function UsagePage() {
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
+
+                  <div className="mt-6 rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-[140px]">
+                            {t('page.user.costs.usage.trends.table.headers.month')}
+                          </TableHead>
+                          <TableHead className="text-right">
+                            {t('page.user.costs.usage.table.headers.total_pages')}
+                          </TableHead>
+                          <TableHead className="text-right">
+                            {t('page.user.costs.usage.table.headers.bw_pages')}
+                          </TableHead>
+                          <TableHead className="text-right">
+                            {t('page.user.costs.usage.table.headers.color_pages')}
+                          </TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {usageData.usage.map((u) => (
+                          <TableRow key={String(u.month)}>
+                            <TableCell className="font-medium">{String(u.month)}</TableCell>
+                            <TableCell className="text-right">
+                              {formatNumber(u.totalPages)}
+                            </TableCell>
+                            <TableCell className="text-right">{formatNumber(u.bwPages)}</TableCell>
+                            <TableCell className="text-right">
+                              {formatNumber(u.colorPages)}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </CardContent>
               </Card>
             )}

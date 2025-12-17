@@ -97,6 +97,7 @@ export const API_ENDPOINTS = {
 
   // Purchase Requests
   PURCHASE_REQUESTS: {
+    BASE: '/purchase-requests',
     LIST: '/purchase-requests',
     DETAIL: (id: string) => `/purchase-requests/${id}`,
     CREATE: '/purchase-requests',
@@ -105,6 +106,7 @@ export const API_ENDPOINTS = {
     STATUS: (id: string) => `/purchase-requests/${id}/status`,
     ASSIGN: (id: string) => `/purchase-requests/${id}/assign`,
     MESSAGES: (id: string) => `/purchase-requests/${id}/messages`,
+    ITEMS: (id: string) => `/purchase-requests/${id}/items`,
   },
 
   // Service Level Agreements

@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient, UseMutationResult } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
@@ -26,6 +26,7 @@ import { SearchableSelect } from '@/app/(dashboard)/system/policies/_components/
 import type { Session } from '@/lib/auth/session'
 import { PurchaseStatusStepper } from '@/components/system/PurchaseStatusStepper'
 import { PurchaseStatusButtonGrid } from '@/components/system/PurchaseStatusButtonGrid'
+import { PurchaseRequestItemFormModal } from './PurchaseRequestItemFormModal'
 import type { LucideIcon } from 'lucide-react'
 import {
   ArrowLeft,
@@ -44,7 +45,7 @@ import {
   Truck,
   Edit3,
 } from 'lucide-react'
-import type { PurchaseRequest } from '@/types/models/purchase-request'
+import type { PurchaseRequest, PurchaseRequestItem } from '@/types/models/purchase-request'
 import { cn } from '@/lib/utils/cn'
 import { useLocale } from '@/components/providers/LocaleProvider'
 import {
@@ -107,6 +108,12 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
   const [pendingStatusChange, setPendingStatusChange] = useState<PurchaseRequestStatus | null>(null)
   const [statusNote, setStatusNote] = useState('')
 
+  // Item management state
+  const [itemModalOpen, setItemModalOpen] = useState(false)
+  const [itemModalMode, setItemModalMode] = useState<'create' | 'edit'>('create')
+  const [selectedItem, setSelectedItem] = useState<PurchaseRequestItem | undefined>(undefined)
+  const [deleteItemConfirm, setDeleteItemConfirm] = useState<string | null>(null)
+
   const { data, isLoading } = useQuery({
     queryKey: ['purchase-requests', 'detail', id],
     queryFn: () => purchaseRequestsClientService.getById(id),
@@ -146,6 +153,21 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
     },
   })
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+
+  // Item delete mutation
+  const deleteItemMutation = useMutation({
+    mutationFn: (itemId: string) => purchaseRequestsClientService.removeItem(id, itemId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['purchase-requests', 'detail', id] })
+      toast.success(t('purchase_request.items.delete_success'))
+      setDeleteItemConfirm(null)
+    },
+    onError: (error: unknown) => {
+      const message =
+        error instanceof Error ? error.message : t('purchase_request.items.delete_error')
+      toast.error(message)
+    },
+  })
   const sysCustomerId = session?.isDefaultCustomer ? session.customerId : undefined
 
   const assignMutation = useMutation({
@@ -163,6 +185,29 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
       toast.error(message)
     },
   })
+
+  // Item management handlers
+  const handleAddItem = () => {
+    setItemModalMode('create')
+    setSelectedItem(undefined)
+    setItemModalOpen(true)
+  }
+
+  const handleEditItem = (item: PurchaseRequestItem) => {
+    setItemModalMode('edit')
+    setSelectedItem(item)
+    setItemModalOpen(true)
+  }
+
+  const handleDeleteItem = (itemId: string) => {
+    setDeleteItemConfirm(itemId)
+  }
+
+  const confirmDeleteItem = () => {
+    if (deleteItemConfirm) {
+      deleteItemMutation.mutate(deleteItemConfirm)
+    }
+  }
 
   if (isLoading) {
     return (
@@ -415,9 +460,9 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
                   <CardDescription>Chi tiết các hạng mục cần mua sắm</CardDescription>
                 </div>
                 <ActionGuard pageId="customer-requests" actionId="manage-purchase-items">
-                  <Button size="sm" variant="outline">
+                  <Button size="sm" variant="outline" onClick={handleAddItem}>
                     <Package className="mr-2 h-4 w-4" />
-                    Thêm vật tư
+                    {t('purchase_request.items.add')}
                   </Button>
                 </ActionGuard>
               </CardHeader>
@@ -427,13 +472,23 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
                     <Table>
                       <TableHeader>
                         <TableRow className="bg-muted/50 hover:bg-muted/50">
-                          <TableHead className="w-[30%]">Tên vật tư</TableHead>
-                          <TableHead>SL</TableHead>
-                          <TableHead>ĐVT</TableHead>
-                          <TableHead className="text-right">Đơn giá</TableHead>
-                          <TableHead className="text-right">Thành tiền</TableHead>
-                          <TableHead className="w-[25%]">Ghi chú</TableHead>
-                          <TableHead className="w-[120px]">Thao tác</TableHead>
+                          <TableHead className="w-[30%]">
+                            {t('purchase_request.items.table.name')}
+                          </TableHead>
+                          <TableHead>{t('purchase_request.items.table.quantity')}</TableHead>
+                          <TableHead>{t('purchase_request.items.table.unit')}</TableHead>
+                          <TableHead className="text-right">
+                            {t('purchase_request.items.table.unit_price')}
+                          </TableHead>
+                          <TableHead className="text-right">
+                            {t('purchase_request.items.table.total_price')}
+                          </TableHead>
+                          <TableHead className="w-[25%]">
+                            {t('purchase_request.items.table.notes')}
+                          </TableHead>
+                          <TableHead className="w-[120px]">
+                            {t('purchase_request.items.table.actions')}
+                          </TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -466,7 +521,12 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
                                   pageId="customer-requests"
                                   actionId="update-purchase-items"
                                 >
-                                  <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-8 w-8 p-0"
+                                    onClick={() => handleEditItem(item)}
+                                  >
                                     <Edit3 className="h-4 w-4" />
                                   </Button>
                                 </ActionGuard>
@@ -478,6 +538,7 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
                                     size="sm"
                                     variant="ghost"
                                     className="text-destructive hover:text-destructive h-8 w-8 p-0"
+                                    onClick={() => handleDeleteItem(item.id)}
                                   >
                                     <XCircle className="h-4 w-4" />
                                   </Button>
@@ -492,7 +553,7 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
                 ) : (
                   <div className="text-muted-foreground flex flex-col items-center justify-center border-t py-12 text-sm">
                     <Package className="mb-2 h-8 w-8 opacity-40" />
-                    <p>Chưa có vật tư nào trong yêu cầu này.</p>
+                    <p>{t('purchase_request.items.empty')}</p>
                   </div>
                 )}
               </CardContent>
@@ -768,6 +829,20 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
             </Card>
           </div>
         </div>
+
+        {/* Item Management Modals */}
+        <ItemManagementModals
+          id={id}
+          itemModalOpen={itemModalOpen}
+          setItemModalOpen={setItemModalOpen}
+          itemModalMode={itemModalMode}
+          selectedItem={selectedItem}
+          deleteItemConfirm={deleteItemConfirm}
+          setDeleteItemConfirm={setDeleteItemConfirm}
+          confirmDeleteItem={confirmDeleteItem}
+          deleteItemMutation={deleteItemMutation}
+          t={t}
+        />
       </div>
     </ActionGuard>
   )
@@ -782,5 +857,81 @@ function InfoRow({ label, value }: { label: string; value?: string | number | nu
         {value}
       </span>
     </div>
+  )
+}
+
+// Item management modals
+function ItemManagementModals({
+  id,
+  itemModalOpen,
+  setItemModalOpen,
+  itemModalMode,
+  selectedItem,
+  deleteItemConfirm,
+  setDeleteItemConfirm,
+  confirmDeleteItem,
+  deleteItemMutation,
+  t,
+}: {
+  id: string
+  itemModalOpen: boolean
+  setItemModalOpen: (open: boolean) => void
+  itemModalMode: 'create' | 'edit'
+  selectedItem?: PurchaseRequestItem
+  deleteItemConfirm: string | null
+  setDeleteItemConfirm: (id: string | null) => void
+  confirmDeleteItem: () => void
+  deleteItemMutation: UseMutationResult<boolean, unknown, string>
+  t: (key: string) => string
+}) {
+  return (
+    <>
+      <PurchaseRequestItemFormModal
+        purchaseRequestId={id}
+        item={selectedItem}
+        open={itemModalOpen}
+        onOpenChange={setItemModalOpen}
+        mode={itemModalMode}
+      />
+
+      <Dialog
+        open={deleteItemConfirm !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDeleteItemConfirm(null)
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('purchase_request.items.delete_confirm_title')}</DialogTitle>
+            <DialogDescription>
+              {t('purchase_request.items.delete_confirm_message')}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4">
+            <Button
+              variant="outline"
+              onClick={() => setDeleteItemConfirm(null)}
+              disabled={deleteItemMutation.isPending}
+            >
+              Hủy
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDeleteItem}
+              disabled={deleteItemMutation.isPending}
+            >
+              {deleteItemMutation.isPending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <XCircle className="mr-2 h-4 w-4" />
+              )}
+              Xóa
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }

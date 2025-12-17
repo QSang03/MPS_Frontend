@@ -152,7 +152,7 @@ export function ConsumableTypeSelect({ value, onChange, disabled, placeholder }:
         >
           {loading && items.length === 0 ? (
             <div className="text-muted-foreground flex items-center gap-2 p-3 text-sm">
-              <Loader2 className="h-4 w-4 animate-spin" /> {t('loading.default')}
+              <Loader2 className="h-4 w-4 animate-spin" /> {t('common.loading')}
             </div>
           ) : items.length === 0 ? (
             <div className="text-muted-foreground p-3 text-sm">
@@ -176,7 +176,7 @@ export function ConsumableTypeSelect({ value, onChange, disabled, placeholder }:
 
           {loading && items.length > 0 && (
             <div className="text-muted-foreground p-2 text-center text-sm">
-              {t('loading.default')}
+              {t('common.loading')}
             </div>
           )}
         </div>
