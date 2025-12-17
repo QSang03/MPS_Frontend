@@ -328,7 +328,11 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
     if (!payloadItem) return null
     const data = payloadItem.payload || payloadItem
     const full = data && 'fullData' in data ? data.fullData : undefined
-    const value = data && 'value' in data ? (data.value ?? 0) : (payloadItem.value ?? 0)
+    const value = getDisplayValue(
+      full?.totalRevenue as number | undefined,
+      full?.totalRevenueConverted as number | undefined,
+      useConverted
+    )
     const title =
       full?.deviceModelName ||
       (data && 'name' in data ? data.name : undefined) ||
