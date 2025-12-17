@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { Fragment, useCallback, useEffect, useState } from 'react'
 import { useLocale } from '@/components/providers/LocaleProvider'
 import { ActionGuard } from '@/components/shared/ActionGuard'
 import { useActionPermission } from '@/lib/hooks/useActionPermission'
@@ -12,12 +12,6 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle as DialogTitleUI,
-} from '@/components/ui/dialog'
 import MonthPicker from '@/components/ui/month-picker'
 import { Button } from '@/components/ui/button'
 import { Loader2, FileText, Calendar } from 'lucide-react'
@@ -83,8 +77,7 @@ export default function UsagePage() {
     devices: DeviceUsageItem[]
     usage?: UsageTrendItem[]
   } | null>(null)
-  const [selectedDevice, setSelectedDevice] = useState<DeviceUsageItem | null>(null)
-  const [deviceDialogOpen, setDeviceDialogOpen] = useState(false)
+  const [expandedDeviceId, setExpandedDeviceId] = useState<string | null>(null)
 
   function getCurrentMonth(): string {
     const now = new Date()
@@ -551,96 +544,83 @@ export default function UsagePage() {
                         {usageData.devices.map((d) => {
                           const openDevice = () => {
                             if (!canViewDeviceUsageHistory) return
-                            setSelectedDevice(d)
-                            setDeviceDialogOpen(true)
+                            setExpandedDeviceId((prev) => (prev === d.deviceId ? null : d.deviceId))
                           }
 
                           return (
-                            <TableRow
-                              key={d.deviceId}
-                              role={canViewDeviceUsageHistory ? 'button' : undefined}
-                              tabIndex={canViewDeviceUsageHistory ? 0 : -1}
-                              onClick={canViewDeviceUsageHistory ? openDevice : undefined}
-                              onKeyDown={(e) => {
-                                if (!canViewDeviceUsageHistory) return
-                                if (e.key === 'Enter' || e.key === ' ') {
-                                  openDevice()
+                            <Fragment key={d.deviceId}>
+                              <TableRow
+                                role={canViewDeviceUsageHistory ? 'button' : undefined}
+                                tabIndex={canViewDeviceUsageHistory ? 0 : -1}
+                                onClick={canViewDeviceUsageHistory ? openDevice : undefined}
+                                onKeyDown={(e) => {
+                                  if (!canViewDeviceUsageHistory) return
+                                  if (e.key === 'Enter' || e.key === ' ') {
+                                    openDevice()
+                                  }
+                                }}
+                                className={
+                                  canViewDeviceUsageHistory
+                                    ? 'cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800'
+                                    : ''
                                 }
-                              }}
-                              className={
-                                canViewDeviceUsageHistory
-                                  ? 'cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800'
-                                  : ''
-                              }
-                            >
-                              <TableCell className="font-medium">
-                                <div className="flex flex-col">
-                                  <span className="text-slate-900 dark:text-white">
-                                    {d.model ?? '—'}
-                                  </span>
-                                  <span className="text-xs text-slate-500">
-                                    {d.serialNumber ?? ''}
-                                  </span>
-                                </div>
-                              </TableCell>
-                              <TableCell>{d.serialNumber ?? '—'}</TableCell>
-                              <TableCell className="text-right font-bold">
-                                {formatNumber(d.totalPages)}
-                              </TableCell>
-                              <TableCell className="text-right">
-                                {formatNumber(d.totalBwPages)}
-                              </TableCell>
-                              <TableCell className="text-right">
-                                {formatNumber(d.totalColorPages)}
-                              </TableCell>
-                              <TableCell className="text-right">
-                                {formatNumber(d.totalPagesA4)}
-                              </TableCell>
-                            </TableRow>
+                              >
+                                <TableCell className="font-medium">
+                                  <div className="flex flex-col">
+                                    <span className="text-slate-900 dark:text-white">
+                                      {d.model ?? '—'}
+                                    </span>
+                                    <span className="text-xs text-slate-500">
+                                      {d.serialNumber ?? ''}
+                                    </span>
+                                  </div>
+                                </TableCell>
+                                <TableCell>{d.serialNumber ?? '—'}</TableCell>
+                                <TableCell className="text-right font-bold">
+                                  {formatNumber(d.totalPages)}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  {formatNumber(d.totalBwPages)}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  {formatNumber(d.totalColorPages)}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  {formatNumber(d.totalPagesA4)}
+                                </TableCell>
+                              </TableRow>
+
+                              {canViewDeviceUsageHistory && expandedDeviceId === d.deviceId ? (
+                                <TableRow className="bg-slate-50/50 dark:bg-slate-900/20">
+                                  <TableCell colSpan={6} className="p-4">
+                                    <ActionGuard
+                                      pageId="user-costs"
+                                      actionId="view-device-usage-history"
+                                    >
+                                      <DeviceUsageHistory
+                                        deviceId={d.deviceId}
+                                        device={{
+                                          id: d.deviceId,
+                                          serialNumber: String(d.serialNumber ?? '').trim(),
+                                          model: d.model,
+                                          // minimal required fields
+                                          location: '',
+                                          createdAt: new Date().toISOString(),
+                                          updatedAt: new Date().toISOString(),
+                                          totalPagesUsed: d.totalPages,
+                                          customerId: '',
+                                          status: '',
+                                        }}
+                                      />
+                                    </ActionGuard>
+                                  </TableCell>
+                                </TableRow>
+                              ) : null}
+                            </Fragment>
                           )
                         })}
                       </TableBody>
                     </Table>
-
-                    {/* Device usage dialog */}
-                    <Dialog
-                      open={deviceDialogOpen}
-                      onOpenChange={(open) => {
-                        setDeviceDialogOpen(open)
-                        if (!open) setSelectedDevice(null)
-                      }}
-                    >
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitleUI>
-                            {selectedDevice
-                              ? `${selectedDevice.model ?? 'Device'} (${String(selectedDevice.serialNumber ?? '').trim()})`
-                              : 'Device'}
-                          </DialogTitleUI>
-                        </DialogHeader>
-                        {selectedDevice && (
-                          <ActionGuard pageId="user-costs" actionId="view-device-usage-history">
-                            <div className="mt-2">
-                              <DeviceUsageHistory
-                                deviceId={selectedDevice.deviceId}
-                                device={{
-                                  id: selectedDevice.deviceId,
-                                  serialNumber: String(selectedDevice.serialNumber ?? '').trim(),
-                                  model: selectedDevice.model,
-                                  // fill minimal required fields
-                                  location: '',
-                                  createdAt: new Date().toISOString(),
-                                  updatedAt: new Date().toISOString(),
-                                  totalPagesUsed: selectedDevice.totalPages,
-                                  customerId: '',
-                                  status: '',
-                                }}
-                              />
-                            </div>
-                          </ActionGuard>
-                        )}
-                      </DialogContent>
-                    </Dialog>
                   </div>
                 ) : (
                   <div className="py-12 text-center">

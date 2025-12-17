@@ -107,10 +107,12 @@ export function PurchaseRequestItemFormModal({
   })
 
   const handleSubmit = (data: ItemFormData) => {
-    // Backend chấp nhận tất cả fields bao gồm notes
     if (mode === 'create') {
-      createMutation.mutate(data)
+      // POST chỉ chấp nhận: consumableTypeId, quantity, unitPrice (không có notes)
+      const { consumableTypeId, quantity, unitPrice } = data
+      createMutation.mutate({ consumableTypeId, quantity, unitPrice })
     } else {
+      // PATCH chấp nhận tất cả fields bao gồm notes
       updateMutation.mutate(data)
     }
   }
@@ -199,25 +201,27 @@ export function PurchaseRequestItemFormModal({
               />
             </div>
 
-            <FormField
-              control={form.control}
-              name="notes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('purchase_request.items.notes_label')}</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder={t('purchase_request.items.notes_placeholder')}
-                      className="resize-none"
-                      rows={3}
-                      {...field}
-                      disabled={isLoading}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {mode === 'edit' && (
+              <FormField
+                control={form.control}
+                name="notes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('purchase_request.items.notes_label')}</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder={t('purchase_request.items.notes_placeholder')}
+                        className="resize-none"
+                        rows={3}
+                        {...field}
+                        disabled={isLoading}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             <DialogFooter>
               <Button

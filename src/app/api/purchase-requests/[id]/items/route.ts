@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import backendApiClient from '@/lib/api/backend-client'
-import { API_ENDPOINTS } from '@/lib/api/endpoints'
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    console.log('API Route GET called with params:', await params)
     const { id } = await params
     const cookieStore = await cookies()
     const accessToken = cookieStore.get('access_token')?.value
@@ -16,7 +14,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     const { searchParams } = new URL(request.url)
 
-    const response = await backendApiClient.get(API_ENDPOINTS.PURCHASE_REQUESTS.ITEMS(id), {
+    const response = await backendApiClient.get(`/purchase-requests/${id}/items`, {
       headers: { Authorization: `Bearer ${accessToken}` },
       params: Object.fromEntries(searchParams),
     })
@@ -40,7 +38,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    console.log('API Route POST called with params:', await params)
     const { id } = await params
     const cookieStore = await cookies()
     const accessToken = cookieStore.get('access_token')?.value
@@ -52,7 +49,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const body = await request.json()
 
     // Theo documentation: POST /purchase-requests/{requestId}/items với body chỉ có item data
-    const response = await backendApiClient.post(`/api/purchase-requests/${id}/items`, body, {
+    const response = await backendApiClient.post(`/purchase-requests/${id}/items`, body, {
       headers: { Authorization: `Bearer ${accessToken}` },
     })
 
@@ -94,7 +91,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     // Theo documentation: PATCH /purchase-requests/{requestId}/items/{itemId}
     const response = await backendApiClient.patch(
-      `/api/purchase-requests/${id}/items/${itemId}`,
+      `/purchase-requests/${id}/items/${itemId}`,
       body,
       {
         headers: { Authorization: `Bearer ${accessToken}` },
@@ -139,7 +136,7 @@ export async function DELETE(
     }
 
     // Theo documentation: DELETE /purchase-requests/{requestId}/items/{itemId}
-    const response = await backendApiClient.delete(`/api/purchase-requests/${id}/items/${itemId}`, {
+    const response = await backendApiClient.delete(`/purchase-requests/${id}/items/${itemId}`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     })
 

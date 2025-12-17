@@ -32,6 +32,14 @@ import {
   ChartTooltipContent,
 } from '@/components/ui/chart'
 import type { ChartConfig } from '@/components/ui/chart'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 
 // Use shared types from dashboard.ts
 type ConsumableTypeWithSeries = DeviceConsumableTypeUsage
@@ -70,6 +78,13 @@ export default function DeviceUsageHistory({ deviceId, device }: DeviceUsageHist
   const [consumables, setConsumables] = useState<ConsumableTypeWithSeries[]>([])
   const [valueMode, setValueMode] = useState<'percentage' | 'remaining'>('percentage')
   const [visibleTypes, setVisibleTypes] = useState<boolean[]>([])
+
+  const formatDateTime = useCallback((value?: string | null) => {
+    if (!value) return '—'
+    const d = new Date(value)
+    if (Number.isNaN(d.getTime())) return '—'
+    return d.toLocaleString()
+  }, [])
 
   const load = useCallback(async () => {
     if (!deviceId) return
@@ -232,6 +247,29 @@ export default function DeviceUsageHistory({ deviceId, device }: DeviceUsageHist
     },
     [yMode]
   )
+
+  const seriesRows = useMemo(() => {
+    if (!consumables || consumables.length === 0) return []
+    return consumables.flatMap((c) => {
+      const typeName = c.consumableTypeName ?? t('common.unknown')
+      const series = c.series ?? []
+      return series.map((s) => {
+        const rawSerial = s.consumableSerialNumber ?? ''
+        const serial = rawSerial.trim() || '—'
+        const points = s.dataPoints?.length ?? 0
+        return {
+          key:
+            s.deviceConsumableId ??
+            `${c.consumableTypeId ?? typeName}-${serial}-${s.installedAt ?? ''}`,
+          typeName,
+          serial,
+          installedAt: s.installedAt,
+          removedAt: s.removedAt,
+          points,
+        }
+      })
+    })
+  }, [consumables, t])
 
   return (
     <div className="space-y-4">
@@ -413,6 +451,41 @@ export default function DeviceUsageHistory({ deviceId, device }: DeviceUsageHist
                       )
                     })()
                   )}
+                </div>
+
+                <div className="mt-4 rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>{t('device_usage.series_table.headers.type')}</TableHead>
+                        <TableHead>{t('device_usage.series_table.headers.serial')}</TableHead>
+                        <TableHead>{t('device_usage.series_table.headers.installed_at')}</TableHead>
+                        <TableHead>{t('device_usage.series_table.headers.removed_at')}</TableHead>
+                        <TableHead className="text-right">
+                          {t('device_usage.series_table.headers.data_points')}
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {seriesRows.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-muted-foreground">
+                            {t('device_usage.series_table.empty')}
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        seriesRows.map((r) => (
+                          <TableRow key={r.key}>
+                            <TableCell className="font-medium">{r.typeName}</TableCell>
+                            <TableCell className="font-mono text-xs">{r.serial}</TableCell>
+                            <TableCell>{formatDateTime(r.installedAt)}</TableCell>
+                            <TableCell>{formatDateTime(r.removedAt)}</TableCell>
+                            <TableCell className="text-right">{r.points}</TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
                 </div>
               </div>
             )}
