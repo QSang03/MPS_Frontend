@@ -35,6 +35,7 @@ import {
   Zap,
 } from 'lucide-react'
 import { consumablesClientService } from '@/lib/api/services/consumables-client.service'
+import { devicesClientService } from '@/lib/api/services/devices-client.service'
 import ConsumableDetailModal from '@/components/consumable/ConsumableDetailModal'
 import { ActionGuard } from '@/components/shared/ActionGuard'
 import { useActionPermission } from '@/lib/hooks/useActionPermission'
@@ -54,10 +55,18 @@ import { StatsCard, StatsCardsGrid } from '@/components/shared/StatsCard'
 import { SearchInput } from '@/components/shared/SearchInput'
 import { CONSUMABLE_STYLES } from '@/constants/consumableStyles'
 import { useLocale } from '@/components/providers/LocaleProvider'
+import Link from 'next/link'
 
 export default function ConsumablesPageClient() {
   const { t } = useLocale()
   const [consumables, setConsumables] = useState<Record<string, unknown>[]>([])
+  const [installedDevices, setInstalledDevices] = useState<
+    Record<string, { id: string; serialNumber?: string | null }>
+  >({})
+  const installedDevicesRef = useRef(installedDevices)
+  useEffect(() => {
+    installedDevicesRef.current = installedDevices
+  }, [installedDevices])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
@@ -276,6 +285,59 @@ export default function ConsumablesPageClient() {
       })
       .filter((group): group is NonNullable<typeof group> => group !== null)
   }, [consumables])
+
+  const installedDeviceIds = useMemo(() => {
+    const ids = new Set<string>()
+    for (const item of consumables) {
+      const typedItem = item as Record<string, unknown>
+      const deviceConsumables = Array.isArray(typedItem.deviceConsumables)
+        ? (typedItem.deviceConsumables as Array<Record<string, unknown>>)
+        : undefined
+      const activeDc =
+        deviceConsumables?.find((d) => Boolean(d?.isActive)) ?? deviceConsumables?.[0]
+      const dcDeviceId = activeDc?.deviceId
+      if (dcDeviceId) ids.add(String(dcDeviceId))
+
+      const activeIds = Array.isArray(typedItem.activeDeviceIds)
+        ? (typedItem.activeDeviceIds as unknown[])
+        : undefined
+      if (activeIds) {
+        for (const id of activeIds) {
+          if (id) ids.add(String(id))
+        }
+      }
+    }
+    return Array.from(ids)
+  }, [consumables])
+
+  useEffect(() => {
+    let cancelled = false
+
+    const loadMissingDevices = async () => {
+      const missing = installedDeviceIds.filter((id) => !installedDevicesRef.current[id])
+      if (missing.length === 0) return
+
+      const fetched: Record<string, { id: string; serialNumber?: string | null }> = {}
+      // limit burst to keep UI responsive (page is paginated anyway)
+      for (const id of missing.slice(0, 30)) {
+        try {
+          const d = await devicesClientService.getById(id)
+          if (d?.id) fetched[id] = { id: d.id, serialNumber: d.serialNumber }
+        } catch {
+          // ignore: show deviceId fallback in UI
+        }
+      }
+
+      if (!cancelled && Object.keys(fetched).length > 0) {
+        setInstalledDevices((prev) => ({ ...prev, ...fetched }))
+      }
+    }
+
+    void loadMissingDevices()
+    return () => {
+      cancelled = true
+    }
+  }, [installedDeviceIds])
 
   const toggleConsumableType = (typeId: string) => {
     setExpandedConsumableTypes((prev) => {
@@ -768,6 +830,35 @@ export default function ConsumablesPageClient() {
                               <p className="mt-0.5 text-xs text-slate-500">
                                 SN: {String(item.serialNumber ?? '—')}
                               </p>
+                              {(() => {
+                                const typedItem = item as Record<string, unknown>
+                                const deviceConsumables = Array.isArray(typedItem.deviceConsumables)
+                                  ? (typedItem.deviceConsumables as Array<Record<string, unknown>>)
+                                  : undefined
+                                const activeDc =
+                                  deviceConsumables?.find((d) => Boolean(d?.isActive)) ??
+                                  deviceConsumables?.[0]
+                                const deviceId =
+                                  (activeDc?.deviceId as string | undefined) ??
+                                  (Array.isArray(typedItem.activeDeviceIds)
+                                    ? (typedItem.activeDeviceIds as unknown[])[0]
+                                    : undefined)
+                                if (!deviceId) return null
+                                const id = String(deviceId)
+                                const deviceSerial = installedDevices[id]?.serialNumber
+                                const label = String(deviceSerial ?? id)
+                                return (
+                                  <p className="mt-1 text-xs text-slate-500">
+                                    {t('user_consumables.installed_on_device')}:{' '}
+                                    <Link
+                                      href={`/user/devices/${id}`}
+                                      className="text-sky-600 hover:underline"
+                                    >
+                                      {label}
+                                    </Link>
+                                  </p>
+                                )
+                              })()}
                             </TableCell>
                             <TableCell className="px-6 py-4 text-sm text-slate-600">
                               {(() => {

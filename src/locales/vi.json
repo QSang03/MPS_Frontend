@@ -2386,6 +2386,7 @@
   "user_consumables.items": "vật tư",
   "user_consumables.pages": "trang",
   "user_consumables.installed_at": "Lắp",
+  "user_consumables.installed_on_device": "Lắp tại",
   "priority.low": "Thấp",
   "priority.low.description": "Không khẩn cấp, có thể xử lý sau",
   "priority.normal": "Bình thường",

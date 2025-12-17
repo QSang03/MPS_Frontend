@@ -2459,6 +2459,7 @@
   "user_consumables.items": "consumables",
   "user_consumables.pages": "pages",
   "user_consumables.installed_at": "Installed",
+  "user_consumables.installed_on_device": "Installed at",
   "priority.low": "Low",
   "priority.low.description": "Not urgent, can be handled later",
   "priority.normal": "Normal",
