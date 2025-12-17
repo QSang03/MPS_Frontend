@@ -308,7 +308,11 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
   // Custom tooltip for top devices to ensure correct payload is shown
   type TooltipPayloadItem = {
     payload?: {
-      fullData?: { deviceModelName?: string }
+      fullData?: {
+        deviceModelName?: string
+        totalRevenue?: number
+        totalRevenueConverted?: number
+      }
       value?: number
       name?: string
     }
@@ -328,11 +332,7 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
     if (!payloadItem) return null
     const data = payloadItem.payload || payloadItem
     const full = data && 'fullData' in data ? data.fullData : undefined
-    const value = getDisplayValue(
-      full?.totalRevenue as number | undefined,
-      full?.totalRevenueConverted as number | undefined,
-      useConverted
-    )
+    const value = getDisplayValue(full?.totalRevenue, full?.totalRevenueConverted, useConverted)
     const title =
       full?.deviceModelName ||
       (data && 'name' in data ? data.name : undefined) ||
