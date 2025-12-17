@@ -297,6 +297,7 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
   const deviceData =
     overview.topDevices
       ?.map((d, index) => ({
+        id: String(d.deviceId ?? d.serialNumber ?? index),
         name: d.deviceModelName || d.serialNumber || 'Unknown',
         value: getDisplayValue(d.totalRevenue, d.totalRevenueConverted, useConverted),
         fullData: d,
@@ -305,9 +306,12 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
       .sort((a, b) => b.value - a.value)
       .slice(0, 5) || []
 
+  const deviceNameById = new Map(deviceData.map((d) => [d.id, d.name]))
+
   // Custom tooltip for top devices to ensure correct payload is shown
   type TooltipPayloadItem = {
     payload?: {
+      id?: string
       fullData?: {
         deviceModelName?: string
         totalRevenue?: number
@@ -329,30 +333,20 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
   }) => {
     if (!active || !payload || !payload.length) return null
 
-    // Try to find a payload item that contains our fullData (most reliable)
-    let payloadItem = payload.find((p) => p && p.payload && 'fullData' in p.payload) as
-      | TooltipPayloadItem
-      | undefined
-
-    // Fallback to first payload item
-    if (!payloadItem) payloadItem = payload[0]
+    const payloadItem = payload[0]
     if (!payloadItem) return null
 
-    const data = payloadItem.payload || payloadItem
-
-    // If fullData exists on the payload, use it. Otherwise, try to match by name against deviceData.
-    let full = data && 'fullData' in data ? data.fullData : undefined
-    if (!full && data && 'name' in data && data.name) {
-      const match = deviceData.find((d) => d.name === data.name)
-      if (match) full = match.fullData
-    }
-
-    const value = getDisplayValue(full?.totalRevenue, full?.totalRevenueConverted, useConverted)
+    const entry = payloadItem.payload
+    const full = entry?.fullData
     const title =
       full?.deviceModelName ||
-      (data && 'name' in data ? data.name : undefined) ||
+      (entry?.id ? deviceNameById.get(String(entry.id)) : undefined) ||
+      entry?.name ||
       payloadItem.name ||
       ''
+
+    // Always prefer the entry's plotted value to guarantee tooltip matches hovered bar.
+    const value = typeof entry?.value === 'number' ? entry.value : (payloadItem.value ?? 0)
 
     return (
       <div
@@ -680,15 +674,16 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
                     />
                     <XAxis type="number" hide />
                     <YAxis
-                      dataKey="name"
+                      dataKey="id"
                       type="category"
                       width={120}
                       tick={{ fontSize: 12, fill: 'var(--foreground)', fontWeight: 500 }}
                       axisLine={false}
                       tickLine={false}
-                      tickFormatter={(value) =>
-                        value.length > 15 ? `${value.substring(0, 15)}...` : value
-                      }
+                      tickFormatter={(value) => {
+                        const label = deviceNameById.get(String(value)) ?? ''
+                        return label.length > 15 ? `${label.substring(0, 15)}...` : label
+                      }}
                     />
                     <Tooltip
                       cursor={{ fill: 'var(--muted)' }}
