@@ -1,6 +1,7 @@
 'use client'
 
 import { useForm } from 'react-hook-form'
+import { useEffect } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
@@ -69,8 +70,25 @@ export function PurchaseRequestItemFormModal({
       consumableTypeId: item?.consumableTypeId || '',
       quantity: item?.quantity || 1,
       unitPrice: item?.unitPrice || 0,
+      notes: item?.notes || '',
     },
   })
+
+  // Reset form when item or mode changes
+  useEffect(() => {
+    if (mode === 'edit' && item) {
+      form.setValue('consumableTypeId', item.consumableTypeId, { shouldValidate: true })
+      form.setValue('quantity', Number(item.quantity), { shouldValidate: true })
+      form.setValue('unitPrice', Number(item.unitPrice || 0), { shouldValidate: true })
+      form.setValue('notes', item.notes || '', { shouldValidate: true })
+    } else if (mode === 'create') {
+      // Reset to empty for create mode
+      form.setValue('consumableTypeId', '', { shouldValidate: true })
+      form.setValue('quantity', 1, { shouldValidate: true })
+      form.setValue('unitPrice', 0, { shouldValidate: true })
+      form.setValue('notes', '', { shouldValidate: true })
+    }
+  }, [item, mode, form])
 
   const createMutation = useMutation({
     mutationFn: (data: ItemFormData) =>
@@ -109,11 +127,21 @@ export function PurchaseRequestItemFormModal({
   const handleSubmit = (data: ItemFormData) => {
     if (mode === 'create') {
       // POST chỉ chấp nhận: consumableTypeId, quantity, unitPrice (không có notes)
+      // Đảm bảo quantity và unitPrice là number
       const { consumableTypeId, quantity, unitPrice } = data
-      createMutation.mutate({ consumableTypeId, quantity, unitPrice })
+      createMutation.mutate({
+        consumableTypeId,
+        quantity: Number(quantity),
+        unitPrice: Number(unitPrice || 0),
+      })
     } else {
       // PATCH chấp nhận tất cả fields bao gồm notes
-      updateMutation.mutate(data)
+      // Đảm bảo tất cả number fields là number
+      updateMutation.mutate({
+        ...data,
+        quantity: Number(data.quantity),
+        unitPrice: Number(data.unitPrice || 0),
+      })
     }
   }
 

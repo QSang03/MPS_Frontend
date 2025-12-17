@@ -130,9 +130,9 @@ export const USER_NAVIGATION_PAYLOAD: NavItemPayload[] = [
       },
       {
         id: 'view-costs',
-        label: 'Xem chi phí',
-        labelEn: 'View costs',
-        labelVi: 'Xem chi phí',
+        label: 'Xem khối lượng sử dụng',
+        labelEn: 'View usage volume',
+        labelVi: 'Xem khối lượng sử dụng',
         icon: 'Send',
         requiredPermissions: {
           strategy: 'all',
@@ -315,13 +315,13 @@ export const USER_NAVIGATION_PAYLOAD: NavItemPayload[] = [
   {
     id: 'user-costs',
     name: 'costs',
-    label: 'Chi phí',
-    labelEn: 'Costs',
-    labelVi: 'Chi phí',
+    label: 'Khối lượng sử dụng',
+    labelEn: 'Usage volume',
+    labelVi: 'Khối lượng sử dụng',
     icon: 'BarChart3',
     route: '/user/dashboard/costs/monthly',
-    description: 'Báo cáo chi phí theo tháng',
-    descriptionEn: 'Monthly cost report',
+    description: 'Báo cáo khối lượng sử dụng',
+    descriptionEn: 'Usage volume reports',
     requiredPermissions: addUserPermissions({
       strategy: 'any',
       resources: [
