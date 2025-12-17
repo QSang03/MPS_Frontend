@@ -328,10 +328,25 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
     payload?: TooltipPayloadItem[]
   }) => {
     if (!active || !payload || !payload.length) return null
-    const payloadItem = payload[0]
+
+    // Try to find a payload item that contains our fullData (most reliable)
+    let payloadItem = payload.find((p) => p && p.payload && 'fullData' in p.payload) as
+      | TooltipPayloadItem
+      | undefined
+
+    // Fallback to first payload item
+    if (!payloadItem) payloadItem = payload[0]
     if (!payloadItem) return null
+
     const data = payloadItem.payload || payloadItem
-    const full = data && 'fullData' in data ? data.fullData : undefined
+
+    // If fullData exists on the payload, use it. Otherwise, try to match by name against deviceData.
+    let full = data && 'fullData' in data ? data.fullData : undefined
+    if (!full && data && 'name' in data && data.name) {
+      const match = deviceData.find((d) => d.name === data.name)
+      if (match) full = match.fullData
+    }
+
     const value = getDisplayValue(full?.totalRevenue, full?.totalRevenueConverted, useConverted)
     const title =
       full?.deviceModelName ||
