@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -65,47 +66,48 @@ const mockRequests = [
   },
 ]
 
-const statusConfig = {
+const getStatusConfig = (t: (key: string) => string) => ({
   [PurchaseRequestStatus.PENDING]: {
     color: 'text-amber-600 bg-amber-50 border-amber-200',
     icon: Clock,
-    label: 'Chờ duyệt',
+    label: t('purchase_request.status.pending'),
   },
   [PurchaseRequestStatus.APPROVED]: {
     color: 'text-emerald-600 bg-emerald-50 border-emerald-200',
     icon: Check,
-    label: 'Đã duyệt',
+    label: t('purchase_request.status.approved'),
   },
   [PurchaseRequestStatus.ORDERED]: {
     color: 'text-[var(--brand-600)] bg-[var(--brand-50)] border-[var(--brand-200)]',
     icon: Truck,
-    label: 'Đã đặt hàng',
+    label: t('purchase_request.status.ordered'),
   },
   [PurchaseRequestStatus.IN_TRANSIT]: {
     color: 'text-[var(--brand-600)] bg-[var(--brand-50)] border-[var(--brand-200)]',
     icon: Truck,
-    label: 'Đang vận chuyển',
+    label: t('purchase_request.status.in_transit'),
   },
   [PurchaseRequestStatus.RECEIVED]: {
     color: 'text-slate-600 bg-slate-50 border-slate-200',
     icon: PackageCheck,
-    label: 'Đã nhận',
+    label: t('purchase_request.status.received'),
   },
   [PurchaseRequestStatus.CANCELLED]: {
     color: 'text-rose-600 bg-rose-50 border-rose-200',
     icon: X,
-    label: 'Đã hủy',
+    label: t('purchase_request.status.cancelled'),
   },
-}
+})
 
-const priorityConfig = {
-  [Priority.LOW]: { color: 'text-slate-600', label: 'Thấp' },
-  [Priority.NORMAL]: { color: 'text-[var(--brand-600)]', label: 'Thường' },
-  [Priority.HIGH]: { color: 'text-orange-600', label: 'Cao' },
-  [Priority.URGENT]: { color: 'text-red-600', label: 'Khẩn cấp' },
-}
+const getPriorityConfig = (t: (key: string) => string) => ({
+  [Priority.LOW]: { color: 'text-slate-600', label: t('priority.low') },
+  [Priority.NORMAL]: { color: 'text-[var(--brand-600)]', label: t('priority.normal') },
+  [Priority.HIGH]: { color: 'text-orange-600', label: t('priority.high') },
+  [Priority.URGENT]: { color: 'text-red-600', label: t('priority.urgent') },
+})
 
 export function PurchaseRequestList({ status: initialStatus }: PurchaseRequestListProps) {
+  const { t } = useLocale()
   // Nếu component được dùng làm danh sách có filter nội bộ thì dùng state,
   // nếu chỉ hiển thị static theo props thì có thể bỏ state này.
   const [filterStatus, setFilterStatus] = useState<PurchaseRequestStatus | 'ALL'>(
@@ -115,6 +117,9 @@ export function PurchaseRequestList({ status: initialStatus }: PurchaseRequestLi
   const filteredRequests = mockRequests.filter(
     (r) => filterStatus === 'ALL' || r.status === filterStatus
   )
+
+  const translatedStatusConfig = getStatusConfig(t)
+  const translatedPriorityConfig = getPriorityConfig(t)
 
   return (
     <div className="space-y-4">
@@ -127,7 +132,7 @@ export function PurchaseRequestList({ status: initialStatus }: PurchaseRequestLi
             onClick={() => setFilterStatus('ALL')}
             className="h-8 rounded-full"
           >
-            Tất cả
+            {t('common.all')}
           </Button>
           {Object.values(PurchaseRequestStatus).map((s) => (
             <Button
@@ -140,7 +145,7 @@ export function PurchaseRequestList({ status: initialStatus }: PurchaseRequestLi
                 filterStatus === s && 'bg-muted font-medium'
               )}
             >
-              {statusConfig[s].label}
+              {translatedStatusConfig[s].label}
             </Button>
           ))}
         </div>
@@ -148,7 +153,7 @@ export function PurchaseRequestList({ status: initialStatus }: PurchaseRequestLi
 
       <div className="space-y-3">
         {filteredRequests.map((request) => {
-          const StatusIcon = statusConfig[request.status].icon
+          const StatusIcon = translatedStatusConfig[request.status].icon
           const isPending = request.status === PurchaseRequestStatus.PENDING
 
           return (
@@ -162,7 +167,7 @@ export function PurchaseRequestList({ status: initialStatus }: PurchaseRequestLi
                   <div
                     className={cn(
                       'flex h-10 w-10 shrink-0 items-center justify-center rounded-full border',
-                      statusConfig[request.status].color
+                      translatedStatusConfig[request.status].color
                     )}
                   >
                     <StatusIcon className="h-5 w-5" />
@@ -196,11 +201,11 @@ export function PurchaseRequestList({ status: initialStatus }: PurchaseRequestLi
                           <span
                             className={cn(
                               'flex items-center gap-1 text-xs font-medium',
-                              priorityConfig[request.priority].color
+                              translatedPriorityConfig[request.priority].color
                             )}
                           >
                             <AlertCircle className="h-3.5 w-3.5" />
-                            {priorityConfig[request.priority].label}
+                            {translatedPriorityConfig[request.priority].label}
                           </span>
                         </div>
                       </div>
@@ -210,10 +215,10 @@ export function PurchaseRequestList({ status: initialStatus }: PurchaseRequestLi
                         variant="outline"
                         className={cn(
                           'hidden text-[10px] tracking-wider whitespace-nowrap uppercase sm:flex',
-                          statusConfig[request.status].color
+                          translatedStatusConfig[request.status].color
                         )}
                       >
-                        {statusConfig[request.status].label}
+                        {translatedStatusConfig[request.status].label}
                       </Badge>
                     </div>
 
@@ -238,7 +243,9 @@ export function PurchaseRequestList({ status: initialStatus }: PurchaseRequestLi
                                   <Check className="h-3.5 w-3.5" />
                                 </Button>
                               </TooltipTrigger>
-                              <TooltipContent>Duyệt yêu cầu</TooltipContent>
+                              <TooltipContent>
+                                {t('purchase_request.actions.approve')}
+                              </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
 
@@ -253,7 +260,9 @@ export function PurchaseRequestList({ status: initialStatus }: PurchaseRequestLi
                                   <X className="h-3.5 w-3.5" />
                                 </Button>
                               </TooltipTrigger>
-                              <TooltipContent>Từ chối</TooltipContent>
+                              <TooltipContent>
+                                {t('purchase_request.actions.reject')}
+                              </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
                         </div>
@@ -272,11 +281,15 @@ export function PurchaseRequestList({ status: initialStatus }: PurchaseRequestLi
           <div className="bg-muted flex h-12 w-12 items-center justify-center rounded-full">
             <PackageCheck className="text-muted-foreground/60 h-6 w-6" />
           </div>
-          <h3 className="mt-3 text-sm font-semibold">Không có yêu cầu nào</h3>
+          <h3 className="mt-3 text-sm font-semibold">{t('purchase_request.list.empty.title')}</h3>
           <p className="text-muted-foreground mt-1 max-w-[200px] text-xs">
             {filterStatus === 'ALL'
-              ? 'Chưa có yêu cầu mua hàng nào được tạo.'
-              : `Không tìm thấy yêu cầu ở trạng thái "${statusConfig[filterStatus].label}".`}
+              ? t('purchase_request.list.empty.no_requests')
+              : t('purchase_request.list.empty.no_requests_filtered', {
+                  status:
+                    translatedStatusConfig[filterStatus as PurchaseRequestStatus]?.label ||
+                    filterStatus,
+                })}
           </p>
         </div>
       )}

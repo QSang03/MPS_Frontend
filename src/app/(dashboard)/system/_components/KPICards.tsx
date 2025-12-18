@@ -22,6 +22,7 @@ import {
 import { cn } from '@/lib/utils/cn'
 import type { AdminOverviewKPIs } from '@/types/dashboard'
 import { useLocale } from '@/components/providers/LocaleProvider'
+import { useRouter } from 'next/navigation'
 import type { CurrencyDataDto } from '@/types/models/currency'
 import { formatCurrencyWithSymbol } from '@/lib/utils/formatters'
 
@@ -66,6 +67,7 @@ export default function KPICards({
   baseCurrency,
 }: KPICardsProps) {
   const { t } = useLocale()
+  const router = useRouter()
   const [showAllMetrics, setShowAllMetrics] = useState(false)
 
   if (isLoading || !kpis) {
@@ -100,6 +102,7 @@ export default function KPICards({
       borderColor: 'border-[var(--color-warning-500)]', // Warning
       iconBg: 'bg-[var(--color-warning-50)]',
       iconColor: 'text-[var(--color-warning-500)]',
+      onClick: () => router.push('/system/notifications'),
     },
     {
       id: 'requests',

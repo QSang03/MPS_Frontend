@@ -6,7 +6,8 @@ export type GuardrailType = 'warning' | 'suggestion' | 'error'
 export interface GuardrailWarning {
   id: string
   type: GuardrailType
-  message: string
+  messageKey: string
+  messageParams?: Record<string, string | number>
   field?: string
   ruleId?: string
   groupId?: string
@@ -48,7 +49,7 @@ export function validateTenantIsolation(
     warnings.push({
       id: 'tenant-isolation-missing',
       type: 'suggestion',
-      message: `You should add condition \`customerId $eq '{{user.customerId}}'\` to ensure users only access resources within their Customer.`,
+      messageKey: 'policies.guardrails.tenant_isolation_missing',
       field: 'resource.customerId',
     })
   }
@@ -68,7 +69,7 @@ export function validateWildcardResourceType(resourceValue: RuleBuilderValue): G
     warnings.push({
       id: 'wildcard-resource-type',
       type: 'warning',
-      message: `You are selecting \`*\` (Wildcard). This policy will apply to ALL resources. Use only for system administrators.`,
+      messageKey: 'policies.guardrails.wildcard_resource_type',
       field: 'resource.type',
     })
   }
@@ -89,7 +90,7 @@ export function validateCustomerManagerPolicy(subjectValue: RuleBuilderValue): G
     warnings.push({
       id: 'customer-manager-missing-managed-customers',
       type: 'suggestion',
-      message: `For role \`customer-manager\`, add condition \`user.attributes.managedCustomers\` to ensure the user only manages assigned customers.`,
+      messageKey: 'policies.guardrails.customer_manager_missing_customers',
       field: 'subject.user.attributes.managedCustomers',
     })
   }
@@ -108,7 +109,7 @@ export function validateDenyAllowConflicts(effect: 'ALLOW' | 'DENY'): GuardrailW
     warnings.push({
       id: 'deny-policy-warning',
       type: 'warning',
-      message: `You are creating a DENY policy. Make sure there is a corresponding ALLOW policy to avoid accidental denies. Use "Analyze" to check conflicts.`,
+      messageKey: 'policies.guardrails.deny_policy_warning',
     })
   }
 

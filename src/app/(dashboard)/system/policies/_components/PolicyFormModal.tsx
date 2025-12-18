@@ -43,42 +43,6 @@ import { Checkbox } from '@/components/ui/checkbox'
 import removeEmpty from '@/lib/utils/clean'
 import { sanitizeSubject } from '@/lib/policies/policy-form.utils'
 
-const policySchema = z.object({
-  name: z.string().min(1, 'Tên policy là bắt buộc'),
-  effect: z.string().min(1),
-  actions: z.string().optional(),
-  includeRole: z.boolean().optional(),
-  roleMatchBy: z.enum(['name', 'level']).optional(),
-  roleOperator: z.string().optional(),
-  roleValues: z.array(z.string()).optional(),
-  roleUseList: z.boolean().optional(),
-  roleNameManual: z.string().optional(),
-  roleNameFromList: z.string().optional(),
-  roleLevel: z.union([z.string(), z.number()]).optional(),
-  resourceOperator: z.string().optional(),
-  resourceTypeFromList: z.string().optional(),
-  includeDepartment: z.boolean().optional(),
-  deptMatchBy: z.enum(['name', 'code']).optional(),
-  deptOperator: z.string().optional(),
-  deptValues: z.array(z.string()).optional(),
-  deptUseList: z.boolean().optional(),
-  deptNameManual: z.string().optional(),
-  deptNameFromList: z.string().optional(),
-  deptCodeFromList: z.string().optional(),
-  conditions: z.string().optional(),
-})
-
-type PolicyFormData = z.infer<typeof policySchema>
-
-interface PolicyFormModalProps {
-  isOpen: boolean
-  onClose: () => void
-  onSubmit: (data: Partial<Policy>) => Promise<void>
-  initialData?: Partial<Policy> | null
-  viewOnly?: boolean
-  onRequestEdit?: () => void
-}
-
 export function PolicyFormModal({
   isOpen,
   onClose,
@@ -90,6 +54,31 @@ export function PolicyFormModal({
   const [isLoading, setIsLoading] = useState(false)
   const [localViewOnly, setLocalViewOnly] = useState(!!viewOnly)
   const { t } = useLocale()
+
+  const policySchema = z.object({
+    name: z.string().min(1, t('policies.validation.name_required')),
+    effect: z.string().min(1),
+    actions: z.string().optional(),
+    includeRole: z.boolean().optional(),
+    roleMatchBy: z.enum(['name', 'level']).optional(),
+    roleOperator: z.string().optional(),
+    roleValues: z.array(z.string()).optional(),
+    roleUseList: z.boolean().optional(),
+    roleNameManual: z.string().optional(),
+    roleNameFromList: z.string().optional(),
+    roleLevel: z.union([z.string(), z.number()]).optional(),
+    resourceOperator: z.string().optional(),
+    resourceTypeFromList: z.string().optional(),
+    includeDepartment: z.boolean().optional(),
+    deptMatchBy: z.enum(['name', 'code']).optional(),
+    deptOperator: z.string().optional(),
+    deptValues: z.array(z.string()).optional(),
+    deptUseList: z.boolean().optional(),
+    deptNameManual: z.string().optional(),
+    deptNameFromList: z.string().optional(),
+    deptCodeFromList: z.string().optional(),
+    conditions: z.string().optional(),
+  })
 
   useEffect(() => {
     setLocalViewOnly(!!viewOnly)
@@ -246,7 +235,7 @@ export function PolicyFormModal({
         ops.push({
           id: '$exists',
           name: '$exists',
-          description: 'Tồn tại (exists)',
+          description: t('policies.operators.exists'),
           appliesTo: ['string', 'number', 'boolean'],
         })
       }
@@ -266,7 +255,7 @@ export function PolicyFormModal({
         ops.push({
           id: '$exists',
           name: '$exists',
-          description: 'Tồn tại (exists)',
+          description: t('policies.operators.exists'),
           appliesTo: ['string', 'number', 'boolean'],
         })
       }
@@ -482,7 +471,7 @@ export function PolicyFormModal({
         if (invalid) {
           setConditionErrors((s) => ({
             ...s,
-            [id]: 'Một hoặc nhiều IP không hợp lệ. Nhập IPv4 hoặc IPv6, cách nhau bằng dấu phẩy',
+            [id]: t('policies.validation.invalid_ip'),
           }))
         } else {
           setConditionErrors((s) => ({ ...s, [id]: null }))
@@ -867,7 +856,7 @@ export function PolicyFormModal({
           (k) => k.startsWith('attributes.role') || k.startsWith('role.')
         )
       ) {
-        setSubmitError('Vui lòng chọn hoặc nhập giá trị role hợp lệ')
+        setSubmitError(t('policies.validation.invalid_role'))
         setIsLoading(false)
         return
       }
@@ -877,7 +866,7 @@ export function PolicyFormModal({
           (k) => k.startsWith('department') || k.startsWith('attributes.')
         )
       ) {
-        setSubmitError('Vui lòng chọn hoặc nhập giá trị department hợp lệ')
+        setSubmitError(t('policies.validation.invalid_department'))
         setIsLoading(false)
         return
       }
@@ -901,10 +890,7 @@ export function PolicyFormModal({
           const val = info?.value
           if (dtype === 'datetime' && typeof val === 'string' && val.trim().length > 0) {
             if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/.test(val)) {
-              setSubmitError(
-                'Một điều kiện datetime không hợp lệ hoặc thiếu giờ:phút: ' +
-                  String(cond.name ?? id)
-              )
+              setSubmitError(t('policies.validation.invalid_datetime') + String(cond.name ?? id))
               setIsLoading(false)
               return
             }
@@ -958,11 +944,13 @@ export function PolicyFormModal({
         const message =
           (bodyObj && typeof bodyObj.message === 'string' && bodyObj.message) ||
           (typeof eObj.message === 'string' && eObj.message) ||
-          'Có lỗi khi lưu policy'
+          t('policies.create_error')
         const code = (bodyObj && typeof bodyObj.error === 'string' && bodyObj.error) || 'ERROR'
         const details = bodyObj && bodyObj.details
         const pretty = `[#${String(status ?? '??')}] ${code}: ${String(message)}`
-        setSubmitError(pretty + (details ? `\nChi tiết: ${JSON.stringify(details)}` : ''))
+        setSubmitError(
+          pretty + (details ? `\n${t('common.details')}: ${JSON.stringify(details)}` : '')
+        )
         return
       }
     } finally {
@@ -974,12 +962,18 @@ export function PolicyFormModal({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <SystemModalLayout
-        title={viewOnly ? 'Chi tiết Policy' : initialData ? 'Chỉnh sửa Policy' : 'Tạo Policy Mới'}
+        title={
+          viewOnly
+            ? t('policies.modal.view_title')
+            : initialData
+              ? t('policies.modal.edit_title')
+              : t('policies.modal.create_title')
+        }
         description={
           viewOnly
             ? t('policies.form.view_only_title')
             : initialData
-              ? 'Cập nhật thông tin policy'
+              ? t('policies.modal.update_button')
               : t('policies.form.edit_title')
         }
         icon={Shield}
@@ -1041,7 +1035,7 @@ export function PolicyFormModal({
             className="space-y-8"
           >
             <fieldset disabled={localViewOnly} className="space-y-8">
-              {/* SECTION: Thông tin cơ bản */}
+              {/* SECTION: {t('policies.form.sections.basic_info')} */}
               <div className="space-y-5 rounded-xl border-2 border-[var(--brand-100)] bg-gradient-to-br from-[var(--brand-50)]/50 to-[var(--brand-50)]/30 p-6">
                 <div className="mb-4 flex items-center gap-2">
                   <FileCode className="h-5 w-5 text-[var(--brand-600)]" />
@@ -1080,8 +1074,8 @@ export function PolicyFormModal({
                             {...field}
                             className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm transition-all focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)]"
                           >
-                            <option value="ALLOW">✓ ALLOW (Cho phép)</option>
-                            <option value="DENY">✗ DENY (Từ chối)</option>
+                            <option value="ALLOW">{t('policies.effect.allow')}</option>
+                            <option value="DENY">{t('policies.effect.deny')}</option>
                           </select>
                         </FormControl>
                         <FormMessage />
@@ -1098,7 +1092,7 @@ export function PolicyFormModal({
                         <FormControl>
                           <Input
                             {...field}
-                            placeholder="read, write, delete (ngăn cách bởi dấu phẩy)"
+                            placeholder={t('policies.form.actions_placeholder')}
                             className="border-gray-300 transition-all focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)]"
                           />
                         </FormControl>
@@ -1134,7 +1128,7 @@ export function PolicyFormModal({
                           />
                         </FormControl>
                         <FormLabel className="cursor-pointer text-sm font-medium text-gray-700">
-                          🎭 Áp dụng theo Role
+                          {t('policies.form.sections.role')}
                         </FormLabel>
                       </FormItem>
                     )}
@@ -1153,7 +1147,7 @@ export function PolicyFormModal({
                           />
                         </FormControl>
                         <FormLabel className="cursor-pointer text-sm font-medium text-gray-700">
-                          🏢 Áp dụng theo Department
+                          {t('policies.form.sections.department')}
                         </FormLabel>
                       </FormItem>
                     )}
@@ -1234,7 +1228,7 @@ export function PolicyFormModal({
                                         {...field}
                                         className="flex h-9 w-full rounded-md border border-gray-300 bg-white px-3 py-1 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
                                       >
-                                        <option value="">-- chọn --</option>
+                                        <option value="">{t('common.select_option')}</option>
                                         {filteredOps.map((op) => (
                                           <option key={op.name} value={op.name}>
                                             {formatOperatorLabel(op)}
@@ -1277,7 +1271,9 @@ export function PolicyFormModal({
                                                 disabled={roleManualHas}
                                                 className="flex h-9 flex-1 rounded-md border border-gray-300 bg-white px-2 text-sm disabled:opacity-50"
                                               >
-                                                <option value="">-- chọn vai trò --</option>
+                                                <option value="">
+                                                  {t('policies.form.select_role')}
+                                                </option>
                                                 {(rolesResp || []).map((r) => (
                                                   <option key={r.id} value={r.name}>
                                                     {r.name}
@@ -1360,7 +1356,7 @@ export function PolicyFormModal({
                                         render={({ field }) => (
                                           <FormItem>
                                             <FormLabel className="text-xs font-medium text-gray-600">
-                                              Role (từ danh sách)
+                                              {t('policies.form.role_from_list')}
                                             </FormLabel>
                                             <FormControl>
                                               <select
@@ -1373,7 +1369,9 @@ export function PolicyFormModal({
                                                 }}
                                                 className="flex h-9 w-full rounded-md border border-gray-300 bg-white px-3 text-sm disabled:opacity-50"
                                               >
-                                                <option value="">-- chọn vai trò --</option>
+                                                <option value="">
+                                                  {t('policies.form.select_role')}
+                                                </option>
                                                 {(rolesResp || []).map((r) => (
                                                   <option key={r.id} value={r.name}>
                                                     {r.name}
@@ -1392,13 +1390,15 @@ export function PolicyFormModal({
                                         render={({ field }) => (
                                           <FormItem>
                                             <FormLabel className="text-xs font-medium text-gray-600">
-                                              Role (nhập thủ công)
+                                              {t('policies.form.role_manual')}
                                             </FormLabel>
                                             <FormControl>
                                               <Input
                                                 {...field}
                                                 type="text"
-                                                placeholder="Hoặc nhập thủ công"
+                                                placeholder={t(
+                                                  'policies.form.manual_input_placeholder'
+                                                )}
                                                 onChange={(e) => {
                                                   const v = e.target.value
                                                   field.onChange(v)
@@ -1437,7 +1437,9 @@ export function PolicyFormModal({
                                             disabled={roleLevelManualHas}
                                             className="flex h-9 flex-1 rounded-md border border-gray-300 bg-white px-2 text-sm disabled:opacity-50"
                                           >
-                                            <option value="">-- chọn level --</option>
+                                            <option value="">
+                                              {t('policies.form.select_level')}
+                                            </option>
                                             {Array.from({ length: 10 }).map((_, i) => (
                                               <option key={i + 1} value={i + 1}>
                                                 {i + 1}
@@ -1468,7 +1470,7 @@ export function PolicyFormModal({
                                           </Button>
                                         </div>
                                         <Input
-                                          placeholder="Hoặc nhập số level (Enter)"
+                                          placeholder={t('policies.form.level_input_placeholder')}
                                           type="number"
                                           value={roleLevelInput}
                                           onChange={(e) => setRoleLevelInput(e.target.value)}
@@ -1532,7 +1534,9 @@ export function PolicyFormModal({
                                             value={String(field.value || '')}
                                             className="flex h-9 w-full rounded-md border border-gray-300 bg-white px-3 text-sm"
                                           >
-                                            <option value="">Chọn level</option>
+                                            <option value="">
+                                              {t('policies.form.select_level')}
+                                            </option>
                                             {Array.from({ length: 10 }).map((_, i) => (
                                               <option key={i + 1} value={i + 1}>
                                                 {i + 1}
@@ -1598,7 +1602,7 @@ export function PolicyFormModal({
                                         {...field}
                                         className="flex h-9 w-full rounded-md border border-gray-300 bg-white px-3 py-1 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
                                       >
-                                        <option value="">-- chọn --</option>
+                                        <option value="">{t('common.select_option')}</option>
                                         {filteredOps.map((op) => (
                                           <option key={op.name} value={op.name}>
                                             {formatOperatorLabel(op)}
@@ -1636,7 +1640,9 @@ export function PolicyFormModal({
                                                 disabled={deptManualHas}
                                                 className="flex h-9 flex-1 rounded-md border border-gray-300 bg-white px-2 text-sm disabled:opacity-50"
                                               >
-                                                <option value="">-- chọn bộ phận --</option>
+                                                <option value="">
+                                                  {t('policies.form.select_department')}
+                                                </option>
                                                 {(deptsResp || []).map((d) => (
                                                   <option key={d.id} value={d.name}>
                                                     {d.name}
@@ -1662,7 +1668,7 @@ export function PolicyFormModal({
                                           </Button>
                                         </div>
                                         <Input
-                                          placeholder="Hoặc nhập thủ công (Enter)"
+                                          placeholder={t('policies.form.manual_input_placeholder')}
                                           value={deptArrayInput}
                                           onChange={(e) => setDeptArrayInput(e.target.value)}
                                           onKeyDown={(e) => {
@@ -1721,7 +1727,7 @@ export function PolicyFormModal({
                                       render={({ field }) => (
                                         <FormItem>
                                           <FormLabel className="text-xs font-medium text-gray-600">
-                                            Department (từ danh sách)
+                                            {t('policies.form.department_from_list')}
                                           </FormLabel>
                                           <FormControl>
                                             <select
@@ -1753,7 +1759,7 @@ export function PolicyFormModal({
                                       render={({ field }) => (
                                         <FormItem>
                                           <FormLabel className="text-xs font-medium text-gray-600">
-                                            Department (nhập thủ công)
+                                            {t('policies.form.department_manual')}
                                           </FormLabel>
                                           <FormControl>
                                             <Input
@@ -1791,7 +1797,7 @@ export function PolicyFormModal({
                                         {...field}
                                         className="flex h-9 w-full rounded-md border border-gray-300 bg-white px-3 text-sm"
                                       >
-                                        <option value="">-- chọn code --</option>
+                                        <option value="">{t('policies.form.select_code')}</option>
                                         {(deptsResp || []).map((d) => (
                                           <option key={d.id} value={d.code}>
                                             {d.code} - {d.name}
@@ -1816,7 +1822,9 @@ export function PolicyFormModal({
               <div className="space-y-4 rounded-xl border-2 border-amber-100 bg-gradient-to-br from-amber-50/50 to-orange-50/30 p-6">
                 <div className="mb-4 flex items-center gap-2">
                   <FileCode className="h-5 w-5 text-amber-600" />
-                  <h3 className="text-lg font-semibold text-gray-800">Resource (Tài nguyên)</h3>
+                  <h3 className="text-lg font-semibold text-gray-800">
+                    {t('policies.form.sections.resource')}
+                  </h3>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">

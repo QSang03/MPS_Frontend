@@ -27,7 +27,7 @@ export function OperatorSelector({
   value,
   onChange,
   disabled = false,
-  placeholder = 'Chọn operator...',
+  placeholder,
   allOperators,
 }: OperatorSelectorProps) {
   // Nếu có cache, filter từ cache. Nếu không, gọi API
@@ -73,7 +73,13 @@ export function OperatorSelector({
   return (
     <Select value={value} onValueChange={onChange} disabled={disabled || isLoading}>
       <SelectTrigger>
-        <SelectValue placeholder={isLoading ? t('loading.loading') : placeholder} />
+        <SelectValue
+          placeholder={
+            isLoading
+              ? t('loading.loading')
+              : placeholder || t('policies.operator_selector.placeholder')
+          }
+        />
       </SelectTrigger>
       <SelectContent>
         {filteredOperators.length === 0 ? (

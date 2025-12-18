@@ -32,15 +32,13 @@ import { toast } from 'sonner'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useLocale } from '@/components/providers/LocaleProvider'
 
-const exchangeRateSchema = z.object({
-  fromCurrencyId: z.string().min(1, 'Vui lòng chọn tiền tệ nguồn'),
-  toCurrencyId: z.string().min(1, 'Vui lòng chọn tiền tệ đích'),
-  rate: z.number().positive('Tỷ giá phải lớn hơn 0'),
-  effectiveFrom: z.string().min(1, 'Vui lòng chọn ngày có hiệu lực'),
-  effectiveTo: z.string().optional().nullable(),
-})
-
-type ExchangeRateFormData = z.infer<typeof exchangeRateSchema>
+type ExchangeRateFormData = {
+  fromCurrencyId: string
+  toCurrencyId: string
+  rate: number
+  effectiveFrom: string
+  effectiveTo?: string | null
+}
 
 interface ExchangeRateFormModalProps {
   open: boolean
@@ -55,8 +53,17 @@ export function ExchangeRateFormModal({
   exchangeRate,
   onSaved,
 }: ExchangeRateFormModalProps) {
-  const queryClient = useQueryClient()
   const { t } = useLocale()
+  const queryClient = useQueryClient()
+
+  // Create schema with translated messages
+  const exchangeRateSchema = z.object({
+    fromCurrencyId: z.string().min(1, t('exchange_rate.form.validation.from_currency_required')),
+    toCurrencyId: z.string().min(1, t('exchange_rate.form.validation.to_currency_required')),
+    rate: z.number().positive(t('exchange_rate.form.validation.rate_positive')),
+    effectiveFrom: z.string().min(1, t('exchange_rate.form.validation.effective_date_required')),
+    effectiveTo: z.string().optional().nullable(),
+  })
 
   const { data: currenciesData } = useQuery({
     queryKey: ['currencies', { isActive: true, limit: 100 }],
@@ -138,7 +145,7 @@ export function ExchangeRateFormModal({
 
   const handleSubmit = async (data: ExchangeRateFormData) => {
     if (data.fromCurrencyId === data.toCurrencyId) {
-      toast.error('Tiền tệ nguồn và đích không được giống nhau')
+      toast.error(t('exchange_rate.form.error.same_currencies'))
       return
     }
 
@@ -154,11 +161,13 @@ export function ExchangeRateFormModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <SystemModalLayout
-        title={exchangeRate ? 'Chỉnh sửa tỷ giá' : 'Tạo tỷ giá mới'}
+        title={
+          exchangeRate ? t('exchange_rate.form.title.edit') : t('exchange_rate.form.title.create')
+        }
         description={
           exchangeRate
-            ? 'Cập nhật thông tin tỷ giá hối đoái'
-            : 'Tạo một tỷ giá hối đoái mới giữa hai loại tiền tệ'
+            ? t('exchange_rate.form.description.edit')
+            : t('exchange_rate.form.description.create')
         }
         icon={TrendingUp}
         variant={exchangeRate ? 'edit' : 'create'}
@@ -204,7 +213,8 @@ export function ExchangeRateFormModal({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-sm font-bold text-gray-800">
-                    Tiền tệ nguồn <span className="text-red-500">*</span>
+                    {t('exchange_rate.form.field.from_currency')}{' '}
+                    <span className="text-red-500">*</span>
                   </FormLabel>
                   <FormControl>
                     <Select value={field.value} onValueChange={field.onChange} disabled={isLoading}>
@@ -234,7 +244,8 @@ export function ExchangeRateFormModal({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-sm font-bold text-gray-800">
-                    Tiền tệ đích <span className="text-red-500">*</span>
+                    {t('exchange_rate.form.field.to_currency')}{' '}
+                    <span className="text-red-500">*</span>
                   </FormLabel>
                   <FormControl>
                     <Select value={field.value} onValueChange={field.onChange} disabled={isLoading}>
@@ -264,7 +275,7 @@ export function ExchangeRateFormModal({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-sm font-bold text-gray-800">
-                    Tỷ giá <span className="text-red-500">*</span>
+                    {t('exchange_rate.form.field.rate')} <span className="text-red-500">*</span>
                   </FormLabel>
                   <FormControl>
                     <Input
@@ -293,7 +304,8 @@ export function ExchangeRateFormModal({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-sm font-bold text-gray-800">
-                    Có hiệu lực từ <span className="text-red-500">*</span>
+                    {t('exchange_rate.form.field.effective_from')}{' '}
+                    <span className="text-red-500">*</span>
                   </FormLabel>
                   <FormControl>
                     <Input type="date" {...field} className="h-10" />
@@ -310,7 +322,7 @@ export function ExchangeRateFormModal({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-sm font-bold text-gray-800">
-                    Có hiệu lực đến (tùy chọn)
+                    {t('exchange_rate.form.field.effective_to')}
                   </FormLabel>
                   <FormControl>
                     <Input
@@ -321,7 +333,9 @@ export function ExchangeRateFormModal({
                       className="h-10"
                     />
                   </FormControl>
-                  <p className="text-xs text-gray-500">Để trống nếu không giới hạn thời gian</p>
+                  <p className="text-xs text-gray-500">
+                    {t('exchange_rate.form.field.effective_to_hint')}
+                  </p>
                   <FormMessage className="mt-1 text-xs text-red-600" />
                 </FormItem>
               )}

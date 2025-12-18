@@ -15,12 +15,9 @@ import type { AdminOverviewKPIs } from '@/types/dashboard'
 import { Bell, Package, AlertTriangle, Clock, ArrowRight } from 'lucide-react'
 import { useLocale } from '@/components/providers/LocaleProvider'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
 import { cn } from '@/lib/utils/cn'
 
 import type { AdminOverviewData } from '@/types/dashboard'
-import { Dialog } from '@/components/ui/dialog'
-import { SystemModalLayout } from '@/components/system/SystemModalLayout'
 import NotificationCard from '@/components/notifications/NotificationCard'
 
 interface AlertsSummaryProps {
@@ -47,16 +44,11 @@ interface AlertItem {
 export function AlertsSummary({
   kpis,
   isLoading,
-  onViewAll,
   recentNotifications,
   alerts,
 }: AlertsSummaryProps) {
   const router = useRouter()
-  const { t, locale } = useLocale()
-  const [modalOpen, setModalOpen] = useState(false)
-  const [selectedAlertType, setSelectedAlertType] = useState<
-    null | 'low_consumable' | 'device_error' | 'sla_breach'
-  >(null)
+  const { t } = useLocale()
   // helper functions for notification navigation were replaced by NotificationCard
   if (isLoading || !kpis) {
     return (
@@ -165,12 +157,6 @@ export function AlertsSummary({
     return ''
   }
 
-  const getDeviceErrorTime = (item: DeviceErrorLike) => {
-    if ('occurredAt' in item && item.occurredAt) return item.occurredAt
-    if ('createdAt' in item && item.createdAt) return item.createdAt
-    return ''
-  }
-
   const getSlaTitle = (item: SlaLike) => {
     if ('title' in item && item.title) return item.title
     if ('id' in item && item.id) return item.id
@@ -179,12 +165,6 @@ export function AlertsSummary({
 
   const getSlaCustomer = (item: SlaLike) => {
     if ('customerName' in item && item.customerName) return item.customerName
-    return ''
-  }
-
-  const getSlaTime = (item: SlaLike) => {
-    if ('createdAt' in item && item.createdAt) return item.createdAt
-    if ('dueAt' in item && item.dueAt) return item.dueAt
     return ''
   }
 
@@ -326,11 +306,9 @@ export function AlertsSummary({
                         'group flex items-center gap-4 rounded-lg border p-3 transition-all',
                         alert.count > 0 ? 'cursor-pointer hover:shadow-md' : 'opacity-60'
                       )}
-                      // Open details modal when there are alerts
                       onClick={() => {
                         if (alert.count > 0) {
-                          setSelectedAlertType(alert.type)
-                          setModalOpen(true)
+                          router.push('/system/notifications')
                         }
                       }}
                     >
@@ -459,8 +437,7 @@ export function AlertsSummary({
                             className="mt-1 h-auto p-0 text-xs"
                             onClick={(e) => {
                               e.stopPropagation()
-                              setSelectedAlertType(alert.type)
-                              setModalOpen(true)
+                              router.push('/system/notifications')
                             }}
                           >
                             {t('alerts.view_details')}
@@ -498,8 +475,7 @@ export function AlertsSummary({
           <CardFooter className="flex justify-end border-t border-gray-100 bg-gray-50/50 p-4">
             <Button
               className="w-full border-gray-200 text-[var(--neutral-500)] hover:bg-white hover:text-[var(--foreground)] sm:w-auto"
-              variant="outline"
-              onClick={onViewAll}
+              onClick={() => router.push('/system/notifications')}
             >
               <Bell className="mr-2 h-4 w-4" />
               {t('alerts.view_all', { count: totalAlerts })}
@@ -507,134 +483,6 @@ export function AlertsSummary({
           </CardFooter>
         )}
       </Card>
-      {/* Details Modal */}
-      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        {modalOpen && (
-          <SystemModalLayout
-            title={
-              selectedAlertType === 'low_consumable'
-                ? t('alerts.modal.title.low_consumable')
-                : selectedAlertType === 'device_error'
-                  ? t('alerts.modal.title.device_error')
-                  : t('alerts.modal.title.sla_breach')
-            }
-            description={t('alerts.modal.description')}
-            icon={Bell}
-            variant="view"
-          >
-            <div className="space-y-3">
-              {selectedAlertType === 'low_consumable' && (
-                <div>
-                  {(alerts?.consumableWarnings?.items ?? []).length === 0 ? (
-                    <p className="text-sm text-gray-500">{t('alerts.modal.empty_item')}</p>
-                  ) : (
-                    <ul className="space-y-2">
-                      {alerts!.consumableWarnings!.items!.map((it, i) => (
-                        <li key={i} className="flex items-start justify-between gap-4">
-                          <div className="flex-1">
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                try {
-                                  if (it.deviceId) router.push(`/system/devices/${it.deviceId}`)
-                                } catch (err) {
-                                  console.error('Navigation failed for consumable modal item', err)
-                                }
-                              }}
-                              className="text-left text-sm font-medium hover:underline"
-                              aria-label={it.deviceName ?? it.deviceId}
-                            >
-                              {it.deviceName ?? it.deviceId}
-                            </button>
-                            <div className="mt-1 space-y-1">
-                              <div className="text-xs text-gray-500">
-                                {it.serialNumber && (
-                                  <span>
-                                    {t('label.serial')}: {it.serialNumber}
-                                  </span>
-                                )}
-                                {it.serialNumber && it.ipAddress && <span> • </span>}
-                                {it.ipAddress && (
-                                  <span>
-                                    {t('label.ip')}: {it.ipAddress}
-                                  </span>
-                                )}
-                              </div>
-                              <div className="text-xs text-gray-500">
-                                {it.consumableTypeName ? `${it.consumableTypeName} • ` : ''}
-                                {it.remainingPercentage !== undefined
-                                  ? t('alerts.remaining_percentage', {
-                                      percent: Math.round(it.remainingPercentage),
-                                    })
-                                  : ''}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="text-xs whitespace-nowrap text-gray-500">
-                            {it.lastUpdatedAt
-                              ? new Date(it.lastUpdatedAt).toLocaleString(
-                                  locale === 'vi' ? 'vi-VN' : 'en-US',
-                                  {
-                                    day: '2-digit',
-                                    month: '2-digit',
-                                    year: 'numeric',
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                  }
-                                )
-                              : ''}
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              )}
-
-              {selectedAlertType === 'device_error' && (
-                <div>
-                  {deviceErrorItems.length === 0 ? (
-                    <p className="text-sm text-gray-500">{t('alerts.modal.empty_item')}</p>
-                  ) : (
-                    <ul className="space-y-2">
-                      {deviceErrorItems.map((it, i) => (
-                        <li key={i} className="flex items-start justify-between gap-4">
-                          <div>
-                            <div className="text-sm font-medium">{getDeviceErrorTitle(it)}</div>
-                            <div className="text-xs text-gray-500">{getDeviceErrorMessage(it)}</div>
-                          </div>
-                          <div className="text-xs text-gray-500">{getDeviceErrorTime(it)}</div>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              )}
-
-              {selectedAlertType === 'sla_breach' && (
-                <div>
-                  {slaItems.length === 0 ? (
-                    <p className="text-sm text-gray-500">{t('alerts.modal.empty_item')}</p>
-                  ) : (
-                    <ul className="space-y-2">
-                      {slaItems.map((it, i) => (
-                        <li key={i} className="flex items-start justify-between gap-4">
-                          <div>
-                            <div className="text-sm font-medium">{getSlaTitle(it)}</div>
-                            <div className="text-xs text-gray-500">{getSlaCustomer(it)}</div>
-                          </div>
-                          <div className="text-xs text-gray-500">{getSlaTime(it)}</div>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              )}
-            </div>
-          </SystemModalLayout>
-        )}
-      </Dialog>
     </motion.div>
   )
 }

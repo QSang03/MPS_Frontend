@@ -13,6 +13,7 @@ import {
 import type { RuleBuilderType } from '../../_types/rule-builder'
 import type { ResourceType } from '@/lib/api/services/resource-types-client.service'
 import type { PolicyCondition } from '@/lib/api/services/policy-conditions-client.service'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 interface FieldSelectorProps {
   type: RuleBuilderType
@@ -62,9 +63,10 @@ export function FieldSelector({
   policyConditions = [],
   selectedResourceType,
   disabled = false,
-  placeholder = 'Chọn field...',
+  placeholder,
   allowManagedCustomers = false,
 }: FieldSelectorProps) {
+  const { t } = useLocale()
   const resourceTypeFields = useMemo(() => {
     if (type !== 'resource' || !selectedResourceType) return []
     const resourceType = resourceTypes.find((rt) => rt.name === selectedResourceType)
@@ -86,7 +88,7 @@ export function FieldSelector({
     return (
       <Select value={value} onValueChange={onChange} disabled={disabled}>
         <SelectTrigger>
-          <SelectValue placeholder={placeholder} />
+          <SelectValue placeholder={placeholder || t('policies.field_selector.placeholder')} />
         </SelectTrigger>
         <SelectContent>
           <SelectGroup>
@@ -122,7 +124,7 @@ export function FieldSelector({
     return (
       <Select value={value} onValueChange={onChange} disabled={disabled}>
         <SelectTrigger>
-          <SelectValue placeholder={placeholder} />
+          <SelectValue placeholder={placeholder || t('policies.field_selector.placeholder')} />
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="type">type (Resource Type)</SelectItem>
@@ -144,7 +146,7 @@ export function FieldSelector({
     return (
       <Select value={value} onValueChange={onChange} disabled={disabled}>
         <SelectTrigger>
-          <SelectValue placeholder={placeholder} />
+          <SelectValue placeholder={placeholder || t('policies.field_selector.placeholder')} />
         </SelectTrigger>
         <SelectContent>
           {policyConditions.map((condition) => (

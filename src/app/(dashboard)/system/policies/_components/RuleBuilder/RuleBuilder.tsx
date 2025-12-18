@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Plus, Trash2, Minus } from 'lucide-react'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import type { RuleBuilderValue, RuleGroup, RuleNode, LogicalGate } from '../../_types/rule-builder'
 import { createRuleNode, createRuleGroup } from '../../_types/rule-builder'
 
@@ -50,6 +51,7 @@ export function RuleBuilder({
   currentDepth = 0,
   disabled = false,
 }: RuleBuilderProps) {
+  const { t } = useLocale()
   const canAddNestedGroup = currentDepth < maxDepth
 
   const handleRootGateChange = useCallback(
@@ -211,7 +213,7 @@ export function RuleBuilder({
             className="cursor-pointer text-xs"
           >
             <Plus className="mr-1 h-3 w-3" />
-            Thêm quy tắc
+            {t('policies.rule_builder.add_rule')}
           </Button>
           {canAddNestedGroup && (
             <Button
@@ -222,7 +224,7 @@ export function RuleBuilder({
               className="text-xs"
             >
               <Plus className="mr-1 h-3 w-3" />
-              Thêm nhóm
+              {t('policies.rule_builder.add_group')}
             </Button>
           )}
         </div>
@@ -262,6 +264,7 @@ function RuleGroupComponent({
   currentDepth,
   disabled = false,
 }: RuleGroupComponentProps) {
+  const { t } = useLocale()
   const canAddNestedGroup = currentDepth < maxDepth
 
   const handleGateChange = useCallback(
@@ -354,7 +357,7 @@ function RuleGroupComponent({
             className="h-7 text-red-500"
           >
             <Minus className="mr-1 h-3 w-3" />
-            Xóa nhóm
+            {t('policies.rule_builder.remove_group')}
           </Button>
         )}
       </div>
@@ -412,7 +415,7 @@ function RuleGroupComponent({
             className="text-xs"
           >
             <Plus className="mr-1 h-3 w-3" />
-            Thêm quy tắc
+            {t('policies.rule_builder.add_rule')}
           </Button>
           {canAddNestedGroup && (
             <Button
@@ -423,7 +426,7 @@ function RuleGroupComponent({
               className="text-xs"
             >
               <Plus className="mr-1 h-3 w-3" />
-              Thêm nhóm
+              {t('policies.rule_builder.add_group')}
             </Button>
           )}
         </div>

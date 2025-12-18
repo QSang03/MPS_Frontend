@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -17,6 +18,7 @@ interface PurchaseRequestFormModalProps {
  * Purchase Request Form in a modal dialog
  */
 export function PurchaseRequestFormModal({ customerId }: PurchaseRequestFormModalProps) {
+  const { t } = useLocale()
   const [open, setOpen] = useState(false)
 
   return (
@@ -24,15 +26,15 @@ export function PurchaseRequestFormModal({ customerId }: PurchaseRequestFormModa
       <DialogTrigger asChild>
         <Button className="gap-2">
           <Plus className="h-4 w-4" />
-          Tạo yêu cầu
+          {t('purchase_request.modal.create_button')}
         </Button>
       </DialogTrigger>
 
       <AnimatePresence>
         {open && (
           <SystemModalLayout
-            title="Tạo yêu cầu mua hàng mới"
-            description="Điền thông tin chi tiết cho yêu cầu mua vật tư tiêu hao"
+            title={t('purchase_request.modal.title')}
+            description={t('purchase_request.modal.description')}
             icon={ShoppingCart}
             variant="create"
             maxWidth="!max-w-[60vw]"

@@ -9,27 +9,42 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Code } from 'lucide-react'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 interface TemplateVariablePickerProps {
   onSelect: (variable: string) => void
   disabled?: boolean
 }
 
-const TEMPLATE_VARIABLES = [
-  { value: '{{user.id}}', label: '{{user.id}}', description: 'ID của user hiện tại' },
+const TEMPLATE_VARIABLES_BASE = [
+  {
+    value: '{{user.id}}',
+    label: '{{user.id}}',
+    descriptionKey: 'policies.template_variables.user_id',
+  },
   {
     value: '{{user.customerId}}',
     label: '{{user.customerId}}',
-    description: 'Customer ID của user hiện tại',
+    descriptionKey: 'policies.template_variables.user_customer_id',
   },
-  { value: '{{user.email}}', label: '{{user.email}}', description: 'Email của user hiện tại' },
+  {
+    value: '{{user.email}}',
+    label: '{{user.email}}',
+    descriptionKey: 'policies.template_variables.user_email',
+  },
 ]
 
 export function TemplateVariablePicker({
   onSelect,
   disabled = false,
 }: TemplateVariablePickerProps) {
+  const { t } = useLocale()
   const [open, setOpen] = useState(false)
+
+  const TEMPLATE_VARIABLES = TEMPLATE_VARIABLES_BASE.map((variable) => ({
+    ...variable,
+    description: t(variable.descriptionKey),
+  }))
 
   const handleSelect = (variable: string) => {
     onSelect(variable)
@@ -45,7 +60,7 @@ export function TemplateVariablePicker({
           size="icon"
           disabled={disabled}
           className="h-8 w-8"
-          title="Chèn template variable"
+          title={t('policies.template_variables.insert_variable')}
         >
           <Code className="h-4 w-4" />
         </Button>

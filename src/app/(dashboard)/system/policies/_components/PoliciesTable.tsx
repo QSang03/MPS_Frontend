@@ -111,10 +111,10 @@ export function PoliciesTable() {
     try {
       if (editingPolicy) {
         await policiesClientService.updatePolicy(editingPolicy.id, formData)
-        toast.success('Cập nhật policy thành công')
+        toast.success(t('policies.update_success'))
       } else {
         await policiesClientService.createPolicy(formData)
-        toast.success('Tạo policy thành công')
+        toast.success(t('policies.create_success'))
       }
       queryClient.invalidateQueries({ queryKey: ['policies'] })
       setIsModalOpen(false)
@@ -149,7 +149,7 @@ export function PoliciesTable() {
       let message: string | undefined
       if (apiBody?.message) message = apiBody.message
       else if (axiosLike && typeof axiosLike.message === 'string') message = axiosLike.message
-      else message = 'Có lỗi khi lưu policy'
+      else message = t('policies.create_error')
 
       const code = apiBody?.error ?? 'ERROR'
       const details = apiBody?.details
@@ -168,7 +168,7 @@ export function PoliciesTable() {
     try {
       await policiesClientService.deletePolicy(id)
       queryClient.invalidateQueries({ queryKey: ['policies'] })
-      toast.success('Xóa policy thành công')
+      toast.success(t('policies.delete_success'))
     } catch (err: unknown) {
       // Narrow error safely without using `any`
       if (err instanceof Error) {
@@ -176,7 +176,7 @@ export function PoliciesTable() {
       } else {
         console.error('Delete policy error', err)
       }
-      toast.error('Có lỗi khi xóa policy')
+      toast.error(t('policies.delete_error'))
     }
   }
 
@@ -402,13 +402,13 @@ export function PoliciesTable() {
                     <TableHead className="w-[160px] text-center font-bold text-gray-700">
                       <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4 text-gray-600" />
-                        Ngày tạo
+                        {t('table.created_at')}
                       </div>
                     </TableHead>
                     <TableHead className="w-[150px] text-center font-bold text-gray-700">
                       <div className="flex items-center gap-2">
                         <Settings className="h-4 w-4 text-gray-600" />
-                        Thao tác
+                        {t('table.actions')}
                       </div>
                     </TableHead>
                   </TableRow>
@@ -546,7 +546,7 @@ export function PoliciesTable() {
           <div className="border-gradient-to-r flex items-center justify-between rounded-2xl border-2 bg-gradient-to-r from-[var(--brand-200)] via-[var(--brand-50)] to-[var(--brand-200)] p-5 shadow-lg transition-all duration-300 hover:shadow-xl">
             <div className="flex items-center gap-3">
               <span className="text-xs font-bold tracking-widest text-gray-600 uppercase">
-                Hiển thị
+                {t('pagination.showing')}
               </span>
               <div className="rounded-xl border-2 border-[var(--brand-200)] bg-gradient-to-r from-[var(--brand-50)] to-[var(--brand-100)] px-4 py-2">
                 <span className="bg-gradient-to-r from-[var(--brand-500)] to-[var(--brand-600)] bg-clip-text text-sm font-bold text-transparent">

@@ -133,11 +133,15 @@ export function PurchaseRequestForm({
           name="itemName"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Tên vật tư</FormLabel>
+              <FormLabel>{t('purchase_request.form.item_name_label')}</FormLabel>
               <FormControl>
-                <Input placeholder="Ví dụ: Mực in HP 85A" {...field} disabled={isPending} />
+                <Input
+                  placeholder={t('purchase_request.form.item_name_placeholder')}
+                  {...field}
+                  disabled={isPending}
+                />
               </FormControl>
-              <FormDescription>Tên của vật tư cần mua</FormDescription>
+              <FormDescription>{t('purchase_request.form.item_name_description')}</FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -148,16 +152,18 @@ export function PurchaseRequestForm({
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Mô tả</FormLabel>
+              <FormLabel>{t('purchase_request.form.description_label')}</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="Mô tả chi tiết về vật tư cần mua..."
+                  placeholder={t('purchase_request.form.description_placeholder')}
                   rows={3}
                   {...field}
                   disabled={isPending}
                 />
               </FormControl>
-              <FormDescription>Mô tả chi tiết về vật tư và lý do cần mua</FormDescription>
+              <FormDescription>
+                {t('purchase_request.form.description_description')}
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -169,7 +175,7 @@ export function PurchaseRequestForm({
             name="quantity"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Số lượng</FormLabel>
+                <FormLabel>{t('purchase_request.form.quantity_label')}</FormLabel>
                 <FormControl>
                   <Input
                     type="number"
@@ -179,7 +185,7 @@ export function PurchaseRequestForm({
                     disabled={isPending}
                   />
                 </FormControl>
-                <FormDescription>Số lượng cần mua</FormDescription>
+                <FormDescription>{t('purchase_request.form.quantity_description')}</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -190,7 +196,7 @@ export function PurchaseRequestForm({
             name="estimatedCost"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Chi phí ước tính</FormLabel>
+                <FormLabel>{t('purchase_request.form.estimated_cost_label')}</FormLabel>
                 <FormControl>
                   <Input
                     type="number"
@@ -200,7 +206,9 @@ export function PurchaseRequestForm({
                     disabled={isPending}
                   />
                 </FormControl>
-                <FormDescription>Chi phí ước tính cho vật tư này</FormDescription>
+                <FormDescription>
+                  {t('purchase_request.form.estimated_cost_description')}
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -231,7 +239,7 @@ export function PurchaseRequestForm({
                   customerId={customerId}
                 />
               </FormControl>
-              <FormDescription>Tiền tệ cho chi phí ước tính</FormDescription>
+              <FormDescription>{t('purchase_request.form.currency_description')}</FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -242,7 +250,7 @@ export function PurchaseRequestForm({
           name="priority"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Độ ưu tiên</FormLabel>
+              <FormLabel>{t('purchase_request.form.priority_label')}</FormLabel>
               <Select
                 onValueChange={field.onChange}
                 defaultValue={field.value}
@@ -250,26 +258,26 @@ export function PurchaseRequestForm({
               >
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Chọn độ ưu tiên" />
+                    <SelectValue placeholder={t('purchase_request.form.priority_placeholder')} />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
                   {Object.values(Priority).map((priority) => (
                     <SelectItem key={priority} value={priority}>
                       {priority === Priority.LOW
-                        ? 'Thấp'
+                        ? t('priority.low')
                         : priority === Priority.NORMAL
-                          ? 'Bình thường'
+                          ? t('priority.normal')
                           : priority === Priority.HIGH
-                            ? 'Cao'
+                            ? t('priority.high')
                             : priority === Priority.URGENT
-                              ? 'Khẩn cấp'
+                              ? t('priority.urgent')
                               : priority}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <FormDescription>Đặt mức độ khẩn cấp của yêu cầu này</FormDescription>
+              <FormDescription>{t('purchase_request.form.priority_description')}</FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -280,7 +288,7 @@ export function PurchaseRequestForm({
           name="requestedBy"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Người yêu cầu</FormLabel>
+              <FormLabel>{t('purchase_request.form.requested_by_label')}</FormLabel>
               <FormControl>
                 <Input
                   placeholder={t('purchase_request.placeholder.requester')}
@@ -288,7 +296,9 @@ export function PurchaseRequestForm({
                   disabled={isPending}
                 />
               </FormControl>
-              <FormDescription>Tên người thực hiện yêu cầu mua hàng</FormDescription>
+              <FormDescription>
+                {t('purchase_request.form.requested_by_description')}
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -297,10 +307,12 @@ export function PurchaseRequestForm({
         <div className="flex gap-4">
           <Button type="submit" disabled={isPending}>
             {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {mode === 'create' ? 'Tạo yêu cầu mua hàng' : 'Cập nhật yêu cầu mua hàng'}
+            {mode === 'create'
+              ? t('purchase_request.form.create_button')
+              : t('purchase_request.form.update_button')}
           </Button>
           <Button type="button" variant="outline" onClick={onSuccess} disabled={isPending}>
-            Hủy
+            {t('common.cancel')}
           </Button>
         </div>
       </form>

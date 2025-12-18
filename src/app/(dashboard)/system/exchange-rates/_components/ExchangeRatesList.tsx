@@ -125,7 +125,7 @@ export function ExchangeRatesList({
     const filters: Array<{ label: string; value: string; onRemove: () => void }> = []
     if (debouncedSearch) {
       filters.push({
-        label: `Tìm kiếm: "${debouncedSearch}"`,
+        label: t('exchange_rates.filters.search', { term: debouncedSearch }),
         value: debouncedSearch,
         onRemove: () => {
           setSearch('')
@@ -136,7 +136,9 @@ export function ExchangeRatesList({
     if (fromCurrencyId !== 'all') {
       const currency = currencies.find((c) => c.id === fromCurrencyId)
       filters.push({
-        label: `Từ: ${currency?.code || fromCurrencyId}`,
+        label: t('exchange_rates.filters.from_currency', {
+          currency: currency?.code || fromCurrencyId,
+        }),
         value: fromCurrencyId,
         onRemove: () => setFromCurrencyId('all'),
       })
@@ -144,20 +146,22 @@ export function ExchangeRatesList({
     if (toCurrencyId !== 'all') {
       const currency = currencies.find((c) => c.id === toCurrencyId)
       filters.push({
-        label: `Đến: ${currency?.code || toCurrencyId}`,
+        label: t('exchange_rates.filters.to_currency', {
+          currency: currency?.code || toCurrencyId,
+        }),
         value: toCurrencyId,
         onRemove: () => setToCurrencyId('all'),
       })
     }
     if (isActive !== 'all') {
       filters.push({
-        label: isActive === 'true' ? 'Đang hoạt động' : 'Không hoạt động',
+        label: isActive === 'true' ? t('status.active') : t('status.inactive'),
         value: isActive,
         onRemove: () => setIsActive('all'),
       })
     }
     return filters
-  }, [debouncedSearch, fromCurrencyId, toCurrencyId, isActive, currencies])
+  }, [debouncedSearch, fromCurrencyId, toCurrencyId, isActive, currencies, t])
 
   const handleResetFilters = () => {
     setSearch('')
@@ -197,7 +201,7 @@ export function ExchangeRatesList({
     () => [
       {
         accessorKey: 'fromCurrency',
-        header: 'Từ',
+        header: t('exchange_rates.table.from_currency'),
         cell: ({ row }) => (
           <div className="font-medium">
             {row.original.fromCurrency.code} - {row.original.fromCurrency.name}
@@ -206,7 +210,7 @@ export function ExchangeRatesList({
       },
       {
         accessorKey: 'toCurrency',
-        header: 'Đến',
+        header: t('exchange_rates.table.to_currency'),
         cell: ({ row }) => (
           <div className="font-medium">
             {row.original.toCurrency.code} - {row.original.toCurrency.name}
@@ -215,7 +219,7 @@ export function ExchangeRatesList({
       },
       {
         accessorKey: 'rate',
-        header: 'Tỷ giá',
+        header: t('exchange_rates.table.rate'),
         cell: ({ row }) => (
           <div className="font-mono font-semibold text-[var(--brand-600)]">
             1 {row.original.fromCurrency.code} = {row.original.rate.toLocaleString()}{' '}
@@ -225,7 +229,7 @@ export function ExchangeRatesList({
       },
       {
         accessorKey: 'effectiveFrom',
-        header: 'Có hiệu lực từ',
+        header: t('exchange_rates.table.effective_from'),
         cell: ({ row }) => (
           <div className="text-sm">
             {format(new Date(row.original.effectiveFrom), 'dd/MM/yyyy', { locale: vi })}
@@ -234,18 +238,18 @@ export function ExchangeRatesList({
       },
       {
         accessorKey: 'effectiveTo',
-        header: 'Có hiệu lực đến',
+        header: t('exchange_rates.table.effective_to'),
         cell: ({ row }) => (
           <div className="text-sm">
             {row.original.effectiveTo
               ? format(new Date(row.original.effectiveTo), 'dd/MM/yyyy', { locale: vi })
-              : 'Không giới hạn'}
+              : t('exchange_rates.table.unlimited')}
           </div>
         ),
       },
       {
         id: 'status',
-        header: 'Trạng thái',
+        header: t('exchange_rates.table.status'),
         cell: ({ row }) => {
           const now = new Date()
           const from = new Date(row.original.effectiveFrom)
@@ -263,12 +267,12 @@ export function ExchangeRatesList({
               {isActive ? (
                 <>
                   <CheckCircle2 className="mr-1 h-3 w-3" />
-                  Đang hoạt động
+                  {t('status.active')}
                 </>
               ) : (
                 <>
                   <XCircle className="mr-1 h-3 w-3" />
-                  Không hoạt động
+                  {t('status.inactive')}
                 </>
               )}
             </Badge>
@@ -277,7 +281,7 @@ export function ExchangeRatesList({
       },
       {
         id: 'actions',
-        header: 'Thao tác',
+        header: t('exchange_rates.table.actions'),
         cell: ({ row }) => (
           <div className="flex gap-2">
             {canUpdate && (
@@ -288,7 +292,7 @@ export function ExchangeRatesList({
                 onClick={() => handleEdit(row.original)}
               >
                 <Edit className="h-4 w-4" />
-                Sửa
+                {t('common.edit')}
               </Button>
             )}
             {canDelete && (
@@ -299,14 +303,14 @@ export function ExchangeRatesList({
                 onClick={() => handleDelete(row.original)}
               >
                 <Trash2 className="h-4 w-4" />
-                Xóa
+                {t('common.delete')}
               </Button>
             )}
           </div>
         ),
       },
     ],
-    [canUpdate, canDelete]
+    [canUpdate, canDelete, t]
   )
 
   return (
@@ -318,13 +322,13 @@ export function ExchangeRatesList({
       <StatsCards
         cards={[
           {
-            label: 'Tổng số tỷ giá',
+            label: t('exchange_rates.stats.total_rates'),
             value: stats.total,
             icon: <TrendingUp className="h-6 w-6" />,
             borderColor: 'blue',
           },
           {
-            label: 'Đang hoạt động',
+            label: t('status.active'),
             value: stats.active,
             icon: <CheckCircle2 className="h-6 w-6" />,
             borderColor: 'green',
@@ -333,16 +337,20 @@ export function ExchangeRatesList({
       />
 
       {/* Filters */}
-      <FilterSection title="Bộ lọc" onReset={handleResetFilters} activeFilters={activeFilters}>
+      <FilterSection
+        title={t('filters.general')}
+        onReset={handleResetFilters}
+        activeFilters={activeFilters}
+      >
         <div className="grid gap-4 md:grid-cols-4">
           <div className="space-y-2">
             <label className="text-sm font-medium">{t('exchange_rates.from_label')}</label>
             <Select value={fromCurrencyId} onValueChange={setFromCurrencyId}>
               <SelectTrigger>
-                <SelectValue placeholder="Tất cả" />
+                <SelectValue placeholder={t('common.all')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tất cả</SelectItem>
+                <SelectItem value="all">{t('common.all')}</SelectItem>
                 {currencies.map((currency) => (
                   <SelectItem key={currency.id} value={currency.id}>
                     {currency.code} - {currency.name}
@@ -356,10 +364,10 @@ export function ExchangeRatesList({
             <label className="text-sm font-medium">{t('exchange_rates.to_label')}</label>
             <Select value={toCurrencyId} onValueChange={setToCurrencyId}>
               <SelectTrigger>
-                <SelectValue placeholder="Tất cả" />
+                <SelectValue placeholder={t('common.all')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tất cả</SelectItem>
+                <SelectItem value="all">{t('common.all')}</SelectItem>
                 {currencies.map((currency) => (
                   <SelectItem key={currency.id} value={currency.id}>
                     {currency.code} - {currency.name}
@@ -370,15 +378,15 @@ export function ExchangeRatesList({
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Trạng thái</label>
+            <label className="text-sm font-medium">{t('exchange_rates.status_label')}</label>
             <Select value={isActive} onValueChange={setIsActive}>
               <SelectTrigger>
-                <SelectValue placeholder="Tất cả" />
+                <SelectValue placeholder={t('common.all')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tất cả</SelectItem>
-                <SelectItem value="true">Đang hoạt động</SelectItem>
-                <SelectItem value="false">Không hoạt động</SelectItem>
+                <SelectItem value="all">{t('common.all')}</SelectItem>
+                <SelectItem value="true">{t('status.active')}</SelectItem>
+                <SelectItem value="false">{t('status.inactive')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -390,8 +398,10 @@ export function ExchangeRatesList({
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Danh sách tỷ giá</CardTitle>
-              <CardDescription>{pagination?.total || 0} tỷ giá</CardDescription>
+              <CardTitle>{t('exchange_rates.list.title')}</CardTitle>
+              <CardDescription>
+                {t('exchange_rates.list.description', { count: pagination?.total || 0 })}
+              </CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -416,7 +426,7 @@ export function ExchangeRatesList({
           ) : (
             <div className="py-12 text-center text-gray-500">
               <TrendingUp className="mx-auto mb-4 h-12 w-12 opacity-20" />
-              <p>Không tìm thấy tỷ giá nào</p>
+              <p>{t('exchange_rates.list.empty')}</p>
             </div>
           )}
         </CardContent>
@@ -442,8 +452,11 @@ export function ExchangeRatesList({
               setDeletingRate(null)
             }
           }}
-          title="Xóa tỷ giá"
-          description={`Bạn có chắc chắn muốn xóa tỷ giá từ ${deletingRate?.fromCurrency.code} đến ${deletingRate?.toCurrency.code}?`}
+          title={t('exchange_rates.delete.title')}
+          description={t('exchange_rates.delete.confirm', {
+            fromCurrency: deletingRate?.fromCurrency.code,
+            toCurrency: deletingRate?.toCurrency.code,
+          })}
           trigger={<div style={{ display: 'none' }} />}
         />
       )}

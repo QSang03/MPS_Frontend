@@ -1,6 +1,7 @@
 'use client'
 
 import { AlertTriangle, Info } from 'lucide-react'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import type { GuardrailWarning } from '../../_utils/guardrails'
 
 interface InlineGuardrailWarningProps {
@@ -9,6 +10,8 @@ interface InlineGuardrailWarningProps {
 }
 
 export function InlineGuardrailWarning({ warning, onAutoFix }: InlineGuardrailWarningProps) {
+  const { t } = useLocale()
+
   const getIcon = () => {
     switch (warning.type) {
       case 'error':
@@ -40,14 +43,14 @@ export function InlineGuardrailWarning({ warning, onAutoFix }: InlineGuardrailWa
       <div className="flex items-start gap-2">
         {getIcon()}
         <div className="flex-1">
-          <p className="font-medium">{warning.message}</p>
+          <p className="font-medium">{t(warning.messageKey, warning.messageParams)}</p>
           {onAutoFix && (
             <button
               type="button"
               onClick={onAutoFix}
               className="mt-2 text-xs font-semibold underline hover:no-underline"
             >
-              Thêm điều kiện này
+              {t('policies.guardrails.add_condition')}
             </button>
           )}
         </div>
