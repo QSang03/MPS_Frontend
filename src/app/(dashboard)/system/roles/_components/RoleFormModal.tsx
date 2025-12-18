@@ -22,14 +22,12 @@ import { Loader2, CheckCircle2, AlertCircle, Layers } from 'lucide-react'
 // Checkbox removed: not used in this component
 import type { UserRole } from '@/types/users'
 
-const roleSchema = z.object({
-  name: z.string().min(1, 'Tên vai trò là bắt buộc'),
-  description: z.string().optional(),
-  level: z.number().min(0).optional(),
-  isActive: z.boolean().optional(),
-})
-
-type RoleFormData = z.infer<typeof roleSchema>
+type RoleFormData = {
+  name: string
+  description?: string
+  level?: number
+  isActive?: boolean
+}
 
 interface RoleFormModalProps {
   isOpen: boolean
@@ -41,6 +39,13 @@ interface RoleFormModalProps {
 export function RoleFormModal({ isOpen, onClose, onSubmit, initialData }: RoleFormModalProps) {
   const [isLoading, setIsLoading] = useState(false)
   const { t } = useLocale()
+
+  const roleSchema = z.object({
+    name: z.string().min(1, t('role.validation.name_required')),
+    description: z.string().optional(),
+    level: z.number().min(0).optional(),
+    isActive: z.boolean().optional(),
+  })
 
   const form = useForm<RoleFormData>({
     resolver: zodResolver(roleSchema),

@@ -49,12 +49,12 @@ export function ServiceRequestActions({ serviceRequest }: ServiceRequestActionsP
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="secondary" className="h-8 w-8 p-0">
-          <span className="sr-only">Open menu</span>
+          <span className="sr-only">{t('common.open_menu')}</span>
           <MoreHorizontal className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+        <DropdownMenuLabel>{t('common.actions')}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link href={`/system/service-requests/${serviceRequest.id}`}>
@@ -68,8 +68,8 @@ export function ServiceRequestActions({ serviceRequest }: ServiceRequestActionsP
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DeleteDialog
-          title="Delete Service Request"
-          description="Are you sure you want to delete this service request? This action cannot be undone."
+          title={t('service_request.delete.title')}
+          description={t('service_request.delete.confirm')}
           onConfirm={handleDelete}
           trigger={
             <DropdownMenuItem

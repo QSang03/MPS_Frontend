@@ -4,9 +4,36 @@ import { getDevSession, DEV_BYPASS_AUTH } from '@/lib/auth/dev-session'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { PurchaseRequestForm } from '../_components/PurchaseRequestForm'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic'
+
+function LocalizedPageContent({ customerId }: { customerId: string }) {
+  'use client'
+  const { t } = useLocale()
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold">{t('purchase_request.new.title')}</h1>
+        <p className="text-muted-foreground">{t('purchase_request.new.subtitle')}</p>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('purchase_request.new.card_title')}</CardTitle>
+          <CardDescription>{t('purchase_request.new.card_description')}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Suspense fallback={<PurchaseRequestFormSkeleton />}>
+            <PurchaseRequestForm customerId={customerId} mode="create" />
+          </Suspense>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
 
 function PurchaseRequestFormSkeleton() {
   return (
@@ -19,6 +46,10 @@ function PurchaseRequestFormSkeleton() {
   )
 }
 
+function PurchaseRequestPageContent({ customerId }: { customerId: string }) {
+  return <LocalizedPageContent customerId={customerId} />
+}
+
 export default async function NewPurchaseRequestPage() {
   let session = await getSession()
 
@@ -27,24 +58,5 @@ export default async function NewPurchaseRequestPage() {
     session = getDevSession('customer-admin')
   }
 
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Tạo yêu cầu mua hàng</h1>
-        <p className="text-muted-foreground">Tạo yêu cầu mua vật tư tiêu hao mới</p>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Thông tin yêu cầu mua hàng</CardTitle>
-          <CardDescription>Điền thông tin chi tiết về vật tư cần mua</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Suspense fallback={<PurchaseRequestFormSkeleton />}>
-            <PurchaseRequestForm customerId={session!.customerId} mode="create" />
-          </Suspense>
-        </CardContent>
-      </Card>
-    </div>
-  )
+  return <PurchaseRequestPageContent customerId={session!.customerId} />
 }

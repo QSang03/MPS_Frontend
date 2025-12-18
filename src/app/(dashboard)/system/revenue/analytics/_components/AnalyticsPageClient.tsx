@@ -1012,7 +1012,7 @@ export default function AnalyticsPageClient() {
             actionId="view-analytics-profit-enterprise"
             fallback={
               <div className="text-muted-foreground py-8 text-center">
-                Không có quyền truy cập báo cáo lợi nhuận doanh nghiệp
+                {t('analytics.no_access.business_profit_report')}
               </div>
             }
           >
@@ -1264,7 +1264,7 @@ export default function AnalyticsPageClient() {
                   actionId="view-analytics-profit-customers"
                   fallback={
                     <div className="text-muted-foreground py-8 text-center">
-                      Không có quyền truy cập báo cáo lợi nhuận khách hàng
+                      {t('analytics.no_access.customer_profit_report')}
                     </div>
                   }
                 >
@@ -2060,7 +2060,7 @@ export default function AnalyticsPageClient() {
                 actionId="view-analytics-profit-customer"
                 fallback={
                   <div className="text-muted-foreground py-8 text-center">
-                    Không có quyền truy cập báo cáo lợi nhuận khách hàng chi tiết
+                    {t('analytics.no_access.customer_profit_detailed_report')}
                   </div>
                 }
               >
@@ -2846,7 +2846,7 @@ export default function AnalyticsPageClient() {
                 actionId="view-analytics-profit-device"
                 fallback={
                   <div className="text-muted-foreground py-8 text-center">
-                    Không có quyền truy cập báo cáo lợi nhuận thiết bị
+                    {t('analytics.no_access.device_profit_report')}
                   </div>
                 }
               >
@@ -3336,7 +3336,7 @@ export default function AnalyticsPageClient() {
             actionId="view-analytics-consumables-lifecycle"
             fallback={
               <div className="text-muted-foreground py-8 text-center">
-                Không có quyền truy cập báo cáo vòng đời vật tư
+                {t('analytics.no_access.consumable_lifecycle_report')}
               </div>
             }
           >

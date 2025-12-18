@@ -107,8 +107,14 @@ export function SlaTemplateFormDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <SystemModalLayout
-        title={initialValues ? 'Chỉnh sửa SLA template' : 'Tạo SLA template'}
-        description={initialValues ? 'Cập nhật template SLA' : 'Tạo template SLA mới'}
+        title={
+          initialValues ? t('sla_template.form.edit_title') : t('sla_template.form.create_title')
+        }
+        description={
+          initialValues
+            ? t('sla_template.form.edit_description')
+            : t('sla_template.form.create_description')
+        }
         icon={undefined}
         variant="create"
         footer={
@@ -137,7 +143,7 @@ export function SlaTemplateFormDialog({
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Tên template</FormLabel>
+                    <FormLabel>{t('sla_template.form.template_name')}</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -153,7 +159,7 @@ export function SlaTemplateFormDialog({
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Mô tả</FormLabel>
+                    <FormLabel>{t('sla_template.form.description')}</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -169,7 +175,7 @@ export function SlaTemplateFormDialog({
                 name="isActive"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Kích hoạt</FormLabel>
+                    <FormLabel>{t('sla_template.form.is_active')}</FormLabel>
                     <FormControl>
                       <Checkbox
                         checked={!!field.value}
@@ -185,9 +191,9 @@ export function SlaTemplateFormDialog({
             <div>
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-medium">Items</h3>
+                  <h3 className="text-lg font-medium">{t('sla_template.form.items_title')}</h3>
                   <div className="text-muted-foreground text-sm">
-                    Danh sách các priority & thời gian
+                    {t('sla_template.form.items_description')}
                   </div>
                 </div>
                 <Button
@@ -204,7 +210,7 @@ export function SlaTemplateFormDialog({
                   }
                   disabled={submitting}
                 >
-                  <Plus className="mr-2 h-3 w-3" /> Thêm item
+                  <Plus className="mr-2 h-3 w-3" /> {t('sla_template.form.add_item')}
                 </Button>
               </div>
 
@@ -256,7 +262,7 @@ export function SlaTemplateFormDialog({
                         name={`items.${idx}.name` as const}
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Tên</FormLabel>
+                            <FormLabel>{t('sla_template.form.item_name')}</FormLabel>
                             <FormControl>
                               <Input {...field} />
                             </FormControl>
@@ -326,7 +332,7 @@ export function SlaTemplateFormDialog({
                           type="button"
                           onClick={() => remove(idx)}
                           disabled={submitting}
-                          title="Xóa"
+                          title={t('common.delete')}
                         >
                           <Trash className="h-4 w-4" />
                         </Button>
@@ -338,7 +344,7 @@ export function SlaTemplateFormDialog({
                         name={`items.${idx}.description` as const}
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Mô tả</FormLabel>
+                            <FormLabel>{t('sla_template.form.description')}</FormLabel>
                             <FormControl>
                               <Textarea {...field} />
                             </FormControl>

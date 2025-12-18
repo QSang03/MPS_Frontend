@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { serviceRequestService } from '@/lib/api/services/service-request.service'
 import { DataTable } from '@/components/shared/DataTable/DataTable'
-import { columns } from './columns'
+import { useColumns } from './columns'
 import type { ServiceRequestStatus } from '@/constants/status'
 
 interface ServiceRequestListProps {
@@ -13,6 +13,7 @@ interface ServiceRequestListProps {
 }
 
 export function ServiceRequestList({ customerId, status }: ServiceRequestListProps) {
+  const columns = useColumns()
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 10,

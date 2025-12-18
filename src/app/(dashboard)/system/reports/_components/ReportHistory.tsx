@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Download, FileText } from 'lucide-react'
 import { formatDateTime } from '@/lib/utils/formatters'
 import { toast } from 'sonner'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 interface ReportHistoryProps {
   customerId: string
@@ -26,8 +27,10 @@ const mockReports = [
 ]
 
 export function ReportHistory({}: ReportHistoryProps) {
+  const { t } = useLocale()
+
   const handleDownload = (reportId: string, name: string) => {
-    toast.success(`Downloading: ${name}`)
+    toast.success(t('reports.history.download_success', { name }))
     // Implement actual download logic here
   }
 
@@ -52,13 +55,13 @@ export function ReportHistory({}: ReportHistoryProps) {
             onClick={() => handleDownload(report.id, report.name)}
           >
             <Download className="mr-2 h-4 w-4" />
-            Download
+            {t('reports.history.download_button')}
           </Button>
         </div>
       ))}
       {mockReports.length === 0 && (
         <div className="text-muted-foreground flex h-32 items-center justify-center rounded-md border-2 border-dashed">
-          <p>No reports generated yet</p>
+          <p>{t('reports.history.empty')}</p>
         </div>
       )}
     </div>

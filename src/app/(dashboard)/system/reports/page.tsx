@@ -6,9 +6,48 @@ import { ReportHistory } from './_components/ReportHistory'
 import { SystemPageLayout } from '@/components/system/SystemPageLayout'
 import { SystemPageHeader } from '@/components/system/SystemPageHeader'
 import { FileText } from 'lucide-react'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic'
+
+function ReportsPageContent({ customerId }: { customerId: string }) {
+  const { t } = useLocale()
+
+  return (
+    <SystemPageLayout fullWidth>
+      <SystemPageHeader
+        title={t('reports.page.title')}
+        subtitle={t('reports.page.subtitle')}
+        icon={<FileText className="h-6 w-6" />}
+      />
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Report Generator */}
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('reports.page.generator_title')}</CardTitle>
+            <CardDescription>{t('reports.page.generator_description')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ReportGenerator customerId={customerId} />
+          </CardContent>
+        </Card>
+
+        {/* Report History */}
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('reports.page.history_title')}</CardTitle>
+            <CardDescription>{t('reports.page.history_description')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ReportHistory customerId={customerId} />
+          </CardContent>
+        </Card>
+      </div>
+    </SystemPageLayout>
+  )
+}
 
 export default async function ReportsPage() {
   let session = await getSession()
@@ -18,37 +57,5 @@ export default async function ReportsPage() {
     session = getDevSession('customer-admin')
   }
 
-  return (
-    <SystemPageLayout fullWidth>
-      <SystemPageHeader
-        title="Báo cáo"
-        subtitle="Tạo và tải xuống báo cáo dịch vụ in ấn"
-        icon={<FileText className="h-6 w-6" />}
-      />
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Report Generator */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Tạo báo cáo mới</CardTitle>
-            <CardDescription>Tạo báo cáo tùy chỉnh để phân tích</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ReportGenerator customerId={session!.customerId} />
-          </CardContent>
-        </Card>
-
-        {/* Report History */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Báo cáo gần đây</CardTitle>
-            <CardDescription>Các báo cáo đã tạo trước đó</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ReportHistory customerId={session!.customerId} />
-          </CardContent>
-        </Card>
-      </div>
-    </SystemPageLayout>
-  )
+  return <ReportsPageContent customerId={session!.customerId} />
 }

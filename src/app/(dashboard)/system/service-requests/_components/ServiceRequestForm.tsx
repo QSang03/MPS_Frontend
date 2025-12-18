@@ -167,13 +167,13 @@ export function ServiceRequestForm({ customerId, onSuccess }: ServiceRequestForm
                         {Object.values(Priority).map((priority) => (
                           <SelectItem key={priority} value={priority}>
                             {priority === Priority.LOW
-                              ? 'Thấp'
+                              ? t('priority.low')
                               : priority === Priority.NORMAL
-                                ? 'Bình thường'
+                                ? t('priority.normal')
                                 : priority === Priority.HIGH
-                                  ? 'Cao'
+                                  ? t('priority.high')
                                   : priority === Priority.URGENT
-                                    ? 'Khẩn cấp'
+                                    ? t('priority.urgent')
                                     : priority}
                           </SelectItem>
                         ))}

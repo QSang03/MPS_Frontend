@@ -1,180 +1,192 @@
 'use client'
 
-import React from 'react'
+import React, { useState, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useSearchParams, useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { useLocale } from '@/components/providers/LocaleProvider'
-// Use native list elements as there's no shared List component in UI library
-import { Badge } from '@/components/ui/badge'
+import { useRouter } from 'next/navigation'
 import { notificationsClientService } from '@/lib/api/services/notifications-client.service'
-import type { Notification } from '@/types/models/notification'
+import type { Notification, NotificationMetadata } from '@/types/models/notification'
+import { toast } from 'sonner'
+
+import { NotificationHeader } from './_components/NotificationHeader'
+import {
+  NotificationFilters,
+  FilterType,
+  NotificationType,
+} from './_components/NotificationFilters'
+import { NotificationList } from './_components/NotificationList'
 
 export default function NotificationsListClient() {
-  const { t } = useLocale()
-  const searchParams = useSearchParams()
   const router = useRouter()
   const queryClient = useQueryClient()
-  const typeFilter = searchParams?.get('type') ?? undefined
 
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['notifications', { type: typeFilter }],
-    queryFn: () => notificationsClientService.getAll({ page: 1, limit: 50 }),
+  // State for filters
+  const [searchQuery, setSearchQuery] = useState('')
+  const [activeFilter, setActiveFilter] = useState<FilterType>('ALL')
+  const [activeType, setActiveType] = useState<NotificationType>('ALL')
+
+  // Fetch notifications
+  const { data, isLoading, isRefetching, refetch } = useQuery({
+    queryKey: ['notifications'],
+    queryFn: () => notificationsClientService.getAll({ page: 1, limit: 100 }), // Fetch more to simulate client-side filtering
   })
 
-  const notifications: Notification[] = Array.isArray(data?.data) ? data!.data : []
+  const notifications = useMemo<Notification[]>(
+    () => (Array.isArray(data?.data) ? data!.data : []),
+    [data]
+  )
 
+  // Calculate stats
+  const unreadCount = notifications.filter((n) => n.status !== 'READ').length
+  const totalCount = notifications.length
+
+  // Mutations
+
+  const handleClearFilters = () => {
+    setSearchQuery('')
+    setActiveFilter('ALL')
+    setActiveType('ALL')
+  }
   const markAsReadMutation = useMutation({
     mutationFn: (id: string) => notificationsClientService.markAsRead(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] })
+      toast.success('Notification marked as read')
+    },
+    onError: () => {
+      toast.error('Failed to mark as read')
+    },
   })
 
   const markAllMutation = useMutation({
     mutationFn: () => notificationsClientService.markAllAsRead(),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] })
+      toast.success('All notifications marked as read')
+    },
+    onError: () => {
+      toast.error('Failed to mark all as read')
+    },
   })
 
-  const filtered = typeFilter
-    ? notifications.filter((n) => {
-        // Try metadata.type first, fallback to title/message search
-        // Normalize to uppercase to compare SERVICE/PURCHASE
-        const metaType = (n as unknown as { metadata?: { type?: string } }).metadata?.type
-        if (metaType && typeof metaType === 'string') {
-          return metaType.toLowerCase() === typeFilter.toLowerCase()
-        }
-        const txt = `${n.title} ${n.message ?? ''}`.toLowerCase()
-        return txt.includes(typeFilter.toLowerCase())
-      })
-    : notifications
-
+  // Handlers
   const handleMarkAsRead = (id: string) => {
-    void markAsReadMutation.mutateAsync(id)
+    markAsReadMutation.mutate(id)
+  }
+
+  const handleDelete = (id: string) => {
+    // Mock delete for now as API is not available
+    toast.success(`Notification ${id} deleted (Mock)`)
+    // In a real app, we would call delete API here
+  }
+
+  const handleViewDetails = (n: Notification) => {
+    // Mark as read if unread
+    if (n.status !== 'READ') {
+      markAsReadMutation.mutate(n.id)
+    }
+
+    // Navigate logic
+    const meta = n as unknown as { metadata?: { requestId?: string; type?: string } }
+    const metaType = meta.metadata?.type?.toLowerCase()
+    const requestId = meta.metadata?.requestId || n.alertId
+
+    // Helper to extract UUID
+    const extractId = (text: string) => {
+      const match = text.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i)
+      return match ? match[0] : null
+    }
+
+    const id = requestId || extractId(`${n.title} ${n.message || ''}`)
+
+    if (id) {
+      if (metaType === 'service' || n.title.toLowerCase().includes('service')) {
+        router.push(`/system/service-requests/${id}`)
+        return
+      }
+      if (metaType === 'purchase' || n.title.toLowerCase().includes('purchase')) {
+        router.push(`/system/purchase-requests/${id}`)
+        return
+      }
+    }
+
+    // Default fallback
+    router.push('/system/notifications')
   }
 
   const handleMarkAll = () => {
-    void markAllMutation.mutateAsync()
+    markAllMutation.mutate()
   }
 
-  const handleBackToSystem = () => {
-    void router.push('/system')
-  }
+  // Filter logic
+  const filteredNotifications = useMemo(() => {
+    return notifications.filter((n) => {
+      const meta = n as Notification & { metadata?: NotificationMetadata }
 
-  const extractServiceRequestId = (text?: string): string | null => {
-    if (!text) return null
-    const uuidRegex = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i
-    const match = text.match(uuidRegex)
-    return match ? match[0] : null
-  }
+      // 1. Search
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase()
+        const title = n.title.toLowerCase()
+        const message = (n.message || '').toLowerCase()
+        const requestId = (meta.metadata?.requestNumber || '').toLowerCase()
 
-  const getNotificationTarget = (n: Notification) => {
-    const meta = n as unknown as { metadata?: { requestId?: string; type?: string } }
-    const metaType = meta.metadata?.type
-    if (metaType && typeof metaType === 'string' && metaType.toLowerCase() === 'service') {
-      const requestId =
-        meta.metadata?.requestId ??
-        n.alertId ??
-        extractServiceRequestId(`${n.title} ${n.message ?? ''}`)
-      if (requestId) return `/system/service-requests/${requestId}`
-    }
-    if (metaType && typeof metaType === 'string' && metaType.toLowerCase() === 'purchase') {
-      const requestId =
-        meta.metadata?.requestId ??
-        n.alertId ??
-        extractServiceRequestId(`${n.title} ${n.message ?? ''}`)
-      if (requestId) return `/system/purchase-requests/${requestId}`
-    }
-    // Fallback: detect keywords/content and check for a UUID
-    const id = extractServiceRequestId(`${n.title} ${n.message ?? ''}`)
-    if (!id) return null
-    const lower = `${n.title ?? ''} ${n.message ?? ''}`.toLowerCase()
-    if (lower.includes('service')) return `/system/service-requests/${id}`
-    if (lower.includes('purchase')) return `/system/purchase-requests/${id}`
-    return null
-  }
+        if (!title.includes(query) && !message.includes(query) && !requestId.includes(query)) {
+          return false
+        }
+      }
+
+      // 2. Status Filter
+      if (activeFilter === 'UNREAD' && n.status === 'READ') return false
+      if (activeFilter === 'READ' && n.status !== 'READ') return false
+
+      // 3. Type Filter
+      if (activeType !== 'ALL') {
+        const metaType = (meta.metadata?.type || '').toLowerCase()
+        const title = n.title.toLowerCase()
+
+        if (activeType === 'PURCHASE' && metaType !== 'purchase' && !title.includes('purchase'))
+          return false
+        if (activeType === 'SERVICE' && metaType !== 'service' && !title.includes('service'))
+          return false
+        if (activeType === 'SYSTEM' && !title.includes('alert') && !title.includes('system'))
+          return false
+      }
+
+      return true
+    })
+  }, [notifications, searchQuery, activeFilter, activeType])
 
   return (
-    <div>
-      <div className="mb-4 flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-medium">{t('notifications.list.title')}</h3>
-          {typeFilter ? (
-            <p className="text-muted-foreground text-sm">Bộ lọc: {typeFilter}</p>
-          ) : null}
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={handleBackToSystem}>
-            {t('common.back')}
-          </Button>
-          <Button size="sm" onClick={handleMarkAll} disabled={markAllMutation.isPending}>
-            {t('notifications.mark_all')}
-          </Button>
+    <div className="space-y-6 pb-10">
+      <NotificationHeader
+        unreadCount={unreadCount}
+        totalCount={totalCount}
+        onRefresh={() => refetch()}
+        onMarkAllAsRead={handleMarkAll}
+        isRefreshing={isRefetching}
+      />
+
+      <div className="container mx-auto max-w-5xl px-4 md:px-6">
+        <NotificationFilters
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          activeFilter={activeFilter}
+          onFilterChange={setActiveFilter}
+          activeType={activeType}
+          onTypeChange={setActiveType}
+          onClearFilters={handleClearFilters}
+          resultCount={filteredNotifications.length}
+        />
+
+        <div className="mt-6">
+          <NotificationList
+            notifications={filteredNotifications}
+            isLoading={isLoading}
+            onMarkAsRead={handleMarkAsRead}
+            onDelete={handleDelete}
+            onViewDetails={handleViewDetails}
+          />
         </div>
       </div>
-
-      {isLoading ? (
-        <div className="py-8 text-center text-gray-500">{t('notifications.loading')}</div>
-      ) : error ? (
-        <div className="py-8 text-center text-red-500">{t('notifications.error.load')}</div>
-      ) : filtered.length === 0 ? (
-        <div className="py-8 text-center text-gray-500">{t('notifications.empty')}</div>
-      ) : (
-        <ul className="divide-y">
-          {filtered.map((n) => (
-            <li
-              key={n.id}
-              onClick={() => {
-                const target = getNotificationTarget(n)
-                if (target) router.push(target)
-                else router.push('/system/notifications')
-              }}
-              className="flex cursor-pointer items-start justify-between gap-4 py-3"
-            >
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <strong>{n.title}</strong>
-                  {n.status !== 'READ' ? (
-                    <Badge variant="secondary">{t('notifications.badge.new')}</Badge>
-                  ) : null}
-                </div>
-                <div className="text-muted-foreground text-sm">
-                  {new Date(n.createdAt).toLocaleString('vi-VN')}
-                </div>
-                {n.message ? <div className="mt-2 text-sm">{n.message}</div> : null}
-              </div>
-              <div className="flex flex-col items-end gap-2">
-                <div className="text-muted-foreground text-sm">{n.channel}</div>
-                <div className="flex gap-2">
-                  {n.status !== 'READ' && (
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleMarkAsRead(n.id)
-                      }}
-                    >
-                      {t('notifications.mark_read')}
-                    </Button>
-                  )}
-                  {getNotificationTarget(n) && (
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        const target = getNotificationTarget(n)
-                        if (target) router.push(target)
-                      }}
-                    >
-                      {t('notifications.view_details')}
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
     </div>
   )
 }

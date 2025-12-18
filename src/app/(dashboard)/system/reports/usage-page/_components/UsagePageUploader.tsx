@@ -81,14 +81,12 @@ export function UsagePageUploader() {
         deviceInfo: device ?? null,
       })
       setStep('review')
-      toast.success(
-        t('usagePageUploader.process_success') || 'Đã phân tích ảnh, hãy rà soát trước khi lưu'
-      )
+      toast.success(t('usage_page_uploader.process_success'))
     } catch (err: unknown) {
       const message =
         (err as { message?: string })?.message ||
         t('usagePageUploader.process_error') ||
-        'Lỗi khi xử lý ảnh. Vui lòng thử lại.'
+        t('usage_page_uploader.process_error')
       setError(message)
       toast.error(message)
     } finally {
@@ -104,8 +102,7 @@ export function UsagePageUploader() {
   const handleApprove = async () => {
     if (!formData.deviceId) {
       const msg =
-        t('usagePageUploader.device_not_found_save') ||
-        'Không tìm thấy thiết bị khớp với Serial Number. Không thể lưu.'
+        t('usagePageUploader.device_not_found_save') || t('usage_page_uploader.device_not_found')
       setError(msg)
       toast.error(msg)
       return
@@ -120,7 +117,7 @@ export function UsagePageUploader() {
         totalBlackWhitePages: Number(formData.totalBlackWhitePages),
         recordedAt: formData.recordedAt,
       })
-      const msg = t('usagePageUploader.approve_success') || 'Đã lưu báo cáo thành công!'
+      const msg = t('usage_page_uploader.approve_success')
       setSuccess(msg)
       toast.success(msg)
       setTimeout(() => {
@@ -130,7 +127,7 @@ export function UsagePageUploader() {
       const message =
         (err as { message?: string })?.message ||
         t('usagePageUploader.approve_error') ||
-        'Lỗi khi lưu dữ liệu'
+        t('usage_page_uploader.save_error')
       setError(message)
       toast.error(message)
     } finally {
@@ -158,10 +155,9 @@ export function UsagePageUploader() {
   return (
     <Card className="shadow-lg">
       <CardHeader>
-        <CardTitle>{t('usagePageUploader.title') || 'Cập nhật Counter Máy In'}</CardTitle>
+        <CardTitle>{t('usage_page_uploader.title')}</CardTitle>
         <CardDescription>
-          {t('usagePageUploader.subtitle') ||
-            'Tải ảnh Usage Page, hệ thống OCR và cho phép chỉnh sửa trước khi lưu.'}
+          {t('usagePageUploader.subtitle') || t('usage_page_uploader.description')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -190,9 +186,7 @@ export function UsagePageUploader() {
               {!previewUrl ? (
                 <label className="text-muted-foreground flex h-full w-full cursor-pointer flex-col items-center justify-center px-4 text-center">
                   <Upload className="mb-3 h-10 w-10 opacity-60" />
-                  <span className="text-sm">
-                    {t('usagePageUploader.upload_prompt') || 'Click hoặc kéo thả ảnh Usage Page'}
-                  </span>
+                  <span className="text-sm">{t('usage_page_uploader.upload_prompt')}</span>
                   <Input
                     type="file"
                     accept="image/*"
@@ -236,12 +230,12 @@ export function UsagePageUploader() {
                 {isProcessing ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    {t('usagePageUploader.processing') || 'Đang phân tích ảnh...'}
+                    {t('usage_page_uploader.processing')}
                   </>
                 ) : (
                   <>
                     <Upload className="h-4 w-4" />
-                    {t('usagePageUploader.process_cta') || 'Phân tích ảnh (OCR)'}
+                    {t('usage_page_uploader.process_cta')}
                   </>
                 )}
               </Button>
@@ -254,7 +248,7 @@ export function UsagePageUploader() {
               <div className="space-y-4">
                 <div className="rounded-lg border border-blue-100 bg-blue-50 p-4">
                   <p className="mb-2 text-xs font-semibold text-blue-800 uppercase">
-                    {t('usagePageUploader.device_info') || 'Thông tin thiết bị'}
+                    {t('usage_page_uploader.device_info')}
                   </p>
                   {formData.deviceInfo ? (
                     <div className="space-y-1 text-sm text-blue-900">
@@ -266,11 +260,11 @@ export function UsagePageUploader() {
                         <span className="font-semibold">Serial:</span> {formData.serialNumber}
                       </p>
                       <p>
-                        <span className="font-semibold">Khách hàng:</span>{' '}
+                        <span className="font-semibold">{t('usage_page_uploader.customer')}:</span>{' '}
                         {formData.deviceInfo.customer?.name}
                       </p>
                       <p>
-                        <span className="font-semibold">Vị trí:</span>{' '}
+                        <span className="font-semibold">{t('usage_page_uploader.location')}:</span>{' '}
                         {formData.deviceInfo.location}
                       </p>
                     </div>
@@ -279,7 +273,7 @@ export function UsagePageUploader() {
                       <AlertCircle className="h-4 w-4" />
                       <span>
                         {t('usagePageUploader.device_not_found') ||
-                          'Không tìm thấy thiết bị khớp với Serial trong ảnh.'}
+                          t('usage_page_uploader.device_not_found_in_image')}
                       </span>
                     </div>
                   )}
@@ -287,9 +281,7 @@ export function UsagePageUploader() {
 
                 <div className="space-y-3">
                   <div className="space-y-1">
-                    <Label htmlFor="recordedAt">
-                      {t('usagePageUploader.recorded_at') || 'Ngày ghi nhận'}
-                    </Label>
+                    <Label htmlFor="recordedAt">{t('usage_page_uploader.recorded_at')}</Label>
                     <Input
                       id="recordedAt"
                       type="date"
@@ -330,7 +322,7 @@ export function UsagePageUploader() {
 
                   <div className="space-y-1">
                     <Label htmlFor="totalPageCount" className="font-semibold">
-                      {t('usagePageUploader.total_page') || 'Total Page Count (Tổng)'}
+                      {t('usage_page_uploader.total_page')}
                     </Label>
                     <Input
                       id="totalPageCount"
@@ -342,8 +334,7 @@ export function UsagePageUploader() {
                       className="bg-muted/50 text-lg font-semibold"
                     />
                     <p className="text-muted-foreground text-xs">
-                      {t('usagePageUploader.total_hint') ||
-                        '*Hãy kiểm tra kỹ số tổng với ảnh bên trái'}
+                      {t('usage_page_uploader.validation_note')}
                     </p>
                   </div>
                 </div>
@@ -357,7 +348,7 @@ export function UsagePageUploader() {
                       onClick={handleReset}
                       disabled={isProcessing || isApproving}
                     >
-                      {t('usagePageUploader.reset') || 'Hủy / Làm lại'}
+                      {t('usage_page_uploader.reset')}
                     </Button>
                     <Button
                       type="button"
@@ -368,12 +359,12 @@ export function UsagePageUploader() {
                       {isApproving ? (
                         <>
                           <Loader2 className="h-4 w-4 animate-spin" />
-                          {t('usagePageUploader.approving') || 'Đang lưu...'}
+                          {t('usage_page_uploader.approving')}
                         </>
                       ) : (
                         <>
                           <Save className="h-4 w-4" />
-                          {t('usagePageUploader.approve') || 'Xác nhận & Lưu'}
+                          {t('usage_page_uploader.approve')}
                         </>
                       )}
                     </Button>
@@ -383,10 +374,7 @@ export function UsagePageUploader() {
             ) : (
               <div className="border-muted-foreground/20 bg-muted/30 text-muted-foreground flex h-full flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 text-center">
                 <Upload className="mb-4 h-12 w-12 opacity-40" />
-                <p className="text-sm">
-                  {t('usagePageUploader.placeholder') ||
-                    'Vui lòng upload ảnh Usage Page để hệ thống trích xuất dữ liệu.'}
-                </p>
+                <p className="text-sm">{t('usage_page_uploader.upload_instruction')}</p>
               </div>
             )}
           </div>

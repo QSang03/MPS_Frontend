@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogTrigger } from '@/components/ui/dialog'
 import { SystemModalLayout } from '@/components/system/SystemModalLayout'
 import { Wrench } from 'lucide-react'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { ServiceRequestForm } from './ServiceRequestForm'
 
 interface ServiceRequestFormModalProps {
@@ -17,6 +18,7 @@ interface ServiceRequestFormModalProps {
  * Service Request Form in a modal dialog
  */
 export function ServiceRequestFormModal({ customerId }: ServiceRequestFormModalProps) {
+  const { t } = useLocale()
   const [open, setOpen] = useState(false)
 
   return (
@@ -24,15 +26,15 @@ export function ServiceRequestFormModal({ customerId }: ServiceRequestFormModalP
       <DialogTrigger asChild>
         <Button className="gap-2">
           <Plus className="h-4 w-4" />
-          Tạo yêu cầu
+          {t('requests.service.create_button')}
         </Button>
       </DialogTrigger>
 
       <AnimatePresence>
         {open && (
           <SystemModalLayout
-            title="Tạo yêu cầu bảo trì mới"
-            description="Điền thông tin chi tiết cho yêu cầu bảo trì mới"
+            title={t('requests.service.modal.title')}
+            description={t('requests.service.modal.description')}
             icon={Wrench}
             variant="create"
           >

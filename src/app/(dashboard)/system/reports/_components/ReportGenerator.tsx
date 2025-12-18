@@ -12,25 +12,32 @@ import {
 import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
 import { FileText, Loader2 } from 'lucide-react'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 interface ReportGeneratorProps {
   customerId: string
 }
 
-const reportTypes = [
-  { value: 'monthly-usage', label: 'Báo cáo sử dụng hàng tháng' },
-  { value: 'device-performance', label: 'Báo cáo hiệu suất thiết bị' },
-  { value: 'service-summary', label: 'Tóm tắt yêu cầu dịch vụ' },
-  { value: 'cost-analysis', label: 'Báo cáo phân tích chi phí' },
+const reportTypesBase = [
+  { value: 'monthly-usage', labelKey: 'reports.types.monthly_usage' },
+  { value: 'device-performance', labelKey: 'reports.types.device_performance' },
+  { value: 'service-summary', labelKey: 'reports.types.service_summary' },
+  { value: 'cost-analysis', labelKey: 'reports.types.cost_analysis' },
 ]
 
 export function ReportGenerator({}: ReportGeneratorProps) {
+  const { t } = useLocale()
   const [reportType, setReportType] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
 
+  const reportTypes = reportTypesBase.map((type) => ({
+    ...type,
+    label: t(type.labelKey),
+  }))
+
   const handleGenerate = async () => {
     if (!reportType) {
-      toast.error('Please select a report type')
+      toast.error(t('reports.generator.select_type_error'))
       return
     }
 
@@ -40,16 +47,16 @@ export function ReportGenerator({}: ReportGeneratorProps) {
     await new Promise((resolve) => setTimeout(resolve, 2000))
 
     setIsGenerating(false)
-    toast.success('Report generated successfully! Check Recent Reports.')
+    toast.success(t('reports.generator.success'))
   }
 
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <Label>Report Type</Label>
+        <Label>{t('reports.generator.type_label')}</Label>
         <Select value={reportType} onValueChange={setReportType} disabled={isGenerating}>
           <SelectTrigger>
-            <SelectValue placeholder="Select report type" />
+            <SelectValue placeholder={t('reports.generator.type_placeholder')} />
           </SelectTrigger>
           <SelectContent>
             {reportTypes.map((type) => (
@@ -65,12 +72,12 @@ export function ReportGenerator({}: ReportGeneratorProps) {
         {isGenerating ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Generating...
+            {t('reports.generator.generating')}
           </>
         ) : (
           <>
             <FileText className="mr-2 h-4 w-4" />
-            Generate Report
+            {t('reports.generator.generate_button')}
           </>
         )}
       </Button>

@@ -300,14 +300,14 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
         color: 'text-slate-600',
       },
       {
-        label: 'Khách hàng đóng',
+        label: t('requests.service.timeline.customer_closed'),
         time: data.customerClosedAt,
         by: data.customerClosedByName ?? data.customerClosedBy,
         icon: XCircle,
         color: 'text-rose-500',
       },
       {
-        label: 'Đã duyệt',
+        label: t('requests.service.timeline.approved'),
         time: data.approvedAt,
         by: data.approvedByName ?? data.approvedBy,
         icon: CheckCircle2,
@@ -331,7 +331,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
               >
                 <Link href="/system/requests">
                   <ArrowLeft className="mr-1 h-4 w-4" />
-                  Quay lại
+                  {t('common.back')}
                 </Link>
               </Button>
             </div>
@@ -348,7 +348,10 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
               <span>•</span>
               <span className="flex items-center gap-1">
                 <User className="h-3.5 w-3.5" />
-                {data.createdByName ?? data.createdBy ?? data.customerId ?? 'Khách vãng lai'}
+                {data.createdByName ??
+                  data.createdBy ??
+                  data.customerId ??
+                  t('requests.service.detail.walk_in_customer')}
               </span>
               {data.approvedAt && (
                 <>
@@ -391,13 +394,15 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
               <CardHeader className="bg-slate-50/50 pb-3 dark:bg-slate-900/50">
                 <CardTitle className="flex items-center gap-2 text-base font-medium">
                   <FileText className="text-muted-foreground h-4 w-4" />
-                  Mô tả chi tiết
+                  {t('requests.service.detail.description')}
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-4">
                 <p className="text-sm leading-relaxed whitespace-pre-wrap md:text-base">
                   {data.description || (
-                    <span className="text-muted-foreground italic">Không có mô tả chi tiết.</span>
+                    <span className="text-muted-foreground italic">
+                      {t('requests.service.detail.no_description')}
+                    </span>
                   )}
                 </p>
                 {Array.isArray(data.attachments) && data.attachments.length > 0 && (
@@ -405,7 +410,9 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                     <div className="mb-2 flex items-center gap-2">
                       <ImageIcon className="text-muted-foreground h-4 w-4" />
                       <div className="text-sm font-medium">
-                        Tệp đính kèm ({data.attachments.length})
+                        {t('requests.service.detail.attachments', {
+                          count: data.attachments.length,
+                        })}
                       </div>
                     </div>
                     <div className="grid grid-cols-3 gap-2">
@@ -430,7 +437,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                             ) : (
                               <div className="text-muted-foreground flex flex-col items-center gap-1 text-xs">
                                 <FileText className="h-4 w-4" />
-                                <span>Không hỗ trợ</span>
+                                <span>{t('common.unsupported')}</span>
                               </div>
                             )}
                           </button>
@@ -468,10 +475,10 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                 <CardHeader className="pb-3">
                   <CardTitle className="flex items-center gap-2 text-base font-medium">
                     <Activity className="h-4 w-4 text-[var(--brand-600)]" />
-                    Trao đổi & Thảo luận
+                    {t('requests.service.detail.conversation_title')}
                   </CardTitle>
                   <CardDescription>
-                    Lịch sử trao đổi giữa kỹ thuật viên và khách hàng
+                    {t('requests.service.detail.conversation_description')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex-1 overflow-hidden p-0">
@@ -523,7 +530,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                           <div className="mb-4 flex items-start justify-between">
                             <div>
                               <div className="text-sm font-semibold">
-                                Phiếu #{cost.id.slice(0, 8)}
+                                {t('requests.service.costs.voucher')} #{cost.id.slice(0, 8)}
                               </div>
                               <div className="text-muted-foreground text-xs">
                                 {formatDateTime(cost.createdAt)}
@@ -547,10 +554,14 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                               <Table>
                                 <TableHeader>
                                   <TableRow className="bg-muted/50 hover:bg-transparent">
-                                    <TableHead className="h-9 text-xs">Loại</TableHead>
-                                    <TableHead className="h-9 text-xs">Diễn giải</TableHead>
+                                    <TableHead className="h-9 text-xs">
+                                      {t('requests.service.costs.type')}
+                                    </TableHead>
+                                    <TableHead className="h-9 text-xs">
+                                      {t('requests.service.costs.description')}
+                                    </TableHead>
                                     <TableHead className="h-9 text-right text-xs">
-                                      Thành tiền
+                                      {t('requests.service.costs.amount')}
                                     </TableHead>
                                   </TableRow>
                                 </TableHeader>
@@ -643,7 +654,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                       </DialogHeader>
                       <div className="mt-2">
                         <p className="text-muted-foreground text-sm">
-                          Ghi chú hành động (tùy chọn)
+                          {t('requests.service.update_status.action_note_label')}
                         </p>
                         <textarea
                           value={statusNote}
@@ -657,24 +668,32 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                           pendingStatusChange === ServiceRequestStatus.CLOSED) && (
                           <div className="mt-3 flex flex-wrap items-center gap-2">
                             <span className="text-muted-foreground mr-2 text-sm">
-                              Lý do mặc định:
+                              {t('requests.service.update_status.default_reasons')}:
                             </span>
                             <Button
                               size="sm"
                               variant="secondary"
-                              onClick={() => setStatusNote('Bảo trì định kỳ')}
+                              onClick={() =>
+                                setStatusNote(
+                                  t('requests.service.update_status.regular_maintenance')
+                                )
+                              }
                             >
-                              Bảo trì định kỳ
+                              {t('requests.service.update_status.regular_maintenance')}
                             </Button>
                             <Button
                               size="sm"
                               variant="secondary"
-                              onClick={() => setStatusNote('Bảo trì theo yêu cầu')}
+                              onClick={() =>
+                                setStatusNote(
+                                  t('requests.service.update_status.on_demand_maintenance')
+                                )
+                              }
                             >
-                              Bảo trì theo yêu cầu
+                              {t('requests.service.update_status.on_demand_maintenance')}
                             </Button>
                             <Button size="sm" variant="outline" onClick={() => setStatusNote('')}>
-                              Xóa
+                              {t('common.clear')}
                             </Button>
                           </div>
                         )}
@@ -687,11 +706,13 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                                 checked={isPastTime}
                                 onChange={(e) => setIsPastTime(e.target.checked)}
                               />
-                              <span>Ghi nhận thời điểm trong quá khứ</span>
+                              <span>{t('requests.service.update_status.record_past_time')}</span>
                             </label>
                             {isPastTime && (
                               <div>
-                                <label className="text-muted-foreground text-sm">Thời gian</label>
+                                <label className="text-muted-foreground text-sm">
+                                  {t('common.time')}
+                                </label>
                                 <input
                                   type="datetime-local"
                                   value={pastTime}
@@ -706,7 +727,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                       <DialogFooter className="mt-4">
                         <div className="flex w-full gap-2">
                           <Button variant="outline" onClick={() => setPendingStatusChange(null)}>
-                            Hủy
+                            {t('common.cancel')}
                           </Button>
                           <Button
                             onClick={() => {
@@ -733,7 +754,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                             }}
                             disabled={updating || (isPastTime && !pastTime)}
                           >
-                            Xác nhận
+                            {t('common.confirm')}
                           </Button>
                         </div>
                       </DialogFooter>
@@ -745,7 +766,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                 <div className="space-y-4">
                   <div className="border-b border-gray-200 pb-3">
                     <label className="text-sm font-semibold text-gray-700">
-                      Kỹ thuật viên phụ trách
+                      {t('requests.service.detail.assigned_technician')}
                     </label>
                   </div>
                   <ActionGuard pageId="customer-requests" actionId="assign-service">
@@ -755,12 +776,16 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                         operator="$eq"
                         value={selectedAssignee ?? data.assignedTo}
                         onChange={(v) => setSelectedAssignee(v as string)}
-                        placeholder={data.assignedToName ?? data.assignedTo ?? 'Chọn nhân viên...'}
+                        placeholder={
+                          data.assignedToName ??
+                          data.assignedTo ??
+                          t('requests.service.detail.select_employee')
+                        }
                         fetchParams={sysCustomerId ? { customerId: sysCustomerId } : undefined}
                         disabled={assignMutation.isPending}
                       />
                       <textarea
-                        placeholder="Ghi chú phân công (tùy chọn)..."
+                        placeholder={t('requests.service.detail.assignment_note_placeholder')}
                         className="flex min-h-[80px] w-full resize-y rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm shadow-sm transition-colors placeholder:text-gray-400 focus-visible:border-[var(--brand-500)] focus-visible:ring-2 focus-visible:ring-[var(--brand-500)] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                         value={assignNote}
                         onChange={(e) => setAssignNote(e.target.value)}
@@ -771,7 +796,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                         size="sm"
                         onClick={() => {
                           if (!selectedAssignee) {
-                            toast.error('Vui lòng chọn kỹ thuật viên')
+                            toast.error(t('requests.service.detail.select_technician_required'))
                             return
                           }
                           assignMutation.mutate({
@@ -781,7 +806,9 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                         }}
                         disabled={assignMutation.isPending}
                       >
-                        {assignMutation.isPending ? 'Đang cập nhật...' : 'Cập nhật phân công'}
+                        {assignMutation.isPending
+                          ? t('common.updating')
+                          : t('requests.service.detail.update_assignment')}
                       </Button>
                     </div>
                   </ActionGuard>
@@ -796,8 +823,10 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                   >
                     <div className="flex justify-center">
                       <DeleteDialog
-                        title="Xóa yêu cầu"
-                        description={`Bạn có chắc chắn muốn xóa yêu cầu ${data.title ?? ''}? Hành động không thể hoàn tác.`}
+                        title={t('requests.service.delete.title')}
+                        description={t('requests.service.delete.confirm_description', {
+                          title: data.title ?? '',
+                        })}
                         onConfirm={async () => {
                           await deleteMutation.mutateAsync()
                         }}
@@ -808,7 +837,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                             disabled={deleteMutation.isPending}
                           >
                             <XCircle className="mr-2 h-4 w-4" />
-                            Xóa yêu cầu này
+                            {t('requests.service.delete.button')}
                           </Button>
                         }
                       />
@@ -824,7 +853,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
               <Card>
                 <CardHeader className="pt-4 pb-2">
                   <CardTitle className="text-muted-foreground text-sm font-medium uppercase">
-                    Thông tin SLA
+                    {t('requests.service.detail.sla_info')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -832,11 +861,15 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                     <div className="text-sm font-semibold">{data.sla.name}</div>
                     <div className="mt-2 grid grid-cols-2 gap-2">
                       <div className="text-xs">
-                        <span className="text-muted-foreground block">Response Time</span>
+                        <span className="text-muted-foreground block">
+                          {t('requests.service.detail.response_time')}
+                        </span>
                         <span className="font-medium">{data.sla.responseTimeHours}h</span>
                       </div>
                       <div className="text-xs">
-                        <span className="text-muted-foreground block">Resolution Time</span>
+                        <span className="text-muted-foreground block">
+                          {t('requests.service.detail.resolution_time')}
+                        </span>
                         <span className="font-medium">{data.sla.resolutionTimeHours}h</span>
                       </div>
                     </div>
@@ -850,7 +883,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
               <CardHeader className="bg-muted/20 border-b pt-4 pb-3">
                 <CardTitle className="flex items-center gap-2 text-sm font-semibold">
                   <Building2 className="h-4 w-4" />
-                  Khách hàng
+                  {t('requests.service.detail.customer')}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 pt-4">
@@ -863,7 +896,10 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                 <div className="grid gap-2 text-sm">
                   <InfoRow label="Email" value={data.customer?.contactEmail} />
                   <InfoRow label="Phone" value={data.customer?.contactPhone} />
-                  <InfoRow label="Liên hệ" value={data.customer?.contactPerson} />
+                  <InfoRow
+                    label={t('requests.service.detail.contact')}
+                    value={data.customer?.contactPerson}
+                  />
                 </div>
                 {Array.isArray(data.customer?.address) && data.customer.address.length > 0 && (
                   <div className="text-muted-foreground mt-2 border-t pt-2 text-xs">
@@ -880,7 +916,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
               <CardHeader className="bg-muted/20 border-b pt-4 pb-3">
                 <CardTitle className="flex items-center gap-2 text-sm font-semibold">
                   <Smartphone className="h-4 w-4" />
-                  Thiết bị
+                  {t('requests.service.detail.device')}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 pt-4">
@@ -889,7 +925,10 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                     <InfoRow label="Model" value={data.device.deviceModel?.name} />
                     <InfoRow label="Serial" value={data.device.serialNumber} />
                     <InfoRow label="IP" value={data.device.ipAddress} />
-                    <InfoRow label="Vị trí" value={data.device.location} />
+                    <InfoRow
+                      label={t('requests.service.detail.location')}
+                      value={data.device.location}
+                    />
                     <div className="pt-1">
                       <Badge variant="secondary" className="text-xs font-normal">
                         {data.device.status}
@@ -897,7 +936,9 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                     </div>
                   </div>
                 ) : (
-                  <div className="text-muted-foreground text-sm italic">Chưa liên kết thiết bị</div>
+                  <div className="text-muted-foreground text-sm italic">
+                    {t('requests.service.detail.no_device_linked')}
+                  </div>
                 )}
               </CardContent>
             </Card>
@@ -905,13 +946,15 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
             {/* 5. Timeline */}
             <Card>
               <CardHeader className="pt-4 pb-3">
-                <CardTitle className="text-sm font-semibold">Hoạt động</CardTitle>
+                <CardTitle className="text-sm font-semibold">
+                  {t('requests.service.detail.activity')}
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="border-muted relative ml-2 space-y-6 border-l pb-2">
                   {timeline.length === 0 ? (
                     <div className="text-muted-foreground pl-4 text-xs">
-                      Chưa có hoạt động ghi nhận.
+                      {t('requests.service.detail.no_activity')}
                     </div>
                   ) : (
                     timeline.map((event, idx) => {
@@ -933,7 +976,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                             </span>
                             {event.by && (
                               <span className="text-muted-foreground mt-0.5 text-xs">
-                                bởi {event.by}
+                                {t('common.by')} {event.by}
                               </span>
                             )}
                           </div>
@@ -950,8 +993,8 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
         {/* --- Dialogs (Hidden) --- */}
         <Dialog open={showAddCost} onOpenChange={(open) => !open && setShowAddCost(false)}>
           <SystemModalLayout
-            title="Ghi chi phí mới"
-            description="Ghi nhận chi phí vật tư hoặc nhân công cho yêu cầu này"
+            title={t('requests.service.costs.add_title')}
+            description={t('requests.service.costs.add_description')}
             icon={FileText}
             variant="create"
             footer={
@@ -997,9 +1040,11 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
             <div className="flex h-full flex-col">
               <div className="mb-4 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground text-sm">Danh sách khoản mục</span>
+                  <span className="text-muted-foreground text-sm">
+                    {t('requests.service.costs.items_list')}
+                  </span>
                   <Button variant="secondary" size="sm" onClick={addItem} className="h-8 text-xs">
-                    <Plus className="mr-1 h-3 w-3" /> Thêm mục
+                    <Plus className="mr-1 h-3 w-3" /> {t('requests.service.costs.add_item')}
                   </Button>
                 </div>
                 <CurrencySelector
@@ -1029,7 +1074,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                     <div className="grid flex-1 gap-3 sm:grid-cols-[130px_1fr_140px]">
                       <div className="space-y-1">
                         <label className="text-muted-foreground text-[10px] font-medium uppercase sm:hidden">
-                          Loại
+                          {t('requests.service.costs.type')}
                         </label>
                         <Select
                           value={it.type}
@@ -1041,26 +1086,32 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="LABOR">Nhân công</SelectItem>
-                            <SelectItem value="PARTS">Vật tư</SelectItem>
-                            <SelectItem value="OTHER">Khác</SelectItem>
+                            <SelectItem value="LABOR">
+                              {t('requests.service.costs.labor')}
+                            </SelectItem>
+                            <SelectItem value="PARTS">
+                              {t('requests.service.costs.parts')}
+                            </SelectItem>
+                            <SelectItem value="OTHER">
+                              {t('requests.service.costs.other')}
+                            </SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                       <div className="space-y-1">
                         <label className="text-muted-foreground text-[10px] font-medium uppercase sm:hidden">
-                          Mô tả
+                          {t('requests.service.costs.description')}
                         </label>
                         <Input
                           value={it.note ?? ''}
                           onChange={(e) => updateItemAt(idx, { note: e.target.value })}
-                          placeholder="Diễn giải chi tiết..."
+                          placeholder={t('requests.service.costs.description_placeholder')}
                           className="bg-background h-9"
                         />
                       </div>
                       <div className="space-y-1">
                         <label className="text-muted-foreground text-[10px] font-medium uppercase sm:hidden">
-                          Số tiền
+                          {t('requests.service.costs.amount')}
                         </label>
                         <div className="relative">
                           <Input
@@ -1073,7 +1124,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                             placeholder="0"
                           />
                           <span className="text-muted-foreground absolute top-1/2 right-3 -translate-y-1/2 text-xs font-medium">
-                            đ
+                            {t('currency.vnd_symbol')}
                           </span>
                         </div>
                       </div>
@@ -1091,9 +1142,9 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                 {newItems.length === 0 && (
                   <div className="text-muted-foreground bg-muted/10 flex h-32 flex-col items-center justify-center rounded-lg border-2 border-dashed">
                     <FileText className="mb-2 h-8 w-8 opacity-50" />
-                    <span className="text-sm">Chưa có mục chi phí nào</span>
+                    <span className="text-sm">{t('requests.service.costs.no_items')}</span>
                     <Button variant="outline" size="sm" onClick={addItem}>
-                      Thêm ngay
+                      {t('requests.service.costs.add_now')}
                     </Button>
                   </div>
                 )}
@@ -1101,7 +1152,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
 
               <div className="-mx-6 mt-4 -mb-4 flex items-center justify-between rounded-b-lg border-t bg-slate-50/80 px-6 pt-4 pb-4 dark:bg-slate-900/50">
                 <div className="text-muted-foreground text-sm font-medium">
-                  Tổng chi phí dự kiến
+                  {t('requests.service.costs.total_estimated')}
                 </div>
                 <div className="text-2xl font-bold text-[var(--brand-600)]">
                   {totalAmountForDraft.toLocaleString('vi-VN')}{' '}
@@ -1117,7 +1168,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
         >
           <DialogContent className="max-w-6xl p-0">
             <DialogHeader>
-              <DialogTitle>Ảnh đính kèm</DialogTitle>
+              <DialogTitle>{t('requests.service.detail.attachment')}</DialogTitle>
             </DialogHeader>
             <div className="flex items-center justify-center p-4">
               {selectedAttachment && (

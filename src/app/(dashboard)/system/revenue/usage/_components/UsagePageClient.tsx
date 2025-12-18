@@ -480,7 +480,7 @@ export default function UsagePageClient() {
         actionId="view-analytics-usage-enterprise"
         fallback={
           <div className="text-muted-foreground py-8 text-center">
-            Không có quyền truy cập báo cáo sử dụng doanh nghiệp
+            {t('usage.no_access.business_usage_report')}
           </div>
         }
       >
@@ -680,7 +680,7 @@ export default function UsagePageClient() {
           actionId="view-analytics-usage-customers"
           fallback={
             <div className="text-muted-foreground py-8 text-center">
-              Không có quyền truy cập báo cáo sử dụng khách hàng
+              {t('usage.no_access.customer_usage_report')}
             </div>
           }
         >
@@ -852,7 +852,7 @@ export default function UsagePageClient() {
             actionId="view-analytics-usage-customer"
             fallback={
               <div className="text-muted-foreground py-8 text-center">
-                Không có quyền truy cập báo cáo sử dụng khách hàng chi tiết
+                {t('usage.no_access.customer_usage_detailed_report')}
               </div>
             }
           >
@@ -1248,7 +1248,7 @@ export default function UsagePageClient() {
             actionId="view-analytics-usage-device"
             fallback={
               <div className="text-muted-foreground py-8 text-center">
-                Không có quyền truy cập báo cáo sử dụng thiết bị
+                {t('usage.no_access.device_usage_report')}
               </div>
             }
           >
