@@ -168,7 +168,7 @@ export function PurchaseRequestItemFormModal({
                     {t('purchase_request.items.consumable_type_required')}
                     {mode === 'edit' && (
                       <span className="text-muted-foreground ml-2 text-sm font-normal">
-                        (không thể thay đổi)
+                        {t('purchase_request.items.consumable_type_readonly')}
                       </span>
                     )}
                   </FormLabel>
@@ -236,7 +236,7 @@ export function PurchaseRequestItemFormModal({
                 onClick={() => onOpenChange(false)}
                 disabled={isLoading}
               >
-                {t('cancel')}
+                {t('common.cancel')}
               </Button>
               <Button type="submit" disabled={isLoading}>
                 {isLoading ? (

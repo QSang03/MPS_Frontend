@@ -43,6 +43,15 @@ import { Checkbox } from '@/components/ui/checkbox'
 import removeEmpty from '@/lib/utils/clean'
 import { sanitizeSubject } from '@/lib/policies/policy-form.utils'
 
+interface PolicyFormModalProps {
+  isOpen: boolean
+  onClose: () => void
+  onSubmit: (data: Partial<Policy>) => Promise<void>
+  initialData?: Partial<Policy> | null
+  viewOnly?: boolean
+  onRequestEdit?: () => void
+}
+
 export function PolicyFormModal({
   isOpen,
   onClose,
@@ -79,6 +88,8 @@ export function PolicyFormModal({
     deptCodeFromList: z.string().optional(),
     conditions: z.string().optional(),
   })
+
+  type PolicyFormData = z.infer<typeof policySchema>
 
   useEffect(() => {
     setLocalViewOnly(!!viewOnly)

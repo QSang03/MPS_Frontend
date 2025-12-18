@@ -1102,6 +1102,7 @@
   "purchase_request.detail.reason": "Reason",
   "purchase_request.status.cancelled_internal": "Cancelled (Internal)",
   "purchase_request.status.customer_cancelled": "Customer Cancelled",
+  "purchase_request.items.consumable_type_readonly": "(cannot be changed)",
   "purchase_request.placeholder.requester": "Enter requester name",
   "purchase_request.placeholder.update_note": "Enter note to save with status update",
   "billing.placeholder.note": "Enter billing note (optional)",

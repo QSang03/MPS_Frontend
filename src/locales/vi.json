@@ -1092,6 +1092,7 @@
   "purchase_request.detail.reason": "Lý do",
   "purchase_request.status.cancelled_internal": "Hủy (nội bộ)",
   "purchase_request.status.customer_cancelled": "Khách hàng hủy",
+  "purchase_request.items.consumable_type_readonly": "(không thể thay đổi)",
   "purchase_request.status.change_to": "Chuyển sang {label}",
   "purchase_request.status.change_arrow": "Chuyển → {label}",
   "purchase_request.items.add": "Thêm vật tư",
