@@ -193,8 +193,18 @@ export default function ImportExcelModal({ trigger }: ImportExcelModalProps = {}
                       t('consumable_types.import.template.capacity'),
                       t('consumable_types.import.template.compatible'),
                     ])
-                    sheet.addRow(['ABC-123', 'Mực in', 1000, 'Model A; Model B'])
-                    sheet.addRow(['DEF-456', 'Bộ lọc', 500, 'Model C'])
+                    sheet.addRow([
+                      'ABC-123',
+                      t('consumable_types.import.template.sample.name1'),
+                      1000,
+                      t('consumable_types.import.template.sample.compatible1'),
+                    ])
+                    sheet.addRow([
+                      'DEF-456',
+                      t('consumable_types.import.template.sample.name2'),
+                      500,
+                      t('consumable_types.import.template.sample.compatible2'),
+                    ])
                     sheet.columns = [{ width: 20 }, { width: 30 }, { width: 15 }, { width: 40 }]
                     const buf = await workbook.xlsx.writeBuffer()
                     const blob = new Blob([buf], {

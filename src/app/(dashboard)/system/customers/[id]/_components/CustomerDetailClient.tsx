@@ -205,7 +205,7 @@ export default function CustomerDetailClient({ customerId }: Props) {
   }
 
   const formatDateRange = (start?: string | null, end?: string | null) => {
-    if (!start && !end) return 'Không rõ thời hạn'
+    if (!start && !end) return t('customer.contract.unknown_duration')
     return `${formatDate(start)} — ${formatDate(end)}`
   }
 
@@ -273,11 +273,11 @@ export default function CustomerDetailClient({ customerId }: Props) {
     } catch (err) {
       console.error('Load customer info failed', err)
       setCustomerInfo(null)
-      setCustomerInfoError('Không thể tải thông tin khách hàng. Vui lòng thử lại sau.')
+      setCustomerInfoError(t('customer.error.load_info'))
     } finally {
       setLoadingCustomerInfo(false)
     }
-  }, [customerId])
+  }, [customerId, t])
 
   const extractApiMessage = (err: unknown): string | undefined => {
     if (!err) return undefined
@@ -373,11 +373,11 @@ export default function CustomerDetailClient({ customerId }: Props) {
     } catch (err: unknown) {
       console.error('Load customer overview failed', err)
       setOverview(null)
-      setError('Không thể tải dữ liệu khách hàng. Vui lòng thử lại sau.')
+      setError(t('customer.error.load_overview'))
     } finally {
       setLoadingOverview(false)
     }
-  }, [customerId, page, limit, debouncedSearch, sortOrder, statusFilter, typeFilter])
+  }, [customerId, page, limit, debouncedSearch, sortOrder, statusFilter, typeFilter, t])
 
   useEffect(() => {
     loadOverview()
@@ -406,7 +406,7 @@ export default function CustomerDetailClient({ customerId }: Props) {
     } catch (err: unknown) {
       console.error('Load consumables failed', err)
       setConsumablesData(null)
-      setConsumablesError('Không thể tải dữ liệu kho khách hàng. Vui lòng thử lại sau.')
+      setConsumablesError(t('customer.error.load_consumables'))
     } finally {
       setConsumablesLoading(false)
     }
@@ -418,6 +418,7 @@ export default function CustomerDetailClient({ customerId }: Props) {
     consumablesSortBy,
     consumablesSortOrder,
     activeTab,
+    t,
   ])
 
   useEffect(() => {
@@ -520,7 +521,7 @@ export default function CustomerDetailClient({ customerId }: Props) {
     if (!status) {
       return (
         <Badge variant="outline" className="border-slate-200 bg-slate-50 text-xs text-slate-600">
-          Không rõ
+          {t('customer.detail.device.status.unknown')}
         </Badge>
       )
     }
@@ -531,21 +532,21 @@ export default function CustomerDetailClient({ customerId }: Props) {
           variant="outline"
           className="border-emerald-200 bg-emerald-50 text-xs text-emerald-700"
         >
-          Đang hoạt động
+          {t('customer.detail.device.status.active')}
         </Badge>
       )
     }
     if (normalized.includes('inactive') || normalized.includes('suspend')) {
       return (
         <Badge variant="outline" className="border-amber-200 bg-amber-50 text-xs text-amber-700">
-          Tạm dừng
+          {t('customer.detail.device.status.inactive')}
         </Badge>
       )
     }
     if (normalized.includes('error')) {
       return (
         <Badge variant="outline" className="border-rose-200 bg-rose-50 text-xs text-rose-700">
-          Lỗi
+          {t('customer.detail.device.status.error')}
         </Badge>
       )
     }
@@ -560,11 +561,11 @@ export default function CustomerDetailClient({ customerId }: Props) {
     const used = (item.deviceCount ?? 0) > 0 || (item.activeDeviceIds?.length ?? 0) > 0
     return used ? (
       <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">
-        Đã sử dụng
+        {t('customer.detail.device.usage.used')}
       </Badge>
     ) : (
       <Badge variant="outline" className="border-slate-200 bg-slate-50 text-slate-600">
-        Chưa sử dụng
+        {t('customer.detail.device.usage.not_used')}
       </Badge>
     )
   }
@@ -681,7 +682,9 @@ export default function CustomerDetailClient({ customerId }: Props) {
                     t('customer.detail.device.unknown_model')}
                 </Link>
               ) : (
-                (device.device?.deviceModel?.name ?? device.device?.model ?? 'Không rõ model')
+                (device.device?.deviceModel?.name ??
+                device.device?.model ??
+                t('customer.detail.device.unknown_model'))
               )}
             </div>
           </ActionGuard>
@@ -907,7 +910,9 @@ export default function CustomerDetailClient({ customerId }: Props) {
                       t('customer.detail.device.unknown_model')}
                   </Link>
                 ) : (
-                  (device.deviceModel?.name ?? device.model ?? 'Không rõ model')
+                  (device.deviceModel?.name ??
+                  device.model ??
+                  t('customer.detail.device.unknown_model'))
                 )}
               </div>
             </td>
@@ -1309,11 +1314,21 @@ export default function CustomerDetailClient({ customerId }: Props) {
                               <option value="">
                                 {t('customer.detail.contracts.filter.all_types')}
                               </option>
-                              <option value="MPS_CLICK_CHARGE">MPS Click Charge</option>
-                              <option value="MPS_CONSUMABLE">MPS Consumable</option>
-                              <option value="CMPS_CLICK_CHARGE">cMPS Click Charge</option>
-                              <option value="CMPS_CONSUMABLE">cMPS Consumable</option>
-                              <option value="PARTS_REPAIR_SERVICE">Parts & Repair</option>
+                              <option value="MPS_CLICK_CHARGE">
+                                {t('contracts.type.MPS_CLICK_CHARGE')}
+                              </option>
+                              <option value="MPS_CONSUMABLE">
+                                {t('contracts.type.MPS_CONSUMABLE')}
+                              </option>
+                              <option value="CMPS_CLICK_CHARGE">
+                                {t('contracts.type.CMPS_CLICK_CHARGE')}
+                              </option>
+                              <option value="CMPS_CONSUMABLE">
+                                {t('contracts.type.CMPS_CONSUMABLE')}
+                              </option>
+                              <option value="PARTS_REPAIR_SERVICE">
+                                {t('contracts.type.PARTS_REPAIR_SERVICE')}
+                              </option>
                             </select>
 
                             <div className="flex items-center gap-2">
@@ -1836,7 +1851,7 @@ export default function CustomerDetailClient({ customerId }: Props) {
                               &nbsp;
                             </th>
                             <th className="px-6 py-4 text-left text-xs font-semibold tracking-wide text-amber-900 uppercase">
-                              Part Number
+                              {t('bulk_assign.part_number_label')}
                             </th>
                             <th className="px-6 py-4 text-left text-xs font-semibold tracking-wide text-amber-900 uppercase">
                               {t('customer.detail.inventory.table.name')}

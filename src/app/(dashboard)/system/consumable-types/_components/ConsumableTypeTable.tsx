@@ -219,7 +219,7 @@ export function ConsumableTypeTable({
                   onClick={() =>
                     onOpenEditStockModal({
                       stockId: m.stockItem!.id,
-                      consumableName: m.name || 'N/A',
+                      consumableName: m.name || t('common.unknown'),
                       quantity: m.stockItem!.quantity ?? 0,
                       threshold: m.stockItem!.lowStockThreshold ?? 0,
                     })

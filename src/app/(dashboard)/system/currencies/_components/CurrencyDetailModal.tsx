@@ -12,6 +12,7 @@ import type { CurrencyDataDto } from '@/types/models/currency'
 import { CheckCircle2, XCircle, Coins, Calendar } from 'lucide-react'
 import { format } from 'date-fns'
 import { vi } from 'date-fns/locale'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 interface CurrencyDetailModalProps {
   currency: CurrencyDataDto | null
@@ -20,6 +21,8 @@ interface CurrencyDetailModalProps {
 }
 
 export function CurrencyDetailModal({ currency, open, onOpenChange }: CurrencyDetailModalProps) {
+  const { t } = useLocale()
+
   if (!currency) return null
 
   return (
@@ -28,9 +31,9 @@ export function CurrencyDetailModal({ currency, open, onOpenChange }: CurrencyDe
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Coins className="h-5 w-5" />
-            Chi tiết tiền tệ
+            {t('currencies.detail.title')}
           </DialogTitle>
-          <DialogDescription>Thông tin chi tiết về loại tiền tệ</DialogDescription>
+          <DialogDescription>{t('currencies.detail.description')}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6">
@@ -38,7 +41,7 @@ export function CurrencyDetailModal({ currency, open, onOpenChange }: CurrencyDe
           <div className="space-y-4">
             <div className="flex items-center justify-between rounded-lg border p-4">
               <div className="space-y-1">
-                <p className="text-sm text-gray-500">Mã tiền tệ</p>
+                <p className="text-sm text-gray-500">{t('currencies.detail.code_label')}</p>
                 <p className="font-mono text-2xl font-bold text-[var(--brand-600)]">
                   {currency.code}
                 </p>
@@ -48,12 +51,12 @@ export function CurrencyDetailModal({ currency, open, onOpenChange }: CurrencyDe
 
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-1">
-                <p className="text-sm text-gray-500">Tên đầy đủ</p>
+                <p className="text-sm text-gray-500">{t('currencies.detail.name_label')}</p>
                 <p className="font-medium">{currency.name}</p>
               </div>
 
               <div className="space-y-1">
-                <p className="text-sm text-gray-500">Trạng thái</p>
+                <p className="text-sm text-gray-500">{t('currencies.detail.status_label')}</p>
                 <Badge
                   className={
                     currency.isActive
@@ -64,12 +67,12 @@ export function CurrencyDetailModal({ currency, open, onOpenChange }: CurrencyDe
                   {currency.isActive ? (
                     <>
                       <CheckCircle2 className="mr-1 h-3 w-3" />
-                      Đang hoạt động
+                      {t('status.active')}
                     </>
                   ) : (
                     <>
                       <XCircle className="mr-1 h-3 w-3" />
-                      Không hoạt động
+                      {t('status.inactive')}
                     </>
                   )}
                 </Badge>
@@ -81,23 +84,23 @@ export function CurrencyDetailModal({ currency, open, onOpenChange }: CurrencyDe
           <div className="space-y-4 rounded-lg border p-4">
             <h3 className="flex items-center gap-2 font-semibold">
               <Calendar className="h-4 w-4" />
-              Thông tin thời gian
+              {t('currencies.detail.timestamps_title')}
             </h3>
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-1">
-                <p className="text-sm text-gray-500">Ngày tạo</p>
+                <p className="text-sm text-gray-500">{t('currencies.detail.created_at')}</p>
                 <p className="font-medium">
                   {currency.createdAt
                     ? format(new Date(currency.createdAt), 'dd/MM/yyyy HH:mm', { locale: vi })
-                    : 'N/A'}
+                    : t('common.not_available')}
                 </p>
               </div>
               <div className="space-y-1">
-                <p className="text-sm text-gray-500">Ngày cập nhật</p>
+                <p className="text-sm text-gray-500">{t('currencies.detail.updated_at')}</p>
                 <p className="font-medium">
                   {currency.updatedAt
                     ? format(new Date(currency.updatedAt), 'dd/MM/yyyy HH:mm', { locale: vi })
-                    : 'N/A'}
+                    : t('common.not_available')}
                 </p>
               </div>
             </div>

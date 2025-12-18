@@ -221,9 +221,12 @@ export default function MovementHistoryModal({
       const consumableName = consumableId ? (consumableNames[consumableId] ?? consumableId) : null
       const deviceName = deviceId ? (deviceNames[deviceId] ?? deviceId) : null
       if (consumableName && deviceName)
-        return `Vật tư tiêu hao ${consumableName} được cài đặt cho thiết bị ${deviceName}`
-      if (consumableName) return `Vật tư tiêu hao ${consumableName}`
-      if (deviceName) return `Thiết bị ${deviceName}`
+        return t('movement_history.notes.consumable_installed_to_device', {
+          consumableName,
+          deviceName,
+        })
+      if (consumableName) return t('movement_history.notes.consumable_only', { consumableName })
+      if (deviceName) return t('movement_history.notes.device_only', { deviceName })
     }
 
     // If pattern contains consumable id + device NAME (text), prefer that
@@ -233,9 +236,13 @@ export default function MovementHistoryModal({
       const deviceNameText = (cmFullName[2] || '').trim()
       const consumableName = consumableId ? (consumableNames[consumableId] ?? consumableId) : null
       if (consumableName && deviceNameText)
-        return `Vật tư tiêu hao ${consumableName} được cài đặt cho thiết bị ${deviceNameText}`
-      if (consumableName) return `Vật tư tiêu hao ${consumableName}`
-      if (deviceNameText) return `Thiết bị ${deviceNameText}`
+        return t('movement_history.notes.consumable_installed_to_device', {
+          consumableName,
+          deviceName: deviceNameText,
+        })
+      if (consumableName) return t('movement_history.notes.consumable_only', { consumableName })
+      if (deviceNameText)
+        return t('movement_history.notes.device_only', { deviceName: deviceNameText })
     }
 
     const cm = CONSUMABLE_START_RE.exec(notes)
@@ -247,17 +254,23 @@ export default function MovementHistoryModal({
     const deviceName = deviceId ? (deviceNames[deviceId] ?? deviceId) : null
 
     if (consumableName && deviceName) {
-      return `Vật tư tiêu hao ${consumableName} được cài đặt cho thiết bị ${deviceName}`
+      return t('movement_history.notes.consumable_installed_to_device', {
+        consumableName,
+        deviceName,
+      })
     }
-    if (consumableName) return `Vật tư tiêu hao ${consumableName}`
-    if (deviceName) return `Thiết bị ${deviceName}`
+    if (consumableName) return t('movement_history.notes.consumable_only', { consumableName })
+    if (deviceName) return t('movement_history.notes.device_only', { deviceName })
 
     // As a final fallback, if we earlier stored a device name mapped to this consumable id, use it
     if (consumableId && consumableDeviceNameMap[consumableId]) {
       const dname = consumableDeviceNameMap[consumableId]
       return consumableName
-        ? `Vật tư tiêu hao ${consumableName} được cài đặt cho thiết bị ${dname}`
-        : `Thiết bị ${dname}`
+        ? t('movement_history.notes.consumable_installed_to_device', {
+            consumableName,
+            deviceName: dname,
+          })
+        : t('movement_history.notes.device_only', { deviceName: dname })
     }
 
     return notes

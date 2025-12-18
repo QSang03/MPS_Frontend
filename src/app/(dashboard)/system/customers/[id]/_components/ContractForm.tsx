@@ -62,35 +62,85 @@ interface ContractFormProps {
   onSuccess?: (created?: Contract | null) => void
 }
 
-const contractTypes = [
-  { value: 'MPS_CLICK_CHARGE', label: 'MPS Click Charge', icon: '📄', color: 'blue' },
-  { value: 'MPS_CONSUMABLE', label: 'MPS Consumable', icon: '🖨️', color: 'purple' },
-  { value: 'CMPS_CLICK_CHARGE', label: 'cMPS Click Charge', icon: '📊', color: 'cyan' },
-  { value: 'CMPS_CONSUMABLE', label: 'cMPS Consumable', icon: '🔧', color: 'orange' },
-  { value: 'PARTS_REPAIR_SERVICE', label: 'Parts & Repair Service', icon: '⚙️', color: 'emerald' },
-]
+function ContractForm({ initial, onSuccess }: ContractFormProps) {
+  const { t } = useLocale()
 
-const contractStatuses = [
-  { value: 'PENDING', label: 'Chờ duyệt', icon: '⏳', color: 'amber', bg: 'bg-amber-100' },
-  { value: 'ACTIVE', label: 'Đang hoạt động', icon: '✅', color: 'emerald', bg: 'bg-emerald-100' },
-  { value: 'EXPIRED', label: 'Đã hết hạn', icon: '⌛', color: 'rose', bg: 'bg-rose-100' },
-  { value: 'TERMINATED', label: 'Đã chấm dứt', icon: '🛑', color: 'slate', bg: 'bg-slate-100' },
-]
+  const contractTypes = [
+    {
+      value: 'MPS_CLICK_CHARGE',
+      label: t('contracts.type.MPS_CLICK_CHARGE'),
+      icon: '📄',
+      color: 'blue',
+    },
+    {
+      value: 'MPS_CONSUMABLE',
+      label: t('contracts.type.MPS_CONSUMABLE'),
+      icon: '🖨️',
+      color: 'purple',
+    },
+    {
+      value: 'CMPS_CLICK_CHARGE',
+      label: t('contracts.type.CMPS_CLICK_CHARGE'),
+      icon: '📊',
+      color: 'cyan',
+    },
+    {
+      value: 'CMPS_CONSUMABLE',
+      label: t('contracts.type.CMPS_CONSUMABLE'),
+      icon: '🔧',
+      color: 'orange',
+    },
+    {
+      value: 'PARTS_REPAIR_SERVICE',
+      label: t('contracts.type.PARTS_REPAIR_SERVICE'),
+      icon: '⚙️',
+      color: 'emerald',
+    },
+  ]
 
-const durationOptions = [
-  { value: 1, label: '1 năm', icon: '📅' },
-  { value: 2, label: '2 năm', icon: '📅' },
-  { value: 3, label: '3 năm', icon: '📅' },
-  { value: 4, label: '4 năm', icon: '📅' },
-  { value: 5, label: '5 năm', icon: '📅' },
-]
+  const contractStatuses = [
+    {
+      value: 'PENDING',
+      label: t('customer.detail.contracts.filter.status.pending'),
+      icon: '⏳',
+      color: 'amber',
+      bg: 'bg-amber-100',
+    },
+    {
+      value: 'ACTIVE',
+      label: t('customer.detail.contracts.filter.status.active'),
+      icon: '✅',
+      color: 'emerald',
+      bg: 'bg-emerald-100',
+    },
+    {
+      value: 'EXPIRED',
+      label: t('customer.detail.contracts.filter.status.expired'),
+      icon: '⌛',
+      color: 'rose',
+      bg: 'bg-rose-100',
+    },
+    {
+      value: 'TERMINATED',
+      label: t('customer.detail.contracts.filter.status.terminated'),
+      icon: '🛑',
+      color: 'slate',
+      bg: 'bg-slate-100',
+    },
+  ]
 
-const CONTRACT_PDF_MAX_MB = Math.round(CONTRACT_PDF_MAX_BYTES / (1024 * 1024))
+  const durationOptions = [
+    { value: 1, label: '1 năm', icon: '📅' },
+    { value: 2, label: '2 năm', icon: '📅' },
+    { value: 3, label: '3 năm', icon: '📅' },
+    { value: 4, label: '4 năm', icon: '📅' },
+    { value: 5, label: '5 năm', icon: '📅' },
+  ]
 
-export function ContractForm({ initial, onSuccess }: ContractFormProps) {
+  const CONTRACT_PDF_MAX_MB = Math.round(CONTRACT_PDF_MAX_BYTES / (1024 * 1024))
+
   const queryClient = useQueryClient()
   const [showValidationErrors, setShowValidationErrors] = useState(false)
-  const { t } = useLocale()
 
   const normalizeDateToYYYYMMDD = (date?: string | null) => {
     if (!date) return undefined
@@ -204,7 +254,7 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
     if (!valid) {
       setShowValidationErrors(true)
       toast.error('⚠️ Vui lòng kiểm tra lại thông tin', {
-        description: 'Một số trường bắt buộc chưa được điền đầy đủ',
+        description: t('contract.validation.incomplete_fields'),
       })
       return
     }
@@ -375,8 +425,8 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
     }
 
     if (file.type !== 'application/pdf') {
-      form.setError('pdfFile', { type: 'manual', message: 'Chỉ chấp nhận file PDF' })
-      toast.error('Chỉ chấp nhận file PDF')
+      form.setError('pdfFile', { type: 'manual', message: t('contract.validation.pdf_only') })
+      toast.error(t('contract.validation.pdf_only'))
       if (fileInputRef.current) fileInputRef.current.value = ''
       return false
     }

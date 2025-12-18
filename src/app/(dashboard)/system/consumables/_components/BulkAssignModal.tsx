@@ -132,8 +132,8 @@ function SearchableConsumableTypeSelectInner({
     if (!sel) return ''
     const name = String(sel.name ?? '')
     const pn = String(sel.partNumber ?? '')
-    return pn ? `${name} • P/N: ${pn}` : name
-  }, [value, types, remoteTypes])
+    return pn ? `${name} • ${t('bulk_assign.part_number_label')}: ${pn}` : name
+  }, [value, types, remoteTypes, t])
 
   return (
     <Select value={value} onValueChange={onChange}>
@@ -190,7 +190,7 @@ function SearchableConsumableTypeSelectInner({
                   <span className="truncate font-medium">{String(tObj.name ?? '')}</span>
                   {partNumber && (
                     <span className="text-muted-foreground truncate text-xs">
-                      P/N: {partNumber}
+                      {t('bulk_assign.part_number_label')}: {partNumber}
                     </span>
                   )}
                 </div>

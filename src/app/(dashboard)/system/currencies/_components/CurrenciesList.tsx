@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { useLocale } from '@/components/providers/LocaleProvider'
 import { useQuery } from '@tanstack/react-query'
 import { currenciesClientService } from '@/lib/api/services/currencies-client.service'
@@ -59,11 +59,13 @@ export function CurrenciesList() {
   const currencies = useMemo(() => data?.data ?? [], [data?.data])
   const pagination = data?.pagination
 
+  const { t } = useLocale()
+
   const activeFilters = useMemo(() => {
     const filters: Array<{ label: string; value: string; onRemove: () => void }> = []
     if (debouncedSearch) {
       filters.push({
-        label: `Tìm kiếm: "${debouncedSearch}"`,
+        label: t('currencies.filters.search', { term: debouncedSearch }),
         value: debouncedSearch,
         onRemove: () => {
           setSearch('')
@@ -73,13 +75,13 @@ export function CurrenciesList() {
     }
     if (isActive !== 'all') {
       filters.push({
-        label: isActive === 'true' ? 'Đang hoạt động' : 'Không hoạt động',
+        label: isActive === 'true' ? t('status.active') : t('status.inactive'),
         value: isActive,
         onRemove: () => setIsActive('all'),
       })
     }
     return filters
-  }, [debouncedSearch, isActive])
+  }, [debouncedSearch, isActive, t])
 
   const handleResetFilters = () => {
     setSearch('')
@@ -88,10 +90,10 @@ export function CurrenciesList() {
     setPage(1)
   }
 
-  const handleViewDetail = (currency: CurrencyDataDto) => {
+  const handleViewDetail = useCallback((currency: CurrencyDataDto) => {
     setSelectedCurrency(currency)
     setDetailModalOpen(true)
-  }
+  }, [])
 
   const stats = useMemo(() => {
     const total = pagination?.total || 0
@@ -99,8 +101,6 @@ export function CurrenciesList() {
     const inactive = total - activeCount
     return { total, active: activeCount, inactive }
   }, [currencies, pagination])
-
-  const { t } = useLocale()
 
   const columns: ColumnDef<CurrencyDataDto>[] = useMemo(
     () => [
@@ -164,7 +164,7 @@ export function CurrenciesList() {
         ),
       },
     ],
-    [t]
+    [t, handleViewDetail]
   )
 
   return (
@@ -194,7 +194,11 @@ export function CurrenciesList() {
       />
 
       {/* Filters */}
-      <FilterSection title="Bộ lọc" onReset={handleResetFilters} activeFilters={activeFilters}>
+      <FilterSection
+        title={t('filters.general')}
+        onReset={handleResetFilters}
+        activeFilters={activeFilters}
+      >
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <label className="text-sm font-medium">{t('filters.search_label')}</label>
@@ -230,10 +234,14 @@ export function CurrenciesList() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Danh sách tiền tệ</CardTitle>
+              <CardTitle>{t('currencies.list.title')}</CardTitle>
               <CardDescription>
-                {pagination?.total || 0} tiền tệ
-                {debouncedSearch && ` (kết quả tìm kiếm: "${debouncedSearch}")`}
+                {t('currencies.list.description', {
+                  count: pagination?.total || 0,
+                  search: debouncedSearch
+                    ? t('currencies.list.search_results', { term: debouncedSearch })
+                    : '',
+                })}
               </CardDescription>
             </div>
           </div>
@@ -259,7 +267,7 @@ export function CurrenciesList() {
           ) : (
             <div className="py-12 text-center text-gray-500">
               <Coins className="mx-auto mb-4 h-12 w-12 opacity-20" />
-              <p>Không tìm thấy tiền tệ nào</p>
+              <p>{t('currencies.list.empty')}</p>
             </div>
           )}
         </CardContent>

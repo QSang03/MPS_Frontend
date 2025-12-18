@@ -49,7 +49,7 @@ export default function CustomerContractsModal({
   customerId,
   customerName,
 }: Props) {
-  const { t } = useLocale()
+  const { t, locale } = useLocale()
   const [contracts, setContracts] = useState<Contract[]>([])
   const [loading, setLoading] = useState(false)
   const [page] = useState(1)
@@ -100,7 +100,7 @@ export default function CustomerContractsModal({
     }
 
     fetchCustomerContracts()
-  }, [open, customerId, page, limit, t])
+  }, [open, customerId, page, limit, t, locale])
 
   // Reset filters when modal closes
   useEffect(() => {
@@ -375,10 +375,18 @@ export default function CustomerContractsModal({
                           className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm transition-colors focus:border-sky-500 focus:ring-2 focus:ring-sky-200 focus:outline-none"
                         >
                           <option value="">{t('customer.contracts.modal.all_statuses')}</option>
-                          <option value="PENDING">Chờ xử lý</option>
-                          <option value="ACTIVE">Đang hoạt động</option>
-                          <option value="EXPIRED">Hết hạn</option>
-                          <option value="TERMINATED">Đã chấm dứt</option>
+                          <option value="PENDING">
+                            {t('customer.detail.contracts.filter.status.pending')}
+                          </option>
+                          <option value="ACTIVE">
+                            {t('customer.detail.contracts.filter.status.active')}
+                          </option>
+                          <option value="EXPIRED">
+                            {t('customer.detail.contracts.filter.status.expired')}
+                          </option>
+                          <option value="TERMINATED">
+                            {t('customer.detail.contracts.filter.status.terminated')}
+                          </option>
                         </select>
                       </div>
                       <div>
@@ -391,11 +399,21 @@ export default function CustomerContractsModal({
                           className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm transition-colors focus:border-sky-500 focus:ring-2 focus:ring-sky-200 focus:outline-none"
                         >
                           <option value="">{t('customer.contracts.modal.all_types')}</option>
-                          <option value="MPS_CLICK_CHARGE">MPS Click Charge</option>
-                          <option value="MPS_CONSUMABLE">MPS Consumable</option>
-                          <option value="CMPS_CLICK_CHARGE">cMPS Click Charge</option>
-                          <option value="CMPS_CONSUMABLE">cMPS Consumable</option>
-                          <option value="PARTS_REPAIR_SERVICE">Parts & Repair</option>
+                          <option value="MPS_CLICK_CHARGE">
+                            {t('contracts.type.MPS_CLICK_CHARGE')}
+                          </option>
+                          <option value="MPS_CONSUMABLE">
+                            {t('contracts.type.MPS_CONSUMABLE')}
+                          </option>
+                          <option value="CMPS_CLICK_CHARGE">
+                            {t('contracts.type.CMPS_CLICK_CHARGE')}
+                          </option>
+                          <option value="CMPS_CONSUMABLE">
+                            {t('contracts.type.CMPS_CONSUMABLE')}
+                          </option>
+                          <option value="PARTS_REPAIR_SERVICE">
+                            {t('contracts.type.PARTS_REPAIR_SERVICE')}
+                          </option>
                         </select>
                       </div>
                     </div>
@@ -516,9 +534,13 @@ export default function CustomerContractsModal({
                           <div className="flex items-center gap-2 text-sm text-slate-600">
                             <Calendar className="h-3.5 w-3.5 text-slate-400" />
                             <span>
-                              {new Date(contract.startDate).toLocaleDateString('vi-VN')}
+                              {new Date(contract.startDate).toLocaleDateString(
+                                locale === 'vi' ? 'vi-VN' : 'en-US'
+                              )}
                               {' — '}
-                              {new Date(contract.endDate).toLocaleDateString('vi-VN')}
+                              {new Date(contract.endDate).toLocaleDateString(
+                                locale === 'vi' ? 'vi-VN' : 'en-US'
+                              )}
                             </span>
                           </div>
                         </td>

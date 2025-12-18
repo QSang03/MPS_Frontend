@@ -94,7 +94,7 @@ export function CreateBillingModal({
     const valid = await form.trigger()
     if (!valid) {
       toast.error('⚠️ Vui lòng kiểm tra lại thông tin', {
-        description: 'Một số trường bắt buộc chưa được điền đầy đủ',
+        description: t('billing.validation.incomplete_fields'),
       })
       return
     }
@@ -337,10 +337,8 @@ export function CreateBillingModal({
                         <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                       </FormControl>
                       <div className="space-y-1 leading-none">
-                        <FormLabel>Dry Run (Chạy thử)</FormLabel>
-                        <FormDescription>
-                          Chỉ tính toán và hiển thị kết quả, không tạo hóa đơn thực tế
-                        </FormDescription>
+                        <FormLabel>{t('billing.dry_run_label')}</FormLabel>
+                        <FormDescription>{t('billing.dry_run_description')}</FormDescription>
                       </div>
                     </FormItem>
                   )}
@@ -355,9 +353,9 @@ export function CreateBillingModal({
                         <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                       </FormControl>
                       <div className="space-y-1 leading-none">
-                        <FormLabel>Force Regenerate (Tạo lại)</FormLabel>
+                        <FormLabel>{t('billing.force_regenerate_label')}</FormLabel>
                         <FormDescription>
-                          Tạo lại hóa đơn ngay cả khi đã tồn tại cho kỳ này
+                          {t('billing.force_regenerate_description')}
                         </FormDescription>
                       </div>
                     </FormItem>
