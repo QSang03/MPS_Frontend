@@ -436,16 +436,16 @@ function DeviceModelsTableContent({
       setDeletingId(id)
       try {
         await deviceModelsClientService.delete(id)
-        toast.success('Đã xóa device model')
+        toast.success(t('device_models.delete_success'))
         await invalidateModels()
       } catch (error) {
         console.error('Delete device model error', error)
-        toast.error('Xóa device model thất bại')
+        toast.error(t('device_models.delete_error'))
       } finally {
         setDeletingId(null)
       }
     },
-    [invalidateModels]
+    [invalidateModels, t]
   )
 
   const handleSaved = useCallback(async () => {

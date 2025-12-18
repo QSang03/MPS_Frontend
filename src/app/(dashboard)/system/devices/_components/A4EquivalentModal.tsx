@@ -244,7 +244,7 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
         | { response?: { data?: { error?: string } }; message?: unknown }
         | undefined
       const msg = maybeErr?.response?.data?.error ?? (maybeErr?.message as string | undefined)
-      toast.error(msg ? String(msg) : 'Không thể lưu dữ liệu A4')
+      toast.error(msg ? String(msg) : t('a4_modal.error.save_failed'))
     } finally {
       setSubmitting(false)
     }
@@ -296,11 +296,11 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
         setTotalBlackWhitePagesA4('0')
       }
 
-      toast.success('Phân tích PDF thành công, vui lòng kiểm tra trước khi lưu')
+      toast.success(t('a4_modal.success.pdf_analyzed'))
     } catch (err: unknown) {
       const maybe = err as { response?: { data?: { message?: string; error?: string } } }
       const msg = maybe?.response?.data?.message || maybe?.response?.data?.error
-      toast.error(msg || 'Phân tích PDF thất bại')
+      toast.error(msg || t('a4_modal.error.pdf_analysis_failed'))
     } finally {
       setScanLoading(false)
     }
@@ -406,7 +406,7 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
               disabled={submitting}
               className="min-w-[100px]"
             >
-              Hủy
+              {t('a4_modal.button.cancel')}
             </Button>
             <Button
               type="submit"
@@ -440,7 +440,7 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
               ) : (
                 <Scan className="h-4 w-4" />
               )}
-              {scanLoading ? 'Đang phân tích PDF...' : 'Phân tích PDF'}
+              {scanLoading ? t('a4_modal.button.analyzing') : t('a4_modal.button.analyze_pdf')}
             </Button>
             <input
               ref={fileInputRef}
@@ -456,19 +456,17 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
                 }
               }}
             />
-            <p className="text-muted-foreground text-xs">
-              Chỉ nhận PDF báo cáo counter. Hệ thống sẽ tự điền trang tổng, hãy kiểm tra lại trước
-              khi lưu.
-            </p>
+            <p className="text-muted-foreground text-xs">{t('a4_modal.info.pdf_only')}</p>
           </div>
 
           {scanResult && (
             <Alert className="border-amber-200 bg-amber-50">
-              <AlertTitle>Kết quả phân tích PDF</AlertTitle>
+              <AlertTitle>{t('a4_modal.result.title')}</AlertTitle>
               <AlertDescription className="text-sm">
-                Tổng trang: {scanResult.totalPageCount ?? '—'} | A4:{' '}
-                {scanResult.totalPageCountA4 ?? '—'}. Vui lòng soát lại các trường bên dưới trước
-                khi lưu.
+                {t('a4_modal.result.description', {
+                  total: scanResult.totalPageCount ?? '—',
+                  a4: scanResult.totalPageCountA4 ?? '—',
+                })}
               </AlertDescription>
             </Alert>
           )}

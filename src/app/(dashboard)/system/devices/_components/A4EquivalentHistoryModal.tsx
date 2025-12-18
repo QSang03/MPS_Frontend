@@ -113,11 +113,11 @@ export function A4EquivalentUsageHistory({
       setTotal(resp.pagination?.total ?? 0)
     } catch (err) {
       console.error('Load A4 snapshots failed', err)
-      toast.error('Không tải được lịch sử snapshot A4')
+      toast.error(t('a4_history.error.load_failed'))
     } finally {
       setLoading(false)
     }
-  }, [deviceId, customerId, page, limit, search, recordedAtFrom, recordedAtTo, sorting])
+  }, [deviceId, customerId, page, limit, search, recordedAtFrom, recordedAtTo, sorting, t])
 
   const fmt = (v: unknown) => (typeof v === 'number' ? v.toLocaleString('vi-VN') : String(v ?? '-'))
   const shortId = (id?: string) => (id ? `${id.slice(0, 8)}…${id.slice(-4)}` : '-')
@@ -193,21 +193,21 @@ export function A4EquivalentUsageHistory({
       : [
           {
             accessorKey: 'totalPageCount',
-            header: 'Tổng trang',
+            header: t('a4_history.table.total_pages'),
             cell: ({ getValue }: CellContext<Row, unknown>) => (
               <div className="text-right font-medium">{fmt(getValue())}</div>
             ),
           },
           {
             accessorKey: 'totalColorPages',
-            header: 'Trang màu',
+            header: t('a4_history.table.color_pages'),
             cell: ({ getValue }: CellContext<Row, unknown>) => (
               <div className="text-right font-medium">{fmt(getValue())}</div>
             ),
           },
           {
             accessorKey: 'totalBlackWhitePages',
-            header: 'Trang đen trắng',
+            header: t('a4_history.table.bw_pages'),
             cell: ({ getValue }: CellContext<Row, unknown>) => (
               <div className="text-right font-medium">{fmt(getValue())}</div>
             ),
@@ -219,21 +219,21 @@ export function A4EquivalentUsageHistory({
       : [
           {
             accessorKey: 'totalPageCountA4',
-            header: 'Tổng trang (A4)',
+            header: t('a4_history.table.total_pages_a4'),
             cell: ({ getValue }: CellContext<Row, unknown>) => (
               <div className="text-right font-medium">{fmt(getValue())}</div>
             ),
           },
           {
             accessorKey: 'totalColorPagesA4',
-            header: 'Trang màu (A4)',
+            header: t('a4_history.table.color_pages_a4'),
             cell: ({ getValue }: CellContext<Row, unknown>) => (
               <div className="text-right font-medium">{fmt(getValue())}</div>
             ),
           },
           {
             accessorKey: 'totalBlackWhitePagesA4',
-            header: 'Trang đen trắng (A4)',
+            header: t('a4_history.table.bw_pages_a4'),
             cell: ({ getValue }: CellContext<Row, unknown>) => (
               <div className="text-right font-medium">{fmt(getValue())}</div>
             ),
@@ -241,7 +241,7 @@ export function A4EquivalentUsageHistory({
         ]),
     {
       accessorKey: 'recordedAt',
-      header: 'Thời gian ghi nhận',
+      header: t('a4_history.table.recorded_at'),
       cell: (ctx) => (
         <div className="text-right text-slate-500">
           {ctx.getValue()
@@ -252,7 +252,7 @@ export function A4EquivalentUsageHistory({
     },
     {
       accessorKey: 'createdAt',
-      header: 'Tạo tại',
+      header: t('a4_history.table.created_at'),
       cell: (ctx) => (
         <div className="text-right text-slate-500">
           {ctx.getValue()
@@ -263,7 +263,7 @@ export function A4EquivalentUsageHistory({
     },
     {
       id: 'actions',
-      header: 'Hành động',
+      header: t('a4_history.table.actions'),
       cell: ({ row }) => (
         <div className="flex items-center justify-end gap-2">
           <DeleteDialog
@@ -287,7 +287,7 @@ export function A4EquivalentUsageHistory({
                   toast.error(msg)
                 }
               } catch (err) {
-                console.error('Xóa snapshot thất bại', err)
+                console.error(t('a4_history.error.delete_failed'), err)
                 const message =
                   err instanceof Error ? err.message : t('devices.a4_history.delete_error')
                 toast.error(message)
@@ -476,7 +476,7 @@ export default function A4EquivalentHistoryModal({
         footer={
           <>
             <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Đóng
+              {t('a4_history.button.close')}
             </Button>
           </>
         }

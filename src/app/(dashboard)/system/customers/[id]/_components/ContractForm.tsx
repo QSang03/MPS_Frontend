@@ -130,11 +130,11 @@ function ContractForm({ initial, onSuccess }: ContractFormProps) {
   ]
 
   const durationOptions = [
-    { value: 1, label: '1 năm', icon: '📅' },
-    { value: 2, label: '2 năm', icon: '📅' },
-    { value: 3, label: '3 năm', icon: '📅' },
-    { value: 4, label: '4 năm', icon: '📅' },
-    { value: 5, label: '5 năm', icon: '📅' },
+    { value: 1, label: t('contract.form.duration.1_year'), icon: '📅' },
+    { value: 2, label: t('contract.form.duration.2_years'), icon: '📅' },
+    { value: 3, label: t('contract.form.duration.3_years'), icon: '📅' },
+    { value: 4, label: t('contract.form.duration.4_years'), icon: '📅' },
+    { value: 5, label: t('contract.form.duration.5_years'), icon: '📅' },
   ]
 
   const CONTRACT_PDF_MAX_MB = Math.round(CONTRACT_PDF_MAX_BYTES / (1024 * 1024))
@@ -253,7 +253,7 @@ function ContractForm({ initial, onSuccess }: ContractFormProps) {
     const valid = await form.trigger()
     if (!valid) {
       setShowValidationErrors(true)
-      toast.error('⚠️ Vui lòng kiểm tra lại thông tin', {
+      toast.error(t('contract.form.validation.warning_title'), {
         description: t('contract.validation.incomplete_fields'),
       })
       return
@@ -295,7 +295,7 @@ function ContractForm({ initial, onSuccess }: ContractFormProps) {
       }
     } catch (err) {
       console.error('Failed to prepare contract payload', err)
-      toast.error('❌ Lỗi khi chuẩn bị dữ liệu')
+      toast.error(t('contract.form.validation.error_prep'))
     }
   }
 
@@ -434,9 +434,9 @@ function ContractForm({ initial, onSuccess }: ContractFormProps) {
     if (file.size > CONTRACT_PDF_MAX_BYTES) {
       form.setError('pdfFile', {
         type: 'manual',
-        message: `Tệp vượt quá ${CONTRACT_PDF_MAX_MB}MB`,
+        message: t('contract.form.file.size_error', { size: CONTRACT_PDF_MAX_MB }),
       })
-      toast.error(`File vượt quá ${CONTRACT_PDF_MAX_MB}MB`)
+      toast.error(t('contract.form.file.size_error', { size: CONTRACT_PDF_MAX_MB }))
       if (fileInputRef.current) fileInputRef.current.value = ''
       return false
     }
@@ -497,8 +497,10 @@ function ContractForm({ initial, onSuccess }: ContractFormProps) {
                 <Sparkles className="h-5 w-5 text-white" />
               </div>
               <div>
-                <h4 className="text-base font-bold text-slate-900">Tiến độ hoàn thành</h4>
-                <p className="text-xs text-slate-600">Điền đầy đủ để tạo hợp đồng</p>
+                <h4 className="text-base font-bold text-slate-900">
+                  {t('contract.form.progress.title')}
+                </h4>
+                <p className="text-xs text-slate-600">{t('contract.form.progress.description')}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -553,9 +555,11 @@ function ContractForm({ initial, onSuccess }: ContractFormProps) {
               <div className="flex items-start gap-3">
                 <AlertCircle className="h-5 w-5 flex-shrink-0 text-amber-600" />
                 <div>
-                  <h5 className="font-semibold text-amber-900">Cần hoàn thiện thông tin</h5>
+                  <h5 className="font-semibold text-amber-900">
+                    {t('contract.form.validation.incomplete.title')}
+                  </h5>
                   <p className="text-sm text-amber-700">
-                    Vui lòng điền đầy đủ các trường bắt buộc được đánh dấu (*)
+                    {t('contract.form.validation.incomplete.description')}
                   </p>
                 </div>
                 <button
@@ -582,11 +586,15 @@ function ContractForm({ initial, onSuccess }: ContractFormProps) {
               <Tag className="h-6 w-6 text-white" />
             </div>
             <div className="flex-1">
-              <h3 className="text-xl font-bold text-slate-900">Thông tin cơ bản</h3>
-              <p className="text-sm text-slate-600">Nhập thông tin nhận dạng hợp đồng</p>
+              <h3 className="text-xl font-bold text-slate-900">
+                {t('contract.form.section.basic.title')}
+              </h3>
+              <p className="text-sm text-slate-600">
+                {t('contract.form.section.basic.description')}
+              </p>
             </div>
             <div className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
-              Bước 1/3
+              {t('contract.form.section.basic.step')}
             </div>
           </div>
 
@@ -598,7 +606,7 @@ function ContractForm({ initial, onSuccess }: ContractFormProps) {
                 <FormItem>
                   <FormLabel className="flex items-center gap-2 text-sm font-bold text-slate-800">
                     <FileText className="h-4 w-4 text-[var(--brand-600)]" />
-                    Mã hợp đồng
+                    {t('contract.form.field.contract_number')}
                     <span className="text-rose-500">*</span>
                   </FormLabel>
                   <FormControl>
@@ -621,13 +629,13 @@ function ContractForm({ initial, onSuccess }: ContractFormProps) {
                 <FormItem>
                   <FormLabel className="flex items-center gap-2 text-sm font-bold text-slate-800">
                     <Tag className="h-4 w-4 text-[var(--brand-600)]" />
-                    Loại hợp đồng
+                    {t('contract.form.field.contract_type')}
                     <span className="text-rose-500">*</span>
                   </FormLabel>
                   <FormControl>
                     <Select value={field.value} onValueChange={(v) => field.onChange(v)}>
                       <SelectTrigger className="h-12 border-2 border-slate-300 bg-white transition-all focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
-                        <SelectValue placeholder="Chọn loại hợp đồng" />
+                        <SelectValue placeholder={t('contract.form.select_contract_type')} />
                       </SelectTrigger>
                       <SelectContent>
                         {contractTypes.map((type) => (
@@ -653,7 +661,7 @@ function ContractForm({ initial, onSuccess }: ContractFormProps) {
                 <FormItem className="md:col-span-2">
                   <FormLabel className="flex items-center gap-2 text-sm font-bold text-slate-800">
                     <CheckCircle2 className="h-4 w-4 text-[var(--brand-600)]" />
-                    Trạng thái
+                    {t('contract.form.field.status')}
                   </FormLabel>
                   <FormControl>
                     <Select
@@ -661,7 +669,7 @@ function ContractForm({ initial, onSuccess }: ContractFormProps) {
                       onValueChange={(v) => field.onChange(v === '' ? undefined : v)}
                     >
                       <SelectTrigger className="h-12 border-2 border-slate-300 bg-white transition-all focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
-                        <SelectValue placeholder="Chọn trạng thái" />
+                        <SelectValue placeholder={t('contract.form.select_status')} />
                       </SelectTrigger>
                       <SelectContent>
                         {contractStatuses.map((status) => (
@@ -696,13 +704,15 @@ function ContractForm({ initial, onSuccess }: ContractFormProps) {
               <Building className="h-6 w-6 text-white" />
             </div>
             <div className="flex-1">
-              <h3 className="text-xl font-bold text-slate-900">Khách hàng & Thời hạn</h3>
+              <h3 className="text-xl font-bold text-slate-900">
+                {t('contract.form.section.customer.title')}
+              </h3>
               <p className="text-sm text-slate-600">
-                Chọn khách hàng và xác định thời hạn hợp đồng
+                {t('contract.form.section.customer.description')}
               </p>
             </div>
             <div className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
-              Bước 2/3
+              {t('contract.form.section.customer.step')}
             </div>
           </div>
 
@@ -713,7 +723,7 @@ function ContractForm({ initial, onSuccess }: ContractFormProps) {
               <FormItem>
                 <FormLabel className="flex items-center gap-2 text-sm font-bold text-slate-800">
                   <Building className="h-4 w-4 text-emerald-600" />
-                  Khách hàng
+                  {t('contract.form.field.customer')}
                   <span className="text-rose-500">*</span>
                 </FormLabel>
                 <FormControl>
@@ -726,7 +736,7 @@ function ContractForm({ initial, onSuccess }: ContractFormProps) {
                 </FormControl>
                 <FormDescription className="flex items-center gap-1.5 text-xs text-slate-600">
                   <Info className="h-3.5 w-3.5" />
-                  Tìm kiếm và chọn khách hàng từ danh sách
+                  {t('contract.form.field.customer.search')}
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -741,7 +751,7 @@ function ContractForm({ initial, onSuccess }: ContractFormProps) {
                 <FormItem>
                   <FormLabel className="flex items-center gap-2 text-sm font-bold text-slate-800">
                     <Calendar className="h-4 w-4 text-cyan-600" />
-                    Ngày bắt đầu
+                    {t('contract.form.field.start_date')}
                     <span className="text-rose-500">*</span>
                   </FormLabel>
                   <FormControl>
@@ -764,7 +774,7 @@ function ContractForm({ initial, onSuccess }: ContractFormProps) {
                 <FormItem>
                   <FormLabel className="flex items-center gap-2 text-sm font-bold text-slate-800">
                     <Clock className="h-4 w-4 text-purple-600" />
-                    Thời hạn (năm)
+                    {t('contract.form.field.duration_years')}
                     <span className="text-rose-500">*</span>
                   </FormLabel>
                   {/* debug: render-time field.value (safe place before Slot child) */}
@@ -781,7 +791,7 @@ function ContractForm({ initial, onSuccess }: ContractFormProps) {
                       disabled={isPending}
                     >
                       <SelectTrigger className="h-12 border-2 border-slate-300 bg-white transition-all focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100">
-                        <SelectValue placeholder="Chọn thời hạn" />
+                        <SelectValue placeholder={t('contract.form.select_duration')} />
                       </SelectTrigger>
                       <SelectContent>
                         {durationOptions.map((option) => (
@@ -797,7 +807,7 @@ function ContractForm({ initial, onSuccess }: ContractFormProps) {
                   </FormControl>
                   <FormDescription className="flex items-center gap-1.5 text-xs text-slate-600">
                     <Info className="h-3.5 w-3.5" />
-                    Ngày kết thúc sẽ được tính tự động
+                    {t('contract.form.field.end_date_auto')}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -817,7 +827,7 @@ function ContractForm({ initial, onSuccess }: ContractFormProps) {
               >
                 <FormLabel className="mb-3 flex items-center gap-2 text-sm font-bold text-slate-800">
                   <Calendar className="h-4 w-4 text-teal-600" />
-                  Ngày kết thúc (tự động tính)
+                  {t('contract.form.field.end_date')}
                 </FormLabel>
                 <div className="flex items-center gap-4 rounded-xl border-2 border-emerald-200 bg-white p-5 shadow-sm">
                   <div className="rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 p-3 shadow-md">
@@ -836,7 +846,8 @@ function ContractForm({ initial, onSuccess }: ContractFormProps) {
                           const sy = parts[0]!
                           const sm = parts[1]!
                           const sd = parts[2]!
-                          if ([sy, sm, sd].some((n) => Number.isNaN(n))) return '❌ Không hợp lệ'
+                          if ([sy, sm, sd].some((n) => Number.isNaN(n)))
+                            return t('contract.form.calc.invalid_date')
                           const endUtc = new Date(Date.UTC(sy + Number(years), sm - 1, sd))
                           endUtc.setUTCDate(endUtc.getUTCDate() - 1)
                           return new Date(endUtc).toLocaleDateString('vi-VN', {
@@ -850,7 +861,7 @@ function ContractForm({ initial, onSuccess }: ContractFormProps) {
                       })()}
                     </div>
                     <p className="mt-1 text-sm font-medium text-emerald-700">
-                      Hợp đồng có hiệu lực đến ngày này
+                      {t('contract.form.field.end_date_description')}
                     </p>
                   </div>
                 </div>
@@ -877,7 +888,7 @@ function ContractForm({ initial, onSuccess }: ContractFormProps) {
               <p className="text-sm text-slate-600">{t('contract.detail_subtitle')}</p>
             </div>
             <div className="rounded-full bg-[var(--brand-50)] px-3 py-1 text-xs font-semibold text-[var(--brand-700)]">
-              Bước 3/3
+              {t('contract.form.section.details.step')}
             </div>
           </div>
 
@@ -901,7 +912,7 @@ function ContractForm({ initial, onSuccess }: ContractFormProps) {
                 </FormControl>
                 <FormDescription className="flex items-center gap-1.5 text-xs text-slate-600">
                   <Info className="h-3.5 w-3.5" />
-                  Mô tả tổng quát hoặc điều kiện đặc biệt của hợp đồng
+                  {t('contract.form.field.description')}
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -923,8 +934,12 @@ function ContractForm({ initial, onSuccess }: ContractFormProps) {
               <Paperclip className="h-6 w-6 text-white" />
             </div>
             <div className="flex-1">
-              <h3 className="text-xl font-bold text-slate-900">Tài liệu hợp đồng</h3>
-              <p className="text-sm text-slate-600">Dán đường dẫn hoặc tải lên file PDF</p>
+              <h3 className="text-xl font-bold text-slate-900">
+                {t('contract.form.section.document.title')}
+              </h3>
+              <p className="text-sm text-slate-600">
+                {t('contract.form.section.document.description')}
+              </p>
             </div>
             <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
               File PDF
@@ -938,7 +953,7 @@ function ContractForm({ initial, onSuccess }: ContractFormProps) {
               <FormItem>
                 <FormLabel className="flex items-center gap-2 text-sm font-bold text-slate-800">
                   <Link2 className="h-4 w-4 text-slate-600" />
-                  Liên kết tài liệu
+                  {t('contract.form.field.document_link')}
                 </FormLabel>
                 <FormControl>
                   <Input
@@ -961,13 +976,13 @@ function ContractForm({ initial, onSuccess }: ContractFormProps) {
                       rel="noopener noreferrer"
                     >
                       <ExternalLink className="h-3.5 w-3.5" />
-                      Xem tài liệu hiện có
+                      {t('contract.form.field.document_link.view')}
                     </a>
                   </Button>
                 )}
                 <FormDescription className="flex items-center gap-1.5 text-xs text-slate-600">
                   <Info className="h-3.5 w-3.5" />
-                  Dán URL nếu file đã được lưu trữ sẵn tại hệ thống khác.
+                  {t('contract.form.field.document_link.paste')}
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -981,7 +996,7 @@ function ContractForm({ initial, onSuccess }: ContractFormProps) {
               <FormItem>
                 <FormLabel className="flex items-center gap-2 text-sm font-bold text-slate-800">
                   <Paperclip className="h-4 w-4 text-slate-600" />
-                  Upload PDF (tối đa {CONTRACT_PDF_MAX_MB}MB)
+                  {t('contract.form.field.pdf_upload', { size: CONTRACT_PDF_MAX_MB })}
                 </FormLabel>
                 <FormControl>
                   <Input
@@ -1023,13 +1038,13 @@ function ContractForm({ initial, onSuccess }: ContractFormProps) {
                         field.onChange(undefined)
                       }}
                     >
-                      Xóa
+                      {t('contract.form.field.pdf_upload.remove')}
                     </Button>
                   </div>
                 )}
                 <FormDescription className="flex items-center gap-1.5 text-xs text-slate-600">
                   <Info className="h-3.5 w-3.5" />
-                  Hệ thống sẽ tự sinh đường dẫn sau khi upload thành công.
+                  {t('contract.form.field.pdf_upload.auto_url')}
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -1088,7 +1103,7 @@ function ContractForm({ initial, onSuccess }: ContractFormProps) {
             className="h-14 border-2 border-slate-300 bg-white px-8 text-base font-semibold text-slate-700 shadow-md transition-all hover:border-slate-400 hover:bg-slate-50 hover:shadow-lg"
           >
             <X className="mr-2 h-5 w-5" />
-            Hủy
+            {t('cancel')}
           </Button>
         </motion.div>
 

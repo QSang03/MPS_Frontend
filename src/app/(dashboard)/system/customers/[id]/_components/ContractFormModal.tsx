@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react' // Bỏ useEffect vì không còn dùng
+import { useState, useMemo } from 'react' // Bỏ useEffect vì không còn dùng
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, Sparkles, FileText, ArrowRight, CheckCircle2, Circle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -10,6 +10,7 @@ import ContractForm from './ContractForm'
 import type { Contract } from '@/types/models/contract'
 import type { ContractFormData } from '@/lib/validations/contract.schema'
 import { cn } from '@/lib/utils'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 interface ContractFormModalProps {
   initial?: Partial<ContractFormData> | undefined
@@ -25,9 +26,14 @@ export function ContractFormModal({
   onCreated,
   triggerVariant = 'default',
   triggerClassName,
-  triggerText = 'Tạo hợp đồng',
+  triggerText,
   compact = false,
 }: ContractFormModalProps) {
+  const { t } = useLocale()
+
+  const defaultTriggerText = useMemo(() => t('contract.form.modal.trigger.create'), [t])
+  const finalTriggerText = triggerText || defaultTriggerText
+
   // Normalize date string (ISO or YYYY-MM-DD) to YYYY-MM-DD or undefined
   const normalizeDateToYYYYMMDD = (date?: string | null): string | undefined => {
     if (!date) return undefined
@@ -89,20 +95,20 @@ export function ContractFormModal({
   const steps = [
     {
       id: 1,
-      label: 'Thông tin cơ bản',
-      description: 'Mã & loại hợp đồng',
+      label: t('contract.form.modal.step.basic.title'),
+      description: t('contract.form.modal.step.basic.description'),
       icon: FileText,
     },
     {
       id: 2,
-      label: 'Khách hàng & Thời hạn',
-      description: 'Chọn khách hàng và thời gian',
+      label: t('contract.form.modal.step.customer.title'),
+      description: t('contract.form.modal.step.customer.description'),
       icon: ArrowRight,
     },
     {
       id: 3,
-      label: 'Chi tiết',
-      description: 'Mô tả và tài liệu',
+      label: t('contract.form.modal.step.details.title'),
+      description: t('contract.form.modal.step.details.description'),
       icon: CheckCircle2,
     },
   ]
@@ -138,7 +144,7 @@ export function ContractFormModal({
             className={cn('gap-2 shadow-sm transition-all', triggerClassName)}
           >
             <Plus className="h-4 w-4" />
-            {triggerText}
+            {finalTriggerText}
           </Button>
         ) : (
           <Button
@@ -158,7 +164,7 @@ export function ContractFormModal({
               <div className="rounded-full bg-white/20 p-1">
                 <Plus className="h-4 w-4" />
               </div>
-              <span className="font-semibold">{triggerText}</span>
+              <span className="font-semibold">{finalTriggerText}</span>
               <Sparkles className="h-4 w-4 opacity-75 transition-opacity group-hover:opacity-100" />
             </div>
           </Button>
@@ -168,8 +174,8 @@ export function ContractFormModal({
       <AnimatePresence>
         {open && (
           <SystemModalLayout
-            title="Tạo hợp đồng mới"
-            description="Điền đầy đủ thông tin để tạo hợp đồng mới trong hệ thống"
+            title={t('contract.form.modal.title')}
+            description={t('contract.form.modal.description')}
             icon={FileText}
             variant="create"
             maxWidth="!max-w-[80vw]"
@@ -183,9 +189,14 @@ export function ContractFormModal({
               {/* Enhanced Progress Stepper */}
               <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-white to-slate-50/50 p-6 shadow-sm">
                 <div className="mb-4 flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-slate-700">Tiến trình</h3>
+                  <h3 className="text-sm font-semibold text-slate-700">
+                    {t('contract.form.modal.progress.title')}
+                  </h3>
                   <span className="text-xs font-medium text-slate-500">
-                    Bước {currentStep} / {steps.length}
+                    {t('contract.form.modal.progress.step', {
+                      current: currentStep,
+                      total: steps.length,
+                    })}
                   </span>
                 </div>
 
@@ -353,7 +364,7 @@ export function ContractFormModal({
                 className="flex items-center gap-2 text-xs text-slate-500"
               >
                 <div className="h-1.5 w-1.5 rounded-full bg-slate-400" />
-                <span>Tất cả các trường có dấu * là bắt buộc</span>
+                <span>{t('contract.form.modal.helper.required')}</span>
               </motion.div>
             </motion.div>
           </SystemModalLayout>

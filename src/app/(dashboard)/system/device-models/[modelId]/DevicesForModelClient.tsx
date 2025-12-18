@@ -95,18 +95,18 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
       } catch (err: unknown) {
         const e = err as Error
         console.error('Load devices for model page failed', e)
-        toast.error('Không thể tải danh sách thiết bị cho model này')
+        toast.error(t('devices_for_model.error.load_list'))
       } finally {
         setLoading(false)
       }
     }
 
     load()
-  }, [modelIdParam])
+  }, [modelIdParam, t])
 
   const handleCreate = async () => {
     if (!serialNumber) {
-      toast.error('Vui lòng nhập serial number')
+      toast.error(t('devices_for_model.error.serial_required'))
       return
     }
     // Wrap the create action so we can confirm when serial exists
@@ -201,7 +201,11 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
           <div className="rounded-lg border border-white/20 bg-white/10 p-3 backdrop-blur-sm">
             <p className="text-sm text-white/80">{t('devices.stats.counter_type')}</p>
             <p className="mt-1 text-lg font-bold text-white/90">
-              {modelUseA4 === undefined ? 'N/A' : modelUseA4 ? 'A4 Counter' : 'Standard Counter'}
+              {modelUseA4 === undefined
+                ? t('devices_for_model.counter_type.na')
+                : modelUseA4
+                  ? t('devices_for_model.counter_type.a4')
+                  : t('devices_for_model.counter_type.standard')}
             </p>
           </div>
           <div className="rounded-lg border border-white/20 bg-white/10 p-3 backdrop-blur-sm">
@@ -232,7 +236,7 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
                   <th className="px-4 py-3 text-left text-sm font-semibold">
                     <div className="flex items-center gap-2">
                       <Monitor className="h-4 w-4 text-[var(--brand-600)]" />
-                      Serial
+                      {t('devices_for_model.table.serial')}
                     </div>
                   </th>
                   <th className="px-4 py-3 text-left text-sm font-semibold">{t('table.model')}</th>
@@ -290,7 +294,9 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
                           ) : (
                             <AlertCircle className="h-3 w-3" />
                           )}
-                          {d.isActive ? 'Hoạt động' : 'Tạm dừng'}
+                          {d.isActive
+                            ? t('devices_for_model.status.active')
+                            : t('devices_for_model.status.inactive')}
                         </Badge>
                       </td>
                       <td className="px-4 py-3 text-right">
@@ -301,7 +307,7 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
                           data-device-id={d.id}
                         >
                           <Eye className="h-4 w-4" />
-                          Xem
+                          {t('devices_for_model.button.view')}
                         </Button>
                       </td>
                     </tr>
@@ -314,8 +320,7 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
 
         {devices.length > 0 && (
           <div className="text-muted-foreground border-t bg-gray-50 px-4 py-3 text-sm">
-            Tổng số: <span className="text-foreground font-semibold">{devices.length}</span> thiết
-            bị
+            {t('devices_for_model.footer.total', { count: devices.length })}
           </div>
         )}
       </div>
@@ -367,7 +372,7 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
               <div className="md:col-span-2">
                 <Label className="flex items-center gap-2 text-base font-semibold">
                   <Monitor className="h-4 w-4 text-[var(--brand-600)]" />
-                  Serial Number *
+                  {t('devices_for_model.form.serial_number')} *
                 </Label>
                 <Input
                   value={serialNumber}
@@ -380,12 +385,12 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
               <div>
                 <Label className="flex items-center gap-2 text-base font-semibold">
                   <MapPin className="h-4 w-4 text-[var(--brand-600)]" />
-                  Vị trí
+                  {t('devices_for_model.form.location')}
                 </Label>
                 <Input
                   value={locationValue}
                   onChange={(e) => setLocationValue(e.target.value)}
-                  placeholder="Văn phòng tầng 2..."
+                  placeholder={t('devices_for_model.form.location_placeholder')}
                   className="mt-2 h-11"
                 />
               </div>
@@ -393,7 +398,7 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
               <div>
                 <Label className="flex items-center gap-2 text-base font-semibold">
                   <Wifi className="h-4 w-4 text-[var(--brand-600)]" />
-                  Địa chỉ IP
+                  {t('devices_for_model.form.ip_address')}
                 </Label>
                 <Input
                   value={ipAddressValue}
@@ -406,7 +411,7 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
               <div>
                 <Label className="flex items-center gap-2 text-base font-semibold">
                   <HardDrive className="h-4 w-4 text-[var(--brand-600)]" />
-                  Địa chỉ MAC
+                  {t('devices_for_model.form.mac_address')}
                 </Label>
                 <Input
                   value={macAddressValue}
@@ -419,7 +424,7 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
               <div>
                 <Label className="flex items-center gap-2 text-base font-semibold">
                   <Settings className="h-4 w-4 text-teal-600" />
-                  Firmware
+                  {t('devices_for_model.form.firmware')}
                 </Label>
                 <Input
                   value={firmwareValue}
@@ -439,16 +444,17 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
           <AlertDialogContent className="max-w-lg overflow-hidden rounded-lg border p-0 shadow-lg">
             <div className="px-6 py-5">
               <AlertDialogHeader className="space-y-2 text-left">
-                <AlertDialogTitle className="text-lg font-bold">Xác nhận Serial</AlertDialogTitle>
+                <AlertDialogTitle className="text-lg font-bold">
+                  {t('devices_for_model.confirm_serial.title')}
+                </AlertDialogTitle>
                 <AlertDialogDescription className="text-muted-foreground text-sm">
-                  Bạn đang đặt số Serial cho thiết bị. Sau khi thiết lập, Serial sẽ không thể chỉnh
-                  sửa sau này. Bạn có chắc chắn muốn tiếp tục?
+                  {t('devices_for_model.confirm_serial.description')}
                 </AlertDialogDescription>
               </AlertDialogHeader>
             </div>
             <AlertDialogFooter className="bg-muted/50 border-t px-6 py-4">
               <AlertDialogCancel onClick={() => setShowCreateSerialWarning(false)}>
-                Hủy
+                {t('devices_for_model.button.cancel')}
               </AlertDialogCancel>
               <Button
                 onClick={async () => {
@@ -464,7 +470,7 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
                 }}
                 className="min-w-[120px] bg-amber-600"
               >
-                Xác nhận
+                {t('devices_for_model.button.confirm')}
               </Button>
             </AlertDialogFooter>
           </AlertDialogContent>

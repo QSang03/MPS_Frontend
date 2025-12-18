@@ -34,7 +34,7 @@ export default function ContractDevicesSection({
   attachedDevices,
 }: Props) {
   const queryClient = useQueryClient()
-  const { t } = useLocale()
+  const { t, locale } = useLocale()
   const [page] = useState(1)
   const [limit] = useState(50)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
@@ -78,10 +78,10 @@ export default function ContractDevicesSection({
             <Plug2 className="h-6 w-6 text-[var(--brand-600)]" />
           </div>
           <p className="text-base font-medium text-[var(--brand-700)]">
-            Lưu hợp đồng trước khi quản lý thiết bị
+            {t('contract_devices.section.save_contract_first.title')}
           </p>
           <p className="text-sm text-[var(--brand-500)]">
-            Bạn cần lưu thông tin hợp đồng trước để có thể thêm và quản lý thiết bị
+            {t('contract_devices.section.save_contract_first.description')}
           </p>
         </div>
       </div>
@@ -116,7 +116,7 @@ export default function ContractDevicesSection({
   const formatDate = (date?: string | null) => {
     if (!date) return '—'
     try {
-      return new Date(date).toLocaleDateString('vi-VN')
+      return new Date(date).toLocaleDateString(locale === 'vi' ? 'vi-VN' : 'en-US')
     } catch {
       return date.slice(0, 10)
     }
@@ -150,7 +150,7 @@ export default function ContractDevicesSection({
               className="gap-2 bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] font-semibold text-white shadow-md transition-all hover:from-[var(--brand-700)] hover:to-[var(--brand-700)] hover:shadow-lg"
             >
               <Plus className="h-4 w-4" />
-              Thêm thiết bị
+              {t('contract_devices.section.add_device')}
             </Button>
           )}
           {canDetachDevices && selectedIds.length > 0 && (
@@ -161,7 +161,7 @@ export default function ContractDevicesSection({
               className="gap-2 bg-gradient-to-r from-red-500 to-pink-600 font-semibold text-white shadow-md transition-all hover:from-red-600 hover:to-pink-700 hover:shadow-lg"
             >
               <Trash2 className="h-4 w-4" />
-              Gỡ {selectedIds.length} thiết bị
+              {t('contract_devices.section.detach_devices', { count: selectedIds.length })}
             </Button>
           )}
         </div>
@@ -184,39 +184,39 @@ export default function ContractDevicesSection({
                   )}
                 </th>
                 <th className="px-4 py-3 text-left text-sm font-bold tracking-wide text-[var(--brand-900)] uppercase">
-                  Serial
+                  {t('contract_devices.section.table.serial')}
                 </th>
                 <th className="px-4 py-3 text-left text-sm font-bold tracking-wide text-[var(--brand-900)] uppercase">
-                  Model
+                  {t('contract_devices.section.table.model')}
                 </th>
                 <th className="px-4 py-3 text-left text-sm font-bold tracking-wide text-indigo-900 uppercase">
                   <div className="flex items-center gap-1">
                     <DollarSign className="h-4 w-4" />
-                    Thuê/tháng
+                    {t('contract_devices.section.table.monthly_rent')}
                   </div>
                 </th>
                 <th className="px-4 py-3 text-left text-sm font-bold tracking-wide text-orange-900 uppercase">
                   <div className="flex items-center gap-1">
                     <TrendingUp className="h-4 w-4" />
-                    Chi phí vận hành/tháng
+                    {t('contract_devices.section.table.operating_cost')}
                   </div>
                 </th>
                 <th className="px-4 py-3 text-left text-sm font-bold tracking-wide text-indigo-900 uppercase">
-                  B/W
+                  {t('contract_devices.section.table.bw_price')}
                 </th>
                 <th className="px-4 py-3 text-left text-sm font-bold tracking-wide text-indigo-900 uppercase">
-                  Màu
+                  {t('contract_devices.section.table.color_price')}
                 </th>
                 <th className="px-4 py-3 text-left text-sm font-bold tracking-wide text-indigo-900 uppercase">
                   <div className="flex items-center gap-1">
                     <Calendar className="h-4 w-4" />
-                    Bắt đầu
+                    {t('contract_devices.section.table.start_date')}
                   </div>
                 </th>
                 <th className="px-4 py-3 text-left text-sm font-bold tracking-wide text-indigo-900 uppercase">
                   <div className="flex items-center gap-1">
                     <Calendar className="h-4 w-4" />
-                    Kết thúc
+                    {t('contract_devices.section.table.end_date')}
                   </div>
                 </th>
               </tr>
@@ -239,10 +239,10 @@ export default function ContractDevicesSection({
                         <MonitorSmartphone className="h-8 w-8 text-[var(--brand-300)]" />
                       </div>
                       <p className="text-sm font-medium text-[var(--brand-700)]">
-                        Chưa có thiết bị nào được gắn
+                        {t('contract_devices.section.empty.title')}
                       </p>
                       <p className="text-xs text-[var(--brand-500)]">
-                        Nhấn "Thêm thiết bị" để bắt đầu gắn thiết bị vào hợp đồng
+                        {t('contract_devices.section.empty.description')}
                       </p>
                     </div>
                   </td>
@@ -329,11 +329,11 @@ export default function ContractDevicesSection({
       {devices.length > 0 && (
         <div className="flex items-center justify-between rounded-lg bg-[var(--brand-50)]/50 px-4 py-3">
           <p className="text-sm text-[var(--brand-700)]">
-            Tổng số: <span className="font-bold">{devices.length}</span> thiết bị
+            {t('contract_devices.section.footer.total', { count: devices.length })}
           </p>
           {selectedIds.length > 0 && (
             <p className="text-sm text-[var(--brand-600)]">
-              Đã chọn: <span className="font-bold">{selectedIds.length}</span> thiết bị
+              {t('contract_devices.section.footer.selected', { count: selectedIds.length })}
             </p>
           )}
         </div>

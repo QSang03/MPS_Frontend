@@ -84,15 +84,15 @@ export function InvoicesList({ customerId, contractId }: InvoicesListProps) {
     if (!status) return '—'
     switch (status) {
       case 'DRAFT':
-        return 'Nháp'
+        return t('invoices.status.draft')
       case 'GENERATED':
-        return 'Đã tạo'
+        return t('invoices.status.generated')
       case 'SENT':
-        return 'Đã gửi'
+        return t('invoices.status.sent')
       case 'PAID':
-        return 'Đã thanh toán'
+        return t('invoices.status.paid')
       case 'VOID':
-        return 'Đã hủy'
+        return t('invoices.status.void')
       default:
         return status
     }
@@ -125,11 +125,11 @@ export function InvoicesList({ customerId, contractId }: InvoicesListProps) {
     } catch (err) {
       console.error('Load invoices failed', err)
       setInvoices([])
-      setError('Không thể tải danh sách hóa đơn. Vui lòng thử lại sau.')
+      setError(t('invoices.error.load_list'))
     } finally {
       setLoading(false)
     }
-  }, [customerId, contractId, page, limit, debouncedSearch, statusFilter])
+  }, [customerId, contractId, page, limit, debouncedSearch, statusFilter, t])
 
   useEffect(() => {
     loadInvoices()
@@ -192,7 +192,7 @@ export function InvoicesList({ customerId, contractId }: InvoicesListProps) {
             <div className="flex items-start gap-3">
               <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0" />
               <div>
-                <p className="font-semibold">Đã xảy ra lỗi</p>
+                <p className="font-semibold">{t('invoices.error.title')}</p>
                 <p className="mt-1">{error}</p>
               </div>
             </div>
@@ -205,7 +205,6 @@ export function InvoicesList({ customerId, contractId }: InvoicesListProps) {
             </div>
             <p className="text-sm font-medium text-slate-600">{t('common.loading')}</p>
             <p className="text-sm font-medium text-slate-600">{t('invoices.loading')}</p>
-            <p className="font-semibold">{t('invoices.error.title')}</p>
           </div>
         ) : invoices.length === 0 ? (
           <motion.div

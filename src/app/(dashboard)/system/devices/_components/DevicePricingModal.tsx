@@ -599,7 +599,7 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
                 />
                 <div className="space-y-2">
                   <Label className={!canEditMonthlyRent ? 'text-muted-foreground' : ''}>
-                    Chi phí vận hành/tháng
+                    {t('device_pricing.form.monthly_operating_cost')}
                   </Label>
                   <Input
                     type="number"
@@ -607,7 +607,7 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
                     inputMode="decimal"
                     value={form.monthlyRentCogs}
                     onChange={(e) => setForm((s) => ({ ...s, monthlyRentCogs: e.target.value }))}
-                    placeholder="Ví dụ: 300000"
+                    placeholder={t('device_pricing.form.monthly_operating_cost_placeholder')}
                     className="h-11 text-base"
                     disabled={!canEditMonthlyRent}
                   />

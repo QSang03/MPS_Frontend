@@ -174,7 +174,9 @@ export function CurrencyConverter({ currencies }: CurrencyConverterProps) {
             <div className="rounded-lg border bg-[var(--brand-50)] p-4">
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Số tiền gốc:</span>
+                  <span className="text-sm text-gray-600">
+                    {t('currency_converter.original_amount')}
+                  </span>
                   <span className="font-semibold">
                     {convertResult.amount.toLocaleString()} {convertResult.fromCurrency.code}
                   </span>
@@ -183,14 +185,16 @@ export function CurrencyConverter({ currencies }: CurrencyConverterProps) {
                   <ArrowRight className="h-4 w-4 text-gray-400" />
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Số tiền sau chuyển đổi:</span>
+                  <span className="text-sm text-gray-600">
+                    {t('currency_converter.converted_amount')}
+                  </span>
                   <span className="text-lg font-bold text-[var(--brand-600)]">
                     {convertResult.convertedAmount.toLocaleString()} {convertResult.toCurrency.code}
                   </span>
                 </div>
                 <div className="mt-2 border-t pt-2">
                   <div className="flex items-center justify-between text-xs text-gray-500">
-                    <span>Tỷ giá:</span>
+                    <span>{t('currency_converter.exchange_rate')}</span>
                     <span>
                       1 {convertResult.fromCurrency.code} = {convertResult.rate.toLocaleString()}{' '}
                       {convertResult.toCurrency.code}
@@ -198,7 +202,7 @@ export function CurrencyConverter({ currencies }: CurrencyConverterProps) {
                   </div>
                   {convertResult.date && (
                     <div className="flex items-center justify-between text-xs text-gray-500">
-                      <span>Ngày áp dụng:</span>
+                      <span>{t('currency_converter.effective_date')}</span>
                       <span>{new Date(convertResult.date).toLocaleDateString('vi-VN')}</span>
                     </div>
                   )}

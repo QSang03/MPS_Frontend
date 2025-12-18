@@ -205,7 +205,9 @@ export default function ContractDevicesModal({
               .filter(Boolean)
             if (serialNumbers.length > 0) {
               toast.error(
-                `Không thể gán thiết bị vì đã được gán cho hợp đồng active khác: ${serialNumbers.join(', ')}`,
+                t('contract_devices.attach.error.conflicting', {
+                  serialNumbers: serialNumbers.join(', '),
+                }),
                 {
                   duration: 5000,
                 }
@@ -229,7 +231,7 @@ export default function ContractDevicesModal({
   const handleAttach = async () => {
     if (!contractId) return
     if (selectedToAttach.length === 0) {
-      toast.error('Vui lòng chọn ít nhất 1 thiết bị để đính kèm')
+      toast.error(t('contract_devices.attach.error.select_at_least_one'))
       return
     }
 
@@ -256,18 +258,18 @@ export default function ContractDevicesModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <SystemModalLayout
-        title="Quản lý thiết bị của hợp đồng"
+        title={t('contract_devices.modal.title')}
         description={
           contractNumber
-            ? `Mã hợp đồng: ${contractNumber}`
-            : 'Danh sách thiết bị được quản lý theo hợp đồng'
+            ? t('contract_devices.modal.description', { contractNumber })
+            : t('contract_devices.modal.description_no_contract')
         }
         icon={MonitorSmartphone}
         variant="view"
         maxWidth={`${hideOuter ? 'hidden' : '!max-w-[80vw]'}`}
         footer={
           <Button variant="outline" onClick={() => onOpenChange(false)} className="min-w-[100px]">
-            Đóng
+            {t('button.close')}
           </Button>
         }
       >
@@ -295,8 +297,8 @@ export default function ContractDevicesModal({
           }}
         >
           <SystemModalLayout
-            title="Thêm và Cập nhật thiết bị"
-            description="Chọn các thiết bị để đính kèm vào hợp đồng"
+            title={t('contract_devices.attach.title')}
+            description={t('contract_devices.attach.description')}
             icon={MonitorSmartphone}
             variant="create"
             maxWidth="!max-w-[85vw]"
@@ -340,7 +342,9 @@ export default function ContractDevicesModal({
                   animate={{ opacity: 1, y: 0 }}
                   className="rounded-lg border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-3 shadow-sm"
                 >
-                  <div className="text-xs font-medium text-slate-500">Tổng thiết bị</div>
+                  <div className="text-xs font-medium text-slate-500">
+                    {t('contract_devices.stats.total')}
+                  </div>
                   <div className="mt-1 text-2xl font-bold text-slate-900">{stats.total}</div>
                 </motion.div>
                 <motion.div
@@ -349,7 +353,9 @@ export default function ContractDevicesModal({
                   transition={{ delay: 0.05 }}
                   className="rounded-lg border border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 p-3 shadow-sm"
                 >
-                  <div className="text-xs font-medium text-amber-700">Đã gán (HĐ này)</div>
+                  <div className="text-xs font-medium text-amber-700">
+                    {t('contract_devices.stats.attached')}
+                  </div>
                   <div className="mt-1 text-2xl font-bold text-amber-900">{stats.attached}</div>
                 </motion.div>
                 <motion.div
@@ -358,7 +364,9 @@ export default function ContractDevicesModal({
                   transition={{ delay: 0.1 }}
                   className="rounded-lg border border-[var(--brand-200)] bg-gradient-to-br from-[var(--brand-50)] to-[var(--brand-50)] p-3 shadow-sm"
                 >
-                  <div className="text-xs font-medium text-blue-700">HĐ khác</div>
+                  <div className="text-xs font-medium text-blue-700">
+                    {t('contract_devices.stats.other')}
+                  </div>
                   <div className="mt-1 text-2xl font-bold text-blue-900">{stats.other}</div>
                 </motion.div>
                 <motion.div
@@ -367,7 +375,9 @@ export default function ContractDevicesModal({
                   transition={{ delay: 0.15 }}
                   className="rounded-lg border border-emerald-200 bg-gradient-to-br from-emerald-50 to-green-50 p-3 shadow-sm"
                 >
-                  <div className="text-xs font-medium text-emerald-700">Chưa gán</div>
+                  <div className="text-xs font-medium text-emerald-700">
+                    {t('contract_devices.stats.unattached')}
+                  </div>
                   <div className="mt-1 text-2xl font-bold text-emerald-900">{stats.unattached}</div>
                 </motion.div>
               </div>
@@ -386,10 +396,11 @@ export default function ContractDevicesModal({
                         <AlertCircle className="h-5 w-5 text-amber-600" />
                       </div>
                       <div>
-                        <p className="font-semibold text-amber-900">Cập nhật thiết bị đã gán</p>
+                        <p className="font-semibold text-amber-900">
+                          {t('contract_devices.warning.attached.title')}
+                        </p>
                         <p className="mt-1 text-sm text-amber-700">
-                          Một số thiết bị đã được gán vào hợp đồng này. Chọn lại sẽ cập nhật thông
-                          tin thời gian của chúng.
+                          {t('contract_devices.warning.attached.description')}
                         </p>
                       </div>
                     </div>
@@ -405,7 +416,7 @@ export default function ContractDevicesModal({
                     <Input
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      placeholder="Tìm theo serial hoặc model..."
+                      placeholder={t('contract_devices.search.placeholder')}
                       className="pl-9"
                     />
                   </div>
@@ -420,18 +431,32 @@ export default function ContractDevicesModal({
                     className="gap-2"
                   >
                     <X className="h-4 w-4" />
-                    Xóa
+                    {t('button.clear')}
                   </Button>
                 </div>
 
                 {/* Filter Chips */}
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-xs font-medium text-slate-600">Lọc nhanh:</span>
+                  <span className="text-xs font-medium text-slate-600">
+                    {t('contract_devices.filter.quick')}
+                  </span>
                   {[
-                    { value: 'all', label: 'Tất cả', count: stats.total },
-                    { value: 'unattached', label: 'Chưa gán', count: stats.unattached },
-                    { value: 'attached', label: 'Đã gán (HĐ này)', count: stats.attached },
-                    { value: 'other', label: 'HĐ khác', count: stats.other },
+                    { value: 'all', label: t('contract_devices.filter.all'), count: stats.total },
+                    {
+                      value: 'unattached',
+                      label: t('contract_devices.filter.unattached'),
+                      count: stats.unattached,
+                    },
+                    {
+                      value: 'attached',
+                      label: t('contract_devices.filter.attached'),
+                      count: stats.attached,
+                    },
+                    {
+                      value: 'other',
+                      label: t('contract_devices.filter.other'),
+                      count: stats.other,
+                    },
                   ].map((filter) => (
                     <Button
                       key={filter.value}
@@ -468,9 +493,11 @@ export default function ContractDevicesModal({
                       <Search className="h-8 w-8 text-slate-400" />
                     </div>
                     <div className="text-center">
-                      <p className="font-medium text-slate-700">Không tìm thấy thiết bị</p>
+                      <p className="font-medium text-slate-700">
+                        {t('contract_devices.empty.title')}
+                      </p>
                       <p className="mt-1 text-sm text-slate-500">
-                        Thử điều chỉnh bộ lọc hoặc tìm kiếm khác
+                        {t('contract_devices.empty.description')}
                       </p>
                     </div>
                   </div>
@@ -502,13 +529,13 @@ export default function ContractDevicesModal({
                             />
                           </th>
                           <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-slate-600 uppercase">
-                            Serial Number
+                            {t('contract_devices.table.serial_number')}
                           </th>
                           <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-slate-600 uppercase">
-                            Model
+                            {t('contract_devices.table.model')}
                           </th>
                           <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-slate-600 uppercase">
-                            Trạng thái
+                            {t('contract_devices.table.status')}
                           </th>
                         </tr>
                       </thead>
@@ -550,7 +577,9 @@ export default function ContractDevicesModal({
                                   )}
                                   title={
                                     isDisabled
-                                      ? `Thiết bị đã được gán cho hợp đồng ${otherContract?.contractNumber}`
+                                      ? t('contract_devices.device.attached_to_contract', {
+                                          contractNumber: otherContract?.contractNumber,
+                                        })
                                       : ''
                                   }
                                 />
@@ -597,7 +626,7 @@ export default function ContractDevicesModal({
                                     className="border-amber-300 bg-amber-100 text-xs font-medium text-amber-700"
                                   >
                                     <CheckCircle2 className="mr-1 h-3 w-3" />
-                                    Đã gán (HĐ này)
+                                    {t('contract_devices.status.attached')}
                                   </Badge>
                                 ) : otherContract ? (
                                   <Badge
@@ -612,7 +641,7 @@ export default function ContractDevicesModal({
                                     variant="outline"
                                     className="border-slate-300 bg-slate-100 text-xs text-slate-600"
                                   >
-                                    Chưa gán
+                                    {t('contract_devices.status.unattached')}
                                   </Badge>
                                 )}
                               </td>
@@ -629,12 +658,14 @@ export default function ContractDevicesModal({
               <div className="rounded-lg border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-4">
                 <div className="mb-3 flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-slate-600" />
-                  <h4 className="text-sm font-semibold text-slate-700">Thời gian hiệu lực</h4>
+                  <h4 className="text-sm font-semibold text-slate-700">
+                    {t('contract_devices.date_range.title')}
+                  </h4>
                 </div>
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                   <div>
                     <label className="mb-1.5 block text-xs font-medium text-slate-600">
-                      Từ ngày
+                      {t('contract_devices.date_range.from')}
                     </label>
                     <Input
                       type="date"
@@ -645,7 +676,7 @@ export default function ContractDevicesModal({
                   </div>
                   <div>
                     <label className="mb-1.5 block text-xs font-medium text-slate-600">
-                      Đến ngày
+                      {t('contract_devices.date_range.to')}
                     </label>
                     <Input
                       type="date"
@@ -656,7 +687,7 @@ export default function ContractDevicesModal({
                   </div>
                 </div>
                 <p className="mt-2 text-xs text-slate-500">
-                  Nếu để trống, hệ thống sẽ sử dụng thời gian của hợp đồng
+                  {t('contract_devices.date_range.empty_note')}
                 </p>
               </div>
 
@@ -665,37 +696,38 @@ export default function ContractDevicesModal({
                 <div className="rounded-lg border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-4">
                   <div className="mb-3 flex items-center gap-2">
                     <Info className="h-4 w-4 text-slate-600" />
-                    <h4 className="text-sm font-semibold text-slate-700">Thông tin giá</h4>
+                    <h4 className="text-sm font-semibold text-slate-700">
+                      {t('contract_devices.pricing.title')}
+                    </h4>
                   </div>
                   <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                     <div>
                       <label className="mb-1.5 block text-xs font-medium text-slate-600">
-                        Giá thuê/tháng (VNĐ)
+                        {t('contract_devices.pricing.monthly_rent')}
                       </label>
                       <Input
                         type="number"
                         value={monthlyRent}
                         onChange={(e) => setMonthlyRent(e.target.value)}
                         className="h-10"
-                        placeholder="Ví dụ: 500000"
+                        placeholder={t('contract_devices.pricing.monthly_rent_placeholder')}
                       />
                     </div>
                     <div>
                       <label className="mb-1.5 block text-xs font-medium text-slate-600">
-                        Chi phí vận hành/tháng (VNĐ)
+                        {t('contract_devices.pricing.monthly_cogs')}
                       </label>
                       <Input
                         type="number"
                         value={monthlyRentCogs}
                         onChange={(e) => setMonthlyRentCogs(e.target.value)}
                         className="h-10"
-                        placeholder="Ví dụ: 300000"
+                        placeholder={t('contract_devices.pricing.monthly_cogs_placeholder')}
                       />
                     </div>
                   </div>
                   <p className="mt-2 text-xs text-slate-500">
-                    Để trống nếu không muốn cập nhật giá. Giá sẽ được áp dụng cho tất cả thiết bị đã
-                    chọn.
+                    {t('contract_devices.pricing.note')}
                   </p>
                 </div>
               </ActionGuard>
@@ -708,8 +740,7 @@ export default function ContractDevicesModal({
                   className="rounded-lg border border-[var(--brand-200)] bg-gradient-to-br from-[var(--brand-50)] to-[var(--brand-50)] p-3 text-center"
                 >
                   <p className="text-sm font-medium text-blue-900">
-                    Đã chọn <span className="text-lg font-bold">{selectedToAttach.length}</span>{' '}
-                    thiết bị
+                    {t('contract_devices.selected.count', { count: selectedToAttach.length })}
                   </p>
                 </motion.div>
               )}

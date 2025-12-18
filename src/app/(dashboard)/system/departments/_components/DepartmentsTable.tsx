@@ -103,7 +103,7 @@ export function DepartmentsTable({
     const filters: Array<{ label: string; value: string; onRemove: () => void }> = []
     if (search) {
       filters.push({
-        label: `Tìm kiếm: "${search}"`,
+        label: t('departments.search.result', { term: search }),
         value: search,
         onRemove: () => {
           setSearch('')
@@ -114,13 +114,14 @@ export function DepartmentsTable({
     }
     if (isActive !== 'all') {
       filters.push({
-        label: isActive === 'true' ? 'Hoạt động' : 'Ngừng hoạt động',
+        label:
+          isActive === 'true' ? t('departments.status.active') : t('departments.status.inactive'),
         value: isActive,
         onRemove: () => setIsActive('all'),
       })
     }
     return filters
-  }, [search, isActive])
+  }, [search, isActive, t])
 
   const handleResetFilters = () => {
     setSearch('')
@@ -143,15 +144,15 @@ export function DepartmentsTable({
     try {
       if (editingDept) {
         await departmentsClientService.updateDepartment(editingDept.id, formData)
-        toast.success('✅ Cập nhật bộ phận thành công')
+        toast.success(t('departments.update_success'))
       } else {
         await departmentsClientService.createDepartment(formData)
-        toast.success('✅ Tạo bộ phận thành công')
+        toast.success(t('departments.create_success'))
       }
       queryClient.invalidateQueries({ queryKey: ['departments'] })
     } catch (err) {
       console.error('Create/update department error', err)
-      toast.error('❌ Có lỗi khi lưu bộ phận')
+      toast.error(t('departments.save_error'))
     } finally {
       setIsModalOpen(false)
     }
@@ -161,10 +162,10 @@ export function DepartmentsTable({
     try {
       await departmentsClientService.deleteDepartment(deptId)
       queryClient.invalidateQueries({ queryKey: ['departments'] })
-      toast.success('✅ Xóa bộ phận thành công')
+      toast.success(t('departments.delete_success'))
     } catch (err) {
       console.error('Delete department error', err)
-      toast.error('❌ Có lỗi khi xóa bộ phận')
+      toast.error(t('departments.delete_error'))
     }
   }
 
@@ -175,19 +176,19 @@ export function DepartmentsTable({
       <StatsCards
         cards={[
           {
-            label: 'Tổng bộ phận',
+            label: t('departments.stats.total'),
             value: stats.total,
             icon: <Building2 className="h-6 w-6" />,
             borderColor: 'blue',
           },
           {
-            label: 'Đang hoạt động',
+            label: t('departments.stats.active'),
             value: stats.active,
             icon: <CheckCircle2 className="h-6 w-6" />,
             borderColor: 'green',
           },
           {
-            label: 'Tạm dừng',
+            label: t('departments.stats.inactive'),
             value: stats.inactive,
             icon: <XCircle className="h-6 w-6" />,
             borderColor: 'gray',
@@ -196,18 +197,20 @@ export function DepartmentsTable({
       />
 
       <FilterSection
-        title="Bộ lọc & Tìm kiếm"
+        title={t('departments.filters.title')}
         onReset={handleResetFilters}
         activeFilters={activeFilters}
         columnVisibilityMenu={columnVisibilityMenu}
       >
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
-            <label className="mb-2 block text-sm font-medium">Tìm kiếm</label>
+            <label className="mb-2 block text-sm font-medium">
+              {t('departments.search.label')}
+            </label>
             <div className="group relative">
               <Search className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-[var(--brand-400)] transition-colors group-focus-within:text-[var(--brand-600)]" />
               <Input
-                placeholder="🔍 Tìm kiếm tên hoặc mã bộ phận..."
+                placeholder={t('departments.search.placeholder')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 onKeyDown={(e) => {
@@ -293,6 +296,7 @@ export function DepartmentsTable({
           canDelete={canDelete}
           searchValue={search}
           sortVersion={sortVersion}
+          t={t}
         />
       </Suspense>
 
@@ -323,6 +327,7 @@ interface DepartmentsTableContentProps {
   canDelete: boolean
   searchValue: string
   sortVersion: number
+  t: (key: string, options?: Record<string, string | number>) => string
 }
 
 function DepartmentsTableContent({
@@ -342,9 +347,9 @@ function DepartmentsTableContent({
   canDelete,
   searchValue,
   sortVersion,
+  t,
 }: DepartmentsTableContentProps) {
   const [isPending, startTransition] = useTransition()
-
   const queryParams = useMemo(
     () => ({
       page,
@@ -384,7 +389,7 @@ function DepartmentsTableContent({
     return [
       {
         id: 'index',
-        header: 'STT',
+        header: t('departments.table.serial_number'),
         cell: ({ row, table }) => {
           const index = table.getSortedRowModel().rows.findIndex((r) => r.id === row.id)
           return (
@@ -401,7 +406,7 @@ function DepartmentsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <Building2 className="h-4 w-4 text-gray-600" />
-            Bộ phận
+            {t('departments.table.department')}
           </div>
         ),
         cell: ({ row }) => (
@@ -414,7 +419,7 @@ function DepartmentsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <Hash className="h-4 w-4 text-gray-600" />
-            Mã
+            {t('departments.table.code')}
           </div>
         ),
         cell: ({ row }) => (
@@ -429,7 +434,7 @@ function DepartmentsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <FileText className="h-4 w-4 text-gray-600" />
-            Mô tả
+            {t('departments.table.description')}
           </div>
         ),
         cell: ({ row }) => (
@@ -442,7 +447,7 @@ function DepartmentsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <CheckCircle2 className="h-4 w-4 text-gray-600" />
-            Trạng thái
+            {t('departments.table.status')}
           </div>
         ),
         cell: ({ row }) => (
@@ -453,12 +458,12 @@ function DepartmentsTableContent({
             {row.original.isActive ? (
               <>
                 <CheckCircle2 className="mr-1 h-3 w-3" />
-                Hoạt động
+                {t('departments.status.active')}
               </>
             ) : (
               <>
                 <XCircle className="mr-1 h-3 w-3" />
-                Ngừng
+                {t('departments.status.inactive')}
               </>
             )}
           </Badge>
@@ -470,7 +475,7 @@ function DepartmentsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-gray-600" />
-            Ngày tạo
+            {t('departments.table.created_date')}
           </div>
         ),
         cell: ({ row }) => (
@@ -484,7 +489,7 @@ function DepartmentsTableContent({
         header: () => (
           <div className="flex items-center gap-2">
             <Settings className="h-4 w-4 text-gray-600" />
-            Hành động
+            {t('departments.table.actions')}
           </div>
         ),
         enableSorting: false,
@@ -496,20 +501,25 @@ function DepartmentsTableContent({
                 variant="secondary"
                 onClick={() => onEditDepartment(row.original)}
                 className="transition-all"
-                title="Chỉnh sửa"
+                title={t('departments.edit.title')}
               >
                 <Edit className="h-4 w-4" />
               </Button>
             )}
             {canDelete && (
               <DeleteDialog
-                title="Xóa bộ phận"
-                description={`Bạn có chắc chắn muốn xóa bộ phận "${row.original.name}" không?\n\nHành động này không thể hoàn tác.`}
+                title={t('departments.delete.title')}
+                description={t('departments.delete.description', { name: row.original.name })}
                 onConfirm={async () => {
                   await Promise.resolve(onDeleteDepartment(row.original.id))
                 }}
                 trigger={
-                  <Button size="sm" variant="destructive" className="transition-all" title="Xóa">
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    className="transition-all"
+                    title={t('departments.delete.button')}
+                  >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 }
@@ -519,7 +529,7 @@ function DepartmentsTableContent({
         ),
       },
     ]
-  }, [pagination, canUpdate, canDelete, onEditDepartment, onDeleteDepartment])
+  }, [pagination, canUpdate, canDelete, onEditDepartment, onDeleteDepartment, t])
 
   return (
     <TableWrapper<Department>
@@ -548,18 +558,18 @@ function DepartmentsTableContent({
             <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200">
               <Building2 className="h-12 w-12 opacity-20" />
             </div>
-            <h3 className="mb-2 text-xl font-bold text-gray-700">Không có bộ phận nào</h3>
+            <h3 className="mb-2 text-xl font-bold text-gray-700">{t('departments.empty.title')}</h3>
             <p className="mb-6 text-gray-500">
               {searchValue || statusFilter !== 'all'
-                ? 'Thử điều chỉnh bộ lọc hoặc tạo bộ phận mới'
-                : 'Bắt đầu bằng cách tạo bộ phận đầu tiên'}
+                ? t('departments.empty.description_filtered')
+                : t('departments.empty.description_empty')}
             </p>
             <Button
               onClick={onCreateDepartment}
               className="rounded-lg bg-[var(--brand-600)] px-6 py-2 text-white transition-all hover:bg-[var(--brand-700)]"
             >
               <Plus className="mr-2 h-4 w-4" />
-              Tạo Bộ phận
+              {t('departments.create.button')}
             </Button>
           </div>
         ) : undefined

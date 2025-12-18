@@ -1223,7 +1223,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
           actionId="view-device-consumables"
           fallback={
             <div className="text-muted-foreground py-8 text-center">
-              Không có quyền xem vật tư thiết bị
+              {t('device_detail.no_permission_consumables')}
             </div>
           }
         >
@@ -1816,7 +1816,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
           actionId="view-maintenance-by-device"
           fallback={
             <div className="text-muted-foreground py-8 text-center">
-              Không có quyền xem lịch sử bảo trì theo thiết bị
+              {t('device_detail.no_permission.maintenance_history')}
             </div>
           }
         >
@@ -1831,7 +1831,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
           actionId="view-consumable-usage-history"
           fallback={
             <div className="text-muted-foreground py-8 text-center">
-              Không có quyền xem lịch sử sử dụng vật tư
+              {t('device_detail.no_permission.consumable_history')}
             </div>
           }
         >
@@ -1861,7 +1861,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
           actionId="view-usage-history"
           fallback={
             <div className="text-muted-foreground py-8 text-center">
-              Không có quyền xem lịch sử sử dụng
+              {t('device_detail.no_permission.usage_history')}
             </div>
           }
         >
@@ -1886,7 +1886,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                 onClick={() => setShowEdit(false)}
                 className="min-w-[100px]"
               >
-                Hủy
+                {t('device_detail.button.cancel')}
               </Button>
               <Button
                 onClick={async () => {
@@ -2501,7 +2501,9 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                   )}
                 </div>
                 <div>
-                  <Label className="text-base font-semibold">Giá</Label>
+                  <Label className="text-base font-semibold">
+                    {t('device_detail.label.price')}
+                  </Label>
                   <Label className="text-base font-semibold">{t('device.price_label')}</Label>
                   <Input
                     type="number"
@@ -3240,7 +3242,9 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
               {!editShowRemovedAt && (
                 <>
                   <div>
-                    <Label className="text-base font-semibold">Giá</Label>
+                    <Label className="text-base font-semibold">
+                      {t('device_detail.label.price')}
+                    </Label>
                     <Input
                       type="number"
                       step="any"
