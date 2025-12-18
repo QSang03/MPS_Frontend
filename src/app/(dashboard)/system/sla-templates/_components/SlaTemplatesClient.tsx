@@ -258,7 +258,7 @@ export default function SlaTemplatesClient({ session }: { session?: Session | nu
                 [
                   {
                     id: 'index',
-                    header: '#',
+                    header: t('table.serial_number'),
                     cell: ({ row }) => <div className="text-sm">{row.index + 1}</div>,
                   },
                   { id: 'name', header: t('table.name'), accessorKey: 'name' },

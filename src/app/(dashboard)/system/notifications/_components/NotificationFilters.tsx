@@ -17,6 +17,8 @@ interface NotificationFiltersProps {
   onTypeChange: (type: NotificationType) => void
   onClearFilters: () => void
   resultCount: number
+  viewMode?: 'list' | 'table'
+  onViewModeChange?: (m: 'list' | 'table') => void
 }
 
 export function NotificationFilters({
@@ -28,6 +30,8 @@ export function NotificationFilters({
   onTypeChange,
   onClearFilters,
   resultCount,
+  viewMode,
+  onViewModeChange,
 }: NotificationFiltersProps) {
   const hasActiveFilters = searchQuery || activeFilter !== 'ALL' || activeType !== 'ALL'
 
@@ -43,8 +47,39 @@ export function NotificationFilters({
             className="pl-9"
           />
         </div>
-        <div className="text-muted-foreground flex items-center gap-2 text-sm">
-          <span>Showing {resultCount} notifications</span>
+        <div className="flex items-center gap-4">
+          <div className="text-muted-foreground hidden items-center gap-2 text-sm sm:flex">
+            <span>Showing {resultCount} notifications</span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className={cn(
+                'rounded-md px-2 py-1 text-sm',
+                viewMode === 'list'
+                  ? 'bg-secondary text-secondary-foreground'
+                  : 'text-muted-foreground'
+              )}
+              onClick={() => onViewModeChange?.('list')}
+              aria-label="List view"
+            >
+              List
+            </button>
+            <button
+              type="button"
+              className={cn(
+                'rounded-md px-2 py-1 text-sm',
+                viewMode === 'table'
+                  ? 'bg-secondary text-secondary-foreground'
+                  : 'text-muted-foreground'
+              )}
+              onClick={() => onViewModeChange?.('table')}
+              aria-label="Table view"
+            >
+              Table
+            </button>
+          </div>
         </div>
       </div>
 

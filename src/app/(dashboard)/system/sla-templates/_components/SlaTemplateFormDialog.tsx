@@ -278,7 +278,7 @@ export function SlaTemplateFormDialog({
                         name={`items.${idx}.responseTimeHours` as const}
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Response (hrs)</FormLabel>
+                            <FormLabel>{t('sla_template.form.response_time_hours')}</FormLabel>
                             <FormControl>
                               <Input
                                 type="number"
@@ -306,7 +306,7 @@ export function SlaTemplateFormDialog({
                         name={`items.${idx}.resolutionTimeHours` as const}
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Resolution (hrs)</FormLabel>
+                            <FormLabel>{t('sla_template.form.resolution_time_hours')}</FormLabel>
                             <FormControl>
                               <Input
                                 type="number"

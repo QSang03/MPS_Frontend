@@ -3428,5 +3428,7 @@
   "sla_template.form.item_name": "Tên",
   "sla_template.form.items_title": "Items",
   "sla_template.form.items_description": "Danh sách các priority & thời gian",
-  "sla_template.form.add_item": "Thêm item"
+  "sla_template.form.add_item": "Thêm item",
+  "sla_template.form.response_time_hours": "Thời gian phản hồi (giờ)",
+  "sla_template.form.resolution_time_hours": "Thời gian giải quyết (giờ)"
 }

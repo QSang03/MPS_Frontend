@@ -3434,5 +3434,7 @@
   "sla_template.form.item_name": "Name",
   "sla_template.form.items_title": "Items",
   "sla_template.form.items_description": "List of priorities & timeframes",
-  "sla_template.form.add_item": "Add Item"
+  "sla_template.form.add_item": "Add Item",
+  "sla_template.form.response_time_hours": "Response (hrs)",
+  "sla_template.form.resolution_time_hours": "Resolution (hrs)"
 }
