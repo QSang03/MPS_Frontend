@@ -28,6 +28,7 @@ import { PurchaseStatusStepper } from '@/components/system/PurchaseStatusStepper
 import { PurchaseStatusButtonGrid } from '@/components/system/PurchaseStatusButtonGrid'
 import { PurchaseRequestItemFormModal } from './PurchaseRequestItemFormModal'
 import type { LucideIcon } from 'lucide-react'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import {
   ArrowLeft,
   CalendarCheck,
@@ -47,7 +48,6 @@ import {
 } from 'lucide-react'
 import type { PurchaseRequest, PurchaseRequestItem } from '@/types/models/purchase-request'
 import { cn } from '@/lib/utils/cn'
-import { useLocale } from '@/components/providers/LocaleProvider'
 import {
   Dialog,
   DialogContent,
@@ -229,7 +229,7 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
   if (!detail) {
     return (
       <div className="text-muted-foreground flex h-[50vh] items-center justify-center">
-        Không tìm thấy yêu cầu mua hàng.
+        {t('purchase_request.detail.not_found')}
       </div>
     )
   }
@@ -242,49 +242,49 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
   const timeline: TimelineEntry[] = (
     [
       {
-        label: 'Chờ duyệt',
+        label: t('purchase_request.status.pending'),
         time: detail.createdAt,
         by: detail.requestedBy,
         icon: Clock4,
         color: 'text-slate-500',
       },
       {
-        label: 'Đã duyệt',
+        label: t('purchase_request.status.approved'),
         time: detail.approvedAt,
         by: detail.approvedByName ?? detail.approvedBy,
         icon: CheckCircle2,
         color: 'text-emerald-600',
       },
       {
-        label: 'Đặt hàng',
+        label: t('purchase_request.status.ordered'),
         time: detail.orderedAt,
         by: detail.orderedBy,
         icon: CalendarCheck,
         color: 'text-[var(--brand-600)]',
       },
       {
-        label: 'Đang vận chuyển',
+        label: t('purchase_request.status.in_transit'),
         time: detail.inTransitAt,
         by: detail.inTransitBy,
         icon: Truck,
         color: 'text-[var(--brand-600)]',
       },
       {
-        label: 'Đã nhận',
+        label: t('purchase_request.status.received'),
         time: detail.receivedAt,
         by: detail.receivedBy,
         icon: Package,
         color: 'text-green-600',
       },
       {
-        label: 'Hủy (nội bộ)',
+        label: t('purchase_request.status.cancelled_internal'),
         time: detail.cancelledAt,
         by: detail.cancelledBy,
         icon: XCircle,
         color: 'text-[var(--color-error-500)]',
       },
       {
-        label: 'Khách hàng hủy',
+        label: t('purchase_request.status.customer_cancelled'),
         time: detail.customerCancelledAt,
         by: detail.customerCancelledBy,
         reason: detail.customerCancelledReason,
@@ -309,12 +309,12 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
               >
                 <Link href="/system/requests">
                   <ArrowLeft className="mr-1 h-4 w-4" />
-                  Quay lại
+                  {t('common.back')}
                 </Link>
               </Button>
             </div>
             <h1 className="flex items-center gap-3 text-2xl font-bold tracking-tight md:text-3xl">
-              {detail.title ?? 'Yêu cầu mua hàng'}
+              {detail.title ?? t('purchase_request.detail.title')}
             </h1>
             <div className="text-muted-foreground flex flex-wrap items-center gap-3 text-sm">
               <span className="bg-muted rounded px-1.5 py-0.5 font-mono text-xs">
@@ -366,11 +366,11 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center gap-2 text-base font-medium">
                     <FileText className="text-muted-foreground h-4 w-4" />
-                    Thông tin chung
+                    {t('purchase_request.detail.general_info')}
                   </CardTitle>
                   <div className="text-right">
                     <p className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
-                      Tổng giá trị (ước tính)
+                      {t('purchase_request.detail.total_estimated_cost')}
                     </p>
                     <p className="text-xl font-bold text-[var(--brand-600)]">
                       {formatCurrency(totalAmount, detail.currency)}
@@ -394,7 +394,9 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
                   )}
                   <ActionGuard pageId="customer-requests" actionId="assign-purchase">
                     <div className="space-y-2">
-                      <label className="text-sm leading-none font-medium">Người phụ trách</label>
+                      <label className="text-sm leading-none font-medium">
+                        {t('purchase_request.detail.assignee')}
+                      </label>
                       <div className="space-y-2">
                         <SearchableSelect
                           field="user.id"
@@ -402,13 +404,15 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
                           value={selectedAssignee ?? detail.assignedTo}
                           onChange={(v) => setSelectedAssignee(String(v))}
                           placeholder={
-                            detail.assignedToName ?? detail.assignedTo ?? 'Chọn nhân viên...'
+                            detail.assignedToName ??
+                            detail.assignedTo ??
+                            t('purchase_request.detail.select_employee')
                           }
                           fetchParams={sysCustomerId ? { customerId: sysCustomerId } : undefined}
                           disabled={assignMutation.isPending}
                         />
                         <textarea
-                          placeholder="Ghi chú phân công (tùy chọn)..."
+                          placeholder={t('purchase_request.detail.assignment_note_placeholder')}
                           className="border-input placeholder:text-muted-foreground focus-visible:ring-ring flex min-h-[60px] w-full resize-y rounded-md border bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:ring-1 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                           value={assignNote}
                           onChange={(e) => setAssignNote(e.target.value)}
@@ -429,7 +433,7 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
                             {assignMutation.isPending ? (
                               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             ) : null}
-                            Phân công
+                            {t('purchase_request.detail.assign')}
                           </Button>
                         </div>
                       </div>
@@ -439,10 +443,14 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
               </CardHeader>
               <CardContent className="space-y-4 pt-4">
                 <div>
-                  <p className="text-muted-foreground mb-1 text-sm font-medium">Mô tả yêu cầu</p>
+                  <p className="text-muted-foreground mb-1 text-sm font-medium">
+                    {t('purchase_request.detail.request_description')}
+                  </p>
                   <p className="text-sm leading-relaxed">
                     {detail.description || (
-                      <span className="text-muted-foreground italic">Không có mô tả chi tiết.</span>
+                      <span className="text-muted-foreground italic">
+                        {t('purchase_request.detail.no_description')}
+                      </span>
                     )}
                   </p>
                 </div>
@@ -455,9 +463,11 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
                 <div className="space-y-1">
                   <CardTitle className="flex items-center gap-2 text-base font-medium">
                     <ShoppingCart className="text-muted-foreground h-4 w-4" />
-                    Danh sách vật tư
+                    {t('purchase_request.detail.items_list')}
                   </CardTitle>
-                  <CardDescription>Chi tiết các hạng mục cần mua sắm</CardDescription>
+                  <CardDescription>
+                    {t('purchase_request.detail.items_description')}
+                  </CardDescription>
                 </div>
                 <ActionGuard pageId="customer-requests" actionId="manage-purchase-items">
                   <Button size="sm" variant="outline" onClick={handleAddItem}>
@@ -497,7 +507,8 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
                               </div>
                               {item.consumableType?.unit && (
                                 <div className="text-muted-foreground mt-0.5 text-xs">
-                                  Quy cách: {item.consumableType.unit}
+                                  {t('purchase_request.detail.specification')}:{' '}
+                                  {item.consumableType.unit}
                                 </div>
                               )}
                             </TableCell>
@@ -559,9 +570,11 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
                 <CardHeader className="pb-3">
                   <CardTitle className="flex items-center gap-2 text-base font-medium">
                     <Activity className="h-4 w-4 text-[var(--brand-500)]" />
-                    Trao đổi & Thảo luận
+                    {t('purchase_request.detail.discussions')}
                   </CardTitle>
-                  <CardDescription>Lịch sử trao đổi liên quan tới đơn mua hàng</CardDescription>
+                  <CardDescription>
+                    {t('purchase_request.detail.discussions_description')}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="flex-1 overflow-hidden p-0">
                   <div className="flex h-full flex-col">
@@ -581,13 +594,15 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
             <Card className="border-l-4 border-l-blue-500 shadow-lg">
               <CardHeader className="pb-4">
                 <CardTitle className="text-base font-bold text-gray-800">
-                  Quản lý & Tác vụ
+                  {t('purchase_request.detail.management')}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-4">
                   <div className="border-b border-gray-200 pb-3">
-                    <label className="text-sm font-semibold text-gray-700">Trạng thái xử lý</label>
+                    <label className="text-sm font-semibold text-gray-700">
+                      {t('purchase_request.detail.processing_status')}
+                    </label>
                   </div>
                   <PermissionGuard
                     session={session}
@@ -595,7 +610,7 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
                     resource={{ type: 'purchaseRequest', customerId: detail.customerId }}
                     fallback={
                       <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
-                        Bạn không có quyền cập nhật.
+                        {t('purchase_request.detail.no_update_permission')}
                       </div>
                     }
                   >
@@ -603,7 +618,7 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
                       <PurchaseStatusStepper current={detail.status} />
                       <div className="border-t border-gray-100 pt-2">
                         <div className="mb-3 text-sm font-medium text-gray-600">
-                          Chuyển trạng thái
+                          {t('purchase_request.detail.change_status')}
                         </div>
                         <PurchaseStatusButtonGrid
                           current={detail.status}
@@ -624,14 +639,16 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
                   >
                     <DialogContent>
                       <DialogHeader>
-                        <DialogTitle>Cập nhật trạng thái</DialogTitle>
+                        <DialogTitle>
+                          {t('purchase_request.detail.update_status_title')}
+                        </DialogTitle>
                         <DialogDescription className="sr-only">
-                          Nhập ghi chú hành động (tùy chọn) để lưu cùng bản ghi cập nhật trạng thái
+                          {t('purchase_request.detail.status_note_description')}
                         </DialogDescription>
                       </DialogHeader>
                       <div className="mt-2">
                         <p className="text-muted-foreground text-sm">
-                          Ghi chú hành động (tùy chọn)
+                          {t('purchase_request.detail.status_note_label')}
                         </p>
                         <textarea
                           value={statusNote}
@@ -684,7 +701,7 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
                         ) : (
                           <XCircle className="mr-2 h-4 w-4" />
                         )}
-                        Xóa yêu cầu này
+                        {t('purchase_request.detail.delete_request')}
                       </Button>
                     </div>
                   </PermissionGuard>
@@ -694,16 +711,16 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
                   >
                     <DialogContent>
                       <DialogHeader>
-                        <DialogTitle>Xác nhận xóa</DialogTitle>
+                        <DialogTitle>
+                          {t('purchase_request.detail.confirm_delete_title')}
+                        </DialogTitle>
                         <DialogDescription className="sr-only">
-                          Bạn có chắc chắn muốn xóa yêu cầu mua hàng này không? Hành động không thể
-                          hoàn tác.
+                          {t('purchase_request.detail.confirm_delete_message')}
                         </DialogDescription>
                       </DialogHeader>
                       <div className="mt-2">
                         <p className="text-sm">
-                          Sau khi xóa, yêu cầu mua hàng sẽ không thể khôi phục. Bạn vẫn muốn tiếp
-                          tục?
+                          {t('purchase_request.detail.confirm_delete_warning')}
                         </p>
                       </div>
                       <DialogFooter className="mt-4">
@@ -736,7 +753,7 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
               <CardHeader className="bg-muted/20 border-b pt-4 pb-3">
                 <CardTitle className="flex items-center gap-2 text-sm font-semibold">
                   <Building2 className="h-4 w-4" />
-                  Khách hàng
+                  {t('purchase_request.detail.customer')}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 pt-4">
@@ -761,9 +778,15 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
                 <div className="grid gap-2 text-sm">
                   <InfoRow label="Email" value={detail.customer?.contactEmail} />
                   <InfoRow label="Phone" value={detail.customer?.contactPhone} />
-                  <InfoRow label="Liên hệ" value={detail.customer?.contactPerson} />
+                  <InfoRow
+                    label={t('purchase_request.detail.contact')}
+                    value={detail.customer?.contactPerson}
+                  />
                   {detail.customer?.billingDay && (
-                    <InfoRow label="Ngày chốt" value={`Ngày ${detail.customer.billingDay}`} />
+                    <InfoRow
+                      label={t('purchase_request.detail.billing_day')}
+                      value={`${t('common.day')} ${detail.customer.billingDay}`}
+                    />
                   )}
                 </div>
                 {Array.isArray(detail.customer?.address) && detail.customer.address.length > 0 && (
@@ -779,12 +802,16 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
             {/* 3. Timeline */}
             <Card>
               <CardHeader className="pt-4 pb-3">
-                <CardTitle className="text-sm font-semibold">Tiến độ xử lý</CardTitle>
+                <CardTitle className="text-sm font-semibold">
+                  {t('purchase_request.detail.processing_progress')}
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="border-muted relative ml-2 space-y-6 border-l pb-2">
                   {timeline.length === 0 ? (
-                    <div className="text-muted-foreground pl-4 text-xs">Chưa có dữ liệu.</div>
+                    <div className="text-muted-foreground pl-4 text-xs">
+                      {t('purchase_request.detail.no_data')}
+                    </div>
                   ) : (
                     timeline.map((event, idx) => {
                       const Icon = event.icon
@@ -805,12 +832,12 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
                             </span>
                             {event.by && (
                               <span className="text-muted-foreground mt-0.5 text-xs">
-                                bởi {event.by}
+                                {t('purchase_request.detail.by')} {event.by}
                               </span>
                             )}
                             {event.reason && (
                               <span className="mt-1 rounded bg-[var(--color-error-50)] p-1 text-xs text-[var(--color-error-500)] italic">
-                                Lý do: {event.reason}
+                                {t('purchase_request.detail.reason')}: {event.reason}
                               </span>
                             )}
                           </div>
@@ -909,7 +936,7 @@ function ItemManagementModals({
               onClick={() => setDeleteItemConfirm(null)}
               disabled={deleteItemMutation.isPending}
             >
-              Hủy
+              {t('common.cancel')}
             </Button>
             <Button
               variant="destructive"
@@ -921,7 +948,7 @@ function ItemManagementModals({
               ) : (
                 <XCircle className="mr-2 h-4 w-4" />
               )}
-              Xóa
+              {t('common.delete')}
             </Button>
           </DialogFooter>
         </DialogContent>
