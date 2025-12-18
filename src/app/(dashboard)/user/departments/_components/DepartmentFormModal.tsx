@@ -19,14 +19,15 @@ import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
 import type { Department } from '@/types/users'
 
-const departmentSchema = z.object({
-  name: z.string().min(2, 'Tên phải có ít nhất 2 ký tự'),
-  code: z.string().optional(),
-  description: z.string().optional(),
-  isActive: z.boolean().optional(),
-})
+const createDepartmentSchema = (t: (k: string) => string) =>
+  z.object({
+    name: z.string().min(2, t('department.validation.name_min')),
+    code: z.string().optional(),
+    description: z.string().optional(),
+    isActive: z.boolean().optional(),
+  })
 
-type DepartmentFormSchema = z.infer<typeof departmentSchema>
+type DepartmentFormSchema = z.infer<ReturnType<typeof createDepartmentSchema>>
 
 export function DepartmentFormModal({
   isOpen,
@@ -40,6 +41,7 @@ export function DepartmentFormModal({
   initialData?: Department | null
 }) {
   const { t } = useLocale()
+  const departmentSchema = React.useMemo(() => createDepartmentSchema(t), [t])
   const {
     register,
     handleSubmit,

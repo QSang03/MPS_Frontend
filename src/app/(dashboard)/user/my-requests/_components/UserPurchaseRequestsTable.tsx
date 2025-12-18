@@ -75,32 +75,32 @@ const buildTimelineSteps = (
   (
     [
       {
-        label: t ? t('requests.purchase.timeline.created') : 'Tạo yêu cầu',
+        label: t ? t('requests.purchase.timeline.created') : 'Created',
         time: request.createdAt,
         by: request.requestedBy,
       },
       {
-        label: t ? t('requests.purchase.timeline.approved') : 'Đã duyệt',
+        label: t ? t('requests.purchase.timeline.approved') : 'Approved',
         time: request.approvedAt,
         by: request.approvedByName ?? request.approvedBy,
       },
       {
-        label: t ? t('requests.purchase.timeline.ordered') : 'Đặt hàng',
+        label: t ? t('requests.purchase.timeline.ordered') : 'Ordered',
         time: request.orderedAt,
         by: request.orderedBy,
       },
       {
-        label: t ? t('requests.purchase.timeline.received') : 'Đã nhận',
+        label: t ? t('requests.purchase.timeline.received') : 'Received',
         time: request.receivedAt,
         by: request.receivedBy,
       },
       {
-        label: t ? t('requests.purchase.timeline.cancelled') : 'Đã hủy',
+        label: t ? t('requests.purchase.timeline.cancelled') : 'Cancelled',
         time: request.cancelledAt,
         by: request.cancelledBy,
       },
       {
-        label: t ? t('requests.purchase.timeline.customer_cancelled') : 'Khách hủy',
+        label: t ? t('requests.purchase.timeline.customer_cancelled') : 'Customer cancelled',
         time: request.customerCancelledAt,
         by: request.customerCancelledBy,
       },

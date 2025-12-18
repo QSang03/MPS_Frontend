@@ -160,15 +160,15 @@ export default function UsagePage() {
     if (!canLoadUsageData) return
     const params = buildTimeForMode()
     if (mode === 'period' && !params.period) {
-      toast.warning('Vui lòng chọn tháng')
+      toast.warning(t('analytics.warning.choose_month'))
       return
     }
     if (mode === 'range' && (!params.from || !params.to)) {
-      toast.warning('Vui lòng chọn khoảng thời gian')
+      toast.warning(t('analytics.warning.choose_range'))
       return
     }
     if (mode === 'year' && !params.year) {
-      toast.warning('Vui lòng chọn năm')
+      toast.warning(t('analytics.warning.choose_year'))
       return
     }
 
@@ -179,9 +179,9 @@ export default function UsagePage() {
       if (res.success && res.data) {
         setUsageData(res.data)
       } else {
-        const msg = res.message || 'Không thể tải dữ liệu'
+        const msg = res.message || t('analytics.error.load_failed')
         if (msg.toLowerCase().includes('no data')) {
-          toast.warning('Không có dữ liệu cho kỳ này')
+          toast.warning(t('analytics.warning.no_data'))
         } else {
           toast.error(msg)
         }
@@ -190,12 +190,12 @@ export default function UsagePage() {
       }
     } catch (err) {
       console.error('Failed to load usage', err)
-      setError('Không thể tải dữ liệu sử dụng')
-      toast.error('Không thể tải dữ liệu sử dụng')
+      setError(t('analytics.error.load_failed'))
+      toast.error(t('analytics.error.load_failed'))
     } finally {
       setLoading(false)
     }
-  }, [buildTimeForMode, canLoadUsageData, mode])
+  }, [buildTimeForMode, canLoadUsageData, mode, t])
 
   useEffect(() => {
     if (!canLoadUsageData) return
@@ -255,8 +255,16 @@ export default function UsagePage() {
                   {mode === 'period' && <MonthPicker value={period} onChange={setPeriod} />}
                   {mode === 'range' && (
                     <>
-                      <MonthPicker placeholder="Từ tháng" value={from} onChange={setFrom} />
-                      <MonthPicker placeholder="Đến tháng" value={to} onChange={setTo} />
+                      <MonthPicker
+                        placeholder={t('analytics.filters.range.from_placeholder')}
+                        value={from}
+                        onChange={setFrom}
+                      />
+                      <MonthPicker
+                        placeholder={t('analytics.filters.range.to_placeholder')}
+                        value={to}
+                        onChange={setTo}
+                      />
                     </>
                   )}
                   {mode === 'year' && (

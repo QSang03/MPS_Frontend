@@ -119,7 +119,7 @@ export function WarehouseDocumentDetailClient({ id }: Props) {
                   disabled={isProcessing}
                   className="flex items-center gap-2"
                 >
-                  <Check className="h-4 w-4" /> Xác nhận
+                  <Check className="h-4 w-4" /> {t('common.confirm')}
                 </Button>
               </ActionGuard>
               <ActionGuard pageId="warehouse-documents" actionId="cancel">
@@ -129,7 +129,7 @@ export function WarehouseDocumentDetailClient({ id }: Props) {
                   disabled={isProcessing}
                   className="flex items-center gap-2"
                 >
-                  <X className="h-4 w-4" /> Hủy
+                  <X className="h-4 w-4" /> {t('common.cancel')}
                 </Button>
               </ActionGuard>
             </>

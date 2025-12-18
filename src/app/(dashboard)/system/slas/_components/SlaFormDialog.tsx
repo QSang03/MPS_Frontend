@@ -30,31 +30,38 @@ import { Switch } from '@/components/ui/switch'
 import { CustomerSelect } from '@/components/shared/CustomerSelect'
 import { ActionGuard } from '@/components/shared/ActionGuard'
 import { Priority } from '@/constants/status'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import type { SLA } from '@/types/models/sla'
 
-const slaFormSchema = z.object({
-  name: z.string().min(3, 'Tên SLA tối thiểu 3 ký tự').max(120, 'Tên SLA tối đa 120 ký tự'),
-  customerId: z.string().min(1, 'Vui lòng chọn khách hàng'),
-  description: z.string().max(500, 'Mô tả tối đa 500 ký tự').optional().or(z.literal('')),
-  responseTimeHours: z
-    .number({
-      message: 'Thời gian phản hồi phải là số giờ',
-    })
-    .int('Vui lòng nhập số nguyên')
-    .positive('Thời gian phản hồi phải lớn hơn 0'),
-  resolutionTimeHours: z
-    .number({
-      message: 'Thời gian xử lý phải là số giờ',
-    })
-    .int('Vui lòng nhập số nguyên')
-    .positive('Thời gian xử lý phải lớn hơn 0'),
-  priority: z.nativeEnum(Priority, {
-    message: 'Vui lòng chọn mức ưu tiên',
-  }),
-  isActive: z.boolean(),
-})
+function createSlaFormSchema(t: (key: string) => string) {
+  return z.object({
+    name: z.string().min(3, t('sla.validation.name_min')).max(120, t('sla.validation.name_max')),
+    customerId: z.string().min(1, t('sla.validation.customer_required')),
+    description: z
+      .string()
+      .max(500, t('sla.validation.description_max'))
+      .optional()
+      .or(z.literal('')),
+    responseTimeHours: z
+      .number({
+        message: t('sla.validation.response_time_number'),
+      })
+      .int(t('sla.validation.integer_required'))
+      .positive(t('sla.validation.response_time_positive')),
+    resolutionTimeHours: z
+      .number({
+        message: t('sla.validation.resolution_time_number'),
+      })
+      .int(t('sla.validation.integer_required'))
+      .positive(t('sla.validation.resolution_time_positive')),
+    priority: z.nativeEnum(Priority, {
+      message: t('sla.validation.priority_required'),
+    }),
+    isActive: z.boolean(),
+  })
+}
 
-export type SlaFormValues = z.infer<typeof slaFormSchema>
+export type SlaFormValues = z.infer<ReturnType<typeof createSlaFormSchema>>
 
 interface SlaFormDialogProps {
   open: boolean
@@ -71,6 +78,9 @@ export function SlaFormDialog({
   isSubmitting,
   initialData,
 }: SlaFormDialogProps) {
+  const { t } = useLocale()
+  const slaFormSchema = createSlaFormSchema(t)
+
   const form = useForm<SlaFormValues>({
     resolver: zodResolver(slaFormSchema),
     defaultValues: {
@@ -115,8 +125,8 @@ export function SlaFormDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <SystemModalLayout
-        title={initialData ? 'Cập nhật SLA' : 'Tạo SLA mới'}
-        description="Định nghĩa cam kết thời gian phản hồi & xử lý để đồng bộ với hợp đồng dịch vụ."
+        title={initialData ? t('sla.form.edit_title') : t('sla.form.create_title')}
+        description={t('sla.form.description')}
         icon={FileText}
         variant={initialData ? 'edit' : 'create'}
         footer={
@@ -128,7 +138,7 @@ export function SlaFormDialog({
               disabled={isSubmitting}
               className="min-w-[100px]"
             >
-              Hủy
+              {t('cancel')}
             </Button>
             <Button
               type="submit"
@@ -137,7 +147,7 @@ export function SlaFormDialog({
               className="min-w-[120px] bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
             >
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {initialData ? 'Lưu thay đổi' : 'Tạo SLA'}
+              {initialData ? t('sla.form.save_changes') : t('sla.form.create_sla')}
             </Button>
           </>
         }
@@ -150,10 +160,10 @@ export function SlaFormDialog({
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Tên SLA</FormLabel>
+                    <FormLabel>{t('sla.form.name')}</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="VD: Standard Support SLA"
+                        placeholder={t('sla.form.name_placeholder')}
                         {...field}
                         disabled={isSubmitting}
                       />
@@ -168,14 +178,14 @@ export function SlaFormDialog({
                 name="customerId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Khách hàng</FormLabel>
+                    <FormLabel>{t('sla.form.customer')}</FormLabel>
                     <FormControl>
                       <ActionGuard pageId="slas" actionId="read-customer-for-sla">
                         <CustomerSelect
                           value={field.value}
                           onChange={field.onChange}
                           disabled={isSubmitting}
-                          placeholder="Chọn khách hàng"
+                          placeholder={t('sla.form.customer_placeholder')}
                         />
                       </ActionGuard>
                     </FormControl>
@@ -190,16 +200,16 @@ export function SlaFormDialog({
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Mô tả</FormLabel>
+                  <FormLabel>{t('sla.form.description')}</FormLabel>
                   <FormControl>
                     <Textarea
                       rows={3}
-                      placeholder="Chuẩn dịch vụ, phạm vi áp dụng, ghi chú escalation..."
+                      placeholder={t('sla.form.description_placeholder')}
                       {...field}
                       disabled={isSubmitting}
                     />
                   </FormControl>
-                  <FormDescription>Nêu rõ phạm vi SLA hoặc điều kiện áp dụng.</FormDescription>
+                  <FormDescription>{t('sla.form.description_help')}</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -211,7 +221,7 @@ export function SlaFormDialog({
                 name="responseTimeHours"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Thời gian phản hồi (giờ)</FormLabel>
+                    <FormLabel>{t('sla.form.response_time')}</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -233,9 +243,7 @@ export function SlaFormDialog({
                         disabled={isSubmitting}
                       />
                     </FormControl>
-                    <FormDescription>
-                      Thời gian đội kỹ thuật phản hồi sau khi nhận ticket.
-                    </FormDescription>
+                    <FormDescription>{t('sla.form.response_time_help')}</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -246,7 +254,7 @@ export function SlaFormDialog({
                 name="resolutionTimeHours"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Thời gian xử lý (giờ)</FormLabel>
+                    <FormLabel>{t('sla.form.resolution_time')}</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -268,9 +276,7 @@ export function SlaFormDialog({
                         disabled={isSubmitting}
                       />
                     </FormControl>
-                    <FormDescription>
-                      Cam kết khắc phục sự cố hoặc hoàn tất yêu cầu.
-                    </FormDescription>
+                    <FormDescription>{t('sla.form.resolution_time_help')}</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -283,7 +289,7 @@ export function SlaFormDialog({
                 name="priority"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Ưu tiên mặc định</FormLabel>
+                    <FormLabel>{t('sla.form.default_priority')}</FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       value={field.value}
@@ -291,14 +297,14 @@ export function SlaFormDialog({
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Chọn ưu tiên" />
+                          <SelectValue placeholder={t('sla.form.priority_placeholder')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value={Priority.LOW}>Thấp</SelectItem>
-                        <SelectItem value={Priority.NORMAL}>Bình thường</SelectItem>
-                        <SelectItem value={Priority.HIGH}>Cao</SelectItem>
-                        <SelectItem value={Priority.URGENT}>Khẩn cấp</SelectItem>
+                        <SelectItem value={Priority.LOW}>{t('priority.low')}</SelectItem>
+                        <SelectItem value={Priority.NORMAL}>{t('priority.normal')}</SelectItem>
+                        <SelectItem value={Priority.HIGH}>{t('priority.high')}</SelectItem>
+                        <SelectItem value={Priority.URGENT}>{t('priority.urgent')}</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -312,8 +318,8 @@ export function SlaFormDialog({
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
                     <div className="space-y-0.5">
-                      <FormLabel>Kích hoạt</FormLabel>
-                      <FormDescription>Khi tắt, SLA sẽ không áp vào yêu cầu mới.</FormDescription>
+                      <FormLabel>{t('sla.form.is_active')}</FormLabel>
+                      <FormDescription>{t('sla.form.is_active_help')}</FormDescription>
                     </div>
                     <FormControl>
                       <Switch

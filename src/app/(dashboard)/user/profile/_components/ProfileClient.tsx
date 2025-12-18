@@ -57,7 +57,7 @@ export function ProfileClient({ initialProfile }: ProfileClientProps) {
     return (
       <Card className="rounded-3xl border-2 border-gray-200">
         <CardContent className="p-8 text-center">
-          <p className="text-lg text-gray-500">⏳ Đang tải thông tin hồ sơ...</p>
+          <p className="text-lg text-gray-500">{t('profile.loading')}</p>
         </CardContent>
       </Card>
     )

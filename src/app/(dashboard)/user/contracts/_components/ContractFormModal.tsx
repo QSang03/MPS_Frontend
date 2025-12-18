@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, Sparkles, FileText, ArrowRight } from 'lucide-react'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -24,6 +25,7 @@ interface ContractFormModalProps {
 
 export function ContractFormModal({ initial, onCreated, trigger }: ContractFormModalProps) {
   const [open, setOpen] = useState(false)
+  const { t } = useLocale()
 
   const normalizeDateToYYYYMMDD = (date?: string | null): string | undefined => {
     if (!date) return undefined
@@ -75,7 +77,7 @@ export function ContractFormModal({ initial, onCreated, trigger }: ContractFormM
         {trigger || (
           <Button variant="default" className="gap-2 shadow-lg transition-all hover:shadow-xl">
             <Plus className="h-4 w-4" />
-            Tạo hợp đồng
+            {t('contract.form.modal.trigger.create')}
           </Button>
         )}
       </DialogTrigger>
@@ -113,11 +115,11 @@ export function ContractFormModal({ initial, onCreated, trigger }: ContractFormM
                     </motion.div>
                     <div className="flex-1">
                       <DialogTitle className="flex items-center gap-2 text-2xl font-bold text-white">
-                        ✨ Tạo hợp đồng mới
+                        ✨ {t('contract.form.modal.title')}
                       </DialogTitle>
                       <DialogDescription className="mt-1 flex items-center gap-2 text-white/90">
                         <FileText className="h-4 w-4" />
-                        Nhập đầy đủ thông tin hợp đồng bên dưới
+                        {t('contract.form.modal.description')}
                       </DialogDescription>
                     </div>
                   </motion.div>
@@ -136,17 +138,17 @@ export function ContractFormModal({ initial, onCreated, trigger }: ContractFormM
                   <div className="mb-6 flex items-center gap-3 text-xs font-semibold text-gray-600">
                     <div className="flex items-center gap-2">
                       <div className="h-2 w-2 rounded-full bg-[var(--brand-600)]"></div>
-                      Thông tin cơ bản
+                      {t('contract.form.modal.step.basic.title')}
                     </div>
                     <ArrowRight className="h-4 w-4 text-gray-400" />
                     <div className="flex items-center gap-2">
                       <div className="h-2 w-2 rounded-full bg-gray-300"></div>
-                      Khách hàng & Thời hạn
+                      {t('contract.form.modal.step.customer.title')}
                     </div>
                     <ArrowRight className="h-4 w-4 text-gray-400" />
                     <div className="flex items-center gap-2">
                       <div className="h-2 w-2 rounded-full bg-gray-300"></div>
-                      Chi tiết
+                      {t('contract.form.modal.step.details.title')}
                     </div>
                   </div>
 

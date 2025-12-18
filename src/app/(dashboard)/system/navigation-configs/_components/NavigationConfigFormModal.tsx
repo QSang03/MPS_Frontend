@@ -146,7 +146,7 @@ export default function NavigationConfigFormModal({ config, open, onOpenChange, 
 
   const filteredRoles: UserRole[] | undefined = rolesData?.data
     ? rolesData.data.filter((role) => {
-        // Không chọn customer -> không hạn chế role
+        // No customer selected -> no role restriction
         if (!form.customerId) return true
         if (isSysCustomer) return true
         const normalized = (role.name || '').trim().toLowerCase()
@@ -574,10 +574,7 @@ export default function NavigationConfigFormModal({ config, open, onOpenChange, 
           {/* Default navigation mode when no customer selected */}
           {!form.customerId && (
             <div className="space-y-2">
-              <Label>
-                {t('navigation_config.fields.default_navigation_type') ||
-                  'Loại navigation (khi không chọn khách hàng)'}
-              </Label>
+              <Label>{t('navigation_config.fields.default_navigation_type')}</Label>
               <Select
                 value={defaultNavMode}
                 onValueChange={(value) => {
@@ -601,10 +598,7 @@ export default function NavigationConfigFormModal({ config, open, onOpenChange, 
               >
                 <SelectTrigger>
                   <SelectValue
-                    placeholder={
-                      (t('navigation_config.placeholder.default_navigation_type') as string) ||
-                      'Chọn loại navigation mặc định'
-                    }
+                    placeholder={t('navigation_config.placeholder.default_navigation_type')}
                   />
                 </SelectTrigger>
                 <SelectContent>
@@ -617,8 +611,7 @@ export default function NavigationConfigFormModal({ config, open, onOpenChange, 
                 </SelectContent>
               </Select>
               <p className="text-xs text-gray-500">
-                {t('navigation_config.helper.default_navigation_type') ||
-                  'Khi chưa chọn khách hàng, bạn có thể chọn dùng navigation System hoặc User.'}
+                {t('navigation_config.helper.default_navigation_type')}
               </p>
             </div>
           )}

@@ -163,7 +163,7 @@ export default function SystemSettingsPage() {
             borderColor: 'green',
           },
           {
-            label: 'Chỉ đọc',
+            label: t('system_settings.stats.read_only'),
             value: readOnlySettings,
             icon: <Eye className="h-6 w-6" />,
             borderColor: 'gray',
@@ -267,11 +267,11 @@ export default function SystemSettingsPage() {
                         </Badge>
                         {setting.isEditable ? (
                           <Badge className="shrink-0 border-[var(--color-success-200)] bg-[var(--color-success-50)] text-[var(--color-success-600)]">
-                            Có thể chỉnh sửa
+                            {t('system_setting.detail.editable')}
                           </Badge>
                         ) : (
                           <Badge className="shrink-0 border-gray-200 bg-gray-500/10 text-gray-700">
-                            Chỉ đọc
+                            {t('system_setting.detail.read_only')}
                           </Badge>
                         )}
                       </div>
@@ -279,7 +279,7 @@ export default function SystemSettingsPage() {
                         <p className="text-sm text-gray-600">{setting.description}</p>
                       )}
                       <div className="text-xs text-gray-400">
-                        Giá trị:{' '}
+                        {t('system_setting.detail.value')}:{' '}
                         <code className="rounded bg-gray-50 px-2 py-0.5 font-mono">
                           {(() => {
                             if (setting.type === SystemSettingType.SECRET) {
@@ -332,7 +332,7 @@ export default function SystemSettingsPage() {
           ) : (
             <div className="py-12 text-center text-gray-500">
               <Settings className="mx-auto mb-4 h-12 w-12 opacity-20" />
-              <p>Không tìm thấy cấu hình nào</p>
+              <p>{t('system_settings.empty.no_settings')}</p>
             </div>
           )}
 

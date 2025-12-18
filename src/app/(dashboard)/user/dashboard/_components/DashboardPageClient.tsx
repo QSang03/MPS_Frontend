@@ -481,7 +481,7 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
             <div className="flex items-start gap-4">
               <div>
                 <p className="text-[11px] font-medium tracking-wider text-[var(--neutral-500)] uppercase md:text-xs">
-                  Trang in đen trắng
+                  {t('dashboard.detail.pages_bw')}
                 </p>
                 <div className="mt-2 flex items-baseline gap-2">
                   <div className="text-2xl font-bold text-[var(--foreground)] md:text-[28px] lg:text-[32px]">
@@ -490,7 +490,10 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
                 </div>
                 <div className="mt-1 flex items-center text-xs font-medium text-[var(--color-success-500)]">
                   <TrendingUp className="mr-1 h-3 w-3" />
-                  5.2% <span className="ml-1 text-[var(--neutral-500)]">so với tháng trước</span>
+                  5.2%{' '}
+                  <span className="ml-1 text-[var(--neutral-500)]">
+                    {t('dashboard.compare_to_last_month')}
+                  </span>
                 </div>
               </div>
               <div className="ml-auto flex flex-col items-end gap-4">
@@ -512,7 +515,7 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
             <div className="flex items-start gap-4">
               <div>
                 <p className="text-[11px] font-medium tracking-wider text-[var(--neutral-500)] uppercase md:text-xs">
-                  Trang in màu sắc
+                  {t('dashboard.detail.pages_color')}
                 </p>
                 <div className="mt-2 flex items-baseline gap-2">
                   <div className="text-2xl font-bold text-[var(--foreground)] md:text-[28px] lg:text-[32px]">

@@ -11,6 +11,7 @@ import { Settings, Key, FileText, Calendar, CheckCircle2, XCircle, Eye, EyeOff }
 import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
 import { vi } from 'date-fns/locale'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 interface Props {
   setting: SystemSetting | null
@@ -19,6 +20,7 @@ interface Props {
 }
 
 export default function SystemSettingDetailModal({ setting, open, onOpenChange }: Props) {
+  const { t } = useLocale()
   const [showSecret, setShowSecret] = React.useState(false)
 
   if (!setting) return null
@@ -120,8 +122,8 @@ export default function SystemSettingDetailModal({ setting, open, onOpenChange }
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <SystemModalLayout
-        title="Chi tiết cấu hình"
-        description="Thông tin chi tiết về cấu hình hệ thống"
+        title={t('system_setting.detail.title')}
+        description={t('system_setting.detail.description')}
         icon={Settings}
         variant="view"
       >
@@ -130,7 +132,7 @@ export default function SystemSettingDetailModal({ setting, open, onOpenChange }
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-sm font-medium text-gray-500">
               <Key className="h-4 w-4" />
-              Khóa cấu hình
+              {t('system_setting.detail.setting_key')}
             </div>
             <div className="flex items-center gap-3">
               <code className="flex-1 rounded-lg bg-gray-100 px-4 py-2 font-mono text-sm font-semibold">
@@ -148,7 +150,7 @@ export default function SystemSettingDetailModal({ setting, open, onOpenChange }
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-sm font-medium text-gray-500">
               <FileText className="h-4 w-4" />
-              Giá trị
+              {t('system_setting.detail.value')}
             </div>
             {renderValue()}
           </div>
@@ -160,7 +162,7 @@ export default function SystemSettingDetailModal({ setting, open, onOpenChange }
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-sm font-medium text-gray-500">
                   <FileText className="h-4 w-4" />
-                  Mô tả
+                  {t('system_setting.detail.description')}
                 </div>
                 <p className="rounded-lg bg-gray-50 p-4 text-sm text-gray-700">
                   {setting.description}
@@ -175,17 +177,17 @@ export default function SystemSettingDetailModal({ setting, open, onOpenChange }
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm font-medium text-gray-500">
-                Trạng thái
+                {t('system_setting.detail.status')}
               </div>
               {setting.isEditable ? (
                 <Badge className="border-[var(--color-success-200)] bg-[var(--color-success-50)] text-[var(--color-success-600)]">
                   <CheckCircle2 className="mr-1 h-3 w-3" />
-                  Có thể chỉnh sửa
+                  {t('system_setting.detail.editable')}
                 </Badge>
               ) : (
                 <Badge className="border-gray-200 bg-gray-500/10 text-gray-700">
                   <XCircle className="mr-1 h-3 w-3" />
-                  Chỉ đọc
+                  {t('system_setting.detail.read_only')}
                 </Badge>
               )}
             </div>
@@ -193,7 +195,7 @@ export default function SystemSettingDetailModal({ setting, open, onOpenChange }
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm font-medium text-gray-500">
                 <Calendar className="h-4 w-4" />
-                Ngày tạo
+                {t('system_setting.detail.created_at')}
               </div>
               <p className="text-sm text-gray-700">
                 {format(new Date(setting.createdAt), 'PPP', { locale: vi })}
@@ -203,7 +205,7 @@ export default function SystemSettingDetailModal({ setting, open, onOpenChange }
             <div className="space-y-2 sm:col-span-2">
               <div className="flex items-center gap-2 text-sm font-medium text-gray-500">
                 <Calendar className="h-4 w-4" />
-                Cập nhật lần cuối
+                {t('system_setting.detail.updated_at')}
               </div>
               <p className="text-sm text-gray-700">
                 {format(new Date(setting.updatedAt), 'PPP p', { locale: vi })}

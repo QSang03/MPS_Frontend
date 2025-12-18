@@ -22,7 +22,7 @@ export default async function WarehouseDocumentDetailPage({ params }: Props) {
       actionId="view-detail"
       fallback={
         <div className="text-muted-foreground py-8 text-center">
-          Không có quyền xem chi tiết chứng từ kho
+          No permission to view warehouse document details
         </div>
       }
     >

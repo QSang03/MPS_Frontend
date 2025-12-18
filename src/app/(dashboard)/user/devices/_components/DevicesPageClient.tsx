@@ -264,12 +264,12 @@ export default function DevicesPageClient() {
         } catch {
           console.error('fetch devices error (failed to inspect error object)', err)
         }
-        toast.error('Không thể tải danh sách thiết bị')
+        toast.error(t('user_devices.error.load_list'))
       } finally {
         setLoading(false)
       }
     },
-    [showInactiveStatuses, statusFilter, customerFilter]
+    [showInactiveStatuses, statusFilter, customerFilter, t]
   )
 
   useEffect(() => {
@@ -381,7 +381,7 @@ export default function DevicesPageClient() {
         await devicesClientService.update(editingDeviceId, { location: customerLocation })
       }
 
-      toast.success(`Đã gán thiết bị cho khách hàng ${customer.name}`)
+      toast.success(t('devices.assign_customer.success').replace('{customer}', customer.name))
       await fetchDevices()
     } catch (err) {
       console.error('Failed to assign customer', err)
@@ -399,11 +399,11 @@ export default function DevicesPageClient() {
             toast.error(String(message))
           }
         } else {
-          toast.error('Không thể gán khách hàng cho thiết bị')
+          toast.error(t('devices.assign_customer.error'))
         }
       } catch (parseErr) {
         console.error('Error parsing assign error', parseErr)
-        toast.error('Không thể gán khách hàng cho thiết bị')
+        toast.error(t('devices.assign_customer.error'))
       }
     } finally {
       setUpdatingCustomer(false)

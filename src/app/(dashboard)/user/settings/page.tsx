@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { ROUTES } from '@/constants/routes'
 import { SettingsClient } from './_components/SettingsClient'
 import { UserPageLayout } from '@/components/user/UserPageLayout'
+import Translated from '@/components/Translated'
 
 export default async function SettingsPage() {
   // Check authentication
@@ -23,8 +24,12 @@ export default async function SettingsPage() {
     <UserPageLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Cài đặt</h1>
-          <p className="text-muted-foreground">Quản lý cài đặt tài khoản và thông báo</p>
+          <h1 className="text-3xl font-bold tracking-tight">
+            <Translated k="page.user_settings.title" />
+          </h1>
+          <p className="text-muted-foreground">
+            <Translated k="page.user_settings.subtitle" />
+          </p>
         </div>
 
         <SettingsClient initialProfile={profile} />

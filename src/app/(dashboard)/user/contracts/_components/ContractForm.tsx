@@ -399,8 +399,10 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
               <Tag className="h-4 w-4 text-[var(--brand-600)]" />
             </div>
             <div>
-              <h3 className="font-bold text-gray-900">Thông tin cơ bản</h3>
-              <p className="text-muted-foreground text-xs">Nhập thông tin nhận dạng hợp đồng</p>
+              <h3 className="font-bold text-gray-900">{t('contract.form.section.basic.title')}</h3>
+              <p className="text-muted-foreground text-xs">
+                {t('contract.form.section.basic.description')}
+              </p>
             </div>
           </div>
 
@@ -412,7 +414,7 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
                 <FormItem>
                   <FormLabel className="flex items-center gap-2 text-base font-semibold">
                     <FileText className="h-4 w-4 text-[var(--brand-600)]" />
-                    Mã hợp đồng *
+                    {t('contract.form.field.contract_number')} *
                   </FormLabel>
                   <FormControl>
                     <Input
@@ -434,12 +436,12 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
                 <FormItem>
                   <FormLabel className="flex items-center gap-2 text-base font-semibold">
                     <Tag className="h-4 w-4 text-[var(--brand-600)]" />
-                    Loại hợp đồng *
+                    {t('contract.form.field.contract_type')} *
                   </FormLabel>
                   <FormControl>
                     <Select value={field.value} onValueChange={(v) => field.onChange(v)}>
                       <SelectTrigger className="h-11">
-                        <SelectValue placeholder="Chọn loại hợp đồng" />
+                        <SelectValue placeholder={t('contract.form.select_contract_type')} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="MPS_CLICK_CHARGE">MPS_CLICK_CHARGE</SelectItem>
@@ -461,7 +463,7 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
                 <FormItem>
                   <FormLabel className="flex items-center gap-2 text-base font-semibold">
                     <Tag className="h-4 w-4 text-[var(--brand-600)]" />
-                    Trạng thái
+                    {t('contract.form.field.status')}
                   </FormLabel>
                   <FormControl>
                     <Select
@@ -469,13 +471,15 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
                       onValueChange={(v) => field.onChange(v === '' ? undefined : v)}
                     >
                       <SelectTrigger className="h-11">
-                        <SelectValue placeholder="Chọn trạng thái" />
+                        <SelectValue placeholder={t('contract.form.select_status')} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="PENDING">⏳ Chờ duyệt</SelectItem>
-                        <SelectItem value="ACTIVE">✅ Đang hoạt động</SelectItem>
-                        <SelectItem value="EXPIRED">⌛ Đã hết hạn</SelectItem>
-                        <SelectItem value="TERMINATED">🛑 Đã chấm dứt</SelectItem>
+                        <SelectItem value="PENDING">⏳ {t('contracts.status.PENDING')}</SelectItem>
+                        <SelectItem value="ACTIVE">✅ {t('contracts.status.ACTIVE')}</SelectItem>
+                        <SelectItem value="EXPIRED">⌛ {t('contracts.status.EXPIRED')}</SelectItem>
+                        <SelectItem value="TERMINATED">
+                          🛑 {t('contracts.status.TERMINATED')}
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </FormControl>
@@ -495,9 +499,11 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
               <Building className="h-4 w-4 text-emerald-600" />
             </div>
             <div>
-              <h3 className="font-bold text-gray-900">Khách hàng & Thời hạn</h3>
+              <h3 className="font-bold text-gray-900">
+                {t('contract.form.section.customer.title')}
+              </h3>
               <p className="text-muted-foreground text-xs">
-                Chọn khách hàng và xác định thời hạn hợp đồng
+                {t('contract.form.section.customer.description')}
               </p>
             </div>
           </div>
@@ -509,7 +515,7 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
               <FormItem>
                 <FormLabel className="flex items-center gap-2 text-base font-semibold">
                   <Building className="h-4 w-4 text-emerald-600" />
-                  Khách hàng *
+                  {t('contract.form.field.customer')} *
                 </FormLabel>
                 <FormControl>
                   <CustomerSelect
@@ -519,9 +525,7 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
                     disabled={isPending}
                   />
                 </FormControl>
-                <FormDescription>
-                  Chọn khách hàng từ danh sách (tìm kiếm, phân trang)
-                </FormDescription>
+                <FormDescription>{t('contract.form.field.customer.search')}</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -535,7 +539,7 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
                 <FormItem>
                   <FormLabel className="flex items-center gap-2 text-base font-semibold">
                     <Calendar className="h-4 w-4 text-[var(--brand-600)]" />
-                    Ngày bắt đầu *
+                    {t('contract.form.field.start_date')} *
                   </FormLabel>
                   <FormControl>
                     <Input {...field} type="date" disabled={isPending} className="h-11" />
@@ -552,7 +556,7 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
                 <FormItem>
                   <FormLabel className="flex items-center gap-2 text-base font-semibold">
                     <Clock className="h-4 w-4 text-[var(--brand-600)]" />
-                    Thời hạn (năm) *
+                    {t('contract.form.field.duration_years')} *
                   </FormLabel>
                   {/* debug: render-time field.value (safe place before Slot child) */}
                   {(() => {
@@ -568,20 +572,18 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
                       disabled={isPending}
                     >
                       <SelectTrigger className="h-11">
-                        <SelectValue placeholder="Chọn thời hạn" />
+                        <SelectValue placeholder={t('contract.form.select_duration')} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="1">📅 1 năm</SelectItem>
-                        <SelectItem value="2">📅 2 năm</SelectItem>
-                        <SelectItem value="3">📅 3 năm</SelectItem>
-                        <SelectItem value="4">📅 4 năm</SelectItem>
-                        <SelectItem value="5">📅 5 năm</SelectItem>
+                        <SelectItem value="1">📅 {t('contract.form.duration.1_year')}</SelectItem>
+                        <SelectItem value="2">📅 {t('contract.form.duration.2_years')}</SelectItem>
+                        <SelectItem value="3">📅 {t('contract.form.duration.3_years')}</SelectItem>
+                        <SelectItem value="4">📅 {t('contract.form.duration.4_years')}</SelectItem>
+                        <SelectItem value="5">📅 {t('contract.form.duration.5_years')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </FormControl>
-                  <FormDescription>
-                    Thời hạn hợp đồng, ngày kết thúc sẽ được tính tự động
-                  </FormDescription>
+                  <FormDescription>{t('contract.form.field.end_date_auto')}</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -599,7 +601,7 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
           >
             <FormLabel className="mb-2 flex items-center gap-2 text-base font-semibold">
               <Calendar className="h-4 w-4 text-teal-600" />
-              Ngày kết thúc (tự động tính)
+              {t('contract.form.field.end_date')}
             </FormLabel>
             <div className="rounded border border-gray-200 bg-white p-3 font-mono text-sm">
               {(() => {
@@ -615,7 +617,7 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
                   const sm = parts[1]!
                   const sd = parts[2]!
                   if ([sy, sm, sd].some((n) => Number.isNaN(n)))
-                    return '❌ Ngày bắt đầu không hợp lệ'
+                    return t('contract.form.calc.invalid_date')
                   // compute using UTC arithmetic to match form value and avoid timezone shifts
                   const endUtc = new Date(Date.UTC(sy + Number(years), sm - 1, sd))
                   endUtc.setUTCDate(endUtc.getUTCDate() - 1)
@@ -637,8 +639,12 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
               <FileText className="h-4 w-4 text-pink-600" />
             </div>
             <div>
-              <h3 className="font-bold text-gray-900">Chi tiết hợp đồng</h3>
-              <p className="text-muted-foreground text-xs">Thêm mô tả và thông tin bổ sung</p>
+              <h3 className="font-bold text-gray-900">
+                {t('contract.form.section.details.title')}
+              </h3>
+              <p className="text-muted-foreground text-xs">
+                {t('contract.form.section.details.description')}
+              </p>
             </div>
           </div>
 
@@ -649,20 +655,18 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
               <FormItem>
                 <FormLabel className="flex items-center gap-2 text-base font-semibold">
                   <FileText className="h-4 w-4 text-pink-600" />
-                  Mô tả hợp đồng
+                  {t('contract.form.field.description')}
                 </FormLabel>
                 <FormControl>
                   <Textarea
                     {...field}
-                    placeholder="Nhập mô tả chi tiết về hợp đồng..."
+                    placeholder={t('contract.placeholder.description')}
                     rows={4}
                     disabled={isPending}
                     className="resize-none"
                   />
                 </FormControl>
-                <FormDescription>
-                  Mô tả tổng quát hoặc điều kiện đặc biệt của hợp đồng
-                </FormDescription>
+                <FormDescription>{t('contract.form.section.details.description')}</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -678,9 +682,11 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
               <Paperclip className="h-4 w-4 text-slate-600" />
             </div>
             <div>
-              <h3 className="font-bold text-gray-900">Tài liệu hợp đồng</h3>
+              <h3 className="font-bold text-gray-900">
+                {t('contract.form.section.document.title')}
+              </h3>
               <p className="text-muted-foreground text-xs">
-                Đính kèm file PDF hoặc dán liên kết có sẵn
+                {t('contract.form.section.document.description')}
               </p>
             </div>
           </div>
@@ -692,7 +698,7 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
               <FormItem>
                 <FormLabel className="flex items-center gap-2 text-base font-semibold">
                   <Link2 className="h-4 w-4 text-slate-600" />
-                  Liên kết tài liệu
+                  {t('contract.form.field.document_link')}
                 </FormLabel>
                 <FormControl>
                   <Input
@@ -720,19 +726,17 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
                       onClick={() => {
                         try {
                           void navigator.clipboard.writeText(resolvedDocumentUrl)
-                          toast.success('Đã copy link')
+                          toast.success(t('contract.form.field.document_link.copy_success'))
                         } catch {
-                          toast.error('Không thể copy liên kết')
+                          toast.error(t('contract.form.field.document_link.copy_error'))
                         }
                       }}
                     >
-                      Sao chép
+                      {t('contract.form.field.document_link.copy')}
                     </Button>
                   </div>
                 )}
-                <FormDescription>
-                  Nếu bạn đã lưu file ở dịch vụ khác, nhập URL trực tiếp để mọi người có thể xem.
-                </FormDescription>
+                <FormDescription>{t('contract.form.field.document_link.paste')}</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -745,7 +749,10 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
               <FormItem>
                 <FormLabel className="flex items-center gap-2 text-base font-semibold">
                   <Paperclip className="h-4 w-4 text-slate-600" />
-                  Upload PDF (tối đa {CONTRACT_PDF_MAX_MB}MB)
+                  {t('contract.form.field.pdf_upload').replace(
+                    '{size}',
+                    String(CONTRACT_PDF_MAX_MB)
+                  )}
                 </FormLabel>
                 <FormControl>
                   <Input
@@ -789,13 +796,11 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
                         field.onChange(undefined)
                       }}
                     >
-                      Xóa
+                      {t('contract.form.field.pdf_upload.remove')}
                     </Button>
                   </div>
                 )}
-                <FormDescription>
-                  File PDF sẽ được tải lên backend và tự động tạo URL cho trường phía trên.
-                </FormDescription>
+                <FormDescription>{t('contract.form.field.pdf_upload.auto_url')}</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -812,7 +817,7 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
             className="h-11 flex-1 bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
           >
             {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {id ? '💾 Cập nhật' : '✨ Tạo hợp đồng'}
+            {id ? `💾 ${t('contract.update')}` : `✨ ${t('contract.create')}`}
           </Button>
           <Button
             type="button"
@@ -821,7 +826,7 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
             disabled={isPending}
             className="h-11 px-6"
           >
-            ✕ Hủy
+            ✕ {t('common.cancel')}
           </Button>
         </div>
 

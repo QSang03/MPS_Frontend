@@ -163,7 +163,10 @@ export default function ContractDevicesModal({
               .filter(Boolean)
             if (serialNumbers.length > 0) {
               toast.error(
-                `Không thể gán thiết bị vì đã được gán cho hợp đồng active khác: ${serialNumbers.join(', ')}`,
+                t('contract_devices.attach.error.conflicting').replace(
+                  '{serialNumbers}',
+                  serialNumbers.join(', ')
+                ),
                 {
                   duration: 5000,
                 }
@@ -187,7 +190,7 @@ export default function ContractDevicesModal({
   const handleAttach = async () => {
     if (!contractId) return
     if (selectedToAttach.length === 0) {
-      toast.error('Vui lòng chọn ít nhất 1 thiết bị để đính kèm')
+      toast.error(t('contract_devices.attach.error.select_at_least_one'))
       return
     }
 
@@ -219,16 +222,14 @@ export default function ContractDevicesModal({
             </div>
             <div className="flex-1">
               <DialogTitle className="flex items-center gap-2 text-2xl font-bold">
-                Quản lý thiết bị của hợp đồng
+                {t('contract_devices.modal.title')}
               </DialogTitle>
               <DialogDescription className="mt-1 flex items-center gap-2 text-white/90">
                 <Sparkles className="h-4 w-4" />
                 {contractNumber ? (
-                  <span>
-                    Mã hợp đồng: <span className="font-semibold">{contractNumber}</span>
-                  </span>
+                  <span>{t('contract_devices.modal.description', { contractNumber })}</span>
                 ) : (
-                  'Danh sách thiết bị được quản lý theo hợp đồng'
+                  t('contract_devices.modal.description_no_contract')
                 )}
               </DialogDescription>
             </div>
@@ -271,10 +272,10 @@ export default function ContractDevicesModal({
               </div>
               <div className="relative z-10 flex items-center gap-4 px-6 py-5 text-white">
                 <DialogTitle className="flex items-center gap-2 text-xl font-bold">
-                  Thêm và Cập nhật thiết bị
+                  {t('contract_devices.attach.title')}
                 </DialogTitle>
                 <DialogDescription className="sr-only">
-                  Thao tác thêm/ cập nhật thiết bị vào hợp đồng
+                  {t('contract_devices.attach.description')}
                 </DialogDescription>
               </div>
             </DialogHeader>
@@ -282,12 +283,11 @@ export default function ContractDevicesModal({
             <div className="space-y-4 rounded-b-xl bg-gradient-to-br from-white via-[var(--brand-50)] to-white p-4">
               <div className="mb-2 space-y-1">
                 <div className="text-sm font-semibold text-[var(--brand-700)]">
-                  Chọn các thiết bị để đính kèm
+                  {t('contract_devices.attach.description')}
                 </div>
                 {hasAttachedDevicesSelected && (
                   <div className="text-xs font-medium text-amber-600">
-                    ⚠️ Một số thiết bị đã được gán vào hợp đồng. Chọn lại sẽ cập nhật thông tin của
-                    chúng.
+                    ⚠️ {t('contract_devices.warning.attached.description')}
                   </div>
                 )}
               </div>
@@ -296,16 +296,22 @@ export default function ContractDevicesModal({
                   <thead className="bg-gradient-to-r from-[var(--brand-50)] to-[var(--brand-50)] text-[var(--brand-700)]">
                     <tr>
                       <th className="px-3 py-2 text-left text-sm font-bold"> </th>
-                      <th className="px-3 py-2 text-left text-sm font-bold">Serial</th>
-                      <th className="px-3 py-2 text-left text-sm font-bold">Model</th>
-                      <th className="px-3 py-2 text-left text-sm font-bold">Trạng thái</th>
+                      <th className="px-3 py-2 text-left text-sm font-bold">
+                        {t('contract_devices.table.serial_number')}
+                      </th>
+                      <th className="px-3 py-2 text-left text-sm font-bold">
+                        {t('contract_devices.table.model')}
+                      </th>
+                      <th className="px-3 py-2 text-left text-sm font-bold">
+                        {t('contract_devices.table.status')}
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
                     {allDevices.length === 0 ? (
                       <tr>
                         <td colSpan={4} className="px-5 py-7 text-center text-[var(--brand-400)]">
-                          Không có thiết bị
+                          {t('contract_devices.empty.title')}
                         </td>
                       </tr>
                     ) : (
@@ -337,7 +343,9 @@ export default function ContractDevicesModal({
                                 className={`h-4 w-4 accent-[var(--brand-600)] ${isDisabled ? 'cursor-not-allowed opacity-50' : ''}`}
                                 title={
                                   isDisabled
-                                    ? `Thiết bị đã được gán cho hợp đồng ${otherContract?.contractNumber}`
+                                    ? t('contract_devices.device.attached_to_contract', {
+                                        contractNumber: otherContract?.contractNumber ?? '',
+                                      })
                                     : ''
                                 }
                               />
@@ -374,7 +382,7 @@ export default function ContractDevicesModal({
                                   className="border-amber-300 bg-amber-100 text-xs font-semibold text-amber-700"
                                 >
                                   <CheckCircle2 className="mr-1 h-3 w-3" />
-                                  Đã gán
+                                  {t('contract_devices.status.attached')}
                                 </Badge>
                               ) : otherContract ? (
                                 <Badge
@@ -382,14 +390,16 @@ export default function ContractDevicesModal({
                                   className="border-[var(--brand-200)] bg-[var(--brand-50)] text-xs font-semibold text-[var(--brand-700)]"
                                 >
                                   <CheckCircle2 className="mr-1 h-3 w-3" />
-                                  Đã gán cho {otherContract.contractNumber}
+                                  {t('contract_devices.status.attached_other', {
+                                    contractNumber: otherContract.contractNumber,
+                                  })}
                                 </Badge>
                               ) : (
                                 <Badge
                                   variant="outline"
                                   className="border-slate-300 bg-slate-100 text-xs text-slate-600"
                                 >
-                                  Chưa gán
+                                  {t('contract_devices.status.unattached')}
                                 </Badge>
                               )}
                             </td>
@@ -406,14 +416,14 @@ export default function ContractDevicesModal({
                   value={activeFrom}
                   onChange={(e) => setActiveFrom(e.target.value)}
                   className="h-11"
-                  placeholder="Từ ngày"
+                  placeholder={t('contract_devices.date_range.from')}
                 />
                 <Input
                   type="date"
                   value={activeTo}
                   onChange={(e) => setActiveTo(e.target.value)}
                   className="h-11"
-                  placeholder={t('common.to')}
+                  placeholder={t('contract_devices.date_range.to')}
                 />
               </div>
             </div>

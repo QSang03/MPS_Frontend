@@ -66,9 +66,13 @@ export default function WarehouseDocumentDetailClient({ id }: Props) {
           </div>
           <h1 className="text-2xl font-bold tracking-tight">{detail.documentNumber}</h1>
           <div className="text-muted-foreground flex items-center gap-3 text-sm">
-            <span className="text-xs">Loại: {detail.type}</span>
+            <span className="text-xs">
+              {t('warehouse_document.field.type')}: {detail.type}
+            </span>
             <span>•</span>
-            <span className="text-xs">Trạng thái: {detail.status}</span>
+            <span className="text-xs">
+              {t('warehouse_document.field.status')}: {detail.status}
+            </span>
           </div>
         </div>
         <div className="flex gap-2">

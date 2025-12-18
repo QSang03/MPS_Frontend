@@ -70,7 +70,7 @@ export function WarehouseDocumentActions({ warehouseDocument }: Props) {
           <DropdownMenuItem asChild>
             <Link href={`/system/warehouse-documents/${warehouseDocument.id}`}>
               <Eye className="mr-2 h-4 w-4" />
-              Xem chi tiết
+              {t('common.view_detail')}
             </Link>
           </DropdownMenuItem>
         </ActionGuard>
@@ -82,7 +82,7 @@ export function WarehouseDocumentActions({ warehouseDocument }: Props) {
                 onClick={() => confirmMutation.mutate()}
               >
                 <Check className="mr-2 h-4 w-4" />
-                Xác nhận
+                {t('common.confirm')}
               </DropdownMenuItem>
             </ActionGuard>
             <ActionGuard pageId="warehouse-documents" actionId="cancel" fallback={null}>
@@ -91,7 +91,7 @@ export function WarehouseDocumentActions({ warehouseDocument }: Props) {
                 onClick={() => cancelMutation.mutate()}
               >
                 <X className="mr-2 h-4 w-4" />
-                Hủy
+                {t('common.cancel')}
               </DropdownMenuItem>
             </ActionGuard>
           </>

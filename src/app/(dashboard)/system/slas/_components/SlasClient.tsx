@@ -1,14 +1,6 @@
 'use client'
 
-import {
-  Component,
-  Suspense,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  useTransition,
-} from 'react'
+import { Suspense, useCallback, useEffect, useMemo, useState, useTransition } from 'react'
 import type { ReactNode } from 'react'
 import type { ColumnDef } from '@tanstack/react-table'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
@@ -192,7 +184,7 @@ export default function SlasClient({ session }: SlasClientProps) {
   const activeFilters: Array<{ label: string; value: string; onRemove: () => void }> = []
   if (searchTerm) {
     activeFilters.push({
-      label: `Tìm kiếm: "${searchTerm}"`,
+      label: `${t('filters.search_label')}: "${searchTerm}"`,
       value: searchTerm,
       onRemove: () => setSearchTerm(''),
     })
@@ -201,7 +193,7 @@ export default function SlasClient({ session }: SlasClientProps) {
     const priorityLabel =
       priorityOptions.find((opt) => opt.value === priorityFilter)?.label || priorityFilter
     activeFilters.push({
-      label: `Ưu tiên: ${priorityLabel}`,
+      label: `${t('sla.filter.priority.label')}: ${priorityLabel}`,
       value: priorityFilter,
       onRemove: () => setPriorityFilter('all'),
     })
@@ -210,14 +202,14 @@ export default function SlasClient({ session }: SlasClientProps) {
     const statusLabel =
       statusOptions.find((opt) => opt.value === statusFilter)?.label || statusFilter
     activeFilters.push({
-      label: `Trạng thái: ${statusLabel}`,
+      label: `${t('sla.filter.status.label')}: ${statusLabel}`,
       value: statusFilter,
       onRemove: () => setStatusFilter('all'),
     })
   }
   if (customerFilter) {
     activeFilters.push({
-      label: `Khách hàng: ${customerFilter}`,
+      label: `${t('sla.filter.customer.label')}: ${customerFilter}`,
       value: customerFilter,
       onRemove: () => setCustomerFilter(''),
     })
@@ -748,50 +740,59 @@ function SlasTableContent({
   )
 }
 
-class SlasTableErrorBoundary extends Component<{ children: ReactNode }, { error: unknown }> {
-  state = { error: null }
+function SlasTableErrorBoundary({ children }: { children: ReactNode }) {
+  const { t } = useLocale()
+  const [error, setError] = useState<unknown>(null)
 
-  static getDerivedStateFromError(error: unknown) {
-    return { error }
-  }
+  useEffect(() => {
+    const handleError = (error: unknown) => {
+      console.error('SlasTable error', error)
+      setError(error)
+    }
 
-  componentDidCatch(error: unknown) {
-    console.error('SlasTable error', error)
-  }
+    // Listen for unhandled errors
+    window.addEventListener('unhandledrejection', (event) => {
+      handleError(event.reason)
+    })
 
-  render() {
-    if (this.state.error) {
-      const err = this.state.error as {
-        response?: { status?: number; data?: { message?: string } }
-        message?: string
-      }
-      const status = err?.response?.status
-      const message =
-        err?.response?.data?.message ||
-        err?.message ||
-        'An error occurred while loading SLA list. Please try again.'
+    window.addEventListener('error', (event) => {
+      handleError(event.error)
+    })
 
-      if (status === 401 || status === 403) {
-        return (
-          <Card>
-            <CardHeader>
-              <CardTitle>{'No access to SLA'}</CardTitle>
-              <CardDescription>{message}</CardDescription>
-            </CardHeader>
-          </Card>
-        )
-      }
+    return () => {
+      window.removeEventListener('unhandledrejection', () => {})
+      window.removeEventListener('error', () => {})
+    }
+  }, [])
 
+  if (error) {
+    const err = error as {
+      response?: { status?: number; data?: { message?: string } }
+      message?: string
+    }
+    const status = err?.response?.status
+    const message = err?.response?.data?.message || err?.message || t('sla.error.loading_failed')
+
+    if (status === 401 || status === 403) {
       return (
         <Card>
           <CardHeader>
-            <CardTitle>{'Failed to load SLA'}</CardTitle>
+            <CardTitle>{t('sla.error.no_access')}</CardTitle>
             <CardDescription>{message}</CardDescription>
           </CardHeader>
         </Card>
       )
     }
 
-    return this.props.children
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('sla.error.load_failed')}</CardTitle>
+          <CardDescription>{message}</CardDescription>
+        </CardHeader>
+      </Card>
+    )
   }
+
+  return <>{children}</>
 }

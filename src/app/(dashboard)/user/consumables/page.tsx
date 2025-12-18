@@ -2,7 +2,7 @@ import ConsumablesPageClient from './_components/ConsumablesPageClient'
 import { UserPageLayout } from '@/components/user/UserPageLayout'
 
 export const metadata = {
-  title: 'Vật tư tiêu hao của tôi',
+  title: 'My Consumables',
 }
 
 export default function ConsumablesPage() {

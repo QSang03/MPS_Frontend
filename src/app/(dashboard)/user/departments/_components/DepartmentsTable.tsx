@@ -366,12 +366,12 @@ export function DepartmentsTable() {
                         {dept.isActive ? (
                           <span className="inline-flex transform items-center gap-2 rounded-xl border-2 border-[var(--brand-300)] bg-gradient-to-r from-[var(--brand-100)] to-[var(--brand-50)] px-4 py-2 text-xs font-bold whitespace-nowrap text-[var(--brand-700)] shadow-sm transition-all duration-300 hover:scale-105 hover:shadow-md">
                             <CheckCircle2 className="h-4 w-4" />
-                            Hoạt động
+                            {t('departments.status.active')}
                           </span>
                         ) : (
                           <span className="inline-flex transform items-center gap-2 rounded-xl border-2 border-red-300 bg-gradient-to-r from-red-100 to-red-50 px-4 py-2 text-xs font-bold whitespace-nowrap text-red-700 shadow-sm transition-all duration-300 hover:scale-105 hover:shadow-md">
                             <XCircle className="h-4 w-4" />
-                            Ngừng
+                            {t('departments.status.inactive')}
                           </span>
                         )}
                       </TableCell>
@@ -428,7 +428,7 @@ export function DepartmentsTable() {
           <div className="border-gradient-to-r flex items-center justify-between rounded-2xl border-2 bg-gradient-to-r from-[var(--brand-200)] from-white via-[var(--brand-50)] to-[var(--brand-50)] to-[var(--brand-200)] p-5 shadow-lg transition-all duration-300 hover:shadow-xl">
             <div className="flex items-center gap-3">
               <span className="text-xs font-bold tracking-widest text-gray-600 uppercase">
-                Hiển thị
+                {t('common.display')}
               </span>
               <div className="rounded-xl border-2 border-[var(--brand-200)] bg-gradient-to-r from-[var(--brand-50)] to-[var(--brand-100)] px-4 py-2">
                 <span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-sm font-bold text-transparent">
@@ -437,7 +437,9 @@ export function DepartmentsTable() {
                 <span className="text-sm text-gray-500"> / </span>
                 <span className="text-sm font-bold text-gray-700">{pagination.total}</span>
               </div>
-              <span className="text-xs font-semibold text-gray-600">bộ phận</span>
+              <span className="text-xs font-semibold text-gray-600">
+                {t('departments.item_label')}
+              </span>
             </div>
 
             <div className="flex items-center gap-2">
@@ -448,11 +450,11 @@ export function DepartmentsTable() {
                 disabled={page <= 1}
                 className="transform rounded-lg border-2 border-gray-300 font-bold transition-all duration-300 hover:scale-105 hover:border-[var(--brand-400)] hover:bg-[var(--brand-50)] hover:text-[var(--brand-700)] disabled:opacity-50"
               >
-                ← Trước
+                ← {t('common.previous')}
               </Button>
 
               <div className="flex items-center gap-2 rounded-xl border-2 border-blue-300 bg-white px-5 py-2 shadow-md">
-                <span className="text-xs font-bold text-gray-600">Trang</span>
+                <span className="text-xs font-bold text-gray-600">{t('common.page_label')}</span>
                 <span className="bg-gradient-to-r from-[var(--brand-500)] to-[var(--brand-600)] bg-clip-text text-base font-bold text-transparent">
                   {pagination.page}
                 </span>
@@ -467,7 +469,7 @@ export function DepartmentsTable() {
                 disabled={page >= pagination.totalPages}
                 className="transform rounded-lg border-2 border-gray-300 font-bold transition-all duration-300 hover:scale-105 hover:border-cyan-400 hover:bg-cyan-100 hover:text-cyan-700 disabled:opacity-50"
               >
-                Sau →
+                {t('common.next')} →
               </Button>
             </div>
           </div>

@@ -2,7 +2,7 @@ import DevicesPageClient from './_components/DevicesPageClient'
 import { UserPageLayout } from '@/components/user/UserPageLayout'
 
 export const metadata = {
-  title: 'Thiết bị của tôi',
+  title: 'My Devices',
 }
 
 export default function DevicesPage() {

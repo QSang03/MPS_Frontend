@@ -36,14 +36,14 @@ export default async function NewUserPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Thêm người dùng</h1>
-        <p className="text-muted-foreground">Tạo tài khoản người dùng mới trong tổ chức</p>
+        <h1 className="text-3xl font-bold">Add User</h1>
+        <p className="text-muted-foreground">Create a new user account in the organization</p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Thông tin người dùng</CardTitle>
-          <CardDescription>Điền thông tin chi tiết để tạo tài khoản người dùng</CardDescription>
+          <CardTitle>User Information</CardTitle>
+          <CardDescription>Fill in detailed information to create a user account</CardDescription>
         </CardHeader>
         <CardContent>
           <Suspense fallback={<UserFormSkeleton />}>

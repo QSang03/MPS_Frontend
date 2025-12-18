@@ -141,7 +141,7 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
         try {
           form.setError('roleId', {
             type: 'manual',
-            message: 'Vai trò không hợp lệ cho khách hàng hiện tại',
+            message: t('user.role.invalid_for_customer'),
           })
         } catch {}
       }
@@ -165,7 +165,7 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
     return undefined
   }, [selectedRoleId, initialData?.roleId, mode])
 
-  // Sử dụng usersClientService thay vì Server Action
+  // Use usersClientService instead of Server Action
   const createMutation = useMutation({
     mutationFn: (data: UserFormData) => usersClientService.createUser(data),
     onSuccess: () => {
@@ -260,12 +260,12 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
     },
   })
 
-  // Sử dụng usersClientService thay vì Server Action
+  // Use usersClientService instead of Server Action
   const updateMutation = useMutation({
     mutationFn: (data: UserFormData) => usersClientService.updateUser(initialData!.id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] })
-      toast.success('Cập nhật người dùng thành công!')
+      toast.success(t('user.update_success'))
       form.reset()
       if (onSuccess) {
         onSuccess()
@@ -281,8 +281,7 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
         details?: BackendDetails | undefined
       }
       const message =
-        _backend.message ||
-        (error instanceof Error ? error.message : 'Cập nhật người dùng thất bại')
+        _backend.message || (error instanceof Error ? error.message : t('user.update_error'))
       const details = _backend.details as BackendDetails | undefined
 
       setServerError(message)
@@ -346,7 +345,7 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
       const validation = validateAttributes(attributes)
       if (!validation.valid) {
         setAttributeErrors(validation.errors)
-        toast.error('Vui lòng kiểm tra các thuộc tính bổ sung')
+        toast.error(t('user.attribute_validation_error'))
         return
       }
       setAttributeErrors({})
@@ -377,9 +376,7 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
             (allowedNonSys.has(r.id.toLowerCase()) || allowedNonSys.has(r.name.toLowerCase()))
         )
         if (!allowed) {
-          toast.error(
-            'Vai trò hiện tại không hợp lệ khi chuyển từ SYS sang khách hàng khác. Vui lòng chọn Manager hoặc User.'
-          )
+          toast.error(t('user.role.invalid_sys_to_customer'))
           return
         }
       }
@@ -422,8 +419,8 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
             </ul>
             {blockSaveDueToRoleMismatch ? (
               <div className="mt-2 text-sm">
-                <strong>Cảnh báo:</strong> Vai trò hiện tại không hợp lệ khi chuyển từ khách hàng
-                SYS sang khách hàng khác. Vui lòng chọn vai trò Manager hoặc User để lưu.
+                <strong>{t('common.warning')}:</strong>{' '}
+                {t('user.role.invalid_sys_to_customer_warning')}
               </div>
             ) : null}
           </div>
@@ -443,7 +440,7 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
                     disabled={isPending}
                   />
                 </FormControl>
-                <FormDescription>Địa chỉ email của người dùng</FormDescription>
+                <FormDescription>{t('user.form.email_description')}</FormDescription>
               </FormItem>
             )}
           />
@@ -454,7 +451,7 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
           name="fullName"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Họ tên</FormLabel>
+              <FormLabel>{t('user.form.full_name')}</FormLabel>
               <FormControl>
                 <Input
                   placeholder={t('user.placeholder.fullName')}
@@ -462,7 +459,7 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
                   disabled={isPending}
                 />
               </FormControl>
-              <FormDescription>Họ tên đầy đủ của người dùng</FormDescription>
+              <FormDescription>{t('user.form.full_name_description')}</FormDescription>
             </FormItem>
           )}
         />
@@ -472,7 +469,7 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
           name="customerId"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Khách hàng</FormLabel>
+              <FormLabel>{t('user.form.customer')}</FormLabel>
               <FormControl>
                 <ActionGuard pageId="users" actionId="read-customer-for-user">
                   <CustomerSelect
@@ -483,7 +480,7 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
                   />
                 </ActionGuard>
               </FormControl>
-              <FormDescription>Khách hàng mà tài khoản thuộc về (tùy chọn)</FormDescription>
+              <FormDescription>{t('user.form.customer_description')}</FormDescription>
             </FormItem>
           )}
         />
@@ -537,12 +534,9 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
                     </SelectContent>
                   </Select>
                   <FormDescription>
-                    Vai trò của người dùng trong hệ thống
+                    {t('user.form.role_description')}
                     {mode === 'create' && !watchedCustomerId ? (
-                      <span className="text-destructive">
-                        {' '}
-                        - Vui lòng chọn Mã khách hàng trước khi chọn vai trò
-                      </span>
+                      <span className="text-destructive"> - {t('user.form.role_hint')}</span>
                     ) : null}
                   </FormDescription>
                 </FormItem>
@@ -567,10 +561,10 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
         <div className="flex gap-4">
           <Button type="submit" disabled={Boolean(isPending || blockSaveDueToRoleMismatch)}>
             {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {mode === 'create' ? 'Tạo người dùng' : 'Cập nhật người dùng'}
+            {mode === 'create' ? t('user.form.create_user') : t('user.form.update_user')}
           </Button>
           <Button type="button" variant="outline" onClick={onSuccess} disabled={isPending}>
-            Hủy
+            {t('common.cancel')}
           </Button>
         </div>
       </form>

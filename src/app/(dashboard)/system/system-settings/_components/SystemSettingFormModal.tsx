@@ -233,7 +233,7 @@ export default function SystemSettingFormModal({ setting, onSaved }: Props) {
               ) : (
                 <FileText className="h-4 w-4" />
               )}
-              Giá trị
+              {t('system_setting.detail.value')}
               <span className="text-red-500">*</span>
             </Label>
             {renderValueInput()}

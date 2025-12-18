@@ -166,12 +166,12 @@ export default function ConsumablesPageClient() {
       } catch (err) {
         console.error('Load consumables failed', err)
         setConsumables([])
-        toast.error('Không thể tải danh sách vật tư')
+        toast.error(t('user_consumables.error.load_list'))
       } finally {
         setLoading(false)
       }
     },
-    [limit, debouncedSearch, statusFilter]
+    [limit, debouncedSearch, statusFilter, t]
   )
 
   useEffect(() => {
@@ -472,14 +472,18 @@ export default function ConsumablesPageClient() {
               <div className="absolute top-full right-0 z-20 mt-2 w-56 rounded-lg border border-gray-200 bg-white p-2 text-xs shadow-lg">
                 {(
                   [
-                    { id: 'partNumber', label: 'Part Number', locked: true },
-                    { id: 'serial', label: 'Serial' },
-                    { id: 'name', label: 'Tên vật tư', locked: true },
-                    { id: 'compatible', label: 'Dòng tương thích' },
-                    { id: 'capacity', label: 'Dung lượng' },
-                    { id: 'installStatus', label: 'Trạng thái lắp đặt' },
-                    { id: 'status', label: 'Trạng thái' },
-                    { id: 'actions', label: 'Thao tác', locked: true },
+                    {
+                      id: 'partNumber',
+                      label: t('user_consumables.table.part_number'),
+                      locked: true,
+                    },
+                    { id: 'serial', label: t('table.serial') },
+                    { id: 'name', label: t('user_consumables.table.name'), locked: true },
+                    { id: 'compatible', label: t('user_consumables.table.compatible') },
+                    { id: 'capacity', label: t('user_consumables.table.capacity') },
+                    { id: 'installStatus', label: t('consumable.detail.install_status') },
+                    { id: 'status', label: t('filters.status_label') },
+                    { id: 'actions', label: t('table.actions'), locked: true },
                   ] as { id: ColumnId; label: string; locked?: boolean }[]
                 ).map((col) => (
                   <label
@@ -587,21 +591,25 @@ export default function ConsumablesPageClient() {
                     <span className="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[var(--brand-50)] text-xs font-semibold text-[var(--brand-600)]">
                       C
                     </span>
-                    Cột
+                    {t('user_consumables.columns')}
                   </Button>
 
                   {showColumnMenu && (
                     <div className="absolute top-full right-0 z-20 mt-2 w-56 rounded-lg border border-gray-200 bg-white p-2 text-xs shadow-lg">
                       {(
                         [
-                          { id: 'partNumber', label: 'Part Number', locked: true },
-                          { id: 'serial', label: 'Serial' },
-                          { id: 'name', label: 'Tên vật tư', locked: true },
-                          { id: 'compatible', label: 'Dòng tương thích' },
-                          { id: 'capacity', label: 'Dung lượng' },
-                          { id: 'installStatus', label: 'Trạng thái lắp đặt' },
-                          { id: 'status', label: 'Trạng thái' },
-                          { id: 'actions', label: 'Thao tác', locked: true },
+                          {
+                            id: 'partNumber',
+                            label: t('user_consumables.table.part_number'),
+                            locked: true,
+                          },
+                          { id: 'serial', label: t('table.serial') },
+                          { id: 'name', label: t('user_consumables.table.name'), locked: true },
+                          { id: 'compatible', label: t('user_consumables.table.compatible') },
+                          { id: 'capacity', label: t('user_consumables.table.capacity') },
+                          { id: 'installStatus', label: t('consumable.detail.install_status') },
+                          { id: 'status', label: t('filters.status_label') },
+                          { id: 'actions', label: t('table.actions'), locked: true },
                         ] as { id: ColumnId; label: string; locked?: boolean }[]
                       ).map((col) => (
                         <label

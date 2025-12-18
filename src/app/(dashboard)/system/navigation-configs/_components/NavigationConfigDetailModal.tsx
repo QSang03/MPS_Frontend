@@ -101,7 +101,9 @@ export default function NavigationConfigDetailModal({ config, open, onOpenChange
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium text-gray-700">Phiên bản</label>
+                <label className="text-sm font-medium text-gray-700">
+                  {t('navigation_config.fields.version')}
+                </label>
                 <div className="mt-1">
                   <Badge variant="outline">{config.version}</Badge>
                 </div>

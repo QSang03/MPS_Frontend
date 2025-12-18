@@ -80,13 +80,13 @@ export function WarehouseDocumentForm({ initialData, onSuccess }: Props) {
   const watchType = useWatch({ control, name: 'type' })
   const watchCustomerId = useWatch({ control, name: 'customerId' })
 
-  // Tự động clear giá trị không phù hợp khi type thay đổi
+  // Auto-clear incompatible values when type changes
   useEffect(() => {
     if (watchType === 'IMPORT_FROM_SUPPLIER') {
-      // Nếu là IMPORT, clear customerId
+      // If IMPORT, clear customerId
       setValue('customerId', undefined)
     } else if (watchType === 'EXPORT_TO_CUSTOMER' || watchType === 'RETURN_FROM_CUSTOMER') {
-      // Nếu là EXPORT hoặc RETURN, clear supplierName
+      // If EXPORT or RETURN, clear supplierName
       setValue('supplierName', '')
     }
   }, [watchType, setValue])
@@ -106,14 +106,14 @@ export function WarehouseDocumentForm({ initialData, onSuccess }: Props) {
   })
 
   const onSubmit = (dto: CreateWarehouseDocumentForm) => {
-    // Ràng buộc chặt chẽ: loại bỏ giá trị không phù hợp trước khi gửi
+    // Strict validation: remove incompatible values before submission
     const cleaned: CreateWarehouseDocumentForm = { ...dto }
 
     if (cleaned.type === 'IMPORT_FROM_SUPPLIER') {
-      // IMPORT không được có customerId
+      // IMPORT cannot have customerId
       delete cleaned.customerId
     } else if (cleaned.type === 'EXPORT_TO_CUSTOMER' || cleaned.type === 'RETURN_FROM_CUSTOMER') {
-      // EXPORT/RETURN không được có supplierName
+      // EXPORT/RETURN cannot have supplierName
       delete cleaned.supplierName
     }
 
@@ -137,7 +137,7 @@ export function WarehouseDocumentForm({ initialData, onSuccess }: Props) {
                   <Select
                     onValueChange={(value) => {
                       field.onChange(value)
-                      // Clear giá trị không phù hợp ngay khi thay đổi type
+                      // Clear incompatible values immediately when type changes
                       if (value === 'IMPORT_FROM_SUPPLIER') {
                         setValue('customerId', undefined)
                       } else {

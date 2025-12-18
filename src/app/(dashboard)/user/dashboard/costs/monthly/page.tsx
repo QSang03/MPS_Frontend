@@ -67,8 +67,9 @@ export default function MonthlyCostsPage() {
   const canViewDeviceCostTrend = can('view-device-cost-trend')
   const labels = {
     totalCostAfterAdjustment:
-      t('page.user.costs.monthly.kpi.total_cost_after_adjustment') || 'Tổng chi phí sau điều chỉnh',
-    totalCost: t('page.user.costs.monthly.kpi.total_cost') || 'Tổng chi phí',
+      t('page.user.costs.monthly.kpi.total_cost_after_adjustment') ||
+      'Total cost after adjustments',
+    totalCost: t('page.user.costs.monthly.kpi.total_cost') || 'Total cost',
     totalCostFormula:
       t('page.user.costs.monthly.kpi.total_cost_formula') ||
       'costRental + costRepair + costPageBW + costPageColor',
@@ -78,10 +79,10 @@ export default function MonthlyCostsPage() {
     costRepair: t('page.user.costs.monthly.kpi.cost_repair') || 'Repair',
     applyNote:
       t('page.user.costs.monthly.kpi.apply_note') ||
-      'Phiếu applyOnCustomerCost=true đã được trừ vào tổng chi phí.',
+      'Adjustments with applyOnCustomerCost=true have been subtracted from the total cost.',
     creditNote:
       t('page.user.costs.monthly.kpi.credit_note') ||
-      'Giá trị điều chỉnh cộng thêm (Có) phía khách.',
+      'Credit adjustments (added value) from the customer side.',
   }
   const [mode, setMode] = useState<TimeRangeMode>('period')
   const [period, setPeriod] = useState(() => {
@@ -492,7 +493,7 @@ export default function MonthlyCostsPage() {
         ) : !costData ? (
           <div className="rounded-xl bg-slate-100 p-12 text-center dark:bg-slate-800">
             <p className="text-lg text-slate-600 dark:text-slate-400">
-              Không có dữ liệu cho kỳ này
+              {t('page.user.costs.no_data')}
             </p>
           </div>
         ) : (
