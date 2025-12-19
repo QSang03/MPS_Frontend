@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useState, useTransition } from 'react'
 import type { ReactNode } from 'react'
+import Link from 'next/link'
 import type { ColumnDef } from '@tanstack/react-table'
 import {
   ListOrdered,
@@ -32,6 +33,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { CustomerSelect } from '@/components/shared/CustomerSelect'
+import { ActionGuard } from '@/components/shared/ActionGuard'
 import { formatCurrency, formatDateTime, formatRelativeTime } from '@/lib/utils/formatters'
 import { cn } from '@/lib/utils/cn'
 // purchaseRequestsClientService removed for user table (no mutation performed here)
@@ -372,9 +374,14 @@ function UserPurchaseRequestsTableContent({
           </div>
         ),
         cell: ({ row }) => (
-          <span className="font-mono text-sm font-semibold">
-            {row.original.requestNumber ?? `#${row.original.id.slice(0, 8)}`}
-          </span>
+          <ActionGuard pageId="user-my-requests" actionId="view-purchase-requests">
+            <Link
+              href={`/user/my-requests/${row.original.id}`}
+              className="text-primary font-mono text-sm font-semibold hover:underline"
+            >
+              {row.original.requestNumber ?? `#${row.original.id.slice(0, 8)}`}
+            </Link>
+          </ActionGuard>
         ),
       },
       {
