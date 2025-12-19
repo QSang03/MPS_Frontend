@@ -359,38 +359,42 @@ export default function CostCalculationPage() {
             </Button>
           }
         >
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className="bg-background max-h-[55vh] overflow-auto rounded-lg border">
+            <table className="w-full min-w-[720px] text-sm">
               <thead>
-                <tr className="text-left">
-                  <th className="px-2 py-2">{t('cost_calculation.materials_modal.partNumber')}</th>
-                  <th className="px-2 py-2">
+                <tr className="bg-muted/40 sticky top-0 z-10 border-b text-left">
+                  <th className="text-muted-foreground px-4 py-3 text-xs font-semibold">
+                    {t('cost_calculation.materials_modal.partNumber')}
+                  </th>
+                  <th className="text-muted-foreground px-4 py-3 text-xs font-semibold">
                     {t('cost_calculation.materials_modal.materialType')}
                   </th>
-                  <th className="px-2 py-2">
+                  <th className="text-muted-foreground px-4 py-3 text-right text-xs font-semibold">
                     {t('cost_calculation.materials_modal.purchasePrice')}
                   </th>
-                  <th className="px-2 py-2">{t('cost_calculation.materials_modal.capacity')}</th>
+                  <th className="text-muted-foreground px-4 py-3 text-right text-xs font-semibold">
+                    {t('cost_calculation.materials_modal.capacity')}
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {selectedMaterials.length === 0 ? (
                   <tr className="border-t">
-                    <td className="text-muted-foreground px-2 py-3" colSpan={4}>
+                    <td className="text-muted-foreground px-4 py-6" colSpan={4}>
                       {t('cost_calculation.materials_modal.empty')}
                     </td>
                   </tr>
                 ) : (
                   selectedMaterials.map((m, idx) => (
-                    <tr key={idx} className="border-t">
-                      <td className="px-2 py-2">{String(m.partNumber ?? '-')}</td>
-                      <td className="px-2 py-2">{String(m.materialType ?? '-')}</td>
-                      <td className="px-2 py-2">
+                    <tr key={idx} className="hover:bg-muted/20 odd:bg-muted/10 border-t">
+                      <td className="px-4 py-3 font-medium">{String(m.partNumber ?? '-')}</td>
+                      <td className="px-4 py-3">{String(m.materialType ?? '-')}</td>
+                      <td className="px-4 py-3 text-right tabular-nums">
                         {typeof m.purchasePrice === 'number'
                           ? m.purchasePrice.toLocaleString(locale)
                           : '-'}
                       </td>
-                      <td className="px-2 py-2">
+                      <td className="px-4 py-3 text-right tabular-nums">
                         {typeof m.capacity === 'number' ? m.capacity.toLocaleString(locale) : '-'}
                       </td>
                     </tr>
