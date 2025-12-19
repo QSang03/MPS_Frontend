@@ -240,6 +240,7 @@ export default function ChangePasswordPage() {
                   <button
                     type="button"
                     onClick={() => setShowOldPassword(!showOldPassword)}
+                    tabIndex={-1}
                     className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-500 hover:text-gray-700"
                   >
                     {showOldPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -264,6 +265,7 @@ export default function ChangePasswordPage() {
                   <button
                     type="button"
                     onClick={() => setShowNewPassword(!showNewPassword)}
+                    tabIndex={-1}
                     className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-500 hover:text-gray-700"
                   >
                     {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -290,6 +292,7 @@ export default function ChangePasswordPage() {
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    tabIndex={-1}
                     className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-500 hover:text-gray-700"
                   >
                     {showConfirmPassword ? (
