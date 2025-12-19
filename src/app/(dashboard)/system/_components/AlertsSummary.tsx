@@ -323,7 +323,7 @@ export function AlertsSummary({
                       </div>
 
                       {/* Alert Info */}
-                      <div className="min-w-0 flex-1">
+                      <div className="min-w-0 flex-1 text-left">
                         <div className="flex items-center gap-2">
                           <p className="font-semibold text-gray-900">{alert.title}</p>
                           {getSeverityBadge(alert.severity, alert.count)}
@@ -347,7 +347,7 @@ export function AlertsSummary({
                                       console.error('Navigation failed for consumable item', err)
                                     }
                                   }}
-                                  className="text-xs text-gray-500 hover:underline"
+                                  className="text-left text-xs text-gray-500 hover:underline"
                                 >
                                   {item.deviceName ?? item.deviceId}
                                   {item.serialNumber && (
@@ -394,7 +394,7 @@ export function AlertsSummary({
                                       console.error('Navigation failed for device error item', err)
                                     }
                                   }}
-                                  className="text-xs text-gray-500 hover:underline"
+                                  className="text-left text-xs text-gray-500 hover:underline"
                                 >
                                   {getDeviceErrorTitle(item)}
                                   {getDeviceErrorMessage(item)
@@ -417,7 +417,7 @@ export function AlertsSummary({
                                       console.error('Navigation failed for SLA item', err)
                                     }
                                   }}
-                                  className="text-xs text-gray-500 hover:underline"
+                                  className="text-left text-xs text-gray-500 hover:underline"
                                 >
                                   {getSlaTitle(item)}
                                   {getSlaCustomer(item) ? ` • ${getSlaCustomer(item)}` : ''}
