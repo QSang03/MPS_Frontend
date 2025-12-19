@@ -1,3 +1,5 @@
+'use client'
+
 import React from 'react'
 import {
   Select,
@@ -6,6 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 type Option = {
   value: string
@@ -30,15 +33,18 @@ export default function FilterDropdown({
   className = '',
   width = 'w-[160px]',
 }: Props) {
+  const { t } = useLocale()
+  const allLabel = placeholder ?? t('placeholder.all')
+
   return (
     <Select value={value} onValueChange={onChange}>
       <SelectTrigger className={`${width} ${className}`}>
-        <SelectValue placeholder={placeholder}>
-          {value === 'all' ? placeholder : options.find((o) => o.value === value)?.label}
+        <SelectValue placeholder={allLabel}>
+          {value === 'all' ? allLabel : options.find((o) => o.value === value)?.label}
         </SelectValue>
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="all">{placeholder ?? 'Tất cả'}</SelectItem>
+        <SelectItem value="all">{allLabel}</SelectItem>
         {options.map((opt) => (
           <SelectItem key={String(opt.value)} value={opt.value}>
             <div className="flex items-center gap-2">

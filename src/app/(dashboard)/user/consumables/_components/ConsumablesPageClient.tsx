@@ -58,7 +58,7 @@ import { useLocale } from '@/components/providers/LocaleProvider'
 import Link from 'next/link'
 
 export default function ConsumablesPageClient() {
-  const { t } = useLocale()
+  const { t, locale } = useLocale()
   const [consumables, setConsumables] = useState<Record<string, unknown>[]>([])
   const [installedDevices, setInstalledDevices] = useState<
     Record<string, { id: string; serialNumber?: string | null }>
@@ -351,15 +351,18 @@ export default function ConsumablesPageClient() {
     })
   }
 
+  const numberLocale = locale === 'vi' ? 'vi-VN' : 'en-US'
+  const dateLocale = locale === 'vi' ? 'vi-VN' : 'en-US'
+
   const formatInteger = (value?: number | null) => {
     if (value === undefined || value === null) return '—'
-    return Math.abs(value).toLocaleString('en-US')
+    return Math.abs(value).toLocaleString(numberLocale)
   }
 
   const formatDate = (v?: string | null) => {
     if (!v) return '—'
     try {
-      return new Date(String(v)).toLocaleDateString('vi-VN')
+      return new Date(String(v)).toLocaleDateString(dateLocale)
     } catch {
       return String(v)
     }

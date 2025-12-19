@@ -381,34 +381,35 @@ export function ModernSidebar({ session }: SidebarProps) {
 
             const translateOr = (key: string, fallback: string) => {
               const v = t(key)
-              return v !== key ? v : fallback
+              if (!v || v === key) return fallback
+              return v
             }
 
             // System (SYS) group mapping
             const systemSections: { key: string; title: string; ids: string[] }[] = [
               {
                 key: 'overview',
-                title: translateOr('nav.overview', 'Tổng quan'),
+                title: translateOr('nav.overview', 'Overview'),
                 ids: ['dashboard'],
               },
               {
                 key: 'devices',
-                title: translateOr('nav.devices', 'Thiết bị'),
+                title: translateOr('nav.devices', 'Devices'),
                 ids: ['devices', 'device-models'],
               },
               {
                 key: 'consumables',
-                title: translateOr('nav.consumables', 'Vật tư'),
+                title: translateOr('nav.consumables', 'Consumables'),
                 ids: ['consumable-types', 'warehouse-documents', 'consumables'],
               },
               {
                 key: 'customers',
-                title: translateOr('nav.customers', 'Khách hàng'),
+                title: translateOr('nav.customers', 'Customers'),
                 ids: ['customers'],
               },
               {
                 key: 'reports',
-                title: translateOr('nav.reports', 'Báo cáo'),
+                title: translateOr('nav.reports', 'Reports'),
                 ids: ['revenue', 'usage-page'],
               },
             ]
@@ -417,24 +418,24 @@ export function ModernSidebar({ session }: SidebarProps) {
             const userSections: { key: string; title: string; ids: string[] }[] = [
               {
                 key: 'overview',
-                title: translateOr('nav.overview', 'Tổng quan'),
+                title: translateOr('nav.overview', 'Overview'),
                 ids: ['user-dashboard'],
               },
               {
                 key: 'devices',
-                title: translateOr('nav.devices', 'Thiết bị'),
+                title: translateOr('nav.devices', 'Devices'),
                 ids: ['user-devices'],
               },
-              { key: 'users', title: translateOr('nav.users', 'Người dùng'), ids: ['users'] },
-              { key: 'costs', title: translateOr('nav.costs', 'Chi phí'), ids: ['user-costs'] },
+              { key: 'users', title: translateOr('nav.users', 'Users'), ids: ['users'] },
+              { key: 'costs', title: translateOr('nav.costs', 'Costs'), ids: ['user-costs'] },
               {
                 key: 'consumables',
-                title: translateOr('nav.consumables', 'Vật tư'),
+                title: translateOr('nav.consumables', 'Consumables'),
                 ids: ['user-consumables', 'user-warehouse-documents'],
               },
               {
                 key: 'contracts',
-                title: translateOr('nav.contracts', 'Hợp đồng'),
+                title: translateOr('nav.contracts', 'Contracts'),
                 ids: ['user-contracts'],
               },
             ]

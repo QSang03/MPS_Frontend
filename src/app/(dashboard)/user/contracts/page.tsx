@@ -2,7 +2,7 @@ import ContractsPageClient from './_components/ContractsPageClient'
 import { UserPageLayout } from '@/components/user/UserPageLayout'
 
 export const metadata = {
-  title: 'Hợp đồng của tôi',
+  title: 'My Contracts',
 }
 
 export default function ContractsPage() {

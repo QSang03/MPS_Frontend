@@ -6,6 +6,7 @@ import type { NotificationMetadata, NotificationStatus } from '@/types/models/no
 import NotificationDetailModal from './NotificationDetailModal'
 import { formatRelativeTime } from '@/lib/utils/formatters'
 import { cn } from '@/lib/utils/cn'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 type NotificationListItem = {
   id: string
@@ -24,6 +25,7 @@ interface NotificationCardProps {
 }
 
 export function NotificationCard({ notification }: NotificationCardProps) {
+  const { t } = useLocale()
   const [open, setOpen] = useState(false)
   const [local, setLocal] = useState<NotificationListItem>(notification)
 
@@ -45,7 +47,9 @@ export function NotificationCard({ notification }: NotificationCardProps) {
           'hover:bg-gray-50 hover:shadow-sm',
           isUnread ? 'bg-white' : 'bg-gray-50'
         )}
-        aria-label={`Mở thông báo ${notification.title}`}
+        aria-label={t('notification.open_notification', {
+          title: notification.title || 'notification',
+        })}
       >
         <div
           className={cn(

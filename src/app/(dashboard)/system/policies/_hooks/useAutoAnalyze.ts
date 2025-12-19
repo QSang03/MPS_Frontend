@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { policyAssistantService } from '@/lib/api/services/policy-assistant.service'
 import type { Policy, PolicyAssistantAnalysis } from '@/types/policies'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 interface UseAutoAnalyzeOptions {
   draft: Partial<Policy>
@@ -17,6 +18,7 @@ export function useAutoAnalyze({
   onAnalysisComplete,
   onError,
 }: UseAutoAnalyzeOptions) {
+  const { t } = useLocale()
   const [analysis, setAnalysis] = useState<PolicyAssistantAnalysis | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -39,14 +41,14 @@ export function useAutoAnalyze({
       onAnalysisComplete?.(result)
     } catch (err) {
       console.error('[useAutoAnalyze] analyze error', err)
-      const errorMessage = err instanceof Error ? err.message : 'Không thể phân tích policy draft'
+      const errorMessage = err instanceof Error ? err.message : t('policies.ai.analyze_error')
       setError(errorMessage)
       setAnalysis(null)
       onError?.(err)
     } finally {
       setIsAnalyzing(false)
     }
-  }, [draft, onAnalysisComplete, onError])
+  }, [draft, onAnalysisComplete, onError, t])
 
   useEffect(() => {
     if (!enabled) {

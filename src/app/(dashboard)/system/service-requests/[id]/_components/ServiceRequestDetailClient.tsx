@@ -103,7 +103,8 @@ const statusBadgeMap: Record<ServiceRequestStatus, string> = {
 }
 
 export function ServiceRequestDetailClient({ id, session }: Props) {
-  const { t } = useLocale()
+  const { t, locale } = useLocale()
+  const intlLocale = locale === 'vi' ? 'vi-VN' : 'en-US'
   const router = useRouter()
   const queryClient = useQueryClient()
   const [updating, setUpdating] = useState(false)
@@ -1155,7 +1156,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                   {t('requests.service.costs.total_estimated')}
                 </div>
                 <div className="text-2xl font-bold text-[var(--brand-600)]">
-                  {totalAmountForDraft.toLocaleString('vi-VN')}{' '}
+                  {totalAmountForDraft.toLocaleString(intlLocale)}{' '}
                   <span className="text-muted-foreground text-sm font-normal">VND</span>
                 </div>
               </div>

@@ -34,7 +34,6 @@ import { contractsClientService } from '@/lib/api/services/contracts-client.serv
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
-import { VN } from '@/constants/vietnamese'
 import { useLocale } from '@/components/providers/LocaleProvider'
 import { useActionPermission } from '@/lib/hooks/useActionPermission'
 import { ActionGuard } from '@/components/shared/ActionGuard'
@@ -43,7 +42,8 @@ import { useRouter } from 'next/navigation'
 import { getPublicUrl } from '@/lib/utils/publicUrl'
 
 export default function ContractsPageClient() {
-  const { t } = useLocale()
+  const { t, locale } = useLocale()
+  const dateLocale = locale === 'vi' ? 'vi-VN' : 'en-US'
   type ContractWithDoc = Contract &
     Partial<Record<'documentUrl' | 'document_url' | 'pdfUrl' | 'pdf_url', string>>
   const { canCreate, canDelete } = useActionPermission('user-contracts')
@@ -177,13 +177,13 @@ export default function ContractsPageClient() {
     if (!status) return '—'
     switch (status) {
       case 'ACTIVE':
-        return VN.status.active
+        return t('filters.status_active')
       case 'PENDING':
-        return VN.status.pending
+        return t('filters.status_pending')
       case 'EXPIRED':
-        return VN.status.expired
+        return t('filters.status_expired')
       case 'TERMINATED':
-        return VN.status.terminated
+        return t('filters.status_terminated')
       default:
         return status
     }
@@ -497,8 +497,8 @@ export default function ContractsPageClient() {
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600">
                         <span>
-                          {new Date(c.startDate).toLocaleDateString('vi-VN')} —{' '}
-                          {new Date(c.endDate).toLocaleDateString('vi-VN')}
+                          {new Date(c.startDate).toLocaleDateString(dateLocale)} —{' '}
+                          {new Date(c.endDate).toLocaleDateString(dateLocale)}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
@@ -549,7 +549,7 @@ export default function ContractsPageClient() {
                                   className="h-8 w-8 text-gray-500 hover:text-gray-900"
                                 >
                                   <MoreHorizontal className="h-4 w-4" />
-                                  <span className="sr-only">Mở menu</span>
+                                  <span className="sr-only">{t('open_menu')}</span>
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent
@@ -561,7 +561,7 @@ export default function ContractsPageClient() {
                                   className="flex cursor-pointer items-center gap-2 py-2"
                                 >
                                   <Eye className="h-4 w-4" />
-                                  Xem chi tiết
+                                  {t('alerts.view_details')}
                                 </DropdownMenuItem>
                                 {/* update/assign actions intentionally omitted for user view */}
 
@@ -613,7 +613,8 @@ export default function ContractsPageClient() {
                 <span>
                   {t('contracts.stats.showing')}{' '}
                   <span className="text-foreground font-semibold">{contracts.length}</span>
-                  {searchTerm && <span> / {contracts.length}</span>} hợp đồng
+                  {searchTerm && <span> / {contracts.length}</span>}{' '}
+                  {t('contracts.stats.contracts')}
                 </span>
               </div>
 

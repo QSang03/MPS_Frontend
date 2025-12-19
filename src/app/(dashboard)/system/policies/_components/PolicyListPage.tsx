@@ -103,7 +103,7 @@ export function PolicyListPage({ onEdit, onCreate }: PolicyListPageProps) {
     ...(search
       ? [
           {
-            label: `Tìm kiếm: "${search}"`,
+            label: t('policies.filters.active.search', { value: search }),
             value: search,
             onRemove: () => {
               setSearch('')
@@ -116,7 +116,7 @@ export function PolicyListPage({ onEdit, onCreate }: PolicyListPageProps) {
     ...(effect !== 'all'
       ? [
           {
-            label: `Effect: ${effect}`,
+            label: t('policies.filters.active.effect', { value: effect }),
             value: effect,
             onRemove: () => {
               setEffect('all')
@@ -128,7 +128,7 @@ export function PolicyListPage({ onEdit, onCreate }: PolicyListPageProps) {
     ...(action
       ? [
           {
-            label: `Action: ${action}`,
+            label: t('policies.filters.active.action', { value: action }),
             value: action,
             onRemove: () => {
               setAction('')

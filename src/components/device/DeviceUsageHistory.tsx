@@ -57,7 +57,9 @@ export default function DeviceUsageHistory({
   initialFromDate,
   initialToDate,
 }: DeviceUsageHistoryProps) {
-  const { t } = useLocale()
+  const { t, locale } = useLocale()
+  const dateLocale = locale === 'vi' ? 'vi-VN' : 'en-US'
+  const numberLocale = locale === 'vi' ? 'vi-VN' : 'en-US'
   // Get date range constraints from ownership period if device is historical
   const ownershipDateRange = useMemo(() => {
     if (device?.ownershipPeriod && isHistoricalDevice(device)) {
@@ -84,12 +86,15 @@ export default function DeviceUsageHistory({
   const [valueMode, setValueMode] = useState<'percentage' | 'remaining'>('percentage')
   const [visibleTypes, setVisibleTypes] = useState<boolean[]>([])
 
-  const formatDateTime = useCallback((value?: string | null) => {
-    if (!value) return '—'
-    const d = new Date(value)
-    if (Number.isNaN(d.getTime())) return '—'
-    return d.toLocaleString()
-  }, [])
+  const formatDateTime = useCallback(
+    (value?: string | null) => {
+      if (!value) return '—'
+      const d = new Date(value)
+      if (Number.isNaN(d.getTime())) return '—'
+      return d.toLocaleString(dateLocale)
+    },
+    [dateLocale]
+  )
 
   useEffect(() => {
     if (ownershipDateRange) {
@@ -243,21 +248,21 @@ export default function DeviceUsageHistory({
 
     return consumables.reduce<ChartConfig>((acc, c, idx) => {
       acc[`c${idx}`] = {
-        label: c.consumableTypeName ?? `Vật tư ${idx + 1}`,
+        label: c.consumableTypeName ?? t('device_usage.consumable_fallback', { index: idx + 1 }),
         color: palette[idx % palette.length],
       }
       return acc
     }, {})
-  }, [consumables])
+  }, [consumables, t])
 
   const formatValue = useCallback(
     (value: number | string | undefined | null) => {
       if (value === null || value === undefined) return '-'
       if (yMode === 'percentage')
-        return `${Number(value).toLocaleString('vi-VN', { maximumFractionDigits: 2 })}%`
-      return Intl.NumberFormat('vi-VN').format(Number(value))
+        return `${Number(value).toLocaleString(numberLocale, { maximumFractionDigits: 2 })}%`
+      return Intl.NumberFormat(numberLocale).format(Number(value))
     },
-    [yMode]
+    [numberLocale, yMode]
   )
 
   const seriesRows = useMemo(() => {

@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import { useState } from 'react'
 import { cn } from '@/lib/utils/cn'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 interface OptimizedImageProps {
   src: string
@@ -37,6 +38,7 @@ export function OptimizedImage({
   fill = false,
   objectFit = 'cover',
 }: OptimizedImageProps) {
+  const { t } = useLocale()
   const [isLoading, setIsLoading] = useState(true)
   const [hasError, setHasError] = useState(false)
 
@@ -50,7 +52,7 @@ export function OptimizedImage({
         className={cn('bg-muted text-muted-foreground flex items-center justify-center', className)}
         style={fill ? undefined : { width, height }}
       >
-        <span className="text-xs">Lỗi tải hình ảnh</span>
+        <span className="text-xs">{t('common.image_load_error')}</span>
       </div>
     )
   }

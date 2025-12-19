@@ -33,7 +33,8 @@ export function ProfileClient({ initialProfile }: ProfileClientProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [profile, setProfile] = useState<UserProfile | null>(initialProfile)
   const router = useRouter()
-  const { t } = useLocale()
+  const { t, locale } = useLocale()
+  const dateLocale = locale === 'vi' ? 'vi-VN' : 'en-US'
 
   useEffect(() => {
     if (!profile) {
@@ -70,8 +71,8 @@ export function ProfileClient({ initialProfile }: ProfileClientProps) {
 
   // ✅ FIX: Safely parse createdAt date (handle undefined)
   const createdDate = user.createdAt
-    ? new Date(user.createdAt).toLocaleDateString('vi-VN')
-    : new Date().toLocaleDateString('vi-VN')
+    ? new Date(user.createdAt).toLocaleDateString(dateLocale)
+    : new Date().toLocaleDateString(dateLocale)
 
   // ✅ FIX: Access department from role or attributes (attributes values are unknown)
   const attributes = user.attributes as Record<string, unknown> | undefined

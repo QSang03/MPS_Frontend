@@ -1,23 +1,25 @@
 'use client'
 
-import React, { useState, useEffect, useId } from 'react'
+import React, { useEffect, useId, useState } from 'react'
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Clock, X } from 'lucide-react'
+import { format } from 'date-fns'
+import { enUS, vi } from 'date-fns/locale'
+import type { CalendarMonth } from 'react-day-picker'
+
+import { Button } from '@/components/ui/button'
+import { Calendar } from '@/components/ui/calendar'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import {
   Select,
-  SelectTrigger,
   SelectContent,
   SelectItem,
+  SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Button } from '@/components/ui/button'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { Calendar } from '@/components/ui/calendar'
-import { Calendar as CalendarIcon, Clock, X, ChevronLeft, ChevronRight } from 'lucide-react'
+import { useLocale } from '@/components/providers/LocaleProvider'
 import { cn } from '@/lib/utils'
-import { format } from 'date-fns'
-import { vi } from 'date-fns/locale'
-import type { CalendarMonth } from 'react-day-picker'
 
 export interface DateTimeLocalPickerProps {
   id?: string
@@ -34,21 +36,6 @@ export interface DateTimeLocalPickerProps {
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
-const MONTH_NAMES = [
-  'Tháng 1',
-  'Tháng 2',
-  'Tháng 3',
-  'Tháng 4',
-  'Tháng 5',
-  'Tháng 6',
-  'Tháng 7',
-  'Tháng 8',
-  'Tháng 9',
-  'Tháng 10',
-  'Tháng 11',
-  'Tháng 12',
-]
-
 export default function DateTimeLocalPicker({
   id,
   value = '',
@@ -61,147 +48,136 @@ export default function DateTimeLocalPicker({
   disabled,
   autoFillCurrentDateTime = true,
 }: DateTimeLocalPickerProps) {
+  const { t, locale } = useLocale()
+  const dateFnsLocale = locale === 'vi' ? vi : enUS
+
   const [mounted, setMounted] = useState(false)
   const [open, setOpen] = useState(false)
   const [hasAutoFilled, setHasAutoFilled] = useState(false)
   const [date, setDate] = useState<Date | undefined>(undefined)
-  const [month, setMonth] = useState<Date>(() => date || new Date())
+  const [month, setMonth] = useState<Date>(() => new Date())
   const [hour, setHour] = useState('')
   const [minute, setMinute] = useState('')
+
   const popoverContentId = useId()
   const selectHourContentId = useId()
   const selectMinuteContentId = useId()
   const generatedIdBase = useId()
   const baseId = id ?? generatedIdBase
+  const errorId = `${baseId}-error`
 
   // Fix hydration: Only render interactive parts after mount
   useEffect(() => {
-    const t = window.setTimeout(() => setMounted(true), 0)
-    return () => window.clearTimeout(t)
+    const timeoutId = window.setTimeout(() => setMounted(true), 0)
+    return () => window.clearTimeout(timeoutId)
   }, [])
 
   // Parse value to state
   useEffect(() => {
-    let t: number | undefined
+    let timeoutId: number | undefined
+
     if (value && value.length >= 16) {
       try {
-        const d = new Date(value)
-        if (!isNaN(d.getTime())) {
-          t = window.setTimeout(() => {
-            setDate(d)
-            setMonth(d) // Update month view to match selected date
-            setHour(String(d.getHours()))
-            setMinute(String(d.getMinutes()))
-            setHasAutoFilled(true) // Mark as filled if value exists
+        const parsed = new Date(value)
+        if (!isNaN(parsed.getTime())) {
+          timeoutId = window.setTimeout(() => {
+            setDate(parsed)
+            setMonth(parsed)
+            setHour(String(parsed.getHours()))
+            setMinute(String(parsed.getMinutes()))
+            setHasAutoFilled(true)
           }, 0)
         }
       } catch {
-        // Invalid date
+        // ignore invalid value
       }
     } else {
-      t = window.setTimeout(() => {
+      timeoutId = window.setTimeout(() => {
         setDate(undefined)
         setHour('')
         setMinute('')
-        setHasAutoFilled(false) // Reset when value is cleared to allow auto-fill again
+        setHasAutoFilled(false)
       }, 0)
     }
+
     return () => {
-      if (t !== undefined) window.clearTimeout(t)
+      if (timeoutId !== undefined) window.clearTimeout(timeoutId)
     }
   }, [value])
 
   // Auto-fill current date/time when opening popover for the first time if value is empty
   useEffect(() => {
-    if (open && autoFillCurrentDateTime && !hasAutoFilled && !value) {
-      const now = new Date()
-      const currentDate = now
-      const currentHour = String(now.getHours())
-      const currentMinute = String(now.getMinutes())
+    if (!open || !autoFillCurrentDateTime || hasAutoFilled || value) return
 
-      // Commit the value immediately
-      const year = currentDate.getFullYear()
-      const month = pad(currentDate.getMonth() + 1)
-      const day = pad(currentDate.getDate())
-      const localValue = `${year}-${month}-${day}T${pad(Number(currentHour))}:${pad(Number(currentMinute))}`
+    const now = new Date()
+    const year = now.getFullYear()
+    const monthPart = pad(now.getMonth() + 1)
+    const dayPart = pad(now.getDate())
+    const hourPart = pad(now.getHours())
+    const minutePart = pad(now.getMinutes())
+    const localValue = `${year}-${monthPart}-${dayPart}T${hourPart}:${minutePart}`
 
-      // Update state via commitValue which will trigger onChange/onISOChange
-      // Use setTimeout to avoid cascading renders warning
-      const timeoutId = setTimeout(() => {
-        setDate(currentDate)
-        setHour(currentHour)
-        setMinute(currentMinute)
-        setHasAutoFilled(true)
-        if (onChange) onChange(localValue)
-        if (onISOChange) {
-          const dateObj = new Date(localValue)
-          onISOChange(isNaN(dateObj.getTime()) ? null : dateObj.toISOString())
-        }
-      }, 0)
+    const timeoutId = window.setTimeout(() => {
+      setDate(now)
+      setMonth(now)
+      setHour(String(now.getHours()))
+      setMinute(String(now.getMinutes()))
+      setHasAutoFilled(true)
 
-      return () => clearTimeout(timeoutId)
-    }
-    return undefined
+      onChange?.(localValue)
+      if (onISOChange) {
+        const dateObj = new Date(localValue)
+        onISOChange(isNaN(dateObj.getTime()) ? null : dateObj.toISOString())
+      }
+    }, 0)
+
+    return () => window.clearTimeout(timeoutId)
   }, [open, autoFillCurrentDateTime, hasAutoFilled, value, onChange, onISOChange])
 
-  // Reset selection state when opening popover to allow re-selecting date/time
+  // Keep month view synced when reopening
   useEffect(() => {
-    if (open && value) {
-      // When reopening with existing value, allow user to modify any part
-      // Don't reset date/hour/minute here as they should reflect current value
-      // But ensure month view is synced
-      if (date) {
-        setMonth(date)
-      }
+    if (open && date) setMonth(date)
+  }, [open, date])
+
+  const commitValue = (d: Date | undefined, h: string, m: string) => {
+    if (!d || !h || !m) {
+      onChange?.('')
+      onISOChange?.(null)
+      return
     }
-  }, [open, value, date])
+
+    const year = d.getFullYear()
+    const monthPart = pad(d.getMonth() + 1)
+    const dayPart = pad(d.getDate())
+    const localValue = `${year}-${monthPart}-${dayPart}T${pad(Number(h))}:${pad(Number(m))}`
+
+    onChange?.(localValue)
+    if (onISOChange) {
+      const dateObj = new Date(localValue)
+      onISOChange(isNaN(dateObj.getTime()) ? null : dateObj.toISOString())
+    }
+  }
 
   const handleDateSelect = (selectedDate: Date | undefined) => {
     setDate(selectedDate)
-    // Only commit if all values are present, otherwise just update the date
     if (selectedDate && hour && minute) {
       commitValue(selectedDate, hour, minute)
     }
   }
 
   const handleHourChange = (newHour: string) => {
-    // map sentinel value back to empty string
     const mapped = newHour === '__clear' ? '' : newHour
     setHour(mapped)
-    // Only commit if all values are present, otherwise just update the hour
     if (date && mapped && minute) {
       commitValue(date, mapped, minute)
     }
   }
 
   const handleMinuteChange = (newMinute: string) => {
-    // map sentinel value back to empty string
     const mapped = newMinute === '__clear' ? '' : newMinute
     setMinute(mapped)
-    // Only commit if all values are present, otherwise just update the minute
     if (date && hour && mapped) {
       commitValue(date, hour, mapped)
-    }
-  }
-
-  const commitValue = (d: Date | undefined, h: string, m: string) => {
-    // VALIDATE: Phải có đủ cả date, hour, minute
-    if (!d || !h || !m) {
-      if (onChange) onChange('')
-      if (onISOChange) onISOChange(null)
-      return
-    }
-
-    // Tạo datetime string
-    const year = d.getFullYear()
-    const month = pad(d.getMonth() + 1)
-    const day = pad(d.getDate())
-    const localValue = `${year}-${month}-${day}T${pad(Number(h))}:${pad(Number(m))}`
-
-    if (onChange) onChange(localValue)
-    if (onISOChange) {
-      const dateObj = new Date(localValue)
-      onISOChange(isNaN(dateObj.getTime()) ? null : dateObj.toISOString())
     }
   }
 
@@ -209,15 +185,14 @@ export default function DateTimeLocalPicker({
     setDate(undefined)
     setHour('')
     setMinute('')
-    if (onChange) onChange('')
-    if (onISOChange) onISOChange(null)
+    onChange?.('')
+    onISOChange?.(null)
   }
 
-  // Display format
   const displayValue = () => {
     if (!date || !hour || !minute) return ''
     try {
-      return `${format(date, 'dd/MM/yyyy', { locale: vi })} ${pad(Number(hour))}:${pad(Number(minute))}`
+      return `${format(date, 'P', { locale: dateFnsLocale })} ${pad(Number(hour))}:${pad(Number(minute))}`
     } catch {
       return ''
     }
@@ -225,7 +200,6 @@ export default function DateTimeLocalPicker({
 
   const display = displayValue()
 
-  // Custom Caption component with year input and month select
   const CustomCaption = (
     props: {
       calendarMonth: CalendarMonth
@@ -240,6 +214,9 @@ export default function DateTimeLocalPicker({
     const [yearInput, setYearInput] = useState(String(currentYear))
 
     useEffect(() => setYearInput(String(currentYear)), [currentYear])
+
+    const monthLabel = (year: number, monthIndex: number) =>
+      format(new Date(year, monthIndex, 1), 'LLLL', { locale: dateFnsLocale })
 
     const changeYear = (year: number) => {
       if (year > 1999 && year <= 2100) setMonth(new Date(year, currentMonth, 1))
@@ -261,7 +238,7 @@ export default function DateTimeLocalPicker({
           onClick={() => setMonth(new Date(currentYear, currentMonth - 1, 1))}
           disabled={disabled}
           className="hover:bg-accent absolute left-0 z-50 flex h-8 w-8 items-center justify-center rounded-md disabled:opacity-50"
-          aria-label="Tháng trước"
+          aria-label={t('datetime.picker.prev_month')}
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
@@ -269,12 +246,12 @@ export default function DateTimeLocalPicker({
         <div className="relative z-50">
           <Select value={String(currentMonth)} onValueChange={changeMonth}>
             <SelectTrigger className="relative z-50 h-8 w-32 text-sm">
-              <SelectValue>{MONTH_NAMES[currentMonth]}</SelectValue>
+              <SelectValue>{monthLabel(currentYear, currentMonth)}</SelectValue>
             </SelectTrigger>
             <SelectContent className="z-[999999]">
-              {MONTH_NAMES.map((month, i) => (
+              {Array.from({ length: 12 }).map((_, i) => (
                 <SelectItem key={i} value={String(i)}>
-                  {month}
+                  {monthLabel(currentYear, i)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -286,10 +263,8 @@ export default function DateTimeLocalPicker({
           inputMode="numeric"
           value={yearInput}
           onChange={(e) => {
-            const value = e.target.value.replace(/\D/g, '')
-            if (value.length <= 4) {
-              setYearInput(value)
-            }
+            const next = e.target.value.replace(/\D/g, '')
+            if (next.length <= 4) setYearInput(next)
           }}
           onBlur={() => {
             const year = parseInt(yearInput, 10)
@@ -300,12 +275,10 @@ export default function DateTimeLocalPicker({
             }
           }}
           onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.currentTarget.blur()
-            }
+            if (e.key === 'Enter') e.currentTarget.blur()
           }}
           className="relative z-50 h-8 w-20 text-center text-sm font-medium"
-          placeholder="Năm"
+          placeholder={t('datetime.picker.year')}
           disabled={disabled}
           maxLength={4}
         />
@@ -315,7 +288,7 @@ export default function DateTimeLocalPicker({
           onClick={() => setMonth(new Date(currentYear, currentMonth + 1, 1))}
           disabled={disabled}
           className="hover:bg-accent absolute right-0 z-50 flex h-8 w-8 items-center justify-center rounded-md disabled:opacity-50"
-          aria-label="Tháng sau"
+          aria-label={t('datetime.picker.next_month')}
         >
           <ChevronRight className="h-4 w-4" />
         </button>
@@ -331,7 +304,7 @@ export default function DateTimeLocalPicker({
           <Input
             value={display}
             readOnly
-            placeholder={placeholder || 'Chọn ngày và giờ'}
+            placeholder={placeholder || t('datetime.picker.placeholder')}
             className={cn(
               'cursor-pointer pr-10',
               !display && 'text-muted-foreground',
@@ -358,10 +331,10 @@ export default function DateTimeLocalPicker({
         <PopoverTrigger asChild>
           <div className="relative" aria-controls={popoverContentId}>
             <Input
-              id={id}
+              id={baseId}
               value={display}
               readOnly
-              placeholder={placeholder || 'Chọn ngày và giờ'}
+              placeholder={placeholder || t('datetime.picker.placeholder')}
               className={cn(
                 'cursor-pointer pr-10',
                 !display && 'text-muted-foreground',
@@ -370,7 +343,7 @@ export default function DateTimeLocalPicker({
               disabled={disabled}
               onClick={() => !disabled && setOpen(true)}
               aria-invalid={Boolean(error)}
-              aria-describedby={ariaDescribedBy ?? (error ? `${id}-error` : undefined)}
+              aria-describedby={ariaDescribedBy ?? (error ? errorId : undefined)}
             />
 
             <div className="pointer-events-none absolute top-0 right-0 flex h-full items-center pr-3">
@@ -402,7 +375,6 @@ export default function DateTimeLocalPicker({
           id={popoverContentId}
         >
           <div className="flex flex-col sm:flex-row">
-            {/* Calendar */}
             <div className="p-3">
               <Calendar
                 mode="single"
@@ -411,7 +383,7 @@ export default function DateTimeLocalPicker({
                 month={month}
                 onMonthChange={setMonth}
                 disabled={disabled}
-                locale={vi}
+                locale={dateFnsLocale}
                 captionLayout="label"
                 components={{
                   MonthCaption: CustomCaption,
@@ -419,17 +391,16 @@ export default function DateTimeLocalPicker({
               />
             </div>
 
-            {/* Time Picker */}
             <div className="min-w-[200px] space-y-4 border-t p-4 sm:border-t-0 sm:border-l">
               <div className="flex items-center gap-2 border-b pb-2">
                 <Clock className="text-muted-foreground h-4 w-4" />
-                <span className="text-sm font-medium">Thời gian</span>
+                <span className="text-sm font-medium">{t('datetime.picker.time')}</span>
               </div>
 
               <div className="space-y-3">
                 <div className="space-y-2">
                   <Label htmlFor={`${baseId}-hour`} className="text-xs">
-                    Giờ
+                    {t('datetime.picker.hour')}
                   </Label>
                   <Select value={hour} onValueChange={handleHourChange} disabled={disabled}>
                     <SelectTrigger
@@ -452,7 +423,7 @@ export default function DateTimeLocalPicker({
 
                 <div className="space-y-2">
                   <Label htmlFor={`${baseId}-minute`} className="text-xs">
-                    Phút
+                    {t('datetime.picker.minute')}
                   </Label>
                   <Select value={minute} onValueChange={handleMinuteChange} disabled={disabled}>
                     <SelectTrigger
@@ -465,8 +436,8 @@ export default function DateTimeLocalPicker({
                     <SelectContent id={selectMinuteContentId}>
                       <SelectItem value="__clear">--</SelectItem>
                       {Array.from({ length: 60 }).map((_, i) => (
-                        <SelectItem key={i} value={String(i * 1)}>
-                          {pad(i * 1)}
+                        <SelectItem key={i} value={String(i)}>
+                          {pad(i)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -474,10 +445,11 @@ export default function DateTimeLocalPicker({
                 </div>
               </div>
 
-              {/* Preview */}
               {date && hour && minute && (
                 <div className="border-t pt-3">
-                  <p className="text-muted-foreground mb-1 text-xs">Đã chọn:</p>
+                  <p className="text-muted-foreground mb-1 text-xs">
+                    {t('datetime.picker.selected')}
+                  </p>
                   <p className="text-sm font-medium">{display}</p>
                 </div>
               )}
@@ -489,17 +461,16 @@ export default function DateTimeLocalPicker({
                 onClick={() => setOpen(false)}
                 className="w-full"
               >
-                Xong
+                {t('datetime.picker.done')}
               </Button>
             </div>
           </div>
         </PopoverContent>
       </Popover>
 
-      {/* Error Message */}
       {error && (
         <div className="bg-destructive/10 border-destructive/20 rounded-md border px-3 py-2">
-          <p id={`${id}-error`} className="text-destructive text-sm font-medium">
+          <p id={errorId} className="text-destructive text-sm font-medium">
             {error}
           </p>
         </div>

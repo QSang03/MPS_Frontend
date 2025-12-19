@@ -2,6 +2,7 @@ import React from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
+import Translated from '@/components/Translated'
 import { StatsCards } from './StatsCard'
 import { cn } from '@/lib/utils'
 import { MapPin } from 'lucide-react'
@@ -75,7 +76,9 @@ export function DetailInfoCard({
             <div className="rounded-xl bg-slate-100 p-3 text-slate-600">{titleIcon}</div>
           )}
           <div>
-            <p className="text-xs tracking-wide text-slate-500 uppercase">Thông tin</p>
+            <p className="text-xs tracking-wide text-slate-500 uppercase">
+              <Translated k="common.information" />
+            </p>
             <CardTitle className="text-2xl text-slate-900">{title}</CardTitle>
           </div>
         </div>
@@ -111,7 +114,7 @@ export function DetailInfoCard({
           <div className="rounded-xl border border-slate-100 bg-slate-50/80 p-4">
             <div className="flex items-center gap-2 text-sm font-semibold text-slate-600">
               <MapPin className="h-4 w-4 text-slate-500" />
-              Địa chỉ
+              <Translated k="common.address" />
             </div>
             <p className="mt-1 text-sm text-slate-800">{address}</p>
           </div>

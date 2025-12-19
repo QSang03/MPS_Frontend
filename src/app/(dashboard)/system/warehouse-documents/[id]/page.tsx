@@ -2,6 +2,7 @@ import { WarehouseDocumentDetailClient } from '../_components/WarehouseDocumentD
 import { getSession } from '@/lib/auth/session'
 import { DEV_BYPASS_AUTH, getDevSession } from '@/lib/auth/dev-session'
 import { ActionGuard } from '@/components/shared/ActionGuard'
+import { NoPermissionMessage } from './NoPermissionMessage'
 
 interface Props {
   params?: Promise<{ id: string }>
@@ -20,11 +21,7 @@ export default async function WarehouseDocumentDetailPage({ params }: Props) {
     <ActionGuard
       pageId="warehouse-documents"
       actionId="view-detail"
-      fallback={
-        <div className="text-muted-foreground py-8 text-center">
-          No permission to view warehouse document details
-        </div>
-      }
+      fallback={<NoPermissionMessage />}
     >
       <WarehouseDocumentDetailClient id={id} session={session} />
     </ActionGuard>

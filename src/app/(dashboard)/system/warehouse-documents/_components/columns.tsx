@@ -92,7 +92,7 @@ export const getColumns = (type?: WarehouseDocumentType, t?: (k: string) => stri
   })
   cols.push({
     accessorKey: 'createdAt',
-    header: t ? t('warehouse_document.field.created_at') : 'Ngày tạo',
+    header: t ? t('warehouse_document.field.created_at') : 'Created at',
     cell: ({ row }) => formatRelativeTime(row.original.createdAt ?? ''),
   })
   cols.push({

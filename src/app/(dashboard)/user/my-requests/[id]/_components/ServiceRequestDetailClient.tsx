@@ -220,7 +220,7 @@ export function ServiceRequestDetailClient({ id }: Props) {
             )}
           </div>
           <h1 className="flex items-center gap-3 text-2xl font-bold tracking-tight md:text-3xl">
-            {detail.title ?? 'Yêu cầu dịch vụ'}
+            {detail.title ?? t('requests.service.detail.title_fallback')}
           </h1>
           <div className="text-muted-foreground flex flex-wrap items-center gap-3 text-sm">
             <span className="bg-muted rounded px-1.5 py-0.5 font-mono text-xs">
@@ -276,7 +276,7 @@ export function ServiceRequestDetailClient({ id }: Props) {
                 </CardTitle>
                 <div className="text-right">
                   <p className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
-                    Tổng chi phí
+                    {t('requests.service.detail.total_cost')}
                   </p>
                   <p className="text-xl font-bold text-[var(--brand-600)]">
                     {costsQuery.data?.data && costsQuery.data.data.length > 0
@@ -543,7 +543,10 @@ export function ServiceRequestDetailClient({ id }: Props) {
                   </div>
                   <div className="grid gap-2 text-sm">
                     <InfoRow label="Model" value={detail.device.deviceModel?.name} />
-                    <InfoRow label="Vị trí" value={detail.device.location} />
+                    <InfoRow
+                      label={t('requests.service.detail.location')}
+                      value={detail.device.location}
+                    />
                     <InfoRow label="IP" value={detail.device.ipAddress} />
                   </div>
                 </>

@@ -1,3 +1,5 @@
+'use client'
+
 import React from 'react'
 import { Button } from '@/components/ui/button'
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
@@ -10,6 +12,7 @@ import {
 } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 interface PaginationControlsProps {
   currentPage: number
@@ -30,6 +33,7 @@ export function PaginationControls({
   onItemsPerPageChange,
   className,
 }: PaginationControlsProps) {
+  const { t } = useLocale()
   const clampedTotalItems = Math.max(totalItems, 0)
   const hasItems = clampedTotalItems > 0
   const startItem = hasItems ? (currentPage - 1) * itemsPerPage + 1 : 0
@@ -74,15 +78,17 @@ export function PaginationControls({
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
         <div className="text-muted-foreground flex items-center gap-2 text-sm">
           <span>
-            Hiển thị <strong className="text-foreground">{startItem}</strong> -{' '}
-            <strong className="text-foreground">{endItem}</strong> trong tổng số{' '}
-            <strong className="text-foreground">{totalItems}</strong>
+            {t('pagination.showing_range_results', {
+              from: String(startItem),
+              to: String(endItem),
+              total: String(clampedTotalItems),
+            })}
           </span>
         </div>
 
         {onItemsPerPageChange && (
           <div className="flex items-center gap-2">
-            <span className="text-muted-foreground text-sm">Số mục mỗi trang:</span>
+            <span className="text-muted-foreground text-sm">{t('pagination.items_per_page')}</span>
             <Select
               value={String(itemsPerPage)}
               onValueChange={(value) => onItemsPerPageChange(parseInt(value))}
@@ -93,7 +99,7 @@ export function PaginationControls({
               <SelectContent>
                 {[10, 20, 30, 50, 100].map((size) => (
                   <SelectItem key={size} value={String(size)}>
-                    {size}
+                    {t('pagination.per_page_option', { count: String(size) })}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -109,7 +115,7 @@ export function PaginationControls({
           className="h-8 w-8 p-0"
           onClick={() => onPageChange(1)}
           disabled={currentPage <= 1}
-          title="Trang đầu"
+          title={t('pagination.first')}
         >
           <ChevronsLeft className="h-4 w-4" />
         </Button>
@@ -119,13 +125,13 @@ export function PaginationControls({
           className="h-8 w-8 p-0"
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage <= 1}
-          title="Trang trước"
+          title={t('pagination.prev')}
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
 
         <div className="flex items-center gap-2 px-2">
-          <span className="text-muted-foreground text-sm">Trang</span>
+          <span className="text-muted-foreground text-sm">{t('pagination.page')}</span>
           <Input
             type="number"
             min={1}
@@ -145,7 +151,7 @@ export function PaginationControls({
           className="h-8 w-8 p-0"
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage >= totalPages}
-          title="Trang sau"
+          title={t('pagination.next')}
         >
           <ChevronRight className="h-4 w-4" />
         </Button>
@@ -155,7 +161,7 @@ export function PaginationControls({
           className="h-8 w-8 p-0"
           onClick={() => onPageChange(totalPages)}
           disabled={currentPage >= totalPages}
-          title="Trang cuối"
+          title={t('pagination.last')}
         >
           <ChevronsRight className="h-4 w-4" />
         </Button>

@@ -24,7 +24,8 @@ interface CurrencyConverterProps {
 }
 
 export function CurrencyConverter({ currencies }: CurrencyConverterProps) {
-  const { t } = useLocale()
+  const { t, locale } = useLocale()
+  const intlLocale = locale === 'vi' ? 'vi-VN' : 'en-US'
   const [amount, setAmount] = useState<string>('')
   const [fromCurrencyId, setFromCurrencyId] = useState<string>('')
   const [toCurrencyId, setToCurrencyId] = useState<string>('')
@@ -178,7 +179,8 @@ export function CurrencyConverter({ currencies }: CurrencyConverterProps) {
                     {t('currency_converter.original_amount')}
                   </span>
                   <span className="font-semibold">
-                    {convertResult.amount.toLocaleString()} {convertResult.fromCurrency.code}
+                    {convertResult.amount.toLocaleString(intlLocale)}{' '}
+                    {convertResult.fromCurrency.code}
                   </span>
                 </div>
                 <div className="flex items-center justify-center">
@@ -189,21 +191,23 @@ export function CurrencyConverter({ currencies }: CurrencyConverterProps) {
                     {t('currency_converter.converted_amount')}
                   </span>
                   <span className="text-lg font-bold text-[var(--brand-600)]">
-                    {convertResult.convertedAmount.toLocaleString()} {convertResult.toCurrency.code}
+                    {convertResult.convertedAmount.toLocaleString(intlLocale)}{' '}
+                    {convertResult.toCurrency.code}
                   </span>
                 </div>
                 <div className="mt-2 border-t pt-2">
                   <div className="flex items-center justify-between text-xs text-gray-500">
                     <span>{t('currency_converter.exchange_rate')}</span>
                     <span>
-                      1 {convertResult.fromCurrency.code} = {convertResult.rate.toLocaleString()}{' '}
+                      1 {convertResult.fromCurrency.code} ={' '}
+                      {convertResult.rate.toLocaleString(intlLocale)}{' '}
                       {convertResult.toCurrency.code}
                     </span>
                   </div>
                   {convertResult.date && (
                     <div className="flex items-center justify-between text-xs text-gray-500">
                       <span>{t('currency_converter.effective_date')}</span>
-                      <span>{new Date(convertResult.date).toLocaleDateString('vi-VN')}</span>
+                      <span>{new Date(convertResult.date).toLocaleDateString(intlLocale)}</span>
                     </div>
                   )}
                 </div>

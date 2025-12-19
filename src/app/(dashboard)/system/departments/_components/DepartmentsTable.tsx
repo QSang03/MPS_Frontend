@@ -64,8 +64,12 @@ export function DepartmentsTable({
   onCreateTriggerReset,
 }: DepartmentsTableProps = {}) {
   const { canUpdate, canDelete } = useActionPermission('departments')
-  const { t } = useLocale()
+  const { t, locale } = useLocale()
   const queryClient = useQueryClient()
+  void locale
+
+  const intlLocale = locale === 'vi' ? 'vi-VN' : 'en-US'
+  void intlLocale
 
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
@@ -480,7 +484,7 @@ function DepartmentsTableContent({
         ),
         cell: ({ row }) => (
           <span className="font-semibold whitespace-nowrap text-gray-600">
-            {new Date(row.original.createdAt).toLocaleDateString('vi-VN')}
+            {new Date(row.original.createdAt).toLocaleDateString(intlLocale)}
           </span>
         ),
       },

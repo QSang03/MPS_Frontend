@@ -425,7 +425,7 @@ export function PolicyFormModal({
       filtered.push({
         id: '$exists',
         name: '$exists',
-        description: 'Tồn tại (exists)',
+        description: t('policies.operator.exists_description'),
         appliesTo: ['string', 'number', 'boolean'],
       })
     }
@@ -1751,7 +1751,9 @@ export function PolicyFormModal({
                                               }}
                                               className="flex h-9 w-full rounded-md border border-gray-300 bg-white px-3 text-sm disabled:opacity-50"
                                             >
-                                              <option value="">-- chọn bộ phận --</option>
+                                              <option value="">
+                                                {t('policies.form.department_select_placeholder')}
+                                              </option>
                                               {(deptsResp || []).map((d) => (
                                                 <option key={d.id} value={d.name}>
                                                   {d.name}
@@ -1775,7 +1777,9 @@ export function PolicyFormModal({
                                           <FormControl>
                                             <Input
                                               {...field}
-                                              placeholder="Hoặc nhập thủ công"
+                                              placeholder={t(
+                                                'policies.form.placeholder.manual_input'
+                                              )}
                                               onChange={(e) => {
                                                 const v = e.target.value
                                                 field.onChange(v)
@@ -2003,7 +2007,7 @@ export function PolicyFormModal({
                                 type="number"
                                 value={sel.value || ''}
                                 onChange={(e) => setConditionValue(cid, e.target.value)}
-                                placeholder="Số"
+                                placeholder={t('policies.form.value_placeholder.number')}
                                 className="h-9"
                               />
                             ) : (
@@ -2013,12 +2017,12 @@ export function PolicyFormModal({
                                 onChange={(e) => setConditionValue(cid, e.target.value)}
                                 placeholder={
                                   cname === 'ipAddress'
-                                    ? 'Ví dụ: 192.168.1.1, 2001:0db8::1'
-                                    : 'Chuỗi'
+                                    ? t('policies.form.value_placeholder.ip_example')
+                                    : t('policies.form.value_placeholder.string')
                                 }
                                 title={
                                   cname === 'ipAddress'
-                                    ? 'Cho phép nhiều IP, cách nhau bằng dấu phẩy. Hỗ trợ IPv4 và IPv6'
+                                    ? t('policies.form.value_help.ip')
                                     : undefined
                                 }
                                 className="h-9"

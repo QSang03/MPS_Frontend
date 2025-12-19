@@ -5,7 +5,6 @@ import { NavigationProvider } from '@/contexts/NavigationContext'
 import { Navbar } from '@/components/layout/Navbar'
 import { SocketProvider } from '@/components/providers/SocketProvider'
 import type { Session } from '@/types/auth'
-import LocaleProvider from '@/components/providers/LocaleProvider'
 
 // Render sidebar only on the client to avoid SSR/client markup mismatches
 const ModernSidebar = dynamic(
@@ -20,18 +19,16 @@ interface ClientLayoutProps {
 
 export function ClientLayout({ children, session }: ClientLayoutProps) {
   return (
-    <LocaleProvider>
-      <NavigationProvider>
-        <SocketProvider session={session}>
-          <div className="flex h-screen overflow-hidden">
-            <ModernSidebar session={session} />
-            <div className="flex flex-1 flex-col overflow-hidden">
-              <Navbar session={session} />
-              <main className="bg-muted/30 flex-1 overflow-y-auto p-4 md:p-6">{children}</main>
-            </div>
+    <NavigationProvider>
+      <SocketProvider session={session}>
+        <div className="flex h-screen overflow-hidden">
+          <ModernSidebar session={session} />
+          <div className="flex flex-1 flex-col overflow-hidden">
+            <Navbar session={session} />
+            <main className="bg-muted/30 flex-1 overflow-y-auto p-4 md:p-6">{children}</main>
           </div>
-        </SocketProvider>
-      </NavigationProvider>
-    </LocaleProvider>
+        </div>
+      </SocketProvider>
+    </NavigationProvider>
   )
 }

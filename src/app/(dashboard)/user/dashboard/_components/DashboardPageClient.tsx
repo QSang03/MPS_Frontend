@@ -48,8 +48,6 @@ import MonthPicker from '@/components/ui/month-picker'
 
 // `Skeleton` removed — not used in this module
 
-const formatNumber = (value: number) => new Intl.NumberFormat('en-US').format(value)
-
 type Overview = {
   month: string
   customerId: string
@@ -147,6 +145,12 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
   const [expandedDeviceId, setExpandedDeviceId] = useState<string | null>(null)
 
   const { t, locale } = useLocale()
+  const intlLocale = locale === 'vi' ? 'vi-VN' : 'en-US'
+
+  const formatNumber = useCallback(
+    (value: number) => new Intl.NumberFormat(intlLocale).format(value),
+    [intlLocale]
+  )
 
   // Dynamic currency formatter based on customer/base currency
   const currencyCode =
@@ -155,19 +159,19 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
   const formatCurrency = useCallback(
     (value: number) => {
       try {
-        return new Intl.NumberFormat(locale || 'vi-VN', {
+        return new Intl.NumberFormat(intlLocale, {
           style: 'currency',
           currency: currencyCode,
           currencyDisplay: 'symbol',
         }).format(value ?? 0)
       } catch {
-        return new Intl.NumberFormat(locale || 'vi-VN', {
+        return new Intl.NumberFormat(intlLocale, {
           style: 'currency',
           currency: 'USD',
         }).format(value ?? 0)
       }
     },
-    [currencyCode, locale]
+    [currencyCode, intlLocale]
   )
 
   // Get month from URL searchParams or prop or default to current month

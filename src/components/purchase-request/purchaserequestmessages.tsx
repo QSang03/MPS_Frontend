@@ -46,7 +46,7 @@ export default function PurchaseRequestMessages({ purchaseRequestId, currentUser
       setDraft('')
     },
     onError: (err: unknown) => {
-      const msg = err instanceof Error ? err.message : 'Không thể gửi tin nhắn'
+      const msg = err instanceof Error ? err.message : t('purchase_request.messages.send_error')
       toast.error(msg)
     },
   })

@@ -450,8 +450,11 @@ export function DeviceMaintenanceTab({
             <div className="flex items-center justify-between">
               <div className="text-muted-foreground flex items-center gap-2 text-sm">
                 <span>
-                  Hiển thị {(page - 1) * limit + 1} - {Math.min(page * limit, total)} / {total} kết
-                  quả
+                  {t('pagination.showing_range_results', {
+                    from: (page - 1) * limit + 1,
+                    to: Math.min(page * limit, total),
+                    total,
+                  })}
                 </span>
                 <Select
                   value={String(limit)}
@@ -482,7 +485,7 @@ export function DeviceMaintenanceTab({
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
                 <span className="text-muted-foreground text-sm">
-                  Trang {page} / {totalPages}
+                  {t('pagination.page_of', { page, totalPages })}
                 </span>
                 <Button
                   variant="outline"

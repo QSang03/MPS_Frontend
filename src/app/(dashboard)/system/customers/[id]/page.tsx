@@ -1,7 +1,7 @@
 import CustomerDetailClient from './_components/CustomerDetailClient'
 
 export const metadata = {
-  title: 'Chi tiết khách hàng',
+  title: 'Customer details',
 }
 
 export default async function CustomerDetailPage({ params }: { params: Promise<{ id: string }> }) {

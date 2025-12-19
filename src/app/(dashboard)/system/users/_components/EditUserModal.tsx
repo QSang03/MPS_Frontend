@@ -165,7 +165,7 @@ export function EditUserModal({
       try {
         form.setError('roleId', {
           type: 'manual',
-          message: 'Vai trò không hợp lệ cho khách hàng hiện tại',
+          message: t('user.role_invalid_for_customer'),
         })
       } catch {}
     } else {
@@ -173,7 +173,7 @@ export function EditUserModal({
         form.clearErrors('roleId')
       } catch {}
     }
-  }, [watchedCustomerCode, roles, allowedNonSys, form, user?.roleId])
+  }, [watchedCustomerCode, roles, allowedNonSys, form, user?.roleId, t])
 
   // Update form when user changes
   useEffect(() => {
@@ -323,14 +323,7 @@ export function EditUserModal({
         <Form {...form}>
           {blockSaveDueToRoleMismatch ? (
             <div className="border-destructive/60 bg-destructive/10 text-destructive rounded border-2 p-3 text-sm">
-              <div className="mb-1 font-medium">
-                Cảnh báo: Vai trò hiện tại không hợp lệ khi chuyển từ khách hàng{' '}
-                <strong>SYS</strong> sang khách hàng khác.
-              </div>
-              <div className="text-sm">
-                Vui lòng chọn vai trò <strong>Manager</strong> hoặc <strong>User</strong> để tiếp
-                tục.
-              </div>
+              {t('user.role_invalid_sys_to_customer_warning')}
             </div>
           ) : null}
           <form id="edit-user-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
@@ -448,10 +441,7 @@ export function EditUserModal({
 
             {/* Info card */}
             <div className="rounded-lg border-2 border-[var(--brand-200)] bg-gradient-to-r from-[var(--brand-50)] to-[var(--brand-100)] p-4">
-              <p className="text-xs text-gray-700">
-                <span className="font-bold text-[var(--brand-700)]">💡 Tip:</span> Các thay đổi sẽ
-                được lưu ngay khi bạn nhấn "Cập nhật".
-              </p>
+              <p className="text-xs text-gray-700">{t('user.update_tip')}</p>
             </div>
           </form>
         </Form>

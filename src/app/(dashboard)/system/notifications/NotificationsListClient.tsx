@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { notificationsClientService } from '@/lib/api/services/notifications-client.service'
 import type { Notification, NotificationMetadata } from '@/types/models/notification'
 import { toast } from 'sonner'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
 import { NotificationHeader } from './_components/NotificationHeader'
 import {
@@ -18,6 +19,8 @@ import { NotificationList } from './_components/NotificationList'
 export default function NotificationsListClient() {
   const router = useRouter()
   const queryClient = useQueryClient()
+  const { locale } = useLocale()
+  const intlLocale = locale === 'vi' ? 'vi-VN' : 'en-US'
 
   // State for filters and view
   const [searchQuery, setSearchQuery] = useState('')
@@ -243,7 +246,7 @@ export default function NotificationsListClient() {
                           {n.channel}
                         </td>
                         <td className="text-muted-foreground px-4 py-3 align-top text-sm">
-                          {new Date(n.createdAt).toLocaleString('vi-VN')}
+                          {new Date(n.createdAt).toLocaleString(intlLocale)}
                         </td>
                         <td className="px-4 py-3 text-right align-top">
                           <div className="flex items-center justify-end gap-2">

@@ -2,7 +2,7 @@ import DashboardPageClient from './_components/DashboardPageClient'
 import { UserPageLayout } from '@/components/user/UserPageLayout'
 
 export const metadata = {
-  title: 'Tổng quan',
+  title: 'Overview',
 }
 
 export default async function UserDashboardPage({

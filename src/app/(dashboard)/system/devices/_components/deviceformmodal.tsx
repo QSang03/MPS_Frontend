@@ -437,7 +437,7 @@ export default function DeviceFormModal({
                   variant="default"
                   size="sm"
                   className="h-8 w-8 rounded-full p-0"
-                  aria-label="Sửa"
+                  aria-label={t('button.edit')}
                 >
                   <Edit className="h-4 w-4" />
                 </Button>

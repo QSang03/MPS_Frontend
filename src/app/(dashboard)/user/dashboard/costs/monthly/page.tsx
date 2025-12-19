@@ -61,7 +61,8 @@ type TimeRangeMode = 'period' | 'range' | 'year'
 type TimeFilter = { period?: string; from?: string; to?: string; year?: string }
 
 export default function MonthlyCostsPage() {
-  const { t } = useLocale()
+  const { t, locale } = useLocale()
+  const numberLocale = locale === 'vi' ? 'vi-VN' : 'en-US'
   const { can } = useActionPermission('user-costs')
   const canLoadCostData = can('load-cost-data')
   const canViewDeviceCostTrend = can('view-device-cost-trend')
@@ -111,7 +112,7 @@ export default function MonthlyCostsPage() {
       return formatCurrencyWithSymbol(n, resolvedCurrency)
     }
     // Fallback to VND if no currency provided
-    return new Intl.NumberFormat('vi-VN', {
+    return new Intl.NumberFormat(numberLocale, {
       style: 'currency',
       currency: 'VND',
       maximumFractionDigits: 0,
@@ -888,9 +889,7 @@ export default function MonthlyCostsPage() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="all">
-                              ---{' '}
-                              {t('page.user.costs.monthly.trends.all_devices') || 'Tất cả thiết bị'}{' '}
-                              ---
+                              --- {t('page.user.costs.monthly.trends.all_devices')} ---
                             </SelectItem>
                             {costData?.devices?.map((device) => (
                               <SelectItem key={device.deviceId} value={device.deviceId}>

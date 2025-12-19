@@ -54,16 +54,16 @@ export default function SettingsPanel() {
   return (
     <div>
       <DialogHeader>
-        <DialogTitle>Thiết lập giao diện</DialogTitle>
-        <DialogDescription>
-          Chọn theme màu sắc và font hiển thị cho giao diện của bạn.
-        </DialogDescription>
+        <DialogTitle>{t('settings.panel.title')}</DialogTitle>
+        <DialogDescription>{t('settings.panel.description')}</DialogDescription>
       </DialogHeader>
 
       <div className="mt-4 space-y-5">
         {/* Theme selection */}
         <div>
-          <p className="mb-3 text-sm font-medium text-gray-700">Chọn giao diện</p>
+          <p className="mb-3 text-sm font-medium text-gray-700">
+            {t('settings.panel.choose_theme')}
+          </p>
           <div className="grid grid-cols-3 gap-3">
             {THEME_PRESETS.map((theme) => (
               <button
@@ -105,7 +105,7 @@ export default function SettingsPanel() {
 
         {/* Font selection */}
         <div>
-          <p className="mb-2 text-sm font-medium text-gray-700">Font chữ</p>
+          <p className="mb-2 text-sm font-medium text-gray-700">{t('settings.panel.font')}</p>
           <div className="flex items-center gap-4">
             <label className="inline-flex cursor-pointer items-center gap-2">
               <input
@@ -144,10 +144,10 @@ export default function SettingsPanel() {
       <DialogFooter className="mt-6">
         <div className="flex w-full justify-end gap-2">
           <Button variant="secondary" onClick={handleReset}>
-            Khôi phục
+            {t('common.reset')}
           </Button>
           <DialogClose asChild>
-            <Button onClick={handleApply}>Áp dụng</Button>
+            <Button onClick={handleApply}>{t('button.apply')}</Button>
           </DialogClose>
         </div>
       </DialogFooter>

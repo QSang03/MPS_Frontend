@@ -14,10 +14,10 @@ import {
   TrendingUp,
   DollarSign,
   Tag,
+  Package,
   CheckCircle2,
   Calendar,
   CalendarCheck,
-  Package,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { TableWrapper } from '@/components/system/TableWrapper'
@@ -317,7 +317,8 @@ function PurchaseRequestsTableContent({
   onStatsChange,
   renderColumnVisibilityMenu,
 }: PurchaseRequestsTableContentProps) {
-  const { t } = useLocale()
+  const { t, locale } = useLocale()
+  const intlLocale = locale === 'vi' ? 'vi-VN' : 'en-US'
   const queryClient = useQueryClient()
   const [sortVersion, setSortVersion] = useState(0)
   const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null)
@@ -700,7 +701,7 @@ function PurchaseRequestsTableContent({
         ),
         cell: ({ row }) => (
           <div className="text-sm">
-            <p>{new Date(row.original.createdAt).toLocaleDateString('vi-VN')}</p>
+            <p>{new Date(row.original.createdAt).toLocaleDateString(intlLocale)}</p>
             <p className="text-muted-foreground text-xs">
               {formatRelativeTime(row.original.createdAt)}
             </p>
@@ -716,6 +717,7 @@ function PurchaseRequestsTableContent({
       pagination.pageSize,
       statusOptions,
       t,
+      intlLocale,
     ]
   )
 

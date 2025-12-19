@@ -152,17 +152,12 @@ function SearchSelect({
 
   useEffect(() => {
     if (!open) return
+    const delay = query === '' ? 0 : 300
     const handle = setTimeout(() => {
       void load(query.trim())
-    }, 300)
+    }, delay)
     return () => clearTimeout(handle)
   }, [open, query, load])
-
-  useEffect(() => {
-    if (open) {
-      void load('')
-    }
-  }, [open, load])
 
   const displayLabel =
     value === 'all' && allowAll

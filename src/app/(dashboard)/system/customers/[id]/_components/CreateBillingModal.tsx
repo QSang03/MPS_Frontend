@@ -93,7 +93,7 @@ export function CreateBillingModal({
   const onSubmit = async (data: CreateInvoiceFormData) => {
     const valid = await form.trigger()
     if (!valid) {
-      toast.error('⚠️ Vui lòng kiểm tra lại thông tin', {
+      toast.error(t('billing.validation.check_info'), {
         description: t('billing.validation.incomplete_fields'),
       })
       return

@@ -24,6 +24,7 @@ interface Props {
  * Reusable conversation component for a service request
  */
 export default function ServiceRequestMessages({ serviceRequestId, currentUserId }: Props) {
+  const { t } = useLocale()
   const queryClient = useQueryClient()
   const [draft, setDraft] = useState('')
   const feedRef = useRef<HTMLDivElement | null>(null)
@@ -44,7 +45,7 @@ export default function ServiceRequestMessages({ serviceRequestId, currentUserId
       setDraft('')
     },
     onError: (err: unknown) => {
-      const msg = err instanceof Error ? err.message : 'Không thể gửi tin nhắn'
+      const msg = err instanceof Error ? err.message : t('service_request.messages.send_error')
       toast.error(msg)
     },
   })
@@ -77,8 +78,6 @@ export default function ServiceRequestMessages({ serviceRequestId, currentUserId
     const tb = b?.createdAt ? new Date(b.createdAt).getTime() : 0
     return ta - tb
   })
-
-  const { t } = useLocale()
 
   return (
     <div className="relative flex h-full flex-col bg-slate-50/30 dark:bg-slate-900/10">

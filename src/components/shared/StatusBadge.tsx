@@ -99,24 +99,38 @@ export function StatusBadge(props: StatusBadgeProps) {
   // Legacy / generic status mode for existing usages
   const hasGenericStatus = 'status' in props && props.status !== undefined
   const status = hasGenericStatus ? props.status : undefined
-  const normalizedStatus = status?.toString().toLowerCase() ?? 'unknown'
+  const statusString = status?.toString() ?? ''
+  const normalizedStatus = statusString.toLowerCase() || 'unknown'
   const getStatusConfig = (s: string) => {
     if (s === 'active' || s === 'hoạt động' || s === 'true') {
-      return { variant: 'success', icon: CheckCircle2, defaultLabel: 'Hoạt động' }
+      return { variant: 'success', icon: CheckCircle2, defaultLabel: t('status.active') }
     }
     if (s === 'inactive' || s === 'không hoạt động' || s === 'false') {
-      return { variant: 'neutral', icon: XCircle, defaultLabel: 'Không hoạt động' }
+      return { variant: 'neutral', icon: XCircle, defaultLabel: t('status.inactive') }
     }
     if (s === 'installed' || s === 'đã lắp') {
-      return { variant: 'success', icon: CheckCircle2, defaultLabel: 'Đã lắp' }
+      return {
+        variant: 'success',
+        icon: CheckCircle2,
+        defaultLabel: t('user_consumables.filter.installed'),
+      }
     }
     if (s === 'not_installed' || s === 'chưa lắp') {
-      return { variant: 'neutral', icon: BoxIcon, defaultLabel: 'Chưa lắp' }
+      return {
+        variant: 'neutral',
+        icon: BoxIcon,
+        defaultLabel: t('user_consumables.filter.not_installed'),
+      }
     }
     if (s === 'pending' || s === 'chờ duyệt') {
-      return { variant: 'warning', icon: Clock, defaultLabel: 'Chờ duyệt' }
+      return { variant: 'warning', icon: Clock, defaultLabel: t('filters.status_pending') }
     }
-    return { variant: 'neutral', icon: Circle, defaultLabel: s }
+    const isNonAscii = /[^\u0000-\u007f]/.test(statusString)
+    return {
+      variant: 'neutral',
+      icon: Circle,
+      defaultLabel: isNonAscii ? t('common.unknown') : statusString || t('common.unknown'),
+    }
   }
   const config = getStatusConfig(normalizedStatus)
   const displayLabel = label || config.defaultLabel
