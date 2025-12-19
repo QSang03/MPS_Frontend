@@ -32,6 +32,9 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: 'MPS - CHÍNH NHÂN TECHNOLOGY - Managed Print Services',
   description: 'Comprehensive print management system',
+  icons: {
+    icon: '/print.svg',
+  },
 }
 
 export default function RootLayout({

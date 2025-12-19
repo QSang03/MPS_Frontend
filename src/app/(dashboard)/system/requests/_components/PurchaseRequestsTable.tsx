@@ -96,7 +96,7 @@ const buildTimelineSteps = (
       {
         label: t('requests.purchase.timeline.created'),
         time: request.createdAt,
-        by: request.requestedBy,
+        by: request.createdByName ?? request.createdBy ?? request.requestedBy,
       },
       {
         label: t('requests.purchase.timeline.approved'),
@@ -106,22 +106,22 @@ const buildTimelineSteps = (
       {
         label: t('requests.purchase.timeline.ordered'),
         time: request.orderedAt,
-        by: request.orderedBy,
+        by: request.orderedByName ?? request.orderedBy,
       },
       {
         label: t('requests.purchase.timeline.received'),
         time: request.receivedAt,
-        by: request.receivedBy,
+        by: request.receivedByName ?? request.receivedBy,
       },
       {
         label: t('requests.purchase.timeline.cancelled'),
         time: request.cancelledAt,
-        by: request.cancelledBy,
+        by: request.cancelledByName ?? request.cancelledBy,
       },
       {
         label: t('requests.purchase.timeline.customer_cancelled'),
         time: request.customerCancelledAt,
-        by: request.customerCancelledBy,
+        by: request.customerCancelledByName ?? request.customerCancelledBy,
       },
     ] as Array<Omit<TimelineStep, 'time'> & { time?: string }>
   ).filter((step): step is TimelineStep => Boolean(step.time))
@@ -421,7 +421,7 @@ function PurchaseRequestsTableContent({
         ),
         cell: ({ row }) => (
           <div className="max-w-[260px]">
-            <p className="font-semibold">{row.original.title ?? row.original.itemName}</p>
+            <p className="truncate font-semibold">{row.original.title ?? row.original.itemName}</p>
             {row.original.description && (
               <p className="text-muted-foreground line-clamp-2 text-xs">
                 {row.original.description}

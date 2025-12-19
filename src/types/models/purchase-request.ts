@@ -21,21 +21,27 @@ export interface PurchaseRequest {
   priority: Priority
   status: PurchaseRequestStatus
   requestedBy: string
+  createdBy?: string | null
+  createdByName?: string | null
   assignedTo?: string
-  assignedToName?: string
+  assignedToName?: string | null
   approvedBy?: string
-  approvedByName?: string
+  approvedByName?: string | null
   approvedAt?: string
   orderedBy?: string
+  orderedByName?: string | null
   orderedAt?: string
   inTransitBy?: string
   inTransitAt?: string
   receivedBy?: string
+  receivedByName?: string | null
   receivedAt?: string
   cancelledBy?: string
+  cancelledByName?: string | null
   cancelledAt?: string
   customerCancelledReason?: string
   customerCancelledBy?: string
+  customerCancelledByName?: string | null
   customerCancelledAt?: string
   notes?: string
   createdAt: string

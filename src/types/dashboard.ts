@@ -125,7 +125,7 @@ export interface MonthlySeries {
 export interface AdminOverviewData {
   month: string // Format: YYYY-MM
   kpis: AdminOverviewKPIs
-  costBreakdown: CostBreakdown
+  costBreakdown?: CostBreakdown
   topCustomers: TopCustomer[]
   monthlySeries?: MonthlySeries
   customer?: {

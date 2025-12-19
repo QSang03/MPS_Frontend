@@ -109,57 +109,6 @@ export default function CustomerAdminDashboard() {
     }
   }
 
-  // Export handlers
-  const handleExportCostBreakdown = async () => {
-    if (!overviewData?.costBreakdown || !canExportMonthlyPdf) return
-    try {
-      const resp = await internalApiClient.get('/api/reports/monthly/export/pdf', {
-        params: {
-          month: selectedMonth,
-        },
-      })
-
-      if (resp?.data?.success && resp.data.data?.url) {
-        const url = getPublicUrl(resp.data.data.url)
-        if (url) window.open(url, '_blank')
-        toast.success(t('export.pdf_created'))
-        return
-      }
-    } catch (err) {
-      console.warn('PDF export failed, falling back to client Excel', err)
-    }
-
-    // Fallback: client-side Excel export
-    const data = [
-      {
-        Category: t('export.categories.rental'),
-        Percentage: overviewData.costBreakdown.rentalPercent,
-      },
-      {
-        Category: t('export.categories.repair'),
-        Percentage: overviewData.costBreakdown.repairPercent,
-      },
-      {
-        Category: t('export.categories.page_bw'),
-        Percentage: overviewData.costBreakdown.pageBWPercent,
-      },
-      {
-        Category: t('export.categories.page_color'),
-        Percentage: overviewData.costBreakdown.pageColorPercent,
-      },
-    ]
-    await exportToExcel(
-      data,
-      [
-        { header: t('export.headers.category'), key: 'Category', width: 30 },
-        { header: t('export.headers.percentage'), key: 'Percentage', width: 15 },
-      ],
-      `cost-breakdown-${selectedMonth}`,
-      t('export.title.cost_breakdown')
-    )
-    toast.success(t('export.cost_breakdown_downloaded'))
-  }
-
   const handleExportMonthlySeries = async () => {
     if (!overviewData?.monthlySeries?.points) return
 
@@ -340,14 +289,7 @@ export default function CustomerAdminDashboard() {
 
       {/* Row 1: Cost Breakdown + Alerts Summary */}
       <div className="grid gap-6 lg:grid-cols-2">
-        <CostBreakdownChart
-          costBreakdown={overviewData?.costBreakdown}
-          isLoading={isLoading}
-          onViewDetails={() => router.push('/system/reports')}
-          onExport={handleExportCostBreakdown}
-          canExport={canExportMonthlyPdf}
-          baseCurrency={displayCurrency}
-        />
+        <CostBreakdownChart costBreakdown={overviewData?.costBreakdown} isLoading={isLoading} />
         <AlertsSummary
           kpis={overviewData?.kpis}
           isLoading={isLoading}

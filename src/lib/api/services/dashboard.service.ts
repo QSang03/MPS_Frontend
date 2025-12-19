@@ -75,8 +75,25 @@ class DashboardService {
           ? { ...raw.monthlySeries, points: raw.monthlySeries.points ?? [] }
           : { points: [] }
 
+      // Calculate costBreakdown from monthlySeries for the current month
+      const currentMonthData = normalizedMonthlySeries.points?.find(
+        (point) => point.month === raw.month
+      )
+
+      let costBreakdown: AdminOverviewData['costBreakdown'] | undefined
+      if (currentMonthData && currentMonthData.totalRevenue > 0) {
+        const totalRevenue = currentMonthData.totalRevenue
+        costBreakdown = {
+          rentalPercent: (currentMonthData.revenueRental / totalRevenue) * 100,
+          repairPercent: (currentMonthData.revenueRepair / totalRevenue) * 100,
+          pageBWPercent: (currentMonthData.revenuePageBW / totalRevenue) * 100,
+          pageColorPercent: (currentMonthData.revenuePageColor / totalRevenue) * 100,
+        }
+      }
+
       return {
         ...raw,
+        costBreakdown,
         monthlySeries: normalizedMonthlySeries,
         alerts: normalizeAlerts(raw.alerts),
       }

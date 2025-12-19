@@ -586,7 +586,6 @@ export const USER_NAVIGATION_PAYLOAD: NavItemPayload[] = [
             // ServiceRequestFormModal dependencies
             { resource: 'devices', action: 'read' },
             { resource: 'slas', action: 'read' },
-            { resource: 'users', action: 'read' },
           ],
         },
       },
@@ -603,7 +602,6 @@ export const USER_NAVIGATION_PAYLOAD: NavItemPayload[] = [
             // ServiceRequestFormModal dependencies
             { resource: 'devices', action: 'read' },
             { resource: 'device-models.compatible-consumables', action: 'read' },
-            { resource: 'users', action: 'read' },
           ],
         },
       },
