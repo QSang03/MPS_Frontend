@@ -1,8 +1,8 @@
 'use client'
 
-import { Suspense, useEffect, useMemo, useState, useTransition } from 'react'
+import { Suspense, useCallback, useEffect, useMemo, useState, useTransition } from 'react'
 import type { ReactNode } from 'react'
-import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import type { ColumnDef } from '@tanstack/react-table'
 import {
   ListOrdered,
@@ -15,6 +15,8 @@ import {
   CheckCircle2,
   Calendar,
   Package,
+  Eye,
+  Settings,
 } from 'lucide-react'
 import { TableWrapper } from '@/components/system/TableWrapper'
 import { TableSkeleton } from '@/components/system/TableSkeleton'
@@ -318,8 +320,16 @@ function UserPurchaseRequestsTableContent({
   renderColumnVisibilityMenu,
 }: UserPurchaseRequestsTableContentProps) {
   const { t } = useLocale()
+  const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [sortVersion, setSortVersion] = useState(0)
+
+  const handleViewDetail = useCallback(
+    (id: string) => {
+      router.push(`/user/purchase-requests/${id}`)
+    },
+    [router]
+  )
 
   const queryParams = useMemo(
     () => ({
@@ -375,12 +385,12 @@ function UserPurchaseRequestsTableContent({
         ),
         cell: ({ row }) => (
           <ActionGuard pageId="user-my-requests" actionId="view-purchase-requests">
-            <Link
-              href={`/user/my-requests/${row.original.id}`}
+            <button
+              onClick={() => handleViewDetail(row.original.id)}
               className="text-primary font-mono text-sm font-semibold hover:underline"
             >
               {row.original.requestNumber ?? `#${row.original.id.slice(0, 8)}`}
-            </Link>
+            </button>
           </ActionGuard>
         ),
       },
@@ -596,8 +606,30 @@ function UserPurchaseRequestsTableContent({
           </div>
         ),
       },
+      {
+        id: 'actions',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <Settings className="h-4 w-4 text-gray-600" />
+            {t('requests.service.table.actions')}
+          </div>
+        ),
+        cell: ({ row }) => (
+          <ActionGuard pageId="user-my-requests" actionId="view-purchase-requests">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => handleViewDetail(row.original.id)}
+              className="transition-all"
+            >
+              <Eye className="mr-2 h-4 w-4" />
+              {t('requests.service.table.detail')}
+            </Button>
+          </ActionGuard>
+        ),
+      },
     ],
-    [pagination.pageIndex, pagination.pageSize, t]
+    [pagination.pageIndex, pagination.pageSize, t, handleViewDetail]
   )
 
   return (

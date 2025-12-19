@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
-import { formatRelativeTime } from '@/lib/utils/formatters'
+import { formatDateTime } from '@/lib/utils/formatters'
 import { purchaseRequestsClientService } from '@/lib/api/services/purchase-requests-client.service'
 import type { PurchaseRequestMessage } from '@/types/models/purchase-request'
 import { toast } from 'sonner'
@@ -18,12 +18,20 @@ interface Props {
   purchaseRequestId: string
   /** Optional id of current user for distinguishing own messages */
   currentUserId?: string | null
+  /** Optional permission context for showing the input area */
+  pageId?: string
+  actionId?: string
 }
 
 /**
  * Reusable conversation component for a purchase request
  */
-export default function PurchaseRequestMessages({ purchaseRequestId, currentUserId }: Props) {
+export default function PurchaseRequestMessages({
+  purchaseRequestId,
+  currentUserId,
+  pageId,
+  actionId,
+}: Props) {
   const { t } = useLocale()
   const queryClient = useQueryClient()
   const [draft, setDraft] = useState('')
@@ -125,7 +133,7 @@ export default function PurchaseRequestMessages({ purchaseRequestId, currentUser
                       {isMe ? t('common.you') : m.authorName}
                     </span>
                     <span className="text-muted-foreground text-[10px]">
-                      {formatRelativeTime(m.createdAt)}
+                      {formatDateTime(m.createdAt)}
                     </span>
                   </div>
 
@@ -153,38 +161,73 @@ export default function PurchaseRequestMessages({ purchaseRequestId, currentUser
       </div>
 
       {/* Input Area */}
-      <ActionGuard pageId="customer-requests" actionId="send-purchase-message">
-        <div className="bg-background border-t p-3">
-          <div className="relative flex items-end gap-2">
-            <Textarea
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              onKeyDown={onKeyDown}
-              placeholder={t('purchase_request.messages.placeholder')}
-              className="bg-muted/30 max-h-[120px] min-h-[44px] resize-none py-3 pr-12 focus-visible:ring-1 focus-visible:ring-offset-0"
-              rows={1}
-            />
-            <Button
-              size="icon"
-              onClick={onSend}
-              disabled={createMessage.isPending || draft.trim().length === 0}
-              className={cn(
-                'absolute right-1 bottom-1 h-9 w-9 transition-all',
-                draft.trim().length > 0
-                  ? 'bg-[var(--btn-primary)] hover:bg-[var(--btn-primary-hover)]'
-                  : 'bg-slate-200 text-slate-400 hover:bg-slate-200 dark:bg-slate-800'
-              )}
-            >
-              {createMessage.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Send className="h-4 w-4" />
-              )}
-              <span className="sr-only">{t('common.send')}</span>
-            </Button>
+      {pageId && actionId ? (
+        <ActionGuard pageId={pageId} actionId={actionId}>
+          <div className="bg-background border-t p-3">
+            <div className="relative flex items-end gap-2">
+              <Textarea
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                onKeyDown={onKeyDown}
+                placeholder={t('purchase_request.messages.placeholder')}
+                className="bg-muted/30 max-h-[120px] min-h-[44px] resize-none py-3 pr-12 focus-visible:ring-1 focus-visible:ring-offset-0"
+                rows={1}
+              />
+              <Button
+                size="icon"
+                onClick={onSend}
+                disabled={createMessage.isPending || draft.trim().length === 0}
+                className={cn(
+                  'absolute right-1 bottom-1 h-9 w-9 transition-all',
+                  draft.trim().length > 0
+                    ? 'bg-[var(--btn-primary)] hover:bg-[var(--btn-primary-hover)]'
+                    : 'bg-slate-200 text-slate-400 hover:bg-slate-200 dark:bg-slate-800'
+                )}
+              >
+                {createMessage.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+                <span className="sr-only">{t('common.send')}</span>
+              </Button>
+            </div>
           </div>
-        </div>
-      </ActionGuard>
+        </ActionGuard>
+      ) : (
+        <ActionGuard pageId="customer-requests" actionId="send-purchase-message">
+          <div className="bg-background border-t p-3">
+            <div className="relative flex items-end gap-2">
+              <Textarea
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                onKeyDown={onKeyDown}
+                placeholder={t('purchase_request.messages.placeholder')}
+                className="bg-muted/30 max-h-[120px] min-h-[44px] resize-none py-3 pr-12 focus-visible:ring-1 focus-visible:ring-offset-0"
+                rows={1}
+              />
+              <Button
+                size="icon"
+                onClick={onSend}
+                disabled={createMessage.isPending || draft.trim().length === 0}
+                className={cn(
+                  'absolute right-1 bottom-1 h-9 w-9 transition-all',
+                  draft.trim().length > 0
+                    ? 'bg-[var(--btn-primary)] hover:bg-[var(--btn-primary-hover)]'
+                    : 'bg-slate-200 text-slate-400 hover:bg-slate-200 dark:bg-slate-800'
+                )}
+              >
+                {createMessage.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+                <span className="sr-only">{t('common.send')}</span>
+              </Button>
+            </div>
+          </div>
+        </ActionGuard>
+      )}
     </div>
   )
 }

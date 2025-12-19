@@ -36,6 +36,7 @@ import { ArrowLeft, Smartphone, Building2, FileText, Image as ImageIcon } from '
 import Image from 'next/image'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useLocale } from '@/components/providers/LocaleProvider'
+import { ActionGuard } from '@/components/shared/ActionGuard'
 // StatusBadge removed (not used)
 
 export default function UserServiceRequestDetail() {
@@ -251,169 +252,176 @@ export default function UserServiceRequestDetail() {
             </CardContent>
           </Card>
 
-          <Card className="flex h-[600px] flex-col border-none shadow-sm ring-1 ring-slate-200 dark:ring-slate-800">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-medium">
-                {t('user_service_request.messages.title')}
-              </CardTitle>
-              <CardDescription>{t('user_service_request.messages.description')}</CardDescription>
-            </CardHeader>
-            <CardContent className="flex-1 overflow-hidden p-0">
-              <div className="flex h-full flex-col">
-                <ServiceRequestMessages
-                  serviceRequestId={requestId}
-                  currentUserId={currentUser?.user?.id ?? null}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-none shadow-sm ring-1 ring-slate-200 dark:ring-slate-800">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-              <div className="space-y-1">
+          <ActionGuard pageId="user-my-requests" actionId="service-messages">
+            <Card className="flex h-[600px] flex-col border-none shadow-sm ring-1 ring-slate-200 dark:ring-slate-800">
+              <CardHeader className="pb-3">
                 <CardTitle className="text-base font-medium">
-                  {t('user_service_request.costs.title')}
+                  {t('user_service_request.messages.title')}
                 </CardTitle>
-                <CardDescription>{t('user_service_request.costs.description')}</CardDescription>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {costs.length === 0 ? (
-                <div className="text-muted-foreground py-8 text-center text-sm">
-                  {t('user_service_request.costs.empty')}
+                <CardDescription>{t('user_service_request.messages.description')}</CardDescription>
+              </CardHeader>
+              <CardContent className="flex-1 overflow-hidden p-0">
+                <div className="flex h-full flex-col">
+                  <ServiceRequestMessages
+                    serviceRequestId={requestId}
+                    currentUserId={currentUser?.user?.id ?? null}
+                    pageId="user-my-requests"
+                  />
                 </div>
-              ) : (
-                <div className="space-y-4">
-                  {costs.map((cost) => (
-                    <div
-                      key={cost.id}
-                      className="bg-card text-card-foreground rounded-lg border p-4 shadow-sm"
-                    >
-                      <div className="mb-4 flex items-start justify-between">
-                        <div>
-                          <div className="text-sm font-semibold">
-                            {t('user_service_request.costs.voucher', { id: cost.id.slice(0, 8) })}
+              </CardContent>
+            </Card>
+          </ActionGuard>
+
+          <ActionGuard pageId="user-my-requests" actionId="service-costs">
+            <Card className="border-none shadow-sm ring-1 ring-slate-200 dark:ring-slate-800">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                <div className="space-y-1">
+                  <CardTitle className="text-base font-medium">
+                    {t('user_service_request.costs.title')}
+                  </CardTitle>
+                  <CardDescription>{t('user_service_request.costs.description')}</CardDescription>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {costs.length === 0 ? (
+                  <div className="text-muted-foreground py-8 text-center text-sm">
+                    {t('user_service_request.costs.empty')}
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {costs.map((cost) => (
+                      <div
+                        key={cost.id}
+                        className="bg-card text-card-foreground rounded-lg border p-4 shadow-sm"
+                      >
+                        <div className="mb-4 flex items-start justify-between">
+                          <div>
+                            <div className="text-sm font-semibold">
+                              {t('user_service_request.costs.voucher', { id: cost.id.slice(0, 8) })}
+                            </div>
+                            <div className="text-muted-foreground text-xs">
+                              {formatDateTime(cost.createdAt)}
+                            </div>
                           </div>
-                          <div className="text-muted-foreground text-xs">
-                            {formatDateTime(cost.createdAt)}
+                          <div className="text-right">
+                            <div className="text-lg font-bold text-emerald-600">
+                              {cost.totalAmount?.toLocaleString() ?? 0}{' '}
+                              <span className="text-muted-foreground text-xs font-normal">
+                                {cost.currency?.symbol ||
+                                  cost.currency?.code ||
+                                  (typeof cost.currency === 'string' ? cost.currency : 'USD')}
+                              </span>
+                            </div>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <div className="text-lg font-bold text-emerald-600">
-                            {cost.totalAmount?.toLocaleString() ?? 0}{' '}
-                            <span className="text-muted-foreground text-xs font-normal">
-                              {cost.currency?.symbol ||
-                                cost.currency?.code ||
-                                (typeof cost.currency === 'string' ? cost.currency : 'USD')}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      {cost.items?.length ? (
-                        <div className="rounded-md border">
-                          <Table>
-                            <TableHeader>
-                              <TableRow className="bg-muted/50 hover:bg-transparent">
-                                <TableHead className="h-9 text-xs">
-                                  {t('user_service_request.costs.table.type')}
-                                </TableHead>
-                                <TableHead className="h-9 text-xs">
-                                  {t('user_service_request.costs.table.note')}
-                                </TableHead>
-                                <TableHead className="h-9 text-right text-xs">
-                                  {t('user_service_request.costs.table.amount')}
-                                </TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {cost.items.map((it) => (
-                                <TableRow key={it.id} className="hover:bg-transparent">
-                                  <TableCell className="py-2 text-xs font-medium">
-                                    {it.type}
-                                  </TableCell>
-                                  <TableCell className="text-muted-foreground py-2 text-xs">
-                                    {it.note ?? '—'}
-                                  </TableCell>
-                                  <TableCell className="py-2 text-right text-xs tabular-nums">
-                                    {it.amount?.toLocaleString()}{' '}
-                                    <span className="text-muted-foreground text-xs">
-                                      {typeof cost.currency === 'string'
-                                        ? cost.currency
-                                        : cost.currency?.code || 'USD'}
-                                    </span>
-                                  </TableCell>
+                        {cost.items?.length ? (
+                          <div className="rounded-md border">
+                            <Table>
+                              <TableHeader>
+                                <TableRow className="bg-muted/50 hover:bg-transparent">
+                                  <TableHead className="h-9 text-xs">
+                                    {t('user_service_request.costs.table.type')}
+                                  </TableHead>
+                                  <TableHead className="h-9 text-xs">
+                                    {t('user_service_request.costs.table.note')}
+                                  </TableHead>
+                                  <TableHead className="h-9 text-right text-xs">
+                                    {t('user_service_request.costs.table.amount')}
+                                  </TableHead>
                                 </TableRow>
-                              ))}
-                            </TableBody>
-                          </Table>
-                        </div>
-                      ) : null}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                              </TableHeader>
+                              <TableBody>
+                                {cost.items.map((it) => (
+                                  <TableRow key={it.id} className="hover:bg-transparent">
+                                    <TableCell className="py-2 text-xs font-medium">
+                                      {it.type}
+                                    </TableCell>
+                                    <TableCell className="text-muted-foreground py-2 text-xs">
+                                      {it.note ?? '—'}
+                                    </TableCell>
+                                    <TableCell className="py-2 text-right text-xs tabular-nums">
+                                      {it.amount?.toLocaleString()}{' '}
+                                      <span className="text-muted-foreground text-xs">
+                                        {typeof cost.currency === 'string'
+                                          ? cost.currency
+                                          : cost.currency?.code || 'USD'}
+                                      </span>
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </ActionGuard>
         </div>
 
         <div className="space-y-6 lg:col-span-4">
           {request.status !== ServiceRequestStatus.CLOSED && (
-            <Card className="border-l-4 border-l-blue-500 shadow-md">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-muted-foreground text-sm font-semibold tracking-wider uppercase">
-                  {t('user_service_request.management.title')}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-5">
-                <div className="space-y-2">
-                  <label className="text-sm leading-none font-medium">
-                    {t('user_service_request.management.status_label')}
-                  </label>
+            <ActionGuard pageId="user-my-requests" actionId="close-service-request">
+              <Card className="border-l-4 border-l-blue-500 shadow-md">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-muted-foreground text-sm font-semibold tracking-wider uppercase">
+                    {t('user_service_request.management.title')}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-5">
                   <div className="space-y-2">
-                    <Select
-                      value={request.status}
-                      onValueChange={(v) => setStatusUpdate(v as ServiceRequestStatus)}
-                      disabled={updateStatusMutation.isPending}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue
-                          placeholder={t('user_service_request.management.status_placeholder')}
-                        />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={ServiceRequestStatus.CLOSED}>
-                          {t('user_service_request.management.close_request')}
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Textarea
-                      placeholder={t('user_service_request.management.action_note_placeholder')}
-                      value={actionNote}
-                      onChange={(e) => setActionNote(e.target.value)}
-                      className="w-full bg-white"
-                      rows={3}
-                    />
-                    <Button
-                      className="w-full"
-                      onClick={() => updateStatusMutation.mutate()}
-                      disabled={!statusUpdate || updateStatusMutation.isPending}
-                    >
-                      {updateStatusMutation.isPending
-                        ? t('user_service_request.management.updating')
-                        : t('user_service_request.management.update')}
-                    </Button>
+                    <label className="text-sm leading-none font-medium">
+                      {t('user_service_request.management.status_label')}
+                    </label>
+                    <div className="space-y-2">
+                      <Select
+                        value={request.status}
+                        onValueChange={(v) => setStatusUpdate(v as ServiceRequestStatus)}
+                        disabled={updateStatusMutation.isPending}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue
+                            placeholder={t('user_service_request.management.status_placeholder')}
+                          />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={ServiceRequestStatus.CLOSED}>
+                            {t('user_service_request.management.close_request')}
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Textarea
+                        placeholder={t('user_service_request.management.action_note_placeholder')}
+                        value={actionNote}
+                        onChange={(e) => setActionNote(e.target.value)}
+                        className="w-full bg-white"
+                        rows={3}
+                      />
+                      <Button
+                        className="w-full"
+                        onClick={() => updateStatusMutation.mutate()}
+                        disabled={!statusUpdate || updateStatusMutation.isPending}
+                      >
+                        {updateStatusMutation.isPending
+                          ? t('user_service_request.management.updating')
+                          : t('user_service_request.management.update')}
+                      </Button>
+                    </div>
                   </div>
-                </div>
-                <div className="border-t pt-2">
-                  <div className="bg-muted rounded p-2 text-sm font-medium">
-                    {t('user_service_request.management.assigned_to')}:{' '}
-                    {request.assignedToName ??
-                      request.assignedTo ??
-                      t('user_service_request.management.not_assigned')}
+                  <div className="border-t pt-2">
+                    <div className="bg-muted rounded p-2 text-sm font-medium">
+                      {t('user_service_request.management.assigned_to')}:{' '}
+                      {request.assignedToName ??
+                        request.assignedTo ??
+                        t('user_service_request.management.not_assigned')}
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </ActionGuard>
           )}
 
           <Card>

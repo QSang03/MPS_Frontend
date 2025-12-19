@@ -431,22 +431,24 @@ export function ServiceRequestDetailClient({ id }: Props) {
           )}
 
           {/* 4. Conversation */}
-          <Card className="flex h-[600px] flex-col border-none shadow-sm ring-1 ring-slate-200 dark:ring-slate-800">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-base font-medium">
-                <Activity className="h-4 w-4 text-blue-500" />
-                {t('requests.service.detail.conversation_title')}
-              </CardTitle>
-              <CardDescription>
-                {t('requests.service.detail.conversation_description')}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex-1 overflow-hidden p-0">
-              <div className="flex h-full flex-col">
-                <ServiceRequestMessages serviceRequestId={id} />
-              </div>
-            </CardContent>
-          </Card>
+          <ActionGuard pageId="user-my-requests" actionId="service-messages">
+            <Card className="flex h-[600px] flex-col border-none shadow-sm ring-1 ring-slate-200 dark:ring-slate-800">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-base font-medium">
+                  <Activity className="h-4 w-4 text-blue-500" />
+                  {t('requests.service.detail.conversation_title')}
+                </CardTitle>
+                <CardDescription>
+                  {t('requests.service.detail.conversation_description')}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex-1 overflow-hidden p-0">
+                <div className="flex h-full flex-col">
+                  <ServiceRequestMessages serviceRequestId={id} pageId="user-my-requests" />
+                </div>
+              </CardContent>
+            </Card>
+          </ActionGuard>
         </div>
 
         {/* --- RIGHT COLUMN (Sidebar) --- */}

@@ -18,12 +18,15 @@ interface Props {
   serviceRequestId: string
   /** Optional id of current user for distinguishing own messages */
   currentUserId?: string | null
+  /** Optional permission context for showing the input area (defaults to admin page) */
+  pageId?: string
 }
 
 /**
  * Reusable conversation component for a service request
  */
-export default function ServiceRequestMessages({ serviceRequestId, currentUserId }: Props) {
+export default function ServiceRequestMessages({ serviceRequestId, currentUserId, pageId }: Props) {
+  const sendPermissionPageId = pageId ?? 'customer-requests'
   const { t } = useLocale()
   const queryClient = useQueryClient()
   const [draft, setDraft] = useState('')
@@ -156,7 +159,7 @@ export default function ServiceRequestMessages({ serviceRequestId, currentUserId
       </div>
 
       {/* Input Area */}
-      <ActionGuard pageId="customer-requests" actionId="send-service-message">
+      <ActionGuard pageId={sendPermissionPageId} actionId="send-service-message">
         <div className="bg-background border-t p-3">
           <div className="relative flex items-end gap-2">
             <Textarea

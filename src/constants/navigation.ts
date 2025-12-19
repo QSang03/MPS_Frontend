@@ -552,6 +552,61 @@ export const USER_NAVIGATION_PAYLOAD: NavItemPayload[] = [
         },
       },
       {
+        id: 'service-messages',
+        label: 'Xem tin nhắn service request',
+        labelEn: 'View service request messages',
+        labelVi: 'Xem tin nhắn service request',
+        icon: 'MessageSquare',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'service-requests.messages', action: 'read' }],
+        },
+      },
+      {
+        id: 'purchase-messages',
+        label: 'Xem tin nhắn purchase request',
+        labelEn: 'View purchase request messages',
+        labelVi: 'Xem tin nhắn purchase request',
+        icon: 'MessageSquare',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'purchase-requests.messages', action: 'read' }],
+        },
+      },
+      {
+        id: 'send-service-message',
+        label: 'Gửi tin nhắn service request',
+        labelEn: 'Send service request message',
+        labelVi: 'Gửi tin nhắn service request',
+        icon: 'MessageSquare',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'service-requests.messages', action: 'create' }],
+        },
+      },
+      {
+        id: 'send-purchase-message',
+        label: 'Gửi tin nhắn purchase request',
+        labelEn: 'Send purchase request message',
+        labelVi: 'Gửi tin nhắn purchase request',
+        icon: 'MessageSquare',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'purchase-requests.messages', action: 'create' }],
+        },
+      },
+      {
+        id: 'service-costs',
+        label: 'Xem chi phí service request',
+        labelEn: 'View service request costs',
+        labelVi: 'Xem chi phí service request',
+        icon: 'DollarSign',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'service-requests.costs', action: 'read' }],
+        },
+      },
+      {
         id: 'view-sla',
         label: 'Xem SLA',
         labelEn: 'View SLAs',
@@ -603,6 +658,17 @@ export const USER_NAVIGATION_PAYLOAD: NavItemPayload[] = [
             { resource: 'devices', action: 'read' },
             { resource: 'device-models.compatible-consumables', action: 'read' },
           ],
+        },
+      },
+      {
+        id: 'update-purchase-status',
+        label: 'Cập nhật trạng thái yêu cầu mua hàng',
+        labelEn: 'Update purchase request status',
+        labelVi: 'Cập nhật trạng thái yêu cầu mua hàng',
+        icon: 'RefreshCw',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'purchase-requests.status', action: 'update' }],
         },
       },
       {
