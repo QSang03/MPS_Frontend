@@ -66,10 +66,7 @@ export function DepartmentsTable({
   const { canUpdate, canDelete } = useActionPermission('departments')
   const { t, locale } = useLocale()
   const queryClient = useQueryClient()
-  void locale
-
   const intlLocale = locale === 'vi' ? 'vi-VN' : 'en-US'
-  void intlLocale
 
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
@@ -301,6 +298,7 @@ export function DepartmentsTable({
           searchValue={search}
           sortVersion={sortVersion}
           t={t}
+          intlLocale={intlLocale}
         />
       </Suspense>
 
@@ -332,6 +330,7 @@ interface DepartmentsTableContentProps {
   searchValue: string
   sortVersion: number
   t: (key: string, options?: Record<string, string | number>) => string
+  intlLocale: string
 }
 
 function DepartmentsTableContent({
@@ -352,6 +351,7 @@ function DepartmentsTableContent({
   searchValue,
   sortVersion,
   t,
+  intlLocale,
 }: DepartmentsTableContentProps) {
   const [isPending, startTransition] = useTransition()
   const queryParams = useMemo(
@@ -533,7 +533,7 @@ function DepartmentsTableContent({
         ),
       },
     ]
-  }, [pagination, canUpdate, canDelete, onEditDepartment, onDeleteDepartment, t])
+  }, [pagination, canUpdate, canDelete, onEditDepartment, onDeleteDepartment, t, intlLocale])
 
   return (
     <TableWrapper<Department>
