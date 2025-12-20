@@ -397,14 +397,9 @@ export default function DevicesPageClient() {
 
       const responseData = axiosError?.response?.data
 
-      console.log('[DEBUG] Response data:', responseData)
-      console.log('[DEBUG] Response data error:', responseData?.error)
-      console.log('[DEBUG] Response data details:', responseData?.details)
-
       // Check for SLA-related errors and show localized message
       // First check the specific reason from details
       if (responseData?.details?.reason === 'No active SLA found for customer') {
-        console.log('[DEBUG] SLA error detected by reason')
         toast.error(t('devices.assign_customer.sla_required'))
         return
       }
@@ -415,15 +410,12 @@ export default function DevicesPageClient() {
         typeof responseData.error === 'string' &&
         responseData.error.includes('active SLA')
       ) {
-        console.log('[DEBUG] SLA error detected by error message')
         toast.error(t('devices.assign_customer.sla_required'))
         return
       }
 
       // Fallback to generic error handling
-      console.log('[DEBUG] Using fallback error handling')
       const message = responseData?.error || responseData?.message || axiosError?.message
-      console.log('[DEBUG] Extracted message:', message)
 
       if (message && typeof message === 'string') {
         toast.error(message)

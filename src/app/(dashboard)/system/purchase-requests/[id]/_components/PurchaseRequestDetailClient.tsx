@@ -624,6 +624,7 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
                           current={detail.status}
                           hasPermission={true}
                           onSelect={(s) => setPendingStatusChange(s)}
+                          showAssignmentWarning={false}
                         />
                       </div>
                     </div>
