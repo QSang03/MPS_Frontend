@@ -631,6 +631,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                           assignedTo={data.assignedTo ?? selectedAssignee}
                           hasPermission={true}
                           onSelect={(s) => setPendingStatusChange(s)}
+                          showAssignmentWarning={true}
                         />
                       </div>
                     </div>

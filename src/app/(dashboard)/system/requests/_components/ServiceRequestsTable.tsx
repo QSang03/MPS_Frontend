@@ -3,7 +3,7 @@
 import { Suspense, useCallback, useEffect, useMemo, useState, useTransition } from 'react'
 import type { ReactNode } from 'react'
 import Link from 'next/link'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query'
 import type { ColumnDef } from '@tanstack/react-table'
 import { toast } from 'sonner'
 import {
@@ -54,6 +54,7 @@ import { useServiceRequestsQuery } from '@/lib/hooks/queries/useServiceRequestsQ
 import { TableSkeleton } from '@/components/system/TableSkeleton'
 import { cn } from '@/lib/utils'
 import { useLocale } from '@/components/providers/LocaleProvider'
+import { customersClientService } from '@/lib/api/services/customers-client.service'
 import { getAllowedTransitions } from '@/lib/utils/status-flow'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 
@@ -118,6 +119,13 @@ export function ServiceRequestsTable() {
   const statusOptions = getStatusOptions(t)
   const priorityOptions = getPriorityOptions(t)
 
+  // Fetch selected customer details to display name in active filters
+  const { data: selectedCustomer } = useQuery<import('@/types/models/customer').Customer | null>({
+    queryKey: ['customers', customerFilter],
+    queryFn: () => customersClientService.getById(customerFilter),
+    enabled: !!customerFilter,
+  })
+
   const handleResetFilters = () => {
     setSearch('')
     setStatusFilter('all')
@@ -154,8 +162,9 @@ export function ServiceRequestsTable() {
     })
   }
   if (customerFilter) {
+    const display = selectedCustomer?.name ?? customerFilter
     activeFilters.push({
-      label: `${t('customer')}: ${customerFilter}`,
+      label: `${t('customer')}: ${display}`,
       value: customerFilter,
       onRemove: () => setCustomerFilter(''),
     })
