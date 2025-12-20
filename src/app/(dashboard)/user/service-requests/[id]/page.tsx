@@ -50,6 +50,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { useLocale } from '@/components/providers/LocaleProvider'
 import { ActionGuard } from '@/components/shared/ActionGuard'
 import { ServiceRequestRatingDisplay } from '@/components/service-request/ServiceRequestRatingDisplay'
+import { ServiceRequestRatingModal } from '@/components/service-request/ServiceRequestRatingModal'
 // StatusBadge removed (not used)
 
 type TimelineEvent = {
@@ -223,6 +224,13 @@ export default function UserServiceRequestDetail() {
             <span className="flex items-center gap-1">
               {request.createdByName ?? request.createdBy ?? t('user_service_request.guest')}
             </span>
+            <span>•</span>
+            <span className="flex items-center gap-1">
+              {t('user_service_request.management.assigned_to')}:{' '}
+              {request.assignedToName ??
+                request.assignedTo ??
+                t('user_service_request.management.not_assigned')}
+            </span>
           </div>
         </div>
         <Dialog
@@ -341,6 +349,32 @@ export default function UserServiceRequestDetail() {
                 />
               </CardContent>
             </Card>
+          )}
+
+          {/* Rating Button */}
+          {!request.satisfactionScore && request.status === ServiceRequestStatus.CLOSED && (
+            <ActionGuard pageId="user-my-requests" actionId="rate-service-request">
+              <ServiceRequestRatingModal
+                serviceRequest={request}
+                onRated={() => {
+                  queryClient.invalidateQueries({ queryKey: ['service-request', requestId] })
+                }}
+                trigger={
+                  <Card className="overflow-hidden border-none shadow-sm ring-1 ring-slate-200 dark:ring-slate-800">
+                    <CardContent className="pt-6">
+                      <div className="space-y-3 text-center">
+                        <div className="text-muted-foreground text-sm">
+                          {t('requests.service.rating.prompt')}
+                        </div>
+                        <Button className="w-full" size="sm">
+                          {t('requests.service.rating.button')}
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                }
+              />
+            </ActionGuard>
           )}
 
           <ActionGuard pageId="user-my-requests" actionId="service-messages">

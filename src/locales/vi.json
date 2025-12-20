@@ -1980,6 +1980,8 @@
   "requests.service.rating.error": "Không thể gửi đánh giá. Vui lòng thử lại.",
   "requests.service.rating.please_select_rating": "Vui lòng chọn điểm đánh giá",
   "requests.service.rating.select_rating": "Chọn số sao để đánh giá",
+  "requests.service.rating.prompt": "Bạn có hài lòng với dịch vụ không?",
+  "requests.service.rating.button": "Đánh giá dịch vụ",
   "requests.service.rating.score_1": "Rất không hài lòng",
   "requests.service.rating.score_2": "Không hài lòng",
   "requests.service.rating.score_3": "Bình thường",

@@ -584,6 +584,25 @@ function UserRequestsTableContent({
         ),
       },
       {
+        accessorKey: 'assignedTo',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <Info className="h-4 w-4 text-gray-600" />
+            {t('requests.service.table.assigned_to')}
+          </div>
+        ),
+        cell: ({ row }) => (
+          <div className="text-sm">
+            <div className="font-medium">
+              {row.original.assignedToName ?? row.original.assignedTo ?? '—'}
+            </div>
+            <div className="text-muted-foreground text-xs">
+              {row.original.assignedTo ? row.original.assignedTo : ''}
+            </div>
+          </div>
+        ),
+      },
+      {
         accessorKey: 'respondedAt',
         header: () => (
           <div className="flex items-center gap-2">

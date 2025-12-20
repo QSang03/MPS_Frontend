@@ -2063,6 +2063,8 @@
   "requests.service.rating.error": "Failed to submit rating. Please try again.",
   "requests.service.rating.please_select_rating": "Please select a rating",
   "requests.service.rating.select_rating": "Select stars to rate",
+  "requests.service.rating.prompt": "Are you satisfied with our service?",
+  "requests.service.rating.button": "Rate Service",
   "requests.service.rating.score_1": "Very Dissatisfied",
   "requests.service.rating.score_2": "Dissatisfied",
   "requests.service.rating.score_3": "Neutral",
