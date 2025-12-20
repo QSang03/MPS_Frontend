@@ -59,15 +59,15 @@ export function NotificationItem({ notification, onMarkAsRead }: NotificationIte
     const isDefaultCustomer = getIsDefaultCustomer()
     if (!id) return isDefaultCustomer ? '/system/notifications' : '/user/my-requests'
     if (type === 'SERVICE')
-      return isDefaultCustomer ? `/system/service-requests/${id}` : `/user/my-requests/${id}`
+      return isDefaultCustomer ? `/system/service-requests/${id}` : `/user/service-requests/${id}`
     if (type === 'PURCHASE')
-      return isDefaultCustomer ? `/system/purchase-requests/${id}` : `/user/my-requests/${id}`
+      return isDefaultCustomer ? `/system/purchase-requests/${id}` : `/user/purchase-requests/${id}`
     const lower =
       (notification.title ?? '').toLowerCase() + ' ' + (notification.message ?? '').toLowerCase()
     if (lower.includes('service'))
-      return isDefaultCustomer ? `/system/service-requests/${id}` : `/user/my-requests/${id}`
+      return isDefaultCustomer ? `/system/service-requests/${id}` : `/user/service-requests/${id}`
     if (lower.includes('purchase'))
-      return isDefaultCustomer ? `/system/purchase-requests/${id}` : `/user/my-requests/${id}`
+      return isDefaultCustomer ? `/system/purchase-requests/${id}` : `/user/purchase-requests/${id}`
     return isDefaultCustomer ? '/system/notifications' : '/user/my-requests'
   }
 
