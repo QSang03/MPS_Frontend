@@ -1036,6 +1036,8 @@
   "timeline.approved": "Đã duyệt",
   "timeline.opened": "Mới mở",
   "timeline.by": "Bởi",
+  "timeline.empty": "Chưa có hoạt động nào",
+  "timeline.reason": "Lý do",
   "device.status.active": "Hoạt động",
   "device.status.inactive": "Ngừng hoạt động",
   "device.status.maintenance": "Bảo trì",

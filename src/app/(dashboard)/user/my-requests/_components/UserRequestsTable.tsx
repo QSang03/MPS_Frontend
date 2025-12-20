@@ -34,7 +34,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { CustomerSelect } from '@/components/shared/CustomerSelect'
+// CustomerSelect removed for user view
 import { formatDateTime } from '@/lib/utils/formatters'
 // serviceRequestsClientService not required in the user table (no status mutation)
 import { ServiceRequestStatus, Priority } from '@/constants/status'
@@ -84,12 +84,10 @@ interface UserRequestsTableProps {
 export function UserRequestsTable({ defaultCustomerId }: UserRequestsTableProps) {
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 })
   const { t } = useLocale()
-  const { can } = useActionPermission('user-my-requests')
-  const canFilterCustomer = can('filter-by-customer')
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<ServiceRequestStatus | 'all'>('all')
   const [priorityFilter, setPriorityFilter] = useState<Priority | 'all'>('all')
-  const [customerFilter, setCustomerFilter] = useState<string>('')
+  // customer filter removed for user view; server queries use `defaultCustomerId`
   const [sorting, setSorting] = useState<{ sortBy?: string; sortOrder?: 'asc' | 'desc' }>({
     sortBy: 'createdAt',
     sortOrder: 'desc',
@@ -126,7 +124,6 @@ export function UserRequestsTable({ defaultCustomerId }: UserRequestsTableProps)
     setSearch('')
     setStatusFilter('all')
     setPriorityFilter('all')
-    setCustomerFilter('')
   }
 
   const activeFilters: Array<{ label: string; value: string; onRemove: () => void }> = []
@@ -155,13 +152,7 @@ export function UserRequestsTable({ defaultCustomerId }: UserRequestsTableProps)
       onRemove: () => setPriorityFilter('all'),
     })
   }
-  if (customerFilter) {
-    activeFilters.push({
-      label: t('filters.customer', { customer: customerFilter }),
-      value: customerFilter,
-      onRemove: () => setCustomerFilter(''),
-    })
-  }
+  // customer filter removed from user UI
 
   return (
     <div className="space-y-6">
@@ -225,16 +216,7 @@ export function UserRequestsTable({ defaultCustomerId }: UserRequestsTableProps)
               </SelectContent>
             </Select>
           </div>
-          {canFilterCustomer && (
-            <div className="space-y-2">
-              <label className="text-sm font-medium">{t('requests.service.filter.customer')}</label>
-              <CustomerSelect
-                value={customerFilter}
-                onChange={(id) => setCustomerFilter(id)}
-                placeholder={t('requests.service.filter.customer_placeholder')}
-              />
-            </div>
-          )}
+          {/* Customer filter removed for user view */}
         </div>
       </FilterSection>
 
@@ -245,7 +227,7 @@ export function UserRequestsTable({ defaultCustomerId }: UserRequestsTableProps)
           searchInput={search}
           statusFilter={statusFilter}
           priorityFilter={priorityFilter}
-          customerFilter={customerFilter || defaultCustomerId || ''}
+          customerFilter={defaultCustomerId || ''}
           sorting={sorting}
           onPaginationChange={setPagination}
           onSortingChange={setSorting}

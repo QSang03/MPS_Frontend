@@ -472,6 +472,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                     <ServiceRequestRatingDisplay
                       satisfactionScore={data.satisfactionScore}
                       customerFeedback={data.customerFeedback}
+                      showThankYouMessage={false}
                     />
                   </CardContent>
                 </Card>

@@ -9,11 +9,13 @@ import { cn } from '@/lib/utils/cn'
 interface ServiceRequestRatingDisplayProps {
   satisfactionScore: number
   customerFeedback?: string
+  showThankYouMessage?: boolean
 }
 
 export function ServiceRequestRatingDisplay({
   satisfactionScore,
   customerFeedback,
+  showThankYouMessage = true,
 }: ServiceRequestRatingDisplayProps) {
   const { t } = useLocale()
 
@@ -51,9 +53,11 @@ export function ServiceRequestRatingDisplay({
             {satisfactionScore}/5
           </Badge>
         </div>
-        <CardDescription className="text-green-600 dark:text-green-400">
-          {t('requests.service.rating.thank_you')}
-        </CardDescription>
+        {showThankYouMessage && (
+          <CardDescription className="text-green-600 dark:text-green-400">
+            {t('requests.service.rating.thank_you')}
+          </CardDescription>
+        )}
       </CardHeader>
 
       <CardContent className="space-y-4">

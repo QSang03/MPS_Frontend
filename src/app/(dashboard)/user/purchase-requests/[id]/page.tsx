@@ -4,7 +4,18 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Building2, Smartphone } from 'lucide-react'
+import {
+  ArrowLeft,
+  Building2,
+  Smartphone,
+  Clock,
+  CheckCircle2,
+  CalendarCheck,
+  Package,
+  Truck,
+  XCircle,
+  Plus,
+} from 'lucide-react'
 
 import { purchaseRequestsClientService } from '@/lib/api/services/purchase-requests-client.service'
 import { devicesClientService } from '@/lib/api/services/devices-client.service'
@@ -38,6 +49,17 @@ import { formatCurrency, formatDateTime } from '@/lib/utils/formatters'
 import { PurchaseRequestStatus } from '@/constants/status'
 import { useToast } from '@/components/ui/use-toast'
 import { ActionGuard } from '@/components/shared/ActionGuard'
+
+type TimelineEvent = {
+  label: string
+  time: string
+  by?: string
+  reason?: string
+  icon: React.ComponentType<{ className?: string }>
+  color: string
+}
+
+type TimelineEntry = TimelineEvent & { time: string }
 
 function toNumber(value?: string | number | null): number {
   if (typeof value === 'number') return value
@@ -123,6 +145,63 @@ export default function UserPurchaseRequestDetailPage() {
   const canCancel =
     detail.status !== PurchaseRequestStatus.CANCELLED &&
     detail.status !== PurchaseRequestStatus.RECEIVED
+
+  const timeline: TimelineEntry[] = (
+    [
+      {
+        label: t('requests.purchase.timeline.created'),
+        time: detail.createdAt,
+        by: detail.requestedBy,
+        icon: Plus,
+        color: 'text-slate-600',
+      },
+      {
+        label: t('requests.purchase.timeline.approved'),
+        time: detail.approvedAt,
+        by: detail.approvedByName ?? detail.approvedBy,
+        icon: CheckCircle2,
+        color: 'text-emerald-600',
+      },
+      {
+        label: t('requests.purchase.timeline.ordered'),
+        time: detail.orderedAt,
+        by: detail.orderedByName ?? detail.orderedBy,
+        icon: CalendarCheck,
+        color: 'text-[var(--brand-600)]',
+      },
+      {
+        label: t('requests.purchase.timeline.in_transit'),
+        time: detail.inTransitAt,
+        by: detail.inTransitBy,
+        icon: Truck,
+        color: 'text-[var(--brand-600)]',
+      },
+      {
+        label: t('requests.purchase.timeline.received'),
+        time: detail.receivedAt,
+        by: detail.receivedByName ?? detail.receivedBy,
+        icon: Package,
+        color: 'text-green-600',
+      },
+      {
+        label: t('requests.purchase.timeline.cancelled'),
+        time: detail.cancelledAt,
+        by: detail.cancelledByName ?? detail.cancelledBy,
+        icon: XCircle,
+        color: 'text-[var(--color-error-500)]',
+      },
+      {
+        label: t('requests.purchase.timeline.customer_cancelled'),
+        time: detail.customerCancelledAt,
+        by: detail.customerCancelledByName ?? detail.customerCancelledBy,
+        reason: detail.customerCancelledReason,
+        icon: XCircle,
+        color: 'text-orange-500',
+      },
+    ] as TimelineEvent[]
+  ).filter((event): event is TimelineEntry => Boolean(event.time))
+
+  timeline.sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime())
 
   return (
     <div className="w-full space-y-6 p-4 pb-20 md:p-6">
@@ -256,6 +335,53 @@ export default function UserPurchaseRequestDetailPage() {
                     </TableRow>
                   </TableBody>
                 </Table>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Timeline */}
+          <Card className="overflow-hidden border-none shadow-sm ring-1 ring-slate-200 dark:ring-slate-800">
+            <CardHeader className="bg-slate-50/50 pb-3 dark:bg-slate-900/50">
+              <CardTitle className="flex items-center gap-2 text-base font-medium">
+                <Clock className="h-4 w-4" />
+                {t('timeline.title')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-4">
+              {timeline.length === 0 ? (
+                <div className="text-muted-foreground py-8 text-center text-sm">
+                  {t('timeline.empty')}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {timeline.map((event, idx) => (
+                    <div key={idx} className="flex gap-3">
+                      <div
+                        className={`flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800`}
+                      >
+                        <event.icon className={`h-4 w-4 ${event.color}`} />
+                      </div>
+                      <div className="flex-1 space-y-1">
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm font-medium">{event.label}</p>
+                          <p className="text-muted-foreground text-xs">
+                            {formatDateTime(event.time)}
+                          </p>
+                        </div>
+                        {event.by && (
+                          <p className="text-muted-foreground text-xs">
+                            {t('timeline.by')} {event.by}
+                          </p>
+                        )}
+                        {event.reason && (
+                          <p className="text-muted-foreground text-xs">
+                            {t('timeline.reason')}: {event.reason}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               )}
             </CardContent>
           </Card>

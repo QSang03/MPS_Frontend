@@ -32,12 +32,36 @@ import {
 import { useToast } from '@/components/ui/use-toast'
 import { getClientUserProfile } from '@/lib/auth/client-auth'
 import type { UserProfile } from '@/types/auth'
-import { ArrowLeft, Smartphone, Building2, FileText, Image as ImageIcon } from 'lucide-react'
+import {
+  ArrowLeft,
+  Smartphone,
+  Building2,
+  FileText,
+  Image as ImageIcon,
+  Clock,
+  Plus,
+  CheckCircle2,
+  Wrench,
+  Package,
+  XCircle,
+} from 'lucide-react'
 import Image from 'next/image'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useLocale } from '@/components/providers/LocaleProvider'
 import { ActionGuard } from '@/components/shared/ActionGuard'
+import { ServiceRequestRatingDisplay } from '@/components/service-request/ServiceRequestRatingDisplay'
 // StatusBadge removed (not used)
+
+type TimelineEvent = {
+  label: string
+  time: string
+  by?: string
+  reason?: string
+  icon: React.ComponentType<{ className?: string }>
+  color: string
+}
+
+type TimelineEntry = TimelineEvent & { time: string }
 
 export default function UserServiceRequestDetail() {
   const { t } = useLocale()
@@ -119,6 +143,56 @@ export default function UserServiceRequestDetail() {
   // Guard: show loading / missing states
   if (isLoading) return <div className="p-8 text-center">{t('loading.default')}</div>
   if (!request) return <div className="p-8 text-center">{t('user_service_request.not_found')}</div>
+
+  // Create timeline
+  const timeline: TimelineEntry[] = (
+    [
+      {
+        label: t('requests.service.timeline.created'),
+        time: request.createdAt,
+        by: request.createdByName ?? request.createdBy,
+        icon: Plus,
+        color: 'text-slate-600',
+      },
+      {
+        label: t('requests.service.timeline.approved'),
+        time: request.approvedAt,
+        by: request.approvedByName ?? request.approvedBy,
+        icon: CheckCircle2,
+        color: 'text-emerald-600',
+      },
+      {
+        label: t('requests.service.timeline.responded'),
+        time: request.respondedAt,
+        by: request.respondedByName ?? request.respondedBy,
+        icon: Wrench,
+        color: 'text-[var(--brand-600)]',
+      },
+      {
+        label: t('requests.service.timeline.resolved'),
+        time: request.resolvedAt,
+        by: request.resolvedByName ?? request.resolvedBy,
+        icon: CheckCircle2,
+        color: 'text-emerald-600',
+      },
+      {
+        label: t('requests.service.timeline.closed'),
+        time: request.closedAt,
+        by: request.closedByName ?? request.closedBy,
+        icon: Package,
+        color: 'text-slate-600',
+      },
+      {
+        label: t('requests.service.timeline.customer_closed'),
+        time: request.customerClosedAt,
+        by: request.customerClosedByName ?? request.customerClosedBy,
+        icon: XCircle,
+        color: 'text-rose-500',
+      },
+    ] as TimelineEvent[]
+  ).filter((event): event is TimelineEntry => Boolean(event.time))
+
+  timeline.sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime())
 
   // Main render
   return (
@@ -251,6 +325,23 @@ export default function UserServiceRequestDetail() {
               )}
             </CardContent>
           </Card>
+
+          {/* Rating */}
+          {request.satisfactionScore && (
+            <Card className="overflow-hidden border-none shadow-sm ring-1 ring-slate-200 dark:ring-slate-800">
+              <CardHeader className="bg-slate-50/50 pb-3 dark:bg-slate-900/50">
+                <CardTitle className="text-base font-medium">
+                  {t('requests.service.rating.title')}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-4">
+                <ServiceRequestRatingDisplay
+                  satisfactionScore={request.satisfactionScore}
+                  customerFeedback={request.customerFeedback}
+                />
+              </CardContent>
+            </Card>
+          )}
 
           <ActionGuard pageId="user-my-requests" actionId="service-messages">
             <Card className="flex h-[600px] flex-col border-none shadow-sm ring-1 ring-slate-200 dark:ring-slate-800">
@@ -488,6 +579,53 @@ export default function UserServiceRequestDetail() {
               ) : (
                 <div className="text-muted-foreground text-sm italic">
                   {t('user_service_request.device.not_linked')}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Timeline */}
+          <Card className="overflow-hidden border-none shadow-sm ring-1 ring-slate-200 dark:ring-slate-800">
+            <CardHeader className="bg-slate-50/50 pb-3 dark:bg-slate-900/50">
+              <CardTitle className="flex items-center gap-2 text-base font-medium">
+                <Clock className="h-4 w-4" />
+                {t('timeline.title')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-4">
+              {timeline.length === 0 ? (
+                <div className="text-muted-foreground py-8 text-center text-sm">
+                  {t('timeline.empty')}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {timeline.map((event, idx) => (
+                    <div key={idx} className="flex gap-3">
+                      <div
+                        className={`flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800`}
+                      >
+                        <event.icon className={`h-4 w-4 ${event.color}`} />
+                      </div>
+                      <div className="flex-1 space-y-1">
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm font-medium">{event.label}</p>
+                          <p className="text-muted-foreground text-xs">
+                            {formatDateTime(event.time)}
+                          </p>
+                        </div>
+                        {event.by && (
+                          <p className="text-muted-foreground text-xs">
+                            {t('timeline.by')} {event.by}
+                          </p>
+                        )}
+                        {event.reason && (
+                          <p className="text-muted-foreground text-xs">
+                            {t('timeline.reason')}: {event.reason}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </CardContent>

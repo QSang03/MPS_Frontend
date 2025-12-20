@@ -1060,6 +1060,8 @@
   "timeline.approved": "Approved",
   "timeline.opened": "Opened",
   "timeline.by": "By",
+  "timeline.empty": "No activity yet",
+  "timeline.reason": "Reason",
   "device.status.active": "Active",
   "device.status.inactive": "Inactive",
   "device.status.maintenance": "Maintenance",
