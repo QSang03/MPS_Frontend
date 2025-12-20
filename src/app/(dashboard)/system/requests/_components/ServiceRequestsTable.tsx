@@ -55,6 +55,7 @@ import { TableSkeleton } from '@/components/system/TableSkeleton'
 import { cn } from '@/lib/utils'
 import { useLocale } from '@/components/providers/LocaleProvider'
 import { customersClientService } from '@/lib/api/services/customers-client.service'
+import { usersClientService } from '@/lib/api/services/users-client.service'
 import { getAllowedTransitions } from '@/lib/utils/status-flow'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 
@@ -126,6 +127,13 @@ export function ServiceRequestsTable() {
     enabled: !!customerFilter,
   })
 
+  // Fetch selected assigned user details to display name/email in active filters
+  const { data: selectedAssignedUser } = useQuery<import('@/types/users').User | null>({
+    queryKey: ['users', assignedToFilter],
+    queryFn: () => usersClientService.getUserById(assignedToFilter),
+    enabled: !!assignedToFilter,
+  })
+
   const handleResetFilters = () => {
     setSearch('')
     setStatusFilter('all')
@@ -177,8 +185,10 @@ export function ServiceRequestsTable() {
     })
   }
   if (assignedToFilter) {
+    const displayAssigned =
+      selectedAssignedUser?.fullName || selectedAssignedUser?.email || assignedToFilter
     activeFilters.push({
-      label: `${t('requests.service.table.assigned_to')}: ${assignedToFilter}`,
+      label: `${t('requests.service.table.assigned_to')}: ${displayAssigned}`,
       value: assignedToFilter,
       onRemove: () => setAssignedToFilter(''),
     })
