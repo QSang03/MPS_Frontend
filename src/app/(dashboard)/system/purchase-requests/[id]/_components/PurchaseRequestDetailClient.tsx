@@ -258,7 +258,7 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
       {
         label: t('purchase_request.status.ordered'),
         time: detail.orderedAt,
-        by: detail.orderedBy,
+        by: detail.orderedByName ?? detail.orderedBy,
         icon: CalendarCheck,
         color: 'text-[var(--brand-600)]',
       },
@@ -272,21 +272,21 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
       {
         label: t('purchase_request.status.received'),
         time: detail.receivedAt,
-        by: detail.receivedBy,
+        by: detail.receivedByName ?? detail.receivedBy,
         icon: Package,
         color: 'text-green-600',
       },
       {
         label: t('purchase_request.status.cancelled_internal'),
         time: detail.cancelledAt,
-        by: detail.cancelledBy,
+        by: detail.cancelledByName ?? detail.cancelledBy,
         icon: XCircle,
         color: 'text-[var(--color-error-500)]',
       },
       {
         label: t('purchase_request.status.customer_cancelled'),
         time: detail.customerCancelledAt,
-        by: detail.customerCancelledBy,
+        by: detail.customerCancelledByName ?? detail.customerCancelledBy,
         reason: detail.customerCancelledReason,
         icon: XCircle,
         color: 'text-orange-500',

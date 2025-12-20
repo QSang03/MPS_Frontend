@@ -90,22 +90,22 @@ const buildTimelineSteps = (
       {
         label: t ? t('requests.purchase.timeline.ordered') : 'Ordered',
         time: request.orderedAt,
-        by: request.orderedBy,
+        by: request.orderedByName ?? request.orderedBy,
       },
       {
         label: t ? t('requests.purchase.timeline.received') : 'Received',
         time: request.receivedAt,
-        by: request.receivedBy,
+        by: request.receivedByName ?? request.receivedBy,
       },
       {
         label: t ? t('requests.purchase.timeline.cancelled') : 'Cancelled',
         time: request.cancelledAt,
-        by: request.cancelledBy,
+        by: request.cancelledByName ?? request.cancelledBy,
       },
       {
         label: t ? t('requests.purchase.timeline.customer_cancelled') : 'Customer cancelled',
         time: request.customerCancelledAt,
-        by: request.customerCancelledBy,
+        by: request.customerCancelledByName ?? request.customerCancelledBy,
       },
     ] as Array<Omit<TimelineStep, 'time'> & { time?: string }>
   ).filter((step): step is TimelineStep => Boolean(step.time))
