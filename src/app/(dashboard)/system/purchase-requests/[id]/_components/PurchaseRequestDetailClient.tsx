@@ -666,6 +666,10 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
                           <Button
                             onClick={() => {
                               if (!pendingStatusChange) return
+                              if (!detail.assignedTo) {
+                                toast.error(t('requests.purchase.detail.assignee_required'))
+                                return
+                              }
                               const status = pendingStatusChange
                               setPendingStatusChange(null)
                               updateStatusMutation.mutate(status)

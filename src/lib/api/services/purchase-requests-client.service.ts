@@ -71,6 +71,7 @@ export const purchaseRequestsClientService = {
       status: PurchaseRequestStatus
       customerInitiatedCancel?: boolean
       customerCancelReason?: string
+      actionNote?: string
     }
   ): Promise<PurchaseRequest | null> {
     const response = await internalApiClient.patch(`/api/purchase-requests/${id}/status`, payload)

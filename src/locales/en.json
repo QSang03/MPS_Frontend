@@ -2053,6 +2053,7 @@
   "requests.purchase.delete_error": "Cannot delete purchase request",
   "requests.purchase.assign_success": "Purchase request assigned successfully",
   "requests.purchase.assign_error": "Cannot assign purchase request",
+  "requests.purchase.detail.assignee_required": "Please assign an assignee before changing status",
   "requests.service.update_status.error": "Cannot update status",
   "requests.service.rating.title": "Service Rating",
   "requests.service.rating.description": "Share your experience about our service quality to help us improve",

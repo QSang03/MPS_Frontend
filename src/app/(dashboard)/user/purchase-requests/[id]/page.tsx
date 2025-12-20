@@ -110,7 +110,8 @@ export default function UserPurchaseRequestDetailPage() {
       return purchaseRequestsClientService.updateStatus(id, {
         status: statusUpdate,
         customerInitiatedCancel: statusUpdate === PurchaseRequestStatus.CANCELLED,
-        customerCancelReason: actionNote,
+        customerCancelReason: actionNote?.trim() || undefined,
+        actionNote: actionNote?.trim() || undefined,
       })
     },
     onSuccess: () => {
@@ -398,7 +399,17 @@ export default function UserPurchaseRequestDetailPage() {
                       />
                       <Button
                         className="w-full"
-                        onClick={() => updateStatusMutation.mutate()}
+                        onClick={() => {
+                          const noteRequired = statusUpdate === PurchaseRequestStatus.CANCELLED
+                          if (noteRequired && !actionNote?.trim()) {
+                            toast({
+                              title: t('purchase_request.messages.action_note_required'),
+                              variant: 'destructive',
+                            })
+                            return
+                          }
+                          updateStatusMutation.mutate()
+                        }}
                         disabled={!statusUpdate || updateStatusMutation.isPending}
                       >
                         {updateStatusMutation.isPending

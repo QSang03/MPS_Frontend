@@ -1970,6 +1970,7 @@
   "requests.purchase.delete_error": "Không thể xóa yêu cầu mua hàng",
   "requests.purchase.assign_success": "Phân công nhân viên thành công",
   "requests.purchase.assign_error": "Không thể phân công nhân viên",
+  "requests.purchase.detail.assignee_required": "Vui lòng phân công người phụ trách trước khi thay đổi trạng thái",
   "requests.service.update_status.error": "Không thể cập nhật trạng thái",
   "requests.service.rating.title": "Đánh giá dịch vụ",
   "requests.service.rating.description": "Hãy chia sẻ trải nghiệm của bạn về chất lượng dịch vụ để chúng tôi cải thiện hơn",
