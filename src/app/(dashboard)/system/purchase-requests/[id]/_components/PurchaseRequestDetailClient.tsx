@@ -33,7 +33,6 @@ import {
   ArrowLeft,
   CalendarCheck,
   CheckCircle2,
-  Clock4,
   Loader2,
   Package,
   XCircle,
@@ -45,6 +44,7 @@ import {
   FileText,
   Truck,
   Edit3,
+  Plus,
 } from 'lucide-react'
 import type { PurchaseRequest, PurchaseRequestItem } from '@/types/models/purchase-request'
 import { cn } from '@/lib/utils/cn'
@@ -242,49 +242,49 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
   const timeline: TimelineEntry[] = (
     [
       {
-        label: t('purchase_request.status.pending'),
+        label: t('requests.purchase.timeline.created'),
         time: detail.createdAt,
         by: detail.requestedBy,
-        icon: Clock4,
-        color: 'text-slate-500',
+        icon: Plus,
+        color: 'text-slate-600',
       },
       {
-        label: t('purchase_request.status.approved'),
+        label: t('requests.purchase.timeline.approved'),
         time: detail.approvedAt,
         by: detail.approvedByName ?? detail.approvedBy,
         icon: CheckCircle2,
         color: 'text-emerald-600',
       },
       {
-        label: t('purchase_request.status.ordered'),
+        label: t('requests.purchase.timeline.ordered'),
         time: detail.orderedAt,
         by: detail.orderedByName ?? detail.orderedBy,
         icon: CalendarCheck,
         color: 'text-[var(--brand-600)]',
       },
       {
-        label: t('purchase_request.status.in_transit'),
+        label: t('requests.purchase.timeline.in_transit'),
         time: detail.inTransitAt,
         by: detail.inTransitBy,
         icon: Truck,
         color: 'text-[var(--brand-600)]',
       },
       {
-        label: t('purchase_request.status.received'),
+        label: t('requests.purchase.timeline.received'),
         time: detail.receivedAt,
         by: detail.receivedByName ?? detail.receivedBy,
         icon: Package,
         color: 'text-green-600',
       },
       {
-        label: t('purchase_request.status.cancelled_internal'),
+        label: t('requests.purchase.timeline.cancelled'),
         time: detail.cancelledAt,
         by: detail.cancelledByName ?? detail.cancelledBy,
         icon: XCircle,
         color: 'text-[var(--color-error-500)]',
       },
       {
-        label: t('purchase_request.status.customer_cancelled'),
+        label: t('requests.purchase.timeline.customer_cancelled'),
         time: detail.customerCancelledAt,
         by: detail.customerCancelledByName ?? detail.customerCancelledBy,
         reason: detail.customerCancelledReason,

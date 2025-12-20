@@ -1999,7 +1999,7 @@
   "requests.purchase.status.in_transit": "Đang vận chuyển",
   "requests.purchase.status.received": "Đã nhận",
   "requests.purchase.status.cancelled": "Đã hủy",
-  "requests.purchase.timeline.created": "Tạo yêu cầu",
+  "requests.purchase.timeline.created": "Tạo",
   "requests.purchase.timeline.approved": "Tiếp nhận",
   "requests.purchase.timeline.ordered": "Đặt hàng",
   "requests.purchase.timeline.in_transit": "Đang vận chuyển",
