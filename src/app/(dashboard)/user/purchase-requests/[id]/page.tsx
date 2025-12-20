@@ -225,6 +225,13 @@ export default function UserPurchaseRequestDetailPage() {
             <span className="flex items-center gap-1">
               {detail.createdByName ?? detail.requestedBy ?? '—'}
             </span>
+            <span>•</span>
+            <span className="flex items-center gap-1">
+              {t('purchase_request.detail.assignee')}:{' '}
+              {detail.assignedToName ??
+                detail.assignedTo ??
+                t('purchase_request.detail.not_assigned')}
+            </span>
           </div>
         </div>
 

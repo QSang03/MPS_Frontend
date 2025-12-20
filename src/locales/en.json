@@ -1113,6 +1113,7 @@
   "purchase_request.detail.general_info": "General Information",
   "purchase_request.detail.total_estimated_cost": "Total Estimated Cost",
   "purchase_request.detail.assignee": "Assignee",
+  "purchase_request.detail.not_assigned": "Not assigned",
   "purchase_request.detail.select_employee": "Select employee...",
   "purchase_request.detail.assignment_note_placeholder": "Assignment note (optional)...",
   "purchase_request.detail.assign": "Assign",

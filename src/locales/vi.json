@@ -1091,6 +1091,7 @@
   "purchase_request.detail.general_info": "Thông tin chung",
   "purchase_request.detail.total_estimated_cost": "Tổng giá trị (ước tính)",
   "purchase_request.detail.assignee": "Người phụ trách",
+  "purchase_request.detail.not_assigned": "Chưa phân công",
   "purchase_request.detail.select_employee": "Chọn nhân viên...",
   "purchase_request.detail.assignment_note_placeholder": "Ghi chú phân công (tùy chọn)...",
   "purchase_request.detail.assign": "Phân công",
