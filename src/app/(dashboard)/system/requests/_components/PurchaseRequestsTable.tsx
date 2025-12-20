@@ -26,7 +26,6 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { FilterSection } from '@/components/system/FilterSection'
-import { StatsCards } from '@/components/system/StatsCard'
 import {
   Select,
   SelectContent,
@@ -146,12 +145,6 @@ export function PurchaseRequestsTable() {
     sortOrder: 'desc',
   })
   const [columnVisibilityMenu, setColumnVisibilityMenu] = useState<ReactNode | null>(null)
-  const [summary, setSummary] = useState({
-    total: 0,
-    pending: 0,
-    ordered: 0,
-    received: 0,
-  })
 
   const debouncedSearch = useDebouncedValue(search, 400)
   const statusOptions = getStatusOptions(t)
@@ -189,35 +182,6 @@ export function PurchaseRequestsTable() {
 
   return (
     <div className="space-y-8">
-      <StatsCards
-        cards={[
-          {
-            label: t('requests.purchase.stats.total'),
-            value: summary.total,
-            icon: <ListOrdered className="h-6 w-6" />,
-            borderColor: 'blue',
-          },
-          {
-            label: t('requests.purchase.stats.pending'),
-            value: summary.pending,
-            icon: <ListOrdered className="h-6 w-6" />,
-            borderColor: 'amber',
-          },
-          {
-            label: t('requests.purchase.stats.ordered'),
-            value: summary.ordered,
-            icon: <ListOrdered className="h-6 w-6" />,
-            borderColor: 'blue',
-          },
-          {
-            label: t('requests.purchase.stats.received'),
-            value: summary.received,
-            icon: <ListOrdered className="h-6 w-6" />,
-            borderColor: 'green',
-          },
-        ]}
-      />
-
       <FilterSection
         title={t('requests.purchase.filter.title')}
         onReset={handleResetFilters}
@@ -279,7 +243,6 @@ export function PurchaseRequestsTable() {
           sorting={sorting}
           onPaginationChange={setPagination}
           onSortingChange={setSorting}
-          onStatsChange={setSummary}
           renderColumnVisibilityMenu={setColumnVisibilityMenu}
         />
       </Suspense>
@@ -296,12 +259,6 @@ interface PurchaseRequestsTableContentProps {
   sorting: { sortBy?: string; sortOrder?: 'asc' | 'desc' }
   onPaginationChange: (pagination: { pageIndex: number; pageSize: number }) => void
   onSortingChange: (sorting: { sortBy?: string; sortOrder?: 'asc' | 'desc' }) => void
-  onStatsChange: (summary: {
-    total: number
-    pending: number
-    ordered: number
-    received: number
-  }) => void
   renderColumnVisibilityMenu: (menu: ReactNode | null) => void
 }
 
@@ -314,7 +271,6 @@ function PurchaseRequestsTableContent({
   sorting,
   onPaginationChange,
   onSortingChange,
-  onStatsChange,
   renderColumnVisibilityMenu,
 }: PurchaseRequestsTableContentProps) {
   const { t, locale } = useLocale()
@@ -341,18 +297,6 @@ function PurchaseRequestsTableContent({
   const { data } = usePurchaseRequestsQuery(queryParams, { version: sortVersion })
   const requests = useMemo(() => (data?.data ?? []) as PurchaseRequestRow[], [data?.data])
   const totalCount = data?.pagination?.total ?? requests.length
-
-  useEffect(() => {
-    const pending = requests.filter((r) => r.status === PurchaseRequestStatus.PENDING).length
-    const ordered = requests.filter((r) => r.status === PurchaseRequestStatus.ORDERED).length
-    const received = requests.filter((r) => r.status === PurchaseRequestStatus.RECEIVED).length
-    onStatsChange({
-      total: totalCount,
-      pending,
-      ordered,
-      received,
-    })
-  }, [requests, totalCount, onStatsChange])
 
   const mutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: PurchaseRequestStatus }) =>

@@ -13,7 +13,6 @@ import {
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { StatsCards } from '@/components/system/StatsCard'
 import { FilterSection } from '@/components/system/FilterSection'
 import { TableWrapper } from '@/components/system/TableWrapper'
 import { TableSkeleton } from '@/components/system/TableSkeleton'
@@ -50,12 +49,6 @@ import {
   FileText,
 } from 'lucide-react'
 
-interface DeviceModelStats {
-  total: number
-  active: number
-  inactive: number
-}
-
 export default function DeviceModelList() {
   const { t } = useLocale()
 
@@ -70,7 +63,6 @@ export default function DeviceModelList() {
     sortOrder: 'desc',
   })
   const [columnVisibilityMenu, setColumnVisibilityMenu] = useState<ReactNode | null>(null)
-  const [stats, setStats] = useState<DeviceModelStats>({ total: 0, active: 0, inactive: 0 })
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -147,29 +139,6 @@ export default function DeviceModelList() {
 
   return (
     <div className="space-y-6">
-      <StatsCards
-        cards={[
-          {
-            label: t('device_model.stats.total_label'),
-            value: stats.total,
-            icon: <Package className="h-6 w-6" />,
-            borderColor: 'violet',
-          },
-          {
-            label: t('device_model.stats.active_label'),
-            value: stats.active,
-            icon: <CheckCircle2 className="h-6 w-6" />,
-            borderColor: 'green',
-          },
-          {
-            label: t('device_model.stats.paused_label'),
-            value: stats.inactive,
-            icon: <XCircle className="h-6 w-6" />,
-            borderColor: 'gray',
-          },
-        ]}
-      />
-
       <FilterSection
         title={t('filters.general')}
         subtitle={t('device_model.filter.subtitle')}
@@ -283,7 +252,6 @@ export default function DeviceModelList() {
           useA4Filter={useA4Filter}
           sorting={sorting}
           onSortingChange={setSorting}
-          onStatsChange={setStats}
           renderColumnVisibilityMenu={setColumnVisibilityMenu}
         />
       </Suspense>
@@ -300,7 +268,6 @@ interface DeviceModelsTableContentProps {
   useA4Filter: string
   sorting: { sortBy?: string; sortOrder?: 'asc' | 'desc' }
   onSortingChange: (sorting: { sortBy?: string; sortOrder?: 'asc' | 'desc' }) => void
-  onStatsChange: (stats: DeviceModelStats) => void
   renderColumnVisibilityMenu: (menu: ReactNode | null) => void
 }
 
@@ -313,7 +280,6 @@ function DeviceModelsTableContent({
   useA4Filter,
   sorting,
   onSortingChange,
-  onStatsChange,
   renderColumnVisibilityMenu,
 }: DeviceModelsTableContentProps) {
   const { t } = useLocale()
@@ -376,17 +342,6 @@ function DeviceModelsTableContent({
       setCountsLoading(false)
     }
   }, [])
-
-  // Update stats when models or totalCount changes
-  useEffect(() => {
-    const total = totalCount
-    const active = models.filter((model) => model.isActive).length
-    onStatsChange({
-      total,
-      active,
-      inactive: Math.max(total - active, 0),
-    })
-  }, [models, totalCount, onStatsChange])
 
   // Fetch consumable counts when models change (separate effect to avoid infinite loop)
   useEffect(() => {

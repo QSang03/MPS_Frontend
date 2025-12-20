@@ -20,13 +20,12 @@ import { Skeleton } from '@/components/ui/skeleton'
 import SystemSettingFormModal from './_components/SystemSettingFormModal'
 import SystemSettingDetailModal from './_components/SystemSettingDetailModal'
 import { ActionGuard } from '@/components/shared/ActionGuard'
-import { Settings, Search, Eye, RefreshCw, Edit } from 'lucide-react'
+import { Settings, Search, Eye, RefreshCw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { SystemPageLayout } from '@/components/system/SystemPageLayout'
 import { SystemPageHeader } from '@/components/system/SystemPageHeader'
 import { FilterSection } from '@/components/system/FilterSection'
 import { PaginationControls } from '@/components/system/PaginationControls'
-import { StatsCards } from '@/components/system/StatsCard'
 import { useLocale } from '@/components/providers/LocaleProvider'
 
 export default function SystemSettingsPage() {
@@ -124,11 +123,6 @@ export default function SystemSettingsPage() {
     })
   }
 
-  // Calculate stats
-  const totalSettings = data?.pagination.total || 0
-  const editableSettings = data?.data?.filter((s) => s.isEditable).length || 0
-  const readOnlySettings = totalSettings - editableSettings
-
   return (
     <SystemPageLayout fullWidth>
       <SystemPageHeader
@@ -145,30 +139,6 @@ export default function SystemSettingsPage() {
             {t('devices.a4_history.refresh')}
           </Button>
         }
-      />
-
-      {/* Stats Cards */}
-      <StatsCards
-        cards={[
-          {
-            label: t('system_settings.stats.total'),
-            value: totalSettings,
-            icon: <Settings className="h-6 w-6" />,
-            borderColor: 'blue',
-          },
-          {
-            label: t('system_settings.stats.editable'),
-            value: editableSettings,
-            icon: <Edit className="h-6 w-6" />,
-            borderColor: 'green',
-          },
-          {
-            label: t('system_settings.stats.read_only'),
-            value: readOnlySettings,
-            icon: <Eye className="h-6 w-6" />,
-            borderColor: 'gray',
-          },
-        ]}
       />
 
       {/* Filters */}

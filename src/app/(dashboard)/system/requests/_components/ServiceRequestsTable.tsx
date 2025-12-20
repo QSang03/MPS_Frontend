@@ -28,7 +28,6 @@ import { Button } from '@/components/ui/button'
 import { TableWrapper } from '@/components/system/TableWrapper'
 import { Input } from '@/components/ui/input'
 import { FilterSection } from '@/components/system/FilterSection'
-import { StatsCards } from '@/components/system/StatsCard'
 import {
   Select,
   SelectContent,
@@ -114,13 +113,6 @@ export function ServiceRequestsTable() {
   })
   const [sortVersion, setSortVersion] = useState(0)
   const [columnVisibilityMenu, setColumnVisibilityMenu] = useState<ReactNode | null>(null)
-  const [summary, setSummary] = useState({
-    total: 0,
-    open: 0,
-    inProgress: 0,
-    resolved: 0,
-    urgent: 0,
-  })
 
   const debouncedSearch = useDebouncedValue(search, 400)
   const statusOptions = getStatusOptions(t)
@@ -192,43 +184,6 @@ export function ServiceRequestsTable() {
 
   return (
     <div className="space-y-8">
-      {/* Stats Cards ở trên cùng, spacing rộng hơn */}
-      <StatsCards
-        cards={[
-          {
-            label: t('requests.service.stats.total'),
-            value: summary.total,
-            icon: <FileText className="h-6 w-6" />,
-            borderColor: 'blue',
-          },
-          {
-            label: t('requests.service.stats.open'),
-            value: summary.open,
-            icon: <FileText className="h-6 w-6" />,
-            borderColor: 'red',
-          },
-          {
-            label: t('requests.service.stats.in_progress'),
-            value: summary.inProgress,
-            icon: <FileText className="h-6 w-6" />,
-            borderColor: 'amber',
-          },
-          {
-            label: t('requests.service.stats.resolved'),
-            value: summary.resolved,
-            icon: <FileText className="h-6 w-6" />,
-            borderColor: 'green',
-          },
-          {
-            label: t('requests.service.stats.urgent'),
-            value: summary.urgent,
-            icon: <FileText className="h-6 w-6" />,
-            borderColor: 'orange',
-          },
-        ]}
-        className="md:grid-cols-5"
-      />
-
       {/* Bộ lọc - grid 4 cột, luôn border và padding */}
       <FilterSection
         title={t('requests.service.filter.title')}
@@ -343,7 +298,6 @@ export function ServiceRequestsTable() {
             setSorting(next)
             setSortVersion((v) => v + 1)
           }}
-          onStatsChange={setSummary}
           renderColumnVisibilityMenu={setColumnVisibilityMenu}
           sortVersion={sortVersion}
         />
@@ -364,13 +318,6 @@ interface ServiceRequestsTableContentProps {
   sorting: { sortBy?: string; sortOrder?: 'asc' | 'desc' }
   onPaginationChange: (pagination: { pageIndex: number; pageSize: number }) => void
   onSortingChange: (sorting: { sortBy?: string; sortOrder?: 'asc' | 'desc' }) => void
-  onStatsChange: (summary: {
-    total: number
-    open: number
-    inProgress: number
-    resolved: number
-    urgent: number
-  }) => void
   renderColumnVisibilityMenu: (menu: ReactNode | null) => void
   sortVersion?: number
 }
@@ -387,7 +334,6 @@ function ServiceRequestsTableContent({
   sorting,
   onPaginationChange,
   onSortingChange,
-  onStatsChange,
   renderColumnVisibilityMenu,
   sortVersion,
 }: ServiceRequestsTableContentProps) {
@@ -431,20 +377,6 @@ function ServiceRequestsTableContent({
   const { data } = useServiceRequestsQuery(queryParams, { version: sortVersion })
   const requests = useMemo(() => (data?.data ?? []) as ServiceRequestRow[], [data?.data])
   const totalCount = data?.pagination?.total ?? requests.length
-
-  useEffect(() => {
-    const open = requests.filter((r) => r.status === ServiceRequestStatus.OPEN).length
-    const inProgress = requests.filter((r) => r.status === ServiceRequestStatus.IN_PROGRESS).length
-    const resolved = requests.filter((r) => r.status === ServiceRequestStatus.RESOLVED).length
-    const urgent = requests.filter((r) => r.priority === Priority.URGENT).length
-    onStatsChange({
-      total: totalCount,
-      open,
-      inProgress,
-      resolved,
-      urgent,
-    })
-  }, [requests, totalCount, onStatsChange])
 
   const mutation = useMutation({
     mutationFn: ({

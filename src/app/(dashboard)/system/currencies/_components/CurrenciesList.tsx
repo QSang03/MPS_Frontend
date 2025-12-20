@@ -20,7 +20,6 @@ import {
 } from '@/components/ui/select'
 import { Search, Eye, CheckCircle2, XCircle, Coins } from 'lucide-react'
 import { FilterSection } from '@/components/system/FilterSection'
-import { StatsCards } from '@/components/system/StatsCard'
 import { TableSkeleton } from '@/components/system/TableSkeleton'
 import { PaginationControls } from '@/components/system/PaginationControls'
 import { CurrencyDetailModal } from './CurrencyDetailModal'
@@ -95,13 +94,6 @@ export function CurrenciesList() {
     setDetailModalOpen(true)
   }, [])
 
-  const stats = useMemo(() => {
-    const total = pagination?.total || 0
-    const activeCount = currencies.filter((c) => c.isActive).length
-    const inactive = total - activeCount
-    return { total, active: activeCount, inactive }
-  }, [currencies, pagination])
-
   const columns: ColumnDef<CurrencyDataDto>[] = useMemo(
     () => [
       {
@@ -169,30 +161,6 @@ export function CurrenciesList() {
 
   return (
     <div className="space-y-6">
-      {/* Stats Cards */}
-      <StatsCards
-        cards={[
-          {
-            label: t('currencies.stats.total'),
-            value: stats.total,
-            icon: <Coins className="h-6 w-6" />,
-            borderColor: 'blue',
-          },
-          {
-            label: t('currencies.stats.active'),
-            value: stats.active,
-            icon: <CheckCircle2 className="h-6 w-6" />,
-            borderColor: 'green',
-          },
-          {
-            label: t('currencies.stats.inactive'),
-            value: stats.inactive,
-            icon: <XCircle className="h-6 w-6" />,
-            borderColor: 'gray',
-          },
-        ]}
-      />
-
       {/* Filters */}
       <FilterSection
         title={t('filters.general')}

@@ -5,8 +5,7 @@ import type { ReactNode } from 'react'
 import { stockItemsClientService } from '@/lib/api/services/stock-items-client.service'
 import { toast } from 'sonner'
 import { Input } from '@/components/ui/input'
-import { Package, CheckCircle2, AlertCircle, Search } from 'lucide-react'
-import { StatsCards } from '@/components/system/StatsCard'
+import { Search } from 'lucide-react'
 import { FilterSection } from '@/components/system/FilterSection'
 import { EditStockModal } from './EditStockModal'
 import { useLocale } from '@/components/providers/LocaleProvider'
@@ -15,23 +14,12 @@ import { ConsumableTypeTable } from './ConsumableTypeTable'
 import { useQueryClient } from '@tanstack/react-query'
 import { ActionGuard } from '@/components/shared/ActionGuard'
 
-interface ConsumableTypeStats {
-  total: number
-  active: number
-  inactive: number
-}
-
 export function ConsumableTypeList() {
   const { t } = useLocale()
   const [searchTerm, setSearchTerm] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [page, setPage] = useState(1)
   const [limit, setLimit] = useState(10)
-  const [stats, setStats] = useState<ConsumableTypeStats>({
-    total: 0,
-    active: 0,
-    inactive: 0,
-  })
   const [columnVisibilityMenu, setColumnVisibilityMenu] = useState<ReactNode | null>(null)
   const [editStockModal, setEditStockModal] = useState<{
     open: boolean
@@ -92,29 +80,6 @@ export function ConsumableTypeList() {
 
   return (
     <div className="space-y-6">
-      <StatsCards
-        cards={[
-          {
-            label: t('consumable_types.stats.total'),
-            value: stats.total,
-            icon: <Package className="h-6 w-6" />,
-            borderColor: 'violet',
-          },
-          {
-            label: t('consumable_types.stats.active'),
-            value: stats.active,
-            icon: <CheckCircle2 className="h-6 w-6" />,
-            borderColor: 'green',
-          },
-          {
-            label: t('consumable_types.stats.inactive'),
-            value: stats.inactive,
-            icon: <AlertCircle className="h-6 w-6" />,
-            borderColor: 'gray',
-          },
-        ]}
-      />
-
       <FilterSection
         title={t('consumable_types.filter.title')}
         subtitle={t('consumable_types.filter.subtitle')}
@@ -149,7 +114,6 @@ export function ConsumableTypeList() {
           searchInput={searchTerm}
           onPageChange={setPage}
           onPageSizeChange={setLimit}
-          onStatsChange={setStats}
           renderColumnVisibilityMenu={setColumnVisibilityMenu}
           onOpenEditStockModal={(payload) => setEditStockModal({ open: true, ...payload })}
         />

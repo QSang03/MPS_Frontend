@@ -1,14 +1,6 @@
 'use client'
 
-import {
-  Suspense,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  useTransition,
-  type ReactNode,
-} from 'react'
+import { Suspense, useEffect, useMemo, useState, useTransition, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { rolesClientService } from '@/lib/api/services/roles-client.service'
 import { useRolesQuery } from '@/lib/hooks/queries/useRolesQuery'
@@ -43,19 +35,12 @@ import {
 import { DeleteDialog } from '@/components/shared/DeleteDialog'
 import { ActionGuard } from '@/components/shared/ActionGuard'
 import { FilterSection } from '@/components/system/FilterSection'
-import { StatsCards } from '@/components/system/StatsCard'
 import { TableSkeleton } from '@/components/system/TableSkeleton'
 import { useLocale } from '@/components/providers/LocaleProvider'
 
 interface RolesTableProps {
   onCreateTrigger?: boolean
   onCreateTriggerReset?: () => void
-}
-
-interface RolesStats {
-  total: number
-  active: number
-  inactive: number
 }
 
 export function RolesTable({ onCreateTrigger, onCreateTriggerReset }: RolesTableProps = {}) {
@@ -72,8 +57,6 @@ export function RolesTable({ onCreateTrigger, onCreateTriggerReset }: RolesTable
     sortOrder: 'desc',
   })
   const [columnVisibilityMenu, setColumnVisibilityMenu] = useState<ReactNode | null>(null)
-  const [stats, setStats] = useState<RolesStats>({ total: 0, active: 0, inactive: 0 })
-  // Removed unused paginationMeta state
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingRole, setEditingRole] = useState<UserRole | null>(null)
@@ -174,34 +157,8 @@ export function RolesTable({ onCreateTrigger, onCreateTriggerReset }: RolesTable
     }
   }
 
-  const handleStatsChange = useCallback((next: RolesStats) => setStats(next), [])
-  // Removed unused handlePaginationMetaChange callback
-
   return (
     <div className="space-y-6">
-      <StatsCards
-        cards={[
-          {
-            label: t('roles.stats.total'),
-            value: stats.total,
-            icon: <Layers className="h-6 w-6" />,
-            borderColor: 'emerald',
-          },
-          {
-            label: t('roles.stats.active'),
-            value: stats.active,
-            icon: <CheckCircle2 className="h-6 w-6" />,
-            borderColor: 'green',
-          },
-          {
-            label: t('roles.stats.inactive'),
-            value: stats.inactive,
-            icon: <XCircle className="h-6 w-6" />,
-            borderColor: 'gray',
-          },
-        ]}
-      />
-
       <FilterSection
         title={t('roles.filter.title')}
         subtitle={t('roles.filter.subtitle')}
@@ -276,7 +233,6 @@ export function RolesTable({ onCreateTrigger, onCreateTriggerReset }: RolesTable
             setLimit(nextLimit)
           }}
           onSortingChange={setSorting}
-          onStatsChange={handleStatsChange}
           renderColumnVisibilityMenu={setColumnVisibilityMenu}
           onEditRole={handleEdit}
           onDeleteRole={handleDelete}
@@ -303,7 +259,6 @@ interface RolesTableContentProps {
   sorting: { sortBy?: string; sortOrder?: 'asc' | 'desc' }
   onPageChange: (page: number, limit: number) => void
   onSortingChange: (sorting: { sortBy?: string; sortOrder?: 'asc' | 'desc' }) => void
-  onStatsChange: (stats: RolesStats) => void
   renderColumnVisibilityMenu: (menu: ReactNode | null) => void
   onEditRole: (role: UserRole) => void
   onDeleteRole: (roleId: string) => Promise<void> | void
@@ -319,7 +274,6 @@ function RolesTableContent({
   sorting,
   onPageChange,
   onSortingChange,
-  onStatsChange,
   renderColumnVisibilityMenu,
   onEditRole,
   onDeleteRole,
@@ -354,16 +308,6 @@ function RolesTableContent({
       },
     [data?.pagination, roles.length, page, limit]
   )
-
-  useEffect(() => {
-    const total = pagination.total ?? roles.length
-    const activeRoles = roles.filter((role) => role.isActive !== false).length
-    onStatsChange({
-      total,
-      active: activeRoles,
-      inactive: total - activeRoles,
-    })
-  }, [pagination, roles, onStatsChange])
 
   const columns = useMemo<ColumnDef<UserRole>[]>(() => {
     return [

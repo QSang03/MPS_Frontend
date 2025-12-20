@@ -34,7 +34,6 @@ import { useActionPermission } from '@/lib/hooks/useActionPermission'
 import { FilterSection } from '@/components/system/FilterSection'
 import { TableWrapper } from '@/components/system/TableWrapper'
 import { TableSkeleton } from '@/components/system/TableSkeleton'
-import { StatsCards } from '@/components/system/StatsCard'
 import type { ColumnDef } from '@tanstack/react-table'
 import { usePoliciesQuery } from '@/lib/hooks/queries/usePoliciesQuery'
 import { useLocale } from '@/components/providers/LocaleProvider'
@@ -61,7 +60,6 @@ export function PolicyListPage({ onEdit, onCreate }: PolicyListPageProps) {
     sortBy: 'createdAt',
     sortOrder: 'desc',
   })
-  const [stats, setStats] = useState({ total: 0, allow: 0, deny: 0 })
 
   // Sync debouncedSearch with search after a 2s pause in typing.
   useEffect(() => {
@@ -141,30 +139,6 @@ export function PolicyListPage({ onEdit, onCreate }: PolicyListPageProps) {
 
   return (
     <div className="space-y-6">
-      {/* Stats Cards */}
-      <StatsCards
-        cards={[
-          {
-            label: t('policies.stats.total_label'),
-            value: stats.total,
-            icon: <Shield className="h-6 w-6" />,
-            borderColor: 'indigo',
-          },
-          {
-            label: 'ALLOW',
-            value: stats.allow,
-            icon: <CheckCircle2 className="h-6 w-6" />,
-            borderColor: 'green',
-          },
-          {
-            label: 'DENY',
-            value: stats.deny,
-            icon: <XCircle className="h-6 w-6" />,
-            borderColor: 'red',
-          },
-        ]}
-      />
-
       {/* Filter Section */}
       <FilterSection
         title={t('filters.general')}
@@ -243,7 +217,6 @@ export function PolicyListPage({ onEdit, onCreate }: PolicyListPageProps) {
           sorting={sorting}
           onPageChange={setPage}
           onSortingChange={setSorting}
-          onStatsChange={setStats}
           renderColumnVisibilityMenu={setColumnVisibilityMenu}
           canUpdate={canUpdate}
           canDelete={canDelete}
@@ -266,7 +239,6 @@ interface PolicyTableProps {
   sorting: { sortBy?: string; sortOrder?: 'asc' | 'desc' }
   onPageChange: (page: number) => void
   onSortingChange: (sorting: { sortBy?: string; sortOrder?: 'asc' | 'desc' }) => void
-  onStatsChange: (stats: { total: number; allow: number; deny: number }) => void
   renderColumnVisibilityMenu: (menu: ReactNode | null) => void
   canUpdate: boolean
   canDelete: boolean
@@ -285,7 +257,6 @@ function PolicyTable({
   sorting,
   onPageChange,
   onSortingChange,
-  onStatsChange,
   renderColumnVisibilityMenu,
   canUpdate,
   canDelete,
@@ -321,13 +292,6 @@ function PolicyTable({
       },
     [data?.pagination, policies.length, page, pageSize]
   )
-
-  useEffect(() => {
-    const total = pagination.total ?? policies.length
-    const allow = policies.filter((p) => p.effect === 'ALLOW').length
-    const deny = policies.filter((p) => p.effect === 'DENY').length
-    onStatsChange({ total, allow, deny })
-  }, [policies, pagination.total, onStatsChange])
 
   const formattedPolicies = useMemo(() => policies.map(formatPolicyForTable), [policies])
 

@@ -34,8 +34,6 @@ import { useLocale } from '@/components/providers/LocaleProvider'
 import {
   Monitor,
   Search,
-  CheckCircle2,
-  AlertCircle,
   Power,
   MapPin,
   Package,
@@ -367,9 +365,6 @@ export default function DevicesPageClient() {
     }
   }, [])
 
-  const activeCount = devices.filter((d) => d.isActive).length
-  const inactiveCount = devices.length - activeCount
-
   const handleCustomerSelect = async (customer: Customer, customerLocation?: string) => {
     if (!editingDeviceId) return
 
@@ -385,24 +380,54 @@ export default function DevicesPageClient() {
       await fetchDevices()
     } catch (err) {
       console.error('Failed to assign customer', err)
-      try {
-        const e = err as { response?: { data?: unknown; status?: number }; message?: string }
-        const body = e?.response?.data
-        if (body) console.error('[assignToCustomer] backend response body:', body)
-        type MsgBody = { message?: string; error?: string }
-        const maybe = (body as MsgBody) || {}
-        const message = maybe.message || maybe.error || e?.message
-        if (message) {
-          if (Array.isArray(message)) {
-            toast.error(message.join(', '))
-          } else {
-            toast.error(String(message))
+
+      // Type-safe access to Axios error response
+      const axiosError = err as {
+        response?: {
+          data?: {
+            error?: string
+            details?: { reason?: string; [key: string]: unknown }
+            message?: string
+            [key: string]: unknown
           }
-        } else {
-          toast.error(t('devices.assign_customer.error'))
+          status?: number
         }
-      } catch (parseErr) {
-        console.error('Error parsing assign error', parseErr)
+        message?: string
+      }
+
+      const responseData = axiosError?.response?.data
+
+      console.log('[DEBUG] Response data:', responseData)
+      console.log('[DEBUG] Response data error:', responseData?.error)
+      console.log('[DEBUG] Response data details:', responseData?.details)
+
+      // Check for SLA-related errors and show localized message
+      // First check the specific reason from details
+      if (responseData?.details?.reason === 'No active SLA found for customer') {
+        console.log('[DEBUG] SLA error detected by reason')
+        toast.error(t('devices.assign_customer.sla_required'))
+        return
+      }
+
+      // Then check if error message contains SLA keywords
+      if (
+        responseData?.error &&
+        typeof responseData.error === 'string' &&
+        responseData.error.includes('active SLA')
+      ) {
+        console.log('[DEBUG] SLA error detected by error message')
+        toast.error(t('devices.assign_customer.sla_required'))
+        return
+      }
+
+      // Fallback to generic error handling
+      console.log('[DEBUG] Using fallback error handling')
+      const message = responseData?.error || responseData?.message || axiosError?.message
+      console.log('[DEBUG] Extracted message:', message)
+
+      if (message && typeof message === 'string') {
+        toast.error(message)
+      } else {
         toast.error(t('devices.assign_customer.error'))
       }
     } finally {
@@ -482,51 +507,6 @@ export default function DevicesPageClient() {
           </ActionGuard>
         }
       />
-
-      {/* Quick Stats - align with admin cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <Card className="shadow-card">
-          <CardContent className="flex items-center gap-4 p-6">
-            <div className="rounded-full bg-[var(--brand-50)] p-3 dark:bg-[var(--brand-900)]/30">
-              <Monitor className="h-6 w-6 text-black dark:text-white" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
-                {t('devices.stats.total_label')}
-              </p>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white">{devices.length}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-card">
-          <CardContent className="flex items-center gap-4 p-6">
-            <div className="rounded-full bg-green-100 p-3 dark:bg-green-900/30">
-              <CheckCircle2 className="h-6 w-6 text-black dark:text-white" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
-                {t('status.active')}
-              </p>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white">{activeCount}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-card">
-          <CardContent className="flex items-center gap-4 p-6">
-            <div className="rounded-full bg-gray-100 p-3 dark:bg-gray-800">
-              <AlertCircle className="h-6 w-6 text-black dark:text-white" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
-                {t('status.inactive')}
-              </p>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white">{inactiveCount}</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
 
       {/* Filter section - align with admin FilterSection */}
       <FilterSection

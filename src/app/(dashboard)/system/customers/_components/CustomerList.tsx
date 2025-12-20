@@ -1,13 +1,12 @@
 'use client'
 
-import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
+import { Suspense, useEffect, useMemo, useState } from 'react'
 import { useLocale } from '@/components/providers/LocaleProvider'
 import type { ReactNode } from 'react'
 import { FilterSection } from '@/components/system/FilterSection'
-import { StatsCards } from '@/components/system/StatsCard'
 import { TableSkeleton } from '@/components/system/TableSkeleton'
 import { Input } from '@/components/ui/input'
-import { Search, Users } from 'lucide-react'
+import { Search } from 'lucide-react'
 import { CustomerTable } from './CustomerTable'
 
 export function CustomerList() {
@@ -16,7 +15,6 @@ export function CustomerList() {
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [page, setPage] = useState(1)
   const [limit, setLimit] = useState(10)
-  const [stats, setStats] = useState({ total: 0, active: 0 })
   const [columnVisibilityMenu, setColumnVisibilityMenu] = useState<ReactNode | null>(null)
 
   useEffect(() => {
@@ -26,10 +24,6 @@ export function CustomerList() {
     }, 2000)
     return () => clearTimeout(timeout)
   }, [searchTerm])
-
-  const handleStatsChange = useCallback((next: { total: number; active: number }) => {
-    setStats(next)
-  }, [])
 
   const activeFilters = useMemo(() => {
     if (!searchTerm) return []
@@ -48,24 +42,6 @@ export function CustomerList() {
 
   return (
     <div className="space-y-6">
-      <StatsCards
-        cards={[
-          {
-            label: t('customer.stats.total_label'),
-            value: stats.total,
-            icon: <Users className="h-6 w-6" />,
-            borderColor: 'blue',
-          },
-          {
-            label: t('customer.stats.active_label'),
-            value: stats.active,
-            icon: <Users className="h-6 w-6" />,
-            borderColor: 'green',
-          },
-          /* 'Địa chỉ lắp đặt' stat removed as requested */
-        ]}
-      />
-
       <FilterSection
         title={t('filters.title_customers')}
         subtitle={t('filters.subtitle_customers')}
@@ -107,7 +83,6 @@ export function CustomerList() {
           searchInput={searchTerm}
           onPageChange={setPage}
           onPageSizeChange={setLimit}
-          onStatsChange={handleStatsChange}
           renderColumnVisibilityMenu={setColumnVisibilityMenu}
         />
       </Suspense>

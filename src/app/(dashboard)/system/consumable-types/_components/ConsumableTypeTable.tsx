@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState, useTransition, useEffect, useCallback } from 'react'
+import { useMemo, useState, useTransition, useCallback } from 'react'
 import type { ReactNode } from 'react'
 import type { ColumnDef } from '@tanstack/react-table'
 import { Button } from '@/components/ui/button'
@@ -38,7 +38,6 @@ interface ConsumableTypeTableProps {
   searchInput: string
   onPageChange: (page: number) => void
   onPageSizeChange: (size: number) => void
-  onStatsChange: (stats: { total: number; active: number; inactive: number }) => void
   renderColumnVisibilityMenu: (menu: ReactNode | null) => void
   onOpenEditStockModal: (payload: {
     stockId: string
@@ -55,7 +54,6 @@ export function ConsumableTypeTable({
   searchInput,
   onPageChange,
   onPageSizeChange,
-  onStatsChange,
   renderColumnVisibilityMenu,
   onOpenEditStockModal,
 }: ConsumableTypeTableProps) {
@@ -87,15 +85,6 @@ export function ConsumableTypeTable({
     () => data?.pagination?.total ?? models.length,
     [data?.pagination?.total, models.length]
   )
-
-  useEffect(() => {
-    const active = models.filter((m) => m.isActive).length
-    onStatsChange({
-      total,
-      active,
-      inactive: Math.max(total - active, 0),
-    })
-  }, [models, total, onStatsChange])
 
   const handleSaved = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['consumable-types'] })

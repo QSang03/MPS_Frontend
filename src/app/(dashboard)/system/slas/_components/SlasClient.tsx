@@ -7,10 +7,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   ArrowLeft,
   CheckCircle2,
-  Clock4,
   Plus,
   ShieldCheck,
-  Zap,
   Edit3,
   FileText,
   Building2,
@@ -43,7 +41,6 @@ import { CustomerSelect } from '@/components/shared/CustomerSelect'
 import { SlaFormDialog, type SlaFormValues } from './SlaFormDialog'
 import { SystemPageHeader } from '@/components/system/SystemPageHeader'
 import { FilterSection } from '@/components/system/FilterSection'
-import { StatsCards } from '@/components/system/StatsCard'
 import { slasClientService } from '@/lib/api/services/slas-client.service'
 import type { SLA } from '@/types/models/sla'
 import { Priority } from '@/constants/status'
@@ -56,15 +53,6 @@ interface SlasClientProps {
 }
 
 type SlaRow = SLA
-
-interface SlaStats {
-  total: number
-  active: number
-  paused: number
-  critical: number
-  avgResponse: number
-  avgResolution: number
-}
 
 const getPriorityOptions = (t: (key: string) => string) => [
   { label: t('sla.filter.priority.all'), value: 'all' },
@@ -124,14 +112,6 @@ export default function SlasClient({ session }: SlasClientProps) {
   const debouncedSearch = useDebouncedValue(searchTerm, 500)
   const priorityOptions = useMemo(() => getPriorityOptions(t), [t])
   const statusOptions = useMemo(() => getStatusOptions(t), [t])
-  const [stats, setStats] = useState<SlaStats>({
-    total: 0,
-    active: 0,
-    paused: 0,
-    critical: 0,
-    avgResponse: 0,
-    avgResolution: 0,
-  })
 
   const createMutation = useMutation({
     mutationFn: (payload: SlaFormValues) => slasClientService.create(payload),
@@ -303,35 +283,6 @@ export default function SlasClient({ session }: SlasClientProps) {
         }
       />
 
-      <StatsCards
-        cards={[
-          {
-            label: t('sla.stats.active'),
-            value: `${stats.active} / ${stats.total}`,
-            icon: <ShieldCheck className="h-6 w-6" />,
-            borderColor: 'emerald',
-          },
-          {
-            label: t('sla.stats.critical'),
-            value: stats.critical,
-            icon: <Zap className="h-6 w-6" />,
-            borderColor: 'orange',
-          },
-          {
-            label: t('sla.stats.avg_response'),
-            value: stats.avgResponse ? `${stats.avgResponse}h` : '--',
-            icon: <Clock4 className="h-6 w-6" />,
-            borderColor: 'blue',
-          },
-          {
-            label: t('sla.stats.avg_resolution'),
-            value: stats.avgResolution ? `${stats.avgResolution}h` : '--',
-            icon: <CheckCircle2 className="h-6 w-6" />,
-            borderColor: 'purple',
-          },
-        ]}
-      />
-
       <FilterSection
         title={t('sla.filter.title')}
         onReset={handleResetFilters}
@@ -420,7 +371,6 @@ export default function SlasClient({ session }: SlasClientProps) {
             sorting={sorting}
             onPaginationChange={setPagination}
             onSortingChange={setSorting}
-            onStatsChange={setStats}
             renderColumnVisibilityMenu={setColumnVisibilityMenu}
             onEdit={handleEditClick}
             onDelete={handleDelete}
@@ -452,7 +402,6 @@ interface SlasTableContentProps {
   sorting: { sortBy?: string; sortOrder?: 'asc' | 'desc' }
   onPaginationChange: (pagination: { pageIndex: number; pageSize: number }) => void
   onSortingChange: (sorting: { sortBy?: string; sortOrder?: 'asc' | 'desc' }) => void
-  onStatsChange: (stats: SlaStats) => void
   renderColumnVisibilityMenu: (menu: ReactNode | null) => void
   onEdit: (sla: SLA) => void
   onDelete: (id: string) => Promise<void> | void
@@ -468,7 +417,6 @@ function SlasTableContent({
   sorting,
   onPaginationChange,
   onSortingChange,
-  onStatsChange,
   renderColumnVisibilityMenu,
   onEdit,
   onDelete,
@@ -494,39 +442,6 @@ function SlasTableContent({
   const { data } = useSlasQuery(queryParams, { version: sortVersion })
   const rows = useMemo(() => (data?.data ?? []) as SlaRow[], [data?.data])
   const totalCount = data?.pagination?.total ?? rows.length
-
-  useEffect(() => {
-    if (!rows.length) {
-      onStatsChange({
-        total: 0,
-        active: 0,
-        paused: 0,
-        critical: 0,
-        avgResponse: 0,
-        avgResolution: 0,
-      })
-      return
-    }
-    const active = rows.filter((sla) => sla.isActive).length
-    const paused = rows.length - active
-    const critical = rows.filter(
-      (sla) => sla.priority === Priority.HIGH || sla.priority === Priority.URGENT
-    ).length
-    const avgResponse = Math.round(
-      rows.reduce((sum, sla) => sum + (sla.responseTimeHours ?? 0), 0) / rows.length
-    )
-    const avgResolution = Math.round(
-      rows.reduce((sum, sla) => sum + (sla.resolutionTimeHours ?? 0), 0) / rows.length
-    )
-    onStatsChange({
-      total: totalCount,
-      active,
-      paused,
-      critical,
-      avgResponse,
-      avgResolution,
-    })
-  }, [rows, totalCount, onStatsChange])
 
   const columns = useMemo<ColumnDef<SlaRow>[]>(
     () => [

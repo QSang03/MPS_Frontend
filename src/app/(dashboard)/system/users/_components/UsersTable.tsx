@@ -23,7 +23,6 @@ import {
 } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { StatsCards } from '@/components/system/StatsCard'
 import { FilterSection } from '@/components/system/FilterSection'
 import { TableSkeleton } from '@/components/system/TableSkeleton'
 import { TableWrapper } from '@/components/system/TableWrapper'
@@ -36,8 +35,6 @@ import {
   Calendar,
   RotateCcw,
   Users,
-  CheckCircle2,
-  AlertCircle,
   Building2,
   UserCog,
   Settings,
@@ -54,8 +51,6 @@ import { useUsersQuery } from '@/lib/hooks/queries/useUsersQuery'
 import type { User, UserFilters, UserPagination, UserRole, UsersResponse } from '@/types/users'
 import type { Customer } from '@/types/models/customer'
 import type { ColumnDef } from '@tanstack/react-table'
-
-type UsersStats = { total: number; active: number; inactive: number }
 
 export function UsersTable() {
   const searchParams = useSearchParams()
@@ -84,7 +79,6 @@ export function UsersTable() {
   })
   const [searchInput, setSearchInput] = useState(filters.search)
   const [columnVisibilityMenu, setColumnVisibilityMenu] = useState<ReactNode | null>(null)
-  const [stats, setStats] = useState<UsersStats>({ total: 0, active: 0, inactive: 0 })
   const [editingUser, setEditingUser] = useState<User | null>(null)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
 
@@ -268,33 +262,8 @@ export function UsersTable() {
     setPagination((prev) => ({ ...prev, ...meta }))
   }, [])
 
-  const handleStatsChange = useCallback((next: UsersStats) => setStats(next), [])
-
   return (
     <div className="space-y-6">
-      <StatsCards
-        cards={[
-          {
-            label: t('user.total_users'),
-            value: stats.total,
-            icon: <Users className="h-6 w-6" />,
-            borderColor: 'blue',
-          },
-          {
-            label: t('user.active'),
-            value: stats.active,
-            icon: <CheckCircle2 className="h-6 w-6" />,
-            borderColor: 'green',
-          },
-          {
-            label: t('user.inactive'),
-            value: stats.inactive,
-            icon: <AlertCircle className="h-6 w-6" />,
-            borderColor: 'gray',
-          },
-        ]}
-      />
-
       <FilterSection
         title={t('filter.title')}
         subtitle={t('filter.subtitle')}
@@ -376,7 +345,6 @@ export function UsersTable() {
             setSorting(next)
             setSortVersion((v) => v + 1)
           }}
-          onStatsChange={handleStatsChange}
           onEditUser={handleEditUser}
           onResetPassword={handleResetPassword}
           onDeleteUser={handleDeleteUser}
@@ -406,7 +374,6 @@ interface UsersTableContentProps {
   onPaginationChange: (page: number, limit: number) => void
   onPaginationMetaChange: (meta: Partial<UserPagination>) => void
   onSortingChange: (sorting: { sortBy?: string; sortOrder?: 'asc' | 'desc' }) => void
-  onStatsChange: (stats: UsersStats) => void
   onEditUser: (user: User) => void
   onResetPassword: (userId: string) => Promise<void>
   onDeleteUser: (userId: string) => Promise<void>
@@ -423,7 +390,6 @@ function UsersTableContent({
   onPaginationChange,
   onPaginationMetaChange,
   onSortingChange,
-  onStatsChange,
   onEditUser,
   onResetPassword,
   onDeleteUser,
@@ -483,16 +449,6 @@ function UsersTableContent({
       totalPages: meta.totalPages ?? Math.max(1, Math.ceil(users.length / pagination.limit)),
     })
   }, [data?.pagination, users.length, pagination.page, pagination.limit, onPaginationMetaChange])
-
-  useEffect(() => {
-    const totalUsers = data?.pagination?.total ?? users.length
-    const activeUsers = users.filter((user) => user.isActive !== false).length
-    onStatsChange({
-      total: totalUsers,
-      active: activeUsers,
-      inactive: totalUsers - activeUsers,
-    })
-  }, [data?.pagination?.total, users, onStatsChange])
 
   const columns = useMemo<ColumnDef<User>[]>(() => {
     const getRoleBadgeColorLocal = (roleName?: string) => getRoleBadgeColor(roleName)

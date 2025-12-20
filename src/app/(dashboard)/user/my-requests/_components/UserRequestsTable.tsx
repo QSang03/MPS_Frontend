@@ -27,7 +27,6 @@ import { Button } from '@/components/ui/button'
 import { TableWrapper } from '@/components/system/TableWrapper'
 import { Input } from '@/components/ui/input'
 import { FilterSection } from '@/components/system/FilterSection'
-import { StatsCards } from '@/components/system/StatsCard'
 import {
   Select,
   SelectContent,
@@ -96,13 +95,6 @@ export function UserRequestsTable({ defaultCustomerId }: UserRequestsTableProps)
     sortOrder: 'desc',
   })
   const [columnVisibilityMenu, setColumnVisibilityMenu] = useState<ReactNode | null>(null)
-  const [summary, setSummary] = useState({
-    total: 0,
-    open: 0,
-    inProgress: 0,
-    resolved: 0,
-    urgent: 0,
-  })
 
   const statusOptions = [
     { label: t('requests.service.status.open'), value: ServiceRequestStatus.OPEN },
@@ -173,42 +165,6 @@ export function UserRequestsTable({ defaultCustomerId }: UserRequestsTableProps)
 
   return (
     <div className="space-y-6">
-      <StatsCards
-        cards={[
-          {
-            label: t('requests.service.stats.total'),
-            value: summary.total,
-            icon: <FileText className="h-6 w-6" />,
-            borderColor: 'blue',
-          },
-          {
-            label: t('requests.service.stats.open'),
-            value: summary.open,
-            icon: <FileText className="h-6 w-6" />,
-            borderColor: 'blue',
-          },
-          {
-            label: t('requests.service.stats.in_progress'),
-            value: summary.inProgress,
-            icon: <FileText className="h-6 w-6" />,
-            borderColor: 'orange',
-          },
-          {
-            label: t('requests.service.stats.resolved'),
-            value: summary.resolved,
-            icon: <FileText className="h-6 w-6" />,
-            borderColor: 'green',
-          },
-          {
-            label: t('requests.service.stats.urgent'),
-            value: summary.urgent,
-            icon: <FileText className="h-6 w-6" />,
-            borderColor: 'red',
-          },
-        ]}
-        className="md:grid-cols-5"
-      />
-
       <FilterSection
         title={t('requests.service.filter.title')}
         onReset={handleResetFilters}
@@ -293,7 +249,6 @@ export function UserRequestsTable({ defaultCustomerId }: UserRequestsTableProps)
           sorting={sorting}
           onPaginationChange={setPagination}
           onSortingChange={setSorting}
-          onStatsChange={setSummary}
           renderColumnVisibilityMenu={setColumnVisibilityMenu}
         />
       </Suspense>
@@ -311,13 +266,6 @@ interface UserRequestsTableContentProps {
   sorting: { sortBy?: string; sortOrder?: 'asc' | 'desc' }
   onPaginationChange: (pagination: { pageIndex: number; pageSize: number }) => void
   onSortingChange: (sorting: { sortBy?: string; sortOrder?: 'asc' | 'desc' }) => void
-  onStatsChange: (summary: {
-    total: number
-    open: number
-    inProgress: number
-    resolved: number
-    urgent: number
-  }) => void
   renderColumnVisibilityMenu: (menu: ReactNode | null) => void
 }
 
@@ -331,7 +279,6 @@ function UserRequestsTableContent({
   sorting,
   onPaginationChange,
   onSortingChange,
-  onStatsChange,
   renderColumnVisibilityMenu,
 }: UserRequestsTableContentProps) {
   const [isPending, startTransition] = useTransition()
@@ -378,20 +325,6 @@ function UserRequestsTableContent({
       )
     )
   }, [requests])
-
-  useEffect(() => {
-    const open = requests.filter((r) => r.status === ServiceRequestStatus.OPEN).length
-    const inProgress = requests.filter((r) => r.status === ServiceRequestStatus.IN_PROGRESS).length
-    const resolved = requests.filter((r) => r.status === ServiceRequestStatus.RESOLVED).length
-    const urgent = requests.filter((r) => r.priority === Priority.URGENT).length
-    onStatsChange({
-      total: totalCount,
-      open,
-      inProgress,
-      resolved,
-      urgent,
-    })
-  }, [requests, totalCount, onStatsChange])
 
   const handleViewDetail = useCallback(
     (id: string) => {

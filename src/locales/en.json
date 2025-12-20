@@ -2242,6 +2242,7 @@
   "customer.select.location.hint.no_addresses": "Enter specific device location at customer (room, floor, area...)",
   "devices.assign_customer.success": "Device assigned to customer {customer}",
   "devices.assign_customer.error": "Cannot assign customer to device",
+  "devices.assign_customer.sla_required": "Cannot assign device to customer without active SLA. Please create SLA for this customer first.",
   "devices.return_to_warehouse.success": "Device returned to warehouse (System)",
   "devices.return_to_warehouse.error": "Cannot return device to warehouse",
   "device.form.validation.serial_required": "Serial number is required",

@@ -20,7 +20,6 @@ import {
   Monitor,
   Search,
   CheckCircle2,
-  AlertCircle,
   Users,
   MapPin,
   Package,
@@ -39,7 +38,6 @@ import {
   isCurrentDevice,
   formatOwnershipPeriod,
 } from '@/lib/utils/device-ownership.utils'
-import { StatsCards } from '@/components/system/StatsCard'
 import { TableSkeleton } from '@/components/system/TableSkeleton'
 import { TableWrapper } from '@/components/system/TableWrapper'
 import { Input } from '@/components/ui/input'
@@ -69,19 +67,12 @@ import { devicesClientService } from '@/lib/api/services/devices-client.service'
 import { customersClientService } from '@/lib/api/services/customers-client.service'
 import { STATUS_DISPLAY } from '@/constants/status'
 import type { DeviceStatusValue } from '@/constants/status'
-// removed unused `cn` import
-
-type DeviceStats = { total: number; active: number; inactive: number }
 
 export default function DevicesPageClient() {
   const { t } = useLocale()
 
-  // NOTE: This component uses a per-row check for session role via IIFE calls with useNavigation.
-  // Be careful folding hooks into loops; keep useNavigation at top-level if refactoring later.
-
   const [searchInput, setSearchInput] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
-  // Keep locale reader near columns to avoid lint issues
   const [statusFilter, setStatusFilter] = useState<string | null>(() => {
     if (typeof window === 'undefined') return null
     try {
@@ -107,7 +98,6 @@ export default function DevicesPageClient() {
   })
   const [sortVersion, setSortVersion] = useState(0)
   const [columnVisibilityMenu, setColumnVisibilityMenu] = useState<ReactNode | null>(null)
-  const [stats, setStats] = useState<DeviceStats>({ total: 0, active: 0, inactive: 0 })
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -216,29 +206,6 @@ export default function DevicesPageClient() {
 
   return (
     <div className="space-y-6">
-      <StatsCards
-        cards={[
-          {
-            label: t('devices.stats.total_label'),
-            value: stats.total,
-            icon: <Monitor className="h-6 w-6" />,
-            borderColor: 'blue',
-          },
-          {
-            label: t('devices.stats.active_label'),
-            value: stats.active,
-            icon: <CheckCircle2 className="h-6 w-6" />,
-            borderColor: 'green',
-          },
-          {
-            label: t('devices.stats.inactive_label'),
-            value: stats.inactive,
-            icon: <AlertCircle className="h-6 w-6" />,
-            borderColor: 'gray',
-          },
-        ]}
-      />
-
       <FilterSection
         title={t('devices.filter.title')}
         subtitle={t('page.devices.subtitle')}
@@ -361,7 +328,6 @@ export default function DevicesPageClient() {
             setSorting(next)
             setSortVersion((v) => v + 1)
           }}
-          onStatsChange={setStats}
           renderColumnVisibilityMenu={setColumnVisibilityMenu}
           sortVersion={sortVersion}
         />
@@ -435,7 +401,6 @@ interface DevicesTableContentProps {
   sorting: { sortBy?: string; sortOrder?: 'asc' | 'desc' }
   onPaginationChange: (page: number, limit: number) => void
   onSortingChange: (sorting: { sortBy?: string; sortOrder?: 'asc' | 'desc' }) => void
-  onStatsChange: (stats: DeviceStats) => void
   renderColumnVisibilityMenu: (menu: ReactNode | null) => void
   sortVersion?: number
 }
@@ -450,7 +415,6 @@ function DevicesTableContent({
   sorting,
   onPaginationChange,
   onSortingChange,
-  onStatsChange,
   renderColumnVisibilityMenu,
   sortVersion,
 }: DevicesTableContentProps) {
@@ -513,16 +477,6 @@ function DevicesTableContent({
       },
     [data?.pagination, devices.length, pagination.page, pagination.limit]
   )
-
-  useEffect(() => {
-    const total = paginationMeta.total ?? devices.length
-    const active = devices.filter((device) => device.isActive !== false).length
-    onStatsChange({
-      total,
-      active,
-      inactive: Math.max(total - active, 0),
-    })
-  }, [devices, paginationMeta, onStatsChange])
 
   const invalidateDevices = useCallback(async () => {
     await queryClient.invalidateQueries({ queryKey: ['devices'] })

@@ -2149,6 +2149,7 @@
   "customer.select.location.hint.no_addresses": "Nhập vị trí cụ thể của thiết bị tại khách hàng (phòng, tầng, khu vực...)",
   "devices.assign_customer.success": "Đã gán thiết bị cho khách hàng {customer}",
   "devices.assign_customer.error": "Không thể gán khách hàng cho thiết bị",
+  "devices.assign_customer.sla_required": "Không thể gán thiết bị cho khách hàng chưa có SLA. Vui lòng tạo SLA cho khách hàng này trước.",
   "devices.return_to_warehouse.success": "Đã đưa thiết bị về kho (System)",
   "devices.return_to_warehouse.error": "Không thể đưa thiết bị về kho",
   "device.form.validation.serial_required": "Serial number là bắt buộc",

@@ -19,7 +19,6 @@ import {
 } from '@/components/ui/select'
 import { Edit, Trash2, TrendingUp, CheckCircle2, XCircle } from 'lucide-react'
 import { FilterSection } from '@/components/system/FilterSection'
-import { StatsCards } from '@/components/system/StatsCard'
 import { TableSkeleton } from '@/components/system/TableSkeleton'
 import { PaginationControls } from '@/components/system/PaginationControls'
 import { ExchangeRateFormModal } from './ExchangeRateFormModal'
@@ -186,17 +185,6 @@ export function ExchangeRatesList({
     setEditingRate(null)
   }
 
-  const stats = useMemo(() => {
-    const total = pagination?.total || 0
-    const active = exchangeRates.filter((r) => {
-      const now = new Date()
-      const from = new Date(r.effectiveFrom)
-      const to = r.effectiveTo ? new Date(r.effectiveTo) : null
-      return from <= now && (!to || to >= now)
-    }).length
-    return { total, active }
-  }, [exchangeRates, pagination])
-
   const columns: ColumnDef<ExchangeRateDataDto>[] = useMemo(
     () => [
       {
@@ -318,25 +306,6 @@ export function ExchangeRatesList({
       {/* Currency Converter Tool */}
       <CurrencyConverter currencies={currencies} />
 
-      {/* Stats Cards */}
-      <StatsCards
-        cards={[
-          {
-            label: t('exchange_rates.stats.total_rates'),
-            value: stats.total,
-            icon: <TrendingUp className="h-6 w-6" />,
-            borderColor: 'blue',
-          },
-          {
-            label: t('status.active'),
-            value: stats.active,
-            icon: <CheckCircle2 className="h-6 w-6" />,
-            borderColor: 'green',
-          },
-        ]}
-      />
-
-      {/* Filters */}
       <FilterSection
         title={t('filters.general')}
         onReset={handleResetFilters}

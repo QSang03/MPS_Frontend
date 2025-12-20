@@ -1,14 +1,6 @@
 'use client'
 
-import {
-  Suspense,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  useTransition,
-  type ReactNode,
-} from 'react'
+import { Suspense, useEffect, useMemo, useState, useTransition, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { departmentsClientService } from '@/lib/api/services/departments-client.service'
 import { useDepartmentsQuery } from '@/lib/hooks/queries/useDepartmentsQuery'
@@ -45,18 +37,11 @@ import { DeleteDialog } from '@/components/shared/DeleteDialog'
 import { useLocale } from '@/components/providers/LocaleProvider'
 import { useActionPermission } from '@/lib/hooks/useActionPermission'
 import { FilterSection } from '@/components/system/FilterSection'
-import { StatsCards } from '@/components/system/StatsCard'
 import { TableSkeleton } from '@/components/system/TableSkeleton'
 
 interface DepartmentsTableProps {
   onCreateTrigger?: boolean
   onCreateTriggerReset?: () => void
-}
-
-interface DepartmentStats {
-  total: number
-  active: number
-  inactive: number
 }
 
 export function DepartmentsTable({
@@ -79,7 +64,6 @@ export function DepartmentsTable({
   })
   const [sortVersion, setSortVersion] = useState(0)
   const [columnVisibilityMenu, setColumnVisibilityMenu] = useState<ReactNode | null>(null)
-  const [stats, setStats] = useState<DepartmentStats>({ total: 0, active: 0, inactive: 0 })
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingDept, setEditingDept] = useState<Department | null>(null)
@@ -170,33 +154,8 @@ export function DepartmentsTable({
     }
   }
 
-  const handleStatsChange = useCallback((next: DepartmentStats) => setStats(next), [])
-
   return (
     <div className="space-y-6">
-      <StatsCards
-        cards={[
-          {
-            label: t('departments.stats.total'),
-            value: stats.total,
-            icon: <Building2 className="h-6 w-6" />,
-            borderColor: 'blue',
-          },
-          {
-            label: t('departments.stats.active'),
-            value: stats.active,
-            icon: <CheckCircle2 className="h-6 w-6" />,
-            borderColor: 'green',
-          },
-          {
-            label: t('departments.stats.inactive'),
-            value: stats.inactive,
-            icon: <XCircle className="h-6 w-6" />,
-            borderColor: 'gray',
-          },
-        ]}
-      />
-
       <FilterSection
         title={t('departments.filters.title')}
         onReset={handleResetFilters}
@@ -288,7 +247,6 @@ export function DepartmentsTable({
             setSorting(next)
             setSortVersion((v) => v + 1)
           }}
-          onStatsChange={handleStatsChange}
           renderColumnVisibilityMenu={setColumnVisibilityMenu}
           onEditDepartment={handleEdit}
           onDeleteDepartment={handleDelete}
@@ -320,7 +278,6 @@ interface DepartmentsTableContentProps {
   sorting: { sortBy?: string; sortOrder?: 'asc' | 'desc' }
   onPageChange: (page: number, limit: number) => void
   onSortingChange: (sorting: { sortBy?: string; sortOrder?: 'asc' | 'desc' }) => void
-  onStatsChange: (stats: DepartmentStats) => void
   renderColumnVisibilityMenu: (menu: ReactNode | null) => void
   onEditDepartment: (dept: Department) => void
   onDeleteDepartment: (deptId: string) => Promise<void> | void
@@ -341,7 +298,6 @@ function DepartmentsTableContent({
   sorting,
   onPageChange,
   onSortingChange,
-  onStatsChange,
   renderColumnVisibilityMenu,
   onEditDepartment,
   onDeleteDepartment,
@@ -378,16 +334,6 @@ function DepartmentsTableContent({
       },
     [data?.pagination, departments.length, page, limit]
   )
-
-  useEffect(() => {
-    const total = pagination.total ?? departments.length
-    const active = departments.filter((d) => d.isActive !== false).length
-    onStatsChange({
-      total,
-      active,
-      inactive: total - active,
-    })
-  }, [departments, pagination, onStatsChange])
 
   const columns = useMemo<ColumnDef<Department>[]>(() => {
     return [

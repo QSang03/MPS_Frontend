@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState, useTransition, useCallback } from 'react'
+import { useMemo, useState, useTransition, useCallback } from 'react'
 import type { ReactNode } from 'react'
 import Link from 'next/link'
 import type { ColumnDef } from '@tanstack/react-table'
@@ -47,7 +47,6 @@ interface CustomerTableProps {
   searchInput: string
   onPageChange: (page: number) => void
   onPageSizeChange: (size: number) => void
-  onStatsChange: (stats: { total: number; active: number }) => void
   renderColumnVisibilityMenu: (menu: ReactNode | null) => void
 }
 
@@ -58,7 +57,6 @@ export function CustomerTable({
   searchInput,
   onPageChange,
   onPageSizeChange,
-  onStatsChange,
   renderColumnVisibilityMenu,
 }: CustomerTableProps) {
   const queryClient = useQueryClient()
@@ -100,17 +98,6 @@ export function CustomerTable({
     () => data?.pagination?.total ?? queryCustomers.length,
     [data?.pagination?.total, queryCustomers.length]
   )
-
-  useEffect(() => {
-    setCustomers(queryCustomers)
-    const activeCount = queryCustomers.filter((c) =>
-      Boolean((c as unknown as { isActive?: boolean }).isActive)
-    ).length
-    onStatsChange({
-      total: totalCount,
-      active: activeCount,
-    })
-  }, [queryCustomers, totalCount, onStatsChange])
 
   const handleSaved = useCallback(
     (updated?: Customer | null) => {

@@ -25,14 +25,10 @@ import {
   ChevronDown,
   Package,
   Plus,
-  CheckCircle,
-  XCircle,
-  Box,
   MoreHorizontal,
   FileText,
   Filter,
   RefreshCw,
-  Zap,
 } from 'lucide-react'
 import { consumablesClientService } from '@/lib/api/services/consumables-client.service'
 import { devicesClientService } from '@/lib/api/services/devices-client.service'
@@ -51,7 +47,6 @@ import {
 } from '@/components/ui/table'
 import { LoadingState } from '@/components/ui/LoadingState'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { StatsCard, StatsCardsGrid } from '@/components/shared/StatsCard'
 import { SearchInput } from '@/components/shared/SearchInput'
 import { CONSUMABLE_STYLES } from '@/constants/consumableStyles'
 import { useLocale } from '@/components/providers/LocaleProvider'
@@ -188,16 +183,6 @@ export default function ConsumablesPageClient() {
 
   // Server-side filtering is now used, so we just use the consumables list directly
   const filteredConsumables = consumables
-
-  const stats = {
-    total: total, // Use total from API
-    // These stats are now only for the current page/view, which might be less useful
-    // but we keep the structure for now. Ideally, we'd fetch global stats separately.
-    installed: consumables.filter((c) => Number(c.deviceCount) > 0).length,
-    notInstalled: consumables.filter((c) => Number(c.deviceCount) === 0).length,
-    active: consumables.filter((c) => String(c.status) === 'ACTIVE').length,
-    inactive: consumables.filter((c) => String(c.status) !== 'ACTIVE').length,
-  }
 
   const { can } = useActionPermission('user-consumables')
 
@@ -425,34 +410,6 @@ export default function ConsumablesPageClient() {
           </div>
         }
       />
-
-      {/* Stats Cards */}
-      <StatsCardsGrid>
-        <StatsCard
-          label={t('user_consumables.stats.installed')}
-          value={stats.installed}
-          icon={<CheckCircle />}
-          variant="success"
-        />
-        <StatsCard
-          label={t('user_consumables.stats.not_installed')}
-          value={stats.notInstalled}
-          icon={<Box />}
-          variant="neutral"
-        />
-        <StatsCard
-          label={t('user_consumables.stats.active')}
-          value={stats.active}
-          icon={<Zap />}
-          variant="info"
-        />
-        <StatsCard
-          label={t('user_consumables.stats.inactive')}
-          value={stats.inactive}
-          icon={<XCircle />}
-          variant="warning"
-        />
-      </StatsCardsGrid>
 
       {/* Filter Card */}
       <div className="relative">

@@ -24,7 +24,6 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { FilterSection } from '@/components/system/FilterSection'
-import { StatsCards } from '@/components/system/StatsCard'
 import {
   Select,
   SelectContent,
@@ -147,12 +146,6 @@ export function UserPurchaseRequestsTable({ defaultCustomerId }: UserPurchaseReq
     sortOrder: 'desc',
   })
   const [columnVisibilityMenu, setColumnVisibilityMenu] = useState<ReactNode | null>(null)
-  const [summary, setSummary] = useState({
-    total: 0,
-    pending: 0,
-    ordered: 0,
-    received: 0,
-  })
 
   const debouncedSearch = useDebouncedValue(search, 400)
 
@@ -189,35 +182,6 @@ export function UserPurchaseRequestsTable({ defaultCustomerId }: UserPurchaseReq
 
   return (
     <div className="space-y-6">
-      <StatsCards
-        cards={[
-          {
-            label: t('requests.purchase.stats.total'),
-            value: summary.total,
-            icon: <ListOrdered className="h-6 w-6" />,
-            borderColor: 'blue',
-          },
-          {
-            label: t('requests.purchase.stats.pending'),
-            value: summary.pending,
-            icon: <ListOrdered className="h-6 w-6" />,
-            borderColor: 'orange',
-          },
-          {
-            label: t('requests.purchase.stats.ordered'),
-            value: summary.ordered,
-            icon: <ListOrdered className="h-6 w-6" />,
-            borderColor: 'blue',
-          },
-          {
-            label: t('requests.purchase.stats.received'),
-            value: summary.received,
-            icon: <ListOrdered className="h-6 w-6" />,
-            borderColor: 'green',
-          },
-        ]}
-      />
-
       <FilterSection
         title={t('requests.purchase.filter.title')}
         onReset={handleResetFilters}
@@ -281,7 +245,6 @@ export function UserPurchaseRequestsTable({ defaultCustomerId }: UserPurchaseReq
           sorting={sorting}
           onPaginationChange={setPagination}
           onSortingChange={setSorting}
-          onStatsChange={setSummary}
           renderColumnVisibilityMenu={setColumnVisibilityMenu}
         />
       </Suspense>
@@ -298,12 +261,6 @@ interface UserPurchaseRequestsTableContentProps {
   sorting: { sortBy?: string; sortOrder?: 'asc' | 'desc' }
   onPaginationChange: (pagination: { pageIndex: number; pageSize: number }) => void
   onSortingChange: (sorting: { sortBy?: string; sortOrder?: 'asc' | 'desc' }) => void
-  onStatsChange: (summary: {
-    total: number
-    pending: number
-    ordered: number
-    received: number
-  }) => void
   renderColumnVisibilityMenu: (menu: ReactNode | null) => void
 }
 
@@ -316,7 +273,6 @@ function UserPurchaseRequestsTableContent({
   sorting,
   onPaginationChange,
   onSortingChange,
-  onStatsChange,
   renderColumnVisibilityMenu,
 }: UserPurchaseRequestsTableContentProps) {
   const { t } = useLocale()
@@ -347,18 +303,6 @@ function UserPurchaseRequestsTableContent({
   const { data } = usePurchaseRequestsQuery(queryParams, { version: sortVersion })
   const requests = useMemo(() => (data?.data ?? []) as PurchaseRequestRow[], [data?.data])
   const totalCount = data?.pagination?.total ?? requests.length
-
-  useEffect(() => {
-    const pending = requests.filter((r) => r.status === PurchaseRequestStatus.PENDING).length
-    const ordered = requests.filter((r) => r.status === PurchaseRequestStatus.ORDERED).length
-    const received = requests.filter((r) => r.status === PurchaseRequestStatus.RECEIVED).length
-    onStatsChange({
-      total: totalCount,
-      pending,
-      ordered,
-      received,
-    })
-  }, [requests, totalCount, onStatsChange])
 
   const columns = useMemo<ColumnDef<PurchaseRequestRow>[]>(
     () => [

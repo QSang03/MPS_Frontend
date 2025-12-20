@@ -82,7 +82,13 @@ export default function PurchaseRequestMessages({
     }
   }
 
-  const messages = data?.data || []
+  const rawMessages = data?.data || []
+  // Ensure newest message is at the bottom (chat-style)
+  const messages = [...rawMessages].sort((a: PurchaseRequestMessage, b: PurchaseRequestMessage) => {
+    const aTime = typeof a.createdAt === 'string' ? Date.parse(a.createdAt) : 0
+    const bTime = typeof b.createdAt === 'string' ? Date.parse(b.createdAt) : 0
+    return aTime - bTime
+  })
 
   return (
     <div className="relative flex h-full flex-col bg-slate-50/30 dark:bg-slate-900/10">
