@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState, useTransition, useCallback } from 'react'
+import { useMemo, useState, useTransition, useCallback, useEffect } from 'react'
 import type { ReactNode } from 'react'
 import Link from 'next/link'
 import type { ColumnDef } from '@tanstack/react-table'
@@ -98,6 +98,13 @@ export function CustomerTable({
     () => data?.pagination?.total ?? queryCustomers.length,
     [data?.pagination?.total, queryCustomers.length]
   )
+
+  // Sync customers state with API data on initial load and when data changes
+  useEffect(() => {
+    if (queryCustomers.length > 0) {
+      setCustomers(queryCustomers)
+    }
+  }, [queryCustomers])
 
   const handleSaved = useCallback(
     (updated?: Customer | null) => {

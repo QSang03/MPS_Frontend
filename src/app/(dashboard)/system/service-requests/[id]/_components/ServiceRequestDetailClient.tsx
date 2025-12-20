@@ -280,6 +280,20 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
   const timeline: TimelineEntry[] = (
     [
       {
+        label: t('requests.service.timeline.created'),
+        time: data.createdAt,
+        by: data.createdByName ?? data.createdBy,
+        icon: Plus,
+        color: 'text-slate-600',
+      },
+      {
+        label: t('requests.service.timeline.approved'),
+        time: data.approvedAt,
+        by: data.approvedByName ?? data.approvedBy,
+        icon: CheckCircle2,
+        color: 'text-emerald-600',
+      },
+      {
         label: t('requests.service.timeline.responded'),
         time: data.respondedAt,
         by: data.respondedByName ?? data.respondedBy,
@@ -306,13 +320,6 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
         by: data.customerClosedByName ?? data.customerClosedBy,
         icon: XCircle,
         color: 'text-rose-500',
-      },
-      {
-        label: t('requests.service.timeline.approved'),
-        time: data.approvedAt,
-        by: data.approvedByName ?? data.approvedBy,
-        icon: CheckCircle2,
-        color: 'text-emerald-600',
       },
     ] as TimelineEvent[]
   ).filter((event): event is TimelineEntry => Boolean(event.time))
