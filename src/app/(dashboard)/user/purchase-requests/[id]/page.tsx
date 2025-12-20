@@ -7,7 +7,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   ArrowLeft,
   Building2,
-  Smartphone,
   Clock,
   CheckCircle2,
   CalendarCheck,
@@ -18,11 +17,9 @@ import {
 } from 'lucide-react'
 
 import { purchaseRequestsClientService } from '@/lib/api/services/purchase-requests-client.service'
-import { devicesClientService } from '@/lib/api/services/devices-client.service'
 import { getClientUserProfile } from '@/lib/auth/client-auth'
 import type { UserProfile } from '@/types/auth'
 import type { PurchaseRequest, PurchaseRequestItem } from '@/types/models/purchase-request'
-import type { Device } from '@/types/models/device'
 
 import { useLocale } from '@/components/providers/LocaleProvider'
 import { Button } from '@/components/ui/button'
@@ -99,13 +96,6 @@ export default function UserPurchaseRequestDetailPage() {
   })
 
   const detail = useMemo(() => (data as PurchaseRequest | null) ?? null, [data])
-
-  const deviceId = detail?.deviceId
-  const { data: device } = useQuery({
-    queryKey: ['device', deviceId],
-    queryFn: () => devicesClientService.getById(deviceId as string),
-    enabled: Boolean(deviceId),
-  })
 
   const items: PurchaseRequestItem[] = detail?.items ?? []
   const totalAmount =
@@ -339,53 +329,6 @@ export default function UserPurchaseRequestDetailPage() {
             </CardContent>
           </Card>
 
-          {/* Timeline */}
-          <Card className="overflow-hidden border-none shadow-sm ring-1 ring-slate-200 dark:ring-slate-800">
-            <CardHeader className="bg-slate-50/50 pb-3 dark:bg-slate-900/50">
-              <CardTitle className="flex items-center gap-2 text-base font-medium">
-                <Clock className="h-4 w-4" />
-                {t('timeline.title')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-4">
-              {timeline.length === 0 ? (
-                <div className="text-muted-foreground py-8 text-center text-sm">
-                  {t('timeline.empty')}
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {timeline.map((event, idx) => (
-                    <div key={idx} className="flex gap-3">
-                      <div
-                        className={`flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800`}
-                      >
-                        <event.icon className={`h-4 w-4 ${event.color}`} />
-                      </div>
-                      <div className="flex-1 space-y-1">
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm font-medium">{event.label}</p>
-                          <p className="text-muted-foreground text-xs">
-                            {formatDateTime(event.time)}
-                          </p>
-                        </div>
-                        {event.by && (
-                          <p className="text-muted-foreground text-xs">
-                            {t('timeline.by')} {event.by}
-                          </p>
-                        )}
-                        {event.reason && (
-                          <p className="text-muted-foreground text-xs">
-                            {t('timeline.reason')}: {event.reason}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
           <ActionGuard pageId="user-my-requests" actionId="purchase-messages">
             <Card className="flex h-[600px] flex-col border-none shadow-sm ring-1 ring-slate-200 dark:ring-slate-800">
               <CardHeader className="pb-3">
@@ -506,32 +449,48 @@ export default function UserPurchaseRequestDetailPage() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="bg-muted/20 border-b pt-4 pb-3">
-              <CardTitle className="flex items-center gap-2 text-sm font-semibold">
-                <Smartphone className="h-4 w-4" />
-                {t('user_service_request.device.title')}
+          {/* Timeline */}
+          <Card className="overflow-hidden border-none shadow-sm ring-1 ring-slate-200 dark:ring-slate-800">
+            <CardHeader className="bg-slate-50/50 pb-3 dark:bg-slate-900/50">
+              <CardTitle className="flex items-center gap-2 text-base font-medium">
+                <Clock className="h-4 w-4" />
+                {t('timeline.title')}
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3 pt-4">
-              {device ? (
-                <div className="grid gap-2 text-sm">
-                  <InfoRow label={t('table.model')} value={(device as Device).deviceModel?.name} />
-                  <InfoRow label={t('table.serial')} value={(device as Device).serialNumber} />
-                  <InfoRow
-                    label={t('user_service_request.device.ip')}
-                    value={(device as Device).ipAddress}
-                  />
-                  <InfoRow label={t('table.location')} value={(device as Device).location} />
-                  <div className="pt-1">
-                    <Badge variant="secondary" className="text-xs font-normal">
-                      {(device as Device).status}
-                    </Badge>
-                  </div>
+            <CardContent className="pt-4">
+              {timeline.length === 0 ? (
+                <div className="text-muted-foreground py-8 text-center text-sm">
+                  {t('timeline.empty')}
                 </div>
               ) : (
-                <div className="text-muted-foreground text-sm italic">
-                  {t('user_service_request.device.not_linked')}
+                <div className="space-y-4">
+                  {timeline.map((event, idx) => (
+                    <div key={idx} className="flex gap-3">
+                      <div
+                        className={`flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800`}
+                      >
+                        <event.icon className={`h-4 w-4 ${event.color}`} />
+                      </div>
+                      <div className="flex-1 space-y-1">
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm font-medium">{event.label}</p>
+                          <p className="text-muted-foreground text-xs">
+                            {formatDateTime(event.time)}
+                          </p>
+                        </div>
+                        {event.by && (
+                          <p className="text-muted-foreground text-xs">
+                            {t('timeline.by')} {event.by}
+                          </p>
+                        )}
+                        {event.reason && (
+                          <p className="text-muted-foreground text-xs">
+                            {t('timeline.reason')}: {event.reason}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </CardContent>
