@@ -177,7 +177,11 @@ function SearchSelect({
           <span className="text-muted-foreground text-xs">▼</span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="start" sideOffset={4} className="bg-background z-[70] w-[320px] p-3">
+      <PopoverContent
+        align="start"
+        sideOffset={4}
+        className="bg-background z-[70] w-[min(60vw,720px)] max-w-[90vw] p-3"
+      >
         <div className="space-y-2">
           <Input
             placeholder={t('filters.search_placeholder')}
