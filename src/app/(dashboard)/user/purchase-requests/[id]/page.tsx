@@ -399,17 +399,7 @@ export default function UserPurchaseRequestDetailPage() {
                       />
                       <Button
                         className="w-full"
-                        onClick={() => {
-                          const noteRequired = statusUpdate === PurchaseRequestStatus.CANCELLED
-                          if (noteRequired && !actionNote?.trim()) {
-                            toast({
-                              title: t('purchase_request.messages.action_note_required'),
-                              variant: 'destructive',
-                            })
-                            return
-                          }
-                          updateStatusMutation.mutate()
-                        }}
+                        onClick={() => updateStatusMutation.mutate()}
                         disabled={!statusUpdate || updateStatusMutation.isPending}
                       >
                         {updateStatusMutation.isPending
