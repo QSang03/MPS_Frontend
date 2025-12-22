@@ -787,6 +787,7 @@
   "customer.form.title_create": "Tạo khách hàng mới",
   "customer.form.title_edit": "Chỉnh sửa khách hàng",
   "customer.form.description_create": "Thêm khách hàng vào hệ thống",
+  "customer.section.basic_info": "Thông tin cơ bản",
   "customer.form.description_edit": "Cập nhật thông tin khách hàng",
   "customer.section.address_desc": "Địa chỉ & mô tả",
   "customer.section.invoice_info": "Thông tin hóa đơn",

@@ -736,6 +736,7 @@
   "customer.form.title_create": "Create new customer",
   "customer.form.title_edit": "Edit customer",
   "customer.form.description_create": "Add customer to the system",
+  "customer.section.basic_info": "Basic information",
   "customer.form.description_edit": "Update customer information",
   "customer.section.address_desc": "Address & description",
   "customer.section.invoice_info": "Invoice information",
