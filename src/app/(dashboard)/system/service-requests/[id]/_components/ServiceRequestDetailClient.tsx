@@ -207,7 +207,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
 
   const [showAddCost, setShowAddCost] = useState(false)
   const [newItems, setNewItems] = useState<
-    Array<{ type: 'LABOR' | 'PARTS' | 'OTHER'; amount: number; note?: string }>
+    Array<{ type: 'LABOR' | 'PART' | 'OTHER'; amount: number; note?: string }>
   >([{ type: 'LABOR', amount: 0, note: '' }])
   const [costCurrencyId, setCostCurrencyId] = useState<string | null>(null)
   const [costCurrencyCode, setCostCurrencyCode] = useState<string | null>(null)
@@ -218,7 +218,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
       totalAmount?: number
       currencyId?: string
       currencyCode?: string
-      items: Array<{ type: 'LABOR' | 'PARTS' | 'OTHER'; amount: number; note?: string }>
+      items: Array<{ type: 'LABOR' | 'PART' | 'OTHER'; amount: number; note?: string }>
     }) => serviceRequestsClientService.createCost(id, payload),
     onSuccess: () => {
       toast.success(t('requests.service.cost_saved'))
@@ -239,7 +239,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
 
   function updateItemAt(
     index: number,
-    patch: Partial<{ type: 'LABOR' | 'PARTS' | 'OTHER'; amount: number; note?: string }>
+    patch: Partial<{ type: 'LABOR' | 'PART' | 'OTHER'; amount: number; note?: string }>
   ) {
     setNewItems((prev) => prev.map((it, i) => (i === index ? { ...it, ...patch } : it)))
   }
@@ -249,7 +249,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
   }
 
   function addItem() {
-    setNewItems((prev) => [...prev, { type: 'PARTS', amount: 0, note: '' }])
+    setNewItems((prev) => [...prev, { type: 'PART', amount: 0, note: '' }])
   }
 
   if (isLoading) {
@@ -1089,7 +1089,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                         <Select
                           value={it.type}
                           onValueChange={(v) =>
-                            updateItemAt(idx, { type: v as 'LABOR' | 'PARTS' | 'OTHER' })
+                            updateItemAt(idx, { type: v as 'LABOR' | 'PART' | 'OTHER' })
                           }
                         >
                           <SelectTrigger className="bg-background h-9">
@@ -1099,7 +1099,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                             <SelectItem value="LABOR">
                               {t('requests.service.costs.labor')}
                             </SelectItem>
-                            <SelectItem value="PARTS">
+                            <SelectItem value="PART">
                               {t('requests.service.costs.parts')}
                             </SelectItem>
                             <SelectItem value="OTHER">

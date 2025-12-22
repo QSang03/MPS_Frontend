@@ -140,7 +140,7 @@ export interface ServiceRequestStats {
 /**
  * Service request cost item type
  */
-export type ServiceRequestCostItemType = 'LABOR' | 'PARTS' | 'OTHER'
+export type ServiceRequestCostItemType = 'LABOR' | 'PART' | 'OTHER'
 
 /**
  * Service request cost item
