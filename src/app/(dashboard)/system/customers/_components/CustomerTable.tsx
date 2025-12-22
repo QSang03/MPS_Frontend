@@ -291,31 +291,18 @@ export function CustomerTable({
             <div className="flex items-center gap-2">
               <span className="block max-w-[260px] truncate">{first}</span>
               <ActionGuard pageId="customers" actionId="update">
-                {addresses.length > 1 ? (
-                  <CustomerFormModal
-                    mode="edit"
-                    customer={customer}
-                    onSaved={handleSaved}
-                    trigger={
-                      <Button variant="secondary" size="sm" className="p-2">
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                    }
-                  />
-                ) : (
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => {
-                      setEditingAddressFor(customer.id)
-                      setEditingAddressValue(first === '—' ? '' : String(first))
-                    }}
-                    className="transition-all"
-                    aria-label={t('customer.address.edit')}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                )}
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    setEditingAddressFor(customer.id)
+                    setEditingAddressValue(first === '—' ? '' : String(first))
+                  }}
+                  className="transition-all"
+                  aria-label={t('customer.address.edit')}
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
               </ActionGuard>
             </div>
           )
@@ -387,6 +374,22 @@ export function CustomerTable({
                   {t('nav.consumables')}
                 </Button>
               </ActionGuard>
+
+              {/* If customer has multiple addresses, expose the address viewer/edit trigger here so actions are grouped */}
+              {Array.isArray(customer.address) && customer.address.length > 1 && (
+                <ActionGuard pageId="customers" actionId="update">
+                  <CustomerFormModal
+                    mode="edit"
+                    customer={customer}
+                    onSaved={handleSaved}
+                    trigger={
+                      <Button variant="secondary" size="sm" className="p-2">
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    }
+                  />
+                </ActionGuard>
+              )}
 
               {/* Create device for this customer */}
               <ActionGuard pageId="devices" actionId="create">
