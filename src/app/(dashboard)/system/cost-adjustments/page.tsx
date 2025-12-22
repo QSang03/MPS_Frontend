@@ -715,7 +715,7 @@ export default function CostAdjustmentsPage() {
               footer={
                 <div className="flex w-full justify-end gap-2">
                   <Button variant="outline" onClick={() => setModalOpen(false)}>
-                    {t('close')}
+                    {t('common.close')}
                   </Button>
                   <Button onClick={handleSubmit} disabled={loadingForm}>
                     {loadingForm
