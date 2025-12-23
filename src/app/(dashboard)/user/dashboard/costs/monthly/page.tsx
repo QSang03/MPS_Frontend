@@ -917,11 +917,11 @@ export default function MonthlyCostsPage() {
                           })
 
                         const showSeries = {
-                          totalCostAfterAdjustment: hasNonZero('totalCostAfterAdjustment'),
-                          costRental: hasNonZero('costRental'),
-                          costRepair: hasNonZero('costRepair'),
-                          costPageBW: hasNonZero('costPageBW'),
-                          costPageColor: hasNonZero('costPageColor'),
+                          totalCostAfterAdjustment: false, // Không vẽ tổng chi phí
+                          costRental: true, // Luôn vẽ phí thuê bao
+                          costRepair: true, // Luôn vẽ phí sửa chữa
+                          costPageBW: true, // Luôn vẽ phí trang in trắng đen
+                          costPageColor: hasNonZero('costPageColor'), // Chỉ vẽ phí trang in màu nếu có giá trị > 0
                         }
 
                         return chartData.length === 1 ? (
