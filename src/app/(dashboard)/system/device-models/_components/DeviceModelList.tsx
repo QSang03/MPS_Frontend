@@ -48,6 +48,7 @@ import {
   Loader2,
   Settings,
   FileText,
+  Edit,
 } from 'lucide-react'
 
 export default function DeviceModelList() {
@@ -610,7 +611,25 @@ function DeviceModelsTableContent({
         cell: ({ row }) => (
           <div className="flex justify-end gap-2">
             <ActionGuard pageId="device-models" actionId="update">
-              <DeviceModelFormModal mode="edit" model={row.original} onSaved={handleSaved} />
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div>
+                    <DeviceModelFormModal
+                      mode="edit"
+                      model={row.original}
+                      onSaved={handleSaved}
+                      trigger={
+                        <Button variant="outline" size="sm" className="cursor-pointer gap-2">
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      }
+                    />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{t('device_model.button.edit')}</p>
+                </TooltipContent>
+              </Tooltip>
             </ActionGuard>
             <ActionGuard pageId="device-models" actionId="delete">
               <Tooltip>

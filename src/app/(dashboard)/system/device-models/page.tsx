@@ -1,7 +1,8 @@
 'use client'
 
 import React from 'react'
-import DeviceModelList from './_components/DeviceModelList'
+import dynamic from 'next/dynamic'
+import { TableSkeleton } from '@/components/system/TableSkeleton'
 import { SystemPageLayout } from '@/components/system/SystemPageLayout'
 import { SystemPageHeader } from '@/components/system/SystemPageHeader'
 import { Package, Plus } from 'lucide-react'
@@ -10,6 +11,16 @@ import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip
 import { useLocale } from '@/components/providers/LocaleProvider'
 import { ActionGuard } from '@/components/shared/ActionGuard'
 import { DeviceModelFormModal } from './_components/DeviceModelFormModal'
+
+// Dynamic import to avoid SSR issues with client-side only services
+const DeviceModelList = dynamic(() => import('./_components/DeviceModelList'), {
+  ssr: false,
+  loading: () => (
+    <div className="space-y-6">
+      <TableSkeleton rows={10} columns={8} />
+    </div>
+  ),
+})
 
 export default function Page() {
   const { t } = useLocale()

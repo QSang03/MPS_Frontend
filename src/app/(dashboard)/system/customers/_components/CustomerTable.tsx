@@ -325,23 +325,25 @@ export function CustomerTable({
               <span className="block max-w-[260px] truncate">{first}</span>
               <ActionGuard pageId="customers" actionId="update">
                 {addresses.length > 1 ? (
-                  <CustomerFormModal
-                    mode="edit"
-                    customer={customer}
-                    onSaved={handleSaved}
-                    trigger={
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button variant="secondary" size="sm" className="cursor-pointer p-2">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>{t('customer.view_details')}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    }
-                  />
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div>
+                        <CustomerFormModal
+                          mode="edit"
+                          customer={customer}
+                          onSaved={handleSaved}
+                          trigger={
+                            <Button variant="secondary" size="sm" className="cursor-pointer p-2">
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          }
+                        />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{t('customer.view_details')}</p>
+                    </TooltipContent>
+                  </Tooltip>
                 ) : (
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -444,91 +446,95 @@ export function CustomerTable({
 
               {/* Create device for this customer */}
               <ActionGuard pageId="devices" actionId="create">
-                <DeviceFormModal
-                  mode="create"
-                  initialCustomerId={customer.id}
-                  initialIsCustomerOwned={true}
-                  trigger={
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="default"
-                          size="sm"
-                          className="cursor-pointer transition-all"
-                          aria-label={t('devices.add')}
-                        >
-                          <Plus className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>{t('devices.add')}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  }
-                  onSaved={async () => {
-                    toast.success(t('device.create_success'))
-                    await queryClient.invalidateQueries({ queryKey: ['customers'] })
-                  }}
-                />
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <DeviceFormModal
+                        mode="create"
+                        initialCustomerId={customer.id}
+                        initialIsCustomerOwned={true}
+                        onSaved={async () => {
+                          toast.success(t('device.create_success'))
+                          await queryClient.invalidateQueries({ queryKey: ['customers'] })
+                        }}
+                        trigger={
+                          <Button
+                            variant="default"
+                            size="sm"
+                            className="cursor-pointer transition-all"
+                            aria-label={t('devices.add')}
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        }
+                      />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{t('devices.add')}</p>
+                  </TooltipContent>
+                </Tooltip>
               </ActionGuard>
               <ActionGuard pageId="customers" actionId="update">
-                <CustomerFormModal
-                  mode="edit"
-                  customer={customer}
-                  onSaved={handleSaved}
-                  trigger={
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button variant="outline" size="sm" className="cursor-pointer gap-2">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>{t('customer.edit')}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  }
-                />
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <CustomerFormModal
+                        mode="edit"
+                        customer={customer}
+                        onSaved={handleSaved}
+                        trigger={
+                          <Button variant="outline" size="sm" className="cursor-pointer gap-2">
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        }
+                      />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{t('customer.edit')}</p>
+                  </TooltipContent>
+                </Tooltip>
               </ActionGuard>
               {/* Service request creation moved to System Requests admin header */}
               <ActionGuard pageId="customers" actionId="delete">
-                <DeleteDialog
-                  title={t('customer.delete_confirm_title')}
-                  description={t('customer.delete_confirmation', {
-                    customerName: customer.name || '',
-                  })}
-                  onConfirm={async () => handleDelete(customer.id)}
-                  trigger={
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          disabled={deletingId === customer.id || isSysCustomer}
-                          className="cursor-pointer transition-all"
-                          title={
-                            isSysCustomer
-                              ? t('customer.delete_forbidden')
-                              : t('dialog.delete.trigger')
-                          }
-                        >
-                          {deletingId === customer.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Trash2 className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>
-                          {isSysCustomer
-                            ? t('customer.delete_forbidden')
-                            : t('dialog.delete.trigger')}
-                        </p>
-                      </TooltipContent>
-                    </Tooltip>
-                  }
-                />
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <DeleteDialog
+                        title={t('customer.delete_confirm_title')}
+                        description={t('customer.delete_confirmation', {
+                          customerName: customer.name || '',
+                        })}
+                        onConfirm={async () => handleDelete(customer.id)}
+                        trigger={
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            disabled={deletingId === customer.id || isSysCustomer}
+                            className="cursor-pointer transition-all"
+                            title={
+                              isSysCustomer
+                                ? t('customer.delete_forbidden')
+                                : t('dialog.delete.trigger')
+                            }
+                          >
+                            {deletingId === customer.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-4 w-4" />
+                            )}
+                          </Button>
+                        }
+                      />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>
+                      {isSysCustomer ? t('customer.delete_forbidden') : t('dialog.delete.trigger')}
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
               </ActionGuard>
             </div>
           )

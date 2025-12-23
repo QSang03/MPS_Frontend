@@ -24,6 +24,7 @@ import {
   CheckCircle2,
   Settings,
   Trash2,
+  Plus,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useLocale } from '@/components/providers/LocaleProvider'
@@ -267,7 +268,25 @@ export function ConsumableTypeTable({
           return (
             <div className="flex items-center justify-end gap-2">
               <ActionGuard pageId="consumable-types" actionId="update">
-                <ConsumableTypeFormModal mode="edit" model={m} onSaved={handleSaved} />
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <ConsumableTypeFormModal
+                        mode="edit"
+                        model={m}
+                        onSaved={handleSaved}
+                        trigger={
+                          <Button variant="outline" size="sm" className="cursor-pointer gap-2">
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        }
+                      />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{t('consumable_types.table.edit')}</p>
+                  </TooltipContent>
+                </Tooltip>
               </ActionGuard>
               <ActionGuard pageId="consumable-types" actionId="delete">
                 <Tooltip>
@@ -355,7 +374,28 @@ export function ConsumableTypeTable({
             </p>
             {!searchInput && (
               <ActionGuard pageId="consumable-types" actionId="create">
-                <ConsumableTypeFormModal mode="create" onSaved={handleSaved} />
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <ConsumableTypeFormModal
+                        mode="create"
+                        onSaved={handleSaved}
+                        trigger={
+                          <Button
+                            variant="outline"
+                            className="cursor-pointer gap-2 hover:bg-[var(--accent)]"
+                          >
+                            <Plus className="h-4 w-4" />
+                            {t('consumable_types.actions.create')}
+                          </Button>
+                        }
+                      />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{t('consumable_types.actions.create')}</p>
+                  </TooltipContent>
+                </Tooltip>
               </ActionGuard>
             )}
           </div>
