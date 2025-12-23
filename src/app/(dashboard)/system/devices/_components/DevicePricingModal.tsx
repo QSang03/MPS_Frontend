@@ -523,31 +523,44 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
         variant="edit"
         footer={
           <>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setOpen(false)}
-              disabled={submitting}
-              className="min-w-[100px] cursor-pointer"
-              title={t('cancel')}
-            >
-              {t('cancel')}
-            </Button>
-            <Button
-              type="submit"
-              form="device-pricing-form"
-              disabled={submitting}
-              className="min-w-[120px] cursor-pointer bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
-              title={t('devices.pricing.save')}
-            >
-              {submitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t('devices.pricing.saving')}
-                </>
-              ) : (
-                <>{t('devices.pricing.save')}</>
-              )}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setOpen(false)}
+                  disabled={submitting}
+                  className="min-w-[100px] cursor-pointer"
+                >
+                  {t('cancel')}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t('cancel')}</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="submit"
+                  form="device-pricing-form"
+                  disabled={submitting}
+                  className="min-w-[120px] cursor-pointer bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
+                >
+                  {submitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />{' '}
+                      {t('devices.pricing.saving')}
+                    </>
+                  ) : (
+                    <>{t('devices.pricing.save')}</>
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t('devices.pricing.save')}</p>
+              </TooltipContent>
+            </Tooltip>
           </>
         }
       >

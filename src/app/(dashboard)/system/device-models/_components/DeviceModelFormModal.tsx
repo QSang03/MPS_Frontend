@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { Separator } from '@/components/ui/separator'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { toast } from 'sonner'
 import deviceModelsClientService from '@/lib/api/services/device-models-client.service'
 import { removeEmpty } from '@/lib/utils/clean'
@@ -141,23 +142,28 @@ export function DeviceModelFormModal({ mode = 'create', model = null, onSaved, t
       ) : (
         <DialogTrigger asChild>
           {mode === 'create' ? (
-            <Button
-              variant="outline"
-              className="cursor-pointer gap-2 hover:bg-[var(--accent)]"
-              title={t('device_model.button.create')}
-            >
-              <Plus className="h-4 w-4" />
-              {t('device_model.button.create')}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" className="cursor-pointer gap-2 hover:bg-[var(--accent)]">
+                  <Plus className="h-4 w-4" />
+                  {t('device_model.button.create')}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t('device_model.button.create')}</p>
+              </TooltipContent>
+            </Tooltip>
           ) : (
-            <Button
-              variant="outline"
-              size="sm"
-              className="cursor-pointer gap-2"
-              title={t('device_model.title_edit')}
-            >
-              <Edit className="h-4 w-4" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="sm" className="cursor-pointer gap-2">
+                  <Edit className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t('device_model.title_edit')}</p>
+              </TooltipContent>
+            </Tooltip>
           )}
         </DialogTrigger>
       )}
@@ -173,52 +179,50 @@ export function DeviceModelFormModal({ mode = 'create', model = null, onSaved, t
         variant={mode}
         footer={
           <>
-            <Button
-              variant="outline"
-              onClick={() => setOpen(false)}
-              type="button"
-              className="min-w-[100px] cursor-pointer"
-              disabled={submitting}
-              title={t('cancel')}
-            >
-              {t('cancel')}
-            </Button>
-            <Button
-              type="submit"
-              form="device-model-form"
-              className="min-w-[120px] cursor-pointer bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
-              disabled={submitting}
-              title={
-                mode === 'create'
-                  ? t('device_model.button.create_new')
-                  : t('device_model.button.update')
-              }
-            >
-              <div className="flex items-center gap-2 text-sm font-semibold text-[var(--brand-700)]">
-                {submitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {mode === 'create'
-                      ? t('device_model.button.creating')
-                      : t('device_model.button.saving')}
-                  </>
-                ) : (
-                  <>
-                    {mode === 'create' ? (
-                      <>
-                        <Plus className="mr-2 h-4 w-4" />
-                        {t('device_model.button.create_new')}
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle2 className="mr-2 h-4 w-4" />
-                        {t('device_model.button.update')}
-                      </>
-                    )}
-                  </>
-                )}
-              </div>
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  onClick={() => setOpen(false)}
+                  type="button"
+                  className="min-w-[100px] cursor-pointer"
+                  disabled={submitting}
+                >
+                  {t('cancel')}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t('cancel')}</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="submit"
+                  form="device-model-form"
+                  className="min-w-[120px] cursor-pointer bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
+                  disabled={submitting}
+                >
+                  {submitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {t('button.saving')}
+                    </>
+                  ) : mode === 'create' ? (
+                    t('device_model.button.create_new')
+                  ) : (
+                    t('device_model.button.update')
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>
+                  {mode === 'create'
+                    ? t('device_model.button.create_new')
+                    : t('device_model.button.update')}
+                </p>
+              </TooltipContent>
+            </Tooltip>
           </>
         }
       >

@@ -622,14 +622,20 @@ function DevicesTableContent({
         enableSorting: true,
         cell: ({ row }) => (
           <ActionGuard pageId="devices" actionId="read">
-            <code
-              role="button"
-              title={t('button.view')}
-              onClick={() => router.push(`/system/devices/${row.original.id}`)}
-              className="cursor-pointer rounded bg-[var(--brand-50)] px-2 py-1 text-sm font-semibold text-[var(--brand-700)]"
-            >
-              {row.original.serialNumber || '—'}
-            </code>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <code
+                  role="button"
+                  onClick={() => router.push(`/system/devices/${row.original.id}`)}
+                  className="cursor-pointer rounded bg-[var(--brand-50)] px-2 py-1 text-sm font-semibold text-[var(--brand-700)]"
+                >
+                  {row.original.serialNumber || '—'}
+                </code>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t('button.view')}</p>
+              </TooltipContent>
+            </Tooltip>
           </ActionGuard>
         ),
       },

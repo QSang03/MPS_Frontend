@@ -6,6 +6,7 @@ import { SystemPageLayout } from '@/components/system/SystemPageLayout'
 import { SystemPageHeader } from '@/components/system/SystemPageHeader'
 import { Package, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { useLocale } from '@/components/providers/LocaleProvider'
 import { ActionGuard } from '@/components/shared/ActionGuard'
 import { DeviceModelFormModal } from './_components/DeviceModelFormModal'
@@ -27,10 +28,17 @@ export default function Page() {
                 window.location.reload()
               }}
               trigger={
-                <Button variant="secondary" className="rounded-md border-0 px-3 py-1.5">
-                  <Plus className="mr-2 h-4 w-4" />
-                  {t('device_model.button.create')}
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="secondary" className="rounded-md border-0 px-3 py-1.5">
+                      <Plus className="mr-2 h-4 w-4" />
+                      {t('device_model.button.create')}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{t('device_model.button.create')}</p>
+                  </TooltipContent>
+                </Tooltip>
               }
             />
           </ActionGuard>

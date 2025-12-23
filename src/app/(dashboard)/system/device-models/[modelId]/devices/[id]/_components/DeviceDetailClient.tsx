@@ -492,16 +492,23 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
   if (error) {
     return (
       <div className="space-y-6">
-        <Link
-          href={
-            backHref ?? (modelId ? `/system/device-models/${modelId}` : '/system/device-models')
-          }
-        >
-          <Button variant="outline" className="cursor-pointer gap-2" title={t('common.back')}>
-            <ArrowLeft className="h-4 w-4" />
-            {t('common.back')}
-          </Button>
-        </Link>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Link
+              href={
+                backHref ?? (modelId ? `/system/device-models/${modelId}` : '/system/device-models')
+              }
+            >
+              <Button variant="outline" className="cursor-pointer gap-2">
+                <ArrowLeft className="h-4 w-4" />
+                {t('common.back')}
+              </Button>
+            </Link>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{t('common.back')}</p>
+          </TooltipContent>
+        </Tooltip>
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-center gap-2 text-center text-red-500">
@@ -517,16 +524,23 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
   if (!device) {
     return (
       <div className="space-y-6">
-        <Link
-          href={
-            backHref ?? (modelId ? `/system/device-models/${modelId}` : '/system/device-models')
-          }
-        >
-          <Button variant="outline" className="cursor-pointer gap-2" title={t('common.back')}>
-            <ArrowLeft className="h-4 w-4" />
-            {t('common.back')}
-          </Button>
-        </Link>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Link
+              href={
+                backHref ?? (modelId ? `/system/device-models/${modelId}` : '/system/device-models')
+              }
+            >
+              <Button variant="outline" className="cursor-pointer gap-2">
+                <ArrowLeft className="h-4 w-4" />
+                {t('common.back')}
+              </Button>
+            </Link>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{t('common.back')}</p>
+          </TooltipContent>
+        </Tooltip>
         <Card>
           <CardContent className="pt-6">
             <div className="text-muted-foreground text-center">
@@ -596,16 +610,24 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
       <div>
         <div className="mb-3 flex items-center justify-between">
           <div>
-            <Link
-              href={
-                backHref ?? (modelId ? `/system/device-models/${modelId}` : '/system/device-models')
-              }
-            >
-              <Button variant="outline" className="gap-2">
-                <ArrowLeft className="h-4 w-4" />
-                {t('common.back')}
-              </Button>
-            </Link>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link
+                  href={
+                    backHref ??
+                    (modelId ? `/system/device-models/${modelId}` : '/system/device-models')
+                  }
+                >
+                  <Button variant="outline" className="cursor-pointer gap-2">
+                    <ArrowLeft className="h-4 w-4" />
+                    {t('common.back')}
+                  </Button>
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t('common.back')}</p>
+              </TooltipContent>
+            </Tooltip>
           </div>
         </div>
 
@@ -627,41 +649,59 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                 {getStatusBadge(device.isActive)}
                 {renderStatusChip()}
                 <ActionGuard pageId="devices" actionId="assign-pricing">
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => setA4ModalOpen(true)}
-                    className="gap-2 bg-white text-black"
-                    title={t('system_device_detail.a4_snapshot.edit_tooltip')}
-                  >
-                    <BarChart3 className="h-4 w-4 text-black" />
-                    A4
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => setA4ModalOpen(true)}
+                        className="cursor-pointer gap-2 bg-white text-black"
+                      >
+                        <BarChart3 className="h-4 w-4 text-black" />
+                        A4
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{t('system_device_detail.a4_snapshot.edit_tooltip')}</p>
+                    </TooltipContent>
+                  </Tooltip>
                 </ActionGuard>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => {
-                    setA4HistoryOpen(true)
-                  }}
-                  className="ml-2 gap-2 bg-white text-black"
-                  title={t('system_device_detail.a4_snapshot.history_tooltip')}
-                >
-                  <FileText className="h-4 w-4 text-black" />
-                  {t('common.history')}
-                </Button>
-                {Boolean(device?.isActive) ? (
-                  <ActionGuard pageId="devices" actionId="update">
+                <Tooltip>
+                  <TooltipTrigger asChild>
                     <Button
                       variant="secondary"
                       size="sm"
-                      onClick={() => setShowEdit(true)}
-                      className="cursor-pointer gap-2"
-                      title={t('common.edit')}
+                      onClick={() => {
+                        setA4HistoryOpen(true)
+                      }}
+                      className="ml-2 cursor-pointer gap-2 bg-white text-black"
                     >
-                      <Edit className="h-4 w-4" />
-                      {t('common.edit')}
+                      <FileText className="h-4 w-4 text-black" />
+                      {t('common.history')}
                     </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{t('system_device_detail.a4_snapshot.history_tooltip')}</p>
+                  </TooltipContent>
+                </Tooltip>
+                {Boolean(device?.isActive) ? (
+                  <ActionGuard pageId="devices" actionId="update">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => setShowEdit(true)}
+                          className="cursor-pointer gap-2"
+                        >
+                          <Edit className="h-4 w-4" />
+                          {t('common.edit')}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{t('common.edit')}</p>
+                      </TooltipContent>
+                    </Tooltip>
                   </ActionGuard>
                 ) : (
                   <Tooltip>
@@ -699,7 +739,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                         }
                       }}
                       trigger={
-                        <Button variant="destructive" size="sm" className="gap-2">
+                        <Button variant="destructive" size="sm" className="cursor-pointer gap-2">
                           <Trash2 className="h-4 w-4" />
                           {t('common.delete')}
                         </Button>
@@ -1882,98 +1922,110 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
           maxWidth="!max-w-[60vw]"
           footer={
             <>
-              <Button
-                variant="outline"
-                onClick={() => setShowEdit(false)}
-                className="min-w-[100px] cursor-pointer"
-                title={t('device_detail.button.cancel')}
-              >
-                {t('device_detail.button.cancel')}
-              </Button>
-              <Button
-                onClick={async () => {
-                  try {
-                    setEditing(true)
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowEdit(false)}
+                    className="min-w-[100px] cursor-pointer"
+                  >
+                    {t('device_detail.button.cancel')}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{t('device_detail.button.cancel')}</p>
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={async () => {
+                      try {
+                        setEditing(true)
 
-                    // Determine final isActive/status values (fall back to device values if user didn't touch)
-                    const finalIsActive =
-                      isActiveEdit === null ? Boolean(device?.isActive) : !!isActiveEdit
-                    const finalStatus = String(
-                      statusEdit ||
-                        (device?.status ?? '') ||
-                        (finalIsActive ? DEVICE_STATUS.ACTIVE : DEVICE_STATUS.DECOMMISSIONED)
-                    ).toUpperCase()
+                        // Determine final isActive/status values (fall back to device values if user didn't touch)
+                        const finalIsActive =
+                          isActiveEdit === null ? Boolean(device?.isActive) : !!isActiveEdit
+                        const finalStatus = String(
+                          statusEdit ||
+                            (device?.status ?? '') ||
+                            (finalIsActive ? DEVICE_STATUS.ACTIVE : DEVICE_STATUS.DECOMMISSIONED)
+                        ).toUpperCase()
 
-                    // If toggling to inactive, require a reason
-                    let chosenReason: string | undefined = undefined
-                    if (finalIsActive === false) {
-                      if (inactiveReasonOptionEdit === '__other') {
-                        chosenReason = inactiveReasonTextEdit
-                      } else {
-                        chosenReason = inactiveReasonOptionEdit
-                      }
-                      if (!chosenReason || String(chosenReason).trim() === '') {
-                        toast.error(t('device.provide_inactive_reason'))
+                        // If toggling to inactive, require a reason
+                        let chosenReason: string | undefined = undefined
+                        if (finalIsActive === false) {
+                          if (inactiveReasonOptionEdit === '__other') {
+                            chosenReason = inactiveReasonTextEdit
+                          } else {
+                            chosenReason = inactiveReasonOptionEdit
+                          }
+                          if (!chosenReason || String(chosenReason).trim() === '') {
+                            toast.error(t('device.provide_inactive_reason'))
+                            setEditing(false)
+                            return
+                          }
+                        }
+
+                        // Validate status consistent with isActive
+                        const activeStatuses = ['ACTIVE', 'MAINTENANCE', 'ERROR', 'OFFLINE']
+                        const inactiveStatuses = ['DECOMMISSIONED', 'DISABLED']
+                        const allowedStatuses = finalIsActive ? activeStatuses : inactiveStatuses
+                        if (!allowedStatuses.includes(finalStatus)) {
+                          toast.error(
+                            t('device.invalid_status_for_is_active').replace(
+                              '{isActive}',
+                              String(finalIsActive)
+                            )
+                          )
+                          setEditing(false)
+                          return
+                        }
+
+                        let dto: UpdateDeviceDto = {
+                          location: locationAddressEdit || undefined,
+                          ipAddress: ipEdit || undefined,
+                          macAddress: macEdit || undefined,
+                          firmware: firmwareEdit || undefined,
+                          isActive: finalIsActive,
+                          status: finalStatus,
+                          inactiveReason: chosenReason || undefined,
+                          customerId: customerIdEdit || undefined,
+                        }
+
+                        dto = removeEmpty(dto)
+                        const updated = await devicesClientService.update(deviceId, dto)
+                        if (updated) {
+                          setDevice(updated)
+                          toast.success(t('device.update_success'))
+                          setShowEdit(false)
+                        } else {
+                          toast.error(t('device.update_error'))
+                        }
+                      } catch (err) {
+                        console.error('Update device failed', err)
+                        toast.error(t('device.update_error'))
+                      } finally {
                         setEditing(false)
-                        return
                       }
-                    }
-
-                    // Validate status consistent with isActive
-                    const activeStatuses = ['ACTIVE', 'MAINTENANCE', 'ERROR', 'OFFLINE']
-                    const inactiveStatuses = ['DECOMMISSIONED', 'DISABLED']
-                    const allowedStatuses = finalIsActive ? activeStatuses : inactiveStatuses
-                    if (!allowedStatuses.includes(finalStatus)) {
-                      toast.error(
-                        t('device.invalid_status_for_is_active').replace(
-                          '{isActive}',
-                          String(finalIsActive)
-                        )
-                      )
-                      setEditing(false)
-                      return
-                    }
-
-                    let dto: UpdateDeviceDto = {
-                      location: locationAddressEdit || undefined,
-                      ipAddress: ipEdit || undefined,
-                      macAddress: macEdit || undefined,
-                      firmware: firmwareEdit || undefined,
-                      isActive: finalIsActive,
-                      status: finalStatus,
-                      inactiveReason: chosenReason || undefined,
-                      customerId: customerIdEdit || undefined,
-                    }
-
-                    dto = removeEmpty(dto)
-                    const updated = await devicesClientService.update(deviceId, dto)
-                    if (updated) {
-                      setDevice(updated)
-                      toast.success(t('device.update_success'))
-                      setShowEdit(false)
-                    } else {
-                      toast.error(t('device.update_error'))
-                    }
-                  } catch (err) {
-                    console.error('Update device failed', err)
-                    toast.error(t('device.update_error'))
-                  } finally {
-                    setEditing(false)
-                  }
-                }}
-                disabled={editing}
-                className="min-w-[100px] cursor-pointer bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] hover:from-[var(--brand-700)] hover:to-[var(--brand-700)]"
-                title={t('device.save_changes')}
-              >
-                {editing ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {t('button.saving')}
-                  </>
-                ) : (
-                  t('device.save_changes')
-                )}
-              </Button>
+                    }}
+                    disabled={editing}
+                    className="min-w-[100px] cursor-pointer bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] hover:from-[var(--brand-700)] hover:to-[var(--brand-700)]"
+                  >
+                    {editing ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        {t('button.saving')}
+                      </>
+                    ) : (
+                      t('device.save_changes')
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{t('device.save_changes')}</p>
+                </TooltipContent>
+              </Tooltip>
             </>
           }
         >
@@ -2712,75 +2764,87 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
           maxWidth="!max-w-[32rem]"
           footer={
             <>
-              <Button
-                variant="outline"
-                onClick={() => setShowWarningDialog(false)}
-                className="cursor-pointer"
-                title={t('common.cancel')}
-              >
-                {t('common.cancel')}
-              </Button>
-              <Button
-                onClick={async () => {
-                  if (!warningTarget) return
-                  const ctId =
-                    warningTarget.consumableTypeId ??
-                    warningTarget.consumable?.consumableTypeId ??
-                    warningTarget.consumableType?.id
-                  if (!ctId) {
-                    toast.error(t('system_device_detail.warning_modal.cannot_determine_type'))
-                    return
-                  }
-                  const v =
-                    typeof warningPercentageEdit === 'number'
-                      ? warningPercentageEdit
-                      : Number(warningPercentageEdit)
-                  if (Number.isNaN(v) || v < 0 || v > 100) {
-                    toast.error(t('system_device_detail.warning_modal.invalid_percentage'))
-                    return
-                  }
-                  try {
-                    setUpdatingWarning(true)
-                    await devicesClientService.updateDeviceConsumableWarning(
-                      deviceId,
-                      String(ctId),
-                      v
-                    )
-                    toast.success(t('system_device_detail.warning_modal.update_success'))
-                    setInstalledConsumables((prev) =>
-                      prev.map((it) => {
-                        // match by consumableTypeId or nested consumableType.id
-                        const match =
-                          String(
-                            it.consumableTypeId ??
-                              it.consumable?.consumableTypeId ??
-                              it.consumableType?.id
-                          ) === String(ctId)
-                        if (match) return { ...it, warningPercentage: v }
-                        return it
-                      })
-                    )
-                    setShowWarningDialog(false)
-                  } catch (err) {
-                    console.error('Update warning failed', err)
-                    toast.error(t('system_device_detail.warning_modal.update_error'))
-                  } finally {
-                    setUpdatingWarning(false)
-                  }
-                }}
-                disabled={updatingWarning}
-                className="min-w-[120px] cursor-pointer bg-gradient-to-r from-amber-600 to-teal-600 hover:from-amber-700 hover:to-teal-700"
-                title={t('device.save_changes')}
-              >
-                {updatingWarning ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {t('button.saving')}
-                  </>
-                ) : (
-                  t('device.save_changes')
-                )}
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowWarningDialog(false)}
+                    className="cursor-pointer"
+                  >
+                    {t('common.cancel')}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{t('common.cancel')}</p>
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={async () => {
+                      if (!warningTarget) return
+                      const ctId =
+                        warningTarget.consumableTypeId ??
+                        warningTarget.consumable?.consumableTypeId ??
+                        warningTarget.consumableType?.id
+                      if (!ctId) {
+                        toast.error(t('system_device_detail.warning_modal.cannot_determine_type'))
+                        return
+                      }
+                      const v =
+                        typeof warningPercentageEdit === 'number'
+                          ? warningPercentageEdit
+                          : Number(warningPercentageEdit)
+                      if (Number.isNaN(v) || v < 0 || v > 100) {
+                        toast.error(t('system_device_detail.warning_modal.invalid_percentage'))
+                        return
+                      }
+                      try {
+                        setUpdatingWarning(true)
+                        await devicesClientService.updateDeviceConsumableWarning(
+                          deviceId,
+                          String(ctId),
+                          v
+                        )
+                        toast.success(t('system_device_detail.warning_modal.update_success'))
+                        setInstalledConsumables((prev) =>
+                          prev.map((it) => {
+                            // match by consumableTypeId or nested consumableType.id
+                            const match =
+                              String(
+                                it.consumableTypeId ??
+                                  it.consumable?.consumableTypeId ??
+                                  it.consumableType?.id
+                              ) === String(ctId)
+                            if (match) return { ...it, warningPercentage: v }
+                            return it
+                          })
+                        )
+                        setShowWarningDialog(false)
+                      } catch (err) {
+                        console.error('Update warning failed', err)
+                        toast.error(t('system_device_detail.warning_modal.update_error'))
+                      } finally {
+                        setUpdatingWarning(false)
+                      }
+                    }}
+                    disabled={updatingWarning}
+                    className="min-w-[120px] cursor-pointer bg-gradient-to-r from-amber-600 to-teal-600 hover:from-amber-700 hover:to-teal-700"
+                  >
+                    {updatingWarning ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        {t('button.saving')}
+                      </>
+                    ) : (
+                      t('device.save_changes')
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{t('device.save_changes')}</p>
+                </TooltipContent>
+              </Tooltip>
             </>
           }
         >

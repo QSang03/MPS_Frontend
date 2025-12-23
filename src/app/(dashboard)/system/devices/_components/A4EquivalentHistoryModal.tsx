@@ -495,14 +495,20 @@ export default function A4EquivalentHistoryModal({
         variant="view"
         footer={
           <>
-            <Button
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              className="cursor-pointer"
-              title={t('a4_history.button.close')}
-            >
-              {t('a4_history.button.close')}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  onClick={() => onOpenChange(false)}
+                  className="cursor-pointer"
+                >
+                  {t('a4_history.button.close')}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t('a4_history.button.close')}</p>
+              </TooltipContent>
+            </Tooltip>
           </>
         }
         maxWidth="!max-w-[80vw]"

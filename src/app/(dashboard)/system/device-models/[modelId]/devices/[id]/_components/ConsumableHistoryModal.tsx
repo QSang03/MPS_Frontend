@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { Dialog } from '@/components/ui/dialog'
 import { SystemModalLayout } from '@/components/system/SystemModalLayout'
 import { FileText } from 'lucide-react'
@@ -156,36 +157,57 @@ export function ConsumableUsageHistory({
               }}
               className="flex-1 border-0 bg-transparent px-0 text-base focus-visible:ring-0"
             />
-            <Button
-              variant="secondary"
-              size="icon"
-              onClick={() => {
-                setSearch('')
-                handleSearch()
-              }}
-              className="h-8 w-8 rounded-full"
-            >
-              <RefreshCw className="h-4 w-4" />
-            </Button>
-            <Button
-              onClick={() => handleSearch()}
-              className="rounded-full bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] px-6 text-white shadow-md transition-all hover:scale-105 hover:shadow-lg"
-            >
-              {t('button.search')}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  onClick={() => {
+                    setSearch('')
+                    handleSearch()
+                  }}
+                  className="h-8 w-8 cursor-pointer rounded-full"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t('button.clear')}</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={() => handleSearch()}
+                  className="cursor-pointer rounded-full bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] px-6 text-white shadow-md transition-all hover:scale-105 hover:shadow-lg"
+                >
+                  {t('button.search')}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t('button.search')}</p>
+              </TooltipContent>
+            </Tooltip>
           </div>
         </div>
 
         {/* Advanced Filters Toggle */}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowFilters(!showFilters)}
-          className="gap-2 rounded-full border-dashed"
-        >
-          <Filter className="h-4 w-4" />
-          {showFilters ? t('filters.hide_filters') : t('filters.show_filters')}
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowFilters(!showFilters)}
+              className="cursor-pointer gap-2 rounded-full border-dashed"
+            >
+              <Filter className="h-4 w-4" />
+              {showFilters ? t('filters.hide_filters') : t('filters.show_filters')}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{showFilters ? t('filters.hide_filters') : t('filters.show_filters')}</p>
+          </TooltipContent>
+        </Tooltip>
 
         {/* Filters Panel with Animation */}
         {showFilters && (
@@ -236,10 +258,21 @@ export function ConsumableUsageHistory({
 
               {/* Action Buttons */}
               <div className="flex items-end gap-2">
-                <Button onClick={() => load()} variant="outline" className="flex-1 rounded-lg">
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                  {t('button.refresh')}
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      onClick={() => load()}
+                      variant="outline"
+                      className="flex-1 cursor-pointer rounded-lg"
+                    >
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                      {t('button.refresh')}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{t('button.refresh')}</p>
+                  </TooltipContent>
+                </Tooltip>
               </div>
             </div>
           </div>
@@ -377,26 +410,40 @@ export function ConsumableUsageHistory({
         </div>
 
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page <= 1 || loading}
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            className="gap-2 rounded-full transition-all hover:scale-105 disabled:opacity-50"
-          >
-            <ChevronLeft className="h-4 w-4" />
-            {t('pagination.prev')}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={loading}
-            onClick={() => setPage((p) => p + 1)}
-            className="gap-2 rounded-full bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] text-white transition-all hover:scale-105 hover:shadow-lg disabled:opacity-50"
-          >
-            {t('pagination.next')}
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page <= 1 || loading}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                className="cursor-pointer gap-2 rounded-full transition-all hover:scale-105 disabled:opacity-50"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                {t('pagination.prev')}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{t('pagination.prev')}</p>
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={loading}
+                onClick={() => setPage((p) => p + 1)}
+                className="cursor-pointer gap-2 rounded-full bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] text-white transition-all hover:scale-105 hover:shadow-lg disabled:opacity-50"
+              >
+                {t('pagination.next')}
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{t('pagination.next')}</p>
+            </TooltipContent>
+          </Tooltip>
         </div>
       </div>
     </div>
@@ -448,16 +495,30 @@ export default function ConsumableHistoryModal({
         maxWidth="!max-w-[75vw]"
         footer={
           <>
-            <Button variant="outline" className="gap-2">
-              <Download className="h-4 w-4" />
-              {t('button.export')}
-            </Button>
-            <Button
-              onClick={() => onOpenChange(false)}
-              className="min-w-[100px] bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] hover:from-[var(--brand-700)] hover:to-[var(--brand-700)]"
-            >
-              {t('button.close')}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" className="cursor-pointer gap-2">
+                  <Download className="h-4 w-4" />
+                  {t('button.export')}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t('button.export')}</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={() => onOpenChange(false)}
+                  className="min-w-[100px] cursor-pointer bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] hover:from-[var(--brand-700)] hover:to-[var(--brand-700)]"
+                >
+                  {t('button.close')}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t('button.close')}</p>
+              </TooltipContent>
+            </Tooltip>
           </>
         }
       >

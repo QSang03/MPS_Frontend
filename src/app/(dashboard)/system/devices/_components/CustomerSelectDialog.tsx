@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/select'
 import { Loader2, Search, Building2, CheckCircle2, MapPin } from 'lucide-react'
 import { customersClientService } from '@/lib/api/services/customers-client.service'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import type { Customer } from '@/types/models/customer'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -139,26 +140,40 @@ export function CustomerSelectDialog({
         variant="view"
         footer={
           <>
-            <Button
-              variant="outline"
-              onClick={() => {
-                onOpenChange(false)
-                setSelectedCustomer(null)
-                setSearchTerm('')
-                setCustomerLocation('')
-              }}
-              className="min-w-[100px]"
-            >
-              {t('cancel')}
-            </Button>
-            <Button
-              onClick={handleConfirm}
-              disabled={!selectedCustomer || (!!requiresLocation && !customerLocation.trim())}
-              className="min-w-[120px] bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
-            >
-              <CheckCircle2 className="mr-2 h-4 w-4" />
-              {t('customer.select.confirm')}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    onOpenChange(false)
+                    setSelectedCustomer(null)
+                    setSearchTerm('')
+                    setCustomerLocation('')
+                  }}
+                  className="min-w-[100px] cursor-pointer"
+                >
+                  {t('cancel')}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t('cancel')}</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={handleConfirm}
+                  disabled={!selectedCustomer || (!!requiresLocation && !customerLocation.trim())}
+                  className="min-w-[120px] cursor-pointer bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
+                >
+                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                  {t('customer.select.confirm')}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t('customer.select.confirm')}</p>
+              </TooltipContent>
+            </Tooltip>
           </>
         }
       >

@@ -438,12 +438,19 @@ function DeviceModelsTableContent({
             actionId="view-device-model-detail"
             fallback={<span className="font-semibold">{row.original.name || '-'}</span>}
           >
-            <Link
-              href={`/system/device-models/${encodeURIComponent(row.original.id)}`}
-              className="font-semibold text-[var(--brand-600)] hover:text-[var(--brand-700)] hover:underline"
-            >
-              {row.original.name || '-'}
-            </Link>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link
+                  href={`/system/device-models/${encodeURIComponent(row.original.id)}`}
+                  className="cursor-pointer font-semibold text-[var(--brand-600)] hover:text-[var(--brand-700)] hover:underline"
+                >
+                  {row.original.name || '-'}
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t('button.view')}</p>
+              </TooltipContent>
+            </Tooltip>
           </ActionGuard>
         ),
       },
@@ -565,23 +572,29 @@ function DeviceModelsTableContent({
             actionId="manage-compatible-consumables"
             fallback={null}
           >
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                setCompatibilityModal({
-                  open: true,
-                  deviceModelId: row.original.id,
-                  deviceModelName: row.original.name || 'N/A',
-                })
-              }
-              className="cursor-pointer gap-2"
-              title={t('device_model.button.manage')}
-            >
-              <Package className="h-4 w-4" />
-              {t('device_model.button.manage')}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    setCompatibilityModal({
+                      open: true,
+                      deviceModelId: row.original.id,
+                      deviceModelName: row.original.name || 'N/A',
+                    })
+                  }
+                  className="cursor-pointer gap-2"
+                >
+                  <Package className="h-4 w-4" />
+                  {t('device_model.button.manage')}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t('device_model.button.manage')}</p>
+              </TooltipContent>
+            </Tooltip>
           </ActionGuard>
         ),
       },

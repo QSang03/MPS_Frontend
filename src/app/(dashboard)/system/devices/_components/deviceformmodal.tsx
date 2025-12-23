@@ -422,14 +422,17 @@ export default function DeviceFormModal({
         <DialogTrigger asChild>{trigger}</DialogTrigger>
       ) : mode === 'create' ? (
         <DialogTrigger asChild>
-          <Button
-            variant="outline"
-            className="cursor-pointer gap-2 hover:bg-[var(--accent)]"
-            title={t('devices.add')}
-          >
-            <Plus className="h-4 w-4" />
-            {t('devices.add')}
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="outline" className="cursor-pointer gap-2 hover:bg-[var(--accent)]">
+                <Plus className="h-4 w-4" />
+                {t('devices.add')}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{t('devices.add')}</p>
+            </TooltipContent>
+          </Tooltip>
         </DialogTrigger>
       ) : compact ? (
         <Tooltip>
@@ -451,14 +454,16 @@ export default function DeviceFormModal({
         </Tooltip>
       ) : (
         <DialogTrigger asChild>
-          <Button
-            variant="outline"
-            size="sm"
-            className="cursor-pointer gap-2"
-            title={t('button.edit')}
-          >
-            <Edit className="h-4 w-4" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="outline" size="sm" className="cursor-pointer gap-2">
+                <Edit className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{t('button.edit')}</p>
+            </TooltipContent>
+          </Tooltip>
         </DialogTrigger>
       )}
 
@@ -471,41 +476,53 @@ export default function DeviceFormModal({
         variant={mode}
         footer={
           <>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setOpen(false)}
-              disabled={submitting}
-              className="min-w-[100px] cursor-pointer"
-              title={t('cancel')}
-            >
-              {t('cancel')}
-            </Button>
-            <Button
-              type="submit"
-              form="device-form"
-              disabled={submitting}
-              variant="default"
-              className="min-w-[120px] cursor-pointer"
-              title={mode === 'create' ? t('device.create_submit') : t('device.save_changes')}
-            >
-              {submitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {mode === 'create' ? t('button.creating') : t('button.saving')}
-                </>
-              ) : mode === 'create' ? (
-                <>
-                  <Plus className="mr-2 h-4 w-4" />
-                  {t('device.create_submit')}
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="mr-2 h-4 w-4" />
-                  {t('device.save_changes')}
-                </>
-              )}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setOpen(false)}
+                  disabled={submitting}
+                  className="min-w-[100px] cursor-pointer"
+                >
+                  {t('cancel')}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t('cancel')}</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="submit"
+                  form="device-form"
+                  disabled={submitting}
+                  variant="default"
+                  className="min-w-[120px] cursor-pointer"
+                >
+                  {submitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {mode === 'create' ? t('button.creating') : t('button.saving')}
+                    </>
+                  ) : mode === 'create' ? (
+                    <>
+                      <Plus className="mr-2 h-4 w-4" />
+                      {t('device.create_submit')}
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="mr-2 h-4 w-4" />
+                      {t('device.save_changes')}
+                    </>
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{mode === 'create' ? t('device.create_submit') : t('device.save_changes')}</p>
+              </TooltipContent>
+            </Tooltip>
           </>
         }
       >
@@ -995,16 +1012,22 @@ export default function DeviceFormModal({
             >
               {t('cancel')}
             </AlertDialogCancel>
-            <Button
-              onClick={async () => {
-                setShowSerialWarning(false)
-                await performSave()
-              }}
-              className="min-w-[120px] cursor-pointer bg-amber-600"
-              title={t('confirm.ok')}
-            >
-              {t('confirm.ok')}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={async () => {
+                    setShowSerialWarning(false)
+                    await performSave()
+                  }}
+                  className="min-w-[120px] cursor-pointer bg-amber-600"
+                >
+                  {t('confirm.ok')}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t('confirm.ok')}</p>
+              </TooltipContent>
+            </Tooltip>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

@@ -644,9 +644,7 @@ export default function MonthlyCostsPage() {
                             cx="50%"
                             cy="50%"
                             labelLine={false}
-                            label={(props: { name?: string; percent?: number }) =>
-                              `${props.name ?? ''}: ${((props.percent ?? 0) * 100).toFixed(1)}%`
-                            }
+                            label={false}
                             outerRadius={100}
                             fill="var(--brand-500)"
                             dataKey="value"

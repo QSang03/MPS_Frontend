@@ -5,6 +5,7 @@ import { SystemPageLayout } from '@/components/system/SystemPageLayout'
 import { SystemPageHeader } from '@/components/system/SystemPageHeader'
 import { Monitor, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { ActionGuard } from '@/components/shared/ActionGuard'
 import DeviceFormModal from './_components/deviceformmodal'
 import { toast } from 'sonner'
@@ -29,14 +30,17 @@ export default function DevicesPage() {
                 }
               }}
               trigger={
-                <Button
-                  variant="outline"
-                  className="cursor-pointer hover:bg-[var(--accent)]"
-                  title={t('devices.add')}
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  {t('devices.add')}
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="outline" className="cursor-pointer hover:bg-[var(--accent)]">
+                      <Plus className="mr-2 h-4 w-4" />
+                      {t('devices.add')}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{t('devices.add')}</p>
+                  </TooltipContent>
+                </Tooltip>
               }
             />
           </ActionGuard>

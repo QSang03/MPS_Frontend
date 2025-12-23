@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Dialog } from '@/components/ui/dialog'
@@ -162,15 +163,22 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
       <div className="rounded-2xl bg-gradient-to-r from-[var(--brand-500)] via-[var(--brand-600)] to-[var(--brand-700)] p-6 text-white shadow-lg">
         <div className="flex items-center justify-between">
           <div className="space-y-2">
-            <Link href="/system/device-models">
-              <Button
-                variant="outline"
-                className="-ml-2 gap-2 border-white/20 bg-transparent text-white"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                {t('common.back')}
-              </Button>
-            </Link>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link href="/system/device-models">
+                  <Button
+                    variant="outline"
+                    className="-ml-2 cursor-pointer gap-2 border-white/20 bg-transparent text-white"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    {t('common.back')}
+                  </Button>
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t('common.back')}</p>
+              </TooltipContent>
+            </Tooltip>
             <div className="flex items-center gap-3">
               <Monitor className="h-10 w-10" />
               <div>
@@ -182,13 +190,20 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
             </div>
           </div>
 
-          <Button
-            onClick={() => setShowCreate(true)}
-            className="gap-2 rounded-md bg-[var(--brand-100)] px-3 py-1.5 text-[var(--brand-700)] hover:bg-[var(--brand-200)]"
-          >
-            <Plus className="h-4 w-4" />
-            {t('devices.add')}
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                onClick={() => setShowCreate(true)}
+                className="cursor-pointer gap-2 rounded-md bg-[var(--brand-100)] px-3 py-1.5 text-[var(--brand-700)] hover:bg-[var(--brand-200)]"
+              >
+                <Plus className="h-4 w-4" />
+                {t('devices.add')}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{t('devices.add')}</p>
+            </TooltipContent>
+          </Tooltip>
         </div>
 
         {/* Quick Stats */}
@@ -261,14 +276,21 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
                     <td colSpan={6} className="px-4 py-12 text-center">
                       <Monitor className="text-muted-foreground mx-auto mb-3 h-12 w-12 opacity-20" />
                       <p className="text-muted-foreground">{t('empty.device_model.empty')}</p>
-                      <Button
-                        size="sm"
-                        onClick={() => setShowCreate(true)}
-                        className="mt-3 gap-2 rounded-md bg-[var(--brand-100)] px-3 py-1.5 text-[var(--brand-700)] hover:bg-[var(--brand-200)]"
-                      >
-                        <Plus className="h-4 w-4" />
-                        {t('empty.devices.first')}
-                      </Button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            size="sm"
+                            onClick={() => setShowCreate(true)}
+                            className="mt-3 cursor-pointer gap-2 rounded-md bg-[var(--brand-100)] px-3 py-1.5 text-[var(--brand-700)] hover:bg-[var(--brand-200)]"
+                          >
+                            <Plus className="h-4 w-4" />
+                            {t('empty.devices.first')}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{t('empty.devices.first')}</p>
+                        </TooltipContent>
+                      </Tooltip>
                     </td>
                   </tr>
                 ) : (
@@ -303,15 +325,22 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
                         </Badge>
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <Button
-                          size="sm"
-                          onClick={() => router.push(`/system/devices/${d.id}`)}
-                          className="gap-2"
-                          data-device-id={d.id}
-                        >
-                          <Eye className="h-4 w-4" />
-                          {t('devices_for_model.button.view')}
-                        </Button>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="sm"
+                              onClick={() => router.push(`/system/devices/${d.id}`)}
+                              className="cursor-pointer gap-2"
+                              data-device-id={d.id}
+                            >
+                              <Eye className="h-4 w-4" />
+                              {t('devices_for_model.button.view')}
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{t('devices_for_model.button.view')}</p>
+                          </TooltipContent>
+                        </Tooltip>
                       </td>
                     </tr>
                   ))
@@ -338,30 +367,44 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
           maxWidth="!max-w-[70vw]"
           footer={
             <>
-              <Button
-                variant="outline"
-                onClick={() => setShowCreate(false)}
-                className="min-w-[100px]"
-              >
-                {t('cancel')}
-              </Button>
-              <Button
-                onClick={() => void handleCreate()}
-                disabled={creating}
-                className="min-w-[120px] bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
-              >
-                {creating ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {t('button.creating')}
-                  </>
-                ) : (
-                  <>
-                    <Plus className="mr-2 h-4 w-4" />
-                    {t('device.create_submit')}
-                  </>
-                )}
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowCreate(false)}
+                    className="min-w-[100px] cursor-pointer"
+                  >
+                    {t('cancel')}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{t('cancel')}</p>
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={() => void handleCreate()}
+                    disabled={creating}
+                    className="min-w-[120px] cursor-pointer bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
+                  >
+                    {creating ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        {t('button.creating')}
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="mr-2 h-4 w-4" />
+                        {t('device.create_submit')}
+                      </>
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{t('device.create_submit')}</p>
+                </TooltipContent>
+              </Tooltip>
             </>
           }
         >
@@ -459,22 +502,29 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
               <AlertDialogCancel onClick={() => setShowCreateSerialWarning(false)}>
                 {t('devices_for_model.button.cancel')}
               </AlertDialogCancel>
-              <Button
-                onClick={async () => {
-                  setShowCreateSerialWarning(false)
-                  if (createConfirmRef.current) {
-                    try {
-                      await createConfirmRef.current()
-                    } catch (e) {
-                      console.error('createConfirmRef failed', e)
-                      toast.error(t('device.create_error'))
-                    }
-                  }
-                }}
-                className="min-w-[120px] bg-amber-600"
-              >
-                {t('devices_for_model.button.confirm')}
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={async () => {
+                      setShowCreateSerialWarning(false)
+                      if (createConfirmRef.current) {
+                        try {
+                          await createConfirmRef.current()
+                        } catch (e) {
+                          console.error('createConfirmRef failed', e)
+                          toast.error(t('device.create_error'))
+                        }
+                      }
+                    }}
+                    className="min-w-[120px] cursor-pointer bg-amber-600"
+                  >
+                    {t('devices_for_model.button.confirm')}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{t('devices_for_model.button.confirm')}</p>
+                </TooltipContent>
+              </Tooltip>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

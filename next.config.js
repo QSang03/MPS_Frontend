@@ -46,8 +46,8 @@ const nextConfig = {
   compress: true,
 
   ...(process.env.ANALYZE === 'true' && {
-    webpack: (config) => {
-      const bundleAnalyzer = require('@next/bundle-analyzer')
+    webpack: async (config) => {
+      const bundleAnalyzer = (await import('@next/bundle-analyzer')).default
       config.plugins.push(
         new (bundleAnalyzer())({
           enabled: true,

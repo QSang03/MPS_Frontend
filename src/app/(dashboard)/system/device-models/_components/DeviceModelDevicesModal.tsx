@@ -6,6 +6,7 @@ import { Dialog } from '@/components/ui/dialog'
 import { SystemModalLayout } from '@/components/system/SystemModalLayout'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { toast } from 'sonner'
 import { devicesClientService } from '@/lib/api/services/devices-client.service'
 import type { Device } from '@/types/models'
@@ -227,11 +228,22 @@ export default function DeviceModelDevicesModal({
                             </Badge>
                           </td>
                           <td className="px-4 py-3 text-right">
-                            <Link href={`/system/devices/${d.id}`}>
-                              <Button variant="secondary" size="sm" className="transition-all">
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                            </Link>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Link href={`/system/devices/${d.id}`}>
+                                  <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    className="cursor-pointer transition-all"
+                                  >
+                                    <Eye className="h-4 w-4" />
+                                  </Button>
+                                </Link>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>{t('button.view')}</p>
+                              </TooltipContent>
+                            </Tooltip>
                           </td>
                         </tr>
                       ))
@@ -256,14 +268,21 @@ export default function DeviceModelDevicesModal({
                   </div>
 
                   {searchTerm && devices.length !== filteredDevices.length && (
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => setSearchTerm('')}
-                      className="h-8"
-                    >
-                      {t('device_model.devices.clear_filter')}
-                    </Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => setSearchTerm('')}
+                          className="h-8 cursor-pointer"
+                        >
+                          {t('device_model.devices.clear_filter')}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{t('device_model.devices.clear_filter')}</p>
+                      </TooltipContent>
+                    </Tooltip>
                   )}
                 </div>
               )}

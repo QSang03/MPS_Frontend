@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/select'
 import { toast } from 'sonner'
 import { devicesClientService } from '@/lib/api/services/devices-client.service'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { DEVICE_STATUS } from '@/constants/status'
 import { CheckCircle2, XCircle } from 'lucide-react'
 import { useLocale } from '@/components/providers/LocaleProvider'
@@ -110,32 +111,44 @@ export default function ToggleActiveModal({
         variant="edit"
         footer={
           <>
-            <Button
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={submitting}
-              className="min-w-[100px] cursor-pointer"
-              title={t('cancel')}
-            >
-              {t('cancel')}
-            </Button>
-            <Button
-              type="submit"
-              form="toggle-active-form"
-              disabled={submitting}
-              className="min-w-[120px] cursor-pointer bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
-              title={
-                targetActive
-                  ? t('toggle_active.modal.button.activate')
-                  : t('toggle_active.modal.button.deactivate')
-              }
-            >
-              {submitting
-                ? t('toggle_active.modal.button.processing')
-                : targetActive
-                  ? t('toggle_active.modal.button.activate')
-                  : t('toggle_active.modal.button.deactivate')}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  onClick={() => onOpenChange(false)}
+                  disabled={submitting}
+                  className="min-w-[100px] cursor-pointer"
+                >
+                  {t('cancel')}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t('cancel')}</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="submit"
+                  form="toggle-active-form"
+                  disabled={submitting}
+                  className="min-w-[120px] cursor-pointer bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
+                >
+                  {submitting
+                    ? t('toggle_active.modal.button.processing')
+                    : targetActive
+                      ? t('toggle_active.modal.button.activate')
+                      : t('toggle_active.modal.button.deactivate')}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>
+                  {targetActive
+                    ? t('toggle_active.modal.button.activate')
+                    : t('toggle_active.modal.button.deactivate')}
+                </p>
+              </TooltipContent>
+            </Tooltip>
           </>
         }
       >

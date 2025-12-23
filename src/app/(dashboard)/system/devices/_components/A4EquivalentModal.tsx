@@ -15,6 +15,7 @@ import type { Device } from '@/types/models/device'
 import { useLocale } from '@/components/providers/LocaleProvider'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Loader2, Scan } from 'lucide-react'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 
 interface Props {
   // Accept any device-like object which must include `id` and optionally `serialNumber`.
@@ -400,24 +401,36 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
         variant="create"
         footer={
           <>
-            <Button
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={submitting}
-              className="min-w-[100px] cursor-pointer"
-              title={t('a4_modal.button.cancel')}
-            >
-              {t('a4_modal.button.cancel')}
-            </Button>
-            <Button
-              type="submit"
-              form="a4-form"
-              disabled={submitting}
-              className="min-w-[120px] cursor-pointer bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
-              title={t('button.update')}
-            >
-              {submitting ? t('button.saving') : t('button.update')}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  onClick={() => onOpenChange(false)}
+                  disabled={submitting}
+                  className="min-w-[100px] cursor-pointer"
+                >
+                  {t('a4_modal.button.cancel')}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t('a4_modal.button.cancel')}</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="submit"
+                  form="a4-form"
+                  disabled={submitting}
+                  className="min-w-[120px] cursor-pointer bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
+                >
+                  {submitting ? t('button.saving') : t('button.update')}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t('button.update')}</p>
+              </TooltipContent>
+            </Tooltip>
           </>
         }
       >
@@ -430,21 +443,27 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
           className="space-y-4"
         >
           <div className="flex flex-wrap items-center gap-3">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={scanLoading}
-              className="cursor-pointer gap-2"
-              title={t('a4_modal.button.analyze_pdf')}
-            >
-              {scanLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Scan className="h-4 w-4" />
-              )}
-              {scanLoading ? t('a4_modal.button.analyzing') : t('a4_modal.button.analyze_pdf')}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={scanLoading}
+                  className="cursor-pointer gap-2"
+                >
+                  {scanLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Scan className="h-4 w-4" />
+                  )}
+                  {scanLoading ? t('a4_modal.button.analyzing') : t('a4_modal.button.analyze_pdf')}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t('a4_modal.button.analyze_pdf')}</p>
+              </TooltipContent>
+            </Tooltip>
             <input
               ref={fileInputRef}
               type="file"
