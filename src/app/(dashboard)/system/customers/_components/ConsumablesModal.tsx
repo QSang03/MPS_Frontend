@@ -3,6 +3,7 @@
 import React from 'react'
 import { useLocale } from '@/components/providers/LocaleProvider'
 import { Loader2, ShoppingCart, Package } from 'lucide-react'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { Dialog } from '@/components/ui/dialog'
 import { SystemModalLayout } from '@/components/system/SystemModalLayout'
 import {
@@ -71,9 +72,16 @@ export default function ConsumablesModal({
                 await onFilterChange(v)
               }}
             >
-              <SelectTrigger className="h-10 w-48 rounded-xl border-2 border-emerald-200 font-semibold text-emerald-700 shadow focus:ring-2 focus:ring-emerald-500">
-                <SelectValue />
-              </SelectTrigger>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <SelectTrigger className="h-10 w-48 cursor-pointer rounded-xl border-2 border-emerald-200 font-semibold text-emerald-700 shadow focus:ring-2 focus:ring-emerald-500">
+                    <SelectValue />
+                  </SelectTrigger>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{t('consumables.filter.tooltip')}</p>
+                </TooltipContent>
+              </Tooltip>
               <SelectContent>
                 <SelectItem value="orphaned">{t('consumables.filter.orphaned')}</SelectItem>
                 <SelectItem value="installed">{t('consumables.filter.installed')}</SelectItem>

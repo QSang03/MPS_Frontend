@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import { Dialog, DialogTrigger } from '@/components/ui/dialog'
 import { SystemModalLayout } from '@/components/system/SystemModalLayout'
 import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -90,14 +91,28 @@ export default function ConsumableTypeFormModal({
       ) : (
         <DialogTrigger asChild>
           {mode === 'create' ? (
-            <Button variant="outline" className="gap-2 hover:bg-[var(--accent)]">
-              <Plus className="h-4 w-4" />
-              {t('consumable_types.actions.create')}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" className="cursor-pointer gap-2 hover:bg-[var(--accent)]">
+                  <Plus className="h-4 w-4" />
+                  {t('consumable_types.actions.create')}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t('consumable_types.actions.create')}</p>
+              </TooltipContent>
+            </Tooltip>
           ) : (
-            <Button variant="outline" size="sm" className="gap-2">
-              <Edit className="h-4 w-4" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="sm" className="cursor-pointer gap-2">
+                  <Edit className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t('consumable_types.form.title_edit')}</p>
+              </TooltipContent>
+            </Tooltip>
           )}
         </DialogTrigger>
       )}
@@ -117,38 +132,56 @@ export default function ConsumableTypeFormModal({
         variant={mode}
         footer={
           <>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setOpen(false)}
-              disabled={loading}
-              className="min-w-[100px]"
-            >
-              {t('button.cancel')}
-            </Button>
-            <Button
-              type="submit"
-              form="consumable-type-form"
-              disabled={loading}
-              className="min-w-[120px] bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {mode === 'create' ? t('button.creating') : t('button.saving')}
-                </>
-              ) : mode === 'create' ? (
-                <>
-                  <Plus className="mr-2 h-4 w-4" />
-                  {t('consumable_type.button.create')}
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="mr-2 h-4 w-4" />
-                  {t('consumable_type.button.save')}
-                </>
-              )}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setOpen(false)}
+                  disabled={loading}
+                  className="min-w-[100px] cursor-pointer"
+                >
+                  {t('button.cancel')}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t('button.cancel')}</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="submit"
+                  form="consumable-type-form"
+                  disabled={loading}
+                  className="min-w-[120px] cursor-pointer bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {mode === 'create' ? t('button.creating') : t('button.saving')}
+                    </>
+                  ) : mode === 'create' ? (
+                    <>
+                      <Plus className="mr-2 h-4 w-4" />
+                      {t('consumable_type.button.create')}
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="mr-2 h-4 w-4" />
+                      {t('consumable_type.button.save')}
+                    </>
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>
+                  {mode === 'create'
+                    ? t('consumable_type.button.create')
+                    : t('consumable_type.button.save')}
+                </p>
+              </TooltipContent>
+            </Tooltip>
           </>
         }
       >

@@ -24,6 +24,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Separator } from '@/components/ui/separator'
 import { Dialog } from '@/components/ui/dialog'
 import { SystemModalLayout } from '@/components/system/SystemModalLayout'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import {
   createInvoiceFormSchema,
   type CreateInvoiceFormData,
@@ -136,32 +137,47 @@ export function CreateBillingModal({
         maxWidth="!max-w-[60vw]"
         footer={
           <>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={isLoading}
-            >
-              {t('cancel')}
-            </Button>
-            <Button
-              type="button"
-              onClick={form.handleSubmit(onSubmit)}
-              disabled={isLoading}
-              className="gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  {t('button.creating')}
-                </>
-              ) : (
-                <>
-                  <Receipt className="h-4 w-4" />
-                  {t('customer.detail.contracts.create_billing')}
-                </>
-              )}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => onOpenChange(false)}
+                  disabled={isLoading}
+                  className="cursor-pointer"
+                >
+                  {t('cancel')}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t('cancel')}</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  onClick={form.handleSubmit(onSubmit)}
+                  disabled={isLoading}
+                  className="cursor-pointer gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      {t('button.creating')}
+                    </>
+                  ) : (
+                    <>
+                      <Receipt className="h-4 w-4" />
+                      {t('customer.detail.contracts.create_billing')}
+                    </>
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t('customer.detail.contracts.create_billing')}</p>
+              </TooltipContent>
+            </Tooltip>
           </>
         }
       >
@@ -225,20 +241,27 @@ export function CreateBillingModal({
 
               {/* Advanced Options */}
               <div className="space-y-4">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => setShowAdvanced(!showAdvanced)}
-                  className="w-full justify-between"
-                >
-                  <span className="flex items-center gap-2">
-                    <Clock className="h-4 w-4" />
-                    {t('billing.advanced_options')}
-                  </span>
-                  <span className="text-xs text-slate-500">
-                    {showAdvanced ? t('hide') : t('show')}
-                  </span>
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={() => setShowAdvanced(!showAdvanced)}
+                      className="w-full cursor-pointer justify-between"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Clock className="h-4 w-4" />
+                        {t('billing.advanced_options')}
+                      </span>
+                      <span className="text-xs text-slate-500">
+                        {showAdvanced ? t('hide') : t('show')}
+                      </span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{t('billing.advanced_options')}</p>
+                  </TooltipContent>
+                </Tooltip>
 
                 {showAdvanced && (
                   <motion.div

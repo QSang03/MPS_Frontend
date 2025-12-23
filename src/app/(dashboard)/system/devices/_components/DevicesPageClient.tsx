@@ -701,30 +701,32 @@ function DevicesTableContent({
                     )}
                     {customer?.code && customer.code !== 'SYS' && (
                       <ActionGuard pageId="devices" actionId="return-to-warehouse">
-                        <DeleteDialog
-                          title={t('devices.remove_customer.title', {
-                            serial: device.serialNumber || device.id,
-                          })}
-                          description={t('devices.remove_customer.description')}
-                          onConfirm={async () => handleRemoveCustomer(device.id)}
-                          trigger={
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="destructive"
-                                  size="sm"
-                                  className="h-7 w-7 cursor-pointer p-0"
-                                  disabled={updatingCustomer}
-                                >
-                                  <X className="h-3.5 w-3.5" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>{t('devices.unassign')}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          }
-                        />
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div>
+                              <DeleteDialog
+                                title={t('devices.remove_customer.title', {
+                                  serial: device.serialNumber || device.id,
+                                })}
+                                description={t('devices.remove_customer.description')}
+                                onConfirm={async () => handleRemoveCustomer(device.id)}
+                                trigger={
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    className="h-7 w-7 cursor-pointer p-0"
+                                    disabled={updatingCustomer}
+                                  >
+                                    <X className="h-3.5 w-3.5" />
+                                  </Button>
+                                }
+                              />
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{t('devices.unassign')}</p>
+                          </TooltipContent>
+                        </Tooltip>
                       </ActionGuard>
                     )}
                   </>
@@ -1007,27 +1009,31 @@ function DevicesTableContent({
               </Tooltip>
               {!isHistorical && (
                 <ActionGuard pageId="devices" actionId="delete">
-                  <DeleteDialog
-                    title={t('device.delete.title', { serial: device.serialNumber || device.id })}
-                    description={t('device.delete.description')}
-                    onConfirm={async () => handleDeleteDevice(device.id)}
-                    trigger={
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            className="h-7 w-7 cursor-pointer p-0"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>{t('device.delete.title_short')}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    }
-                  />
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div>
+                        <DeleteDialog
+                          title={t('device.delete.title', {
+                            serial: device.serialNumber || device.id,
+                          })}
+                          description={t('device.delete.description')}
+                          onConfirm={async () => handleDeleteDevice(device.id)}
+                          trigger={
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              className="h-7 w-7 cursor-pointer p-0"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          }
+                        />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{t('device.delete.title_short')}</p>
+                    </TooltipContent>
+                  </Tooltip>
                 </ActionGuard>
               )}
             </div>

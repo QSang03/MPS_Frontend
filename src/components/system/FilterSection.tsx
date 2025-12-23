@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Filter, RotateCcw, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 
 interface ActiveFilter {
   label: string
@@ -78,28 +79,42 @@ export function FilterSection({
                       className="group inline-flex items-center gap-1.5 rounded-lg border border-[var(--brand-200)] bg-gradient-to-r from-[var(--brand-50)] to-[var(--brand-100)] py-1 pr-1.5 pl-2.5 text-xs font-medium text-[var(--brand-700)] shadow-sm transition-all duration-150 hover:border-[var(--brand-300)] hover:shadow"
                     >
                       <span className="leading-none">{filter.label}</span>
-                      <button
-                        onClick={filter.onRemove}
-                        className="rounded-md p-0.5 transition-colors duration-150 group-hover:bg-[var(--brand-100)] hover:bg-[var(--brand-200)] hover:opacity-60"
-                        aria-label={t('filters.remove_aria', { label: filter.label })}
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            onClick={filter.onRemove}
+                            className="cursor-pointer rounded-md p-0.5 transition-colors duration-150 group-hover:bg-[var(--brand-100)] hover:bg-[var(--brand-200)] hover:opacity-60"
+                            aria-label={t('filters.remove_aria', { label: filter.label })}
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{t('filters.remove')}</p>
+                        </TooltipContent>
+                      </Tooltip>
                     </div>
                   ))}
                 </div>
               </div>
             )}
             {onReset && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onReset}
-                className="border border-gray-300 font-medium whitespace-nowrap text-gray-700 shadow-sm transition-all duration-150 hover:border-gray-400 hover:bg-gray-50 hover:shadow"
-              >
-                <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
-                {t('filters.reset')}
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={onReset}
+                    className="cursor-pointer border border-gray-300 font-medium whitespace-nowrap text-gray-700 shadow-sm transition-all duration-150 hover:border-gray-400 hover:bg-gray-50 hover:shadow"
+                  >
+                    <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
+                    {t('filters.reset')}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{t('filters.reset')}</p>
+                </TooltipContent>
+              </Tooltip>
             )}
           </div>
         )}

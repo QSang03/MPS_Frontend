@@ -6,6 +6,7 @@ import { stockItemsClientService } from '@/lib/api/services/stock-items-client.s
 import { Dialog } from '@/components/ui/dialog'
 import { SystemModalLayout } from '@/components/system/SystemModalLayout'
 import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { Loader2, Eye } from 'lucide-react'
 import { useLocale } from '@/components/providers/LocaleProvider'
 import { format } from 'date-fns'
@@ -367,31 +368,59 @@ export default function MovementHistoryModal({
               <option value={25}>{t('pagination.per_page_option', { count: '25' })}</option>
               <option value={50}>{t('pagination.per_page_option', { count: '50' })}</option>
             </select>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                if ((pagination?.page ?? page) <= 1) return
-                setPage((p) => Math.max(1, p - 1))
-              }}
-              disabled={(pagination?.page ?? page) <= 1}
-            >
-              {t('pagination.prev')}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                if ((pagination?.page ?? page) >= (pagination?.totalPages ?? 1)) return
-                setPage((p) => p + 1)
-              }}
-              disabled={(pagination?.page ?? page) >= (pagination?.totalPages ?? 1)}
-            >
-              {t('pagination.next')}
-            </Button>
-            <Button onClick={() => onOpenChange(false)} variant="secondary" size="sm">
-              {t('button.close')}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    if ((pagination?.page ?? page) <= 1) return
+                    setPage((p) => Math.max(1, p - 1))
+                  }}
+                  disabled={(pagination?.page ?? page) <= 1}
+                  className="cursor-pointer"
+                >
+                  {t('pagination.prev')}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t('pagination.prev')}</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    if ((pagination?.page ?? page) >= (pagination?.totalPages ?? 1)) return
+                    setPage((p) => p + 1)
+                  }}
+                  disabled={(pagination?.page ?? page) >= (pagination?.totalPages ?? 1)}
+                  className="cursor-pointer"
+                >
+                  {t('pagination.next')}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t('pagination.next')}</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={() => onOpenChange(false)}
+                  variant="secondary"
+                  size="sm"
+                  className="cursor-pointer"
+                >
+                  {t('button.close')}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t('button.close')}</p>
+              </TooltipContent>
+            </Tooltip>
           </div>
         </div>
       </SystemModalLayout>

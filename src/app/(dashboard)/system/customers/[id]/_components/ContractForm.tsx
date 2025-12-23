@@ -24,6 +24,7 @@ import {
   ExternalLink,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import {
   Form,
   FormControl,
@@ -965,20 +966,27 @@ function ContractForm({ initial, onSuccess }: ContractFormProps) {
                   />
                 </FormControl>
                 {documentUrlValue && (
-                  <Button
-                    asChild
-                    variant="default"
-                    className="mt-2 h-8 w-fit gap-1 rounded-full border border-[var(--brand-200)] bg-[var(--brand-50)] px-3 text-sm font-medium text-[var(--brand-700)]"
-                  >
-                    <a
-                      href={getPublicUrl(documentUrlValue) ?? documentUrlValue}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <ExternalLink className="h-3.5 w-3.5" />
-                      {t('contract.form.field.document_link.view')}
-                    </a>
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        asChild
+                        variant="default"
+                        className="mt-2 h-8 w-fit cursor-pointer gap-1 rounded-full border border-[var(--brand-200)] bg-[var(--brand-50)] px-3 text-sm font-medium text-[var(--brand-700)]"
+                      >
+                        <a
+                          href={getPublicUrl(documentUrlValue) ?? documentUrlValue}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <ExternalLink className="h-3.5 w-3.5" />
+                          {t('contract.form.field.document_link.view')}
+                        </a>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{t('contract.form.field.document_link.view')}</p>
+                    </TooltipContent>
+                  </Tooltip>
                 )}
                 <FormDescription className="flex items-center gap-1.5 text-xs text-slate-600">
                   <Info className="h-3.5 w-3.5" />
@@ -1028,18 +1036,25 @@ function ContractForm({ initial, onSuccess }: ContractFormProps) {
                       <p className="font-semibold text-slate-900">{selectedFile.name}</p>
                       <p className="text-xs text-slate-500">{formatFileSize(selectedFile.size)}</p>
                     </div>
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      className="text-rose-600"
-                      onClick={() => {
-                        setPdfFileValue(undefined)
-                        field.onChange(undefined)
-                      }}
-                    >
-                      {t('contract.form.field.pdf_upload.remove')}
-                    </Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          className="cursor-pointer text-rose-600"
+                          onClick={() => {
+                            setPdfFileValue(undefined)
+                            field.onChange(undefined)
+                          }}
+                        >
+                          {t('contract.form.field.pdf_upload.remove')}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{t('contract.form.field.pdf_upload.remove')}</p>
+                      </TooltipContent>
+                    </Tooltip>
                   </div>
                 )}
                 <FormDescription className="flex items-center gap-1.5 text-xs text-slate-600">
@@ -1061,50 +1076,64 @@ function ContractForm({ initial, onSuccess }: ContractFormProps) {
           transition={{ delay: 0.4 }}
           className="flex flex-col gap-3 pt-2 sm:flex-row"
         >
-          <Button
-            type="submit"
-            disabled={isPending}
-            className="group relative h-14 flex-1 overflow-hidden bg-[var(--btn-primary)] text-base font-bold text-[var(--btn-primary-foreground)] shadow-xl transition-all hover:bg-[var(--btn-primary-hover)] hover:shadow-2xl"
-          >
-            <motion.div
-              className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/25 to-white/0"
-              initial={{ x: '-100%' }}
-              whileHover={{ x: '100%' }}
-              transition={{ duration: 0.6 }}
-            />
-            <div className="relative flex items-center justify-center gap-2.5">
-              {isPending ? (
-                <>
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                  <span>{t('button.processing')}</span>
-                </>
-              ) : (
-                <>
-                  {id ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="submit"
+                disabled={isPending}
+                className="group relative h-14 flex-1 cursor-pointer overflow-hidden bg-[var(--btn-primary)] text-base font-bold text-[var(--btn-primary-foreground)] shadow-xl transition-all hover:bg-[var(--btn-primary-hover)] hover:shadow-2xl"
+              >
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/25 to-white/0"
+                  initial={{ x: '-100%' }}
+                  whileHover={{ x: '100%' }}
+                  transition={{ duration: 0.6 }}
+                />
+                <div className="relative flex items-center justify-center gap-2.5">
+                  {isPending ? (
                     <>
-                      <Save className="h-5 w-5" />
-                      <span>{t('contract.update')}</span>
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      <span>{t('button.processing')}</span>
                     </>
                   ) : (
                     <>
-                      <Sparkles className="h-5 w-5" />
-                      <span>{t('contract.create')}</span>
+                      {id ? (
+                        <>
+                          <Save className="h-5 w-5" />
+                          <span>{t('contract.update')}</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="h-5 w-5" />
+                          <span>{t('contract.create')}</span>
+                        </>
+                      )}
                     </>
                   )}
-                </>
-              )}
-            </div>
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onSuccess?.()}
-            disabled={isPending}
-            className="h-14 border-2 border-slate-300 bg-white px-8 text-base font-semibold text-slate-700 shadow-md transition-all hover:border-slate-400 hover:bg-slate-50 hover:shadow-lg"
-          >
-            <X className="mr-2 h-5 w-5" />
-            {t('cancel')}
-          </Button>
+                </div>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{id ? t('contract.update') : t('contract.create')}</p>
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onSuccess?.()}
+                disabled={isPending}
+                className="h-14 cursor-pointer border-2 border-slate-300 bg-white px-8 text-base font-semibold text-slate-700 shadow-md transition-all hover:border-slate-400 hover:bg-slate-50 hover:shadow-lg"
+              >
+                <X className="mr-2 h-5 w-5" />
+                {t('cancel')}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{t('cancel')}</p>
+            </TooltipContent>
+          </Tooltip>
         </motion.div>
 
         {/* Contract devices management (only when editing) */}

@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { contractsClientService } from '@/lib/api/services/contracts-client.service'
 import type { ContractDevice } from '@/types/models/contract-device'
 import { formatCurrencyWithSymbol } from '@/lib/utils/formatters'
@@ -144,25 +145,39 @@ export default function ContractDevicesSection({
 
         <div className="flex flex-wrap items-center gap-2">
           {canAttachDevices && (
-            <Button
-              size="sm"
-              onClick={openAttachDialog}
-              className="gap-2 bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] font-semibold text-white shadow-md transition-all hover:from-[var(--brand-700)] hover:to-[var(--brand-700)] hover:shadow-lg"
-            >
-              <Plus className="h-4 w-4" />
-              {t('contract_devices.section.add_device')}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="sm"
+                  onClick={openAttachDialog}
+                  className="cursor-pointer gap-2 bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] font-semibold text-white shadow-md transition-all hover:from-[var(--brand-700)] hover:to-[var(--brand-700)] hover:shadow-lg"
+                >
+                  <Plus className="h-4 w-4" />
+                  {t('contract_devices.section.add_device')}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t('contract_devices.section.add_device')}</p>
+              </TooltipContent>
+            </Tooltip>
           )}
           {canDetachDevices && selectedIds.length > 0 && (
-            <Button
-              size="sm"
-              onClick={handleDetach}
-              disabled={detachMutation.isPending}
-              className="gap-2 bg-gradient-to-r from-red-500 to-pink-600 font-semibold text-white shadow-md transition-all hover:from-red-600 hover:to-pink-700 hover:shadow-lg"
-            >
-              <Trash2 className="h-4 w-4" />
-              {t('contract_devices.section.detach_devices', { count: selectedIds.length })}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="sm"
+                  onClick={handleDetach}
+                  disabled={detachMutation.isPending}
+                  className="cursor-pointer gap-2 bg-gradient-to-r from-red-500 to-pink-600 font-semibold text-white shadow-md transition-all hover:from-red-600 hover:to-pink-700 hover:shadow-lg"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  {t('contract_devices.section.detach_devices', { count: selectedIds.length })}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t('contract_devices.section.detach_devices', { count: selectedIds.length })}</p>
+              </TooltipContent>
+            </Tooltip>
           )}
         </div>
       </div>

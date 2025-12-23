@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import { Dialog, DialogTrigger } from '@/components/ui/dialog'
 import { SystemModalLayout } from '@/components/system/SystemModalLayout'
 import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { Input } from '@/components/ui/input'
 import { FileText, Loader2, Upload } from 'lucide-react'
 import ExcelJS from 'exceljs'
@@ -136,10 +137,17 @@ export default function ImportExcelModal({ trigger }: ImportExcelModalProps = {}
         <DialogTrigger asChild>{trigger}</DialogTrigger>
       ) : (
         <DialogTrigger asChild>
-          <Button variant="outline" className="gap-2 hover:bg-[var(--accent)]">
-            <FileText className="h-4 w-4" />
-            {t('consumable_types.import.button')}
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="outline" className="cursor-pointer gap-2 hover:bg-[var(--accent)]">
+                <FileText className="h-4 w-4" />
+                {t('consumable_types.import.button')}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{t('consumable_types.import.button')}</p>
+            </TooltipContent>
+          </Tooltip>
         </DialogTrigger>
       )}
 
@@ -151,25 +159,39 @@ export default function ImportExcelModal({ trigger }: ImportExcelModalProps = {}
         maxWidth="!max-w-[55vw]"
         footer={
           <>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setOpen(false)
-                setFile(null)
-              }}
-              className="min-w-[100px]"
-            >
-              {t('button.cancel')}
-            </Button>
-            <Button
-              variant="default"
-              onClick={handleUpload}
-              disabled={loading}
-              className="min-w-[120px]"
-            >
-              {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              {t('consumable_types.import.upload')}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setOpen(false)
+                    setFile(null)
+                  }}
+                  className="min-w-[100px] cursor-pointer"
+                >
+                  {t('button.cancel')}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t('button.cancel')}</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="default"
+                  onClick={handleUpload}
+                  disabled={loading}
+                  className="min-w-[120px] cursor-pointer"
+                >
+                  {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  {t('consumable_types.import.upload')}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t('consumable_types.import.upload')}</p>
+              </TooltipContent>
+            </Tooltip>
           </>
         }
       >
@@ -180,53 +202,60 @@ export default function ImportExcelModal({ trigger }: ImportExcelModalProps = {}
             </label>
             <div className="flex items-center gap-2">
               <Input type="file" accept=".xlsx,.xls" onChange={handleFileChange} className="mt-2" />
-              <Button
-                variant="default"
-                onClick={async () => {
-                  // generate template and download
-                  try {
-                    const workbook = new ExcelJS.Workbook()
-                    const sheet = workbook.addWorksheet('Template')
-                    sheet.addRow([
-                      t('consumable_types.import.template.part'),
-                      t('consumable_types.import.template.name'),
-                      t('consumable_types.import.template.capacity'),
-                      t('consumable_types.import.template.compatible'),
-                    ])
-                    sheet.addRow([
-                      'ABC-123',
-                      t('consumable_types.import.template.sample.name1'),
-                      1000,
-                      t('consumable_types.import.template.sample.compatible1'),
-                    ])
-                    sheet.addRow([
-                      'DEF-456',
-                      t('consumable_types.import.template.sample.name2'),
-                      500,
-                      t('consumable_types.import.template.sample.compatible2'),
-                    ])
-                    sheet.columns = [{ width: 20 }, { width: 30 }, { width: 15 }, { width: 40 }]
-                    const buf = await workbook.xlsx.writeBuffer()
-                    const blob = new Blob([buf], {
-                      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                    })
-                    const url = URL.createObjectURL(blob)
-                    const a = document.createElement('a')
-                    a.href = url
-                    a.download = 'consumable-types-template.xlsx'
-                    document.body.appendChild(a)
-                    a.click()
-                    a.remove()
-                    URL.revokeObjectURL(url)
-                  } catch (err) {
-                    console.error('Failed to generate template', err)
-                    toast.error(t('consumable_types.import.errors.template_failed'))
-                  }
-                }}
-                className="mt-2"
-              >
-                {t('consumable_types.import.download_template')}
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="default"
+                    onClick={async () => {
+                      // generate template and download
+                      try {
+                        const workbook = new ExcelJS.Workbook()
+                        const sheet = workbook.addWorksheet('Template')
+                        sheet.addRow([
+                          t('consumable_types.import.template.part'),
+                          t('consumable_types.import.template.name'),
+                          t('consumable_types.import.template.capacity'),
+                          t('consumable_types.import.template.compatible'),
+                        ])
+                        sheet.addRow([
+                          'ABC-123',
+                          t('consumable_types.import.template.sample.name1'),
+                          1000,
+                          t('consumable_types.import.template.sample.compatible1'),
+                        ])
+                        sheet.addRow([
+                          'DEF-456',
+                          t('consumable_types.import.template.sample.name2'),
+                          500,
+                          t('consumable_types.import.template.sample.compatible2'),
+                        ])
+                        sheet.columns = [{ width: 20 }, { width: 30 }, { width: 15 }, { width: 40 }]
+                        const buf = await workbook.xlsx.writeBuffer()
+                        const blob = new Blob([buf], {
+                          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                        })
+                        const url = URL.createObjectURL(blob)
+                        const a = document.createElement('a')
+                        a.href = url
+                        a.download = 'consumable-types-template.xlsx'
+                        document.body.appendChild(a)
+                        a.click()
+                        a.remove()
+                        URL.revokeObjectURL(url)
+                      } catch (err) {
+                        console.error('Failed to generate template', err)
+                        toast.error(t('consumable_types.import.errors.template_failed'))
+                      }
+                    }}
+                    className="mt-2 cursor-pointer"
+                  >
+                    {t('consumable_types.import.download_template')}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{t('consumable_types.import.download_template')}</p>
+                </TooltipContent>
+              </Tooltip>
             </div>
             {file && <div className="text-muted-foreground mt-2 text-sm">{file.name}</div>}
           </div>

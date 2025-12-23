@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import {
   ChevronDown,
   ChevronUp,
@@ -1124,19 +1125,33 @@ export default function CustomerDetailClient({ customerId }: Props) {
                   }
                 }}
                 trigger={
-                  <Button variant="secondary" size="sm" className="gap-2">
-                    <Edit className="h-4 w-4" />
-                    {t('customer.detail.edit')}
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="secondary" size="sm" className="cursor-pointer gap-2">
+                        <Edit className="h-4 w-4" />
+                        {t('customer.detail.edit')}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{t('customer.detail.edit')}</p>
+                    </TooltipContent>
+                  </Tooltip>
                 }
               />
             )}
           </ActionGuard>
           <Link href="/system/customers">
-            <Button variant="outline" size="sm" className="gap-2">
-              <ArrowRight className="h-4 w-4 rotate-180" />
-              {t('customer.detail.back_to_list')}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="sm" className="cursor-pointer gap-2">
+                  <ArrowRight className="h-4 w-4 rotate-180" />
+                  {t('customer.detail.back_to_list')}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t('customer.detail.back_to_list')}</p>
+              </TooltipContent>
+            </Tooltip>
           </Link>
         </div>
       </motion.div>
@@ -1205,34 +1220,52 @@ export default function CustomerDetailClient({ customerId }: Props) {
                     </div>
                     <div className="flex items-center gap-2">
                       <ActionGuard pageId="customers" actionId="contract-create">
-                        <Button
-                          size="sm"
-                          onClick={() => setCreateContractOpen(true)}
-                          className="gap-2 bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] shadow-sm hover:from-[var(--brand-700)] hover:to-[var(--brand-700)]"
-                        >
-                          <Plus className="h-4 w-4" />
-                          {t('customer.detail.contracts.create')}
-                        </Button>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="sm"
+                              onClick={() => setCreateContractOpen(true)}
+                              className="cursor-pointer gap-2 bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] shadow-sm hover:from-[var(--brand-700)] hover:to-[var(--brand-700)]"
+                            >
+                              <Plus className="h-4 w-4" />
+                              {t('customer.detail.contracts.create')}
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{t('customer.detail.contracts.create')}</p>
+                          </TooltipContent>
+                        </Tooltip>
                       </ActionGuard>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={toggleAllContracts}
-                        disabled={!contracts.length}
-                        className="gap-2"
-                      >
-                        {isAllExpanded ? (
-                          <>
-                            <ChevronUp className="h-4 w-4" />
-                            {t('customer.detail.contracts.collapse')}
-                          </>
-                        ) : (
-                          <>
-                            <ChevronDown className="h-4 w-4" />
-                            {t('customer.detail.contracts.expand_all')}
-                          </>
-                        )}
-                      </Button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={toggleAllContracts}
+                            disabled={!contracts.length}
+                            className="cursor-pointer gap-2"
+                          >
+                            {isAllExpanded ? (
+                              <>
+                                <ChevronUp className="h-4 w-4" />
+                                {t('customer.detail.contracts.collapse')}
+                              </>
+                            ) : (
+                              <>
+                                <ChevronDown className="h-4 w-4" />
+                                {t('customer.detail.contracts.expand_all')}
+                              </>
+                            )}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>
+                            {isAllExpanded
+                              ? t('customer.detail.contracts.collapse')
+                              : t('customer.detail.contracts.expand_all')}
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
                       <Button
                         variant="outline"
                         size="sm"
@@ -1645,21 +1678,32 @@ export default function CustomerDetailClient({ customerId }: Props) {
                                     </ActionGuard>
 
                                     {/* Expand/collapse chevron */}
-                                    <Button
-                                      variant="secondary"
-                                      size="icon"
-                                      onClick={() => toggleContract(contract.id)}
-                                      className="h-8 w-8 transition-transform hover:bg-slate-100"
-                                    >
-                                      <motion.div
-                                        animate={{
-                                          rotate: expandedContracts.has(contract.id) ? 180 : 0,
-                                        }}
-                                        transition={{ duration: 0.2 }}
-                                      >
-                                        <ChevronDown className="h-4 w-4" />
-                                      </motion.div>
-                                    </Button>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          variant="secondary"
+                                          size="icon"
+                                          onClick={() => toggleContract(contract.id)}
+                                          className="h-8 w-8 cursor-pointer transition-transform hover:bg-slate-100"
+                                        >
+                                          <motion.div
+                                            animate={{
+                                              rotate: expandedContracts.has(contract.id) ? 180 : 0,
+                                            }}
+                                            transition={{ duration: 0.2 }}
+                                          >
+                                            <ChevronDown className="h-4 w-4" />
+                                          </motion.div>
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>
+                                          {expandedContracts.has(contract.id)
+                                            ? t('customer.detail.contracts.collapse')
+                                            : t('customer.detail.contracts.expand')}
+                                        </p>
+                                      </TooltipContent>
+                                    </Tooltip>
                                   </div>
                                 </td>
                               </motion.tr>
@@ -1689,32 +1733,46 @@ export default function CustomerDetailClient({ customerId }: Props) {
                       })}
                     </div>
                     <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={page <= 1}
-                        onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-                        className="gap-2"
-                      >
-                        <ChevronUp className="h-4 w-4 rotate-90" />
-                        {t('customer.detail.pagination.previous')}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={pagination.totalPages ? page >= pagination.totalPages : false}
-                        onClick={() =>
-                          setPage((prev) =>
-                            pagination.totalPages
-                              ? Math.min(pagination.totalPages, prev + 1)
-                              : prev + 1
-                          )
-                        }
-                        className="gap-2"
-                      >
-                        {t('customer.detail.pagination.next')}
-                        <ChevronDown className="h-4 w-4 -rotate-90" />
-                      </Button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={page <= 1}
+                            onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                            className="cursor-pointer gap-2"
+                          >
+                            <ChevronUp className="h-4 w-4 rotate-90" />
+                            {t('customer.detail.pagination.previous')}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{t('customer.detail.pagination.previous')}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={pagination.totalPages ? page >= pagination.totalPages : false}
+                            onClick={() =>
+                              setPage((prev) =>
+                                pagination.totalPages
+                                  ? Math.min(pagination.totalPages, prev + 1)
+                                  : prev + 1
+                              )
+                            }
+                            className="cursor-pointer gap-2"
+                          >
+                            {t('customer.detail.pagination.next')}
+                            <ChevronDown className="h-4 w-4 -rotate-90" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{t('customer.detail.pagination.next')}</p>
+                        </TooltipContent>
+                      </Tooltip>
                     </div>
                   </div>
                 )}

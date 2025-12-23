@@ -20,31 +20,33 @@ export default function Page() {
         subtitle={t('page.device_models.subtitle')}
         icon={<Package className="h-6 w-6" />}
         actions={
-          <ActionGuard pageId="device-models" actionId="create">
-            <DeviceModelFormModal
-              mode="create"
-              onSaved={() => {
-                // Refresh will be handled by DeviceModelList
-                window.location.reload()
-              }}
-              trigger={
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="secondary"
-                      className="cursor-pointer rounded-md border-0 px-3 py-1.5"
-                    >
-                      <Plus className="mr-2 h-4 w-4" />
-                      {t('device_model.button.create')}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{t('device_model.button.create')}</p>
-                  </TooltipContent>
-                </Tooltip>
-              }
-            />
-          </ActionGuard>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div>
+                <ActionGuard pageId="device-models" actionId="create">
+                  <DeviceModelFormModal
+                    mode="create"
+                    onSaved={() => {
+                      // Refresh will be handled by DeviceModelList
+                      window.location.reload()
+                    }}
+                    trigger={
+                      <Button
+                        variant="secondary"
+                        className="cursor-pointer rounded-md border-0 px-3 py-1.5"
+                      >
+                        <Plus className="mr-2 h-4 w-4" />
+                        {t('device_model.button.create')}
+                      </Button>
+                    }
+                  />
+                </ActionGuard>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{t('device_model.button.create')}</p>
+            </TooltipContent>
+          </Tooltip>
         }
       />
       <DeviceModelList />

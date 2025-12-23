@@ -267,47 +267,50 @@ export function A4EquivalentUsageHistory({
       header: t('a4_history.table.actions'),
       cell: ({ row }) => (
         <div className="flex items-center justify-end gap-2">
-          <DeleteDialog
-            title={t('devices.a4_history.delete.title')}
-            description={t('devices.a4_history.delete.description', {
-              snapshotId: row.original.snapshotId ?? '',
-            })}
-            onConfirm={async () => {
-              try {
-                const snapshotId = row.original.snapshotId
-                if (!snapshotId) {
-                  toast.error(t('devices.a4_history.error.invalid_snapshot'))
-                  return
-                }
-                const res = await reportsClientService.deleteA4Equivalent(snapshotId)
-                if (res && res.success) {
-                  toast.success(res.message || t('devices.a4_history.delete_success'))
-                  await load()
-                } else {
-                  const msg = res?.message || res?.error || t('devices.a4_history.delete_error')
-                  toast.error(msg)
-                }
-              } catch (err) {
-                console.error(t('a4_history.error.delete_failed'), err)
-                const message =
-                  err instanceof Error ? err.message : t('devices.a4_history.delete_error')
-                toast.error(message)
-              }
-            }}
-            trigger={
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button size="sm" variant="destructive" className="cursor-pointer">
-                    {' '}
-                    <Trash2 className="h-4 w-4 text-red-600" />{' '}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{t('devices.a4_history.delete')}</p>
-                </TooltipContent>
-              </Tooltip>
-            }
-          />
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div>
+                <DeleteDialog
+                  title={t('devices.a4_history.delete.title')}
+                  description={t('devices.a4_history.delete.description', {
+                    snapshotId: row.original.snapshotId ?? '',
+                  })}
+                  onConfirm={async () => {
+                    try {
+                      const snapshotId = row.original.snapshotId
+                      if (!snapshotId) {
+                        toast.error(t('devices.a4_history.error.invalid_snapshot'))
+                        return
+                      }
+                      const res = await reportsClientService.deleteA4Equivalent(snapshotId)
+                      if (res && res.success) {
+                        toast.success(res.message || t('devices.a4_history.delete_success'))
+                        await load()
+                      } else {
+                        const msg =
+                          res?.message || res?.error || t('devices.a4_history.delete_error')
+                        toast.error(msg)
+                      }
+                    } catch (err) {
+                      console.error(t('a4_history.error.delete_failed'), err)
+                      const message =
+                        err instanceof Error ? err.message : t('devices.a4_history.delete_error')
+                      toast.error(message)
+                    }
+                  }}
+                  trigger={
+                    <Button size="sm" variant="destructive" className="cursor-pointer">
+                      {' '}
+                      <Trash2 className="h-4 w-4 text-red-600" />{' '}
+                    </Button>
+                  }
+                />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{t('devices.a4_history.delete')}</p>
+            </TooltipContent>
+          </Tooltip>
         </div>
       ),
     },

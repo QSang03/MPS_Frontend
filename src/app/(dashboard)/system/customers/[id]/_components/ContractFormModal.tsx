@@ -6,6 +6,7 @@ import { Plus, Sparkles, FileText, ArrowRight, CheckCircle2, Circle } from 'luci
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogTrigger } from '@/components/ui/dialog'
 import { SystemModalLayout } from '@/components/system/SystemModalLayout'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import ContractForm from './ContractForm'
 import type { Contract } from '@/types/models/contract'
 import type { ContractFormData } from '@/lib/validations/contract.schema'
@@ -138,36 +139,50 @@ export function ContractFormModal({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {compact ? (
-          <Button
-            size="sm"
-            variant={triggerVariant}
-            className={cn('gap-2 shadow-sm transition-all', triggerClassName)}
-          >
-            <Plus className="h-4 w-4" />
-            {finalTriggerText}
-          </Button>
-        ) : (
-          <Button
-            variant={triggerVariant}
-            className={cn(
-              'group relative gap-2 overflow-hidden bg-gradient-to-r from-blue-600 to-indigo-600 shadow-lg transition-all hover:scale-105 hover:from-blue-700 hover:to-indigo-700 hover:shadow-xl',
-              triggerClassName
-            )}
-          >
-            <motion.div
-              className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0"
-              initial={{ x: '-100%' }}
-              whileHover={{ x: '100%' }}
-              transition={{ duration: 0.6 }}
-            />
-            <div className="relative flex items-center gap-2">
-              <div className="rounded-full bg-white/20 p-1">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                size="sm"
+                variant={triggerVariant}
+                className={cn('cursor-pointer gap-2 shadow-sm transition-all', triggerClassName)}
+              >
                 <Plus className="h-4 w-4" />
-              </div>
-              <span className="font-semibold">{finalTriggerText}</span>
-              <Sparkles className="h-4 w-4 opacity-75 transition-opacity group-hover:opacity-100" />
-            </div>
-          </Button>
+                {finalTriggerText}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{finalTriggerText}</p>
+            </TooltipContent>
+          </Tooltip>
+        ) : (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={triggerVariant}
+                className={cn(
+                  'group relative cursor-pointer gap-2 overflow-hidden bg-gradient-to-r from-blue-600 to-indigo-600 shadow-lg transition-all hover:scale-105 hover:from-blue-700 hover:to-indigo-700 hover:shadow-xl',
+                  triggerClassName
+                )}
+              >
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0"
+                  initial={{ x: '-100%' }}
+                  whileHover={{ x: '100%' }}
+                  transition={{ duration: 0.6 }}
+                />
+                <div className="relative flex items-center gap-2">
+                  <div className="rounded-full bg-white/20 p-1">
+                    <Plus className="h-4 w-4" />
+                  </div>
+                  <span className="font-semibold">{finalTriggerText}</span>
+                  <Sparkles className="h-4 w-4 opacity-75 transition-opacity group-hover:opacity-100" />
+                </div>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{finalTriggerText}</p>
+            </TooltipContent>
+          </Tooltip>
         )}
       </DialogTrigger>
 

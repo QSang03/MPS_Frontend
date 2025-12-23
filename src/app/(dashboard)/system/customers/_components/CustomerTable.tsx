@@ -4,6 +4,7 @@ import { useMemo, useState, useTransition, useCallback, useEffect } from 'react'
 import type { ReactNode } from 'react'
 import Link from 'next/link'
 import type { ColumnDef } from '@tanstack/react-table'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { useQueryClient } from '@tanstack/react-query'
 import DeviceFormModal from '@/app/(dashboard)/system/devices/_components/deviceformmodal'
 import { Badge } from '@/components/ui/badge'
@@ -198,12 +199,19 @@ export function CustomerTable({
         ),
         enableSorting: true,
         cell: ({ row }) => (
-          <Link
-            href={`/system/customers/${row.original.id}`}
-            className="font-semibold text-emerald-700 hover:text-emerald-800 hover:underline"
-          >
-            {row.original.name || '—'}
-          </Link>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link
+                href={`/system/customers/${row.original.id}`}
+                className="cursor-pointer font-semibold text-emerald-700 hover:text-emerald-800 hover:underline"
+              >
+                {row.original.name || '—'}
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{t('customer.view_details')}</p>
+            </TooltipContent>
+          </Tooltip>
         ),
       },
       {
@@ -248,40 +256,65 @@ export function CustomerTable({
                   className="h-9 flex-1"
                 />
                 <div className="flex items-center gap-2">
-                  <Button
-                    size="sm"
-                    onClick={async () => {
-                      try {
-                        setSavingAddressId(customer.id)
-                        const payload: Partial<Customer> = {
-                          address: [editingAddressValue].filter(Boolean),
-                        }
-                        const updated = await customersClientService.update(customer.id, payload)
-                        if (updated) {
-                          setCustomers((cur) =>
-                            cur.map((item) => (item.id === updated.id ? updated : item))
-                          )
-                          toast.success(t('customer.address_update_success'))
-                        }
-                        setEditingAddressFor(null)
-                      } catch (err) {
-                        console.error('Update address failed', err)
-                        toast.error((err as Error).message || t('customer.address_update_error'))
-                      } finally {
-                        setSavingAddressId(null)
-                      }
-                    }}
-                    disabled={savingAddressId === customer.id}
-                  >
-                    {savingAddressId === customer.id ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Check className="h-4 w-4" />
-                    )}
-                  </Button>
-                  <Button size="sm" variant="secondary" onClick={() => setEditingAddressFor(null)}>
-                    <X className="h-4 w-4" />
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="sm"
+                        onClick={async () => {
+                          try {
+                            setSavingAddressId(customer.id)
+                            const payload: Partial<Customer> = {
+                              address: [editingAddressValue].filter(Boolean),
+                            }
+                            const updated = await customersClientService.update(
+                              customer.id,
+                              payload
+                            )
+                            if (updated) {
+                              setCustomers((cur) =>
+                                cur.map((item) => (item.id === updated.id ? updated : item))
+                              )
+                              toast.success(t('customer.address_update_success'))
+                            }
+                            setEditingAddressFor(null)
+                          } catch (err) {
+                            console.error('Update address failed', err)
+                            toast.error(
+                              (err as Error).message || t('customer.address_update_error')
+                            )
+                          } finally {
+                            setSavingAddressId(null)
+                          }
+                        }}
+                        disabled={savingAddressId === customer.id}
+                        className="cursor-pointer"
+                      >
+                        {savingAddressId === customer.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Check className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{t('customer.address.save')}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => setEditingAddressFor(null)}
+                        className="cursor-pointer"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{t('customer.address.cancel')}</p>
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
               </div>
             )
@@ -297,24 +330,38 @@ export function CustomerTable({
                     customer={customer}
                     onSaved={handleSaved}
                     trigger={
-                      <Button variant="secondary" size="sm" className="p-2">
-                        <Eye className="h-4 w-4" />
-                      </Button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="secondary" size="sm" className="cursor-pointer p-2">
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{t('customer.view_details')}</p>
+                        </TooltipContent>
+                      </Tooltip>
                     }
                   />
                 ) : (
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => {
-                      setEditingAddressFor(customer.id)
-                      setEditingAddressValue(first === '—' ? '' : String(first))
-                    }}
-                    className="transition-all"
-                    aria-label={t('customer.address.edit')}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => {
+                          setEditingAddressFor(customer.id)
+                          setEditingAddressValue(first === '—' ? '' : String(first))
+                        }}
+                        className="cursor-pointer transition-all"
+                        aria-label={t('customer.address.edit')}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{t('customer.address.edit')}</p>
+                    </TooltipContent>
+                  </Tooltip>
                 )}
               </ActionGuard>
             </div>
@@ -377,15 +424,22 @@ export function CustomerTable({
           return (
             <div className="flex items-center justify-end gap-2">
               <ActionGuard pageId="customers" actionId="view-consumables">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => void loadConsumablesForCustomer(customer)}
-                  className="transition-all hover:bg-[var(--brand-100)] hover:text-[var(--brand-700)]"
-                >
-                  <Package className="mr-2 h-4 w-4" />
-                  {t('nav.consumables')}
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => void loadConsumablesForCustomer(customer)}
+                      className="cursor-pointer transition-all hover:bg-[var(--brand-100)] hover:text-[var(--brand-700)]"
+                    >
+                      <Package className="mr-2 h-4 w-4" />
+                      {t('nav.consumables')}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{t('customer.consumables.view')}</p>
+                  </TooltipContent>
+                </Tooltip>
               </ActionGuard>
 
               {/* Create device for this customer */}
@@ -395,14 +449,21 @@ export function CustomerTable({
                   initialCustomerId={customer.id}
                   initialIsCustomerOwned={true}
                   trigger={
-                    <Button
-                      variant="default"
-                      size="sm"
-                      className="transition-all"
-                      aria-label={t('devices.add')}
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="default"
+                          size="sm"
+                          className="cursor-pointer transition-all"
+                          aria-label={t('devices.add')}
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{t('devices.add')}</p>
+                      </TooltipContent>
+                    </Tooltip>
                   }
                   onSaved={async () => {
                     toast.success(t('device.create_success'))
@@ -411,7 +472,23 @@ export function CustomerTable({
                 />
               </ActionGuard>
               <ActionGuard pageId="customers" actionId="update">
-                <CustomerFormModal mode="edit" customer={customer} onSaved={handleSaved} />
+                <CustomerFormModal
+                  mode="edit"
+                  customer={customer}
+                  onSaved={handleSaved}
+                  trigger={
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="outline" size="sm" className="cursor-pointer gap-2">
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{t('customer.edit')}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  }
+                />
               </ActionGuard>
               {/* Service request creation moved to System Requests admin header */}
               <ActionGuard pageId="customers" actionId="delete">
@@ -422,21 +499,34 @@ export function CustomerTable({
                   })}
                   onConfirm={async () => handleDelete(customer.id)}
                   trigger={
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      disabled={deletingId === customer.id || isSysCustomer}
-                      className="transition-all"
-                      title={
-                        isSysCustomer ? t('customer.delete_forbidden') : t('dialog.delete.trigger')
-                      }
-                    >
-                      {deletingId === customer.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Trash2 className="h-4 w-4" />
-                      )}
-                    </Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          disabled={deletingId === customer.id || isSysCustomer}
+                          className="cursor-pointer transition-all"
+                          title={
+                            isSysCustomer
+                              ? t('customer.delete_forbidden')
+                              : t('dialog.delete.trigger')
+                          }
+                        >
+                          {deletingId === customer.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>
+                          {isSysCustomer
+                            ? t('customer.delete_forbidden')
+                            : t('dialog.delete.trigger')}
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
                   }
                 />
               </ActionGuard>

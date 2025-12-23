@@ -306,27 +306,31 @@ export function ConsumableCompatibilityModal({
                               actionId="remove-compatible-consumable"
                               fallback={null}
                             >
-                              <DeleteDialog
-                                title={t('common.confirm_delete')}
-                                description={t('device_model.compatibility.delete_confirmation')}
-                                onConfirm={() => removeCompatibility(c.id)}
-                                trigger={
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Button
-                                        variant="destructive"
-                                        size="sm"
-                                        className="cursor-pointer transition-all"
-                                      >
-                                        <Trash2 className="h-4 w-4" />
-                                      </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      <p>{t('common.confirm_delete')}</p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                }
-                              />
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div>
+                                    <DeleteDialog
+                                      title={t('common.confirm_delete')}
+                                      description={t(
+                                        'device_model.compatibility.delete_confirmation'
+                                      )}
+                                      onConfirm={() => removeCompatibility(c.id)}
+                                      trigger={
+                                        <Button
+                                          variant="destructive"
+                                          size="sm"
+                                          className="cursor-pointer transition-all"
+                                        >
+                                          <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                      }
+                                    />
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>{t('common.confirm_delete')}</p>
+                                </TooltipContent>
+                              </Tooltip>
                             </ActionGuard>
                           </td>
                         </tr>

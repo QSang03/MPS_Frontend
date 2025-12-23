@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { Label } from '@/components/ui/label'
 import { Dialog } from '@/components/ui/dialog'
 import { SystemModalLayout } from '@/components/system/SystemModalLayout'
@@ -65,30 +66,44 @@ export function EditStockModal({
         maxWidth="!max-w-[60vw]"
         footer={
           <>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={saving}
-              className="min-w-[100px]"
-            >
-              {t('cancel')}
-            </Button>
-            <Button
-              type="button"
-              onClick={handleSave}
-              disabled={saving}
-              className="min-w-[120px] bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
-            >
-              {saving ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {t('button.saving')}
-                </>
-              ) : (
-                t('department.button.save_changes')
-              )}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => onOpenChange(false)}
+                  disabled={saving}
+                  className="min-w-[100px] cursor-pointer"
+                >
+                  {t('cancel')}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t('cancel')}</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="min-w-[120px] cursor-pointer bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
+                >
+                  {saving ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {t('button.saving')}
+                    </>
+                  ) : (
+                    t('department.button.save_changes')
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t('department.button.save_changes')}</p>
+              </TooltipContent>
+            </Tooltip>
           </>
         }
       >

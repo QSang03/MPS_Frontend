@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { Dialog, DialogTrigger } from '@/components/ui/dialog'
 import { SystemModalLayout } from '@/components/system/SystemModalLayout'
 import { Input } from '@/components/ui/input'
@@ -381,14 +382,28 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
         {trigger ? (
           trigger
         ) : mode === 'create' ? (
-          <Button variant="outline" className="gap-2 hover:bg-[var(--accent)]">
-            <Plus className="h-4 w-4" />
-            {t('customer.button.add')}
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="outline" className="cursor-pointer gap-2 hover:bg-[var(--accent)]">
+                <Plus className="h-4 w-4" />
+                {t('customer.button.add')}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{t('customer.button.add')}</p>
+            </TooltipContent>
+          </Tooltip>
         ) : (
-          <Button variant="outline" size="sm" className="gap-2">
-            <Edit className="h-4 w-4" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="outline" size="sm" className="cursor-pointer gap-2">
+                <Edit className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{t('customer.button.edit')}</p>
+            </TooltipContent>
+          </Tooltip>
         )}
       </DialogTrigger>
 
@@ -404,43 +419,63 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
         maxWidth="max-w-[720px]"
         footer={
           <>
-            <Button
-              variant="outline"
-              onClick={() => setOpen(false)}
-              type="button"
-              disabled={submitting}
-              className="min-w-[100px]"
-            >
-              {t('customer.button.cancel')}
-            </Button>
-            <Button
-              variant="default"
-              type="submit"
-              form="customer-form"
-              className="min-w-[140px]"
-              disabled={submitting}
-            >
-              {submitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {mode === 'create' ? t('customer.button.creating') : t('customer.button.saving')}
-                </>
-              ) : (
-                <>
-                  {mode === 'create' ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  onClick={() => setOpen(false)}
+                  type="button"
+                  disabled={submitting}
+                  className="min-w-[100px] cursor-pointer"
+                >
+                  {t('customer.button.cancel')}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t('customer.button.cancel')}</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="default"
+                  type="submit"
+                  form="customer-form"
+                  className="min-w-[140px] cursor-pointer"
+                  disabled={submitting}
+                >
+                  {submitting ? (
                     <>
-                      <Plus className="mr-2 h-4 w-4" />
-                      {t('customer.button.create')}
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {mode === 'create'
+                        ? t('customer.button.creating')
+                        : t('customer.button.saving')}
                     </>
                   ) : (
                     <>
-                      <Edit className="mr-2 h-4 w-4" />
-                      {t('customer.button.save_changes')}
+                      {mode === 'create' ? (
+                        <>
+                          <Plus className="mr-2 h-4 w-4" />
+                          {t('customer.button.create')}
+                        </>
+                      ) : (
+                        <>
+                          <Edit className="mr-2 h-4 w-4" />
+                          {t('customer.button.save_changes')}
+                        </>
+                      )}
                     </>
                   )}
-                </>
-              )}
-            </Button>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>
+                  {mode === 'create'
+                    ? t('customer.button.create')
+                    : t('customer.button.save_changes')}
+                </p>
+              </TooltipContent>
+            </Tooltip>
           </>
         }
       >
@@ -631,39 +666,54 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
                       placeholder={t('customer.placeholder.address_n', { n: idx + 1 })}
                       className={`h-11 ${fieldErrors.address ? 'border-destructive focus-visible:ring-destructive/50' : ''} flex-1`}
                     />
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      onClick={() =>
-                        setForm((s) => {
-                          const arr = Array.isArray(s.address) ? [...s.address] : []
-                          arr.splice(idx, 1)
-                          return { ...s, address: arr }
-                        })
-                      }
-                      disabled={!(Array.isArray(form.address) && form.address.length > 1)}
-                      className="min-w-[64px]"
-                    >
-                      {t('customer.button.delete')}
-                    </Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          onClick={() =>
+                            setForm((s) => {
+                              const arr = Array.isArray(s.address) ? [...s.address] : []
+                              arr.splice(idx, 1)
+                              return { ...s, address: arr }
+                            })
+                          }
+                          disabled={!(Array.isArray(form.address) && form.address.length > 1)}
+                          className="min-w-[64px] cursor-pointer"
+                        >
+                          {t('customer.button.delete')}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{t('customer.button.delete')}</p>
+                      </TooltipContent>
+                    </Tooltip>
                   </div>
                 )
               )}
 
               <div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    setForm((s) => ({
-                      ...(s || {}),
-                      address: [...(Array.isArray(s.address) ? s.address : []), ''],
-                    }))
-                  }
-                >
-                  {t('customer.button.add_address')}
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setForm((s) => ({
+                          ...(s || {}),
+                          address: [...(Array.isArray(s.address) ? s.address : []), ''],
+                        }))
+                      }
+                      className="cursor-pointer"
+                    >
+                      {t('customer.button.add_address')}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{t('customer.button.add_address')}</p>
+                  </TooltipContent>
+                </Tooltip>
               </div>
               {fieldErrors.address && (
                 <p className="text-destructive mt-1 text-sm">{fieldErrors.address}</p>
@@ -794,51 +844,68 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
                       className="h-11 flex-1"
                       type="email"
                     />
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      onClick={() =>
-                        setForm((s) => {
-                          const emails = Array.isArray(s.invoiceInfo?.emails)
-                            ? [...(s.invoiceInfo?.emails || [])]
-                            : []
-                          emails.splice(idx, 1)
-                          return { ...s, invoiceInfo: { ...(s.invoiceInfo || {}), emails } }
-                        })
-                      }
-                      disabled={
-                        !(
-                          Array.isArray(form.invoiceInfo?.emails) &&
-                          form.invoiceInfo!.emails!.length > 1
-                        )
-                      }
-                      className="min-w-[64px]"
-                    >
-                      {t('customer.button.delete')}
-                    </Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          onClick={() =>
+                            setForm((s) => {
+                              const emails = Array.isArray(s.invoiceInfo?.emails)
+                                ? [...(s.invoiceInfo?.emails || [])]
+                                : []
+                              emails.splice(idx, 1)
+                              return { ...s, invoiceInfo: { ...(s.invoiceInfo || {}), emails } }
+                            })
+                          }
+                          disabled={
+                            !(
+                              Array.isArray(form.invoiceInfo?.emails) &&
+                              form.invoiceInfo!.emails!.length > 1
+                            )
+                          }
+                          className="min-w-[64px] cursor-pointer"
+                        >
+                          {t('customer.button.delete')}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{t('customer.button.delete')}</p>
+                      </TooltipContent>
+                    </Tooltip>
                   </div>
                 ))}
 
                 <div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      setForm((s) => ({
-                        ...(s || {}),
-                        invoiceInfo: {
-                          ...(s.invoiceInfo || {}),
-                          emails: [
-                            ...(Array.isArray(s.invoiceInfo?.emails) ? s.invoiceInfo!.emails! : []),
-                            '',
-                          ],
-                        },
-                      }))
-                    }
-                  >
-                    {t('customer.button.add_email')}
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          setForm((s) => ({
+                            ...(s || {}),
+                            invoiceInfo: {
+                              ...(s.invoiceInfo || {}),
+                              emails: [
+                                ...(Array.isArray(s.invoiceInfo?.emails)
+                                  ? s.invoiceInfo!.emails!
+                                  : []),
+                                '',
+                              ],
+                            },
+                          }))
+                        }
+                        className="cursor-pointer"
+                      >
+                        {t('customer.button.add_email')}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{t('customer.button.add_email')}</p>
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
               </div>
             </div>

@@ -6,6 +6,7 @@ import { Dialog } from '@/components/ui/dialog'
 import { SystemModalLayout } from '@/components/system/SystemModalLayout'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { Input } from '@/components/ui/input'
 import {
   Loader2,
@@ -324,33 +325,50 @@ export default function CustomerContractsModal({
                     className="pl-9"
                   />
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowFilters(!showFilters)}
-                  className={cn(
-                    'gap-2 transition-colors',
-                    hasActiveFilters && 'border-sky-300 bg-sky-50 text-sky-700'
-                  )}
-                >
-                  <Filter className="h-4 w-4" />
-                  {t('customer.contracts.modal.filter_button')}
-                  {hasActiveFilters && (
-                    <Badge variant="secondary" className="ml-1 h-5 w-5 rounded-full p-0 text-xs">
-                      !
-                    </Badge>
-                  )}
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowFilters(!showFilters)}
+                      className={cn(
+                        'cursor-pointer gap-2 transition-colors',
+                        hasActiveFilters && 'border-sky-300 bg-sky-50 text-sky-700'
+                      )}
+                    >
+                      <Filter className="h-4 w-4" />
+                      {t('customer.contracts.modal.filter_button')}
+                      {hasActiveFilters && (
+                        <Badge
+                          variant="secondary"
+                          className="ml-1 h-5 w-5 rounded-full p-0 text-xs"
+                        >
+                          !
+                        </Badge>
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{t('customer.contracts.modal.filter_button')}</p>
+                  </TooltipContent>
+                </Tooltip>
                 {hasActiveFilters && (
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={clearAllFilters}
-                    className="gap-2 text-slate-600"
-                  >
-                    <X className="h-4 w-4" />
-                    {t('customer.contracts.modal.clear_filters')}
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={clearAllFilters}
+                        className="cursor-pointer gap-2 text-slate-600"
+                      >
+                        <X className="h-4 w-4" />
+                        {t('customer.contracts.modal.clear_filters')}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{t('customer.contracts.modal.clear_filters')}</p>
+                    </TooltipContent>
+                  </Tooltip>
                 )}
               </div>
 
@@ -502,13 +520,20 @@ export default function CustomerContractsModal({
                               {contract.contractNumber}
                             </Badge>
                             <Link href={`/system/contracts/${contract.id}`}>
-                              <Button
-                                variant="default"
-                                size="sm"
-                                className="h-6 w-6 p-0 opacity-0 transition-opacity group-hover:opacity-100"
-                              >
-                                <ExternalLink className="h-3.5 w-3.5" />
-                              </Button>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="default"
+                                    size="sm"
+                                    className="h-6 w-6 cursor-pointer p-0 opacity-0 transition-opacity group-hover:opacity-100"
+                                  >
+                                    <ExternalLink className="h-3.5 w-3.5" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>{t('customer.contracts.modal.view_contract')}</p>
+                                </TooltipContent>
+                              </Tooltip>
                             </Link>
                           </div>
                         </td>
@@ -546,19 +571,30 @@ export default function CustomerContractsModal({
                         </td>
                         <td className="px-4 py-3.5 text-right">
                           {contract.description && (
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                              className="h-8 w-8 p-0"
-                              onClick={() => toggleRowExpansion(contract.id)}
-                            >
-                              <motion.div
-                                animate={{ rotate: expandedRow === contract.id ? 180 : 0 }}
-                                transition={{ duration: 0.2 }}
-                              >
-                                <ChevronDown className="h-4 w-4" />
-                              </motion.div>
-                            </Button>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="secondary"
+                                  size="sm"
+                                  className="h-8 w-8 cursor-pointer p-0"
+                                  onClick={() => toggleRowExpansion(contract.id)}
+                                >
+                                  <motion.div
+                                    animate={{ rotate: expandedRow === contract.id ? 180 : 0 }}
+                                    transition={{ duration: 0.2 }}
+                                  >
+                                    <ChevronDown className="h-4 w-4" />
+                                  </motion.div>
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>
+                                  {expandedRow === contract.id
+                                    ? t('customer.contracts.modal.collapse')
+                                    : t('customer.contracts.modal.expand')}
+                                </p>
+                              </TooltipContent>
+                            </Tooltip>
                           )}
                         </td>
                       </motion.tr>

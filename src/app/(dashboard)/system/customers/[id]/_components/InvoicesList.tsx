@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { invoicesClientService } from '@/lib/api/services/invoices-client.service'
@@ -283,36 +284,50 @@ export function InvoicesList({ customerId, contractId }: InvoicesListProps) {
                       <td className="px-4 py-4">
                         <div className="flex items-center justify-end gap-1.5">
                           <ActionGuard pageId="customers" actionId="invoice-view">
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                              className="h-8 w-8 p-0"
-                              onClick={() => {
-                                // TODO: Open invoice detail modal
-                                console.log('View invoice:', invoice.invoiceId)
-                              }}
-                              aria-label={t('invoices.action.view')}
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="secondary"
+                                  size="sm"
+                                  className="h-8 w-8 cursor-pointer p-0"
+                                  onClick={() => {
+                                    // TODO: Open invoice detail modal
+                                    console.log('View invoice:', invoice.invoiceId)
+                                  }}
+                                  aria-label={t('invoices.action.view')}
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>{t('invoices.action.view')}</p>
+                              </TooltipContent>
+                            </Tooltip>
                           </ActionGuard>
                           <ActionGuard pageId="customers" actionId="invoice-view">
                             {invoice.pdfUrl && (
-                              <Button
-                                variant="secondary"
-                                size="sm"
-                                className="h-8 w-8 p-0"
-                                onClick={() => {
-                                  // Normalize the PDF URL to use NEXT_PUBLIC_API_URL
-                                  const pdf = getPublicUrl(invoice.pdfUrl)
-                                  if (pdf) {
-                                    window.open(pdf, '_blank')
-                                  }
-                                }}
-                                aria-label={t('invoices.action.download_pdf')}
-                              >
-                                <Download className="h-4 w-4" />
-                              </Button>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    className="h-8 w-8 cursor-pointer p-0"
+                                    onClick={() => {
+                                      // Normalize the PDF URL to use NEXT_PUBLIC_API_URL
+                                      const pdf = getPublicUrl(invoice.pdfUrl)
+                                      if (pdf) {
+                                        window.open(pdf, '_blank')
+                                      }
+                                    }}
+                                    aria-label={t('invoices.action.download_pdf')}
+                                  >
+                                    <Download className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>{t('invoices.action.download_pdf')}</p>
+                                </TooltipContent>
+                              </Tooltip>
                             )}
                           </ActionGuard>
                         </div>
@@ -334,32 +349,46 @@ export function InvoicesList({ customerId, contractId }: InvoicesListProps) {
                   })}
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    disabled={page === 1}
-                    className="gap-2"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                    {t('pagination.prev')}
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage((p) => Math.max(1, p - 1))}
+                        disabled={page === 1}
+                        className="cursor-pointer gap-2"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                        {t('pagination.prev')}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{t('pagination.prev')}</p>
+                    </TooltipContent>
+                  </Tooltip>
                   <div className="text-sm text-slate-600">
                     {t('pagination.page_of', {
                       page: pagination.page,
                       totalPages: pagination.totalPages,
                     })}
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
-                    disabled={page === pagination.totalPages}
-                    className="gap-2"
-                  >
-                    {t('pagination.next')}
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
+                        disabled={page === pagination.totalPages}
+                        className="cursor-pointer gap-2"
+                      >
+                        {t('pagination.next')}
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{t('pagination.next')}</p>
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
               </div>
             )}

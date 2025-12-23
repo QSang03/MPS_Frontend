@@ -613,35 +613,37 @@ function DeviceModelsTableContent({
               <DeviceModelFormModal mode="edit" model={row.original} onSaved={handleSaved} />
             </ActionGuard>
             <ActionGuard pageId="device-models" actionId="delete">
-              <DeleteDialog
-                title={t('device_model.delete.confirm_title')}
-                description={t('device_model.delete.confirm_description', {
-                  name: row.original.name || '',
-                })}
-                onConfirm={async () => handleDelete(row.original.id)}
-                trigger={
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="sm"
-                        disabled={deletingId === row.original.id}
-                        className="cursor-pointer transition-all"
-                      >
-                        {deletingId === row.original.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Trash2 className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>{t('device_model.delete.confirm_title')}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                }
-              />
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div>
+                    <DeleteDialog
+                      title={t('device_model.delete.confirm_title')}
+                      description={t('device_model.delete.confirm_description', {
+                        name: row.original.name || '',
+                      })}
+                      onConfirm={async () => handleDelete(row.original.id)}
+                      trigger={
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          disabled={deletingId === row.original.id}
+                          className="cursor-pointer transition-all"
+                        >
+                          {deletingId === row.original.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
+                        </Button>
+                      }
+                    />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{t('device_model.delete.confirm_title')}</p>
+                </TooltipContent>
+              </Tooltip>
             </ActionGuard>
           </div>
         ),

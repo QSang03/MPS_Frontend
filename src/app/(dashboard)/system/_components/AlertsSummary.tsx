@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import type { AdminOverviewKPIs } from '@/types/dashboard'
 import { Bell, Package, AlertTriangle, Clock, ArrowRight } from 'lucide-react'
 import { useLocale } from '@/components/providers/LocaleProvider'
@@ -431,18 +432,25 @@ export function AlertsSummary({
                       <div className="text-right">
                         <p className="text-2xl font-bold text-gray-900">{alert.count}</p>
                         {alert.count > 0 && (
-                          <Button
-                            variant="default"
-                            size="sm"
-                            className="mt-1 h-auto p-0 text-xs"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              router.push('/system/notifications')
-                            }}
-                          >
-                            {t('alerts.view_details')}
-                            <ArrowRight className="ml-1 h-3 w-3" />
-                          </Button>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="default"
+                                size="sm"
+                                className="mt-1 h-auto cursor-pointer p-0 text-xs"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  router.push('/system/notifications')
+                                }}
+                              >
+                                {t('alerts.view_details')}
+                                <ArrowRight className="ml-1 h-3 w-3" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>{t('alerts.view_details')}</p>
+                            </TooltipContent>
+                          </Tooltip>
                         )}
                       </div>
                     </motion.div>
@@ -473,13 +481,20 @@ export function AlertsSummary({
         </CardContent>
         {totalAlerts > 0 && (
           <CardFooter className="flex justify-end border-t border-gray-100 bg-gray-50/50 p-4">
-            <Button
-              className="w-full border-gray-200 text-[var(--neutral-500)] hover:bg-white hover:text-[var(--foreground)] sm:w-auto"
-              onClick={() => router.push('/system/notifications')}
-            >
-              <Bell className="mr-2 h-4 w-4" />
-              {t('alerts.view_all', { count: totalAlerts })}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  className="w-full cursor-pointer border-gray-200 text-[var(--neutral-500)] hover:bg-white hover:text-[var(--foreground)] sm:w-auto"
+                  onClick={() => router.push('/system/notifications')}
+                >
+                  <Bell className="mr-2 h-4 w-4" />
+                  {t('alerts.view_all', { count: totalAlerts })}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t('alerts.view_all', { count: totalAlerts })}</p>
+              </TooltipContent>
+            </Tooltip>
           </CardFooter>
         )}
       </Card>

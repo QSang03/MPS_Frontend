@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { Dialog } from '@/components/ui/dialog'
 import { SystemModalLayout } from '@/components/system/SystemModalLayout'
 import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { Badge } from '@/components/ui/badge'
 import {
   MonitorSmartphone,
@@ -268,9 +269,20 @@ export default function ContractDevicesModal({
         variant="view"
         maxWidth={`${hideOuter ? 'hidden' : '!max-w-[80vw]'}`}
         footer={
-          <Button variant="outline" onClick={() => onOpenChange(false)} className="min-w-[100px]">
-            {t('button.close')}
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                className="min-w-[100px] cursor-pointer"
+              >
+                {t('button.close')}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{t('button.close')}</p>
+            </TooltipContent>
+          </Tooltip>
         }
       >
         <ContractDevicesSection
@@ -304,33 +316,54 @@ export default function ContractDevicesModal({
             maxWidth="!max-w-[85vw]"
             footer={
               <>
-                <Button
-                  variant="outline"
-                  onClick={() => setAttachOpen(false)}
-                  disabled={attachMutation.status === 'pending'}
-                >
-                  {t('cancel')}
-                </Button>
-                <Button
-                  onClick={handleAttach}
-                  disabled={attachMutation.status === 'pending' || selectedToAttach.length === 0}
-                  className="gap-2 bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] shadow-sm hover:bg-[var(--btn-primary-hover)] hover:shadow-md"
-                >
-                  {attachMutation.status === 'pending' ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      {t('button.processing')}
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle2 className="h-4 w-4" />
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      onClick={() => setAttachOpen(false)}
+                      disabled={attachMutation.status === 'pending'}
+                      className="cursor-pointer"
+                    >
+                      {t('cancel')}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{t('cancel')}</p>
+                  </TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      onClick={handleAttach}
+                      disabled={
+                        attachMutation.status === 'pending' || selectedToAttach.length === 0
+                      }
+                      className="cursor-pointer gap-2 bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] shadow-sm hover:bg-[var(--btn-primary-hover)] hover:shadow-md"
+                    >
+                      {attachMutation.status === 'pending' ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          {t('button.processing')}
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle2 className="h-4 w-4" />
+                          {hasAttachedDevicesSelected
+                            ? t('button.update')
+                            : t('contract.device.attach')}
+                          {selectedToAttach.length > 0 && ` (${selectedToAttach.length})`}
+                        </>
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>
                       {hasAttachedDevicesSelected
                         ? t('button.update')
                         : t('contract.device.attach')}
-                      {selectedToAttach.length > 0 && ` (${selectedToAttach.length})`}
-                    </>
-                  )}
-                </Button>
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
               </>
             }
           >
@@ -420,19 +453,26 @@ export default function ContractDevicesModal({
                       className="pl-9"
                     />
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setSearchTerm('')
-                      setFilterStatus('all')
-                    }}
-                    disabled={!searchTerm && filterStatus === 'all'}
-                    className="gap-2"
-                  >
-                    <X className="h-4 w-4" />
-                    {t('button.clear')}
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSearchTerm('')
+                          setFilterStatus('all')
+                        }}
+                        disabled={!searchTerm && filterStatus === 'all'}
+                        className="cursor-pointer gap-2"
+                      >
+                        <X className="h-4 w-4" />
+                        {t('button.clear')}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{t('button.clear')}</p>
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
 
                 {/* Filter Chips */}
@@ -458,24 +498,30 @@ export default function ContractDevicesModal({
                       count: stats.other,
                     },
                   ].map((filter) => (
-                    <Button
-                      key={filter.value}
-                      variant="outline"
-                      size="sm"
-                      // FIX 3: Ép kiểu về FilterStatus thay vì any
-                      onClick={() => setFilterStatus(filter.value as FilterStatus)}
-                      className={cn(
-                        'h-8 gap-1.5 px-3 text-xs transition-all',
-                        filterStatus === filter.value
-                          ? 'border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100'
-                          : 'hover:border-slate-300'
-                      )}
-                    >
-                      {filter.label}
-                      <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
-                        {filter.count}
-                      </Badge>
-                    </Button>
+                    <Tooltip key={filter.value}>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          // FIX 3: Ép kiểu về FilterStatus thay vì any
+                          onClick={() => setFilterStatus(filter.value as FilterStatus)}
+                          className={cn(
+                            'h-8 cursor-pointer gap-1.5 px-3 text-xs transition-all',
+                            filterStatus === filter.value
+                              ? 'border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100'
+                              : 'hover:border-slate-300'
+                          )}
+                        >
+                          {filter.label}
+                          <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
+                            {filter.count}
+                          </Badge>
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{filter.label}</p>
+                      </TooltipContent>
+                    </Tooltip>
                   ))}
                 </div>
               </div>

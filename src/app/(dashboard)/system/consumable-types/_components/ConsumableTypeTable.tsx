@@ -5,6 +5,7 @@ import type { ReactNode } from 'react'
 import type { ColumnDef } from '@tanstack/react-table'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { useQueryClient } from '@tanstack/react-query'
 import { consumableTypesClientService } from '@/lib/api/services/consumable-types-client.service'
 import type { ConsumableType } from '@/types/models/consumable-type'
@@ -202,21 +203,28 @@ export function ConsumableTypeTable({
                 {m.stockItem.quantity}
               </span>
               <ActionGuard pageId="consumable-types" actionId="edit-stock" fallback={null}>
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={() =>
-                    onOpenEditStockModal({
-                      stockId: m.stockItem!.id,
-                      consumableName: m.name || t('common.unknown'),
-                      quantity: m.stockItem!.quantity ?? 0,
-                      threshold: m.stockItem!.lowStockThreshold ?? 0,
-                    })
-                  }
-                  className="h-6 w-6 p-0"
-                >
-                  <Pencil className="h-3 w-3 text-gray-500" />
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() =>
+                        onOpenEditStockModal({
+                          stockId: m.stockItem!.id,
+                          consumableName: m.name || t('common.unknown'),
+                          quantity: m.stockItem!.quantity ?? 0,
+                          threshold: m.stockItem!.lowStockThreshold ?? 0,
+                        })
+                      }
+                      className="h-6 w-6 cursor-pointer p-0"
+                    >
+                      <Pencil className="h-3 w-3 text-gray-500" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{t('consumable_types.table.edit_stock')}</p>
+                  </TooltipContent>
+                </Tooltip>
               </ActionGuard>
             </div>
           ) : (
@@ -262,27 +270,36 @@ export function ConsumableTypeTable({
                 <ConsumableTypeFormModal mode="edit" model={m} onSaved={handleSaved} />
               </ActionGuard>
               <ActionGuard pageId="consumable-types" actionId="delete">
-                <DeleteDialog
-                  title={t('consumable_types.table.delete_confirm_title')}
-                  description={t('consumable_types.table.delete_confirm_description', {
-                    name: m.name || '',
-                  })}
-                  onConfirm={async () => handleDelete(m.id)}
-                  trigger={
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      disabled={deletingId === m.id}
-                      className="transition-all"
-                    >
-                      {deletingId === m.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Trash2 className="h-4 w-4" />
-                      )}
-                    </Button>
-                  }
-                />
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <DeleteDialog
+                        title={t('consumable_types.table.delete_confirm_title')}
+                        description={t('consumable_types.table.delete_confirm_description', {
+                          name: m.name || '',
+                        })}
+                        onConfirm={async () => handleDelete(m.id)}
+                        trigger={
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            disabled={deletingId === m.id}
+                            className="cursor-pointer transition-all"
+                          >
+                            {deletingId === m.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-4 w-4" />
+                            )}
+                          </Button>
+                        }
+                      />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{t('consumable_types.table.delete')}</p>
+                  </TooltipContent>
+                </Tooltip>
               </ActionGuard>
             </div>
           )
