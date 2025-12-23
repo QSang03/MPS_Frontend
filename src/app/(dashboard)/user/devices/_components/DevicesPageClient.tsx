@@ -1024,7 +1024,7 @@ export default function DevicesPageClient() {
                                 onSuccess={() => fetchDevices()}
                               >
                                 <Button
-                                  variant="default"
+                                  variant="secondary"
                                   size="sm"
                                   className="h-8 w-8 p-0 text-black dark:text-white"
                                   title={t('user_devices.action.create_request')}
@@ -1036,7 +1036,7 @@ export default function DevicesPageClient() {
                             </ActionGuard>
                             <ActionGuard pageId="user-devices" actionId="create-a4-snapshot">
                               <Button
-                                variant="default"
+                                variant="secondary"
                                 size="sm"
                                 className="h-8 w-8 p-0 text-black dark:text-white"
                                 title={t('user_devices.action.create_a4_snapshot')}
@@ -1050,7 +1050,7 @@ export default function DevicesPageClient() {
                             </ActionGuard>
                             <ActionGuard pageId="user-devices" actionId="view-a4-history">
                               <Button
-                                variant="default"
+                                variant="secondary"
                                 size="sm"
                                 className="h-8 w-8 p-0 text-black dark:text-white"
                                 title={t('user_devices.action.view_a4_history')}
@@ -1059,7 +1059,7 @@ export default function DevicesPageClient() {
                                   setA4HistoryOpen(true)
                                 }}
                               >
-                                <FileText className="h-4 w-4 text-black dark:text-white" />
+                                <BarChart3 className="h-4 w-4 text-black dark:text-white" />
                               </Button>
                             </ActionGuard>
                           </div>

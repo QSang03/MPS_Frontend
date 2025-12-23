@@ -22,6 +22,7 @@ import {
 import { cn } from '@/lib/utils'
 import { Input } from '@/components/ui/input'
 import { useLocale } from '@/components/providers/LocaleProvider'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 
 interface AddConsumableModalProps {
   deviceModelId: string
@@ -237,25 +238,31 @@ export function AddConsumableModal({
                             </Badge>
                           </td>
                           <td className="px-4 py-3 text-right">
-                            <Button
-                              size="sm"
-                              onClick={() => handleAdd(c.id)}
-                              disabled={addingId === c.id}
-                              className="cursor-pointer gap-2 bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] whitespace-nowrap hover:from-[var(--brand-700)] hover:to-[var(--brand-700)]"
-                              title={t('device_model.add_consumable.add_button')}
-                            >
-                              {addingId === c.id ? (
-                                <>
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                  {t('device_model.add_consumable.adding')}
-                                </>
-                              ) : (
-                                <>
-                                  <Plus className="h-4 w-4" />
-                                  {t('device_model.add_consumable.add_button')}
-                                </>
-                              )}
-                            </Button>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleAdd(c.id)}
+                                  disabled={addingId === c.id}
+                                  className="cursor-pointer gap-2 bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] whitespace-nowrap hover:from-[var(--brand-700)] hover:to-[var(--brand-700)]"
+                                >
+                                  {addingId === c.id ? (
+                                    <>
+                                      <Loader2 className="h-4 w-4 animate-spin" />
+                                      {t('device_model.add_consumable.adding')}
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Plus className="h-4 w-4" />
+                                      {t('device_model.add_consumable.add_button')}
+                                    </>
+                                  )}
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>{t('device_model.add_consumable.add_button')}</p>
+                              </TooltipContent>
+                            </Tooltip>
                           </td>
                         </tr>
                       ))
@@ -276,33 +283,45 @@ export function AddConsumableModal({
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    disabled={page <= 1 || loading}
-                    className="cursor-pointer gap-1"
-                    title={t('pagination.prev')}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                    {t('pagination.prev')}
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage((p) => Math.max(1, p - 1))}
+                        disabled={page <= 1 || loading}
+                        className="cursor-pointer gap-1"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                        {t('pagination.prev')}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{t('pagination.prev')}</p>
+                    </TooltipContent>
+                  </Tooltip>
 
                   <span className="text-muted-foreground px-3 py-1 text-sm font-semibold">
                     {page} / {totalPages}
                   </span>
 
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                    disabled={page >= totalPages || loading}
-                    className="cursor-pointer gap-1"
-                    title={t('pagination.next')}
-                  >
-                    {t('pagination.next')}
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                        disabled={page >= totalPages || loading}
+                        className="cursor-pointer gap-1"
+                      >
+                        {t('pagination.next')}
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{t('pagination.next')}</p>
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
               </div>
             </div>

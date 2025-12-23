@@ -361,14 +361,16 @@ export function A4EquivalentUsageHistory({
           </div>
 
           <div className="flex gap-2">
-            <Button
-              variant="default"
-              onClick={() => setPage(1)}
-              className="cursor-pointer"
-              title={t('devices.a4_history.search_button')}
-            >
-              {t('devices.a4_history.search_button')}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="default" onClick={() => setPage(1)} className="cursor-pointer">
+                  {t('devices.a4_history.search_button')}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t('devices.a4_history.search_button')}</p>
+              </TooltipContent>
+            </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button

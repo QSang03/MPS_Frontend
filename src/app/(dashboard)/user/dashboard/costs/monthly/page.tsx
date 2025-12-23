@@ -909,6 +909,21 @@ export default function MonthlyCostsPage() {
 
                         if (!chartData || chartData.length === 0) return <div />
 
+                        const hasNonZero = (key: keyof DeviceCostTrendItem) =>
+                          chartData.some((row) => {
+                            const raw = row?.[key] as unknown
+                            const n = typeof raw === 'number' ? raw : Number(raw)
+                            return Number.isFinite(n) && n !== 0
+                          })
+
+                        const showSeries = {
+                          totalCostAfterAdjustment: hasNonZero('totalCostAfterAdjustment'),
+                          costRental: hasNonZero('costRental'),
+                          costRepair: hasNonZero('costRepair'),
+                          costPageBW: hasNonZero('costPageBW'),
+                          costPageColor: hasNonZero('costPageColor'),
+                        }
+
                         return chartData.length === 1 ? (
                           <BarChart
                             data={chartData}
@@ -942,36 +957,46 @@ export default function MonthlyCostsPage() {
                                 fontSize: '12px',
                               }}
                             />
-                            <Bar
-                              dataKey="totalCostAfterAdjustment"
-                              fill="var(--brand-600)"
-                              radius={[2, 2, 0, 0]}
-                              name={labels.totalCostAfterAdjustment}
-                            />
-                            <Bar
-                              dataKey="costRental"
-                              fill="var(--color-success-500)"
-                              radius={[2, 2, 0, 0]}
-                              name={labels.costRental}
-                            />
-                            <Bar
-                              dataKey="costRepair"
-                              fill="var(--warning-500)"
-                              radius={[2, 2, 0, 0]}
-                              name={labels.costRepair}
-                            />
-                            <Bar
-                              dataKey="costPageBW"
-                              fill="var(--brand-700)"
-                              radius={[2, 2, 0, 0]}
-                              name={labels.costPageBW}
-                            />
-                            <Bar
-                              dataKey="costPageColor"
-                              fill="var(--color-info-500)"
-                              radius={[2, 2, 0, 0]}
-                              name={labels.costPageColor}
-                            />
+                            {showSeries.totalCostAfterAdjustment && (
+                              <Bar
+                                dataKey="totalCostAfterAdjustment"
+                                fill="var(--brand-600)"
+                                radius={[2, 2, 0, 0]}
+                                name={labels.totalCost}
+                              />
+                            )}
+                            {showSeries.costRental && (
+                              <Bar
+                                dataKey="costRental"
+                                fill="var(--color-success-500)"
+                                radius={[2, 2, 0, 0]}
+                                name={labels.costRental}
+                              />
+                            )}
+                            {showSeries.costRepair && (
+                              <Bar
+                                dataKey="costRepair"
+                                fill="var(--warning-500)"
+                                radius={[2, 2, 0, 0]}
+                                name={labels.costRepair}
+                              />
+                            )}
+                            {showSeries.costPageBW && (
+                              <Bar
+                                dataKey="costPageBW"
+                                fill="var(--brand-700)"
+                                radius={[2, 2, 0, 0]}
+                                name={labels.costPageBW}
+                              />
+                            )}
+                            {showSeries.costPageColor && (
+                              <Bar
+                                dataKey="costPageColor"
+                                fill="var(--color-info-500)"
+                                radius={[2, 2, 0, 0]}
+                                name={labels.costPageColor}
+                              />
+                            )}
                           </BarChart>
                         ) : (
                           <LineChart
@@ -1006,51 +1031,61 @@ export default function MonthlyCostsPage() {
                                 fontSize: '12px',
                               }}
                             />
-                            <Line
-                              type="monotone"
-                              dataKey="totalCostAfterAdjustment"
-                              stroke="var(--brand-600)"
-                              strokeWidth={3}
-                              dot={{ fill: 'var(--brand-600)', r: 4 }}
-                              activeDot={{ r: 6 }}
-                              name={labels.totalCostAfterAdjustment}
-                            />
-                            <Line
-                              type="monotone"
-                              dataKey="costRental"
-                              stroke="var(--color-success-500)"
-                              strokeWidth={3}
-                              dot={{ fill: 'var(--color-success-500)', r: 4 }}
-                              activeDot={{ r: 6 }}
-                              name={labels.costRental}
-                            />
-                            <Line
-                              type="monotone"
-                              dataKey="costRepair"
-                              stroke="var(--warning-500)"
-                              strokeWidth={3}
-                              dot={{ fill: 'var(--warning-500)', r: 4 }}
-                              activeDot={{ r: 6 }}
-                              name={labels.costRepair}
-                            />
-                            <Line
-                              type="monotone"
-                              dataKey="costPageBW"
-                              stroke="var(--brand-700)"
-                              strokeWidth={3}
-                              dot={{ fill: 'var(--brand-700)', r: 4 }}
-                              activeDot={{ r: 6 }}
-                              name={labels.costPageBW}
-                            />
-                            <Line
-                              type="monotone"
-                              dataKey="costPageColor"
-                              stroke="var(--color-info-500)"
-                              strokeWidth={3}
-                              dot={{ fill: 'var(--color-info-500)', r: 4 }}
-                              activeDot={{ r: 6 }}
-                              name={labels.costPageColor}
-                            />
+                            {showSeries.totalCostAfterAdjustment && (
+                              <Line
+                                type="monotone"
+                                dataKey="totalCostAfterAdjustment"
+                                stroke="var(--brand-600)"
+                                strokeWidth={3}
+                                dot={{ fill: 'var(--brand-600)', r: 4 }}
+                                activeDot={{ r: 6 }}
+                                name={labels.totalCost}
+                              />
+                            )}
+                            {showSeries.costRental && (
+                              <Line
+                                type="monotone"
+                                dataKey="costRental"
+                                stroke="var(--color-success-500)"
+                                strokeWidth={3}
+                                dot={{ fill: 'var(--color-success-500)', r: 4 }}
+                                activeDot={{ r: 6 }}
+                                name={labels.costRental}
+                              />
+                            )}
+                            {showSeries.costRepair && (
+                              <Line
+                                type="monotone"
+                                dataKey="costRepair"
+                                stroke="var(--warning-500)"
+                                strokeWidth={3}
+                                dot={{ fill: 'var(--warning-500)', r: 4 }}
+                                activeDot={{ r: 6 }}
+                                name={labels.costRepair}
+                              />
+                            )}
+                            {showSeries.costPageBW && (
+                              <Line
+                                type="monotone"
+                                dataKey="costPageBW"
+                                stroke="var(--brand-700)"
+                                strokeWidth={3}
+                                dot={{ fill: 'var(--brand-700)', r: 4 }}
+                                activeDot={{ r: 6 }}
+                                name={labels.costPageBW}
+                              />
+                            )}
+                            {showSeries.costPageColor && (
+                              <Line
+                                type="monotone"
+                                dataKey="costPageColor"
+                                stroke="var(--color-info-500)"
+                                strokeWidth={3}
+                                dot={{ fill: 'var(--color-info-500)', r: 4 }}
+                                activeDot={{ r: 6 }}
+                                name={labels.costPageColor}
+                              />
+                            )}
                           </LineChart>
                         )
                       })()}

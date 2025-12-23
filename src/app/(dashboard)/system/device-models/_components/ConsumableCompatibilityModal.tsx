@@ -353,15 +353,21 @@ export function ConsumableCompatibilityModal({
                   </div>
 
                   {searchTerm && compatibleConsumables.length !== filteredConsumables.length && (
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => setSearchTerm('')}
-                      className="h-8 cursor-pointer"
-                      title={t('device_model.compatibility.clear_filter')}
-                    >
-                      {t('device_model.compatibility.clear_filter')}
-                    </Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => setSearchTerm('')}
+                          className="h-8 cursor-pointer"
+                        >
+                          {t('device_model.compatibility.clear_filter')}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{t('device_model.compatibility.clear_filter')}</p>
+                      </TooltipContent>
+                    </Tooltip>
                   )}
                 </div>
               )}
