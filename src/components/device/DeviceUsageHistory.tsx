@@ -237,19 +237,49 @@ export default function DeviceUsageHistory({
   }, [hasDataPerType])
 
   const chartConfig = useMemo<ChartConfig>(() => {
-    // Use theme CSS variables for chart colors so charts reflect the active theme.
-    const palette = [
-      'var(--brand-600)',
-      'var(--color-success-500)',
-      'var(--warning-500)',
-      'var(--error-500)',
-      'var(--brand-500)',
-    ]
+    const normalizeName = (value?: string | null) => {
+      if (!value) return ''
+      // Lowercase + remove Vietnamese diacritics for robust regex matching
+      return value
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+    }
+
+    const resolveColorByName = (rawName: string, idx: number) => {
+      const name = normalizeName(rawName)
+
+      // Match common EN/VN naming patterns
+      if (/(?:^|\b)(black|den)(?:\b|$)/.test(name) || /toner\s*den/.test(name)) {
+        // In light: near-black; in dark these variables become near-white so the line stays visible
+        return 'var(--neutral-950)'
+      }
+      if (/(?:^|\b)cyan(?:\b|$)/.test(name)) {
+        return 'var(--chart-2)'
+      }
+      if (/(?:^|\b)magenta(?:\b|$)/.test(name)) {
+        // No dedicated magenta token in the current theme; use error as the closest semantic accent
+        return 'var(--error-500)'
+      }
+      if (/(?:^|\b)(yellow|vang)(?:\b|$)/.test(name) || /toner\s*vang/.test(name)) {
+        return 'var(--warning-500)'
+      }
+
+      // Fallback palette for non-CMYK consumables (drum, waste toner, etc.)
+      const fallbackPalette = [
+        'var(--chart-1)',
+        'var(--chart-2)',
+        'var(--chart-3)',
+        'var(--chart-4)',
+        'var(--chart-5)',
+      ]
+      return fallbackPalette[idx % fallbackPalette.length]
+    }
 
     return consumables.reduce<ChartConfig>((acc, c, idx) => {
       acc[`c${idx}`] = {
         label: c.consumableTypeName ?? t('device_usage.consumable_fallback', { index: idx + 1 }),
-        color: palette[idx % palette.length],
+        color: resolveColorByName(c.consumableTypeName ?? '', idx),
       }
       return acc
     }, {})
