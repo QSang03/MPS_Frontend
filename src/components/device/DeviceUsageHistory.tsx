@@ -255,6 +255,16 @@ export default function DeviceUsageHistory({
     }, {})
   }, [consumables, t])
 
+  const getSeriesColor = useCallback(
+    (index: number) => {
+      const cfg = chartConfig[`c${index}` as keyof typeof chartConfig] as
+        | { label?: string; color?: string }
+        | undefined
+      return cfg?.color ?? `var(--chart-${(index % 5) + 1})`
+    },
+    [chartConfig]
+  )
+
   const formatValue = useCallback(
     (value: number | string | undefined | null) => {
       if (value === null || value === undefined) return '-'
@@ -382,14 +392,19 @@ export default function DeviceUsageHistory({
                   {consumables.map((c, i) => {
                     // only show toggles for types that actually have data in the selected range
                     if (!hasDataPerType[i]) return null
+                    const seriesColor = getSeriesColor(i)
                     return (
                       <button
                         key={c.consumableTypeId ?? i}
-                        className={`rounded-md border px-3 py-1 text-sm shadow-sm ${
-                          visibleTypes[i]
-                            ? 'border-[var(--brand-300)] bg-[var(--brand-50)]'
-                            : 'bg-white'
+                        className={`flex items-center rounded-md border px-3 py-1 text-sm shadow-sm ${
+                          visibleTypes[i] ? 'bg-white' : 'bg-white'
                         }`}
+                        style={{
+                          borderColor: seriesColor,
+                          backgroundColor: visibleTypes[i]
+                            ? `color-mix(in srgb, ${seriesColor} 12%, transparent)`
+                            : 'transparent',
+                        }}
                         onClick={() =>
                           setVisibleTypes((prev) => {
                             const copy = [...prev]
@@ -398,7 +413,11 @@ export default function DeviceUsageHistory({
                           })
                         }
                       >
-                        {c.consumableTypeName ?? t('common.unknown')}
+                        <span
+                          className="mr-2 inline-block h-2 w-2 shrink-0 rounded-[2px]"
+                          style={{ backgroundColor: seriesColor }}
+                        />
+                        <span>{c.consumableTypeName ?? t('common.unknown')}</span>
                       </button>
                     )
                   })}
@@ -445,11 +464,7 @@ export default function DeviceUsageHistory({
 
                             {consumables.map((c, i) => {
                               if (!hasDataPerType[i] || !visibleTypes[i]) return null
-                              // resolve color from chartConfig safely
-                              const cfg = chartConfig[`c${i}` as keyof typeof chartConfig] as
-                                | { label?: string; color?: string }
-                                | undefined
-                              const strokeColor = cfg?.color ?? `hsl(var(--chart-${(i % 5) + 1}))`
+                              const strokeColor = getSeriesColor(i)
                               return (
                                 <Line
                                   key={c.consumableTypeId ?? i}
