@@ -49,7 +49,6 @@ import A4EquivalentModal from '@/app/(dashboard)/system/devices/_components/A4Eq
 import A4EquivalentHistoryModal from '@/app/(dashboard)/system/devices/_components/A4EquivalentHistoryModal'
 import DeviceFormModal from '@/app/(dashboard)/system/devices/_components/deviceformmodal'
 import ContractDevicesModal from './ContractDevicesModal'
-import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { Dialog } from '@/components/ui/dialog'
 import { SystemModalLayout } from '@/components/system/SystemModalLayout'
 import {
