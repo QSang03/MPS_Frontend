@@ -909,20 +909,40 @@ export default function MonthlyCostsPage() {
 
                         if (!chartData || chartData.length === 0) return <div />
 
-                        const hasNonZero = (key: keyof DeviceCostTrendItem) =>
-                          chartData.some((row) => {
-                            const raw = row?.[key] as unknown
-                            const n = typeof raw === 'number' ? raw : Number(raw)
-                            return Number.isFinite(n) && n !== 0
-                          })
+                        const seriesDefs = [
+                          {
+                            key: 'totalCostAfterAdjustment',
+                            name: labels.totalCost,
+                            color: 'var(--brand-600)',
+                          },
+                          {
+                            key: 'costRental',
+                            name: labels.costRental,
+                            color: 'var(--color-success-500)',
+                          },
+                          {
+                            key: 'costRepair',
+                            name: labels.costRepair,
+                            color: 'var(--warning-500)',
+                          },
+                          {
+                            key: 'costPageBW',
+                            name: labels.costPageBW,
+                            color: 'var(--brand-700)',
+                          },
+                          {
+                            key: 'costPageColor',
+                            name: labels.costPageColor,
+                            color: 'var(--color-info-500)',
+                          },
+                        ] as const
 
-                        const showSeries = {
-                          totalCostAfterAdjustment: false, // Không vẽ tổng chi phí
-                          costRental: true, // Luôn vẽ phí thuê bao
-                          costRepair: true, // Luôn vẽ phí sửa chữa
-                          costPageBW: true, // Luôn vẽ phí trang in trắng đen
-                          costPageColor: hasNonZero('costPageColor'), // Chỉ vẽ phí trang in màu nếu có giá trị > 0
-                        }
+                        const hasSeriesData = (key: (typeof seriesDefs)[number]['key']) =>
+                          chartData.some(
+                            (row) => Number((row as Record<string, unknown>)[key] ?? 0) > 0
+                          )
+
+                        const activeSeries = seriesDefs.filter((s) => hasSeriesData(s.key))
 
                         return chartData.length === 1 ? (
                           <BarChart
@@ -957,46 +977,15 @@ export default function MonthlyCostsPage() {
                                 fontSize: '12px',
                               }}
                             />
-                            {showSeries.totalCostAfterAdjustment && (
+                            {activeSeries.map((s) => (
                               <Bar
-                                dataKey="totalCostAfterAdjustment"
-                                fill="var(--brand-600)"
+                                key={s.key}
+                                dataKey={s.key}
+                                fill={s.color}
                                 radius={[2, 2, 0, 0]}
-                                name={labels.totalCost}
+                                name={s.name}
                               />
-                            )}
-                            {showSeries.costRental && (
-                              <Bar
-                                dataKey="costRental"
-                                fill="var(--color-success-500)"
-                                radius={[2, 2, 0, 0]}
-                                name={labels.costRental}
-                              />
-                            )}
-                            {showSeries.costRepair && (
-                              <Bar
-                                dataKey="costRepair"
-                                fill="var(--warning-500)"
-                                radius={[2, 2, 0, 0]}
-                                name={labels.costRepair}
-                              />
-                            )}
-                            {showSeries.costPageBW && (
-                              <Bar
-                                dataKey="costPageBW"
-                                fill="var(--brand-700)"
-                                radius={[2, 2, 0, 0]}
-                                name={labels.costPageBW}
-                              />
-                            )}
-                            {showSeries.costPageColor && (
-                              <Bar
-                                dataKey="costPageColor"
-                                fill="var(--color-info-500)"
-                                radius={[2, 2, 0, 0]}
-                                name={labels.costPageColor}
-                              />
-                            )}
+                            ))}
                           </BarChart>
                         ) : (
                           <LineChart
@@ -1031,61 +1020,18 @@ export default function MonthlyCostsPage() {
                                 fontSize: '12px',
                               }}
                             />
-                            {showSeries.totalCostAfterAdjustment && (
+                            {activeSeries.map((s) => (
                               <Line
+                                key={s.key}
                                 type="monotone"
-                                dataKey="totalCostAfterAdjustment"
-                                stroke="var(--brand-600)"
+                                dataKey={s.key}
+                                stroke={s.color}
                                 strokeWidth={3}
-                                dot={{ fill: 'var(--brand-600)', r: 4 }}
+                                dot={{ fill: s.color, r: 4 }}
                                 activeDot={{ r: 6 }}
-                                name={labels.totalCost}
+                                name={s.name}
                               />
-                            )}
-                            {showSeries.costRental && (
-                              <Line
-                                type="monotone"
-                                dataKey="costRental"
-                                stroke="var(--color-success-500)"
-                                strokeWidth={3}
-                                dot={{ fill: 'var(--color-success-500)', r: 4 }}
-                                activeDot={{ r: 6 }}
-                                name={labels.costRental}
-                              />
-                            )}
-                            {showSeries.costRepair && (
-                              <Line
-                                type="monotone"
-                                dataKey="costRepair"
-                                stroke="var(--warning-500)"
-                                strokeWidth={3}
-                                dot={{ fill: 'var(--warning-500)', r: 4 }}
-                                activeDot={{ r: 6 }}
-                                name={labels.costRepair}
-                              />
-                            )}
-                            {showSeries.costPageBW && (
-                              <Line
-                                type="monotone"
-                                dataKey="costPageBW"
-                                stroke="var(--brand-700)"
-                                strokeWidth={3}
-                                dot={{ fill: 'var(--brand-700)', r: 4 }}
-                                activeDot={{ r: 6 }}
-                                name={labels.costPageBW}
-                              />
-                            )}
-                            {showSeries.costPageColor && (
-                              <Line
-                                type="monotone"
-                                dataKey="costPageColor"
-                                stroke="var(--color-info-500)"
-                                strokeWidth={3}
-                                dot={{ fill: 'var(--color-info-500)', r: 4 }}
-                                activeDot={{ r: 6 }}
-                                name={labels.costPageColor}
-                              />
-                            )}
+                            ))}
                           </LineChart>
                         )
                       })()}
