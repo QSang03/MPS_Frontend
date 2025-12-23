@@ -1,6 +1,5 @@
 'use client'
 
-import React from 'react'
 import {
   Table,
   TableBody,
@@ -99,6 +98,8 @@ export default function NavigationConfigTable({ configs, onView, onEdit, onDelet
                     size="sm"
                     onClick={() => onView(config)}
                     className="h-8 w-8 p-0"
+                    title={t('button.view')}
+                    aria-label={t('button.view')}
                   >
                     <Eye className="h-4 w-4" />
                   </Button>
@@ -108,6 +109,8 @@ export default function NavigationConfigTable({ configs, onView, onEdit, onDelet
                       size="sm"
                       onClick={() => onEdit(config)}
                       className="h-8 w-8 p-0"
+                      title={t('button.edit')}
+                      aria-label={t('button.edit')}
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
@@ -118,6 +121,8 @@ export default function NavigationConfigTable({ configs, onView, onEdit, onDelet
                       size="sm"
                       onClick={() => onDelete(config)}
                       className="h-8 w-8 p-0"
+                      title={t('button.delete')}
+                      aria-label={t('button.delete')}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
