@@ -627,7 +627,7 @@ function DeviceModelsTableContent({
                   </div>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>{t('device_model.button.edit')}</p>
+                  <p>{t('button.edit')}</p>
                 </TooltipContent>
               </Tooltip>
             </ActionGuard>
