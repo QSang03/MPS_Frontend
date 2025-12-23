@@ -1,6 +1,9 @@
 import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
+  // Produce a standalone build for smaller Docker runtime images
+  output: 'standalone',
+
   // Turbopack configuration (stable in Next.js 15)
   turbopack: {
     // Configure loaders if needed

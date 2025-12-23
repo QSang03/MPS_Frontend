@@ -9,8 +9,9 @@ services:
       - NEXT_PUBLIC_API_URL=http://192.168.117.18:3000
       - JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
       - DEFAULT_USER_PASSWORD=mpschinhnhan
-    ports:
-      - '3000:3000'
+    # Do not bind Next.js to the host port; expose it only to the Docker network
+    expose:
+      - '3000'
     networks:
       - mps-network
 
