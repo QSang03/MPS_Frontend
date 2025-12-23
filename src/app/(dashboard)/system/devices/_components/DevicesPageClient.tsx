@@ -674,18 +674,24 @@ function DevicesTableContent({
                 {!isHistoricalDevice(device) && (
                   <>
                     {customer?.code === 'SYS' && (
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        className="h-7 w-7 p-0"
-                        onClick={() => {
-                          setEditingDeviceId(device.id)
-                          setShowCustomerSelect(true)
-                        }}
-                        title={`${t('button.edit')} ${t('customer')}`}
-                      >
-                        <Edit2 className="h-3.5 w-3.5" />
-                      </Button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            className="h-7 w-7 cursor-pointer p-0"
+                            onClick={() => {
+                              setEditingDeviceId(device.id)
+                              setShowCustomerSelect(true)
+                            }}
+                          >
+                            <Edit2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{`${t('button.edit')} ${t('customer')}`}</p>
+                        </TooltipContent>
+                      </Tooltip>
                     )}
                     {customer?.code && customer.code !== 'SYS' && (
                       <ActionGuard pageId="devices" actionId="return-to-warehouse">
@@ -696,15 +702,21 @@ function DevicesTableContent({
                           description={t('devices.remove_customer.description')}
                           onConfirm={async () => handleRemoveCustomer(device.id)}
                           trigger={
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              className="h-7 w-7 p-0"
-                              disabled={updatingCustomer}
-                              title={t('devices.unassign')}
-                            >
-                              <X className="h-3.5 w-3.5" />
-                            </Button>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  className="h-7 w-7 cursor-pointer p-0"
+                                  disabled={updatingCustomer}
+                                >
+                                  <X className="h-3.5 w-3.5" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>{t('devices.unassign')}</p>
+                              </TooltipContent>
+                            </Tooltip>
                           }
                         />
                       </ActionGuard>
@@ -851,21 +863,27 @@ function DevicesTableContent({
               </div>
               <ActionGuard pageId="devices" actionId="toggle-active">
                 {device.isActive ? (
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    type="button"
-                    aria-label="On"
-                    title={t('devices.toggle_active.title')}
-                    className="h-7 w-7 p-0 transition-all"
-                    onClick={() => {
-                      setToggleTargetDevice(device)
-                      setToggleTargetActive(false)
-                      setToggleModalOpen(true)
-                    }}
-                  >
-                    <Power className="h-4 w-4" />
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        type="button"
+                        aria-label="On"
+                        className="h-7 w-7 cursor-pointer p-0 transition-all"
+                        onClick={() => {
+                          setToggleTargetDevice(device)
+                          setToggleTargetActive(false)
+                          setToggleModalOpen(true)
+                        }}
+                      >
+                        <Power className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{t('devices.toggle_active.title')}</p>
+                    </TooltipContent>
+                  </Tooltip>
                 ) : (
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -875,7 +893,7 @@ function DevicesTableContent({
                         type="button"
                         aria-label="Off"
                         title={t('devices.toggle_paused.title')}
-                        className="h-7 w-7 p-0 transition-all"
+                        className="h-7 w-7 cursor-pointer p-0 transition-all"
                         onClick={() => {
                           setToggleTargetDevice(device)
                           setToggleTargetActive(true)
@@ -918,7 +936,7 @@ function DevicesTableContent({
                     <Button
                       variant="secondary"
                       size="sm"
-                      className="h-7 w-7 p-0 text-gray-400"
+                      className="h-7 w-7 cursor-pointer p-0 text-gray-400"
                       disabled
                       title={t('devices.history_edit_disabled')}
                     >
@@ -943,32 +961,44 @@ function DevicesTableContent({
               {!isHistorical && <AssignPricingButton device={device} onSaved={invalidateDevices} />}
               {!isHistorical && (
                 <ActionGuard pageId="devices" actionId="assign-pricing">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="h-7 w-7 cursor-pointer p-0"
+                        onClick={() => {
+                          setA4ModalDevice(device)
+                          setA4ModalOpen(true)
+                        }}
+                      >
+                        <BarChart3 className="h-3.5 w-3.5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{t('devices.a4_snapshot.title')}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </ActionGuard>
+              )}
+              <Tooltip>
+                <TooltipTrigger asChild>
                   <Button
                     variant="secondary"
                     size="sm"
-                    className="h-7 w-7 p-0"
+                    className="h-7 w-7 cursor-pointer p-0"
                     onClick={() => {
-                      setA4ModalDevice(device)
-                      setA4ModalOpen(true)
+                      setA4HistoryDevice(device)
+                      setA4HistoryOpen(true)
                     }}
-                    title={t('devices.a4_snapshot.title')}
                   >
-                    <BarChart3 className="h-3.5 w-3.5" />
+                    <RefreshCw className="h-3.5 w-3.5" />
                   </Button>
-                </ActionGuard>
-              )}
-              <Button
-                variant="secondary"
-                size="sm"
-                className="h-7 w-7 p-0"
-                onClick={() => {
-                  setA4HistoryDevice(device)
-                  setA4HistoryOpen(true)
-                }}
-                title={t('devices.a4_history.title')}
-              >
-                <RefreshCw className="h-3.5 w-3.5" />
-              </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{t('devices.a4_history.title')}</p>
+                </TooltipContent>
+              </Tooltip>
               {!isHistorical && (
                 <ActionGuard pageId="devices" actionId="delete">
                   <DeleteDialog
@@ -976,9 +1006,20 @@ function DevicesTableContent({
                     description={t('device.delete.description')}
                     onConfirm={async () => handleDeleteDevice(device.id)}
                     trigger={
-                      <Button variant="destructive" size="sm" className="h-7 w-7 p-0">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            className="h-7 w-7 cursor-pointer p-0"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{t('device.delete.title_short')}</p>
+                        </TooltipContent>
+                      </Tooltip>
                     }
                   />
                 </ActionGuard>

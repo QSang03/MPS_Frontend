@@ -422,7 +422,11 @@ export default function DeviceFormModal({
         <DialogTrigger asChild>{trigger}</DialogTrigger>
       ) : mode === 'create' ? (
         <DialogTrigger asChild>
-          <Button variant="outline" className="gap-2 hover:bg-[var(--accent)]">
+          <Button
+            variant="outline"
+            className="cursor-pointer gap-2 hover:bg-[var(--accent)]"
+            title={t('devices.add')}
+          >
             <Plus className="h-4 w-4" />
             {t('devices.add')}
           </Button>
@@ -436,7 +440,7 @@ export default function DeviceFormModal({
                 <Button
                   variant="default"
                   size="sm"
-                  className="h-8 w-8 rounded-full p-0"
+                  className="h-8 w-8 cursor-pointer rounded-full p-0"
                   aria-label={t('button.edit')}
                 >
                   <Edit className="h-4 w-4" />
@@ -447,7 +451,12 @@ export default function DeviceFormModal({
         </Tooltip>
       ) : (
         <DialogTrigger asChild>
-          <Button variant="outline" size="sm" className="gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="cursor-pointer gap-2"
+            title={t('button.edit')}
+          >
             <Edit className="h-4 w-4" />
           </Button>
         </DialogTrigger>
@@ -467,7 +476,8 @@ export default function DeviceFormModal({
               variant="outline"
               onClick={() => setOpen(false)}
               disabled={submitting}
-              className="min-w-[100px]"
+              className="min-w-[100px] cursor-pointer"
+              title={t('cancel')}
             >
               {t('cancel')}
             </Button>
@@ -476,7 +486,8 @@ export default function DeviceFormModal({
               form="device-form"
               disabled={submitting}
               variant="default"
-              className="min-w-[120px]"
+              className="min-w-[120px] cursor-pointer"
+              title={mode === 'create' ? t('device.create_submit') : t('device.save_changes')}
             >
               {submitting ? (
                 <>
@@ -979,7 +990,8 @@ export default function DeviceFormModal({
           <AlertDialogFooter className="bg-muted/50 border-t px-6 py-4">
             <AlertDialogCancel
               onClick={() => setShowSerialWarning(false)}
-              className="min-w-[100px]"
+              className="min-w-[100px] cursor-pointer"
+              title={t('cancel')}
             >
               {t('cancel')}
             </AlertDialogCancel>
@@ -988,7 +1000,8 @@ export default function DeviceFormModal({
                 setShowSerialWarning(false)
                 await performSave()
               }}
-              className="min-w-[120px] bg-amber-600"
+              className="min-w-[120px] cursor-pointer bg-amber-600"
+              title={t('confirm.ok')}
             >
               {t('confirm.ok')}
             </Button>

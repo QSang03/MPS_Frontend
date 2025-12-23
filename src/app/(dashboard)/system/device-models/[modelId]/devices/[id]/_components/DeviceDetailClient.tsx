@@ -497,7 +497,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
             backHref ?? (modelId ? `/system/device-models/${modelId}` : '/system/device-models')
           }
         >
-          <Button variant="outline" className="gap-2">
+          <Button variant="outline" className="cursor-pointer gap-2" title={t('common.back')}>
             <ArrowLeft className="h-4 w-4" />
             {t('common.back')}
           </Button>
@@ -522,7 +522,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
             backHref ?? (modelId ? `/system/device-models/${modelId}` : '/system/device-models')
           }
         >
-          <Button variant="outline" className="gap-2">
+          <Button variant="outline" className="cursor-pointer gap-2" title={t('common.back')}>
             <ArrowLeft className="h-4 w-4" />
             {t('common.back')}
           </Button>
@@ -656,7 +656,8 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                       variant="secondary"
                       size="sm"
                       onClick={() => setShowEdit(true)}
-                      className="gap-2"
+                      className="cursor-pointer gap-2"
+                      title={t('common.edit')}
                     >
                       <Edit className="h-4 w-4" />
                       {t('common.edit')}
@@ -1884,7 +1885,8 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
               <Button
                 variant="outline"
                 onClick={() => setShowEdit(false)}
-                className="min-w-[100px]"
+                className="min-w-[100px] cursor-pointer"
+                title={t('device_detail.button.cancel')}
               >
                 {t('device_detail.button.cancel')}
               </Button>
@@ -1960,7 +1962,8 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                   }
                 }}
                 disabled={editing}
-                className="min-w-[100px] bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] hover:from-[var(--brand-700)] hover:to-[var(--brand-700)]"
+                className="min-w-[100px] cursor-pointer bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] hover:from-[var(--brand-700)] hover:to-[var(--brand-700)]"
+                title={t('device.save_changes')}
               >
                 {editing ? (
                   <>
@@ -2709,7 +2712,12 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
           maxWidth="!max-w-[32rem]"
           footer={
             <>
-              <Button variant="outline" onClick={() => setShowWarningDialog(false)}>
+              <Button
+                variant="outline"
+                onClick={() => setShowWarningDialog(false)}
+                className="cursor-pointer"
+                title={t('common.cancel')}
+              >
                 {t('common.cancel')}
               </Button>
               <Button
@@ -2761,7 +2769,8 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                   }
                 }}
                 disabled={updatingWarning}
-                className="min-w-[120px] bg-gradient-to-r from-amber-600 to-teal-600 hover:from-amber-700 hover:to-teal-700"
+                className="min-w-[120px] cursor-pointer bg-gradient-to-r from-amber-600 to-teal-600 hover:from-amber-700 hover:to-teal-700"
+                title={t('device.save_changes')}
               >
                 {updatingWarning ? (
                   <>
@@ -3409,10 +3418,18 @@ export function ConsumableUsageHistory({
                 setSearch('')
                 handleSearch()
               }}
+              className="cursor-pointer"
+              title={t('common.clear')}
             >
               <RefreshCw className="h-4 w-4" />
             </Button>
-            <Button variant="outline" size="sm" onClick={() => handleSearch()} className="ml-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleSearch()}
+              className="ml-2 cursor-pointer"
+              title={t('common.search')}
+            >
               {t('common.search')}
             </Button>
           </div>
@@ -3443,7 +3460,13 @@ export function ConsumableUsageHistory({
             <option value="20">20</option>
             <option value="50">50</option>
           </select>
-          <Button variant="secondary" size="sm" onClick={() => load()}>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => load()}
+            className="cursor-pointer"
+            title={t('button.refresh')}
+          >
             {t('button.refresh')}
           </Button>
         </div>

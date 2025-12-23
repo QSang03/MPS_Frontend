@@ -494,7 +494,7 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
                 <Button
                   variant="secondary"
                   size="sm"
-                  className="h-8 w-8 rounded-full p-0"
+                  className="h-8 w-8 cursor-pointer rounded-full p-0"
                   aria-label={t('devices.pricing.assign')}
                 >
                   <Tag className="h-4 w-4" />
@@ -505,7 +505,12 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
         </Tooltip>
       ) : (
         <DialogTrigger asChild>
-          <Button variant="outline" size="sm" className="gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="cursor-pointer gap-2"
+            title={t('devices.pricing.assign')}
+          >
             <Edit className="h-4 w-4" />
           </Button>
         </DialogTrigger>
@@ -523,7 +528,8 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
               variant="outline"
               onClick={() => setOpen(false)}
               disabled={submitting}
-              className="min-w-[100px]"
+              className="min-w-[100px] cursor-pointer"
+              title={t('cancel')}
             >
               {t('cancel')}
             </Button>
@@ -531,7 +537,8 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
               type="submit"
               form="device-pricing-form"
               disabled={submitting}
-              className="min-w-[120px] bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
+              className="min-w-[120px] cursor-pointer bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
+              title={t('devices.pricing.save')}
             >
               {submitting ? (
                 <>

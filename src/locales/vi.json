@@ -1722,6 +1722,7 @@
   "device.a4.error.invalid_counter_values": "Các giá trị counter phải là số nguyên không âm",
   "device.delete.title": "Xóa thiết bị {serial}",
   "device.delete.description": "Hành động này không thể hoàn tác.",
+  "device.delete.title_short": "Xóa thiết bị",
   "device.a4.log_title": "Ghi nhật ký A4 cho thiết bị",
   "devices.pricing.save": "Lưu giá",
   "devices.pricing.price_bw": "Giá mỗi trang trắng đen",

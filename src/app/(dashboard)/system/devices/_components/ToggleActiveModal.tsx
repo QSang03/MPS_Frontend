@@ -114,7 +114,8 @@ export default function ToggleActiveModal({
               variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={submitting}
-              className="min-w-[100px]"
+              className="min-w-[100px] cursor-pointer"
+              title={t('cancel')}
             >
               {t('cancel')}
             </Button>
@@ -122,7 +123,12 @@ export default function ToggleActiveModal({
               type="submit"
               form="toggle-active-form"
               disabled={submitting}
-              className="min-w-[120px] bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
+              className="min-w-[120px] cursor-pointer bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
+              title={
+                targetActive
+                  ? t('toggle_active.modal.button.activate')
+                  : t('toggle_active.modal.button.deactivate')
+              }
             >
               {submitting
                 ? t('toggle_active.modal.button.processing')

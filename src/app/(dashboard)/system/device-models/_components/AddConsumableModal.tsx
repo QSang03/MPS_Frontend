@@ -241,7 +241,8 @@ export function AddConsumableModal({
                               size="sm"
                               onClick={() => handleAdd(c.id)}
                               disabled={addingId === c.id}
-                              className="gap-2 bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] whitespace-nowrap hover:from-[var(--brand-700)] hover:to-[var(--brand-700)]"
+                              className="cursor-pointer gap-2 bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] whitespace-nowrap hover:from-[var(--brand-700)] hover:to-[var(--brand-700)]"
+                              title={t('device_model.add_consumable.add_button')}
                             >
                               {addingId === c.id ? (
                                 <>
@@ -280,7 +281,8 @@ export function AddConsumableModal({
                     size="sm"
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
                     disabled={page <= 1 || loading}
-                    className="gap-1"
+                    className="cursor-pointer gap-1"
+                    title={t('pagination.prev')}
                   >
                     <ChevronLeft className="h-4 w-4" />
                     {t('pagination.prev')}
@@ -295,7 +297,8 @@ export function AddConsumableModal({
                     size="sm"
                     onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                     disabled={page >= totalPages || loading}
-                    className="gap-1"
+                    className="cursor-pointer gap-1"
+                    title={t('pagination.next')}
                   >
                     {t('pagination.next')}
                     <ChevronRight className="h-4 w-4" />

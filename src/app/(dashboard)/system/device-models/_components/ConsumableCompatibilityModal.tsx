@@ -25,6 +25,7 @@ import { DeleteDialog } from '@/components/shared/DeleteDialog'
 import { cn } from '@/lib/utils'
 import { useLocale } from '@/components/providers/LocaleProvider'
 import { ActionGuard } from '@/components/shared/ActionGuard'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 
 interface ConsumableCompatibilityModalProps {
   deviceModelId: string
@@ -209,7 +210,8 @@ export function ConsumableCompatibilityModal({
                       setAddModalOpen(true)
                     }}
                     size="sm"
-                    className="gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700"
+                    className="cursor-pointer gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700"
+                    title={t('device_model.compatibility.add_button')}
                   >
                     <Plus className="h-4 w-4" />
                     {t('device_model.compatibility.add_button')}
@@ -309,13 +311,20 @@ export function ConsumableCompatibilityModal({
                                 description={t('device_model.compatibility.delete_confirmation')}
                                 onConfirm={() => removeCompatibility(c.id)}
                                 trigger={
-                                  <Button
-                                    variant="destructive"
-                                    size="sm"
-                                    className="transition-all"
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        variant="destructive"
+                                        size="sm"
+                                        className="cursor-pointer transition-all"
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>{t('common.confirm_delete')}</p>
+                                    </TooltipContent>
+                                  </Tooltip>
                                 }
                               />
                             </ActionGuard>
@@ -348,7 +357,8 @@ export function ConsumableCompatibilityModal({
                       variant="secondary"
                       size="sm"
                       onClick={() => setSearchTerm('')}
-                      className="h-8"
+                      className="h-8 cursor-pointer"
+                      title={t('device_model.compatibility.clear_filter')}
                     >
                       {t('device_model.compatibility.clear_filter')}
                     </Button>

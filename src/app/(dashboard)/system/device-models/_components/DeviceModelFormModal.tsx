@@ -141,12 +141,21 @@ export function DeviceModelFormModal({ mode = 'create', model = null, onSaved, t
       ) : (
         <DialogTrigger asChild>
           {mode === 'create' ? (
-            <Button variant="outline" className="gap-2 hover:bg-[var(--accent)]">
+            <Button
+              variant="outline"
+              className="cursor-pointer gap-2 hover:bg-[var(--accent)]"
+              title={t('device_model.button.create')}
+            >
               <Plus className="h-4 w-4" />
               {t('device_model.button.create')}
             </Button>
           ) : (
-            <Button variant="outline" size="sm" className="gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="cursor-pointer gap-2"
+              title={t('device_model.title_edit')}
+            >
               <Edit className="h-4 w-4" />
             </Button>
           )}
@@ -168,16 +177,22 @@ export function DeviceModelFormModal({ mode = 'create', model = null, onSaved, t
               variant="outline"
               onClick={() => setOpen(false)}
               type="button"
-              className="min-w-[100px]"
+              className="min-w-[100px] cursor-pointer"
               disabled={submitting}
+              title={t('cancel')}
             >
               {t('cancel')}
             </Button>
             <Button
               type="submit"
               form="device-model-form"
-              className="min-w-[120px] bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
+              className="min-w-[120px] cursor-pointer bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
               disabled={submitting}
+              title={
+                mode === 'create'
+                  ? t('device_model.button.create_new')
+                  : t('device_model.button.update')
+              }
             >
               <div className="flex items-center gap-2 text-sm font-semibold text-[var(--brand-700)]">
                 {submitting ? (

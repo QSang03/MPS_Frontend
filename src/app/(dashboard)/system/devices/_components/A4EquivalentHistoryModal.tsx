@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Search, RefreshCw, Calendar as CalendarIcon, FileText, Trash2 } from 'lucide-react'
 import { SystemModalLayout } from '@/components/system/SystemModalLayout'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { Dialog } from '@/components/ui/dialog'
 import {
   Select,
@@ -294,10 +295,17 @@ export function A4EquivalentUsageHistory({
               }
             }}
             trigger={
-              <Button size="sm" variant="destructive" title={t('devices.a4_history.delete')}>
-                {' '}
-                <Trash2 className="h-4 w-4 text-red-600" />{' '}
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button size="sm" variant="destructive" className="cursor-pointer">
+                    {' '}
+                    <Trash2 className="h-4 w-4 text-red-600" />{' '}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{t('devices.a4_history.delete')}</p>
+                </TooltipContent>
+              </Tooltip>
             }
           />
         </div>
@@ -353,17 +361,29 @@ export function A4EquivalentUsageHistory({
           </div>
 
           <div className="flex gap-2">
-            <Button variant="default" onClick={() => setPage(1)}>
+            <Button
+              variant="default"
+              onClick={() => setPage(1)}
+              className="cursor-pointer"
+              title={t('devices.a4_history.search_button')}
+            >
               {t('devices.a4_history.search_button')}
             </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => load()}
-              title={t('devices.a4_history.refresh')}
-            >
-              <RefreshCw className="h-4 w-4" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => load()}
+                  className="cursor-pointer"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t('devices.a4_history.refresh')}</p>
+              </TooltipContent>
+            </Tooltip>
           </div>
         </div>
 
@@ -475,7 +495,12 @@ export default function A4EquivalentHistoryModal({
         variant="view"
         footer={
           <>
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              className="cursor-pointer"
+              title={t('a4_history.button.close')}
+            >
               {t('a4_history.button.close')}
             </Button>
           </>

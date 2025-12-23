@@ -22,6 +22,7 @@ import { ConsumableCompatibilityModal } from './ConsumableCompatibilityModal'
 import type { DeviceModel } from '@/types/models/device-model'
 import deviceModelsClientService from '@/lib/api/services/device-models-client.service'
 import { ActionGuard } from '@/components/shared/ActionGuard'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { useDeviceModelsQuery } from '@/lib/hooks/queries/useDeviceModelsQuery'
 import { useQueryClient } from '@tanstack/react-query'
 import type { ColumnDef } from '@tanstack/react-table'
@@ -575,7 +576,8 @@ function DeviceModelsTableContent({
                   deviceModelName: row.original.name || 'N/A',
                 })
               }
-              className="gap-2"
+              className="cursor-pointer gap-2"
+              title={t('device_model.button.manage')}
             >
               <Package className="h-4 w-4" />
               {t('device_model.button.manage')}
@@ -605,19 +607,26 @@ function DeviceModelsTableContent({
                 })}
                 onConfirm={async () => handleDelete(row.original.id)}
                 trigger={
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    disabled={deletingId === row.original.id}
-                    className="transition-all"
-                  >
-                    {deletingId === row.original.id ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Trash2 className="h-4 w-4" />
-                    )}
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        disabled={deletingId === row.original.id}
+                        className="cursor-pointer transition-all"
+                      >
+                        {deletingId === row.original.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{t('device_model.delete.confirm_title')}</p>
+                    </TooltipContent>
+                  </Tooltip>
                 }
               />
             </ActionGuard>

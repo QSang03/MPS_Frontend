@@ -1799,6 +1799,7 @@
   "device.a4.error.invalid_counter_values": "Counter values must be non-negative integers",
   "device.delete.title": "Delete device {serial}",
   "device.delete.description": "This action cannot be undone.",
+  "device.delete.title_short": "Delete device",
   "device.a4.log_title": "Record A4 log for device",
   "devices.pricing.save": "Save Price",
   "devices.pricing.price_bw": "Price per B&W page",

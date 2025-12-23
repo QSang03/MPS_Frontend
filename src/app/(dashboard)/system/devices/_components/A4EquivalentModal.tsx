@@ -404,7 +404,8 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
               variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={submitting}
-              className="min-w-[100px]"
+              className="min-w-[100px] cursor-pointer"
+              title={t('a4_modal.button.cancel')}
             >
               {t('a4_modal.button.cancel')}
             </Button>
@@ -412,7 +413,8 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
               type="submit"
               form="a4-form"
               disabled={submitting}
-              className="min-w-[120px] bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
+              className="min-w-[120px] cursor-pointer bg-[var(--btn-primary)] text-[var(--btn-primary-foreground)] hover:bg-[var(--btn-primary-hover)]"
+              title={t('button.update')}
             >
               {submitting ? t('button.saving') : t('button.update')}
             </Button>
@@ -433,7 +435,8 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
               variant="outline"
               onClick={() => fileInputRef.current?.click()}
               disabled={scanLoading}
-              className="gap-2"
+              className="cursor-pointer gap-2"
+              title={t('a4_modal.button.analyze_pdf')}
             >
               {scanLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
