@@ -1128,11 +1128,11 @@ export default function CustomerDetailClient({ customerId }: Props) {
                     <TooltipTrigger asChild>
                       <Button variant="secondary" size="sm" className="cursor-pointer gap-2">
                         <Edit className="h-4 w-4" />
-                        {t('customer.detail.edit')}
+                        {t('button.edit')}
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>{t('customer.detail.edit')}</p>
+                      <p>{t('button.edit')}</p>
                     </TooltipContent>
                   </Tooltip>
                 }

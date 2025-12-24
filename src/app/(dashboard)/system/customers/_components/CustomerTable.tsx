@@ -492,7 +492,7 @@ export function CustomerTable({
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>{t('customer.edit')}</p>
+                    <p>{t('button.edit')}</p>
                   </TooltipContent>
                 </Tooltip>
               </ActionGuard>

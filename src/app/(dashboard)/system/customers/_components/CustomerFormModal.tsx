@@ -401,7 +401,7 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              <p>{t('customer.button.edit')}</p>
+              <p>{t('button.edit')}</p>
             </TooltipContent>
           </Tooltip>
         )}

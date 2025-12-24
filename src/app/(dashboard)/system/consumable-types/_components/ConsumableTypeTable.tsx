@@ -284,7 +284,7 @@ export function ConsumableTypeTable({
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>{t('consumable_types.table.edit')}</p>
+                    <p>{t('button.edit')}</p>
                   </TooltipContent>
                 </Tooltip>
               </ActionGuard>
@@ -316,7 +316,7 @@ export function ConsumableTypeTable({
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>{t('consumable_types.table.delete')}</p>
+                    <p>{t('button.delete')}</p>
                   </TooltipContent>
                 </Tooltip>
               </ActionGuard>
