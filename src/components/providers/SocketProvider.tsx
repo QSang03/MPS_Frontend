@@ -74,7 +74,9 @@ export function SocketProvider({ children, session }: SocketProviderProps) {
 
     const isDefaultCustomer = getIsDefaultCustomer()
 
-    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:3019'
+    const wsUrl =
+      process.env.NEXT_PUBLIC_WS_URL ||
+      (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3019')
     const fullUrl = `${wsUrl}/notifications`
     console.log('🔌 [SocketProvider] Initializing WebSocket connection:', {
       wsUrl,
