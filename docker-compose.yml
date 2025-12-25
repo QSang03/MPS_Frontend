@@ -19,7 +19,7 @@ services:
     image: nginx:alpine
     container_name: mps-nginx
     ports:
-      - '10000:80'
+      - '0.0.0.0:10000:80'
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
