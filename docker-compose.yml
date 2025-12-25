@@ -4,11 +4,8 @@ services:
   nextjs:
     build: .
     container_name: mps-frontend
-    environment:
-      - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=http://192.168.117.210:5000
-      - JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
-      - DEFAULT_USER_PASSWORD=mpschinhnhan
+    env_file:
+      - .env.production
     # Do not bind Next.js to the host port; expose it only to the Docker network
     expose:
       - '3000'
