@@ -22,7 +22,6 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
 } from 'recharts'
 import type { MonthlySeries } from '@/types/dashboard'
@@ -352,19 +351,6 @@ export function MonthlySeriesChart({
                   content={
                     <CustomTooltip baseCurrency={baseCurrency} metricConfig={METRIC_CONFIG} />
                   }
-                />
-                <Legend
-                  verticalAlign="top"
-                  height={36}
-                  iconType="circle"
-                  formatter={(value) => {
-                    const config = METRIC_CONFIG[value as keyof typeof METRIC_CONFIG]
-                    return (
-                      <span className="text-[13px] text-[var(--neutral-500)]">
-                        {config?.label || value}
-                      </span>
-                    )
-                  }}
                 />
 
                 {Object.entries(METRIC_CONFIG).map(([key, config]) => {
