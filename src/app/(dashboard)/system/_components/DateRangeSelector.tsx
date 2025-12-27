@@ -8,6 +8,7 @@ import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react'
 import MonthPicker from '@/components/ui/month-picker'
 import { cn } from '@/lib/utils/cn'
 import { useLocale } from '@/components/providers/LocaleProvider'
+import { toast } from 'sonner'
 
 interface DateRangeSelectorProps {
   defaultMonth?: string // Format: YYYY-MM
@@ -29,6 +30,8 @@ export function DateRangeSelector({ defaultMonth, onChange }: DateRangeSelectorP
 
   const { locale, t } = useLocale()
 
+  const [isAggregating, setIsAggregating] = useState(false)
+
   // Quick select options (labels will use translations)
   const quickSelects = [
     { label: t('dashboard.date_range.this_month'), value: 0 },
@@ -40,6 +43,39 @@ export function DateRangeSelector({ defaultMonth, onChange }: DateRangeSelectorP
   const handleMonthChange = (newMonth: string) => {
     setSelectedMonth(newMonth)
     onChange?.(newMonth)
+  }
+
+  const handleRunMonthlyAggregation = async () => {
+    if (isAggregating) return
+
+    setIsAggregating(true)
+    try {
+      const resp = await fetch(
+        `/api/reports/jobs/monthly-aggregation?month=${encodeURIComponent(selectedMonth)}`,
+        {
+          method: 'POST',
+          credentials: 'include',
+        }
+      )
+
+      if (!resp.ok) {
+        throw new Error(`HTTP ${resp.status}`)
+      }
+
+      const data = (await resp.json().catch(() => null)) as {
+        success?: boolean
+        message?: string
+      } | null
+      if (data?.success === false) {
+        throw new Error(data.message || 'Aggregation failed')
+      }
+
+      toast.success(t('dashboard.aggregation.success'))
+    } catch {
+      toast.error(t('dashboard.aggregation.error'))
+    } finally {
+      setIsAggregating(false)
+    }
   }
 
   const handlePrevMonth = () => {
@@ -87,7 +123,7 @@ export function DateRangeSelector({ defaultMonth, onChange }: DateRangeSelectorP
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           {/* Month Navigator */}
           <div className="flex items-center gap-3">
-            <Calendar className="h-5 w-5 text-gray-500" />
+            <Calendar className="h-5 w-5 text-gray-500" aria-hidden="true" />
             {/* small MonthPicker trigger - keeps original layout but provides a place to open calendar */}
             <div className="hidden sm:block">
               <MonthPicker
@@ -103,6 +139,8 @@ export function DateRangeSelector({ defaultMonth, onChange }: DateRangeSelectorP
                 variant="outline"
                 size="icon"
                 onClick={handlePrevMonth}
+                aria-label={t('dashboard.date_range.previous_month')}
+                title={t('dashboard.date_range.previous_month')}
                 className="h-9 w-9 rounded-full border-slate-200 text-slate-700 hover:bg-slate-100"
               >
                 <ChevronLeft className="h-4 w-4" />
@@ -118,6 +156,8 @@ export function DateRangeSelector({ defaultMonth, onChange }: DateRangeSelectorP
                 size="icon"
                 onClick={handleNextMonth}
                 disabled={isNextMonthDisabled()}
+                aria-label={t('dashboard.date_range.next_month')}
+                title={t('dashboard.date_range.next_month')}
                 className="h-9 w-9 rounded-full border-slate-200 text-slate-700 hover:bg-slate-100 disabled:opacity-50"
               >
                 <ChevronRight className="h-4 w-4" />
@@ -127,6 +167,18 @@ export function DateRangeSelector({ defaultMonth, onChange }: DateRangeSelectorP
 
           {/* Quick Select Buttons */}
           <div className="flex flex-wrap gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleRunMonthlyAggregation}
+              disabled={isAggregating}
+              className="h-9 rounded-full px-4 text-sm font-semibold"
+            >
+              {isAggregating
+                ? t('dashboard.aggregation.running')
+                : t('dashboard.aggregation.button')}
+            </Button>
+
             {quickSelects.map((option) => {
               const now = new Date()
               now.setMonth(now.getMonth() + option.value)

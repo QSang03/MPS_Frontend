@@ -3142,6 +3142,8 @@
   "policies.draft.checklist.hints.tenant_isolation_missing": "Cần giới hạn customerId trong resource hoặc subject.",
   "policies.draft.checklist.hints.conditions_invalid": "Không được để trống operator/value trong điều kiện.",
   "dashboard.date_range.this_month": "Tháng này",
+  "dashboard.date_range.previous_month": "Tháng trước",
+  "dashboard.date_range.next_month": "Tháng sau",
   "dashboard.date_range.last_month": "Tháng trước",
   "dashboard.date_range.last_3_months": "3 tháng trước",
   "dashboard.date_range.last_6_months": "6 tháng trước",

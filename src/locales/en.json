@@ -3144,6 +3144,8 @@
   "revenue.tab.analytics": "Profit Analysis",
   "revenue.tab.usage": "Usage Statistics",
   "dashboard.date_range.this_month": "This month",
+  "dashboard.date_range.previous_month": "Previous month",
+  "dashboard.date_range.next_month": "Next month",
   "dashboard.date_range.last_month": "Last month",
   "dashboard.date_range.last_3_months": "Last 3 months",
   "dashboard.date_range.last_6_months": "Last 6 months",
