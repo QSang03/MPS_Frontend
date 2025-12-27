@@ -3641,7 +3641,7 @@
   "print_page_report.line_items_title": "Chi tiết chỉ số thiết bị",
   "print_page_report.line_items_count": "{count} thiết bị",
   "print_page_report.total": "Tổng cộng",
-  "print_page_report.total_bw_used": "Tổng ĐT đã dùng",
+  "print_page_report.total_bw_used": "Tổng Đ/T đã dùng",
   "print_page_report.total_color_used": "Tổng màu đã dùng",
   "print_page_report.empty.title": "Không có báo cáo",
   "print_page_report.empty.description": "Tạo báo cáo trang in đầu tiên để bắt đầu",
