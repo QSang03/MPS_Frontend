@@ -306,7 +306,7 @@ export function PrintPageReportList() {
                                 {t('print_page_report.actions.view_detail')}
                               </Link>
                             </DropdownMenuItem>
-                            {report.status !== 'VOID' && (
+                            {report.status !== 'VOID' && !report.xlsxUrl && (
                               <DropdownMenuItem onClick={() => handleExportXlsx(report)}>
                                 <Download className="mr-2 h-4 w-4" />
                                 {t('print_page_report.actions.export_xlsx')}

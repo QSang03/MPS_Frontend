@@ -136,7 +136,7 @@ export function PrintPageReportDetail() {
               </a>
             </Button>
           )}
-          {report.status !== 'VOID' && (
+          {report.status !== 'VOID' && !report.xlsxUrl && (
             <Button onClick={handleExportXlsx} disabled={isExporting}>
               {isExporting ? (
                 <>
