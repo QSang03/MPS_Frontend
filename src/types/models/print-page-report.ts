@@ -83,6 +83,14 @@ export interface ExportPrintPageReportDto {
 }
 
 /**
+ * Void (cancel) print page report DTO
+ */
+export interface VoidPrintPageReportDto {
+  reportId: string
+  notes?: string
+}
+
+/**
  * Query params for listing print page reports
  */
 export interface PrintPageReportQueryParams {

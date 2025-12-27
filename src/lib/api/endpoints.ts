@@ -153,6 +153,7 @@ export const API_ENDPOINTS = {
       GENERATE: '/reports/print-page/generate',
       DETAIL: (id: string) => `/reports/print-page/${id}`,
       EXPORT_XLSX: '/reports/print-page/export-xlsx',
+      VOID: '/reports/print-page/void',
     },
   },
   // Policies

@@ -3663,5 +3663,11 @@
   "print_page_report.errors.missing_fields": "Please fill in all required fields",
   "print_page_report.errors.preview_failed": "Failed to preview report",
   "print_page_report.errors.generate_failed": "Failed to generate report",
-  "print_page_report.errors.export_failed": "Failed to export Excel file"
+  "print_page_report.errors.export_failed": "Failed to export Excel file",
+  "print_page_report.errors.void_failed": "Failed to void report",
+  "print_page_report.void_confirm": "Are you sure you want to void this report?",
+  "print_page_report.void_success": "Report voided successfully",
+  "print_page_report.void_dialog.title": "Confirm void report",
+  "print_page_report.void_dialog.description": "Are you sure you want to void this report? This action cannot be undone.",
+  "print_page_report.void_dialog.confirm": "Void report"
 }

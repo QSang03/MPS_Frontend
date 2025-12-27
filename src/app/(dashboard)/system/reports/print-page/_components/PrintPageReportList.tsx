@@ -27,6 +27,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { toast } from 'sonner'
 import { useLocale } from '@/components/providers/LocaleProvider'
 import { formatDate, formatNumber } from '@/lib/utils/formatters'
@@ -72,6 +82,8 @@ export function PrintPageReportList() {
   const [customers, setCustomers] = useState<Customer[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isGenerateOpen, setIsGenerateOpen] = useState(false)
+  const [voidDialogOpen, setVoidDialogOpen] = useState(false)
+  const [reportToVoid, setReportToVoid] = useState<PrintPageReportListItem | null>(null)
 
   // Filters
   const [search, setSearch] = useState('')
@@ -147,6 +159,33 @@ export function PrintPageReportList() {
   const handleGenerateSuccess = () => {
     setIsGenerateOpen(false)
     handleRefresh()
+  }
+
+  const openVoidDialog = (report: PrintPageReportListItem) => {
+    setReportToVoid(report)
+    setVoidDialogOpen(true)
+  }
+
+  const handleVoidConfirm = async () => {
+    if (!reportToVoid) return
+
+    try {
+      const success = await printPageReportsClientService.voidReport({
+        reportId: reportToVoid.id,
+      })
+      if (success) {
+        toast.success(t('print_page_report.void_success'))
+        handleRefresh()
+      } else {
+        toast.error(t('print_page_report.errors.void_failed'))
+      }
+    } catch (error) {
+      console.error('Error voiding report:', error)
+      toast.error(t('print_page_report.errors.void_failed'))
+    } finally {
+      setVoidDialogOpen(false)
+      setReportToVoid(null)
+    }
   }
 
   return (
@@ -321,7 +360,10 @@ export function PrintPageReportList() {
                               </DropdownMenuItem>
                             )}
                             {report.status === 'DRAFT' && (
-                              <DropdownMenuItem className="text-destructive">
+                              <DropdownMenuItem
+                                className="text-destructive"
+                                onClick={() => openVoidDialog(report)}
+                              >
                                 <Ban className="mr-2 h-4 w-4" />
                                 {t('print_page_report.actions.void')}
                               </DropdownMenuItem>
@@ -376,6 +418,27 @@ export function PrintPageReportList() {
         customers={customers}
         onSuccess={handleGenerateSuccess}
       />
+
+      {/* Void Confirmation Dialog */}
+      <AlertDialog open={voidDialogOpen} onOpenChange={setVoidDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('print_page_report.void_dialog.title')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('print_page_report.void_dialog.description')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('button.cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleVoidConfirm}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {t('print_page_report.void_dialog.confirm')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

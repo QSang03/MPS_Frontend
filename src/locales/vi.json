@@ -3656,5 +3656,11 @@
   "print_page_report.errors.missing_fields": "Vui lòng điền đầy đủ các trường bắt buộc",
   "print_page_report.errors.preview_failed": "Không thể tạo xem trước báo cáo",
   "print_page_report.errors.generate_failed": "Không thể tạo báo cáo",
-  "print_page_report.errors.export_failed": "Không thể xuất file Excel"
+  "print_page_report.errors.export_failed": "Không thể xuất file Excel",
+  "print_page_report.errors.void_failed": "Không thể hủy báo cáo",
+  "print_page_report.void_confirm": "Bạn có chắc chắn muốn hủy báo cáo này?",
+  "print_page_report.void_success": "Hủy báo cáo thành công",
+  "print_page_report.void_dialog.title": "Xác nhận hủy báo cáo",
+  "print_page_report.void_dialog.description": "Bạn có chắc chắn muốn hủy báo cáo này? Thao tác này không thể hoàn tác.",
+  "print_page_report.void_dialog.confirm": "Hủy báo cáo"
 }

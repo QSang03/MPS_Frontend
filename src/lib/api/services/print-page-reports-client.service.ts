@@ -6,6 +6,7 @@ import type {
   GeneratePrintPageReportDto,
   ExportPrintPageReportDto,
   PrintPageReportQueryParams,
+  VoidPrintPageReportDto,
 } from '@/types/models/print-page-report'
 import type { ApiListResponse, ListPagination } from '@/types/api'
 
@@ -118,6 +119,19 @@ export const printPageReportsClientService = {
     }
 
     return null
+  },
+
+  /**
+   * Void (cancel) a print page report
+   * Changes status to VOID
+   */
+  async voidReport(payload: VoidPrintPageReportDto): Promise<boolean> {
+    try {
+      const response = await internalApiClient.post('/api/reports/print-page/void', payload)
+      return response.data?.success === true
+    } catch {
+      return false
+    }
   },
 }
 
