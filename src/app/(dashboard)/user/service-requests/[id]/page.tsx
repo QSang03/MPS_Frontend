@@ -34,11 +34,7 @@ import {
   XCircle,
 } from 'lucide-react'
 import Image from 'next/image'
-// Server-safe translation stub (returns key). Avoid React hooks in server component.
-const t = (key: string, ..._args: unknown[]) => {
-  void _args
-  return key
-}
+import { getServerLocale, createServerTranslator } from '@/lib/utils/server-translation'
 import { ActionGuard } from '@/components/shared/ActionGuard'
 import { ServiceRequestRatingDisplay } from '@/components/service-request/ServiceRequestRatingDisplay'
 import { ServiceRequestRatingModal } from '@/components/service-request/ServiceRequestRatingModal'
@@ -60,7 +56,10 @@ export default async function UserServiceRequestDetail(props: {
   params?: Promise<Record<string, string | string[] | undefined>>
   searchParams?: Promise<unknown>
 }) {
-  // use server-safe t()
+  // Get server-safe translator
+  const locale = await getServerLocale()
+  const t = createServerTranslator(locale)
+
   const paramsObj = (await (props?.params ?? Promise.resolve({}))) as { id?: string }
   const requestId = paramsObj.id ?? ''
 
@@ -294,7 +293,6 @@ export default async function UserServiceRequestDetail(props: {
             <ActionGuard pageId="user-my-requests" actionId="rate-service-request">
               <ServiceRequestRatingModal
                 serviceRequest={request}
-                onRated={() => {}}
                 trigger={
                   <Card className="overflow-hidden border-none shadow-sm ring-1 ring-slate-200 dark:ring-slate-800">
                     <CardContent className="pt-6">
