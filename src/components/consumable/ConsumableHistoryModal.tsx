@@ -45,6 +45,7 @@ export function ConsumableUsageHistory({
     id?: string
     consumableId?: string
     consumableTypeId?: string
+    consumableTypeName?: string
     percentage?: number
     remaining?: number
     capacity?: number
@@ -242,8 +243,12 @@ export function ConsumableUsageHistory({
                   <TableCell className="font-mono text-xs text-slate-500" title={r.id}>
                     {shortId(r.id)}
                   </TableCell>
-                  <TableCell className="font-mono text-xs">{shortId(r.consumableId)}</TableCell>
-                  <TableCell className="font-mono text-xs">{shortId(r.consumableTypeId)}</TableCell>
+                  <TableCell className="text-sm" title={r.consumableTypeName}>
+                    {r.consumableTypeName || shortId(r.consumableId)}
+                  </TableCell>
+                  <TableCell className="text-sm" title={r.consumableTypeName}>
+                    {r.consumableTypeName || shortId(r.consumableTypeId)}
+                  </TableCell>
                   <TableCell className="text-right font-medium">
                     {r.percentage !== undefined ? (
                       <span
