@@ -140,6 +140,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
   const [installedConsumables, setInstalledConsumables] = useState<DeviceConsumable[]>([])
   const [compatibleConsumables, setCompatibleConsumables] = useState<CompatibleConsumable[]>([])
   const [selectedConsumableId, setSelectedConsumableId] = useState<string | null>(null)
+  const [selectedConsumableTypeName, setSelectedConsumableTypeName] = useState<string | null>(null)
   const [showConsumableHistoryModal, setShowConsumableHistoryModal] = useState(false)
   // derive selected consumable info for display in modal header
   // (We compute the object inside the modal component when needed to avoid
@@ -1584,8 +1585,11 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                                     onClick={() => {
                                       // open modal to show consumable history for this consumable
                                       const selectedId = cons?.id ?? c?.id
+                                      const typeName =
+                                        cons?.consumableType?.name ?? cons?.serialNumber ?? null
                                       if (selectedId) {
                                         setSelectedConsumableId(String(selectedId))
+                                        setSelectedConsumableTypeName(typeName)
                                         setShowConsumableHistoryModal(true)
                                       } else {
                                         toast.error(
@@ -2889,11 +2893,15 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
       <ConsumableHistoryModal
         deviceId={deviceId}
         consumableId={selectedConsumableId ?? undefined}
+        consumableTypeName={selectedConsumableTypeName ?? undefined}
         installedConsumables={installedConsumables}
         open={showConsumableHistoryModal}
         onOpenChange={(v) => {
           setShowConsumableHistoryModal(v)
-          if (!v) setSelectedConsumableId(null)
+          if (!v) {
+            setSelectedConsumableId(null)
+            setSelectedConsumableTypeName(null)
+          }
         }}
       />
 

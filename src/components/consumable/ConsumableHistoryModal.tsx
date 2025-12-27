@@ -207,7 +207,6 @@ export function ConsumableUsageHistory({
               <TableHead>
                 {t('system_device_detail.consumable_history.table.consumable_name')}
               </TableHead>
-              <TableHead>{t('system_device_detail.consumable_history.table.type')}</TableHead>
               <TableHead className="text-right">{t('device_usage.value.percentage')}</TableHead>
               <TableHead className="text-right">
                 {t('system_device_detail.consumable_history.table.remaining')}
@@ -224,7 +223,7 @@ export function ConsumableUsageHistory({
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={8} className="h-32 text-center">
+                <TableCell colSpan={7} className="h-32 text-center">
                   <div className="flex flex-col items-center justify-center gap-2 text-slate-500">
                     <Loader2 className="h-6 w-6 animate-spin text-[var(--brand-600)]" />
                     <p className="text-sm">{t('loading.default')}</p>
@@ -233,21 +232,18 @@ export function ConsumableUsageHistory({
               </TableRow>
             ) : items.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="h-32 text-center text-slate-500">
+                <TableCell colSpan={7} className="h-32 text-center text-slate-500">
                   {t('system_device_detail.consumable_history.empty')}
                 </TableCell>
               </TableRow>
             ) : (
-              items.map((r) => (
+              items.map((r, idx) => (
                 <TableRow key={r.id}>
-                  <TableCell className="font-mono text-xs text-slate-500" title={r.id}>
-                    {shortId(r.id)}
+                  <TableCell className="text-center text-sm text-slate-500">
+                    {(page - 1) * limit + idx + 1}
                   </TableCell>
                   <TableCell className="text-sm" title={r.consumableTypeName}>
                     {r.consumableTypeName || shortId(r.consumableId)}
-                  </TableCell>
-                  <TableCell className="text-sm" title={r.consumableTypeName}>
-                    {r.consumableTypeName || shortId(r.consumableTypeId)}
                   </TableCell>
                   <TableCell className="text-right font-medium">
                     {r.percentage !== undefined ? (

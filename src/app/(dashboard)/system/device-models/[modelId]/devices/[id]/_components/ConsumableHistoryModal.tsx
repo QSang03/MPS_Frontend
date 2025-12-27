@@ -313,9 +313,6 @@ export function ConsumableUsageHistory({
                   <th className="px-6 py-4 text-left text-xs font-bold tracking-wider text-slate-600 uppercase dark:text-slate-400">
                     {t('system_device_detail.consumable_history.table.consumable_name')}
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold tracking-wider text-slate-600 uppercase dark:text-slate-400">
-                    {t('system_device_detail.consumable_history.table.type')}
-                  </th>
                   <th className="px-6 py-4 text-right text-xs font-bold tracking-wider text-slate-600 uppercase dark:text-slate-400">
                     {t('system_device_detail.consumable_history.table.percentage')}
                   </th>
@@ -334,18 +331,15 @@ export function ConsumableUsageHistory({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {items.map((r) => (
+                {items.map((r, idx) => (
                   <tr
                     key={r.id}
                     className="group transition-all hover:bg-gradient-to-r hover:from-[var(--brand-50)] hover:to-[var(--brand-50)] dark:hover:from-[var(--brand-900)]/30 dark:hover:to-[var(--brand-700)]/30"
                   >
-                    <td className="px-6 py-4">
-                      <code
-                        className="rounded-md bg-slate-100 px-2 py-1 font-mono text-xs text-slate-700 group-hover:bg-white dark:bg-slate-800 dark:text-slate-300 dark:group-hover:bg-slate-900"
-                        title={r.id}
-                      >
-                        {shortId(r.id)}
-                      </code>
+                    <td className="px-6 py-4 text-center">
+                      <span className="text-sm text-slate-600 dark:text-slate-400">
+                        {(page - 1) * limit + idx + 1}
+                      </span>
                     </td>
                     <td className="px-6 py-4">
                       <span
@@ -353,14 +347,6 @@ export function ConsumableUsageHistory({
                         title={r.consumableTypeName}
                       >
                         {r.consumableTypeName || shortId(r.consumableId)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className="text-sm text-slate-600 dark:text-slate-400"
-                        title={r.consumableTypeName}
-                      >
-                        {r.consumableTypeName || shortId(r.consumableTypeId)}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
@@ -461,12 +447,14 @@ export function ConsumableUsageHistory({
 export default function ConsumableHistoryModal({
   deviceId,
   consumableId,
+  consumableTypeName,
   installedConsumables,
   open,
   onOpenChange,
 }: {
   deviceId: string
   consumableId?: string
+  consumableTypeName?: string
   installedConsumables?: unknown[]
   open: boolean
   onOpenChange: (v: boolean) => void
@@ -481,6 +469,8 @@ export default function ConsumableHistoryModal({
       }) ?? null)
     : null
   const title = (() => {
+    // Prefer consumableTypeName passed from parent
+    if (consumableTypeName) return consumableTypeName
     if (!selectedConsumableObj) return consumableId ?? '—'
     const o = selectedConsumableObj as Record<string, unknown>
     const maybeConsumable = o['consumable'] as Record<string, unknown> | undefined

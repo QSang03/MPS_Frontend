@@ -523,15 +523,12 @@ export default function DeviceUsageHistory({
                         <TableHead>{t('device_usage.series_table.headers.serial')}</TableHead>
                         <TableHead>{t('device_usage.series_table.headers.installed_at')}</TableHead>
                         <TableHead>{t('device_usage.series_table.headers.removed_at')}</TableHead>
-                        <TableHead className="text-right">
-                          {t('device_usage.series_table.headers.data_points')}
-                        </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {seriesRows.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={5} className="text-muted-foreground">
+                          <TableCell colSpan={4} className="text-muted-foreground">
                             {t('device_usage.series_table.empty')}
                           </TableCell>
                         </TableRow>
@@ -542,7 +539,6 @@ export default function DeviceUsageHistory({
                             <TableCell className="font-mono text-xs">{r.serial}</TableCell>
                             <TableCell>{formatDateTime(r.installedAt)}</TableCell>
                             <TableCell>{formatDateTime(r.removedAt)}</TableCell>
-                            <TableCell className="text-right">{r.points}</TableCell>
                           </TableRow>
                         ))
                       )}
