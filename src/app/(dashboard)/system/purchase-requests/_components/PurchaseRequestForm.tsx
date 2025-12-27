@@ -43,6 +43,9 @@ interface PurchaseRequestFormProps {
   customerId: string
   mode: 'create' | 'edit'
   onSuccess?: () => void
+  // Optional server-seeded data to avoid initial client requests
+  initialCurrencies?: import('@/types/models/currency').CurrencyDataDto[]
+  initialCustomer?: import('@/types/models/customer').Customer | null
 }
 
 export function PurchaseRequestForm({
@@ -50,6 +53,8 @@ export function PurchaseRequestForm({
   customerId,
   mode,
   onSuccess,
+  initialCurrencies,
+  initialCustomer,
 }: PurchaseRequestFormProps) {
   const router = useRouter()
   const queryClient = useQueryClient()
@@ -237,6 +242,8 @@ export function PurchaseRequestForm({
                   optional
                   placeholder={t('currency.select.placeholder_with_default')}
                   customerId={customerId}
+                  initialCurrencies={initialCurrencies}
+                  initialCustomer={initialCustomer}
                 />
               </FormControl>
               <FormDescription>{t('purchase_request.form.currency_description')}</FormDescription>

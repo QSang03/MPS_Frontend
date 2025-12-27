@@ -1,25 +1,16 @@
-'use client'
-
-import { useParams } from 'next/navigation'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
-import { useState, useEffect } from 'react'
-import { serviceRequestsClientService } from '@/lib/api/services/service-requests-client.service'
+import serverApiClient from '@/lib/api/server-client'
+import { API_ENDPOINTS } from '@/lib/api/endpoints'
+import { withRefreshRetry } from '@/lib/api/server-retry'
+import { authServerService } from '@/lib/api/services/auth-server.service'
+import ServiceRequestMessagesServer from '@/components/service-request/ServiceRequestMessagesServer'
+import type { ServiceRequest, ServiceRequestCost } from '@/types/models'
 import { ServiceRequestStatus } from '@/constants/status'
-import type { ServiceRequestCost } from '@/types/models/service-request'
 import { formatDateTime } from '@/lib/utils/formatters'
+import getPublicUrl from '@/lib/utils/publicUrl'
 import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import ServiceRequestMessages from '@/components/service-request/ServiceRequestMessages'
 import {
   Table,
   TableBody,
@@ -29,9 +20,6 @@ import {
   TableHeader,
 } from '@/components/ui/table'
 // Dialog/Input imports removed (not used in user page)
-import { useToast } from '@/components/ui/use-toast'
-import { getClientUserProfile } from '@/lib/auth/client-auth'
-import type { UserProfile } from '@/types/auth'
 import {
   ArrowLeft,
   Smartphone,
@@ -46,11 +34,15 @@ import {
   XCircle,
 } from 'lucide-react'
 import Image from 'next/image'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { useLocale } from '@/components/providers/LocaleProvider'
+// Server-safe translation stub (returns key). Avoid React hooks in server component.
+const t = (key: string, ..._args: unknown[]) => {
+  void _args
+  return key
+}
 import { ActionGuard } from '@/components/shared/ActionGuard'
 import { ServiceRequestRatingDisplay } from '@/components/service-request/ServiceRequestRatingDisplay'
 import { ServiceRequestRatingModal } from '@/components/service-request/ServiceRequestRatingModal'
+import ServiceRequestManagementClient from '@/components/service-request/ServiceRequestManagementClient'
 // StatusBadge removed (not used)
 
 type TimelineEvent = {
@@ -64,85 +56,56 @@ type TimelineEvent = {
 
 type TimelineEntry = TimelineEvent & { time: string }
 
-export default function UserServiceRequestDetail() {
-  const { t } = useLocale()
-  const params = useParams()
-  const requestId = params.id as string
-  const { toast } = useToast()
-  const queryClient = useQueryClient()
+export default async function UserServiceRequestDetail(props: {
+  params?: Promise<Record<string, string | string[] | undefined>>
+  searchParams?: Promise<unknown>
+}) {
+  // use server-safe t()
+  const paramsObj = (await (props?.params ?? Promise.resolve({}))) as { id?: string }
+  const requestId = paramsObj.id ?? ''
 
-  const [statusUpdate, setStatusUpdate] = useState<ServiceRequestStatus | ''>('')
-  const [actionNote, setActionNote] = useState('')
-  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null)
-  const [selectedAttachment, setSelectedAttachment] = useState<string | null>(null)
+  // Server-side fetch: request detail, costs, and current user profile
+  let request: ServiceRequest | null = null
+  let costs: ServiceRequestCost[] = []
+  let currentUser: { user?: { id?: string } } | null = null
 
-  useEffect(() => {
-    let mounted = true
-    getClientUserProfile()
-      .then((u) => {
-        if (mounted) setCurrentUser(u)
-      })
-      .catch(() => {
-        if (mounted) setCurrentUser(null)
-      })
-    return () => {
-      mounted = false
-    }
-  }, [])
+  try {
+    const [reqResp, costsResp, profile] = await Promise.all([
+      withRefreshRetry(() => serverApiClient.get(API_ENDPOINTS.SERVICE_REQUESTS.DETAIL(requestId))),
+      withRefreshRetry(() => serverApiClient.get(API_ENDPOINTS.SERVICE_REQUESTS.COSTS(requestId))),
+      authServerService.getProfileServer(),
+    ])
+
+    request = (reqResp.data && (reqResp.data.data ?? reqResp.data)) || null
+    costs = (costsResp.data && (costsResp.data.data ?? costsResp.data)) || []
+    currentUser = profile ?? null
+  } catch (err) {
+    console.error('[UserServiceRequestDetail] server fetch error', err)
+  }
 
   function normalizeAttachmentUrl(att: string) {
     if (!att || typeof att !== 'string') return att
     if (/^https?:\/\//i.test(att) || att.startsWith('//')) return att
-    const path = att.startsWith('/') ? att : `/${att}`
-    const base = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/$/, '')
-    if (!base) return path
-    return `${base}${path}`
+
+    // Prefer same-origin proxied URL when running in browser
+    const proxied = getPublicUrl(att)
+    if (proxied) return proxied
+
+    // Fallback to original value
+    return att
   }
 
-  // Fetch request detail
-  const { data: request, isLoading } = useQuery({
-    queryKey: ['service-request', requestId],
-    queryFn: () => serviceRequestsClientService.getById(requestId),
-  })
+  // request, costs and profile are fetched server-side above
 
-  // Messages are rendered by ServiceRequestMessages component; no local query needed
-
-  // Fetch costs (if any) separately
-  const { data: costsData } = useQuery({
-    queryKey: ['service-request-costs', requestId],
-    queryFn: () => serviceRequestsClientService.getCosts(requestId),
-  })
-
-  // Update status mutation
-  const updateStatusMutation = useMutation({
-    mutationFn: async () => {
-      if (!statusUpdate) return
-      return serviceRequestsClientService.updateStatus(requestId, {
-        status: statusUpdate,
-        customerInitiatedClose: statusUpdate === ServiceRequestStatus.CLOSED,
-        customerCloseReason: actionNote,
-      })
-    },
-    onSuccess: () => {
-      toast({ title: t('user_service_request.update_status.success') })
-      queryClient.invalidateQueries({ queryKey: ['service-request', requestId] })
-      setStatusUpdate('')
-      setActionNote('')
-    },
-    onError: () => {
-      toast({ title: t('user_service_request.update_status.error'), variant: 'destructive' })
-    },
-  })
+  // Status updates are handled by client-side action components when needed.
 
   // Message sending handled inside ServiceRequestMessages component; mutation removed
 
   // Derive frequently-used variables for rendering
   // messages variable not used here (ServiceRequestMessages handles messages)
-  const costs: ServiceRequestCost[] = costsData?.data ?? []
   // totalCost/intlLocale removed; costs displayed individually instead
 
   // Guard: show loading / missing states
-  if (isLoading) return <div className="p-8 text-center">{t('loading.default')}</div>
   if (!request) return <div className="p-8 text-center">{t('user_service_request.not_found')}</div>
 
   // Create timeline
@@ -233,33 +196,7 @@ export default function UserServiceRequestDetail() {
             </span>
           </div>
         </div>
-        <Dialog
-          open={Boolean(selectedAttachment)}
-          onOpenChange={(open) => !open && setSelectedAttachment(null)}
-        >
-          <DialogContent className="max-w-6xl p-0">
-            <DialogHeader>
-              <DialogTitle>{t('user_service_request.attachment.title')}</DialogTitle>
-            </DialogHeader>
-            <div className="flex items-center justify-center p-4">
-              {selectedAttachment && (
-                <div
-                  style={{ maxHeight: '80vh', width: 'auto', maxWidth: '100%' }}
-                  className="relative"
-                >
-                  <Image
-                    src={selectedAttachment}
-                    alt="attachment"
-                    width={1200}
-                    height={800}
-                    unoptimized
-                    className="max-h-[80vh] max-w-full object-contain"
-                  />
-                </div>
-              )}
-            </div>
-          </DialogContent>
-        </Dialog>
+        {/* Attachment preview modal removed in server-rendered page. Attachments open in new tab. */}
 
         <div className="flex items-center gap-3">
           <div className="flex flex-col items-end gap-1">
@@ -304,10 +241,11 @@ export default function UserServiceRequestDetail() {
                       const url = normalizeAttachmentUrl(att)
                       const isImage = /\.(png|jpe?g|gif|webp|avif)$/i.test(url)
                       return (
-                        <button
+                        <a
                           key={idx}
-                          onClick={() => isImage && setSelectedAttachment(url)}
-                          type="button"
+                          href={url}
+                          target="_blank"
+                          rel="noreferrer"
                           className="group bg-muted/10 flex h-28 w-full items-center justify-center overflow-hidden rounded border p-1"
                         >
                           {isImage ? (
@@ -325,7 +263,7 @@ export default function UserServiceRequestDetail() {
                               <span>{t('user_service_request.attachments.not_supported')}</span>
                             </div>
                           )}
-                        </button>
+                        </a>
                       )
                     })}
                   </div>
@@ -356,9 +294,7 @@ export default function UserServiceRequestDetail() {
             <ActionGuard pageId="user-my-requests" actionId="rate-service-request">
               <ServiceRequestRatingModal
                 serviceRequest={request}
-                onRated={() => {
-                  queryClient.invalidateQueries({ queryKey: ['service-request', requestId] })
-                }}
+                onRated={() => {}}
                 trigger={
                   <Card className="overflow-hidden border-none shadow-sm ring-1 ring-slate-200 dark:ring-slate-800">
                     <CardContent className="pt-6">
@@ -387,10 +323,9 @@ export default function UserServiceRequestDetail() {
               </CardHeader>
               <CardContent className="flex-1 overflow-hidden p-0">
                 <div className="flex h-full flex-col">
-                  <ServiceRequestMessages
+                  <ServiceRequestMessagesServer
                     serviceRequestId={requestId}
                     currentUserId={currentUser?.user?.id ?? null}
-                    pageId="user-my-requests"
                   />
                 </div>
               </CardContent>
@@ -497,53 +432,11 @@ export default function UserServiceRequestDetail() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-5">
-                  <div className="space-y-2">
-                    <label className="text-sm leading-none font-medium">
-                      {t('user_service_request.management.status_label')}
-                    </label>
-                    <div className="space-y-2">
-                      <Select
-                        value={request.status}
-                        onValueChange={(v) => setStatusUpdate(v as ServiceRequestStatus)}
-                        disabled={updateStatusMutation.isPending}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue
-                            placeholder={t('user_service_request.management.status_placeholder')}
-                          />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value={ServiceRequestStatus.CLOSED}>
-                            {t('user_service_request.management.close_request')}
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <Textarea
-                        placeholder={t('user_service_request.management.action_note_placeholder')}
-                        value={actionNote}
-                        onChange={(e) => setActionNote(e.target.value)}
-                        className="w-full bg-white"
-                        rows={3}
-                      />
-                      <Button
-                        className="w-full"
-                        onClick={() => updateStatusMutation.mutate()}
-                        disabled={!statusUpdate || updateStatusMutation.isPending}
-                      >
-                        {updateStatusMutation.isPending
-                          ? t('user_service_request.management.updating')
-                          : t('user_service_request.management.update')}
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="border-t pt-2">
-                    <div className="bg-muted rounded p-2 text-sm font-medium">
-                      {t('user_service_request.management.assigned_to')}:{' '}
-                      {request.assignedToName ??
-                        request.assignedTo ??
-                        t('user_service_request.management.not_assigned')}
-                    </div>
-                  </div>
+                  <ServiceRequestManagementClient
+                    requestId={requestId}
+                    initialStatus={request.status}
+                    assignedTo={request.assignedToName ?? request.assignedTo ?? null}
+                  />
                 </CardContent>
               </Card>
             </ActionGuard>

@@ -45,27 +45,18 @@ export async function GET(request: NextRequest) {
       `customerId from session${params.customerId ? ' (overridden by query param)' : ''}`
     )
 
+    // Backend /dashboard/overview only supports { month, customerId? }.
+    // Do not forward unrelated params like `lang` to avoid 400 from strict validation.
+    const backendParams: Record<string, string> = { month }
+    if (params.customerId) backendParams.customerId = params.customerId
+
+    console.log('[api/dashboard/overview] Forwarding backend params:', backendParams)
+
     // Call backend API (backend extracts customerId from JWT)
     const response = await backendApiClient.get('/dashboard/overview', {
-      params,
+      params: backendParams,
       headers: { Authorization: `Bearer ${accessToken}` },
     })
-
-    const respData = response && (response.data as Record<string, unknown> | undefined)
-    const respSuccess =
-      typeof respData?.success === 'boolean' ? (respData.success as boolean) : undefined
-    const respItemsLength = Array.isArray(respData?.items)
-      ? (respData.items as Array<unknown>).length
-      : undefined
-    console.log(
-      '[api/dashboard/overview] Backend response status:',
-      response.status,
-      'data summary:',
-      {
-        success: respSuccess,
-        items: respItemsLength,
-      }
-    )
 
     return NextResponse.json(response.data)
   } catch (error: unknown) {

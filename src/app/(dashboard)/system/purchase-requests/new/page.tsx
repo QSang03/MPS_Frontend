@@ -1,5 +1,9 @@
 import { Suspense } from 'react'
 import { getSession } from '@/lib/auth/session'
+import serverApiClient from '@/lib/api/server-client'
+import { API_ENDPOINTS } from '@/lib/api/endpoints'
+import type { CurrencyDataDto } from '@/types/models/currency'
+import type { Customer } from '@/types/models/customer'
 import { getDevSession, DEV_BYPASS_AUTH } from '@/lib/auth/dev-session'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -9,7 +13,15 @@ import { useLocale } from '@/components/providers/LocaleProvider'
 // Force dynamic rendering
 export const dynamic = 'force-dynamic'
 
-function LocalizedPageContent({ customerId }: { customerId: string }) {
+function LocalizedPageContent({
+  customerId,
+  initialCurrencies,
+  initialCustomer,
+}: {
+  customerId: string
+  initialCurrencies?: CurrencyDataDto[]
+  initialCustomer?: Customer | null
+}) {
   'use client'
   const { t } = useLocale()
 
@@ -27,7 +39,12 @@ function LocalizedPageContent({ customerId }: { customerId: string }) {
         </CardHeader>
         <CardContent>
           <Suspense fallback={<PurchaseRequestFormSkeleton />}>
-            <PurchaseRequestForm customerId={customerId} mode="create" />
+            <PurchaseRequestForm
+              customerId={customerId}
+              mode="create"
+              initialCurrencies={initialCurrencies}
+              initialCustomer={initialCustomer}
+            />
           </Suspense>
         </CardContent>
       </Card>
@@ -46,8 +63,22 @@ function PurchaseRequestFormSkeleton() {
   )
 }
 
-function PurchaseRequestPageContent({ customerId }: { customerId: string }) {
-  return <LocalizedPageContent customerId={customerId} />
+function PurchaseRequestPageContent({
+  customerId,
+  initialCurrencies,
+  initialCustomer,
+}: {
+  customerId: string
+  initialCurrencies?: CurrencyDataDto[]
+  initialCustomer?: Customer | null
+}) {
+  return (
+    <LocalizedPageContent
+      customerId={customerId}
+      initialCurrencies={initialCurrencies}
+      initialCustomer={initialCustomer}
+    />
+  )
 }
 
 export default async function NewPurchaseRequestPage() {
@@ -58,5 +89,31 @@ export default async function NewPurchaseRequestPage() {
     session = getDevSession('customer-admin')
   }
 
-  return <PurchaseRequestPageContent customerId={session!.customerId} />
+  // Server-seed currencies and customer to avoid initial client XHR in the form
+  let initialCurrencies: CurrencyDataDto[] | undefined = undefined
+  let initialCustomer: Customer | null | undefined = undefined
+
+  try {
+    const resp = await serverApiClient.get(`${API_ENDPOINTS.CURRENCIES.LIST}`, {
+      params: { isActive: true, limit: 100 },
+    })
+    initialCurrencies = resp.data?.data ?? []
+  } catch (err) {
+    console.error('Failed to fetch currencies on server:', err)
+  }
+
+  try {
+    const resp = await serverApiClient.get(`${API_ENDPOINTS.CUSTOMERS}/${session!.customerId}`)
+    initialCustomer = resp.data?.data ?? null
+  } catch (err) {
+    console.error('Failed to fetch customer on server:', err)
+  }
+
+  return (
+    <PurchaseRequestPageContent
+      customerId={session!.customerId}
+      initialCurrencies={initialCurrencies}
+      initialCustomer={initialCustomer}
+    />
+  )
 }

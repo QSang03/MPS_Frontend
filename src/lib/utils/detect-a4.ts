@@ -9,13 +9,18 @@ export function getShowModeFromDeviceAndItems(
 ): ShowMode {
   // Normalize explicit `showA4` prop values
   if (showA4Prop === true) return 'a4'
-  if (showA4Prop === false) return 'standard'
+  // NOTE: With the new backend logic, when model does NOT use A4 counters we still
+  // want to show both standard + A4 columns. Therefore, `showA4=false` should not
+  // force "standard only"; treat it like auto/undefined.
 
   // If device model flag present, use it
   const raw = deviceModelFlag as unknown
   const modelUseA4 = raw === true || raw === 'true' || raw === 1 || raw === '1'
   if (typeof raw !== 'undefined') {
-    return modelUseA4 ? 'a4' : 'standard'
+    // New backend logic:
+    // - If model uses A4 counters: show A4 only
+    // - If model does NOT use A4 counters: show BOTH standard + A4 (agent updates standard; billing/statistics use A4)
+    return modelUseA4 ? 'a4' : 'both'
   }
 
   // Fallback: auto-detect from item rows when no device model available
@@ -36,7 +41,7 @@ export function getShowModeFromDeviceAndItems(
   )
   if (hasA4 && !hasStandard) return 'a4'
   if (!hasA4 && hasStandard) return 'standard'
-  if (hasA4 && hasStandard) return 'a4' // prefer A4 when both present
+  if (hasA4 && hasStandard) return 'both'
   return 'both'
 }
 

@@ -3,28 +3,38 @@ import { format, formatDistance } from 'date-fns'
 /**
  * Format date to readable string
  */
-export function formatDate(date: string | Date, pattern = 'MMM dd, yyyy'): string {
-  return format(new Date(date), pattern)
+export function formatDate(
+  date: string | Date | null | undefined,
+  pattern = 'MMM dd, yyyy'
+): string {
+  if (date === null || date === undefined || date === '') return '-'
+  const parsed = new Date(date)
+  if (Number.isNaN(parsed.getTime())) return '-'
+  return format(parsed, pattern)
 }
 
 /**
  * Format date to datetime string
  */
-export function formatDateTime(date: string | Date): string {
-  return format(new Date(date), 'MMM dd, yyyy HH:mm')
+export function formatDateTime(date: string | Date | null | undefined): string {
+  return formatDate(date, 'MMM dd, yyyy HH:mm')
 }
 
 /**
  * Format date to relative time (e.g., "2 hours ago")
  */
-export function formatRelativeTime(date: string | Date): string {
-  return formatDistance(new Date(date), new Date(), { addSuffix: true })
+export function formatRelativeTime(date: string | Date | null | undefined): string {
+  if (date === null || date === undefined || date === '') return '-'
+  const parsed = new Date(date)
+  if (Number.isNaN(parsed.getTime())) return '-'
+  return formatDistance(parsed, new Date(), { addSuffix: true })
 }
 
 /**
  * Format number with thousand separators
  */
-export function formatNumber(num: number): string {
+export function formatNumber(num: number | null | undefined): string {
+  if (typeof num !== 'number' || !Number.isFinite(num)) return '-'
   return new Intl.NumberFormat('en-US').format(num)
 }
 

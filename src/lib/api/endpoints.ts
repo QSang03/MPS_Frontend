@@ -148,6 +148,12 @@ export const API_ENDPOINTS = {
       CREATE: '/reports/invoices',
       DETAIL: (id: string) => `/reports/invoices/${id}`,
     },
+    PRINT_PAGE: {
+      LIST: '/reports/print-page',
+      GENERATE: '/reports/print-page/generate',
+      DETAIL: (id: string) => `/reports/print-page/${id}`,
+      EXPORT_XLSX: '/reports/print-page/export-xlsx',
+    },
   },
   // Policies
   POLICIES: '/policies',

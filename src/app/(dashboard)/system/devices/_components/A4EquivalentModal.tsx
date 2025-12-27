@@ -33,10 +33,6 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
   const [totalPageCountA4, setTotalPageCountA4] = useState<string>('')
   const [totalColorPagesA4, setTotalColorPagesA4] = useState<string>('')
   const [totalBlackWhitePagesA4, setTotalBlackWhitePagesA4] = useState<string>('')
-  // New non-A4 fields
-  const [totalPageCount, setTotalPageCount] = useState<string>('')
-  const [totalColorPages, setTotalColorPages] = useState<string>('')
-  const [totalBlackWhitePages, setTotalBlackWhitePages] = useState<string>('')
   const [recordedAt, setRecordedAt] = useState<string>('') // local value
   const [recordedAtISO, setRecordedAtISO] = useState<string | null>(null) // ISO
   const [updateLatest, setUpdateLatest] = useState<boolean>(false)
@@ -48,44 +44,24 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
   } | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
-  const rawA4 = (device as Device | null)?.deviceModel?.useA4Counter as unknown
-  const useA4 = rawA4 === true || rawA4 === 'true' || rawA4 === 1 || rawA4 === '1'
-
   useEffect(() => {
     if (!device) return
     // Reset form when device changes / modal toggled open
-    // If the device model uses A4 counters only, prefill standard counters with 0 to avoid confusion
-    if (useA4) {
-      setTotalPageCount('0')
-      setTotalColorPages('0')
-      setTotalBlackWhitePages('0')
-      setTotalPageCountA4('')
-      setTotalColorPagesA4('')
-      setTotalBlackWhitePagesA4('')
-    } else {
-      // If the device model uses standard counters (non-A4), prefill A4 counters with 0
-      setTotalPageCount('')
-      setTotalColorPages('')
-      setTotalBlackWhitePages('')
-      setTotalPageCountA4('0')
-      setTotalColorPagesA4('0')
-      setTotalBlackWhitePagesA4('0')
-    }
+    // New backend logic: when creating a snapshot, always send A4-equivalent values.
+    // Standard counters are always sent as 0 (agent updates standard separately).
+    setTotalPageCountA4('')
+    setTotalColorPagesA4('')
+    setTotalBlackWhitePagesA4('')
     setRecordedAt('')
     setUpdateLatest(false)
     setScanResult(null)
-  }, [device, open, useA4])
+  }, [device, open])
 
   if (!device) return null
 
   const handleSubmit = async () => {
-    // basic validation: require at least one of the counts (either non-A4 or A4) and recordedAt
-    if (
-      // If device uses A4, require A4 counts; otherwise require non-A4 counts. If model not specified, allow either.
-      useA4
-        ? !totalPageCountA4.trim() && !totalColorPagesA4.trim() && !totalBlackWhitePagesA4.trim()
-        : !totalPageCount.trim() && !totalColorPages.trim() && !totalBlackWhitePages.trim()
-    ) {
+    // basic validation: require at least one A4 counter and recordedAt
+    if (!totalPageCountA4.trim() && !totalColorPagesA4.trim() && !totalBlackWhitePagesA4.trim()) {
       toast.error(t('device.a4.error.require_counter'))
       return
     }
@@ -96,17 +72,12 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
     }
 
     // parse numeric inputs (if present)
-    // parse numeric inputs (if present) for both A4 and non-A4 variants
     const totalA4 = totalPageCountA4.trim() ? Number(totalPageCountA4) : undefined
     const colorA4 = totalColorPagesA4.trim() ? Number(totalColorPagesA4) : undefined
     const bwA4 = totalBlackWhitePagesA4.trim() ? Number(totalBlackWhitePagesA4) : undefined
 
-    const total = totalPageCount.trim() ? Number(totalPageCount) : undefined
-    const color = totalColorPages.trim() ? Number(totalColorPages) : undefined
-    const bw = totalBlackWhitePages.trim() ? Number(totalBlackWhitePages) : undefined
-
     // basic numeric validation
-    const invalidNumber = [total, color, bw, totalA4, colorA4, bwA4].some(
+    const invalidNumber = [totalA4, colorA4, bwA4].some(
       (v) => v !== undefined && (Number.isNaN(v) || v < 0)
     )
     if (invalidNumber) {
@@ -114,49 +85,10 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
       return
     }
 
-    // If total is provided, try to ensure color + bw equals total.
-    // - If both color and bw provided but sum !== total -> stop with message
-    // - If one of color/bw missing -> compute it as total - provided (if valid)
-    let finalTotal = total
-    let finalColor = color
-    let finalBw = bw
-
     // A4 final values
     let finalTotalA4 = totalA4
     let finalColorA4 = colorA4
     let finalBwA4 = bwA4
-
-    if (finalTotal !== undefined) {
-      if (finalColor !== undefined && finalBw !== undefined) {
-        if (finalColor + finalBw !== finalTotal) {
-          toast.error(
-            t('device.a4.validation.total_mismatch', {
-              color: finalColor,
-              bw: finalBw,
-              total: finalTotal,
-            })
-          )
-          return
-        }
-      } else if (finalColor !== undefined && finalBw === undefined) {
-        const computedBw = finalTotal - finalColor
-        if (computedBw < 0) {
-          toast.error(t('device.a4.error.color_exceeds_total'))
-          return
-        }
-        finalBw = computedBw
-        // show a gentle info so user knows we computed it
-        toast(t('device.a4.auto_fill_bw', { value: computedBw }))
-      } else if (finalBw !== undefined && finalColor === undefined) {
-        const computedColor = finalTotal - finalBw
-        if (computedColor < 0) {
-          toast.error(t('device.a4.error.bw_exceeds_total'))
-          return
-        }
-        finalColor = computedColor
-        toast(t('device.a4.auto_fill_color', { value: computedColor }))
-      }
-    }
 
     // Same validations/auto-compute for A4 numbers
     if (finalTotalA4 !== undefined) {
@@ -195,42 +127,20 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
       }
     }
 
-    // If non-A4 total not provided but color and bw provided -> fill total
-    if (finalTotal === undefined) {
-      if (finalColor !== undefined && finalBw !== undefined) {
-        finalTotal = finalColor + finalBw
-      }
-    }
-
     const body: Record<string, unknown> = {
       deviceId: device.id,
       recordedAt: recordedAtISO,
       updateLatest,
+      // Always send standard counters as 0
+      totalPageCount: 0,
+      totalColorPages: 0,
+      totalBlackWhitePages: 0,
     }
-
-    // attach non-A4 values when present
-    if (finalTotal !== undefined) body.totalPageCount = finalTotal
-    if (finalColor !== undefined) body.totalColorPages = finalColor
-    if (finalBw !== undefined) body.totalBlackWhitePages = finalBw
 
     // attach A4-equivalent values when present
     if (finalTotalA4 !== undefined) body.totalPageCountA4 = finalTotalA4
     if (finalColorA4 !== undefined) body.totalColorPagesA4 = finalColorA4
     if (finalBwA4 !== undefined) body.totalBlackWhitePagesA4 = finalBwA4
-
-    // If device uses A4 counters, ensure non-A4 fields are explicitly set to 0 in case backend expects them
-    if (useA4) {
-      if (body.totalPageCount === undefined) body.totalPageCount = 0
-      if (body.totalColorPages === undefined) body.totalColorPages = 0
-      if (body.totalBlackWhitePages === undefined) body.totalBlackWhitePages = 0
-    }
-
-    // If device uses standard counters, ensure A4 fields are set to 0
-    if (!useA4) {
-      if (body.totalPageCountA4 === undefined) body.totalPageCountA4 = 0
-      if (body.totalColorPagesA4 === undefined) body.totalColorPagesA4 = 0
-      if (body.totalBlackWhitePagesA4 === undefined) body.totalBlackWhitePagesA4 = 0
-    }
 
     setSubmitting(true)
     try {
@@ -277,25 +187,14 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
         headers: { 'Content-Type': 'multipart/form-data' },
       })
       const data = resp?.data?.data || {}
-      const total = data.totalPageCount ?? data.totalPageCountA4 ?? 0
+      const total = data.totalPageCountA4 ?? data.totalPageCount ?? 0
       setScanResult({
         totalPageCount: data.totalPageCount,
         totalPageCountA4: data.totalPageCountA4,
         message: resp?.data?.message,
       })
 
-      if (useA4) {
-        setTotalPageCountA4(total !== null && total !== undefined ? String(total) : '')
-        // clear non-A4 to avoid confusion
-        setTotalPageCount('0')
-        setTotalColorPages('0')
-        setTotalBlackWhitePages('0')
-      } else {
-        setTotalPageCount(total !== null && total !== undefined ? String(total) : '')
-        setTotalPageCountA4('0')
-        setTotalColorPagesA4('0')
-        setTotalBlackWhitePagesA4('0')
-      }
+      setTotalPageCountA4(total !== null && total !== undefined ? String(total) : '')
 
       toast.success(t('a4_modal.success.pdf_analyzed'))
     } catch (err: unknown) {
@@ -322,44 +221,6 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
     // If both color and bw are filled, auto-compute total = color + bw
     if (colorNum !== undefined && bwNum !== undefined) {
       setTotalPageCountA4(String(colorNum + bwNum))
-    }
-  }
-
-  // non-A4 helpers (live auto-fill behavior)
-  const handleColorChangeNonA4 = (v: string) => {
-    setTotalColorPages(v)
-    const colorNum = parseNum(v)
-    const bwNum = parseNum(totalBlackWhitePages)
-
-    if (colorNum !== undefined && bwNum !== undefined) {
-      setTotalPageCount(String(colorNum + bwNum))
-    }
-  }
-
-  const handleBwChangeNonA4 = (v: string) => {
-    setTotalBlackWhitePages(v)
-    const bwNum = parseNum(v)
-    const colorNum = parseNum(totalColorPages)
-
-    if (colorNum !== undefined && bwNum !== undefined) {
-      setTotalPageCount(String(colorNum + bwNum))
-    }
-  }
-
-  const handleTotalChangeNonA4 = (v: string) => {
-    setTotalPageCount(v)
-    const totalNum = parseNum(v)
-    const colorNum = parseNum(totalColorPages)
-    const bwNum = parseNum(totalBlackWhitePages)
-
-    if (totalNum !== undefined) {
-      if (colorNum !== undefined && bwNum === undefined) {
-        const computedBw = totalNum - colorNum
-        if (computedBw >= 0) setTotalBlackWhitePages(String(computedBw))
-      } else if (bwNum !== undefined && colorNum === undefined) {
-        const computedColor = totalNum - bwNum
-        if (computedColor >= 0) setTotalColorPages(String(computedColor))
-      }
     }
   }
 
@@ -493,87 +354,44 @@ export default function A4EquivalentModal({ device, open, onOpenChange, onSaved 
             </Alert>
           )}
 
-          {/* non-A4 fields (regular counters) */}
-          {!useA4 && (
-            <>
-              <div>
-                <Label className="text-sm font-semibold">{t('device.a4.total_color')}</Label>
-                <Input
-                  value={totalColorPages}
-                  onChange={(e) => handleColorChangeNonA4(e.target.value)}
-                  placeholder={t('device.a4.example', { value: '2000' })}
-                  className="mt-2 h-11"
-                  type="number"
-                  min={0}
-                />
-              </div>
+          {/* A4 fields (always) */}
+          <>
+            <div>
+              <Label className="text-sm font-semibold">{t('device.a4.total_color_a4')}</Label>
+              <Input
+                value={totalColorPagesA4}
+                onChange={(e) => handleColorChange(e.target.value)}
+                placeholder={t('device.a4.example', { value: '2000' })}
+                className="mt-2 h-11"
+                type="number"
+                min={0}
+              />
+            </div>
 
-              <div>
-                <Label className="text-sm font-semibold">{t('device.a4.total_bw')}</Label>
-                <Input
-                  value={totalBlackWhitePages}
-                  onChange={(e) => handleBwChangeNonA4(e.target.value)}
-                  placeholder={t('device.a4.example', { value: '8000' })}
-                  className="mt-2 h-11"
-                  type="number"
-                  min={0}
-                />
-              </div>
+            <div>
+              <Label className="text-sm font-semibold">{t('device.a4.total_bw_a4')}</Label>
+              <Input
+                value={totalBlackWhitePagesA4}
+                onChange={(e) => handleBwChange(e.target.value)}
+                placeholder={t('device.a4.example', { value: '8000' })}
+                className="mt-2 h-11"
+                type="number"
+                min={0}
+              />
+            </div>
 
-              <div>
-                <Label className="text-sm font-semibold">{t('device.a4.total')}</Label>
-                <Input
-                  value={totalPageCount}
-                  onChange={(e) => handleTotalChangeNonA4(e.target.value)}
-                  placeholder={t('device.a4.example', { value: '10000' })}
-                  className="mt-2 h-11"
-                  type="number"
-                  min={0}
-                />
-              </div>
-            </>
-          )}
-
-          {/* A4 fields */}
-          {useA4 && (
-            <>
-              <div>
-                <Label className="text-sm font-semibold">{t('device.a4.total_color_a4')}</Label>
-                <Input
-                  value={totalColorPagesA4}
-                  onChange={(e) => handleColorChange(e.target.value)}
-                  placeholder={t('device.a4.example', { value: '2000' })}
-                  className="mt-2 h-11"
-                  type="number"
-                  min={0}
-                />
-              </div>
-
-              <div>
-                <Label className="text-sm font-semibold">{t('device.a4.total_bw_a4')}</Label>
-                <Input
-                  value={totalBlackWhitePagesA4}
-                  onChange={(e) => handleBwChange(e.target.value)}
-                  placeholder={t('device.a4.example', { value: '8000' })}
-                  className="mt-2 h-11"
-                  type="number"
-                  min={0}
-                />
-              </div>
-
-              <div>
-                <Label className="text-sm font-semibold">{t('device.a4.total_a4')}</Label>
-                <Input
-                  value={totalPageCountA4}
-                  onChange={(e) => handleTotalChange(e.target.value)}
-                  placeholder={t('device.a4.example', { value: '10000' })}
-                  className="mt-2 h-11"
-                  type="number"
-                  min={0}
-                />
-              </div>
-            </>
-          )}
+            <div>
+              <Label className="text-sm font-semibold">{t('device.a4.total_a4')}</Label>
+              <Input
+                value={totalPageCountA4}
+                onChange={(e) => handleTotalChange(e.target.value)}
+                placeholder={t('device.a4.example', { value: '10000' })}
+                className="mt-2 h-11"
+                type="number"
+                min={0}
+              />
+            </div>
+          </>
 
           <div>
             <Label className="text-sm font-semibold">{t('device.a4.recorded_at_time')}</Label>

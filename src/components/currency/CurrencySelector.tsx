@@ -29,6 +29,9 @@ interface CurrencySelectorProps {
   className?: string
   isActive?: boolean // Filter by active currencies only
   customerId?: string // Customer ID to get default currency
+  // Server-seeded initial data to avoid initial client XHR
+  initialCurrencies?: CurrencyDataDto[]
+  initialCustomer?: import('@/types/models/customer').Customer | null
 }
 
 export function CurrencySelector({
@@ -42,6 +45,8 @@ export function CurrencySelector({
   className,
   isActive = true,
   customerId,
+  initialCurrencies,
+  initialCustomer,
 }: CurrencySelectorProps) {
   const { t } = useLocale()
   const placeholderText = placeholder ?? t('currency.select.placeholder')
@@ -49,6 +54,7 @@ export function CurrencySelector({
     queryKey: ['currencies', { isActive, limit: 100 }],
     queryFn: () => currenciesClientService.list({ isActive, limit: 100 }),
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    initialData: initialCurrencies ? { data: initialCurrencies } : undefined,
   })
 
   // Fetch customer data if customerId is provided
@@ -57,6 +63,7 @@ export function CurrencySelector({
     queryFn: () => customersClientService.getById(customerId!),
     enabled: !!customerId,
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    initialData: initialCustomer ?? undefined,
   })
 
   const currencies = currenciesData?.data ?? []

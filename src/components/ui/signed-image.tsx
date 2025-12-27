@@ -1,6 +1,7 @@
 'use client'
 
 import { useSignedUrl } from '@/lib/hooks/useSignedUrl'
+import { buildProxiedSignedUrl } from '@/lib/utils/signed-url'
 import { cn } from '@/lib/utils'
 import Image from 'next/image'
 import { useState } from 'react'
@@ -99,7 +100,7 @@ export function SignedImage({
   // Fallback to direct URL if signed URL generation fails
   return (
     <Image
-      src={`${process.env.NEXT_PUBLIC_API_URL}/public/uploads/${src}`}
+      src={buildProxiedSignedUrl(src, expiryHours)}
       alt={alt}
       className={className}
       width={width}

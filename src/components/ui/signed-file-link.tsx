@@ -1,6 +1,7 @@
 'use client'
 
 import { useSignedUrl } from '@/lib/hooks/useSignedUrl'
+import { buildProxiedSignedUrl } from '@/lib/utils/signed-url'
 import { cn } from '@/lib/utils'
 import { Download, ExternalLink, FileText, Loader2 } from 'lucide-react'
 import Link from 'next/link'
@@ -119,7 +120,7 @@ export function SignedFileLink({
   }
 
   // Fallback to direct URL if signed URL generation fails
-  const fallbackUrl = `${process.env.NEXT_PUBLIC_API_URL}/public/uploads/${filePath}`
+  const fallbackUrl = buildProxiedSignedUrl(filePath, expiryHours)
   return (
     <Link
       href={fallbackUrl}

@@ -706,36 +706,53 @@ export default function CustomerDetailClient({ customerId }: Props) {
             {formatPrice(device.pricePerColorPage, device.currency)}
           </span>
         </td>
-        {/* Page counts: prefer A4 values for A4 models, otherwise prefer non-A4 totals (fallbacks included) */}
+        {/* Page counts
+            - useA4Counter=true: show A4 values (fallback to standard)
+            - useA4Counter=false: show BOTH standard + A4 values (6 values)
+        */}
         {(() => {
           const raw = device.device?.deviceModel?.useA4Counter as unknown
           const useA4 = raw === true || raw === 'true' || raw === 1 || raw === '1'
-          const total = useA4
-            ? (device.totalPageCountA4 ?? device.totalPageCount ?? device.device?.totalPagesUsed)
-            : (device.totalPageCount ?? device.totalPageCountA4 ?? device.device?.totalPagesUsed)
-          const color = useA4
-            ? (device.totalColorPagesA4 ?? device.totalColorPages)
-            : (device.totalColorPages ?? device.totalColorPagesA4)
-          const bw = useA4
-            ? (device.totalBlackWhitePagesA4 ?? device.totalBlackWhitePages)
-            : (device.totalBlackWhitePages ?? device.totalBlackWhitePagesA4)
+
+          const standardTotal = device.totalPageCount ?? device.device?.totalPagesUsed
+          const standardColor = device.totalColorPages
+          const standardBw = device.totalBlackWhitePages
+
+          const a4Total = device.totalPageCountA4
+          const a4Color = device.totalColorPagesA4
+          const a4Bw = device.totalBlackWhitePagesA4
+
+          const renderSingle = (v: unknown) => (
+            <span className="text-sm font-medium text-slate-700">
+              {v != null ? formatNumber(v as number) : '—'}
+            </span>
+          )
+
+          const renderBoth = (standard: unknown, a4: unknown) => (
+            <div className="flex flex-col items-end gap-0.5 leading-tight">
+              <div className="text-sm font-medium text-slate-700">
+                {standard != null ? formatNumber(standard as number) : '—'}
+              </div>
+              <div className="text-xs text-slate-500">
+                A4: {a4 != null ? formatNumber(a4 as number) : '—'}
+              </div>
+            </div>
+          )
 
           return (
             <>
               <td className="px-4 py-4 text-right">
-                <span className="text-sm font-medium text-slate-700">
-                  {total != null ? formatNumber(total) : '—'}
-                </span>
+                {useA4
+                  ? renderSingle(a4Total ?? standardTotal)
+                  : renderBoth(standardTotal, a4Total)}
               </td>
               <td className="px-4 py-4 text-right">
-                <span className="text-sm font-medium text-slate-700">
-                  {color != null ? formatNumber(color) : '—'}
-                </span>
+                {useA4
+                  ? renderSingle(a4Color ?? standardColor)
+                  : renderBoth(standardColor, a4Color)}
               </td>
               <td className="px-4 py-4 text-right">
-                <span className="text-sm font-medium text-slate-700">
-                  {bw != null ? formatNumber(bw) : '—'}
-                </span>
+                {useA4 ? renderSingle(a4Bw ?? standardBw) : renderBoth(standardBw, a4Bw)}
               </td>
             </>
           )

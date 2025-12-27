@@ -449,6 +449,11 @@ export default function A4EquivalentHistoryModal({
   showA4?: boolean | 'auto'
 }) {
   const { t } = useLocale()
+
+  // New backend logic: for non-A4 models we still want to show both standard + A4 counters.
+  // Therefore, if a caller passes `showA4={false}`, we treat it as auto.
+  const normalizedShowA4: boolean | 'auto' | undefined = showA4 === false ? 'auto' : showA4
+
   const [deviceInfo, setDeviceInfo] = useState<{
     deviceModelName?: string
     serialNumber?: string
@@ -518,7 +523,11 @@ export default function A4EquivalentHistoryModal({
         }
         maxWidth="!max-w-[80vw]"
       >
-        <A4EquivalentUsageHistory deviceId={deviceId} customerId={customerId} showA4={showA4} />
+        <A4EquivalentUsageHistory
+          deviceId={deviceId}
+          customerId={customerId}
+          showA4={normalizedShowA4}
+        />
       </SystemModalLayout>
     </Dialog>
   )

@@ -51,13 +51,16 @@ interface NavbarProps {
   session: Session
 }
 
-export function Navbar({ session }: NavbarProps) {
+export function Navbar({
+  session,
+  initialUnreadCount,
+}: NavbarProps & { initialUnreadCount?: number }) {
   const { toggleSidebar } = useUIStore()
   const router = useRouter()
   const queryClient = useQueryClient()
   const pageTitle = useUIStore((s) => s.pageTitle)
   const pathname = usePathname()
-  const { unreadCount, isUnreadCountLoading } = useNotifications()
+  const { unreadCount, isUnreadCountLoading } = useNotifications({ initialUnreadCount })
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
 
   const currentMonth = new Date().toISOString().slice(0, 7)

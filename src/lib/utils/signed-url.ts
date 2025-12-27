@@ -47,6 +47,13 @@ class SignedUrlService {
   }
 
   /**
+   * Public helper to generate proxied signed URL (useful for sync fallbacks)
+   */
+  public generateProxiedSignedUrlPublic(filePath: string, expiryHours: number): string {
+    return this.generateProxiedSignedUrl(filePath, expiryHours)
+  }
+
+  /**
    * Generates HMAC signature for file access
    */
   private generateSignature(filePath: string, expiresAt: number): string {
@@ -147,17 +154,24 @@ function generateSignature(filePath: string, expiresAt: number, secret: string):
  * @param expiryHours - Optional expiry hours
  * @returns Signed URL or null if filePath is empty
  */
+/**
+ * Synchronous helper for components that need a quick proxied URL fallback.
+ * Returns a same-origin URL under `/api/files/proxy` so browser requests stay internal.
+ */
+export function buildProxiedSignedUrl(filePath: string, expiryHours: number = 24): string {
+  if (!filePath) return ''
+  return signedUrlService.generateProxiedSignedUrlPublic(filePath, expiryHours)
+}
+
+/**
+ * Deprecated compatibility wrapper used in some places; prefer `buildProxiedSignedUrl`.
+ */
 export function useSignedUrl(
   filePath: string | null | undefined,
   expiryHours: number = 24
 ): string | null {
-  // This is a placeholder - in a real implementation, you'd use React Query or similar
-  // to fetch the signed URL asynchronously
   if (!filePath) return null
-
-  // For now, return the direct URL - this should be replaced with actual signed URL fetching
-  // In production, this would call signedUrlService.generateSignedUrl(filePath, expiryHours)
-  return `${process.env.NEXT_PUBLIC_API_URL}/public/uploads/${filePath}?expires=${Date.now() + expiryHours * 60 * 60 * 1000}`
+  return buildProxiedSignedUrl(filePath, expiryHours)
 }
 
 /**
@@ -172,10 +186,16 @@ export function getSignedUrl(filePath: string, expiryHours?: number): string {
   const expiry = expiryHours || parseInt(process.env.FILE_URL_EXPIRY_HOURS || '24', 10)
   const expiresAt = Math.floor(Date.now() / 1000) + expiry * 60 * 60
 
-  const baseUrl = `${process.env.NEXT_PUBLIC_API_URL}/public/uploads/${filePath}`
-  const signedUrl = new URL(baseUrl)
+  // Use proxied route so client never requests backend domain directly
+  const baseUrl = '/api/files/proxy'
+  const signedUrl = new URL(
+    baseUrl,
+    typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'
+  )
+  signedUrl.searchParams.set('file', filePath)
   signedUrl.searchParams.set('expires', expiresAt.toString())
-  signedUrl.searchParams.set('secure', 'true') // Placeholder for actual signature
+  // For sync signature we keep a placeholder secure param (server will validate)
+  signedUrl.searchParams.set('secure', 'true')
 
   return signedUrl.toString()
 }

@@ -4,7 +4,9 @@ import { getClientAccessToken } from '@/lib/auth/client-auth'
 import { getLanguage } from '@/lib/utils/language'
 
 const apiClient: AxiosInstance = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL,
+  // BFF proxying: browser calls same-origin Next.js route handler,
+  // which then calls the real backend server-to-server.
+  baseURL: '/api/backend',
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',

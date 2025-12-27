@@ -19,13 +19,14 @@ const notificationTimestamps = new Map<string, number>()
 /**
  * Hook to manage notifications state, React Query, WebSocket events, and toast notifications
  */
-export function useNotifications() {
+export function useNotifications(opts?: { initialUnreadCount?: number }) {
   const socket = useSocket()
   const queryClient = useQueryClient()
   const router = useRouter()
   const [isPanelOpen, setIsPanelOpen] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const { t } = useLocale()
+  // allow server to seed initial unread count to avoid initial client XHR
 
   // Preload notification sound để tránh trễ lần đầu
   useEffect(() => {
@@ -55,6 +56,8 @@ export function useNotifications() {
   const unreadCountQuery = useQuery({
     queryKey: ['notifications', 'unread-count'],
     queryFn: () => notificationsClientService.getUnreadCount(),
+    initialData: opts?.initialUnreadCount,
+    staleTime: 30000,
     refetchInterval: 30000, // Refetch every 30 seconds
   })
   const normalizedUnreadCount = Number(unreadCountQuery.data ?? 0)

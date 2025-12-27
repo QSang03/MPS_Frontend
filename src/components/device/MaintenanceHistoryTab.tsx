@@ -48,11 +48,11 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { cn } from '@/lib/utils'
 import { ActionGuard } from '@/components/shared/ActionGuard'
 
-// Helper to convert backend relative URLs to full URLs
+// Helper to convert backend relative URLs to same-origin proxied URLs
 const getFullImageUrl = (url: string) => {
   if (url.startsWith('http')) return url
-  const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
-  return `${backendUrl}${url}`
+  // Proxy through Next.js so browser never calls backend domain directly
+  return `/api/backend${url.startsWith('/') ? url : `/${url}`}`
 }
 
 interface MaintenanceHistoryTabProps {

@@ -29,6 +29,7 @@ export const ROUTES = {
   CUSTOMER_ADMIN_DEPARTMENTS: '/system/departments',
   CUSTOMER_ADMIN_SYSTEM_SETTINGS: '/system/system-settings',
   CUSTOMER_ADMIN_REPORTS: '/system/reports',
+  CUSTOMER_ADMIN_PRINT_PAGE_REPORTS: '/system/reports/print-page',
 
   // User
   USER_MY_DEVICES: '/user/devices',

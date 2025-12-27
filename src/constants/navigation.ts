@@ -1031,6 +1031,56 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
     actions: [],
   },
   {
+    id: 'print-page-report',
+    label: 'Print Page Report',
+    labelEn: 'Print Page Report',
+    labelVi: 'Báo cáo trang in',
+    icon: 'FileSpreadsheet',
+    route: '/system/reports/print-page',
+    description: 'Tạo và quản lý báo cáo sử dụng trang in theo kỳ thanh toán',
+    descriptionEn: 'Generate and manage print page usage reports for billing periods',
+    descriptionVi: 'Tạo và quản lý báo cáo sử dụng trang in theo kỳ thanh toán',
+    requiredPermissions: withBasicPermissions([
+      { resource: 'reports.print-page', action: 'read' },
+      { resource: 'customers', action: 'read' },
+    ]),
+    actions: [
+      {
+        id: 'list-print-page-reports',
+        label: 'Xem danh sách báo cáo trang in',
+        labelEn: 'View print page reports list',
+        labelVi: 'Xem danh sách báo cáo trang in',
+        icon: 'List',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'reports.print-page', action: 'read' }],
+        },
+      },
+      {
+        id: 'generate-print-page-report',
+        label: 'Tạo báo cáo trang in',
+        labelEn: 'Generate print page report',
+        labelVi: 'Tạo báo cáo trang in',
+        icon: 'Plus',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'reports.print-page.generate', action: 'create' }],
+        },
+      },
+      {
+        id: 'export-print-page-report',
+        label: 'Xuất báo cáo Excel',
+        labelEn: 'Export report to Excel',
+        labelVi: 'Xuất báo cáo Excel',
+        icon: 'Download',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'reports.print-page.export-xlsx', action: 'create' }],
+        },
+      },
+    ],
+  },
+  {
     id: 'cost-adjustments',
     label: 'Điều chỉnh chi phí',
     labelEn: 'Cost adjustments',

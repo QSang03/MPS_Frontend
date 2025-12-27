@@ -30,6 +30,8 @@ export function useAdminOverview(
     enabled?: boolean
     refetchInterval?: number
     staleTime?: number
+    // Allow providing server-seeded initial data to avoid initial client XHR
+    initialData?: AdminOverviewData | undefined
   }
 ): UseQueryResult<AdminOverviewData, Error> {
   return useQuery({
@@ -40,6 +42,7 @@ export function useAdminOverview(
     refetchOnMount: true, // Always refetch when component mounts
     refetchOnWindowFocus: false, // Don't refetch on window focus
     enabled: options?.enabled ?? true,
+    initialData: options?.initialData,
   })
 }
 

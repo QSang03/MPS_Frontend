@@ -15,16 +15,17 @@ const ModernSidebar = dynamic(
 interface ClientLayoutProps {
   children: React.ReactNode
   session: Session
+  initialUnreadCount?: number
 }
 
-export function ClientLayout({ children, session }: ClientLayoutProps) {
+export function ClientLayout({ children, session, initialUnreadCount }: ClientLayoutProps) {
   return (
     <NavigationProvider>
       <SocketProvider session={session}>
         <div className="flex h-screen overflow-hidden">
           <ModernSidebar session={session} />
           <div className="flex flex-1 flex-col overflow-hidden">
-            <Navbar session={session} />
+            <Navbar session={session} initialUnreadCount={initialUnreadCount} />
             <main className="bg-muted/30 flex-1 overflow-y-auto p-4 md:p-6">{children}</main>
           </div>
         </div>

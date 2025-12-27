@@ -122,10 +122,8 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
     // Normalize leading slash
     const path = att.startsWith('/') ? att : `/${att}`
 
-    // Prepend backend API URL from env to reach hosted file server
-    const base = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/$/, '')
-    if (!base) return path
-    return `${base}${path}`
+    // Use same-origin proxy so browser never calls backend domain directly
+    return `/api/backend${path}`
   }
   const [selectedAssignee, setSelectedAssignee] = useState<string | undefined>(undefined)
   const [pendingStatusChange, setPendingStatusChange] = useState<ServiceRequestStatus | null>(null)
