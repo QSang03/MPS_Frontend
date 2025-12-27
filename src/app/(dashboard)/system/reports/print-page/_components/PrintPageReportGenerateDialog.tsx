@@ -145,7 +145,7 @@ export function PrintPageReportGenerateDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
+      <DialogContent className="max-h-[90vh] w-[calc(100vw-2rem)] max-w-none overflow-y-auto sm:w-[calc(100vw-4rem)]">
         <DialogHeader>
           <DialogTitle>{t('print_page_report.dialog.title')}</DialogTitle>
           <DialogDescription>{t('print_page_report.dialog.description')}</DialogDescription>
