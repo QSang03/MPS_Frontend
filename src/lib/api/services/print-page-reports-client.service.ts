@@ -110,7 +110,9 @@ export const printPageReportsClientService = {
   /**
    * Export report to XLSX
    */
-  async exportXlsx(payload: ExportPrintPageReportDto): Promise<{ xlsxUrl?: string } | null> {
+  async exportXlsx(
+    payload: ExportPrintPageReportDto
+  ): Promise<{ xlsxUrl?: string; pdfUrl?: string } | null> {
     const response = await internalApiClient.post('/api/reports/print-page/export-xlsx', payload)
 
     // Backend responses vary:
@@ -138,8 +140,23 @@ export const printPageReportsClientService = {
         (typeof obj.xlsxSignedUrl === 'string' && obj.xlsxSignedUrl) ||
         (typeof obj.xlsxDownloadUrl === 'string' && obj.xlsxDownloadUrl)
 
+      const pdfUrl =
+        (typeof obj.pdfUrl === 'string' && obj.pdfUrl) ||
+        (typeof obj.pdfFileUrl === 'string' && obj.pdfFileUrl) ||
+        (typeof obj.pdfDownloadUrl === 'string' && obj.pdfDownloadUrl) ||
+        (typeof obj.pdfSignedUrl === 'string' && obj.pdfSignedUrl)
+
       const normalized = typeof xlsxUrl === 'string' ? normalizeToDownloadUrl(xlsxUrl) : ''
-      return normalized ? { xlsxUrl: normalized } : null
+      const normalizedPdf = typeof pdfUrl === 'string' ? normalizeToDownloadUrl(pdfUrl) : ''
+
+      if (normalized || normalizedPdf) {
+        return {
+          ...(normalized ? { xlsxUrl: normalized } : {}),
+          ...(normalizedPdf ? { pdfUrl: normalizedPdf } : {}),
+        }
+      }
+
+      return null
     }
 
     return null

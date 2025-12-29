@@ -148,8 +148,8 @@ export function PrintPageReportList() {
         reportId: report.id,
         customerId: report.customerId,
       })
-      if (result?.xlsxUrl) {
-        toast.success(t('print_page_report.export_success'))
+      if (result?.xlsxUrl || result?.pdfUrl) {
+        toast.success(t('print_page_report.generate_success'))
         // Refresh to get updated xlsxUrl/pdfUrl
         fetchReports()
       } else {
@@ -355,7 +355,7 @@ export function PrintPageReportList() {
                                 {t('print_page_report.actions.view_detail')}
                               </Link>
                             </DropdownMenuItem>
-                            {report.status !== 'VOID' && !report.xlsxUrl && !report.pdfUrl && (
+                            {report.status !== 'VOID' && (!report.xlsxUrl || !report.pdfUrl) && (
                               <DropdownMenuItem onClick={() => handleGenerateFiles(report)}>
                                 <Download className="mr-2 h-4 w-4" />
                                 {t('print_page_report.actions.generate_report_files')}

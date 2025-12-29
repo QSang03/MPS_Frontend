@@ -76,9 +76,9 @@ export function PrintPageReportDetail() {
         reportId: report.id,
         customerId: report.customerId,
       })
-      if (result?.xlsxUrl) {
-        toast.success(t('print_page_report.export_success'))
-        // Refresh to get updated xlsxUrl
+      if (result?.xlsxUrl || result?.pdfUrl) {
+        toast.success(t('print_page_report.generate_success'))
+        // Refresh to get updated xlsxUrl/pdfUrl
         fetchReport()
       } else {
         toast.error(t('print_page_report.errors.export_failed'))
@@ -143,7 +143,7 @@ export function PrintPageReportDetail() {
               </a>
             </Button>
           )}
-          {report.status !== 'VOID' && !report.xlsxUrl && !report.pdfUrl && (
+          {report.status !== 'VOID' && (!report.xlsxUrl || !report.pdfUrl) && (
             <Button onClick={handleGenerateFiles} disabled={isExporting}>
               {isExporting ? (
                 <>
