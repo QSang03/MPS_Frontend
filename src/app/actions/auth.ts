@@ -6,7 +6,6 @@ import { loginSchema } from '@/lib/validations/auth.schema'
 import serverApiClient from '@/lib/api/server-client'
 import { API_ENDPOINTS } from '@/lib/api/endpoints'
 import type { UserRole } from '@/constants/roles'
-import { ROUTES } from '@/constants/routes'
 import type { AuthResponse } from '@/types/auth'
 
 /**
@@ -270,8 +269,8 @@ export async function logout(): Promise<void> {
   // Destroy session and cookies
   await destroySession()
 
-  // Redirect to login
-  redirect(ROUTES.LOGIN)
+  // Redirect to landing page
+  redirect('/')
 }
 
 /**

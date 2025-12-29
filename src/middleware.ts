@@ -25,6 +25,16 @@ interface Session {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
+  // Landing page - allow access without authentication
+  if (pathname === '/') {
+    const r = NextResponse.next()
+    r.headers.set(
+      'cache-control',
+      'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
+    )
+    return r
+  }
+
   // Public routes - allow access without authentication
   // Include forgot-password so users can request a reset without being authenticated
   if (

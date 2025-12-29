@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+
+<html class="light" lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MPS - CHÍNH NHÂN TECHNOLOGY</title>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Theme Configuration -->
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#135bec",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101622",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Manrope', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-[#0d121b] dark:text-white">
+<div class="relative flex min-h-screen w-full flex-col overflow-x-hidden">
+<!-- Top Navigation -->
+<header class="sticky top-0 z-50 w-full bg-[#f8f9fc]/90 backdrop-blur-md border-b border-[#e7ebf3]">
+<div class="mx-auto flex h-16 max-w-[960px] items-center justify-between px-4 sm:px-10">
+<div class="flex items-center gap-4 text-[#0d121b]">
+<div class="size-8 text-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-3xl">print</span>
+</div>
+<h2 class="text-[#0d121b] text-xl font-bold leading-tight tracking-[-0.015em]">MPS - CHÍNH NHÂN TECHNOLOGY</h2>
+</div>
+<div class="hidden md:flex flex-1 justify-end gap-8 items-center">
+<nav class="flex items-center gap-6">
+<a class="text-[#0d121b] text-sm font-medium hover:text-primary transition-colors" href="#">Trang chủ</a>
+<a class="text-[#0d121b] text-sm font-medium hover:text-primary transition-colors" href="#problems">Vấn đề</a>
+<a class="text-[#0d121b] text-sm font-medium hover:text-primary transition-colors" href="#solution">Giải pháp</a>
+<a class="text-[#0d121b] text-sm font-medium hover:text-primary transition-colors" href="#contact">Liên hệ</a>
+</nav>
+<button class="flex cursor-pointer items-center justify-center overflow-hidden rounded-lg h-9 px-4 bg-primary text-white text-sm font-bold leading-normal tracking-[0.015em] hover:bg-blue-700 transition-colors">
+<span class="truncate">Login</span>
+</button>
+</div>
+<!-- Mobile Menu Icon (Placeholder) -->
+<button class="md:hidden text-[#0d121b]">
+<span class="material-symbols-outlined">menu</span>
+</button>
+</div>
+</header>
+<!-- Hero Section -->
+<section class="flex flex-col items-center py-5 px-4 sm:px-10">
+<div class="w-full max-w-[960px]">
+<div class="relative w-full rounded-xl overflow-hidden min-h-[540px] flex flex-col justify-end p-6 sm:p-10 bg-cover bg-center" data-alt="Modern office workspace with sleek printers and professional staff working comfortably" style='background-image: linear-gradient(rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.7) 100%), url("https://lh3.googleusercontent.com/aida-public/AB6AXuCk4oGCeKsbIG1qw-JfJhrKZUoKoEudShrijBYTMZ9a-LSjGeByViZcMRqcB-XOqlovr653rp-ZydPQGnHJ8FO2Oj4faLlGycHMetwAx2leGkJp7mNdEtDQp-67QkO8xgdJeLyv6y3gfFixpo5C455a8jezI01qKSI9JbpFHfVXYAyojSZEegbBh2iwCQ8JNM7z__gn5_hWyhFGwNLqy3woKcqnm5p6k3TdTVLmZkOWnyGuea0dNlMFQDMnty1NsI6O3qjzd8FJSU7A");'>
+<div class="relative z-10 flex flex-col gap-6 max-w-2xl">
+<!-- Headline -->
+<h1 class="text-white text-4xl sm:text-5xl font-black leading-tight tracking-[-0.02em]">
+                            Quản lý in ấn trọn gói – Không lo mực, không lo hỏng máy
+                        </h1>
+<!-- Sub-headline -->
+<p class="text-white/90 text-lg font-medium leading-normal">
+                            Giảm đến 30% chi phí in ấn. Trả tiền theo số trang in thực tế.
+                        </p>
+<!-- Benefits List -->
+<ul class="flex flex-col gap-3 text-white/90 text-base font-normal">
+<li class="flex items-center gap-3">
+<span class="material-symbols-outlined text-green-400">check_circle</span>
+<span>Thuê máy – Bảo trì – Mực in – Linh kiện</span>
+</li>
+<li class="flex items-center gap-3">
+<span class="material-symbols-outlined text-green-400">check_circle</span>
+<span>Giám sát từ xa – Hỗ trợ nhanh</span>
+</li>
+<li class="flex items-center gap-3">
+<span class="material-symbols-outlined text-green-400">check_circle</span>
+<span>Chi phí minh bạch mỗi tháng</span>
+</li>
+</ul>
+<!-- CTA Button -->
+<div class="pt-4">
+<button class="flex w-full sm:w-auto cursor-pointer items-center justify-center rounded-lg h-12 px-8 bg-primary text-white text-base font-bold leading-normal tracking-[0.015em] hover:bg-blue-700 transition-all shadow-lg hover:shadow-xl">
+<span>Nhận tư vấn &amp; báo giá MPS miễn phí</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Problem Section -->
+<section class="flex flex-col items-center py-10 px-4 sm:px-10" id="problems">
+<div class="w-full max-w-[960px] flex flex-col gap-10">
+<!-- Section Header -->
+<div class="text-center sm:text-left">
+<span class="text-primary text-sm font-bold tracking-wider uppercase mb-2 block">MPS GIẢI QUYẾT ĐIỀU GÌ CHO BẠN?</span>
+<h2 class="text-[#0d121b] text-3xl sm:text-4xl font-bold leading-tight">Bạn đang gặp những vấn đề này?</h2>
+</div>
+<!-- Problem Cards Grid -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+<!-- Card 1 -->
+<div class="flex flex-col gap-3 rounded-xl border border-[#e7ebf3] bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
+<div class="text-red-500 mb-2">
+<span class="material-symbols-outlined text-4xl">build_circle</span>
+</div>
+<h3 class="text-[#0d121b] text-lg font-bold leading-tight">Máy in hay hỏng</h3>
+<p class="text-[#4c669a] text-sm font-normal leading-relaxed">Máy móc trục trặc thường xuyên gây gián đoạn quy trình làm việc và ảnh hưởng tiến độ.</p>
+</div>
+<!-- Card 2 -->
+<div class="flex flex-col gap-3 rounded-xl border border-[#e7ebf3] bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
+<div class="text-orange-500 mb-2">
+<span class="material-symbols-outlined text-4xl">water_drop</span>
+</div>
+<h3 class="text-[#0d121b] text-lg font-bold leading-tight">Hết mực đột xuất</h3>
+<p class="text-[#4c669a] text-sm font-normal leading-relaxed">Phải gọi nhiều nhà cung cấp khác nhau, chờ đợi lâu để được thay mực mới.</p>
+</div>
+<!-- Card 3 -->
+<div class="flex flex-col gap-3 rounded-xl border border-[#e7ebf3] bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
+<div class="text-yellow-600 mb-2">
+<span class="material-symbols-outlined text-4xl">attach_money</span>
+</div>
+<h3 class="text-[#0d121b] text-lg font-bold leading-tight">Chi phí không kiểm soát</h3>
+<p class="text-[#4c669a] text-sm font-normal leading-relaxed">Không biết chính xác chi phí mỗi trang in là bao nhiêu, gây lãng phí ngân sách.</p>
+</div>
+<!-- Card 4 -->
+<div class="flex flex-col gap-3 rounded-xl border border-[#e7ebf3] bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
+<div class="text-purple-500 mb-2">
+<span class="material-symbols-outlined text-4xl">support_agent</span>
+</div>
+<h3 class="text-[#0d121b] text-lg font-bold leading-tight">IT quá tải</h3>
+<p class="text-[#4c669a] text-sm font-normal leading-relaxed">Nhân viên IT mất quá nhiều thời gian xử lý các sự cố máy in thay vì việc chính.</p>
+</div>
+<!-- Card 5 -->
+<div class="flex flex-col gap-3 rounded-xl border border-[#e7ebf3] bg-white p-6 shadow-sm hover:shadow-md transition-shadow sm:col-span-2 lg:col-span-2">
+<div class="text-blue-500 mb-2">
+<span class="material-symbols-outlined text-4xl">devices_other</span>
+</div>
+<h3 class="text-[#0d121b] text-lg font-bold leading-tight">Thiết bị không đồng bộ</h3>
+<p class="text-[#4c669a] text-sm font-normal leading-relaxed">Mỗi phòng ban dùng một loại máy, một hãng khác nhau khiến việc quản lý trở nên phức tạp và khó khăn.</p>
+</div>
+</div>
+<!-- Solution Statement -->
+<div class="mt-4 rounded-xl bg-primary/10 p-8 text-center border border-primary/20">
+<p class="text-primary text-xl sm:text-2xl font-bold leading-tight">
+                        MPS xử lý tất cả trong một dịch vụ duy nhất
+                    </p>
+</div>
+</div>
+</section>
+<!-- Key Takeaway Section -->
+<section class="flex flex-col items-center py-12 px-4 sm:px-10 bg-white">
+<div class="w-full max-w-[960px] flex flex-col items-center text-center gap-8">
+<div class="inline-flex items-center justify-center px-4 py-1.5 rounded-full bg-background-light border border-[#e7ebf3]">
+<span class="text-xs font-bold text-[#4c669a] tracking-widest uppercase">1 CÂU CHỐT ĐỂ GHI NHỚ</span>
+</div>
+<div class="relative p-8 sm:p-12 bg-gradient-to-br from-[#101622] to-[#1e293b] rounded-2xl shadow-xl overflow-hidden w-full">
+<!-- Decorative background element -->
+<div class="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 rounded-full bg-primary/20 blur-3xl"></div>
+<div class="absolute bottom-0 left-0 -ml-16 -mb-16 w-64 h-64 rounded-full bg-primary/10 blur-3xl"></div>
+<h2 class="relative z-10 text-white text-2xl sm:text-3xl md:text-4xl font-bold leading-relaxed">
+                        "MPS = In bao nhiêu, trả bấy nhiêu <br class="hidden sm:block"/>
+<span class="text-blue-400">Không lo mực</span> – 
+                        <span class="text-blue-400">Không lo sửa</span> – 
+                        <span class="text-blue-400">Không gián đoạn</span>"
+                    </h2>
+</div>
+<button class="flex min-w-[200px] cursor-pointer items-center justify-center rounded-lg h-12 px-6 bg-primary text-white text-base font-bold hover:bg-blue-700 transition-colors shadow-lg mt-4">
+                    Nhận tư vấn ngay
+                </button>
+</div>
+</section>
+<!-- Simple Footer -->
+<footer class="border-t border-[#e7ebf3] bg-[#f8f9fc] py-12 mt-auto">
+<div class="mx-auto flex max-w-[960px] flex-col gap-8 px-10">
+<div class="flex flex-col md:flex-row justify-between items-center gap-6">
+<div class="flex items-center gap-3">
+<div class="size-8 text-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-3xl">print</span>
+</div>
+<h3 class="text-[#0d121b] text-xl font-bold">MPS - CHÍNH NHÂN TECHNOLOGY</h3>
+</div>
+<div class="flex gap-8 flex-wrap justify-center">
+<a class="text-[#4c669a] hover:text-primary transition-colors text-sm font-medium" href="#">Trang chủ</a>
+<a class="text-[#4c669a] hover:text-primary transition-colors text-sm font-medium" href="#">Dịch vụ</a>
+<a class="text-[#4c669a] hover:text-primary transition-colors text-sm font-medium" href="#">Báo giá</a>
+<a class="text-[#4c669a] hover:text-primary transition-colors text-sm font-medium" href="#">Liên hệ</a>
+</div>
+</div>
+<div class="border-t border-[#e7ebf3]"></div>
+<div class="flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left">
+<p class="text-[#9aaac8] text-sm">© 2024 MPS Services. All rights reserved.</p>
+<div class="flex gap-4">
+<!-- Social Icons Placeholder -->
+<a class="text-[#9aaac8] hover:text-primary" href="#"><span class="material-symbols-outlined text-xl">public</span></a>
+<a class="text-[#9aaac8] hover:text-primary" href="#"><span class="material-symbols-outlined text-xl">mail</span></a>
+</div>
+</div>
+</div>
+</footer>
+</div>
+</body></html>
