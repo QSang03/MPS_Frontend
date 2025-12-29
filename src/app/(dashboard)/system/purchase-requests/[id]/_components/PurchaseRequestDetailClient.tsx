@@ -1,6 +1,8 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { useChatRealtime } from '@/lib/hooks/useChatRealtime'
+import { ChatRequestType } from '@/types/chat-websocket'
 import { useMutation, useQuery, useQueryClient, UseMutationResult } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -121,6 +123,36 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
 
   const detail = useMemo(() => (data as PurchaseRequest | null) ?? null, [data])
 
+  // Real-time status updates via chat socket — update local cache immediately
+  useChatRealtime({
+    requestType: ChatRequestType.PURCHASE,
+    requestId: id,
+    userId: typeof session?.userId === 'string' ? session.userId : null,
+    userName: typeof session?.username === 'string' ? session.username : null,
+    enabled: Boolean(id),
+    onStatusUpdated: (evt) => {
+      // Patch detail cache
+      queryClient.setQueryData(['purchase-requests', 'detail', id], (old: unknown) => {
+        const prev = old as PurchaseRequest | null
+        if (!prev) return old
+        return { ...prev, status: evt.statusAfter ?? prev.status }
+      })
+
+      // Also update list entry if present
+      queryClient.setQueryData(['purchase-requests'], (old: unknown) => {
+        if (!old || typeof old !== 'object') return old
+        const prevArr = (old as { data?: PurchaseRequest[] })?.data
+        if (!Array.isArray(prevArr)) return old
+        const next = prevArr.map((p) =>
+          p.id === id ? { ...p, status: evt.statusAfter ?? p.status } : p
+        )
+        return { ...(old as Record<string, unknown>), data: next }
+      })
+
+      if (evt?.statusAfter)
+        toast.success(t('requests.purchase.status_updated', { status: evt.statusAfter }))
+    },
+  })
   const updateStatusMutation = useMutation({
     mutationFn: (status: PurchaseRequestStatus) =>
       purchaseRequestsClientService.updateStatus(id, { status }),

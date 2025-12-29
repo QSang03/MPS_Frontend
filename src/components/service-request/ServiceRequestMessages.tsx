@@ -24,6 +24,15 @@ interface Props {
   currentUserName?: string | null
   /** Optional permission context for showing the input area (defaults to admin page) */
   pageId?: string
+  /** Optional handler for status updates */
+  onStatusUpdated?: (evt: {
+    requestType: string
+    requestId: string
+    statusBefore?: string
+    statusAfter?: string
+    updatedBy?: string
+    updatedAt?: string
+  }) => void
 }
 
 /**
@@ -82,6 +91,14 @@ export default function ServiceRequestMessages({
       if (isNearBottom) {
         markRead([evt.id])
         markedReadRef.current.add(evt.id)
+      }
+    },
+    onStatusUpdated: (evt) => {
+      // Update queries and notify
+      queryClient.invalidateQueries({ queryKey: ['service-requests'] })
+      queryClient.invalidateQueries({ queryKey: ['service-requests', 'detail', serviceRequestId] })
+      if (evt?.statusAfter) {
+        toast.success(t('requests.service.status_updated', { status: evt.statusAfter }))
       }
     },
   })

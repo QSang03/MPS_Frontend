@@ -9,6 +9,7 @@ import {
   type ChatMessageEventDto,
   type ChatReadEventDto,
   type ChatTypingEventDto,
+  type ChatStatusEventDto,
   type JoinLeaveChatPayload,
   type MarkReadPayload,
   type TypingPayload,
@@ -51,6 +52,7 @@ export function useChatRealtime(opts: {
   enabled?: boolean
   onMessageCreated?: (message: ChatMessageEventDto) => void
   onRead?: (evt: ChatReadEventDto) => void
+  onStatusUpdated?: (evt: ChatStatusEventDto) => void
 }) {
   const enabled = opts.enabled ?? true
   const requestType = opts.requestType
@@ -61,11 +63,13 @@ export function useChatRealtime(opts: {
   // Use refs for callbacks to avoid effect re-runs when parent passes inline functions
   const onMessageCreatedRef = useRef(opts.onMessageCreated)
   const onReadRef = useRef(opts.onRead)
+  const onStatusUpdatedRef = useRef(opts.onStatusUpdated)
 
   useEffect(() => {
     onMessageCreatedRef.current = opts.onMessageCreated
     onReadRef.current = opts.onRead
-  }, [opts.onMessageCreated, opts.onRead])
+    onStatusUpdatedRef.current = opts.onStatusUpdated
+  }, [opts.onMessageCreated, opts.onRead, opts.onStatusUpdated])
 
   const socketRef = useRef<Socket | null>(null)
   const [isConnected, setIsConnected] = useState(false)
@@ -122,6 +126,12 @@ export function useChatRealtime(opts: {
       onReadRef.current?.(evt)
     }
 
+    const onStatus = (evt: ChatStatusEventDto) => {
+      if (!evt?.requestId) return
+      if (evt.requestId !== requestId) return
+      onStatusUpdatedRef.current?.(evt)
+    }
+
     const onError = (evt: ChatErrorEventDto) => {
       console.error('[chat] error:', evt)
     }
@@ -131,6 +141,7 @@ export function useChatRealtime(opts: {
     socket.on('chat.message.created', onMessage)
     socket.on('chat.typing', onTyping)
     socket.on('chat.read', onRead)
+    socket.on('chat.status.updated', onStatus)
     socket.on('chat.error', onError)
 
     // If already connected (singleton reused), join without causing synchronous state updates
@@ -158,6 +169,7 @@ export function useChatRealtime(opts: {
       socket.off('chat.message.created', onMessage)
       socket.off('chat.typing', onTyping)
       socket.off('chat.read', onRead)
+      socket.off('chat.status.updated', onStatus)
       socket.off('chat.error', onError)
 
       // Clean local typing state

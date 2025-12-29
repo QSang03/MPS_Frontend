@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import { useChatRealtime } from '@/lib/hooks/useChatRealtime'
+import { ChatRequestType } from '@/types/chat-websocket'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -133,6 +135,34 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
     queryFn: () => serviceRequestsClientService.getById(id),
   })
 
+  // Real-time status updates via chat socket — apply updates locally to cache
+  useChatRealtime({
+    requestType: ChatRequestType.SERVICE,
+    requestId: id,
+    userId: typeof session?.userId === 'string' ? session.userId : null,
+    userName: typeof session?.username === 'string' ? session.username : null,
+    enabled: Boolean(id),
+    onStatusUpdated: (evt) => {
+      queryClient.setQueryData(['service-requests', 'detail', id], (old: unknown) => {
+        const prev = old as Record<string, unknown> | null
+        if (!prev) return old
+        return { ...prev, status: evt.statusAfter ?? prev['status'] }
+      })
+
+      queryClient.setQueryData(['service-requests'], (old: unknown) => {
+        if (!old || typeof old !== 'object') return old
+        const prevArr = (old as { data?: Array<Record<string, unknown>> })?.data
+        if (!Array.isArray(prevArr)) return old
+        const next = prevArr.map((p) =>
+          p.id === id ? { ...p, status: evt.statusAfter ?? p.status } : p
+        )
+        return { ...(old as Record<string, unknown>), data: next }
+      })
+
+      if (evt?.statusAfter)
+        toast.success(t('requests.service.status_updated', { status: evt.statusAfter }))
+    },
+  })
   // Use session customerId as system customer id when available (session provided by server after login).
   const sysCustomerId = session?.isDefaultCustomer ? session.customerId : undefined
 

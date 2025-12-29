@@ -25,6 +25,15 @@ interface Props {
   /** Optional permission context for showing the input area */
   pageId?: string
   actionId?: string
+  /** Optional handler for status updates (chat.status.updated) */
+  onStatusUpdated?: (evt: {
+    requestType: string
+    requestId: string
+    statusBefore?: string
+    statusAfter?: string
+    updatedBy?: string
+    updatedAt?: string
+  }) => void
 }
 
 /**
@@ -86,6 +95,16 @@ export default function PurchaseRequestMessages({
       if (isNearBottom) {
         markRead([evt.id])
         markedReadRef.current.add(evt.id)
+      }
+    },
+    onStatusUpdated: (evt) => {
+      // Invalidate detail and list when status changes
+      queryClient.invalidateQueries({ queryKey: ['purchase-requests'] })
+      queryClient.invalidateQueries({
+        queryKey: ['purchase-requests', 'detail', purchaseRequestId],
+      })
+      if (evt?.statusAfter) {
+        toast.success(t('requests.purchase.status_updated', { status: evt.statusAfter }))
       }
     },
   })

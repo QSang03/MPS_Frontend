@@ -34,6 +34,15 @@ export interface ChatReadEventDto {
   readAt: string
 }
 
+export interface ChatStatusEventDto {
+  requestType: ChatRequestType | `${ChatRequestType}`
+  requestId: string
+  statusBefore?: string
+  statusAfter?: string
+  updatedBy?: string
+  updatedAt?: string
+}
+
 export interface ChatErrorEventDto {
   message: string
 }
