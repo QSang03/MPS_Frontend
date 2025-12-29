@@ -320,12 +320,6 @@ export default function LandingPage() {
       {/* Key Takeaway Section */}
       <section className="flex flex-col items-center bg-white px-4 py-12 sm:px-10">
         <div className="flex w-full max-w-[960px] flex-col items-center gap-8 text-center">
-          <div className="inline-flex items-center justify-center rounded-full border border-[#e7ebf3] bg-[#f6f6f8] px-4 py-1.5">
-            <span className="text-xs font-bold tracking-widest text-[#4c669a] uppercase">
-              1 CÂU CHỐT ĐỂ GHI NHỚ
-            </span>
-          </div>
-
           <div className="relative w-full overflow-hidden rounded-2xl bg-gradient-to-br from-[#101622] to-[#1e293b] p-8 shadow-xl sm:p-12">
             {/* Decorative background element */}
             <div className="absolute top-0 right-0 -mt-16 -mr-16 h-64 w-64 rounded-full bg-[#135bec]/20 blur-3xl"></div>
