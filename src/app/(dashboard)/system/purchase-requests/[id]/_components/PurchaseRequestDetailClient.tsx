@@ -581,6 +581,9 @@ export function PurchaseRequestDetailClient({ id, session }: Props) {
                     <PurchaseRequestMessages
                       purchaseRequestId={id}
                       currentUserId={typeof session?.userId === 'string' ? session.userId : null}
+                      currentUserName={
+                        typeof session?.username === 'string' ? session.username : null
+                      }
                     />
                   </div>
                 </CardContent>

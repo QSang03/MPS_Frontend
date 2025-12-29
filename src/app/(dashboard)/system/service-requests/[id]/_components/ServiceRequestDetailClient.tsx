@@ -494,6 +494,9 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                     <ServiceRequestMessages
                       serviceRequestId={id}
                       currentUserId={typeof session?.userId === 'string' ? session.userId : null}
+                      currentUserName={
+                        typeof session?.username === 'string' ? session.username : null
+                      }
                     />
                   </div>
                 </CardContent>

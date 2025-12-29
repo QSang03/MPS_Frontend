@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, KeyboardEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, KeyboardEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Textarea } from '@/components/ui/textarea'
@@ -13,11 +13,15 @@ import { Loader2, Send, MessageSquare } from 'lucide-react'
 import { useLocale } from '@/components/providers/LocaleProvider'
 import { ActionGuard } from '@/components/shared/ActionGuard'
 import { cn } from '@/lib/utils/cn'
+import { useChatRealtime } from '@/lib/hooks/useChatRealtime'
+import { ChatRequestType, type ChatMessageEventDto } from '@/types/chat-websocket'
 
 interface Props {
   serviceRequestId: string
   /** Optional id of current user for distinguishing own messages */
   currentUserId?: string | null
+  /** Optional display name of current user (for typing/read events) */
+  currentUserName?: string | null
   /** Optional permission context for showing the input area (defaults to admin page) */
   pageId?: string
 }
@@ -25,12 +29,62 @@ interface Props {
 /**
  * Reusable conversation component for a service request
  */
-export default function ServiceRequestMessages({ serviceRequestId, currentUserId, pageId }: Props) {
+export default function ServiceRequestMessages({
+  serviceRequestId,
+  currentUserId,
+  currentUserName,
+  pageId,
+}: Props) {
   const sendPermissionPageId = pageId ?? 'customer-requests'
   const { t } = useLocale()
   const queryClient = useQueryClient()
   const [draft, setDraft] = useState('')
   const feedRef = useRef<HTMLDivElement | null>(null)
+  const markedReadRef = useRef<Set<string>>(new Set())
+
+  const { typingUsers, notifyTyping, stopTyping, markRead } = useChatRealtime({
+    requestType: ChatRequestType.SERVICE,
+    requestId: serviceRequestId,
+    userId: currentUserId ?? null,
+    userName: currentUserName ?? null,
+    enabled: Boolean(serviceRequestId),
+    onMessageCreated: (evt: ChatMessageEventDto) => {
+      const queryKey = ['service-requests', serviceRequestId, 'messages']
+
+      queryClient.setQueryData(queryKey, (old: unknown) => {
+        const prev = (old as { data?: ServiceRequestMessage[] } | undefined)?.data
+        const prevArr = Array.isArray(prev) ? prev : []
+        if (prevArr.some((m) => m.id === evt.id)) return old
+
+        const mapped: ServiceRequestMessage = {
+          id: evt.id,
+          serviceRequestId: evt.serviceRequestId ?? serviceRequestId,
+          authorId: evt.authorId,
+          authorType: evt.authorType,
+          authorName: evt.authorName,
+          message: evt.message,
+          content: evt.message,
+          createdAt: evt.createdAt,
+        }
+
+        return {
+          ...(typeof old === 'object' && old !== null ? (old as Record<string, unknown>) : {}),
+          data: [...prevArr, mapped],
+        }
+      })
+
+      if (!currentUserId || evt.authorId === currentUserId) return
+      if (markedReadRef.current.has(evt.id)) return
+
+      const el = feedRef.current
+      const isNearBottom = !!el && el.scrollHeight - el.scrollTop - el.clientHeight < 80 /* px */
+
+      if (isNearBottom) {
+        markRead([evt.id])
+        markedReadRef.current.add(evt.id)
+      }
+    },
+  })
 
   const { data, isLoading } = useQuery({
     queryKey: ['service-requests', serviceRequestId, 'messages'],
@@ -66,6 +120,7 @@ export default function ServiceRequestMessages({ serviceRequestId, currentUserId
   function onSend() {
     const content = draft.trim()
     if (!content) return
+    stopTyping()
     createMessage.mutate({ message: content })
   }
 
@@ -76,11 +131,28 @@ export default function ServiceRequestMessages({ serviceRequestId, currentUserId
     }
   }
 
-  const messages = (data?.data || []).slice().sort((a, b) => {
-    const ta = a?.createdAt ? new Date(a.createdAt).getTime() : 0
-    const tb = b?.createdAt ? new Date(b.createdAt).getTime() : 0
-    return ta - tb
-  })
+  const messages = useMemo(() => {
+    const rawMessages = data?.data ?? []
+    return rawMessages.slice().sort((a, b) => {
+      const ta = a?.createdAt ? new Date(a.createdAt).getTime() : 0
+      const tb = b?.createdAt ? new Date(b.createdAt).getTime() : 0
+      return ta - tb
+    })
+  }, [data?.data])
+
+  // Mark all currently loaded messages as read (best-effort; requires userId).
+  useEffect(() => {
+    if (!currentUserId) return
+    const ids = messages
+      .filter((m) => m?.id && (!m.authorId || m.authorId !== currentUserId))
+      .map((m) => m.id)
+
+    const newIds = ids.filter((id) => !markedReadRef.current.has(id))
+    if (newIds.length === 0) return
+
+    markRead(newIds)
+    newIds.forEach((id) => markedReadRef.current.add(id))
+  }, [messages, currentUserId, markRead])
 
   return (
     <div className="relative flex h-full flex-col bg-slate-50/30 dark:bg-slate-900/10">
@@ -162,10 +234,21 @@ export default function ServiceRequestMessages({ serviceRequestId, currentUserId
       <ActionGuard pageId={sendPermissionPageId} actionId="send-service-message">
         <div className="bg-background border-t p-3">
           <div className="relative flex items-end gap-2">
+            {typingUsers.length > 0 ? (
+              <div className="text-muted-foreground pointer-events-none absolute -top-5 left-0 text-xs">
+                {typingUsers.length === 1
+                  ? `${typingUsers[0]?.userName ?? 'Someone'} đang gõ...`
+                  : `${typingUsers[0]?.userName ?? 'Someone'} và ${typingUsers.length - 1} người khác đang gõ...`}
+              </div>
+            ) : null}
             <Textarea
               value={draft}
-              onChange={(e) => setDraft(e.target.value)}
+              onChange={(e) => {
+                setDraft(e.target.value)
+                notifyTyping()
+              }}
               onKeyDown={onKeyDown}
+              onBlur={stopTyping}
               placeholder={t('service_request.messages.placeholder')}
               className="bg-muted/30 max-h-[120px] min-h-[44px] resize-none py-3 pr-12 focus-visible:ring-1 focus-visible:ring-offset-0"
               rows={1}

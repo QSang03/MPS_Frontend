@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, KeyboardEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, KeyboardEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Textarea } from '@/components/ui/textarea'
@@ -13,11 +13,15 @@ import { Loader2, Send, MessageSquare } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import { useLocale } from '../providers/LocaleProvider'
 import { ActionGuard } from '@/components/shared/ActionGuard'
+import { useChatRealtime } from '@/lib/hooks/useChatRealtime'
+import { ChatRequestType, type ChatMessageEventDto } from '@/types/chat-websocket'
 
 interface Props {
   purchaseRequestId: string
   /** Optional id of current user for distinguishing own messages */
   currentUserId?: string | null
+  /** Optional display name of current user (for typing/read events) */
+  currentUserName?: string | null
   /** Optional permission context for showing the input area */
   pageId?: string
   actionId?: string
@@ -29,6 +33,7 @@ interface Props {
 export default function PurchaseRequestMessages({
   purchaseRequestId,
   currentUserId,
+  currentUserName,
   pageId,
   actionId,
 }: Props) {
@@ -36,6 +41,54 @@ export default function PurchaseRequestMessages({
   const queryClient = useQueryClient()
   const [draft, setDraft] = useState('')
   const feedRef = useRef<HTMLDivElement | null>(null)
+  const markedReadRef = useRef<Set<string>>(new Set())
+
+  const { typingUsers, notifyTyping, stopTyping, markRead } = useChatRealtime({
+    requestType: ChatRequestType.PURCHASE,
+    requestId: purchaseRequestId,
+    userId: currentUserId ?? null,
+    userName: currentUserName ?? null,
+    enabled: Boolean(purchaseRequestId),
+    onMessageCreated: (evt: ChatMessageEventDto) => {
+      const queryKey = ['purchase-requests', purchaseRequestId, 'messages']
+
+      queryClient.setQueryData(queryKey, (old: unknown) => {
+        const prev = (old as { data?: PurchaseRequestMessage[] } | undefined)?.data
+        const prevArr = Array.isArray(prev) ? prev : []
+        if (prevArr.some((m) => m.id === evt.id)) return old
+
+        const mapped: PurchaseRequestMessage = {
+          id: evt.id,
+          purchaseRequestId: evt.purchaseRequestId ?? purchaseRequestId,
+          customerId: evt.customerId,
+          authorId: evt.authorId,
+          authorName: evt.authorName,
+          message: evt.message,
+          content: evt.message,
+          statusBefore: evt.statusBefore as unknown as PurchaseRequestMessage['statusBefore'],
+          statusAfter: evt.statusAfter as unknown as PurchaseRequestMessage['statusAfter'],
+          createdAt: evt.createdAt,
+        }
+
+        return {
+          ...(typeof old === 'object' && old !== null ? (old as Record<string, unknown>) : {}),
+          data: [...prevArr, mapped],
+        }
+      })
+
+      // If user is currently viewing, optimistically mark read for new incoming messages.
+      if (!currentUserId || evt.authorId === currentUserId) return
+      if (markedReadRef.current.has(evt.id)) return
+
+      const el = feedRef.current
+      const isNearBottom = !!el && el.scrollHeight - el.scrollTop - el.clientHeight < 80 /* px */
+
+      if (isNearBottom) {
+        markRead([evt.id])
+        markedReadRef.current.add(evt.id)
+      }
+    },
+  })
 
   const { data, isLoading } = useQuery({
     queryKey: ['purchase-requests', purchaseRequestId, 'messages'],
@@ -72,6 +125,7 @@ export default function PurchaseRequestMessages({
   function onSend() {
     const content = draft.trim()
     if (!content) return
+    stopTyping()
     createMessage.mutate({ message: content })
   }
 
@@ -82,13 +136,29 @@ export default function PurchaseRequestMessages({
     }
   }
 
-  const rawMessages = data?.data || []
   // Ensure newest message is at the bottom (chat-style)
-  const messages = [...rawMessages].sort((a: PurchaseRequestMessage, b: PurchaseRequestMessage) => {
-    const aTime = typeof a.createdAt === 'string' ? Date.parse(a.createdAt) : 0
-    const bTime = typeof b.createdAt === 'string' ? Date.parse(b.createdAt) : 0
-    return aTime - bTime
-  })
+  const messages = useMemo(() => {
+    const rawMessages = data?.data ?? []
+    return [...rawMessages].sort((a: PurchaseRequestMessage, b: PurchaseRequestMessage) => {
+      const aTime = typeof a.createdAt === 'string' ? Date.parse(a.createdAt) : 0
+      const bTime = typeof b.createdAt === 'string' ? Date.parse(b.createdAt) : 0
+      return aTime - bTime
+    })
+  }, [data?.data])
+
+  // Mark all currently loaded messages as read (best-effort; requires userId).
+  useEffect(() => {
+    if (!currentUserId) return
+    const ids = messages
+      .filter((m) => m?.id && (!m.authorId || m.authorId !== currentUserId))
+      .map((m) => m.id)
+
+    const newIds = ids.filter((id) => !markedReadRef.current.has(id))
+    if (newIds.length === 0) return
+
+    markRead(newIds)
+    newIds.forEach((id) => markedReadRef.current.add(id))
+  }, [messages, currentUserId, markRead])
 
   return (
     <div className="relative flex h-full flex-col bg-slate-50/30 dark:bg-slate-900/10">
@@ -171,10 +241,21 @@ export default function PurchaseRequestMessages({
         <ActionGuard pageId={pageId} actionId={actionId}>
           <div className="bg-background border-t p-3">
             <div className="relative flex items-end gap-2">
+              {typingUsers.length > 0 ? (
+                <div className="text-muted-foreground pointer-events-none absolute -top-5 left-0 text-xs">
+                  {typingUsers.length === 1
+                    ? `${typingUsers[0]?.userName ?? 'Someone'} đang gõ...`
+                    : `${typingUsers[0]?.userName ?? 'Someone'} và ${typingUsers.length - 1} người khác đang gõ...`}
+                </div>
+              ) : null}
               <Textarea
                 value={draft}
-                onChange={(e) => setDraft(e.target.value)}
+                onChange={(e) => {
+                  setDraft(e.target.value)
+                  notifyTyping()
+                }}
                 onKeyDown={onKeyDown}
+                onBlur={stopTyping}
                 placeholder={t('purchase_request.messages.placeholder')}
                 className="bg-muted/30 max-h-[120px] min-h-[44px] resize-none py-3 pr-12 focus-visible:ring-1 focus-visible:ring-offset-0"
                 rows={1}
@@ -204,10 +285,21 @@ export default function PurchaseRequestMessages({
         <ActionGuard pageId="customer-requests" actionId="send-purchase-message">
           <div className="bg-background border-t p-3">
             <div className="relative flex items-end gap-2">
+              {typingUsers.length > 0 ? (
+                <div className="text-muted-foreground absolute -top-5 left-0 text-xs">
+                  {typingUsers.length === 1
+                    ? `${typingUsers[0]?.userName ?? 'Someone'} đang gõ...`
+                    : `${typingUsers[0]?.userName ?? 'Someone'} và ${typingUsers.length - 1} người khác đang gõ...`}
+                </div>
+              ) : null}
               <Textarea
                 value={draft}
-                onChange={(e) => setDraft(e.target.value)}
+                onChange={(e) => {
+                  setDraft(e.target.value)
+                  notifyTyping()
+                }}
                 onKeyDown={onKeyDown}
+                onBlur={stopTyping}
                 placeholder={t('purchase_request.messages.placeholder')}
                 className="bg-muted/30 max-h-[120px] min-h-[44px] resize-none py-3 pr-12 focus-visible:ring-1 focus-visible:ring-offset-0"
                 rows={1}

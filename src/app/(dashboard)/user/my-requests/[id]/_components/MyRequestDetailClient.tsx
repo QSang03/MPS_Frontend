@@ -33,5 +33,5 @@ export default function MyRequestDetailClient({ id, session }: Props) {
   }
 
   // Fallback to service request detail
-  return <ServiceRequestDetailClient id={id} />
+  return <ServiceRequestDetailClient id={id} session={session} />
 }

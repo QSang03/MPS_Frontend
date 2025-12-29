@@ -5,6 +5,7 @@ import { withRefreshRetry } from '@/lib/api/server-retry'
 import { authServerService } from '@/lib/api/services/auth-server.service'
 import ServiceRequestMessagesServer from '@/components/service-request/ServiceRequestMessagesServer'
 import type { ServiceRequest, ServiceRequestCost } from '@/types/models'
+import type { UserProfile } from '@/types/auth'
 import { ServiceRequestStatus } from '@/constants/status'
 import { formatDateTime } from '@/lib/utils/formatters'
 import getPublicUrl from '@/lib/utils/publicUrl'
@@ -66,7 +67,7 @@ export default async function UserServiceRequestDetail(props: {
   // Server-side fetch: request detail, costs, and current user profile
   let request: ServiceRequest | null = null
   let costs: ServiceRequestCost[] = []
-  let currentUser: { user?: { id?: string } } | null = null
+  let currentUser: UserProfile | null = null
 
   try {
     const [reqResp, costsResp, profile] = await Promise.all([
@@ -324,6 +325,13 @@ export default async function UserServiceRequestDetail(props: {
                   <ServiceRequestMessagesServer
                     serviceRequestId={requestId}
                     currentUserId={currentUser?.user?.id ?? null}
+                    currentUserName={
+                      (currentUser?.user?.firstName || currentUser?.user?.lastName
+                        ? `${currentUser?.user?.firstName ?? ''} ${currentUser?.user?.lastName ?? ''}`.trim()
+                        : currentUser?.user?.username) ??
+                      currentUser?.user?.email ??
+                      null
+                    }
                   />
                 </div>
               </CardContent>

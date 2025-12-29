@@ -82,7 +82,7 @@ const priorityBadgeMap: Record<Priority, string> = {
   [Priority.URGENT]: 'bg-red-50 text-red-700 border-red-200',
 }
 
-export function ServiceRequestDetailClient({ id }: Props) {
+export function ServiceRequestDetailClient({ id, session }: Props) {
   const router = useRouter()
   const queryClient = useQueryClient()
   const [showCloseConfirm, setShowCloseConfirm] = useState(false)
@@ -444,7 +444,14 @@ export function ServiceRequestDetailClient({ id }: Props) {
               </CardHeader>
               <CardContent className="flex-1 overflow-hidden p-0">
                 <div className="flex h-full flex-col">
-                  <ServiceRequestMessages serviceRequestId={id} pageId="user-my-requests" />
+                  <ServiceRequestMessages
+                    serviceRequestId={id}
+                    pageId="user-my-requests"
+                    currentUserId={typeof session?.userId === 'string' ? session.userId : null}
+                    currentUserName={
+                      typeof session?.username === 'string' ? session.username : null
+                    }
+                  />
                 </div>
               </CardContent>
             </Card>

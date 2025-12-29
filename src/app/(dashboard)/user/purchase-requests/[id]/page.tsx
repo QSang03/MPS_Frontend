@@ -352,6 +352,13 @@ export default function UserPurchaseRequestDetailPage() {
                   <PurchaseRequestMessages
                     purchaseRequestId={detail.id}
                     currentUserId={currentUser?.user?.id ?? null}
+                    currentUserName={
+                      (currentUser?.user?.firstName || currentUser?.user?.lastName
+                        ? `${currentUser?.user?.firstName ?? ''} ${currentUser?.user?.lastName ?? ''}`.trim()
+                        : currentUser?.user?.username) ??
+                      currentUser?.user?.email ??
+                      null
+                    }
                     pageId="user-my-requests"
                     actionId="send-purchase-message"
                   />
