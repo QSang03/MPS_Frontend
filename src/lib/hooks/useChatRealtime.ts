@@ -58,6 +58,15 @@ export function useChatRealtime(opts: {
   const userId = opts.userId ?? null
   const userName = (opts.userName ?? '').trim() || 'User'
 
+  // Use refs for callbacks to avoid effect re-runs when parent passes inline functions
+  const onMessageCreatedRef = useRef(opts.onMessageCreated)
+  const onReadRef = useRef(opts.onRead)
+
+  useEffect(() => {
+    onMessageCreatedRef.current = opts.onMessageCreated
+    onReadRef.current = opts.onRead
+  }, [opts.onMessageCreated, opts.onRead])
+
   const socketRef = useRef<Socket | null>(null)
   const [isConnected, setIsConnected] = useState(false)
 
@@ -92,7 +101,7 @@ export function useChatRealtime(opts: {
 
     const onMessage = (msg: ChatMessageEventDto) => {
       if (!messageBelongsToRoom({ requestType, requestId, message: msg })) return
-      opts.onMessageCreated?.(msg)
+      onMessageCreatedRef.current?.(msg)
     }
 
     const onTyping = (evt: ChatTypingEventDto) => {
@@ -110,7 +119,7 @@ export function useChatRealtime(opts: {
 
     const onRead = (evt: ChatReadEventDto) => {
       if (!evt?.userId) return
-      opts.onRead?.(evt)
+      onReadRef.current?.(evt)
     }
 
     const onError = (evt: ChatErrorEventDto) => {
@@ -162,7 +171,7 @@ export function useChatRealtime(opts: {
       }
       isTypingRef.current = false
     }
-  }, [enabled, requestId, requestType, roomPayload, opts, userId])
+  }, [enabled, requestId, requestType, roomPayload, userId])
 
   const emitTyping = useCallback(
     (isTyping: boolean) => {

@@ -242,7 +242,7 @@ export default function PurchaseRequestMessages({
           <div className="bg-background border-t p-3">
             <div className="relative flex items-end gap-2">
               {typingUsers.length > 0 ? (
-                <div className="text-muted-foreground pointer-events-none absolute -top-5 left-0 text-xs">
+                <div className="text-muted-foreground absolute -top-5 left-0 text-xs">
                   {typingUsers.length === 1
                     ? `${typingUsers[0]?.userName ?? 'Someone'} đang gõ...`
                     : `${typingUsers[0]?.userName ?? 'Someone'} và ${typingUsers.length - 1} người khác đang gõ...`}
