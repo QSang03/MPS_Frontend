@@ -15,6 +15,7 @@ export interface PrintPageReport {
   totalColorPagesA4: number
   status: PrintPageReportStatus
   xlsxUrl?: string
+  pdfUrl?: string
   generatedDate?: string
   createdAt: string
   notes?: string
@@ -57,6 +58,7 @@ export interface PrintPageReportListItem {
   totalColorPagesA4: number
   status: PrintPageReportStatus
   xlsxUrl?: string
+  pdfUrl?: string
   generatedDate?: string
   createdAt: string
 }

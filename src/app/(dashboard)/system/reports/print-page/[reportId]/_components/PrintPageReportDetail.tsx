@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
-import { FileSpreadsheet, ArrowLeft, Download, Ban, Loader2 } from 'lucide-react'
+import { FileSpreadsheet, ArrowLeft, Download, Ban, Loader2, FileText } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import {
@@ -133,6 +133,14 @@ export function PrintPageReportDetail() {
               <a href={report.xlsxUrl} target="_blank" rel="noopener noreferrer">
                 <FileSpreadsheet className="mr-2 h-4 w-4" />
                 {t('print_page_report.actions.download_xlsx')}
+              </a>
+            </Button>
+          )}
+          {report.pdfUrl && (
+            <Button variant="outline" asChild>
+              <a href={report.pdfUrl} target="_blank" rel="noopener noreferrer">
+                <FileText className="mr-2 h-4 w-4" />
+                {t('print_page_report.actions.view_pdf')}
               </a>
             </Button>
           )}

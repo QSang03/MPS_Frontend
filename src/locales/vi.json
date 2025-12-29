@@ -3626,6 +3626,7 @@
   "print_page_report.actions.view_detail": "Xem chi tiết",
   "print_page_report.actions.export_xlsx": "Xuất Excel",
   "print_page_report.actions.download_xlsx": "Tải Excel",
+  "print_page_report.actions.view_pdf": "Xem PDF",
   "print_page_report.actions.void": "Hủy báo cáo",
   "print_page_report.preview": "Xem trước",
   "print_page_report.previewing": "Đang tạo xem trước...",

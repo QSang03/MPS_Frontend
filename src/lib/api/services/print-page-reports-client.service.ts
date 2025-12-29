@@ -10,6 +10,39 @@ import type {
 } from '@/types/models/print-page-report'
 import type { ApiListResponse, ListPagination } from '@/types/api'
 
+const normalizeToDownloadUrl = (url: string): string => {
+  const trimmed = url.trim()
+  if (!trimmed) return ''
+
+  // Already proxied/signed via Next.js
+  if (trimmed.startsWith('/api/files/proxy')) return trimmed
+
+  // Convert backend public uploads URL/path to a same-origin proxied signed URL
+  // Examples:
+  // - /public/uploads/pdf/report.pdf
+  // - https://api.example.com/public/uploads/pdf/report.pdf
+  const marker = '/public/uploads/'
+  const idx = trimmed.indexOf(marker)
+  if (idx >= 0) {
+    const filePath = trimmed.slice(idx + marker.length)
+    return buildProxiedSignedUrl(filePath)
+  }
+
+  // If backend returns just the path under uploads (e.g. pdf/report.pdf)
+  if (!trimmed.startsWith('http') && !trimmed.startsWith('/')) {
+    return buildProxiedSignedUrl(trimmed)
+  }
+
+  // Otherwise return as-is (might be a public URL)
+  return trimmed
+}
+
+const normalizeReportFileUrl = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') return undefined
+  const normalized = normalizeToDownloadUrl(value)
+  return normalized || undefined
+}
+
 export const printPageReportsClientService = {
   /**
    * Get all print page reports (client-side)
@@ -36,7 +69,13 @@ export const printPageReportsClientService = {
       }
     )
     const { data, pagination } = response.data || { data: [], pagination: undefined }
-    return { data: Array.isArray(data) ? data : [], pagination }
+    const list = Array.isArray(data) ? data : []
+    const normalized = list.map((item) => ({
+      ...item,
+      xlsxUrl: normalizeReportFileUrl((item as unknown as { xlsxUrl?: unknown })?.xlsxUrl),
+      pdfUrl: normalizeReportFileUrl((item as unknown as { pdfUrl?: unknown })?.pdfUrl),
+    }))
+    return { data: normalized, pagination }
   },
 
   /**
@@ -44,7 +83,13 @@ export const printPageReportsClientService = {
    */
   async getById(id: string): Promise<PrintPageReport | null> {
     const response = await internalApiClient.get(`/api/reports/print-page/${id}`)
-    return response.data?.data ?? response.data ?? null
+    const raw = (response.data?.data ?? response.data ?? null) as PrintPageReport | null
+    if (!raw) return null
+    return {
+      ...raw,
+      xlsxUrl: normalizeReportFileUrl((raw as unknown as { xlsxUrl?: unknown })?.xlsxUrl),
+      pdfUrl: normalizeReportFileUrl((raw as unknown as { pdfUrl?: unknown })?.pdfUrl),
+    }
   },
 
   /**
@@ -53,7 +98,13 @@ export const printPageReportsClientService = {
    */
   async generate(payload: GeneratePrintPageReportDto): Promise<PrintPageReport | null> {
     const response = await internalApiClient.post('/api/reports/print-page/generate', payload)
-    return response.data?.data ?? response.data ?? null
+    const raw = (response.data?.data ?? response.data ?? null) as PrintPageReport | null
+    if (!raw) return null
+    return {
+      ...raw,
+      xlsxUrl: normalizeReportFileUrl((raw as unknown as { xlsxUrl?: unknown })?.xlsxUrl),
+      pdfUrl: normalizeReportFileUrl((raw as unknown as { pdfUrl?: unknown })?.pdfUrl),
+    }
   },
 
   /**
@@ -70,33 +121,6 @@ export const printPageReportsClientService = {
     const raw = response.data?.data ?? response.data
 
     if (!raw) return null
-
-    const normalizeToDownloadUrl = (url: string): string => {
-      const trimmed = url.trim()
-      if (!trimmed) return ''
-
-      // Already proxied/signed via Next.js
-      if (trimmed.startsWith('/api/files/proxy')) return trimmed
-
-      // Convert backend public uploads URL/path to a same-origin proxied signed URL
-      // Examples:
-      // - /public/uploads/excel/report.xlsx
-      // - https://api.example.com/public/uploads/excel/report.xlsx
-      const marker = '/public/uploads/'
-      const idx = trimmed.indexOf(marker)
-      if (idx >= 0) {
-        const filePath = trimmed.slice(idx + marker.length)
-        return buildProxiedSignedUrl(filePath)
-      }
-
-      // If backend returns just the path under uploads (e.g. excel/report.xlsx)
-      if (!trimmed.startsWith('http') && !trimmed.startsWith('/')) {
-        return buildProxiedSignedUrl(trimmed)
-      }
-
-      // Otherwise return as-is (might be a public URL)
-      return trimmed
-    }
 
     if (typeof raw === 'string') {
       const xlsxUrl = normalizeToDownloadUrl(raw)

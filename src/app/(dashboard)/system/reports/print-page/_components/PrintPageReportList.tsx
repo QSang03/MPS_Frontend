@@ -1,7 +1,16 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { FileSpreadsheet, Plus, RefreshCw, Eye, Download, Ban, Search } from 'lucide-react'
+import {
+  FileSpreadsheet,
+  Plus,
+  RefreshCw,
+  Eye,
+  Download,
+  Ban,
+  Search,
+  FileText,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -356,6 +365,14 @@ export function PrintPageReportList() {
                                 <a href={report.xlsxUrl} target="_blank" rel="noopener noreferrer">
                                   <FileSpreadsheet className="mr-2 h-4 w-4" />
                                   {t('print_page_report.actions.download_xlsx')}
+                                </a>
+                              </DropdownMenuItem>
+                            )}
+                            {report.pdfUrl && (
+                              <DropdownMenuItem asChild>
+                                <a href={report.pdfUrl} target="_blank" rel="noopener noreferrer">
+                                  <FileText className="mr-2 h-4 w-4" />
+                                  {t('print_page_report.actions.view_pdf')}
                                 </a>
                               </DropdownMenuItem>
                             )}
