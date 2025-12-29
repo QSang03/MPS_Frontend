@@ -67,7 +67,7 @@ export function PrintPageReportDetail() {
     }
   }, [reportId, fetchReport])
 
-  const handleExportXlsx = async () => {
+  const handleGenerateFiles = async () => {
     if (!report) return
 
     setIsExporting(true)
@@ -77,7 +77,6 @@ export function PrintPageReportDetail() {
         customerId: report.customerId,
       })
       if (result?.xlsxUrl) {
-        window.open(result.xlsxUrl, '_blank')
         toast.success(t('print_page_report.export_success'))
         // Refresh to get updated xlsxUrl
         fetchReport()
@@ -144,8 +143,8 @@ export function PrintPageReportDetail() {
               </a>
             </Button>
           )}
-          {report.status !== 'VOID' && !report.xlsxUrl && (
-            <Button onClick={handleExportXlsx} disabled={isExporting}>
+          {report.status !== 'VOID' && !report.xlsxUrl && !report.pdfUrl && (
+            <Button onClick={handleGenerateFiles} disabled={isExporting}>
               {isExporting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -154,7 +153,7 @@ export function PrintPageReportDetail() {
               ) : (
                 <>
                   <Download className="mr-2 h-4 w-4" />
-                  {t('print_page_report.actions.export_xlsx')}
+                  {t('print_page_report.actions.generate_report_files')}
                 </>
               )}
             </Button>

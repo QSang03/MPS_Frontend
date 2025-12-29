@@ -142,15 +142,16 @@ export function PrintPageReportList() {
     fetchReports()
   }, [fetchReports])
 
-  const handleExportXlsx = async (report: PrintPageReportListItem) => {
+  const handleGenerateFiles = async (report: PrintPageReportListItem) => {
     try {
       const result = await printPageReportsClientService.exportXlsx({
         reportId: report.id,
         customerId: report.customerId,
       })
       if (result?.xlsxUrl) {
-        window.open(result.xlsxUrl, '_blank')
         toast.success(t('print_page_report.export_success'))
+        // Refresh to get updated xlsxUrl/pdfUrl
+        fetchReports()
       } else {
         toast.error(t('print_page_report.errors.export_failed'))
       }
@@ -354,10 +355,10 @@ export function PrintPageReportList() {
                                 {t('print_page_report.actions.view_detail')}
                               </Link>
                             </DropdownMenuItem>
-                            {report.status !== 'VOID' && !report.xlsxUrl && (
-                              <DropdownMenuItem onClick={() => handleExportXlsx(report)}>
+                            {report.status !== 'VOID' && !report.xlsxUrl && !report.pdfUrl && (
+                              <DropdownMenuItem onClick={() => handleGenerateFiles(report)}>
                                 <Download className="mr-2 h-4 w-4" />
-                                {t('print_page_report.actions.export_xlsx')}
+                                {t('print_page_report.actions.generate_report_files')}
                               </DropdownMenuItem>
                             )}
                             {report.xlsxUrl && (
