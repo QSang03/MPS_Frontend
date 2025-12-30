@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { leadsClientService } from '@/lib/api/services/leads-client.service'
 import type { Lead, LeadStatus } from '@/types/leads'
@@ -23,13 +23,8 @@ import {
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Mail, Phone, Building2, Calendar, Copy } from 'lucide-react'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog'
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
+import { DeleteDialog } from '@/components/shared/DeleteDialog'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { useLocale } from '@/components/providers/LocaleProvider'
@@ -38,7 +33,7 @@ export default function ClientLeadDetail({ id }: { id: string }) {
   const { t } = useLocale()
   const router = useRouter()
   const queryClient = useQueryClient()
-  const [confirmOpen, setConfirmOpen] = useState(false)
+  // ConfirmDialog manages its own open state; no local confirmOpen needed
 
   const { data, isLoading } = useQuery({
     queryKey: ['lead', id],
@@ -134,20 +129,6 @@ export default function ClientLeadDetail({ id }: { id: string }) {
     false
 
   // Update cache when a single lead is updated so UI reflects immediately
-  const handleMarkContacted = () => {
-    updateMutation.mutate(
-      { status: 'CONTACTED' },
-      {
-        onSuccess: (updatedLead: Lead) => {
-          // update the detail cache
-          queryClient.setQueryData(['lead', id], updatedLead)
-          // refresh list cache too
-          queryClient.invalidateQueries({ queryKey: ['leads'] })
-          setConfirmOpen(false)
-        },
-      }
-    )
-  }
 
   return (
     <Card>
@@ -237,45 +218,31 @@ export default function ClientLeadDetail({ id }: { id: string }) {
 
           <div className="md:col-span-1">
             <div className="flex flex-col gap-3">
-              <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>{t('leads.confirm_title') || 'Confirm action'}</DialogTitle>
-                  </DialogHeader>
-                  <div className="py-2">
-                    {t('leads.confirm_mark_contacted') ||
-                      'Mark this lead as contacted? This cannot be undone.'}
-                  </div>
-                  <DialogFooter>
-                    <div className="flex w-full gap-2">
-                      <Button
-                        variant="ghost"
-                        onClick={() => setConfirmOpen(false)}
-                        className="w-full"
-                      >
-                        {t('button.cancel') || 'Cancel'}
-                      </Button>
-                      <Button
-                        className="w-full"
-                        onClick={handleMarkContacted}
-                        disabled={updateLoading}
-                      >
-                        {updateLoading
-                          ? t('button.saving') || 'Saving...'
-                          : t('button.confirm') || 'Confirm'}
-                      </Button>
-                    </div>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-
-              <Button
-                disabled={lead.status === 'CONTACTED' || updateLoading}
-                onClick={() => setConfirmOpen(true)}
-                className="w-full"
-              >
-                {t('leads.mark_contacted') || 'Mark contacted'}
-              </Button>
+              <ConfirmDialog
+                title={t('leads.confirm_title') || 'Confirm action'}
+                description={
+                  t('leads.confirm_mark_contacted') ||
+                  'Mark this lead as contacted? This cannot be undone.'
+                }
+                confirmLabel={t('leads.mark_contacted') || 'Mark contacted'}
+                trigger={
+                  <Button
+                    disabled={lead.status === 'CONTACTED' || updateLoading}
+                    className="w-full"
+                  >
+                    {t('leads.mark_contacted') || 'Mark contacted'}
+                  </Button>
+                }
+                onConfirm={async () => {
+                  const updatedLead = await updateMutation.mutateAsync({ status: 'CONTACTED' })
+                  try {
+                    queryClient.setQueryData(['lead', id], updatedLead)
+                    queryClient.invalidateQueries({ queryKey: ['leads'] })
+                  } catch {
+                    // ignore cache update errors
+                  }
+                }}
+              />
 
               <Button
                 variant="ghost"
@@ -285,21 +252,20 @@ export default function ClientLeadDetail({ id }: { id: string }) {
                 {t('button.back') || 'Back'}
               </Button>
 
-              <Button
-                variant="destructive"
-                className="w-full"
-                onClick={() => {
-                  if (
-                    !confirm(
-                      t('leads.delete_confirm') || 'Are you sure you want to delete this lead?'
-                    )
-                  )
-                    return
-                  deleteMutation.mutate()
+              <DeleteDialog
+                title={t('button.delete') || 'Delete'}
+                description={
+                  t('leads.delete_confirm') || 'Are you sure you want to delete this lead?'
+                }
+                trigger={
+                  <Button variant="destructive" className="w-full">
+                    {t('button.delete') || 'Delete'}
+                  </Button>
+                }
+                onConfirm={async () => {
+                  await deleteMutation.mutateAsync()
                 }}
-              >
-                {t('button.delete') || 'Delete'}
-              </Button>
+              />
             </div>
           </div>
         </div>

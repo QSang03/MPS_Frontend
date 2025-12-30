@@ -25,6 +25,7 @@ import { toast } from 'sonner'
 import { Trash2, Eye } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useLocale } from '@/components/providers/LocaleProvider'
+import { DeleteDialog } from '@/components/shared/DeleteDialog'
 
 export function LeadListClient() {
   const { t } = useLocale()
@@ -81,11 +82,6 @@ export function LeadListClient() {
 
   const handleStatusChange = (id: string, s: LeadStatus) => {
     updateMutation.mutate({ id, payload: { status: s } })
-  }
-
-  const handleDelete = (id: string) => {
-    if (!confirm(t('leads.delete_confirm') || 'Are you sure you want to delete this lead?')) return
-    deleteMutation.mutate(id)
   }
 
   return (
@@ -177,9 +173,20 @@ export function LeadListClient() {
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
-                      <Button size="sm" variant="ghost" onClick={() => handleDelete(lead.id)}>
-                        <Trash2 className="text-destructive h-4 w-4" />
-                      </Button>
+                      <DeleteDialog
+                        title={t('button.delete') || 'Delete'}
+                        description={
+                          t('leads.delete_confirm') || 'Are you sure you want to delete this lead?'
+                        }
+                        trigger={
+                          <Button size="sm" variant="ghost">
+                            <Trash2 className="text-destructive h-4 w-4" />
+                          </Button>
+                        }
+                        onConfirm={async () => {
+                          await deleteMutation.mutateAsync(lead.id)
+                        }}
+                      />
                     </div>
                   </TableCell>
                 </TableRow>
