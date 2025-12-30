@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { ROUTES } from '@/constants/routes'
+import LeadModal from '@/components/landing/LeadModal'
 
 export default function LandingPage() {
   return (
@@ -155,9 +156,11 @@ export default function LandingPage() {
               </ul>
               {/* CTA Button */}
               <div className="pt-4">
-                <button className="flex h-12 w-full cursor-pointer items-center justify-center rounded-lg bg-[#135bec] px-8 text-base leading-normal font-bold tracking-[0.015em] text-white shadow-lg transition-all hover:bg-blue-700 hover:shadow-xl sm:w-auto">
-                  <span>Nhận tư vấn & báo giá MPS miễn phí</span>
-                </button>
+                <LeadModal>
+                  <button className="flex h-12 w-full cursor-pointer items-center justify-center rounded-lg bg-[#135bec] px-8 text-base leading-normal font-bold tracking-[0.015em] text-white shadow-lg transition-all hover:bg-blue-700 hover:shadow-xl sm:w-auto">
+                    <span>Nhận tư vấn &amp; báo giá MPS miễn phí</span>
+                  </button>
+                </LeadModal>
               </div>
             </div>
           </div>
@@ -352,9 +355,11 @@ export default function LandingPage() {
             Để lại thông tin để nhận tư vấn miễn phí về giải pháp quản lý in ấn phù hợp với doanh
             nghiệp của bạn.
           </p>
-          <button className="flex h-12 min-w-[200px] cursor-pointer items-center justify-center rounded-lg bg-[#135bec] px-6 text-base font-bold text-white shadow-lg transition-colors hover:bg-blue-700">
-            Nhận tư vấn & báo giá MPS miễn phí
-          </button>
+          <LeadModal>
+            <button className="flex h-12 min-w-[200px] cursor-pointer items-center justify-center rounded-lg bg-[#135bec] px-6 text-base font-bold text-white shadow-lg transition-colors hover:bg-blue-700">
+              Nhận tư vấn &amp; báo giá MPS miễn phí
+            </button>
+          </LeadModal>
         </div>
       </section>
 

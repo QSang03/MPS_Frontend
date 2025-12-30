@@ -35,6 +35,16 @@ export async function middleware(request: NextRequest) {
     return r
   }
 
+  // Allow public access to leads API (public consultation form)
+  if (pathname.startsWith('/api/backend/leads')) {
+    const r = NextResponse.next()
+    r.headers.set(
+      'cache-control',
+      'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
+    )
+    return r
+  }
+
   // Public routes - allow access without authentication
   // Include forgot-password so users can request a reset without being authenticated
   if (

@@ -175,6 +175,15 @@ export const API_ENDPOINTS = {
     MARK_ALL_READ: '/notifications/read-all',
   },
 
+  // Leads (public)
+  LEADS: {
+    CREATE: '/leads/submit',
+    LIST: '/leads',
+    DETAIL: (id: string) => `/leads/${id}`,
+    UPDATE: (id: string) => `/leads/${id}`,
+    DELETE: (id: string) => `/leads/${id}`,
+  },
+
   // Currencies
   CURRENCIES: {
     LIST: '/currencies',
