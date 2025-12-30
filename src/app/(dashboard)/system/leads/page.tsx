@@ -12,7 +12,7 @@ export default function LeadsPage() {
   const { t } = useLocale()
 
   return (
-    <SystemPageLayout>
+    <SystemPageLayout fullWidth>
       <SystemPageHeader
         title={t('nav.leads') || 'Leads'}
         subtitle={t('leads.subtitle') || 'Manage leads and inquiries'}

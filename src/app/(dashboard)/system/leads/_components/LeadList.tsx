@@ -120,20 +120,20 @@ export function LeadListClient() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>ID</TableHead>
+              <TableHead>{t('table.index') || 'STT'}</TableHead>
               <TableHead>{t('leads.table.fullName') || 'Full name'}</TableHead>
               <TableHead>{t('leads.table.email') || 'Email'}</TableHead>
               <TableHead>{t('leads.table.phone') || 'Phone'}</TableHead>
               <TableHead>{t('leads.table.company') || 'Company'}</TableHead>
               <TableHead>{t('leads.table.status') || 'Status'}</TableHead>
               <TableHead>{t('leads.table.createdAt') || 'Created'}</TableHead>
-              <TableHead>Actions</TableHead>
+              <TableHead>{t('table.actions') || 'Actions'}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading && (
               <TableRow>
-                <TableCell colSpan={8}>Loading...</TableCell>
+                <TableCell colSpan={8}>{t('common.loading') || 'Loading...'}</TableCell>
               </TableRow>
             )}
 
@@ -144,9 +144,9 @@ export function LeadListClient() {
             )}
 
             {!isLoading &&
-              leads.map((lead) => (
+              leads.map((lead, idx) => (
                 <TableRow key={lead.id}>
-                  <TableCell>{lead.id}</TableCell>
+                  <TableCell>{(pagination.page - 1) * pagination.limit + idx + 1}</TableCell>
                   <TableCell>{lead.fullName}</TableCell>
                   <TableCell>{lead.email}</TableCell>
                   <TableCell>{lead.phone}</TableCell>
@@ -198,7 +198,7 @@ export function LeadListClient() {
           </div>
           <div className="flex items-center gap-2">
             <Button disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
-              Prev
+              {t('pagination.previous')}
             </Button>
             <div>
               Page {pagination.page} / {pagination.totalPages}
@@ -207,7 +207,7 @@ export function LeadListClient() {
               disabled={page >= (pagination.totalPages || 1)}
               onClick={() => setPage((p) => p + 1)}
             >
-              Next
+              {t('pagination.next')}
             </Button>
           </div>
         </div>

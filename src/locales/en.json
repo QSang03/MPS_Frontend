@@ -58,6 +58,7 @@
   "leads.mark_contacted": "Mark contacted",
   "leads.created": "Created",
   "button.confirm": "Confirm",
+  "button.back": "Back",
   "system_settings.title": "Edit System Setting",
   "system_settings.description": "Update the value and description for this system setting",
   "system_settings.edit": "Edit",
