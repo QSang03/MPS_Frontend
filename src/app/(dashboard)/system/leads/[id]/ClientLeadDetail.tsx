@@ -21,7 +21,7 @@ import {
   CardDescription,
 } from '@/components/ui/card'
 import { StatusBadge } from '@/components/ui/StatusBadge'
-import { Mail, Phone, Building2, Calendar } from 'lucide-react'
+import { Mail, Phone, Building2, Calendar, Copy } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { useLocale } from '@/components/providers/LocaleProvider'
@@ -60,26 +60,55 @@ export default function ClientLeadDetail({ id }: { id: string }) {
 
   const lead = data as Lead
 
+  const initials = lead.fullName
+    ? lead.fullName
+        .split(' ')
+        .map((s) => s[0])
+        .slice(0, 2)
+        .join('')
+        .toUpperCase()
+    : '?'
+  const formattedDate =
+    lead.createdAt && !isNaN(Date.parse(lead.createdAt))
+      ? new Date(lead.createdAt).toLocaleString()
+      : '-'
+  const displayEmail = lead.email || '-'
+  const displayPhone = lead.phone || '-'
+
+  const copyId = async () => {
+    try {
+      await navigator.clipboard.writeText(lead.id)
+      toast.success(t('contract.form.field.document_link.copy_success') || 'Copied')
+    } catch {
+      toast.error(t('contract.form.field.document_link.copy_error') || 'Copy failed')
+    }
+  }
+
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center gap-3">
-          <div>
-            <CardTitle>{lead.fullName}</CardTitle>
-            <CardDescription className="text-sm">
-              <span className="inline-flex items-center gap-2">
-                <Mail className="size-4 opacity-70" />
-                <a className="underline" href={`mailto:${lead.email}`}>
-                  {lead.email}
-                </a>
-                •
-                <Phone className="size-4 opacity-70" />
-                <a className="underline" href={`tel:${lead.phone}`}>
-                  {lead.phone}
-                </a>
-              </span>
-            </CardDescription>
+        <div className="flex w-full items-center gap-3">
+          <div className="flex items-center gap-3">
+            <div className="bg-muted-foreground/10 text-muted-foreground flex h-12 w-12 items-center justify-center rounded-full text-lg font-semibold">
+              {initials}
+            </div>
+            <div>
+              <CardTitle>{lead.fullName || '-'}</CardTitle>
+              <CardDescription className="text-muted-foreground text-sm">
+                <span className="inline-flex items-center gap-4">
+                  <span className="inline-flex items-center gap-2 text-sm">
+                    <Mail className="size-4 opacity-70" />
+                    {displayEmail}
+                  </span>
+                  <span className="inline-flex items-center gap-2 text-sm">
+                    <Phone className="size-4 opacity-70" />
+                    {displayPhone}
+                  </span>
+                </span>
+              </CardDescription>
+            </div>
           </div>
+
           <div className="ml-auto flex items-center gap-3">
             <div className="mr-2">
               <StatusBadge
@@ -115,10 +144,16 @@ export default function ClientLeadDetail({ id }: { id: string }) {
       <CardContent>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <div className="md:col-span-2">
-            <div className="mb-4 rounded-md border px-4 py-3">
+            <div className="bg-muted-foreground/5 mb-4 rounded-md border px-4 py-3">
               <h3 className="mb-2 font-medium">Message</h3>
               <div className="text-muted-foreground text-sm whitespace-pre-wrap">
-                {lead.message || <span className="text-muted-foreground">No message</span>}
+                {lead.message ? (
+                  <div>{lead.message}</div>
+                ) : (
+                  <div className="text-muted-foreground italic">
+                    {t('leads.no_message') || 'No message'}
+                  </div>
+                )}
               </div>
             </div>
             <div className="text-muted-foreground flex gap-6 text-sm">
@@ -128,25 +163,34 @@ export default function ClientLeadDetail({ id }: { id: string }) {
               </div>
               <div className="inline-flex items-center gap-2">
                 <Calendar className="size-4 opacity-70" />
-                <span>Created: {new Date(lead.createdAt).toLocaleString()}</span>
+                <span>
+                  {t('leads.created') || 'Created'}: {formattedDate}
+                </span>
               </div>
             </div>
           </div>
 
           <div className="md:col-span-1">
             <div className="flex flex-col gap-3">
-              {lead.status !== 'CONTACTED' && (
-                <Button onClick={() => updateMutation.mutate({ status: 'CONTACTED' })}>
-                  Mark contacted
-                </Button>
-              )}
+              <Button
+                disabled={lead.status === 'CONTACTED'}
+                onClick={() => updateMutation.mutate({ status: 'CONTACTED' })}
+                className="w-full"
+              >
+                {t('leads.mark_contacted') || 'Mark contacted'}
+              </Button>
 
-              <Button variant="ghost" onClick={() => router.push('/system/leads')}>
+              <Button
+                variant="ghost"
+                onClick={() => router.push('/system/leads')}
+                className="w-full"
+              >
                 {t('button.back') || 'Back'}
               </Button>
 
               <Button
                 variant="destructive"
+                className="w-full"
                 onClick={() => {
                   if (
                     !confirm(
@@ -157,7 +201,7 @@ export default function ClientLeadDetail({ id }: { id: string }) {
                   deleteMutation.mutate()
                 }}
               >
-                Delete
+                {t('button.delete') || 'Delete'}
               </Button>
             </div>
           </div>
@@ -165,7 +209,16 @@ export default function ClientLeadDetail({ id }: { id: string }) {
       </CardContent>
 
       <CardFooter>
-        <div className="text-muted-foreground text-sm">ID: {lead.id}</div>
+        <div className="flex w-full items-center justify-between gap-2">
+          <div className="text-muted-foreground text-sm">
+            ID: <code className="ml-1 font-mono text-xs">{lead.id}</code>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="ghost" onClick={copyId}>
+              <Copy className="size-4" />
+            </Button>
+          </div>
+        </div>
       </CardFooter>
     </Card>
   )
