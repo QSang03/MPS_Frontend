@@ -96,12 +96,15 @@ export function LeadListClient() {
             onChange={(e) => setSearch(e.target.value)}
             className="min-w-[260px]"
           />
-          <Select value={status} onValueChange={(v) => setStatus(v as LeadStatus | '')}>
+          <Select
+            value={status}
+            onValueChange={(v) => setStatus(v === 'ALL' ? '' : (v as LeadStatus))}
+          >
             <SelectTrigger className="h-10 rounded-md border">
               <SelectValue placeholder={t('leads.filter.status') || 'All status'} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All</SelectItem>
+              <SelectItem value="ALL">All</SelectItem>
               <SelectItem value="PENDING">PENDING</SelectItem>
               <SelectItem value="CONTACTED">CONTACTED</SelectItem>
               <SelectItem value="CONVERTED">CONVERTED</SelectItem>
