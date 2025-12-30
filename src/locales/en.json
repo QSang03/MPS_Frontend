@@ -59,6 +59,8 @@
   "leads.message": "Message",
   "leads.id_label": "ID",
   "leads.created": "Created",
+  "leads.detail_title": "Lead details",
+  "leads.not_found": "Lead not found",
   "button.confirm": "Confirm",
   "button.back": "Back",
   "system_settings.title": "Edit System Setting",

@@ -117,6 +117,8 @@
   "leads.message": "Nội dung",
   "leads.id_label": "ID",
   "leads.created": "Tạo lúc",
+  "leads.detail_title": "Chi tiết lead",
+  "leads.not_found": "Không tìm thấy lead",
   "button.confirm": "Xác nhận",
   "button.back": "Quay lại",
   "nav.navigation-configs": "Cấu hình Navigation",
