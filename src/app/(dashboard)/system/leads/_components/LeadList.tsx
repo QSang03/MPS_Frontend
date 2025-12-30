@@ -23,15 +23,17 @@ import {
 } from '@/components/ui/table'
 import { toast } from 'sonner'
 import { Trash2, Eye } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import { useLocale } from '@/components/providers/LocaleProvider'
 
 export function LeadListClient() {
   const { t } = useLocale()
   const queryClient = useQueryClient()
+  const router = useRouter()
 
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
-  const [status, setStatus] = useState<LeadStatus | ''>('')
+  const [status, setStatus] = useState<LeadStatus | 'ALL'>('ALL')
   const [page, setPage] = useState(1)
   const [limit] = useState(20)
 
@@ -47,7 +49,7 @@ export function LeadListClient() {
         page,
         limit,
         search: debouncedSearch || undefined,
-        status: status ? (status as LeadStatus) : undefined,
+        status: status === 'ALL' ? undefined : (status as LeadStatus),
       }),
   })
 
@@ -96,10 +98,7 @@ export function LeadListClient() {
             onChange={(e) => setSearch(e.target.value)}
             className="min-w-[260px]"
           />
-          <Select
-            value={status}
-            onValueChange={(v) => setStatus(v === 'ALL' ? '' : (v as LeadStatus))}
-          >
+          <Select value={status} onValueChange={(v) => setStatus(v as LeadStatus | 'ALL')}>
             <SelectTrigger className="h-10 rounded-md border">
               <SelectValue placeholder={t('leads.filter.status') || 'All status'} />
             </SelectTrigger>
@@ -174,7 +173,7 @@ export function LeadListClient() {
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() => alert(JSON.stringify(lead, null, 2))}
+                        onClick={() => router.push(`/system/leads/${lead.id}`)}
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
