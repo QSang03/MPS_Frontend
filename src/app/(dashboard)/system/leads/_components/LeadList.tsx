@@ -1,149 +1,213 @@
 'use client'
 
-import React, { useCallback, useEffect, useState } from 'react'
-import { leadsClientService, type Lead } from '@/lib/api/services/leads-client.service'
-import { TableSkeleton } from '@/components/system/TableSkeleton'
-import { useLocale } from '@/components/providers/LocaleProvider'
+import React, { useEffect, useState } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { leadsClientService } from '@/lib/api/services/leads-client.service'
+import type { Lead, LeadStatus } from '@/types/leads'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import { toast } from 'sonner'
+import { Trash2, Eye } from 'lucide-react'
+import { useLocale } from '@/components/providers/LocaleProvider'
 
-export default function LeadList() {
+export function LeadListClient() {
   const { t } = useLocale()
-  const [leads, setLeads] = useState<Lead[]>([])
-  const [page, setPage] = useState(1)
-  const [limit, setLimit] = useState(20)
-  const [loading, setLoading] = useState(false)
-  const [total, setTotal] = useState<number | null>(null)
+  const queryClient = useQueryClient()
 
-  const load = useCallback(async () => {
-    setLoading(true)
-    try {
-      const res = await leadsClientService.list({ page, limit })
-      setLeads(res.data)
-      setTotal(res.pagination?.total ?? null)
-    } catch (error) {
-      console.error('Load leads failed', error)
-      toast.error(t('error.cannot_load_customer') || 'Failed to load leads')
-    } finally {
-      setLoading(false)
-    }
-  }, [page, limit, t])
+  const [search, setSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [status, setStatus] = useState<LeadStatus | ''>('')
+  const [page, setPage] = useState(1)
+  const [limit] = useState(20)
 
   useEffect(() => {
-    void load()
-  }, [load])
+    const id = setTimeout(() => setDebouncedSearch(search), 500)
+    return () => clearTimeout(id)
+  }, [search])
 
-  if (loading) return <TableSkeleton rows={8} columns={6} />
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ['leads', page, limit, debouncedSearch, status],
+    queryFn: () =>
+      leadsClientService.getLeads({
+        page,
+        limit,
+        search: debouncedSearch || undefined,
+        status: status ? (status as LeadStatus) : undefined,
+      }),
+  })
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: Partial<Lead> }) =>
+      leadsClientService.updateLead(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['leads'] })
+      toast.success(t('leads.update_success') || 'Updated')
+    },
+    onError: () => {
+      toast.error(t('leads.update_error') || 'Update failed')
+    },
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => leadsClientService.deleteLead(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['leads'] })
+      toast.success(t('leads.delete_success') || 'Deleted')
+    },
+    onError: () => {
+      toast.error(t('leads.delete_error') || 'Delete failed')
+    },
+  })
+
+  const leads = data?.data || []
+  const pagination = data?.pagination || { page: 1, limit: 20, total: 0, totalPages: 1 }
+
+  const handleStatusChange = (id: string, s: LeadStatus) => {
+    updateMutation.mutate({ id, payload: { status: s } })
+  }
+
+  const handleDelete = (id: string) => {
+    if (!confirm(t('leads.delete_confirm') || 'Are you sure you want to delete this lead?')) return
+    deleteMutation.mutate(id)
+  }
 
   return (
-    <div className="overflow-x-auto rounded-lg bg-white p-4 shadow-sm">
-      <table className="w-full table-fixed text-sm">
-        <thead>
-          <tr className="text-left text-xs font-medium text-gray-500">
-            <th className="w-8">#</th>
-            <th>Họ tên</th>
-            <th>Email</th>
-            <th>Số điện thoại</th>
-            <th>Công ty</th>
-            <th>Trạng thái</th>
-            <th>Thao tác</th>
-          </tr>
-        </thead>
-        <tbody>
-          {leads.length === 0 ? (
-            <tr>
-              <td colSpan={7} className="py-8 text-center text-sm text-gray-500">
-                {t('empty.no_data.title') || 'No leads found'}
-              </td>
-            </tr>
-          ) : (
-            leads.map((l, idx) => (
-              <tr key={l.id} className="border-t">
-                <td className="py-3">{(page - 1) * limit + idx + 1}</td>
-                <td className="py-3">{l.fullName}</td>
-                <td className="py-3">{l.email}</td>
-                <td className="py-3">{l.phone || '—'}</td>
-                <td className="py-3">{l.company || '—'}</td>
-                <td className="py-3">{l.status || 'PENDING'}</td>
-                <td className="py-3">
-                  <div className="flex gap-2">
-                    <button
-                      className="rounded border px-2 py-1 text-xs"
-                      onClick={async () => {
-                        try {
-                          const updated = await leadsClientService.update(l.id, {
-                            status: 'CONTACTED',
-                          })
-                          if (updated) {
-                            setLeads((cur) => cur.map((x) => (x.id === updated.id ? updated : x)))
-                            toast.success(t('toast.refreshed') || 'Updated')
-                          }
-                        } catch (err) {
-                          console.error('Update lead failed', err)
-                          toast.error((err as Error).message || 'Failed to update')
-                        }
-                      }}
-                    >
-                      {t('button.save') || 'Mark Contacted'}
-                    </button>
-                    <button
-                      className="rounded border px-2 py-1 text-xs"
-                      onClick={async () => {
-                        if (!confirm('Delete this lead?')) return
-                        try {
-                          const ok = await leadsClientService.delete(l.id)
-                          if (ok) {
-                            setLeads((cur) => cur.filter((x) => x.id !== l.id))
-                            toast.success(t('customer.delete_success') || 'Deleted')
-                          }
-                        } catch (err) {
-                          console.error('Delete lead failed', err)
-                          toast.error((err as Error).message || 'Failed to delete')
-                        }
-                      }}
-                    >
-                      {t('button.delete') || 'Delete'}
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
-
-      {/* pagination simple */}
-      <div className="mt-4 flex items-center justify-between">
-        <div>
-          <label className="text-muted-foreground text-sm">Rows per page:</label>
-          <select
-            value={limit}
-            onChange={(e) => setLimit(Number(e.target.value))}
-            className="ml-2 rounded border px-2 py-1 text-sm"
-          >
-            <option value={10}>10</option>
-            <option value={20}>20</option>
-            <option value={50}>50</option>
-          </select>
+    <div className="overflow-hidden rounded-2xl bg-white p-6 shadow">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <Input
+            placeholder={t('filters.search_placeholder') || 'Search...'}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="min-w-[260px]"
+          />
+          <Select value={status} onValueChange={(v) => setStatus(v as LeadStatus | '')}>
+            <SelectTrigger className="h-10 rounded-md border">
+              <SelectValue placeholder={t('leads.filter.status') || 'All status'} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">All</SelectItem>
+              <SelectItem value="PENDING">PENDING</SelectItem>
+              <SelectItem value="CONTACTED">CONTACTED</SelectItem>
+              <SelectItem value="CONVERTED">CONVERTED</SelectItem>
+              <SelectItem value="REJECTED">REJECTED</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button onClick={() => refetch()} className="ml-2">
+            {t('button.refresh') || 'Refresh'}
+          </Button>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            className="rounded border px-3 py-1 text-sm"
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page === 1}
-          >
-            Prev
-          </button>
-          <div className="text-sm">
-            Page {page}
-            {total ? ` of ${Math.ceil(total / limit)}` : ''}
+      </div>
+
+      <div className="mt-4">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>ID</TableHead>
+              <TableHead>{t('leads.table.fullName') || 'Full name'}</TableHead>
+              <TableHead>{t('leads.table.email') || 'Email'}</TableHead>
+              <TableHead>{t('leads.table.phone') || 'Phone'}</TableHead>
+              <TableHead>{t('leads.table.company') || 'Company'}</TableHead>
+              <TableHead>{t('leads.table.status') || 'Status'}</TableHead>
+              <TableHead>{t('leads.table.createdAt') || 'Created'}</TableHead>
+              <TableHead>Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoading && (
+              <TableRow>
+                <TableCell colSpan={8}>Loading...</TableCell>
+              </TableRow>
+            )}
+
+            {!isLoading && leads.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={8}>{t('empty.no_data.title') || 'No data'}</TableCell>
+              </TableRow>
+            )}
+
+            {!isLoading &&
+              leads.map((lead) => (
+                <TableRow key={lead.id}>
+                  <TableCell>{lead.id}</TableCell>
+                  <TableCell>{lead.fullName}</TableCell>
+                  <TableCell>{lead.email}</TableCell>
+                  <TableCell>{lead.phone}</TableCell>
+                  <TableCell>{lead.company}</TableCell>
+                  <TableCell>
+                    <Select
+                      value={lead.status}
+                      onValueChange={(v) => handleStatusChange(lead.id, v as LeadStatus)}
+                    >
+                      <SelectTrigger className="h-8 w-[160px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="PENDING">PENDING</SelectItem>
+                        <SelectItem value="CONTACTED">CONTACTED</SelectItem>
+                        <SelectItem value="CONVERTED">CONVERTED</SelectItem>
+                        <SelectItem value="REJECTED">REJECTED</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                  <TableCell>{new Date(lead.createdAt).toLocaleString()}</TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => alert(JSON.stringify(lead, null, 2))}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => handleDelete(lead.id)}>
+                        <Trash2 className="text-destructive h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+          </TableBody>
+        </Table>
+
+        {/* Pagination (simple) */}
+        <div className="mt-4 flex items-center justify-between">
+          <div>
+            {t('pagination.showing_range_results', {
+              from: (pagination.page - 1) * pagination.limit + 1,
+              to: Math.min(pagination.page * pagination.limit, pagination.total),
+              total: pagination.total,
+            })}
           </div>
-          <button
-            className="rounded border px-3 py-1 text-sm"
-            onClick={() => setPage((p) => p + 1)}
-            disabled={total !== null && page >= Math.ceil(total / limit)}
-          >
-            Next
-          </button>
+          <div className="flex items-center gap-2">
+            <Button disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
+              Prev
+            </Button>
+            <div>
+              Page {pagination.page} / {pagination.totalPages}
+            </div>
+            <Button
+              disabled={page >= (pagination.totalPages || 1)}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              Next
+            </Button>
+          </div>
         </div>
       </div>
     </div>

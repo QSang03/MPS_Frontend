@@ -2557,6 +2557,29 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
     ],
   },
   {
+    id: 'leads',
+    label: 'Khách hàng tiềm năng',
+    labelEn: 'Leads',
+    labelVi: 'Khách hàng tiềm năng',
+    icon: 'UserPlus',
+    route: '/system/leads',
+    requiredPermissions: withBasicPermissions([{ resource: 'leads', action: 'read' }]),
+    actions: [
+      {
+        id: 'update',
+        label: 'Chỉnh sửa lead',
+        icon: 'Edit',
+        requiredPermissions: withBasicPermissions([{ resource: 'leads', action: 'update' }]),
+      },
+      {
+        id: 'delete',
+        label: 'Xóa lead',
+        icon: 'Trash2',
+        requiredPermissions: withBasicPermissions([{ resource: 'leads', action: 'delete' }]),
+      },
+    ],
+  },
+  {
     id: 'policies',
     label: 'Quản lý policies',
     labelEn: 'Policies',
