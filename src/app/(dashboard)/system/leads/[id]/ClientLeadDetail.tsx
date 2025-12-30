@@ -99,7 +99,7 @@ export default function ClientLeadDetail({ id }: { id: string }) {
         </CardFooter>
       </Card>
     )
-  if (!data) return <div>No data</div>
+  if (!data) return <div>{t('empty.no_data.title') || 'No data'}</div>
 
   const lead = data as Lead
 
@@ -210,7 +210,7 @@ export default function ClientLeadDetail({ id }: { id: string }) {
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <div className="md:col-span-2">
             <div className="bg-muted-foreground/5 mb-4 rounded-md border px-4 py-3">
-              <h3 className="mb-2 font-medium">Message</h3>
+              <h3 className="mb-2 font-medium">{t('leads.message') || 'Message'}</h3>
               <div className="text-muted-foreground text-sm whitespace-pre-wrap">
                 {lead.message ? (
                   <div>{lead.message}</div>
@@ -308,7 +308,7 @@ export default function ClientLeadDetail({ id }: { id: string }) {
       <CardFooter>
         <div className="flex w-full items-center justify-between gap-2">
           <div className="text-muted-foreground text-sm">
-            ID: <code className="ml-1 font-mono text-xs">{lead.id}</code>
+            {t('leads.id_label') || 'ID'}: <code className="ml-1 font-mono text-xs">{lead.id}</code>
           </div>
           <div className="flex items-center gap-2">
             <Button size="sm" variant="ghost" onClick={copyId}>

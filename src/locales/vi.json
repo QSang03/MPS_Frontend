@@ -114,6 +114,8 @@
   "leads.confirm_title": "Xác nhận hành động",
   "leads.confirm_mark_contacted": "Đánh dấu lead này là đã liên hệ? Hành động không thể hoàn tác.",
   "leads.mark_contacted": "Đánh dấu đã liên hệ",
+  "leads.message": "Nội dung",
+  "leads.id_label": "ID",
   "leads.created": "Tạo lúc",
   "button.confirm": "Xác nhận",
   "button.back": "Quay lại",

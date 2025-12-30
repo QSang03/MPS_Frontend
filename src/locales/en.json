@@ -56,6 +56,8 @@
   "leads.confirm_title": "Confirm action",
   "leads.confirm_mark_contacted": "Mark this lead as contacted? This cannot be undone.",
   "leads.mark_contacted": "Mark contacted",
+  "leads.message": "Message",
+  "leads.id_label": "ID",
   "leads.created": "Created",
   "button.confirm": "Confirm",
   "button.back": "Back",
