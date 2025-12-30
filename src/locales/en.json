@@ -39,6 +39,8 @@
   "nav.policies": "Policy Management",
   "nav.system-settings": "System Settings",
   "nav.navigation-configs": "Navigation Config",
+  "nav.leads": "Leads",
+  "nav.leads_sub": "Manage inbound consultation leads",
   "system_settings.title": "Edit System Setting",
   "system_settings.description": "Update the value and description for this system setting",
   "system_settings.edit": "Edit",

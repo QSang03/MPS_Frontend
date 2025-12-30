@@ -2220,6 +2220,34 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
         },
       },
       {
+        id: 'system-leads',
+        label: 'Leads',
+        labelEn: 'Leads',
+        labelVi: 'Leads',
+        icon: 'UserPlus',
+        metadata: {
+          route: '/system/leads',
+          description: 'Quản lý khách hàng tiềm năng từ form liên hệ công khai',
+          descriptionEn: 'Manage inbound consultation leads submitted from the public form',
+          actions: [
+            {
+              id: 'mark-contacted',
+              label: 'Đánh dấu đã liên hệ',
+              labelEn: 'Mark contacted',
+              icon: 'Check',
+              requiredPermissions: withBasicPermissions([{ resource: 'leads', action: 'update' }]),
+            },
+            {
+              id: 'delete',
+              label: 'Xóa',
+              labelEn: 'Delete',
+              icon: 'Trash2',
+              requiredPermissions: withBasicPermissions([{ resource: 'leads', action: 'delete' }]),
+            },
+          ],
+        },
+      },
+      {
         id: 'update',
         label: 'Chỉnh sửa người dùng',
         icon: 'Edit',

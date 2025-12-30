@@ -98,6 +98,8 @@
   "nav.policies": "Quản lý policies",
   "nav.system-settings": "Cấu hình hệ thống",
   "nav.navigation-configs": "Cấu hình Navigation",
+  "nav.leads": "Leads",
+  "nav.leads_sub": "Quản lý khách hàng tiềm năng từ form liên hệ",
   "page.system_settings.subtitle": "Quản lý các cấu hình và thiết lập hệ thống",
   "nav.user-dashboard": "Tổng quan",
   "nav.user-devices": "Thiết bị",
