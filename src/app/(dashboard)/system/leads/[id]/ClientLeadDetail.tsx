@@ -43,7 +43,12 @@ export default function ClientLeadDetail({ id }: { id: string }) {
 
   const updateMutation = useMutation({
     mutationFn: (payload: Partial<Lead>) => leadsClientService.updateLead(id, payload),
-    onSuccess: () => {
+    onSuccess: (updatedLead: Lead) => {
+      try {
+        queryClient.setQueryData(['lead', id], updatedLead)
+      } catch {
+        // ignore cache set errors
+      }
       queryClient.invalidateQueries({ queryKey: ['leads'] })
       toast.success(t('leads.update_success') || 'Updated')
     },
