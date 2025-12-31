@@ -147,12 +147,12 @@ export function MonthlySeriesChart({
     },
     cogsRental: {
       label: t('dashboard.metrics.cogs_rental'),
-      color: 'var(--error-400)',
+      color: '#F97316',
       strokeWidth: 2,
     },
     cogsConsumable: {
       label: t('dashboard.metrics.cogs_consumable'),
-      color: 'var(--error-300)',
+      color: '#10B981',
       strokeWidth: 2,
     },
     cogsRepair: {
