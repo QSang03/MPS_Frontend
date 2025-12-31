@@ -346,34 +346,92 @@ export default function LandingPage() {
       </section>
 
       {/* Contact Section */}
-      <section className="flex flex-col items-center px-4 py-12 sm:px-10" id="contact">
-        <div className="flex w-full max-w-[960px] flex-col items-center gap-6 text-center">
-          <h2 className="text-3xl leading-tight font-bold text-[#0d121b] sm:text-4xl">
-            Liên hệ tư vấn
-          </h2>
-          <p className="max-w-xl text-lg text-[#4c669a]">
-            Để lại thông tin để nhận tư vấn miễn phí về giải pháp quản lý in ấn phù hợp với doanh
-            nghiệp của bạn.
-          </p>
-          <div className="mt-4 text-sm text-[#4c669a]">
-            <div>
-              Số điện thoại:{' '}
-              <a className="text-[#135bec] hover:underline" href="tel:0948275005">
-                0948275005
-              </a>
+      <section
+        id="contact"
+        className="flex items-center justify-center bg-[#f6f6f8] px-4 py-16 sm:py-16 md:py-12"
+      >
+        <div className="w-full max-w-[960px]">
+          <div className="grid items-center gap-6 md:grid-cols-2">
+            {/* Left: title + description */}
+            <div className="flex flex-col items-start justify-center">
+              <h2 className="text-[28px] font-extrabold text-[#111827] md:text-3xl">
+                Liên hệ tư vấn MPS
+              </h2>
+              <p className="mt-3 max-w-[520px] text-base text-[#4B5563]">
+                Để lại thông tin để nhận tư vấn miễn phí về giải pháp quản lý in ấn phù hợp với
+                doanh nghiệp của bạn.
+              </p>
             </div>
-            <div>
-              Email:{' '}
-              <a className="text-[#135bec] hover:underline" href="mailto:mps@chinhnhan.vn">
-                mps@chinhnhan.vn
-              </a>
+
+            {/* Right: contact block + CTA */}
+            <div className="flex justify-end">
+              <div className="w-full rounded-[16px] border border-[#E5E7EB] bg-[#F3F6FF] p-6 shadow-[0_8px_24px_rgba(16,24,40,0.06)] md:w-[420px] md:p-8">
+                <div className="flex flex-col gap-4">
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-3">
+                      <span className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-white text-[#135bec]">
+                        <svg
+                          className="h-5 w-5"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            d="M3 5.5A2.5 2.5 0 015.5 3h1A2.5 2.5 0 019 5.5v13A2.5 2.5 0 016.5 21h-1A2.5 2.5 0 013 18.5v-13z"
+                            stroke="#135bec"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </span>
+                      <a href="tel:0948275005" className="text-xl font-semibold text-[#111827]">
+                        0948 275 005
+                      </a>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-white text-[#111827]">
+                        <svg
+                          className="h-4 w-4"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            d="M3 8.5v7A2.5 2.5 0 005.5 18h13a2.5 2.5 0 002.5-2.5v-7"
+                            stroke="#111827"
+                            strokeWidth="1.2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                          <path
+                            d="M21 6.5l-9 6-9-6"
+                            stroke="#111827"
+                            strokeWidth="1.2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </span>
+                      <a href="mailto:mps@chinhnhan.vn" className="text-sm text-[#374151]">
+                        mps@chinhnhan.vn
+                      </a>
+                    </div>
+                  </div>
+
+                  <LeadModal>
+                    <button className="mt-1 w-full rounded-full bg-[#135bec] px-6 py-3 text-center text-base font-semibold text-white shadow-md transition-all hover:bg-[#0f4fc7]">
+                      Nhận tư vấn &amp; báo giá MPS miễn phí
+                    </button>
+                  </LeadModal>
+
+                  <p className="mt-2 text-center text-xs text-[#6B7280]">
+                    Phản hồi trong vòng 24 giờ làm việc.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
-          <LeadModal>
-            <button className="flex h-12 min-w-[200px] cursor-pointer items-center justify-center rounded-lg bg-[#135bec] px-6 text-base font-bold text-white shadow-lg transition-colors hover:bg-blue-700">
-              Nhận tư vấn &amp; báo giá MPS miễn phí
-            </button>
-          </LeadModal>
         </div>
       </section>
 
