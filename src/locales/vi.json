@@ -1318,6 +1318,7 @@
   "auth.password_label": "Mật khẩu",
   "auth.placeholder.email": "Nhập email",
   "auth.placeholder.password": "Nhập mật khẩu",
+  "auth.back_to_landing": "Quay về trang chính",
   "auth.forgot_password_link": "Quên mật khẩu?",
   "auth.login_action": "Đăng nhập",
   "auth.forgot_password.title": "Quên mật khẩu",

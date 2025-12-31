@@ -250,6 +250,15 @@ export default function LoginPage() {
               {isPending ? t('auth.sending') : t('auth.login_action')}
             </Button>
           </form>
+          <div className="mt-4 text-center">
+            <button
+              type="button"
+              onClick={() => router.push('/')}
+              className="text-sm text-[var(--brand-600)] hover:underline"
+            >
+              {t('auth.back_to_landing') || 'Back to landing page'}
+            </button>
+          </div>
         </CardContent>
       </Card>
     </motion.div>

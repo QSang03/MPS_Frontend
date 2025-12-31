@@ -1348,6 +1348,7 @@
   "auth.forgot_password.description": "Enter email to receive reset instructions",
   "auth.forgot_password.email_placeholder": "Enter email",
   "auth.forgot_password.submit": "Send instructions",
+  "auth.back_to_landing": "Back to landing page",
   "auth.reset_password.action": "Reset password",
   "auth.errors.invalid_token": "Invalid token",
   "auth.errors.required_fields": "Please fill in all fields",
