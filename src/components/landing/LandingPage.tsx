@@ -158,7 +158,7 @@ export default function LandingPage() {
               <div className="pt-4">
                 <LeadModal>
                   <button className="flex h-12 w-full cursor-pointer items-center justify-center rounded-lg bg-[#135bec] px-8 text-base leading-normal font-bold tracking-[0.015em] text-white shadow-lg transition-all hover:bg-blue-700 hover:shadow-xl sm:w-auto">
-                    <span>Nhận tư vấn &amp; báo giá MPS miễn phí</span>
+                    <span>Nhận tư vấn & báo giá MPS miễn phí</span>
                   </button>
                 </LeadModal>
               </div>
@@ -329,10 +329,10 @@ export default function LandingPage() {
             <div className="absolute bottom-0 left-0 -mb-16 -ml-16 h-64 w-64 rounded-full bg-[#135bec]/10 blur-3xl"></div>
 
             <h2 className="relative z-10 text-2xl leading-relaxed font-bold text-white sm:text-3xl md:text-4xl">
-              &quot;MPS = In bao nhiêu, trả bấy nhiêu <br className="hidden sm:block" />
+              "MPS = In bao nhiêu, trả bấy nhiêu <br className="hidden sm:block" />
               <span className="text-blue-400">Không lo mực</span> –{' '}
               <span className="text-blue-400">Không lo sửa</span> –{' '}
-              <span className="text-blue-400">Không gián đoạn</span>&quot;
+              <span className="text-blue-400">Không gián đoạn</span>"
             </h2>
           </div>
 
@@ -363,71 +363,106 @@ export default function LandingPage() {
               </p>
             </div>
 
-            {/* Right: contact block + CTA */}
+            {/* Right: contact block + CTA - Giao diện mới xịn hơn */}
             <div className="flex justify-end">
-              <div className="w-full rounded-[16px] border border-[#E5E7EB] bg-[#F3F6FF] p-6 shadow-[0_8px_24px_rgba(16,24,40,0.06)] md:w-[420px] md:p-8">
-                <div className="flex flex-col gap-4">
-                  <div className="flex flex-col gap-2">
-                    <div className="flex items-center gap-3">
-                      <span className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-white text-[#135bec]">
+              <div className="relative w-full overflow-hidden rounded-2xl border border-white/60 bg-white/80 p-6 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] backdrop-blur-xl md:w-[450px] md:p-8">
+                {/* Decorative gradients (Hiệu ứng nền loang màu mờ ảo) */}
+                <div className="absolute -top-10 -right-10 h-32 w-32 rounded-full bg-blue-500/10 blur-3xl"></div>
+                <div className="absolute -bottom-10 -left-10 h-32 w-32 rounded-full bg-purple-500/10 blur-3xl"></div>
+
+                <div className="relative flex flex-col gap-6">
+                  {/* Header nhỏ trong box */}
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900">Thông tin kết nối</h3>
+                    <p className="text-sm text-gray-500">Hỗ trợ kỹ thuật & Báo giá nhanh</p>
+                  </div>
+
+                  <div className="flex flex-col gap-3">
+                    {/* Phone Item */}
+                    <div className="group flex items-center gap-4 rounded-xl border border-gray-100 bg-white p-4 shadow-sm transition-all hover:border-blue-200 hover:shadow-md">
+                      <span className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-[#135bec] transition-colors group-hover:bg-[#135bec] group-hover:text-white">
                         <svg
-                          className="h-5 w-5"
+                          className="h-6 w-6"
                           viewBox="0 0 24 24"
                           fill="none"
                           xmlns="http://www.w3.org/2000/svg"
                         >
                           <path
                             d="M3 5.5A2.5 2.5 0 015.5 3h1A2.5 2.5 0 019 5.5v13A2.5 2.5 0 016.5 21h-1A2.5 2.5 0 013 18.5v-13z"
-                            stroke="#135bec"
+                            stroke="currentColor"
                             strokeWidth="1.5"
                             strokeLinecap="round"
                             strokeLinejoin="round"
                           />
                         </svg>
                       </span>
-                      <a href="tel:0948275005" className="text-xl font-semibold text-[#111827]">
-                        0948 275 005
-                      </a>
+                      <div className="flex flex-col">
+                        <span className="text-xs font-medium tracking-wide text-gray-500 uppercase">
+                          Hotline 24/7
+                        </span>
+                        <a
+                          href="tel:0948275005"
+                          className="text-xl font-bold text-[#111827] transition-colors hover:text-[#135bec]"
+                        >
+                          0948 275 005
+                        </a>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-white text-[#111827]">
+
+                    {/* Email Item */}
+                    <div className="group flex items-center gap-4 rounded-xl border border-gray-100 bg-white p-4 shadow-sm transition-all hover:border-blue-200 hover:shadow-md">
+                      <span className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-[#135bec] transition-colors group-hover:bg-[#135bec] group-hover:text-white">
                         <svg
-                          className="h-4 w-4"
+                          className="h-6 w-6"
                           viewBox="0 0 24 24"
                           fill="none"
                           xmlns="http://www.w3.org/2000/svg"
                         >
                           <path
                             d="M3 8.5v7A2.5 2.5 0 005.5 18h13a2.5 2.5 0 002.5-2.5v-7"
-                            stroke="#111827"
-                            strokeWidth="1.2"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
                             strokeLinecap="round"
                             strokeLinejoin="round"
                           />
                           <path
                             d="M21 6.5l-9 6-9-6"
-                            stroke="#111827"
-                            strokeWidth="1.2"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
                             strokeLinecap="round"
                             strokeLinejoin="round"
                           />
                         </svg>
                       </span>
-                      <a href="mailto:mps@chinhnhan.vn" className="text-sm text-[#374151]">
-                        mps@chinhnhan.vn
-                      </a>
+                      <div className="flex flex-col">
+                        <span className="text-xs font-medium tracking-wide text-gray-500 uppercase">
+                          Email hỗ trợ
+                        </span>
+                        <a
+                          href="mailto:mps@chinhnhan.vn"
+                          className="text-base font-semibold text-[#111827] transition-colors hover:text-[#135bec]"
+                        >
+                          mps@chinhnhan.vn
+                        </a>
+                      </div>
                     </div>
                   </div>
 
                   <LeadModal>
-                    <button className="mt-1 w-full rounded-full bg-[#135bec] px-6 py-3 text-center text-base font-semibold text-white shadow-md transition-all hover:bg-[#0f4fc7]">
-                      Nhận tư vấn &amp; báo giá MPS miễn phí
+                    <button className="relative w-full overflow-hidden rounded-xl bg-[#135bec] px-6 py-4 text-center text-base font-bold text-white shadow-lg shadow-blue-500/30 transition-all hover:-translate-y-0.5 hover:bg-[#0f4fc7] hover:shadow-blue-500/50">
+                      <span className="relative z-10">Nhận tư vấn & Báo giá MPS</span>
+                      {/* Shine effect overlay */}
+                      <div className="group-hover:animate-shimmer absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
                     </button>
                   </LeadModal>
 
-                  <p className="mt-2 text-center text-xs text-[#6B7280]">
-                    Phản hồi trong vòng 24 giờ làm việc.
-                  </p>
+                  <div className="flex items-center justify-center gap-2 text-center text-xs text-[#6B7280]">
+                    <span className="relative flex h-2 w-2">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
+                      <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500"></span>
+                    </span>
+                    Phản hồi nhanh trong vòng 24 giờ làm việc.
+                  </div>
                 </div>
               </div>
             </div>
