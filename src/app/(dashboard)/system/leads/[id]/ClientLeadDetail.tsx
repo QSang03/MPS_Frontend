@@ -33,6 +33,7 @@ export default function ClientLeadDetail({ id }: { id: string }) {
   const { t } = useLocale()
   const router = useRouter()
   const queryClient = useQueryClient()
+  const [expandedMessage, setExpandedMessage] = React.useState(false)
   // ConfirmDialog manages its own open state; no local confirmOpen needed
 
   const { data, isLoading } = useQuery({
@@ -191,10 +192,31 @@ export default function ClientLeadDetail({ id }: { id: string }) {
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <div className="md:col-span-2">
             <div className="bg-muted-foreground/5 mb-4 rounded-md border px-4 py-3">
-              <h3 className="mb-2 font-medium">{t('leads.message') || 'Message'}</h3>
-              <div className="text-muted-foreground text-sm whitespace-pre-wrap">
+              <div className="mb-2 flex items-center justify-between">
+                <h3 className="font-medium">{t('leads.message') || 'Message'}</h3>
+                {lead.message && lead.message.length > 400 ? (
+                  <button
+                    className="text-primary-foreground text-sm underline-offset-2 hover:underline"
+                    onClick={() => setExpandedMessage((s) => !s)}
+                  >
+                    {expandedMessage
+                      ? t('leads.show_less') || 'Show less'
+                      : t('leads.show_more') || 'Show more'}
+                  </button>
+                ) : null}
+              </div>
+
+              <div className="text-muted-foreground text-sm">
                 {lead.message ? (
-                  <div>{lead.message}</div>
+                  expandedMessage ? (
+                    <div className="whitespace-pre-wrap">{lead.message}</div>
+                  ) : (
+                    <div className="whitespace-pre-wrap">
+                      {lead.message.length > 400
+                        ? `${lead.message.slice(0, 400)}...`
+                        : lead.message}
+                    </div>
+                  )
                 ) : (
                   <div className="text-muted-foreground italic">
                     {t('leads.no_message') || 'No message'}
@@ -273,11 +295,10 @@ export default function ClientLeadDetail({ id }: { id: string }) {
 
       <CardFooter>
         <div className="flex w-full items-center justify-between gap-2">
-          <div className="text-muted-foreground text-sm">
-            {t('leads.id_label') || 'ID'}: <code className="ml-1 font-mono text-xs">{lead.id}</code>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button size="sm" variant="ghost" onClick={copyId}>
+          <div className="text-muted-foreground flex items-center gap-2 text-sm">
+            <span className="text-muted-foreground text-xs">{t('leads.id_label') || 'ID'}:</span>
+            <code className="font-mono text-xs">{lead.id}</code>
+            <Button size="icon" variant="ghost" className="ml-2" onClick={copyId}>
               <Copy className="size-4" />
             </Button>
           </div>

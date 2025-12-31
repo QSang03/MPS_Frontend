@@ -1,24 +1,24 @@
-'use client'
-
+import React from 'react'
 import ClientLeadDetail from './ClientLeadDetail'
-import { useLocale } from '@/components/providers/LocaleProvider'
+import LeadShowHeaderClient from './LeadShowHeaderClient'
 
-export default function LeadShowPage(props: unknown) {
-  const { t } = useLocale()
-  const id = (props as { params?: { id?: string } })?.params?.id
-  if (!id) {
-    return (
-      <div className="p-6">
-        <h1 className="mb-4 text-xl font-semibold">{t('leads.detail_title') || 'Lead details'}</h1>
-        <div>{t('leads.not_found') || 'Lead not found'}</div>
-      </div>
-    )
-  }
+type Params = { id?: string }
 
+function isPromise<T>(v: T | Promise<T>): v is Promise<T> {
+  return typeof (v as unknown as { then?: unknown }).then === 'function'
+}
+
+export default function LeadShowPage(props: { params?: Promise<Params> }) {
+  const rawParams = props.params as unknown
+  const params =
+    rawParams && isPromise(rawParams)
+      ? React.use(rawParams as Promise<Params>)
+      : (rawParams as Params | undefined)
+  const id = params?.id
   return (
     <div className="p-6">
-      <h1 className="mb-4 text-xl font-semibold">{t('leads.detail_title') || 'Lead details'}</h1>
-      <ClientLeadDetail id={id} />
+      <LeadShowHeaderClient id={id} />
+      {id ? <ClientLeadDetail id={id} /> : null}
     </div>
   )
 }
