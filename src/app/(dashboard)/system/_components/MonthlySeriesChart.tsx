@@ -117,7 +117,7 @@ export function MonthlySeriesChart({
   const METRIC_CONFIG = {
     totalRevenue: {
       label: t('dashboard.metrics.total_revenue'),
-      color: 'var(--color-success-500)',
+      color: '#2563EB',
       strokeWidth: 3,
     },
     revenueRental: {
