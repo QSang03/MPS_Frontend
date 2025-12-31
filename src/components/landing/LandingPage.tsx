@@ -355,6 +355,20 @@ export default function LandingPage() {
             Để lại thông tin để nhận tư vấn miễn phí về giải pháp quản lý in ấn phù hợp với doanh
             nghiệp của bạn.
           </p>
+          <div className="mt-4 text-sm text-[#4c669a]">
+            <div>
+              Số điện thoại:{' '}
+              <a className="text-[#135bec] hover:underline" href="tel:0948275005">
+                0948275005
+              </a>
+            </div>
+            <div>
+              Email:{' '}
+              <a className="text-[#135bec] hover:underline" href="mailto:mps@chinhnhan.vn">
+                mps@chinhnhan.vn
+              </a>
+            </div>
+          </div>
           <LeadModal>
             <button className="flex h-12 min-w-[200px] cursor-pointer items-center justify-center rounded-lg bg-[#135bec] px-6 text-base font-bold text-white shadow-lg transition-colors hover:bg-blue-700">
               Nhận tư vấn &amp; báo giá MPS miễn phí
@@ -385,7 +399,7 @@ export default function LandingPage() {
                   <rect width="12" height="8" x="6" y="14" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold text-[#0d121b]">MPS Services</h3>
+              <h3 className="text-xl font-bold text-[#0d121b]">MPS - CHÍNH NHÂN TECHNOLOGY</h3>
             </div>
             <div className="flex flex-wrap justify-center gap-8">
               <a
@@ -416,7 +430,9 @@ export default function LandingPage() {
           </div>
           <div className="border-t border-[#e7ebf3]"></div>
           <div className="flex flex-col items-center justify-between gap-4 text-center md:flex-row md:text-left">
-            <p className="text-sm text-[#9aaac8]">© 2024 MPS Services. All rights reserved.</p>
+            <p className="text-sm text-[#9aaac8]">
+              © 2026 MPS - CHÍNH NHÂN TECHNOLOGY. All rights reserved.
+            </p>
             <div className="flex gap-4">
               <a className="text-[#9aaac8] hover:text-[#135bec]" href="#">
                 <svg
