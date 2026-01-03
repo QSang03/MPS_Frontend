@@ -507,12 +507,7 @@ export default function LandingPage() {
               >
                 Dịch vụ
               </a>
-              <a
-                className="text-sm font-medium text-[#4c669a] transition-colors hover:text-[#135bec]"
-                href="#contact"
-              >
-                Báo giá
-              </a>
+
               <a
                 className="text-sm font-medium text-[#4c669a] transition-colors hover:text-[#135bec]"
                 href="#contact"
