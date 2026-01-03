@@ -473,7 +473,7 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="mt-auto border-t border-[#e7ebf3] bg-[#f8f9fc] py-12">
         <div className="mx-auto flex max-w-[960px] flex-col gap-8 px-10">
-          <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
+          <div className="flex flex-col items-center justify-between gap-6 md:flex-row md:gap-20">
             <div className="flex items-center gap-3">
               <div className="flex size-8 items-center justify-center text-[#135bec]">
                 <svg
