@@ -8,9 +8,14 @@ import {
   User,
   Settings,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Zap,
   LayoutDashboard,
   Printer,
+  Phone,
+  Mail,
+  Headphones,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useLocale } from '@/components/providers/LocaleProvider'
@@ -45,6 +50,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import { useCustomerManagers } from '@/lib/hooks/useCustomerManagers'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 // 'cn' helper removed from imports (not used here)
 
 interface NavbarProps {
@@ -62,9 +69,18 @@ export function Navbar({
   const pathname = usePathname()
   const { unreadCount, isUnreadCountLoading } = useNotifications({ initialUnreadCount })
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+  const [managerIndex, setManagerIndex] = useState(0)
 
   const currentMonth = new Date().toISOString().slice(0, 7)
   const { t } = useLocale()
+
+  // Check if user is on user-side routes (not system admin)
+  const isUserRoute = pathname?.startsWith('/user')
+
+  // Fetch customer managers only for user routes
+  const { data: customerManagers } = useCustomerManagers({
+    enabled: isUserRoute,
+  })
 
   // Start with a server-safe default to avoid SSR/client mismatch. Update
   // the value on the client after hydration. We defer the setState call
@@ -225,6 +241,110 @@ export function Navbar({
 
           {/* Right side - Actions */}
           <div className="flex items-center gap-1 md:gap-3">
+            {/* Customer Manager Info - Only show on user routes */}
+            {isUserRoute &&
+              customerManagers &&
+              customerManagers.length > 0 &&
+              (() => {
+                const managersPerPage = 2
+                const totalPages = Math.ceil(customerManagers.length / managersPerPage)
+                const startIdx = managerIndex * managersPerPage
+                const visibleManagers = customerManagers.slice(startIdx, startIdx + managersPerPage)
+                const canGoPrev = managerIndex > 0
+                const canGoNext = managerIndex < totalPages - 1
+
+                return (
+                  <TooltipProvider>
+                    <div className="hidden items-center gap-1 rounded-lg border border-[var(--brand-100)] bg-[var(--brand-50)] px-2 py-1.5 lg:flex">
+                      {/* Left arrow - only show if more than 2 managers */}
+                      {customerManagers.length > managersPerPage && (
+                        <button
+                          onClick={() => setManagerIndex((prev) => Math.max(0, prev - 1))}
+                          disabled={!canGoPrev}
+                          className={`rounded p-0.5 transition-colors ${canGoPrev ? 'text-[var(--brand-600)] hover:bg-[var(--brand-100)]' : 'cursor-not-allowed text-gray-300'}`}
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                        </button>
+                      )}
+
+                      <Headphones className="h-4 w-4 flex-shrink-0 text-[var(--brand-600)]" />
+                      <div className="flex items-center gap-2">
+                        {visibleManagers.map((manager, index) => (
+                          <div key={manager.id} className="flex items-center gap-2 text-xs">
+                            {index > 0 && <span className="text-gray-300">•</span>}
+                            {manager.fullName && (
+                              <span className="max-w-[100px] truncate font-semibold text-gray-700">
+                                {manager.fullName}
+                              </span>
+                            )}
+                            {manager.fullName && manager.email && (
+                              <span className="text-gray-400">|</span>
+                            )}
+                            {manager.email && (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <a
+                                    href={`mailto:${manager.email}`}
+                                    className="flex items-center gap-1 text-[var(--brand-600)] transition-colors hover:text-[var(--brand-700)]"
+                                  >
+                                    <Mail className="h-3 w-3" />
+                                    <span className="max-w-[120px] truncate">{manager.email}</span>
+                                  </a>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>
+                                    {t('navbar.customerManager.email')}: {manager.email}
+                                  </p>
+                                </TooltipContent>
+                              </Tooltip>
+                            )}
+                            {(manager.fullName || manager.email) && manager.phone && (
+                              <span className="text-gray-400">|</span>
+                            )}
+                            {manager.phone && (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <a
+                                    href={`tel:${manager.phone}`}
+                                    className="flex items-center gap-1 text-[var(--brand-600)] transition-colors hover:text-[var(--brand-700)]"
+                                  >
+                                    <Phone className="h-3 w-3" />
+                                    <span>{manager.phone}</span>
+                                  </a>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>
+                                    {t('navbar.customerManager.phone')}: {manager.phone}
+                                  </p>
+                                </TooltipContent>
+                              </Tooltip>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Right arrow - only show if more than 2 managers */}
+                      {customerManagers.length > managersPerPage && (
+                        <button
+                          onClick={() =>
+                            setManagerIndex((prev) => Math.min(totalPages - 1, prev + 1))
+                          }
+                          disabled={!canGoNext}
+                          className={`rounded p-0.5 transition-colors ${canGoNext ? 'text-[var(--brand-600)] hover:bg-[var(--brand-100)]' : 'cursor-not-allowed text-gray-300'}`}
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                  </TooltipProvider>
+                )
+              })()}
+
+            {/* Divider before language switcher - only show when customer manager is displayed */}
+            {isUserRoute && customerManagers && customerManagers.length > 0 && (
+              <div className="hidden h-6 w-px bg-gray-200 lg:block" />
+            )}
+
             <div className="hidden md:block">
               <LanguageSwitcher />
             </div>
