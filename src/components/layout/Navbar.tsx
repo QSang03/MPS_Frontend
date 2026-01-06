@@ -272,6 +272,15 @@ export function Navbar({
                         {visibleManagers.map((manager, index) => (
                           <div key={manager.id} className="flex items-center gap-2 text-xs">
                             {index > 0 && <span className="text-gray-300">•</span>}
+
+                            {/* Contact prompt shown immediately before the name when available */}
+                            {(manager.role || manager.phone) && (
+                              <span className="mr-1 text-xs font-medium whitespace-nowrap text-[var(--brand-700)]">
+                                Cần hỗ trợ? Liên hệ: {manager.role ? `${manager.role} : ` : ''}
+                                {manager.phone ?? ''}
+                              </span>
+                            )}
+
                             {manager.fullName && (
                               <span className="max-w-[100px] truncate font-semibold text-gray-700">
                                 {manager.fullName}

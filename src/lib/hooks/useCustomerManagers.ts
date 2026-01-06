@@ -15,6 +15,7 @@ export interface CustomerManager {
   email: string
   phone: string
   avatar?: string
+  role?: string
 }
 
 interface CustomerManagersResponse {
