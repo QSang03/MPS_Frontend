@@ -508,9 +508,8 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="technical">Technical</SelectItem>
-                      <SelectItem value="sale">Sales</SelectItem>
-                      <SelectItem value="dev">Dev</SelectItem>
+                      <SelectItem value="technical">Kỹ thuật</SelectItem>
+                      <SelectItem value="sale">Kinh doanh</SelectItem>
                     </SelectContent>
                   </Select>
                 </FormControl>

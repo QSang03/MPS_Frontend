@@ -20,6 +20,13 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { Loader2, User, Edit, Phone, Shield } from 'lucide-react'
 import type { UserProfile } from '@/types/auth'
@@ -237,11 +244,17 @@ export function EditProfileModal({
                       {t('user.field.role_attribute')}
                     </FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder={t('user.placeholder.role_attribute')}
-                        {...field}
-                        className="h-10 rounded-lg border-2 border-gray-200 text-base transition-all focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
-                      />
+                      <Select onValueChange={field.onChange} value={(field.value as string) || ''}>
+                        <FormControl>
+                          <SelectTrigger className="h-10 rounded-lg border-2 border-gray-200 text-base transition-all focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200">
+                            <SelectValue placeholder={t('user.placeholder.role_attribute')} />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="technical">Kỹ thuật</SelectItem>
+                          <SelectItem value="sale">Kinh doanh</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </FormControl>
                     <FormMessage className="mt-1 text-xs text-red-600" />
                   </FormItem>
