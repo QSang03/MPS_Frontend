@@ -66,7 +66,7 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
     defaultValues: {
       email: initialData?.email || '',
       fullName: initialData?.fullName || '',
-      phone: initialData?.phone || '',
+      phone: (initialData?.attributes as Record<string, any>)?.phone || initialData?.phone || '',
       roleAttribute: (initialData?.attributes as Record<string, any>)?.role || '',
       customerId: initialData?.customerId || customerId || '',
       roleId: initialData?.roleId || '',
@@ -360,7 +360,9 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
       attributes: {
         ...(attributeSchema ? attributes : {}),
         role: data.roleAttribute,
+        phone: data.phone,
       },
+      phone: undefined, // Remove top-level field if it was in schema
       roleAttribute: undefined, // Remove temporary field
     } as unknown as Record<string, unknown>)
 

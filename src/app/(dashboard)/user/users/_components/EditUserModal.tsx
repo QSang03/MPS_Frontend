@@ -23,11 +23,11 @@ import {
 } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Loader2, User, Mail } from 'lucide-react'
+import { Loader2, User, Mail, Shield } from 'lucide-react'
 import { usersClientService } from '@/lib/api/services/users-client.service'
 import { getRolesForClient } from '@/lib/auth/data-actions'
 import { useRoleAttributeSchema } from '@/lib/hooks/useRoleAttributeSchema'
-// Dynamic attributes fields component is not used here; import removed
+import { DynamicAttributesFields } from '@/components/shared/DynamicAttributesFields'
 import type { UserRole } from '@/types/users'
 import type { User as UserType } from '@/types/users'
 import { toast } from 'sonner'
@@ -38,6 +38,9 @@ import { useActionPermission } from '@/lib/hooks/useActionPermission'
 
 type EditUserFormData = {
   email: string
+  fullName: string
+  phone: string
+  roleAttribute: string
   roleId: string
   customerId?: string
   departmentId?: string
@@ -78,6 +81,14 @@ export function EditUserModal({
           .string()
           .min(1, t('validation.email_required'))
           .email(t('validation.email_invalid')),
+        fullName: z.string().min(1, t('user.field.fullName') + ' ' + t('common.is_required')),
+        phone: z
+          .string()
+          .min(1, t('user.field.phone') + ' ' + t('common.is_required'))
+          .regex(/^(0|\+84)[0-9]{9,10}$/, t('validation.phone_invalid')),
+        roleAttribute: z
+          .string()
+          .min(1, t('user.field.role_attribute') + ' ' + t('common.is_required')),
         roleId: z.string().min(1, t('validation.role_required')),
         customerId: z.string().optional(),
         departmentId: z.string().optional(),
@@ -89,6 +100,9 @@ export function EditUserModal({
     resolver: zodResolver(editUserSchema),
     defaultValues: {
       email: '',
+      fullName: '',
+      phone: '',
+      roleAttribute: '',
       roleId: '',
       customerId: '',
       departmentId: '',
@@ -100,8 +114,12 @@ export function EditUserModal({
   // Update form when user changes
   useEffect(() => {
     if (user) {
+      const attrs = (user.attributes as Record<string, any>) || {}
       form.reset({
         email: user.email,
+        fullName: user.fullName || '',
+        phone: attrs.phone || user.phone || '',
+        roleAttribute: attrs.role || '',
         roleId: user.roleId,
         customerId: user.customerId || '',
         departmentId: user.departmentId || '',
@@ -167,7 +185,13 @@ export function EditUserModal({
       // Build payload
       const payload: Record<string, unknown> = {
         email: data.email,
+        fullName: data.fullName,
         roleId: data.roleId,
+        attributes: {
+          ...(attributeSchema ? attributes : {}),
+          role: data.roleAttribute,
+          phone: data.phone,
+        },
       }
 
       if (customerIdToSend) {
@@ -177,8 +201,8 @@ export function EditUserModal({
       if (data.departmentId) {
         payload.departmentId = data.departmentId
       }
-      if (attributeSchema) {
-        payload.attributes = attributes
+      if (data.departmentId) {
+        payload.departmentId = data.departmentId
       }
       // Update user
       const updatedUser = await usersClientService.updateUser(user.id, payload)
@@ -215,7 +239,17 @@ export function EditUserModal({
                 if (field.startsWith('attributes.')) {
                   const key = field.replace(/^attributes\./, '')
                   setAttributeErrors((s) => ({ ...s, [key]: String(msg) }))
-                } else if (['email', 'roleId', 'customerId', 'departmentId'].includes(field)) {
+                } else if (
+                  [
+                    'email',
+                    'fullName',
+                    'phone',
+                    'roleAttribute',
+                    'roleId',
+                    'customerId',
+                    'departmentId',
+                  ].includes(field)
+                ) {
                   try {
                     form.setError(field as keyof EditUserFormData, {
                       type: 'server',
@@ -331,6 +365,61 @@ export function EditUserModal({
         <div className="bg-background space-y-5 px-6 py-6">
           <Form {...form}>
             <form id="edit-user-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+              {/* Full Name Field */}
+              <FormField
+                control={form.control}
+                name="fullName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2 text-sm font-medium">
+                      <User className="text-muted-foreground h-4 w-4" />
+                      {t('user.field.fullName')} <span className="text-muted-foreground">*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Input placeholder={t('user.placeholder.fullName')} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2 text-sm font-medium">
+                        <span className="text-lg">📞</span>
+                        {t('user.field.phone')} <span className="text-muted-foreground">*</span>
+                      </FormLabel>
+                      <FormControl>
+                        <Input placeholder={t('user.placeholder.phone')} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="roleAttribute"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2 text-sm font-medium">
+                        <Shield className="text-muted-foreground h-4 w-4" />
+                        {t('user.field.role_attribute')}{' '}
+                        <span className="text-muted-foreground">*</span>
+                      </FormLabel>
+                      <FormControl>
+                        <Input placeholder={t('user.placeholder.role_attribute')} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
               {/* Email Field */}
               <FormField
                 control={form.control}
@@ -385,6 +474,23 @@ export function EditUserModal({
                     </FormItem>
                   )}
                 />
+              )}
+
+              {/* Dynamic Attributes Fields (if any exist on the selected role) */}
+              {attributeSchema && (
+                <div className="space-y-4 rounded-lg border-2 border-dashed p-4">
+                  <h4 className="text-sm font-bold text-gray-700">
+                    {t('dynamic_attributes.title')}
+                  </h4>
+                  <DynamicAttributesFields
+                    schema={attributeSchema}
+                    values={attributes}
+                    onChange={setAttributes}
+                    disabled={isLoading}
+                    // Role and Phone are handled manually in the main form
+                    excludeKeys={['role', 'phone']}
+                  />
+                </div>
               )}
 
               {/* Info card */}

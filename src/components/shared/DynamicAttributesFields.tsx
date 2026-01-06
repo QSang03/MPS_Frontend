@@ -154,6 +154,7 @@ interface DynamicAttributesFieldsProps {
   onChange: (values: Record<string, unknown>) => void
   errors?: Record<string, string>
   disabled?: boolean
+  excludeKeys?: string[]
 }
 
 export function DynamicAttributesFields({
@@ -162,6 +163,7 @@ export function DynamicAttributesFields({
   onChange,
   errors = {},
   disabled,
+  excludeKeys = [],
 }: DynamicAttributesFieldsProps) {
   const { t } = useLocale()
 
@@ -186,17 +188,19 @@ export function DynamicAttributesFields({
       </div>
 
       <div className="space-y-4">
-        {Object.entries(schema).map(([fieldName, fieldSchema]) => (
-          <DynamicAttributeInput
-            key={fieldName}
-            fieldName={fieldName}
-            schema={fieldSchema}
-            value={values[fieldName]}
-            onChange={(value) => handleFieldChange(fieldName, value)}
-            error={errors[fieldName]}
-            disabled={disabled}
-          />
-        ))}
+        {Object.entries(schema)
+          .filter(([fieldName]) => !excludeKeys.includes(fieldName))
+          .map(([fieldName, fieldSchema]) => (
+            <DynamicAttributeInput
+              key={fieldName}
+              fieldName={fieldName}
+              schema={fieldSchema}
+              value={values[fieldName]}
+              onChange={(value) => handleFieldChange(fieldName, value)}
+              error={errors[fieldName]}
+              disabled={disabled}
+            />
+          ))}
       </div>
     </div>
   )

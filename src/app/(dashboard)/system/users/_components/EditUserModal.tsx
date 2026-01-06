@@ -35,6 +35,12 @@ import { toast } from 'sonner'
 // Default validation schema (English) for type inference
 export const editUserSchemaDefault = z.object({
   email: z.string().min(1, 'Email is required').email('Invalid email address'),
+  fullName: z.string().min(1, 'Full name is required'),
+  phone: z
+    .string()
+    .min(1, 'Phone is required')
+    .regex(/^(0|\+84)[0-9]{9,10}$/, 'Invalid phone format'),
+  roleAttribute: z.string().min(1, 'Department/Role is required'),
   roleId: z.string().min(1, 'Role is required'),
   customerId: z.string().min(1, 'Customer is required'),
 })
@@ -72,6 +78,14 @@ export function EditUserModal({
           .string()
           .min(1, t('validation.email_required'))
           .email(t('validation.email_invalid')),
+        fullName: z.string().min(1, t('user.field.fullName') + ' ' + t('common.is_required')),
+        phone: z
+          .string()
+          .min(1, t('user.field.phone') + ' ' + t('common.is_required'))
+          .regex(/^(0|\+84)[0-9]{9,10}$/, t('validation.phone_invalid')),
+        roleAttribute: z
+          .string()
+          .min(1, t('user.field.role_attribute') + ' ' + t('common.is_required')),
         roleId: z.string().min(1, t('validation.role_required')),
         customerId: z.string().min(1, t('validation.customer_required')),
       }),
@@ -82,6 +96,9 @@ export function EditUserModal({
     resolver: zodResolver(localEditUserSchema),
     defaultValues: {
       email: '',
+      fullName: '',
+      phone: '',
+      roleAttribute: '',
       roleId: '',
       customerId: '',
     },
@@ -178,8 +195,12 @@ export function EditUserModal({
   // Update form when user changes
   useEffect(() => {
     if (user) {
+      const attrs = (user.attributes as Record<string, any>) || {}
       form.reset({
         email: user.email,
+        fullName: user.fullName || '',
+        phone: attrs.phone || user.phone || '',
+        roleAttribute: attrs.role || '',
         roleId: user.roleId,
         customerId: user.customerId || '',
       })
@@ -213,10 +234,15 @@ export function EditUserModal({
       // Build payload and remove empty fields so server won't receive blank strings
       const payload = removeEmpty({
         email: data.email,
+        fullName: data.fullName,
         roleId: data.roleId,
         customerId: customerIdToSend,
         // only include attributes when the role defines a schema
-        attributes: attributeSchema ? attributes : undefined,
+        attributes: {
+          ...(attributeSchema ? attributes : {}),
+          role: data.roleAttribute,
+          phone: data.phone,
+        },
       })
 
       // Validate role restriction when switching from SYS to non-SYS
@@ -259,7 +285,11 @@ export function EditUserModal({
             }
 
             // Only set known top-level form fields
-            if (['email', 'roleId', 'customerId'].includes(field)) {
+            if (
+              ['email', 'fullName', 'phone', 'roleAttribute', 'roleId', 'customerId'].includes(
+                field
+              )
+            ) {
               form.setError(field as keyof EditUserFormData, { type: 'server', message })
             }
           })
@@ -328,6 +358,72 @@ export function EditUserModal({
           ) : null}
           <form id="edit-user-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
             {/* Email Field */}
+            <FormField
+              control={form.control}
+              name="fullName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-2 text-sm font-bold text-gray-800">
+                    <User className="h-4 w-4 text-[var(--brand-600)]" />
+                    {t('user.field.fullName')} <span className="text-muted-foreground">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder={t('user.placeholder.fullName')}
+                      {...field}
+                      className="h-10 rounded-lg border-2 border-gray-200 text-base transition-all focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)]"
+                    />
+                  </FormControl>
+                  <FormMessage className="mt-1 text-xs text-[var(--color-error-500)]" />
+                </FormItem>
+              )}
+            />
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2 text-sm font-bold text-gray-800">
+                      <span className="text-lg">📞</span>
+                      {t('user.field.phone')} <span className="text-muted-foreground">*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder={t('user.placeholder.phone')}
+                        {...field}
+                        className="h-10 rounded-lg border-2 border-gray-200 text-base transition-all focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)]"
+                      />
+                    </FormControl>
+                    <FormMessage className="mt-1 text-xs text-[var(--color-error-500)]" />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="roleAttribute"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2 text-sm font-bold text-gray-800">
+                      <Shield className="h-4 w-4 text-[var(--brand-600)]" />
+                      {t('user.field.role_attribute')}{' '}
+                      <span className="text-muted-foreground">*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder={t('user.placeholder.role_attribute')}
+                        {...field}
+                        className="h-10 rounded-lg border-2 border-gray-200 text-base transition-all focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)]"
+                      />
+                    </FormControl>
+                    <FormMessage className="mt-1 text-xs text-[var(--color-error-500)]" />
+                  </FormItem>
+                )}
+              />
+            </div>
+
             <FormField
               control={form.control}
               name="email"
@@ -436,6 +532,7 @@ export function EditUserModal({
                 onChange={setAttributes}
                 errors={attributeErrors}
                 disabled={isLoading}
+                excludeKeys={['role', 'phone']}
               />
             )}
 
