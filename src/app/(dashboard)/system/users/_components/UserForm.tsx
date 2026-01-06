@@ -66,8 +66,11 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
     defaultValues: {
       email: initialData?.email || '',
       fullName: initialData?.fullName || '',
-      phone: (initialData?.attributes as Record<string, any>)?.phone || initialData?.phone || '',
-      roleAttribute: (initialData?.attributes as Record<string, any>)?.role || '',
+      phone:
+        ((initialData?.attributes as Record<string, unknown>)?.phone as string) ||
+        initialData?.phone ||
+        '',
+      roleAttribute: ((initialData?.attributes as Record<string, unknown>)?.role as string) || '',
       customerId: initialData?.customerId || customerId || '',
       roleId: initialData?.roleId || '',
     },

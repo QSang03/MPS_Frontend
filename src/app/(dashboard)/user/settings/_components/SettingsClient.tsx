@@ -116,7 +116,7 @@ export function SettingsClient({ initialProfile, initialTab = 'account' }: Setti
     setIsLoading(true)
     setMessage(null)
 
-    const payload: Record<string, any> = {
+    const payload: Record<string, unknown> = {
       attributes: {
         fullName: attrName || undefined,
         phone: attrPhone || undefined,

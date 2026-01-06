@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic'
 import { NavigationProvider } from '@/contexts/NavigationContext'
 import { Navbar } from '@/components/layout/Navbar'
 import { SocketProvider } from '@/components/providers/SocketProvider'
+import ContactBox from '@/components/layout/ContactBox'
 import type { Session } from '@/types/auth'
 
 // Render sidebar only on the client to avoid SSR/client markup mismatches
@@ -29,6 +30,8 @@ export function ClientLayout({ children, session, initialUnreadCount }: ClientLa
             <main className="bg-muted/30 flex-1 overflow-y-auto p-4 md:p-6">{children}</main>
           </div>
         </div>
+        {/* Floating contact box for user routes */}
+        <ContactBox />
       </SocketProvider>
     </NavigationProvider>
   )

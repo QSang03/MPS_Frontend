@@ -75,13 +75,17 @@ export function EditProfileModal({
       form.reset({
         fullName:
           u.fullName ||
-          (attrs.fullName as string) ||
+          (attrs.fullName as string | undefined) ||
           u.name ||
-          (attrs.name as string) ||
-          (u as any).fullName ||
+          (attrs.name as string | undefined) ||
+          // fallback to any possible shape
+          ((u as unknown as Record<string, unknown>).fullName as string | undefined) ||
           '',
-        phone: (attrs.phone as string) || (u as any).phone || '',
-        role: (attrs.role as string) || '',
+        phone:
+          (attrs.phone as string | undefined) ||
+          ((u as unknown as Record<string, unknown>).phone as string | undefined) ||
+          '',
+        role: (attrs.role as string | undefined) || '',
       })
     }
   }, [profile, form])
@@ -91,7 +95,7 @@ export function EditProfileModal({
 
     setIsLoading(true)
     try {
-      const payload: Record<string, any> = {
+      const payload: Record<string, unknown> = {
         attributes: {
           fullName: data.fullName?.trim() || undefined,
           phone: data.phone?.trim() || undefined,

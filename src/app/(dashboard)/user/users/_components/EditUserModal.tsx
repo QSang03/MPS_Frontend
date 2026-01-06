@@ -114,13 +114,13 @@ export function EditUserModal({
   // Update form when user changes
   useEffect(() => {
     if (user) {
-      const attrs = (user.attributes as Record<string, any>) || {}
+      const attrs = (user.attributes as Record<string, unknown>) || {}
       setAttributes(user.attributes || {})
       form.reset({
         email: user.email,
-        fullName: attrs.name || user.fullName || '',
-        phone: attrs.phone || user.phone || '',
-        roleAttribute: attrs.role || '',
+        fullName: (attrs.name as string) || user.fullName || '',
+        phone: (attrs.phone as string) || user.phone || '',
+        roleAttribute: (attrs.role as string) || '',
         roleId: user.roleId,
         customerId: user.customerId || '',
         departmentId: user.departmentId || '',
