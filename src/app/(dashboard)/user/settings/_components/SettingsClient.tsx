@@ -64,6 +64,7 @@ export function SettingsClient({ initialProfile, initialTab = 'account' }: Setti
   // Use `attributes.name` and `attributes.phone` from the profile
   const [attrName, setAttrName] = useState('')
   const [attrPhone, setAttrPhone] = useState('')
+  const [attrRole, setAttrRole] = useState('')
 
   // Password states
   const [currentPassword, setCurrentPassword] = useState('')
@@ -92,6 +93,7 @@ export function SettingsClient({ initialProfile, initialTab = 'account' }: Setti
       const attrs = (profile.user.attributes as Record<string, unknown> | undefined) || {}
       setAttrName((attrs.name as string) || '')
       setAttrPhone((attrs.phone as string) || '')
+      setAttrRole((attrs.role as string) || '')
     }
   }, [profile])
 
@@ -116,6 +118,7 @@ export function SettingsClient({ initialProfile, initialTab = 'account' }: Setti
       attributes: {
         name: attrName || undefined,
         phone: attrPhone || undefined,
+        role: attrRole || undefined,
       } as unknown as UserProfile['user']['attributes'],
     }
 
@@ -394,12 +397,23 @@ export function SettingsClient({ initialProfile, initialTab = 'account' }: Setti
 
                 {/* Phone (attributes.phone) */}
                 <div className="space-y-2">
-                  <Label htmlFor="phone">{t('customer.detail.info.phone')}</Label>
+                  <Label htmlFor="phone">{t('user.field.phone')}</Label>
                   <Input
                     id="phone"
                     value={attrPhone}
                     onChange={(e) => setAttrPhone(e.target.value)}
-                    placeholder={t('customer.detail.info.phone')}
+                    placeholder={t('user.placeholder.phone')}
+                  />
+                </div>
+
+                {/* Role (attributes.role) */}
+                <div className="space-y-2">
+                  <Label htmlFor="role">{t('user.field.role_attribute')}</Label>
+                  <Input
+                    id="role"
+                    value={attrRole}
+                    onChange={(e) => setAttrRole(e.target.value)}
+                    placeholder={t('user.placeholder.role_attribute')}
                   />
                 </div>
               </div>
