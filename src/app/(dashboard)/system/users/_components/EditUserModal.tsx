@@ -196,16 +196,15 @@ export function EditUserModal({
   useEffect(() => {
     if (user) {
       const attrs = (user.attributes as Record<string, any>) || {}
+      setAttributes(attrs)
       form.reset({
         email: user.email,
-        fullName: user.fullName || '',
+        fullName: attrs.name || user.fullName || '',
         phone: attrs.phone || user.phone || '',
         roleAttribute: attrs.role || '',
         roleId: user.roleId,
         customerId: user.customerId || '',
       })
-      // ensure attributes state tracks the current user when opening edit modal
-      setAttributes(user.attributes || {})
     }
   }, [user, form])
 
@@ -234,7 +233,7 @@ export function EditUserModal({
       // Build payload and remove empty fields so server won't receive blank strings
       const payload = removeEmpty({
         email: data.email,
-        fullName: data.fullName,
+        name: data.fullName, // Map fullName to name
         roleId: data.roleId,
         customerId: customerIdToSend,
         // only include attributes when the role defines a schema

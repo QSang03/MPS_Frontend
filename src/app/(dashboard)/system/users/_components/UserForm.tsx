@@ -357,6 +357,8 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
     // Remove empty fields so backend won't receive blank strings
     const payload = removeEmpty({
       ...data,
+      name: data.fullName, // Map fullName to name
+      fullName: undefined, // Remove fullName from top-level
       attributes: {
         ...(attributeSchema ? attributes : {}),
         role: data.roleAttribute,

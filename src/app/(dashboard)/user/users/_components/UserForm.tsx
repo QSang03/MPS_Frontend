@@ -288,6 +288,8 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
 
     const payload = removeEmpty({
       ...data,
+      name: data.fullName, // Map fullName to name
+      fullName: undefined, // Remove top-level
       attributes: {
         ...(attributeSchema ? attributes : {}),
         role: data.roleAttribute,

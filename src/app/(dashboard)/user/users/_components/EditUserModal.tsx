@@ -115,17 +115,16 @@ export function EditUserModal({
   useEffect(() => {
     if (user) {
       const attrs = (user.attributes as Record<string, any>) || {}
+      setAttributes(user.attributes || {})
       form.reset({
         email: user.email,
-        fullName: user.fullName || '',
+        fullName: attrs.name || user.fullName || '',
         phone: attrs.phone || user.phone || '',
         roleAttribute: attrs.role || '',
         roleId: user.roleId,
         customerId: user.customerId || '',
         departmentId: user.departmentId || '',
       })
-      // ensure attributes state tracks the current user when opening edit modal
-      setAttributes(user.attributes || {})
     }
   }, [user, form])
 
@@ -185,7 +184,7 @@ export function EditUserModal({
       // Build payload
       const payload: Record<string, unknown> = {
         email: data.email,
-        fullName: data.fullName,
+        name: data.fullName, // Map fullName to name
         roleId: data.roleId,
         attributes: {
           ...(attributeSchema ? attributes : {}),
