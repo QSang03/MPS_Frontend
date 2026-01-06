@@ -66,6 +66,8 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
     defaultValues: {
       email: initialData?.email || '',
       fullName: initialData?.fullName || '',
+      phone: initialData?.phone || '',
+      roleAttribute: (initialData?.attributes as Record<string, any>)?.role || '',
       customerId: initialData?.customerId || customerId || '',
       roleId: initialData?.roleId || '',
     },
@@ -355,7 +357,11 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
     // Remove empty fields so backend won't receive blank strings
     const payload = removeEmpty({
       ...data,
-      attributes: attributeSchema ? attributes : undefined,
+      attributes: {
+        ...(attributeSchema ? attributes : {}),
+        role: data.roleAttribute,
+      },
+      roleAttribute: undefined, // Remove temporary field
     } as unknown as Record<string, unknown>)
 
     if (mode === 'create') {
@@ -444,25 +450,63 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
               </FormItem>
             )}
           />
+
+          <FormField
+            control={form.control}
+            name="phone"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('user.field.phone')}</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder={t('user.placeholder.phone')}
+                    {...field}
+                    disabled={isPending}
+                  />
+                </FormControl>
+                <FormDescription>{t('user.field.phone_description')}</FormDescription>
+              </FormItem>
+            )}
+          />
         </div>
 
-        <FormField
-          control={form.control}
-          name="fullName"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t('user.form.full_name')}</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder={t('user.placeholder.fullName')}
-                  {...field}
-                  disabled={isPending}
-                />
-              </FormControl>
-              <FormDescription>{t('user.form.full_name_description')}</FormDescription>
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <FormField
+            control={form.control}
+            name="fullName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('user.form.full_name')}</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder={t('user.placeholder.fullName')}
+                    {...field}
+                    disabled={isPending}
+                  />
+                </FormControl>
+                <FormDescription>{t('user.form.full_name_description')}</FormDescription>
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="roleAttribute"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('user.field.role_attribute')}</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder={t('user.placeholder.role_attribute')}
+                    {...field}
+                    disabled={isPending}
+                  />
+                </FormControl>
+                <FormDescription>{t('user.field.role_attribute_description')}</FormDescription>
+              </FormItem>
+            )}
+          />
+        </div>
 
         <FormField
           control={form.control}

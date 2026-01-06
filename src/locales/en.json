@@ -285,7 +285,12 @@
   "user.field.fullName": "Full name",
   "user.placeholder.fullName": "Enter full name",
   "user.placeholder.phone": "Enter phone number",
+  "user.placeholder.role_attribute": "e.g. Technical, Sales...",
   "user.field.fullName_description": "User's full name",
+  "user.field.phone": "Phone number",
+  "user.field.phone_description": "Contact phone number",
+  "user.field.role_attribute": "Department / Job role",
+  "user.field.role_attribute_description": "Working position or professional department",
   "user.field.role": "Role",
   "user.roles.loading": "Loading roles...",
   "user.roles.no_roles": "No permission to view roles",
@@ -3340,7 +3345,6 @@
   "consumable_types.import.button": "Import Excel",
   "consumable_types.actions.bulk_assign": "Bulk assign consumables",
   "consumable_types.actions.create": "Add consumable type",
-
   "consumable_types.filters.search_label": "Search: \"{term}\"",
   "consumable_types.stock.update_success": "Stock information updated",
   "consumable_types.stock.update_error": "Failed to update stock",
@@ -3355,7 +3359,6 @@
   "consumable_types.filter.title": "Filters & Search",
   "consumable_types.filter.subtitle": "Search consumable types",
   "consumable_types.search.placeholder": "Search consumable types...",
-
   "consumable_types.form.create_success": "Consumable type created",
   "consumable_types.form.update_success": "Consumable type updated",
   "consumable_types.form.save_error": "Failed to save consumable type",
@@ -3363,7 +3366,6 @@
   "consumable_types.form.title_edit": "Edit consumable type",
   "consumable_types.form.description_create": "Add a new consumable type to the system",
   "consumable_types.form.description_edit": "Update consumable type information",
-
   "consumable_type.section.basic_info": "Basic information",
   "consumable_type.field.name": "Name of consumable type *",
   "consumable_type.field.unit": "Unit",
@@ -3389,7 +3391,6 @@
   "consumable_types.table.delete_error": "Failed to delete consumable type",
   "consumable_types.table.delete_confirm_title": "Delete consumable type",
   "consumable_types.table.delete_confirm_description": "Confirm delete consumable type \"{name}\"?",
-
   "consumable_types.import.errors.no_file": "Please select a file",
   "consumable_types.import.errors.failed": "Failed to import file",
   "consumable_types.import.success": "Import successful",
@@ -3447,7 +3448,6 @@
   "navigation_config.delete_success": "Navigation config deleted successfully",
   "navigation_config.delete_error": "Failed to delete navigation config",
   "navigation_config.confirm_delete": "Are you sure you want to delete navigation config \"{name}\"?",
-
   "navigation_config.empty": "No navigation configs",
   "navigation_config.fields.name": "Name",
   "navigation_config.fields.description": "Description",
@@ -3460,7 +3460,6 @@
   "navigation_config.default_display": "Default (null)",
   "navigation_config.active": "Active",
   "navigation_config.inactive": "Inactive",
-
   "navigation_config.placeholder.name": "main-navigation",
   "navigation_config.placeholder.description": "Description about this navigation config",
   "navigation_config.placeholder.customer_select": "Select customer (leave empty = default)",
@@ -3471,7 +3470,6 @@
   "navigation_config.helper.roles_create": "You do not have permission to view roles so you cannot create a new config",
   "navigation_config.fields.is_active": "Active",
   "navigation_config.helper.is_active": "Only active configs are available for use",
-
   "navigation_config.items.title": "Navigation Items",
   "navigation_config.items.description": "Select which navigation items should be visible for this customer",
   "navigation_config.actions.disable_all": "Disable all",
@@ -3620,7 +3618,6 @@
   "user.information_description": "Fill in detailed information to create a user account",
   "common.warning": "Warning",
   "user.role_invalid_sys_to_customer_warning": "Warning: Current role is not valid when switching from SYS customer to another customer. Please select Manager or User role to continue.",
-
   "nav.print-page-report": "Print Page Report",
   "print_page_report.list_title": "Print Page Reports",
   "print_page_report.list_subtitle": "Generate and manage print page usage reports",

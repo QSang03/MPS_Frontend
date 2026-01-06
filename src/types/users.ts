@@ -54,7 +54,7 @@ export interface User {
   username?: string
   fullName?: string
   isActive?: boolean
-  phoneNumber?: string
+  phone?: string
   attributes: {
     customField?: string
     [key: string]: unknown

@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Loader2, User, Edit, Phone } from 'lucide-react'
+import { Loader2, User, Edit, Phone, Shield } from 'lucide-react'
 import type { UserProfile } from '@/types/auth'
 import internalApiClient from '@/lib/api/internal-client'
 import { toast } from 'sonner'
@@ -29,8 +29,15 @@ import { useLocale } from '@/components/providers/LocaleProvider'
 
 // Validation schema for editing profile
 const editProfileSchema = z.object({
-  name: z.string().optional(),
-  phone: z.string().optional(),
+  name: z.string().min(1, 'Họ tên là bắt buộc'),
+  phone: z
+    .string()
+    .min(1, 'Số điện thoại là bắt buộc')
+    .regex(
+      /^(0|\+84)[0-9]{9,10}$/,
+      'Số điện thoại không hợp lệ (VD: 0912345678 hoặc +84912345678)'
+    ),
+  role: z.string().min(1, 'Bộ phận/Vai trò công việc là bắt buộc'),
 })
 
 type EditProfileFormData = z.infer<typeof editProfileSchema>
@@ -56,6 +63,7 @@ export function EditProfileModal({
     defaultValues: {
       name: '',
       phone: '',
+      role: '',
     },
   })
 
@@ -66,6 +74,7 @@ export function EditProfileModal({
       form.reset({
         name: (attrs.name as string) || '',
         phone: (attrs.phone as string) || '',
+        role: (attrs.role as string) || '',
       })
     }
   }, [profile, form])
@@ -79,6 +88,7 @@ export function EditProfileModal({
         attributes: {
           name: data.name?.trim() || undefined,
           phone: data.phone?.trim() || undefined,
+          role: data.role?.trim() || undefined,
         },
       }
 
@@ -111,7 +121,7 @@ export function EditProfileModal({
         if (errorData.errors && typeof errorData.errors === 'object') {
           Object.entries(errorData.errors).forEach(([field, messages]) => {
             const message = Array.isArray(messages) ? String(messages[0]) : String(messages)
-            if (['name', 'phone'].includes(field)) {
+            if (['name', 'phone', 'role'].includes(field)) {
               form.setError(field as keyof EditProfileFormData, { type: 'server', message })
             }
           })
@@ -197,6 +207,28 @@ export function EditProfileModal({
                         placeholder={t('user.placeholder.phone')}
                         {...field}
                         className="h-10 rounded-lg border-2 border-gray-200 text-base transition-all focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)]"
+                      />
+                    </FormControl>
+                    <FormMessage className="mt-1 text-xs text-red-600" />
+                  </FormItem>
+                )}
+              />
+
+              {/* Role Field (attributes.role) */}
+              <FormField
+                control={form.control}
+                name="role"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2 text-sm font-bold text-gray-800">
+                      <Shield className="h-4 w-4 text-emerald-600" />
+                      {t('user.field.role_attribute')}
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder={t('user.placeholder.role_attribute')}
+                        {...field}
+                        className="h-10 rounded-lg border-2 border-gray-200 text-base transition-all focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
                       />
                     </FormControl>
                     <FormMessage className="mt-1 text-xs text-red-600" />

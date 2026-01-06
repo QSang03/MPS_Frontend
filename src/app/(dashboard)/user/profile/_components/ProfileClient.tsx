@@ -254,6 +254,16 @@ export function ProfileClient({ initialProfile }: ProfileClientProps) {
                       {(attributes && (attributes.phone as string)) || t('profile.not_updated')}
                     </div>
                   </div>
+
+                  {/* Role Attribute (attributes.role) */}
+                  <div className="space-y-2">
+                    <Label htmlFor="roleAttribute" className="text-sm font-bold text-gray-700">
+                      🎭 {t('user.field.role_attribute')}
+                    </Label>
+                    <div className="flex-1 rounded-2xl border-2 border-gray-200 bg-gray-50 px-3 py-2 text-gray-700">
+                      {(attributes && (attributes.role as string)) || t('profile.not_updated')}
+                    </div>
+                  </div>
                 </div>
               </div>
 

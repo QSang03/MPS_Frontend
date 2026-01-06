@@ -20,6 +20,14 @@ export const userSchema = z.object({
     .min(1, 'Họ tên là bắt buộc')
     .min(2, 'Họ tên phải có ít nhất 2 ký tự')
     .max(100, 'Họ tên không được quá 100 ký tự'),
+  phone: z
+    .string()
+    .min(1, 'Số điện thoại là bắt buộc')
+    .regex(
+      /^(0|\+84)[0-9]{9,10}$/,
+      'Số điện thoại không hợp lệ (VD: 0912345678 hoặc +84912345678)'
+    ),
+  roleAttribute: z.string().min(1, 'Bộ phận/Vai trò công việc là bắt buộc'),
   roleId: z.string().min(1, 'Vai trò là bắt buộc'),
   departmentId: z.string().optional(),
   // The customer the user belongs to (optional for system admins)
