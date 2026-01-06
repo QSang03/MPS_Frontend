@@ -391,7 +391,10 @@ export function EditUserModal({
                       <span className="text-muted-foreground">*</span>
                     </FormLabel>
                     <FormControl>
-                      <Select onValueChange={field.onChange} value={(field.value as string) || ''}>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={(field.value as string) || ''}
+                      >
                         <FormControl>
                           <SelectTrigger className="h-10 rounded-lg border-2 border-gray-200 transition-all focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)]">
                             <SelectValue placeholder={t('user.placeholder.role_attribute')} />
