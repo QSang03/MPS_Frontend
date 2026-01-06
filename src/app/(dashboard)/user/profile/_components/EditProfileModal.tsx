@@ -29,7 +29,7 @@ import { useLocale } from '@/components/providers/LocaleProvider'
 
 // Validation schema for editing profile
 const editProfileSchema = z.object({
-  name: z.string().min(1, 'Họ tên là bắt buộc'),
+  fullName: z.string().min(1, 'Họ tên là bắt buộc'),
   phone: z
     .string()
     .min(1, 'Số điện thoại là bắt buộc')
@@ -61,7 +61,7 @@ export function EditProfileModal({
   const form = useForm<EditProfileFormData>({
     resolver: zodResolver(editProfileSchema),
     defaultValues: {
-      name: '',
+      fullName: '',
       phone: '',
       role: '',
     },
@@ -70,10 +70,17 @@ export function EditProfileModal({
   // Update form when profile changes
   useEffect(() => {
     if (profile?.user) {
-      const attrs = (profile.user.attributes as Record<string, unknown> | undefined) || {}
+      const u = profile.user
+      const attrs = (u.attributes as Record<string, unknown> | undefined) || {}
       form.reset({
-        name: (attrs.name as string) || '',
-        phone: (attrs.phone as string) || '',
+        fullName:
+          u.fullName ||
+          (attrs.fullName as string) ||
+          u.name ||
+          (attrs.name as string) ||
+          (u as any).fullName ||
+          '',
+        phone: (attrs.phone as string) || (u as any).phone || '',
         role: (attrs.role as string) || '',
       })
     }
@@ -84,9 +91,9 @@ export function EditProfileModal({
 
     setIsLoading(true)
     try {
-      const payload = {
+      const payload: Record<string, any> = {
         attributes: {
-          name: data.name?.trim() || undefined,
+          fullName: data.fullName?.trim() || undefined,
           phone: data.phone?.trim() || undefined,
           role: data.role?.trim() || undefined,
         },
@@ -99,6 +106,7 @@ export function EditProfileModal({
           ([, value]) => value !== undefined && String(value).trim() !== ''
         )
       )
+
       const cleanedPayload: Record<string, unknown> = {}
       if (Object.keys(cleanedAttrs).length) cleanedPayload.attributes = cleanedAttrs
 
@@ -173,7 +181,7 @@ export function EditProfileModal({
               {/* Name Field (attributes.name) */}
               <FormField
                 control={form.control}
-                name="name"
+                name="fullName"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center gap-2 text-sm font-bold text-gray-800">

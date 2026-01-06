@@ -25,7 +25,8 @@ import {
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Loader2, User, Mail, Shield } from 'lucide-react'
-import { getRolesForClient, updateUserForClient } from '@/lib/auth/data-actions'
+import { getRolesForClient } from '@/lib/auth/data-actions'
+import { usersClientService } from '@/lib/api/services/users-client.service'
 import { useRoleAttributeSchema } from '@/lib/hooks/useRoleAttributeSchema'
 import { DynamicAttributesFields } from '@/components/shared/DynamicAttributesFields'
 import removeEmpty from '@/lib/utils/clean'
@@ -233,7 +234,7 @@ export function EditUserModal({
       // Build payload and remove empty fields so server won't receive blank strings
       const payload = removeEmpty({
         email: data.email,
-        name: data.fullName, // Map fullName to name
+        fullName: data.fullName, // Map fullName to fullName (reverted from name)
         roleId: data.roleId,
         customerId: customerIdToSend,
         // only include attributes when the role defines a schema
@@ -252,63 +253,37 @@ export function EditUserModal({
       }
 
       // Update user
-      const result = await updateUserForClient(user.id, payload)
+      const result = await usersClientService.updateUser(user.id, payload)
 
-      // If backend returned the updated user object -> success
-      const isUser =
-        result && typeof result === 'object' && 'id' in (result as Record<string, unknown>)
+      toast.success(t('user.update_success'))
+      onUserUpdated(result)
+      onClose()
+    } catch (error: any) {
+      console.error('Update user failed:', error)
+      const data = error.responseData
+      const message = error.message || t('user.update_error')
 
-      if (isUser) {
-        const updatedUser = result as UserType
-        toast.success(t('user.update_success'))
-        onUserUpdated(updatedUser)
-        onClose()
-      } else {
-        // Handle structured error payload from backend (validation / 409)
-        const err = result as unknown
-        // Map field errors to react-hook-form if possible
-        if (
-          err &&
-          typeof err === 'object' &&
-          'errors' in err &&
-          typeof (err as Record<string, unknown>).errors === 'object'
-        ) {
-          const errorsObj = (err as Record<string, unknown>).errors as Record<string, unknown>
-          Object.entries(errorsObj).forEach(([field, messages]) => {
-            const message = Array.isArray(messages) ? String(messages[0]) : String(messages)
-            // Map to attribute errors if field targets attributes (e.g. attributes.x)
-            if (typeof field === 'string' && field.startsWith('attributes.')) {
-              const key = field.replace(/^attributes\./, '')
-              setAttributeErrors((s) => ({ ...s, [key]: message }))
-              return
-            }
-
-            // Only set known top-level form fields
+      if (data && typeof data === 'object') {
+        const errObj = data as Record<string, any>
+        if (errObj.errors && Array.isArray(errObj.errors)) {
+          errObj.errors.forEach((e: any) => {
+            const field = e.field
+            const msg = e.message
             if (
               ['email', 'fullName', 'phone', 'roleAttribute', 'roleId', 'customerId'].includes(
                 field
               )
             ) {
-              form.setError(field as keyof EditUserFormData, { type: 'server', message })
+              form.setError(field as keyof EditUserFormData, { type: 'server', message: msg })
             }
           })
           toast.error(t('validation.fields_error'))
-        } else if (err && typeof err === 'object' && 'message' in err) {
-          toast.error(String((err as { message?: string } | undefined)?.message ?? ''))
-        } else if (
-          err &&
-          typeof err === 'object' &&
-          'authExpired' in err &&
-          (err as { authExpired?: boolean } | undefined)?.authExpired
-        ) {
-          toast.error(t('error.auth_expired'))
         } else {
-          toast.error(t('user.update_error'))
+          toast.error(message)
         }
+      } else {
+        toast.error(message)
       }
-    } catch (error) {
-      console.error('Error updating user:', error)
-      toast.error(t('user.update_error'))
     } finally {
       setIsLoading(false)
     }

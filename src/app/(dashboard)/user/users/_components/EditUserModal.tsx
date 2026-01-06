@@ -184,7 +184,7 @@ export function EditUserModal({
       // Build payload
       const payload: Record<string, unknown> = {
         email: data.email,
-        name: data.fullName, // Map fullName to name
+        fullName: data.fullName, // Map fullName to fullName (reverted from name)
         roleId: data.roleId,
         attributes: {
           ...(attributeSchema ? attributes : {}),

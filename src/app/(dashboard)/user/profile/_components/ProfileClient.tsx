@@ -235,13 +235,17 @@ export function ProfileClient({ initialProfile }: ProfileClientProps) {
                     </div>
                   </div>
 
-                  {/* Name (attributes.name) */}
+                  {/* Name (user.name or attributes.name) */}
                   <div className="space-y-2">
                     <Label htmlFor="name" className="text-sm font-bold text-gray-700">
                       📝 {t('profile.basic.name')}
                     </Label>
                     <div className="flex-1 rounded-2xl border-2 border-gray-200 bg-gray-50 px-3 py-2 text-gray-700">
-                      {(attributes && (attributes.name as string)) || t('profile.not_updated')}
+                      {user.fullName ||
+                        (attributes && (attributes.fullName as string)) ||
+                        user.name ||
+                        (attributes && (attributes.name as string)) ||
+                        t('profile.not_updated')}
                     </div>
                   </div>
 

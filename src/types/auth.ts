@@ -93,6 +93,8 @@ export interface UserProfile {
     email: string
     role: UserRoleData
     username?: string
+    name?: string
+    fullName?: string
     firstName?: string
     lastName?: string
     avatar?: string

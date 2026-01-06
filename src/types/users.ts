@@ -53,6 +53,7 @@ export interface User {
   password: string
   username?: string
   fullName?: string
+  name?: string
   isActive?: boolean
   phone?: string
   attributes: {

@@ -90,8 +90,11 @@ export function SettingsClient({ initialProfile, initialTab = 'account' }: Setti
 
   useEffect(() => {
     if (profile) {
-      const attrs = (profile.user.attributes as Record<string, unknown> | undefined) || {}
-      setAttrName((attrs.name as string) || '')
+      const u = profile.user
+      const attrs = (u.attributes as Record<string, unknown> | undefined) || {}
+      setAttrName(
+        u.fullName || (attrs.fullName as string) || u.name || (attrs.name as string) || ''
+      )
       setAttrPhone((attrs.phone as string) || '')
       setAttrRole((attrs.role as string) || '')
     }
@@ -113,13 +116,12 @@ export function SettingsClient({ initialProfile, initialTab = 'account' }: Setti
     setIsLoading(true)
     setMessage(null)
 
-    const payload: Partial<UserProfile['user']> = {
-      // Only send attributes supported by the API
+    const payload: Record<string, any> = {
       attributes: {
-        name: attrName || undefined,
+        fullName: attrName || undefined,
         phone: attrPhone || undefined,
         role: attrRole || undefined,
-      } as unknown as UserProfile['user']['attributes'],
+      },
     }
 
     try {
