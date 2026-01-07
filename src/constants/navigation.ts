@@ -843,6 +843,17 @@ export const USER_NAVIGATION_PAYLOAD: NavItemPayload[] = [
           resources: [{ resource: 'reports.print-page.export-xlsx', action: 'create' }],
         },
       },
+      {
+        id: 'void-print-page-report',
+        label: 'Hủy báo cáo',
+        labelEn: 'Void report',
+        labelVi: 'Hủy báo cáo',
+        icon: 'Ban',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'reports.print-page.void', action: 'create' }],
+        },
+      },
     ],
   },
 ]

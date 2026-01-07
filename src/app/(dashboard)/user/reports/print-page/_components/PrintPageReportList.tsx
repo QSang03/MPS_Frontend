@@ -59,6 +59,7 @@ import type {
 import type { Customer } from '@/types/models/customer'
 import type { ListPagination } from '@/types/api'
 import { MonthPicker } from '@/components/ui/month-picker'
+import { ActionGuard } from '@/components/shared/ActionGuard'
 import { PrintPageReportGenerateDialog } from '@/app/(dashboard)/user/reports/print-page/_components/PrintPageReportGenerateDialog'
 import { LoadingState } from '@/components/ui/LoadingState'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -286,10 +287,12 @@ export function PrintPageReportList() {
                 : t('print_page_report.list_subtitle')}
             </CardDescription>
           </div>
-          <Button onClick={() => setIsGenerateOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            {t('print_page_report.generate_report')}
-          </Button>
+          <ActionGuard pageId="print-page-report" actionId="generate-print-page-report">
+            <Button onClick={() => setIsGenerateOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              {t('print_page_report.generate_report')}
+            </Button>
+          </ActionGuard>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -358,22 +361,32 @@ export function PrintPageReportList() {
                                 </Link>
                               </DropdownMenuItem>
                               {report.status !== 'VOID' && (!report.xlsxUrl || !report.pdfUrl) && (
-                                <DropdownMenuItem onClick={() => handleGenerateFiles(report)}>
-                                  <Download className="mr-2 h-4 w-4" />
-                                  {t('print_page_report.actions.generate_report_files')}
-                                </DropdownMenuItem>
+                                <ActionGuard
+                                  pageId="print-page-report"
+                                  actionId="export-print-page-report"
+                                >
+                                  <DropdownMenuItem onClick={() => handleGenerateFiles(report)}>
+                                    <Download className="mr-2 h-4 w-4" />
+                                    {t('print_page_report.actions.generate_report_files')}
+                                  </DropdownMenuItem>
+                                </ActionGuard>
                               )}
                               {report.xlsxUrl && (
-                                <DropdownMenuItem asChild>
-                                  <a
-                                    href={report.xlsxUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                  >
-                                    <FileSpreadsheet className="mr-2 h-4 w-4" />
-                                    {t('print_page_report.actions.download_xlsx')}
-                                  </a>
-                                </DropdownMenuItem>
+                                <ActionGuard
+                                  pageId="print-page-report"
+                                  actionId="export-print-page-report"
+                                >
+                                  <DropdownMenuItem asChild>
+                                    <a
+                                      href={report.xlsxUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                    >
+                                      <FileSpreadsheet className="mr-2 h-4 w-4" />
+                                      {t('print_page_report.actions.download_xlsx')}
+                                    </a>
+                                  </DropdownMenuItem>
+                                </ActionGuard>
                               )}
                               {report.pdfUrl && (
                                 <DropdownMenuItem asChild>
@@ -384,13 +397,18 @@ export function PrintPageReportList() {
                                 </DropdownMenuItem>
                               )}
                               {report.status === 'DRAFT' && (
-                                <DropdownMenuItem
-                                  className="text-destructive"
-                                  onClick={() => openVoidDialog(report)}
+                                <ActionGuard
+                                  pageId="print-page-report"
+                                  actionId="void-print-page-report"
                                 >
-                                  <Ban className="mr-2 h-4 w-4" />
-                                  {t('print_page_report.actions.void')}
-                                </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    className="text-destructive"
+                                    onClick={() => openVoidDialog(report)}
+                                  >
+                                    <Ban className="mr-2 h-4 w-4" />
+                                    {t('print_page_report.actions.void')}
+                                  </DropdownMenuItem>
+                                </ActionGuard>
                               )}
                             </DropdownMenuContent>
                           </DropdownMenu>

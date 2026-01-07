@@ -20,6 +20,7 @@ import { formatDate, formatNumber } from '@/lib/utils/formatters'
 import { printPageReportsClientService } from '@/lib/api/services/print-page-reports-client.service'
 import type { PrintPageReport, PrintPageReportStatus } from '@/types/models/print-page-report'
 import { LoadingState } from '@/components/ui/LoadingState'
+import { ActionGuard } from '@/components/shared/ActionGuard'
 import Link from 'next/link'
 
 function getStatusBadgeVariant(status: PrintPageReportStatus) {
@@ -127,43 +128,51 @@ export function PrintPageReportDetail() {
           </Link>
         </Button>
         <div className="flex gap-2">
-          {report.xlsxUrl && (
-            <Button variant="outline" asChild>
-              <a href={report.xlsxUrl} target="_blank" rel="noopener noreferrer">
-                <FileSpreadsheet className="mr-2 h-4 w-4" />
-                {t('print_page_report.actions.download_xlsx')}
-              </a>
-            </Button>
-          )}
-          {report.pdfUrl && (
-            <Button variant="outline" asChild>
-              <a href={report.pdfUrl} target="_blank" rel="noopener noreferrer">
-                <FileText className="mr-2 h-4 w-4" />
-                {t('print_page_report.actions.view_pdf')}
-              </a>
-            </Button>
-          )}
-          {report.status !== 'VOID' && (!report.xlsxUrl || !report.pdfUrl) && (
-            <Button onClick={handleGenerateFiles} disabled={isExporting}>
-              {isExporting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {t('print_page_report.exporting')}
-                </>
-              ) : (
-                <>
-                  <Download className="mr-2 h-4 w-4" />
-                  {t('print_page_report.actions.generate_report_files')}
-                </>
-              )}
-            </Button>
-          )}
-          {report.status === 'DRAFT' && (
-            <Button variant="destructive">
-              <Ban className="mr-2 h-4 w-4" />
-              {t('print_page_report.actions.void')}
-            </Button>
-          )}
+          <ActionGuard pageId="print-page-report" actionId="export-print-page-report">
+            {report.xlsxUrl && (
+              <Button variant="outline" asChild>
+                <a href={report.xlsxUrl} target="_blank" rel="noopener noreferrer">
+                  <FileSpreadsheet className="mr-2 h-4 w-4" />
+                  {t('print_page_report.actions.download_xlsx')}
+                </a>
+              </Button>
+            )}
+          </ActionGuard>
+          <ActionGuard pageId="print-page-report" actionId="export-print-page-report">
+            {report.pdfUrl && (
+              <Button variant="outline" asChild>
+                <a href={report.pdfUrl} target="_blank" rel="noopener noreferrer">
+                  <FileText className="mr-2 h-4 w-4" />
+                  {t('print_page_report.actions.view_pdf')}
+                </a>
+              </Button>
+            )}
+          </ActionGuard>
+          <ActionGuard pageId="print-page-report" actionId="export-print-page-report">
+            {report.status !== 'VOID' && (!report.xlsxUrl || !report.pdfUrl) && (
+              <Button onClick={handleGenerateFiles} disabled={isExporting}>
+                {isExporting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {t('print_page_report.exporting')}
+                  </>
+                ) : (
+                  <>
+                    <Download className="mr-2 h-4 w-4" />
+                    {t('print_page_report.actions.generate_report_files')}
+                  </>
+                )}
+              </Button>
+            )}
+          </ActionGuard>
+          <ActionGuard pageId="print-page-report" actionId="void-print-page-report">
+            {report.status === 'DRAFT' && (
+              <Button variant="destructive">
+                <Ban className="mr-2 h-4 w-4" />
+                {t('print_page_report.actions.void')}
+              </Button>
+            )}
+          </ActionGuard>
         </div>
       </div>
 
