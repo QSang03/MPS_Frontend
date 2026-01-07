@@ -438,6 +438,11 @@ export function ModernSidebar({ session }: SidebarProps) {
                 title: translateOr('nav.contracts', 'Contracts'),
                 ids: ['user-contracts'],
               },
+              {
+                key: 'reports',
+                title: translateOr('nav.reports', 'Reports'),
+                ids: ['print-page-report'],
+              },
             ]
 
             // Prefer user sections only when role is 'user'; tránh lẫn route user trong payload SYS
@@ -469,6 +474,7 @@ export function ModernSidebar({ session }: SidebarProps) {
                 if (h.startsWith('/user/consumables') || h.startsWith('/user/warehouse-documents'))
                   return 'consumables'
                 if (h.startsWith('/user/contracts')) return 'contracts'
+                if (h.startsWith('/system/reports/print-page')) return 'reports'
               } else {
                 if (h === '/system' || h.startsWith('/system/dashboard')) return 'overview'
                 if (h.startsWith('/system/devices') || h.startsWith('/system/device-models'))
