@@ -798,7 +798,7 @@ export const USER_NAVIGATION_PAYLOAD: NavItemPayload[] = [
     labelEn: 'Print Page Report',
     labelVi: 'Báo cáo trang in',
     icon: 'FileSpreadsheet',
-    route: '/system/reports/print-page',
+    route: '/user/reports/print-page',
     description: 'Tạo và quản lý báo cáo sử dụng trang in theo kỳ thanh toán',
     descriptionEn: 'Generate and manage print page usage reports for billing periods',
     descriptionVi: 'Tạo và quản lý báo cáo sử dụng trang in theo kỳ thanh toán',

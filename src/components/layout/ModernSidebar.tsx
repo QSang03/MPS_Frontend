@@ -474,7 +474,7 @@ export function ModernSidebar({ session }: SidebarProps) {
                 if (h.startsWith('/user/consumables') || h.startsWith('/user/warehouse-documents'))
                   return 'consumables'
                 if (h.startsWith('/user/contracts')) return 'contracts'
-                if (h.startsWith('/system/reports/print-page')) return 'reports'
+                if (h.startsWith('/user/reports/print-page')) return 'reports'
               } else {
                 if (h === '/system' || h.startsWith('/system/dashboard')) return 'overview'
                 if (h.startsWith('/system/devices') || h.startsWith('/system/device-models'))
