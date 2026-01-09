@@ -234,4 +234,13 @@ export const API_ENDPOINTS = {
     DELETE: (id: string) => `/navigation-config/${id}`,
     BY_NAME: (name: string) => `/navigation-config/name/${encodeURIComponent(name)}`,
   },
+
+  // Collectors
+  COLLECTORS: {
+    LIST: '/collectors',
+    DETAIL: (id: string) => `/collectors/${id}`,
+    CREATE: '/collectors',
+    DELETE: (id: string) => `/collectors/${id}`,
+    DOWNLOAD: (id: string) => `/collectors/${id}/download`,
+  },
 } as const

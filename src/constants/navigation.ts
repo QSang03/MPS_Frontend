@@ -2920,4 +2920,90 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
       },
     ],
   },
+  {
+    id: 'collectors',
+    label: 'Quản lý Collector',
+    labelEn: 'Collectors',
+    labelVi: 'Quản lý Collector',
+    icon: 'Server',
+    route: '/system/collectors',
+    description: 'Quản lý các bản build collector cho khách hàng',
+    descriptionEn: 'Manage collector builds for customers',
+    descriptionVi: 'Quản lý các bản build collector cho khách hàng',
+    requiredPermissions: withBasicPermissions([
+      { resource: 'collectors', action: 'read' },
+      { resource: 'customers', action: 'read' },
+    ]),
+    actions: [
+      {
+        id: 'create',
+        label: 'Tạo collector build',
+        labelEn: 'Create collector build',
+        labelVi: 'Tạo collector build',
+        icon: 'Plus',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [
+            { resource: 'collectors', action: 'create' },
+            { resource: 'customers', action: 'read' },
+          ],
+        },
+      },
+      {
+        id: 'view-detail',
+        label: 'Xem chi tiết collector',
+        labelEn: 'View collector detail',
+        labelVi: 'Xem chi tiết collector',
+        icon: 'Eye',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'collectors', action: 'read' }],
+        },
+      },
+      {
+        id: 'download',
+        label: 'Tải collector',
+        labelEn: 'Download collector',
+        labelVi: 'Tải collector',
+        icon: 'Download',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'collectors.download', action: 'read' }],
+        },
+      },
+      {
+        id: 'delete',
+        label: 'Xóa collector',
+        labelEn: 'Delete collector',
+        labelVi: 'Xóa collector',
+        icon: 'Trash2',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'collectors', action: 'delete' }],
+        },
+      },
+      {
+        id: 'filter-by-customer',
+        label: 'Lọc theo khách hàng',
+        labelEn: 'Filter by customer',
+        labelVi: 'Lọc theo khách hàng',
+        icon: 'Filter',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'customers', action: 'read' }],
+        },
+      },
+      {
+        id: 'filter-by-status',
+        label: 'Lọc theo trạng thái build',
+        labelEn: 'Filter by build status',
+        labelVi: 'Lọc theo trạng thái build',
+        icon: 'Filter',
+        requiredPermissions: {
+          strategy: 'all',
+          resources: [{ resource: 'collectors', action: 'read' }],
+        },
+      },
+    ],
+  },
 ]
