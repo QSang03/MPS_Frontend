@@ -23,6 +23,15 @@ import { cn } from '@/lib/utils'
 import { getPublicUrl } from '@/lib/utils/publicUrl'
 import { useLocale } from '@/components/providers/LocaleProvider'
 import { ActionGuard } from '@/components/shared/ActionGuard'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogClose,
+} from '@/components/ui/dialog'
 
 interface InvoicesListProps {
   customerId: string
@@ -45,6 +54,8 @@ export function InvoicesList({ customerId, contractId }: InvoicesListProps) {
     total: number
     totalPages: number
   } | null>(null)
+  const [selectedInvoice, setSelectedInvoice] = useState<any | null>(null)
+  const [detailOpen, setDetailOpen] = useState(false)
 
   const formatDate = (value?: string | null) => {
     if (!value) return '—'
@@ -290,9 +301,16 @@ export function InvoicesList({ customerId, contractId }: InvoicesListProps) {
                                   variant="secondary"
                                   size="sm"
                                   className="h-8 w-8 cursor-pointer p-0"
-                                  onClick={() => {
-                                    // TODO: Open invoice detail modal
-                                    console.log('View invoice:', invoice.invoiceId)
+                                  onClick={async () => {
+                                    try {
+                                      const detail = await invoicesClientService.getById(
+                                        invoice.invoiceId
+                                      )
+                                      setSelectedInvoice(detail)
+                                      setDetailOpen(true)
+                                    } catch (err) {
+                                      console.error('Load invoice detail failed', err)
+                                    }
                                   }}
                                   aria-label={t('invoices.action.view')}
                                 >
@@ -395,6 +413,60 @@ export function InvoicesList({ customerId, contractId }: InvoicesListProps) {
           </>
         )}
       </CardContent>
+      {/* Invoice detail dialog */}
+      <Dialog open={detailOpen} onOpenChange={(open) => setDetailOpen(open)}>
+        <DialogContent showCloseButton>
+          <DialogHeader>
+            <DialogTitle>{t('invoices.detail.title') || 'Invoice detail'}</DialogTitle>
+            <DialogDescription>
+              {selectedInvoice ? selectedInvoice.invoiceNumber : '—'}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="mt-4 space-y-2 text-sm text-slate-700">
+            {selectedInvoice ? (
+              <>
+                <div>
+                  <strong>{t('invoices.table.number')}: </strong>
+                  {selectedInvoice.invoiceNumber}
+                </div>
+                <div>
+                  <strong>{t('invoices.table.period')}: </strong>
+                  {selectedInvoice.periodStart} — {selectedInvoice.periodEnd}
+                </div>
+                <div>
+                  <strong>{t('invoices.table.billing_date')}: </strong>
+                  {selectedInvoice.billingDate || '—'}
+                </div>
+                <div>
+                  <strong>{t('invoices.table.total')}: </strong>
+                  {selectedInvoice.totalAmount}
+                </div>
+                {selectedInvoice.pdfUrl && (
+                  <div className="pt-2">
+                    <a
+                      className="text-emerald-600 underline"
+                      href={getPublicUrl(selectedInvoice.pdfUrl) ?? selectedInvoice.pdfUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      {t('invoices.action.download_pdf')}
+                    </a>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div>{t('common.loading')}</div>
+            )}
+          </div>
+
+          <DialogFooter className="mt-4">
+            <DialogClose className="rounded bg-slate-100 px-3 py-1">
+              {t('common.close') || 'Close'}
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   )
 }

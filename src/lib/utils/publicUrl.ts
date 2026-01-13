@@ -9,6 +9,10 @@ export function getPublicUrl(pathOrUrl?: string | null): string | null {
     if (/^https?:\/\//i.test(pathOrUrl)) {
       try {
         const u = new URL(pathOrUrl)
+        // If the resource lives under mps-uploads (public uploads), don't proxy via /api/backend
+        if (u.pathname.startsWith('/mps-uploads')) {
+          return `${u.pathname}${u.search}`
+        }
         return `/api/backend${u.pathname}${u.search}`
       } catch {
         return pathOrUrl
@@ -16,6 +20,11 @@ export function getPublicUrl(pathOrUrl?: string | null): string | null {
     }
 
     // If path starts with a slash, proxy directly
+    // If the path is for public uploads, return it directly (no backend proxy)
+    if (pathOrUrl.startsWith('/mps-uploads')) {
+      return pathOrUrl
+    }
+
     if (pathOrUrl.startsWith('/')) {
       return `/api/backend${pathOrUrl}`
     }
