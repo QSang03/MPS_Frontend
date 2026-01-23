@@ -517,6 +517,21 @@ function UsersTableContent({
         enableSorting: false,
       },
       {
+        id: 'attributesRole',
+        header: () => (
+          <div className="flex items-center gap-2">
+            <Users className="h-4 w-4 text-gray-600" />
+            {t('user.role')} <span className="text-xs text-gray-400">(attributes)</span>
+          </div>
+        ),
+        cell: ({ row }) => (
+          <Badge variant="outline" className="font-mono text-xs">
+            {row.original.attributes?.role || '—'}
+          </Badge>
+        ),
+        enableSorting: false,
+      },
+      {
         accessorKey: 'createdAt',
         enableSorting: true,
         header: () => (
