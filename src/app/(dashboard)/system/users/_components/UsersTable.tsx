@@ -524,11 +524,14 @@ function UsersTableContent({
             {t('user.role')} <span className="text-xs text-gray-400">(attributes)</span>
           </div>
         ),
-        cell: ({ row }) => (
-          <Badge variant="outline" className="font-mono text-xs">
-            {row.original.attributes?.role || '—'}
-          </Badge>
-        ),
+        cell: ({ row }) => {
+          const attrRole = row.original.attributes?.role ?? '—'
+          return (
+            <Badge variant="outline" className="font-mono text-xs">
+              {String(attrRole)}
+            </Badge>
+          )
+        },
         enableSorting: false,
       },
       {
