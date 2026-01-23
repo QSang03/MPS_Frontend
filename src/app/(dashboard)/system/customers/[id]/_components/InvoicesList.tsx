@@ -18,7 +18,7 @@ import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { invoicesClientService } from '@/lib/api/services/invoices-client.service'
-import type { InvoiceListItem, InvoiceStatus } from '@/types/models/invoice'
+import type { Invoice, InvoiceListItem, InvoiceStatus } from '@/types/models/invoice'
 import { cn } from '@/lib/utils'
 import { getPublicUrl } from '@/lib/utils/publicUrl'
 import { useLocale } from '@/components/providers/LocaleProvider'
@@ -54,7 +54,7 @@ export function InvoicesList({ customerId, contractId }: InvoicesListProps) {
     total: number
     totalPages: number
   } | null>(null)
-  const [selectedInvoice, setSelectedInvoice] = useState<any | null>(null)
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
 
   const formatDate = (value?: string | null) => {
