@@ -8,7 +8,7 @@ export default function WarehouseDocumentsPageClient() {
   const { t } = useLocale()
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 sm:space-y-4 md:space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">{t('page.warehouseDocuments.user_title')}</h1>

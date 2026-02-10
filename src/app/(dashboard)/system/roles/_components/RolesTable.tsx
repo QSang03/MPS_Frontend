@@ -158,7 +158,7 @@ export function RolesTable({ onCreateTrigger, onCreateTriggerReset }: RolesTable
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 sm:space-y-4 md:space-y-6">
       <FilterSection
         title={t('roles.filter.title')}
         subtitle={t('roles.filter.subtitle')}

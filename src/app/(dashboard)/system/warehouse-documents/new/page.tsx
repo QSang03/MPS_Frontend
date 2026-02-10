@@ -12,7 +12,7 @@ export default async function NewWarehouseDocumentPage() {
   if (!session && DEV_BYPASS_AUTH) session = getDevSession('sys-admin')
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 sm:space-y-4 md:space-y-6">
       <NewWarehouseDocumentHeaderClient />
       <Card>
         <NewWarehouseDocumentFormHeaderClient />

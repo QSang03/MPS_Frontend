@@ -55,9 +55,9 @@ export default function DashboardClient({
 
   if (query.isError) {
     return (
-      <div className="space-y-6 p-6">
+      <div className="space-y-4 p-2 sm:space-y-6 sm:p-4 md:p-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">{pageTitle}</h1>
+          <h1 className="text-lg font-bold sm:text-xl md:text-2xl">{pageTitle}</h1>
         </div>
 
         <EmptyState
@@ -70,9 +70,9 @@ export default function DashboardClient({
   }
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">{pageTitle}</h1>
+    <div className="space-y-4 p-2 sm:space-y-6 sm:p-4 md:p-6">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="text-lg font-bold sm:text-xl md:text-2xl">{pageTitle}</h1>
       </div>
 
       <DateRangeSelector defaultMonth={month} onChange={(m) => setMonth(m)} />
@@ -87,7 +87,7 @@ export default function DashboardClient({
         onContractsClick={() => setContractsModalOpen(true)}
       />
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-3 sm:gap-4 md:gap-3 md:gap-6 lg:grid-cols-2">
         <MonthlySeriesChart
           monthlySeries={overviewData?.monthlySeries}
           isLoading={query.isLoading}
@@ -99,7 +99,7 @@ export default function DashboardClient({
         />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-3 sm:gap-4 md:gap-3 md:gap-6 lg:grid-cols-2">
         <AlertsSummary
           kpis={overviewData?.kpis}
           isLoading={query.isLoading}

@@ -447,7 +447,11 @@ export default function NavigationConfigFormModal({ config, open, onOpenChange, 
           </>
         }
       >
-        <form id="navigation-config-form" onSubmit={handleSubmit} className="space-y-6">
+        <form
+          id="navigation-config-form"
+          onSubmit={handleSubmit}
+          className="space-y-3 sm:space-y-4 md:space-y-6"
+        >
           {/* Name */}
           <div className="space-y-2">
             <Label htmlFor="name">

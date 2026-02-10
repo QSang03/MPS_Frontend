@@ -470,7 +470,7 @@ export default function UsagePageClient() {
   ])
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 sm:space-y-4 md:space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">{t('analytics.title')}</h2>
       </div>
@@ -717,8 +717,8 @@ export default function UsagePageClient() {
 
               {/* Customers Chart */}
               {customersData.length > 0 && (
-                <div className="mb-6 w-full" style={{ height: 400 }}>
-                  <ResponsiveContainer width="100%" height={400}>
+                <div className="mb-6 h-[250px] w-full sm:h-[320px] md:h-[400px]">
+                  <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                       data={customersData.slice(0, 10).map((c) => ({
                         name: c.name.length > 15 ? c.name.substring(0, 15) + '...' : c.name,
@@ -923,10 +923,9 @@ export default function UsagePageClient() {
                           return (
                             <ChartContainer
                               config={chartConfig}
-                              className="w-full"
-                              style={{ height: 400 }}
+                              className="h-[250px] w-full sm:h-[320px] md:h-[400px]"
                             >
-                              <ResponsiveContainer width="100%" height={400}>
+                              <ResponsiveContainer width="100%" height="100%">
                                 <BarChart
                                   accessibilityLayer
                                   data={[single]}
@@ -1028,10 +1027,9 @@ export default function UsagePageClient() {
                         return (
                           <ChartContainer
                             config={chartConfig}
-                            className="w-full"
-                            style={{ height: 400 }}
+                            className="h-[250px] w-full sm:h-[320px] md:h-[400px]"
                           >
-                            <ResponsiveContainer width="100%" height={400}>
+                            <ResponsiveContainer width="100%" height="100%">
                               <BarChart
                                 accessibilityLayer
                                 data={chartData}
@@ -1117,8 +1115,8 @@ export default function UsagePageClient() {
 
                   {/* Right Column: Device Breakdown Chart */}
                   {customerDetailData.devices.length > 0 && (
-                    <div className="w-full" style={{ height: 400 }}>
-                      <ResponsiveContainer width="100%" height={400}>
+                    <div className="h-[250px] w-full sm:h-[320px] md:h-[400px]">
+                      <ResponsiveContainer width="100%" height="100%">
                         <BarChart
                           data={customerDetailData.devices.map((d) => ({
                             name: d.model || d.serialNumber || 'Unknown',
@@ -1270,8 +1268,8 @@ export default function UsagePageClient() {
                 ) : (
                   <>
                     {/* Bar Chart */}
-                    <div className="mb-6 w-full" style={{ height: 400 }}>
-                      <ResponsiveContainer width="100%" height={400}>
+                    <div className="mb-6 h-[250px] w-full sm:h-[320px] md:h-[400px]">
+                      <ResponsiveContainer width="100%" height="100%">
                         <BarChart
                           data={deviceData.usage.map((u) => ({
                             month: u.month,

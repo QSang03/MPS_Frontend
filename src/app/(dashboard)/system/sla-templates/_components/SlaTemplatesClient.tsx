@@ -210,7 +210,7 @@ export default function SlaTemplatesClient({ session }: { session?: Session | nu
   }, [search, sorting, t])
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 sm:space-y-4 md:space-y-6">
       <SystemPageHeader
         title={t('page.sla.title')}
         subtitle={t('page.sla.subtitle')}

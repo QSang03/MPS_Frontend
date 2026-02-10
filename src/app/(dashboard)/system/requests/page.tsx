@@ -52,7 +52,7 @@ export default function RequestsPage() {
 
       <Separator className="my-4" />
 
-      <Tabs defaultValue="service" className="space-y-6">
+      <Tabs defaultValue="service" className="space-y-3 sm:space-y-4 md:space-y-6">
         {/* Tabs List với style hiện đại hơn */}
         <div>
           <TabsList className="bg-muted inline-flex h-10 items-center justify-start rounded-lg p-1">

@@ -88,9 +88,12 @@ export function ServiceRequestForm({ customerId, onSuccess }: ServiceRequestForm
 
   return (
     <div className="bg-card text-card-foreground rounded-lg border shadow-sm">
-      <div className="p-6">
+      <div className="p-3 sm:p-4 md:p-6">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-3 sm:space-y-4 md:space-y-6"
+          >
             {/* Hidden Customer ID */}
             <FormField
               control={form.control}

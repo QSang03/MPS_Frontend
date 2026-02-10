@@ -35,7 +35,7 @@ export function NotificationPanel({ children }: NotificationPanelProps) {
   return (
     <Popover open={isPanelOpen} onOpenChange={setIsPanelOpen}>
       <PopoverTrigger asChild>{children}</PopoverTrigger>
-      <PopoverContent className="w-80 p-0" align="end">
+      <PopoverContent className="w-[calc(100vw-2rem)] max-w-80 p-0 sm:w-80" align="end">
         <div className="flex items-center justify-between border-b px-4 py-3">
           <div className="flex items-center gap-2">
             <h3 className="font-semibold">{t('notifications.list.title')}</h3>
@@ -65,7 +65,7 @@ export function NotificationPanel({ children }: NotificationPanelProps) {
           )}
         </div>
 
-        <div className="max-h-[400px] overflow-y-auto">
+        <div className="max-h-[60vh] overflow-y-auto sm:max-h-[400px]">
           {isLoading ? (
             <div className="flex items-center justify-center p-8">
               <Loader2 className="text-muted-foreground h-5 w-5 animate-spin" />

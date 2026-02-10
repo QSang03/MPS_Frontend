@@ -132,7 +132,7 @@ export default function CollectorDetailModal({
                 <Building2 className="h-4 w-4" />
                 {t('collectors.customer_info')}
               </h4>
-              <div className="grid grid-cols-2 gap-4 pl-6">
+              <div className="grid grid-cols-1 gap-3 pl-6 sm:grid-cols-2 sm:gap-4">
                 <div>
                   <span className="text-muted-foreground text-sm">
                     {t('collectors.customer_name')}
@@ -162,7 +162,7 @@ export default function CollectorDetailModal({
                 <Network className="h-4 w-4" />
                 {t('collectors.network_config')}
               </h4>
-              <div className="grid grid-cols-2 gap-4 pl-6">
+              <div className="grid grid-cols-1 gap-3 pl-6 sm:grid-cols-2 sm:gap-4">
                 <div>
                   <span className="text-muted-foreground text-sm">{t('collectors.subnets')}</span>
                   <div className="mt-1 flex flex-wrap gap-1">
@@ -199,7 +199,7 @@ export default function CollectorDetailModal({
                 <HardDrive className="h-4 w-4" />
                 {t('collectors.build_info')}
               </h4>
-              <div className="grid grid-cols-2 gap-4 pl-6">
+              <div className="grid grid-cols-1 gap-3 pl-6 sm:grid-cols-2 sm:gap-4">
                 <div>
                   <span className="text-muted-foreground text-sm">{t('collectors.version')}</span>
                   <p className="font-medium">{collector.version || '-'}</p>
@@ -227,7 +227,7 @@ export default function CollectorDetailModal({
                 <Calendar className="h-4 w-4" />
                 {t('collectors.metadata')}
               </h4>
-              <div className="grid grid-cols-2 gap-4 pl-6">
+              <div className="grid grid-cols-1 gap-3 pl-6 sm:grid-cols-2 sm:gap-4">
                 <div>
                   <span className="text-muted-foreground text-sm">
                     {t('collectors.created_at')}

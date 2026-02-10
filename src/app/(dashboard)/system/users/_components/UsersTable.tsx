@@ -263,7 +263,7 @@ export function UsersTable() {
   }, [])
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 sm:space-y-4 md:space-y-6">
       <FilterSection
         title={t('filter.title')}
         subtitle={t('filter.subtitle')}

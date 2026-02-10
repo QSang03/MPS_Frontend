@@ -278,7 +278,7 @@ export function UsersTable() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 sm:space-y-4 md:space-y-6">
       <PageHeader
         title={t('page.users.title')}
         subtitle={t('page.users.subtitle')}

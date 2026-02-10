@@ -51,7 +51,7 @@ export default function WarehouseDocumentsPanel() {
     })
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 sm:space-y-4 md:space-y-6">
       <FilterSection
         title={t('warehouse_document.filter.title')}
         subtitle={t('warehouse_document.filter.subtitle')}

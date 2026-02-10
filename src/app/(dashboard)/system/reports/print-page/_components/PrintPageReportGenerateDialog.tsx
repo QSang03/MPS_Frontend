@@ -195,7 +195,7 @@ export function PrintPageReportGenerateDialog({
             </div>
 
             {/* Period Override (optional) */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
               <div className="space-y-2">
                 <Label>{t('print_page_report.fields.period_start_override')}</Label>
                 <Popover>

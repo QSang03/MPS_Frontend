@@ -133,7 +133,7 @@ export function ContractFormModal({ initial, onCreated, trigger }: ContractFormM
                 transition={{ delay: 0.2, duration: 0.3 }}
                 className="flex-1 overflow-y-auto bg-gradient-to-b from-white via-[var(--brand-50)]/30 to-white"
               >
-                <div className="p-6">
+                <div className="p-3 sm:p-4 md:p-6">
                   {/* Progress indicator */}
                   <div className="mb-6 flex items-center gap-3 text-xs font-semibold text-gray-600">
                     <div className="flex items-center gap-2">

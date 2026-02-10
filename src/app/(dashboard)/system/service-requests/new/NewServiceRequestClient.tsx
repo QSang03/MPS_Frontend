@@ -24,7 +24,7 @@ export function NewServiceRequestClient({ session }: Props) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 sm:space-y-4 md:space-y-6">
       <div className="flex items-center gap-4">
         <Button variant="secondary" size="sm" asChild>
           <Link href="/system/service-requests">

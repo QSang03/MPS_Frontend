@@ -135,7 +135,7 @@ export function WarehouseDocumentForm({ initialData, onSuccess }: Props) {
 
   return (
     <Form {...form}>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 sm:space-y-4 md:space-y-6">
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <FormField
             control={control}

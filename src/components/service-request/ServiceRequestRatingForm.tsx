@@ -96,7 +96,7 @@ export function ServiceRequestRatingForm({
       </CardHeader>
 
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4 md:space-y-6">
           {/* Star Rating */}
           <div className="space-y-3">
             <Label className="text-base font-medium">

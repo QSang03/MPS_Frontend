@@ -27,7 +27,7 @@ export function NewUserPageClient({ customerId }: { customerId: string }) {
   const { t } = useLocale()
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 sm:space-y-4 md:space-y-6">
       <div>
         <h1 className="text-3xl font-bold">{t('user.create_title')}</h1>
         <p className="text-muted-foreground">{t('user.create_description')}</p>

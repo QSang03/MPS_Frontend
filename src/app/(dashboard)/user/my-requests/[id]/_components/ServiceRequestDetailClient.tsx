@@ -125,12 +125,12 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
     return (
       <div className="space-y-4 p-6">
         <div className="bg-muted h-8 w-1/4 animate-pulse rounded" />
-        <div className="grid gap-6 lg:grid-cols-12">
-          <div className="col-span-8 space-y-4">
+        <div className="grid grid-cols-1 gap-3 sm:gap-4 md:gap-6 lg:grid-cols-12">
+          <div className="space-y-4 lg:col-span-8">
             <div className="bg-muted h-40 animate-pulse rounded-lg" />
             <div className="bg-muted h-64 animate-pulse rounded-lg" />
           </div>
-          <div className="col-span-4 space-y-4">
+          <div className="space-y-4 lg:col-span-4">
             <div className="bg-muted h-64 animate-pulse rounded-lg" />
           </div>
         </div>
@@ -263,7 +263,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+      <div className="grid grid-cols-1 gap-3 sm:gap-4 md:gap-6 lg:grid-cols-12">
         {/* --- LEFT COLUMN (Main Content) --- */}
         <div className="space-y-6 lg:col-span-8">
           {/* 1. Overview & Stats */}

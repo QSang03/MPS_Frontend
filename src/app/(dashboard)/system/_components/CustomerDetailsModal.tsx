@@ -295,7 +295,7 @@ export function CustomerDetailsModal({
               ) : customerDetails ? (
                 <div className="mt-6 space-y-6">
                   {/* KPIs */}
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
                     <Card>
                       <CardHeader className="pb-3">
                         <CardTitle className="flex items-center gap-2 text-sm">

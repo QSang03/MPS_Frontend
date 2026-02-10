@@ -299,25 +299,15 @@ export function ModernSidebar({ session }: SidebarProps) {
     <>
       {/* Mobile overlay */}
       {sidebarOpen && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
-          onClick={toggleSidebar}
-        />
+        <div className="fixed inset-0 z-40 bg-black/50 lg:hidden" onClick={toggleSidebar} />
       )}
 
       {/* Sidebar */}
-      <motion.aside
-        initial={false}
-        animate={{
-          x: sidebarOpen ? 0 : '-100%',
-        }}
-        transition={{ type: 'spring', damping: 25 }}
+      <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex w-[268px] flex-col border-r border-gray-200 transition-transform duration-300 lg:static lg:translate-x-0',
-          'bg-white shadow-xl lg:shadow-none'
+          'fixed inset-y-0 left-0 z-50 flex w-[260px] flex-col border-r border-gray-200 sm:w-[268px] lg:static lg:translate-x-0',
+          'bg-white shadow-xl lg:shadow-none',
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         )}
       >
         {/* Logo Header - Minimal Design */}
@@ -327,7 +317,7 @@ export function ModernSidebar({ session }: SidebarProps) {
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.5 }}
         >
-          <div className="relative flex items-center justify-between gap-3 px-6 py-6">
+          <div className="relative flex items-center justify-between gap-2 px-3 py-4 sm:gap-3 sm:px-6 sm:py-6">
             <div className="flex min-w-0 flex-1 items-center gap-3">
               {/* make logo clickable to open settings */}
               <Dialog>
@@ -368,7 +358,7 @@ export function ModernSidebar({ session }: SidebarProps) {
         </motion.div>
 
         {/* Navigation - Enhanced with grouping */}
-        <nav className="scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 flex-1 overflow-y-auto px-4 py-4">
+        <nav className="scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 flex-1 overflow-x-hidden overflow-y-auto px-2 py-3 sm:px-4 sm:py-4">
           {(() => {
             // Group items by semantic section based on nav id/name (UI-only grouping)
             type Item = {
@@ -585,7 +575,7 @@ export function ModernSidebar({ session }: SidebarProps) {
             </div>
           </div>
         </motion.div>
-      </motion.aside>
+      </aside>
     </>
   )
 }

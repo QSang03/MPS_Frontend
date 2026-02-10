@@ -25,7 +25,7 @@ export default function ContactBox() {
   }
 
   return (
-    <div className="fixed right-6 bottom-6 z-50">
+    <div className="safe-area-bottom fixed right-3 bottom-3 z-50 sm:right-6 sm:bottom-6">
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -33,7 +33,7 @@ export default function ContactBox() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.9 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="absolute right-0 bottom-16 mb-2 w-80 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl"
+            className="absolute right-0 bottom-14 mb-2 w-[calc(100vw-1.5rem)] max-w-80 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl sm:bottom-16 sm:w-80"
           >
             {/* Header */}
             <div className="bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] px-4 py-3">
@@ -54,7 +54,7 @@ export default function ContactBox() {
             </div>
 
             {/* Content */}
-            <div className="max-h-80 overflow-y-auto p-3">
+            <div className="max-h-[60vh] overflow-y-auto p-3 sm:max-h-80">
               {isLoading ? (
                 <div className="flex items-center justify-center py-8">
                   <div className="h-6 w-6 animate-spin rounded-full border-2 border-[var(--brand-600)] border-t-transparent" />
@@ -142,7 +142,7 @@ export default function ContactBox() {
         onClick={() => setIsOpen(!isOpen)}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
-        className={`flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-colors ${
+        className={`flex h-12 w-12 items-center justify-center rounded-full shadow-lg transition-colors sm:h-14 sm:w-14 ${
           isOpen
             ? 'bg-gray-600 text-white'
             : 'bg-gradient-to-r from-[var(--brand-600)] to-[var(--brand-700)] text-white'

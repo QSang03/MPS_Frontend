@@ -204,7 +204,7 @@ export default function ContractsPageClient() {
 
   if (loading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-3 sm:space-y-4 md:space-y-6">
         <Skeleton className="h-32 w-full rounded-2xl" />
         <Card>
           <CardHeader>
@@ -224,7 +224,7 @@ export default function ContractsPageClient() {
   const pendingCount = contracts.filter((c) => c.status === 'PENDING').length
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 sm:space-y-4 md:space-y-6">
       {/* Header */}
       <Card className="border-none bg-white shadow-sm">
         <CardContent className="p-6">

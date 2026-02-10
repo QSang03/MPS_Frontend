@@ -97,56 +97,58 @@ export function CostBreakdownChart({ costBreakdown, isLoading }: CostBreakdownCh
           </CardDescription>
         </CardHeader>
         <CardContent className="flex-1">
-          <ResponsiveContainer width="100%" height={320}>
-            <PieChart>
-              <Pie
-                data={chartData}
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={100}
-                paddingAngle={2}
-                dataKey="value"
-                animationBegin={0}
-                animationDuration={800}
-              >
-                {chartData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} strokeWidth={0} />
-                ))}
-              </Pie>
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: 'var(--popover)',
-                  border: 'none',
-                  borderRadius: '8px',
-                  color: 'var(--popover-foreground)',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                }}
-                itemStyle={{ color: 'var(--popover-foreground)', fontSize: '13px' }}
-                formatter={(value: number) => [
-                  `${value.toFixed(2)}%`,
-                  t('dashboard.cost_breakdown.rate_label'),
-                ]}
-              />
-              <Legend
-                verticalAlign="bottom"
-                height={36}
-                iconType="circle"
-                iconSize={8}
-                wrapperStyle={{
-                  fontSize: '13px',
-                  color: '#6B7280',
-                  paddingTop: '20px',
-                }}
-                formatter={(value: string) => (
-                  <span className="ml-1 text-[var(--neutral-500)]">{value}</span>
-                )}
-              />
-            </PieChart>
-          </ResponsiveContainer>
+          <div className="h-[200px] sm:h-[260px] md:h-[320px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={chartData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={100}
+                  paddingAngle={2}
+                  dataKey="value"
+                  animationBegin={0}
+                  animationDuration={800}
+                >
+                  {chartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} strokeWidth={0} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'var(--popover)',
+                    border: 'none',
+                    borderRadius: '8px',
+                    color: 'var(--popover-foreground)',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                  }}
+                  itemStyle={{ color: 'var(--popover-foreground)', fontSize: '13px' }}
+                  formatter={(value: number) => [
+                    `${value.toFixed(2)}%`,
+                    t('dashboard.cost_breakdown.rate_label'),
+                  ]}
+                />
+                <Legend
+                  verticalAlign="bottom"
+                  height={36}
+                  iconType="circle"
+                  iconSize={8}
+                  wrapperStyle={{
+                    fontSize: '13px',
+                    color: '#6B7280',
+                    paddingTop: '20px',
+                  }}
+                  formatter={(value: string) => (
+                    <span className="ml-1 text-[var(--neutral-500)]">{value}</span>
+                  )}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
 
           {/* Summary Stats */}
-          <div className="mt-4 grid grid-cols-2 gap-3 border-t border-gray-100 pt-4">
+          <div className="mt-4 grid grid-cols-1 gap-2 border-t border-gray-100 pt-4 sm:grid-cols-2 sm:gap-3">
             {chartData.map((item) => (
               <div key={item.name} className="flex items-center gap-3">
                 <div

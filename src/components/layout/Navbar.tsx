@@ -182,7 +182,7 @@ export function Navbar({
       <div className="absolute right-0 bottom-0 left-0 h-px bg-gradient-to-r from-transparent via-[var(--brand-400)] to-transparent opacity-50" />
 
       <div className="border-b border-gray-200/50 bg-white/95 shadow-sm backdrop-blur-lg">
-        <div className="flex h-23 items-center justify-between px-4 md:px-6">
+        <div className="flex h-14 items-center justify-between px-2 sm:px-3 md:h-16 md:px-4 lg:h-23 lg:px-6">
           {/* Left side - Mobile menu button */}
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <Button
@@ -196,11 +196,13 @@ export function Navbar({
           </motion.div>
 
           {/* Mobile Logo */}
-          <div className="mr-auto ml-2 flex items-center gap-2 lg:hidden">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-[var(--brand-600)]">
-              <Printer className="h-5 w-5" />
+          <div className="mr-auto ml-1 flex items-center gap-1.5 sm:ml-2 sm:gap-2 lg:hidden">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-[var(--brand-600)] sm:h-8 sm:w-8">
+              <Printer className="h-4 w-4 sm:h-5 sm:w-5" />
             </div>
-            <span className="text-sm font-bold text-slate-900">{t('sidebar.logo.title')}</span>
+            <span className="xs:inline hidden text-sm font-bold text-slate-900 sm:inline">
+              {t('sidebar.logo.title')}
+            </span>
           </div>
 
           {/* Center - Page title & Company (compact) */}
@@ -227,10 +229,10 @@ export function Navbar({
           </div>
 
           {/* Right side - Actions */}
-          <div className="flex items-center gap-1 md:gap-3">
+          <div className="flex items-center gap-0.5 sm:gap-1 md:gap-3">
             {/* customer manager moved to floating ContactBox; header no longer shows contacts */}
 
-            <div className="hidden md:block">
+            <div className="hidden sm:block">
               <LanguageSwitcher />
             </div>
             {/* Dashboard shortcut removed in favor of header info */}
@@ -253,7 +255,7 @@ export function Navbar({
             </NotificationPanel>
 
             {/* Divider */}
-            <div className="hidden h-6 w-px bg-gray-200 md:block" />
+            <div className="hidden h-6 w-px bg-gray-200 sm:block" />
 
             {/* User menu - Premium Dropdown */}
             <DropdownMenu>
@@ -265,12 +267,12 @@ export function Navbar({
                   >
                     {/* Avatar with gradient border */}
                     <div className="relative">
-                      <Avatar className="h-8 w-8 border-2 border-transparent transition-all duration-300 group-hover:border-[var(--brand-400)]">
-                        <AvatarFallback className="bg-gradient-to-br from-[var(--brand-500)] to-[var(--brand-700)] text-xs font-bold text-white">
+                      <Avatar className="h-7 w-7 border-2 border-transparent transition-all duration-300 group-hover:border-[var(--brand-400)] sm:h-8 sm:w-8">
+                        <AvatarFallback className="bg-gradient-to-br from-[var(--brand-500)] to-[var(--brand-700)] text-[10px] font-bold text-white sm:text-xs">
                           {initials}
                         </AvatarFallback>
                       </Avatar>
-                      <div className="absolute right-0 bottom-0 h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-500"></div>
+                      <div className="absolute right-0 bottom-0 h-2 w-2 rounded-full border-2 border-white bg-emerald-500 sm:h-2.5 sm:w-2.5"></div>
                     </div>
 
                     {/* Email and Chevron */}

@@ -148,8 +148,8 @@ export default function LoginPage() {
             animate={{ scale: 1 }}
             transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
           >
-            <div className="from-brand-500 to-brand-600 shadow-glow relative flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br">
-              <Printer className="h-10 w-10 text-white" />
+            <div className="from-brand-500 to-brand-600 shadow-glow relative flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br sm:h-20 sm:w-20">
+              <Printer className="h-8 w-8 text-white sm:h-10 sm:w-10" />
               <motion.div
                 className="absolute -top-1 -right-1"
                 animate={{
@@ -171,10 +171,10 @@ export default function LoginPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
           >
-            <CardTitle className="font-display text-center text-3xl font-bold">
+            <CardTitle className="font-display text-center text-2xl font-bold sm:text-3xl">
               {t('auth.welcome_title')}
             </CardTitle>
-            <CardDescription className="mt-2 text-center text-base">
+            <CardDescription className="mt-1.5 text-center text-sm sm:mt-2 sm:text-base">
               {t('auth.welcome_description')}
             </CardDescription>
           </motion.div>

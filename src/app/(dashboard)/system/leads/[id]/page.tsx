@@ -16,7 +16,7 @@ export default function LeadShowPage(props: { params?: Promise<Params> }) {
       : (rawParams as Params | undefined)
   const id = params?.id
   return (
-    <div className="p-6">
+    <div className="p-3 sm:p-4 md:p-6">
       <LeadShowHeaderClient id={id} />
       {id ? <ClientLeadDetail id={id} /> : null}
     </div>

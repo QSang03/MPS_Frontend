@@ -13,10 +13,15 @@ export function LoadingState({ text, className, spinnerClassName }: LoadingState
   const { t } = useLocale()
   const resolvedText = text ?? t('loading.default')
   return (
-    <div className={cn('flex min-h-[200px] flex-col items-center justify-center p-8', className)}>
+    <div
+      className={cn(
+        'flex min-h-[150px] flex-col items-center justify-center p-4 sm:min-h-[200px] sm:p-8',
+        className
+      )}
+    >
       <Loader2
         className={cn(
-          'h-10 w-10 animate-spin text-[var(--brand-600)] dark:text-[var(--brand-400)]',
+          'h-8 w-8 animate-spin text-[var(--brand-600)] sm:h-10 sm:w-10 dark:text-[var(--brand-400)]',
           spinnerClassName
         )}
       />

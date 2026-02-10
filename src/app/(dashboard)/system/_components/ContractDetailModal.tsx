@@ -68,7 +68,7 @@ export default function ContractDetailModal({ open, onOpenChange, contractId }: 
                 <div className="text-sm text-gray-500">{data.status || '—'}</div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 text-sm text-gray-700">
+              <div className="grid grid-cols-1 gap-3 text-sm text-gray-700 sm:grid-cols-2 sm:gap-4">
                 <div className="flex items-center gap-2">
                   <Building2 className="h-4 w-4" />
                   <div>

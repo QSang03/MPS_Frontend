@@ -571,7 +571,7 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-5">
                 <div className="space-y-2">
                   <Label>{t('devices.pricing.price_bw')}</Label>
                   <Input
@@ -643,7 +643,7 @@ export default function DevicePricingModal({ device, onSaved, compact = false }:
                     {t('devices.pricing.cost_description')}
                   </p>
                 </div>
-                <div className="grid grid-cols-2 gap-5">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-5">
                   <div className="space-y-2">
                     <Label>{t('devices.pricing.cost_bw')}</Label>
                     <Input

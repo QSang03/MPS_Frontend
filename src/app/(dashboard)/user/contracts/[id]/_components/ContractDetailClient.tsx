@@ -45,17 +45,17 @@ export default function ContractDetailClient({ contractId }: Props) {
   }, [contractId, t])
 
   if (loading) {
-    return <div className="p-6">{t('loading.default')}</div>
+    return <div className="p-3 sm:p-4 md:p-6">{t('loading.default')}</div>
   }
 
   if (!contract) {
-    return <div className="p-6">{t('customer.detail.contract_not_found')}</div>
+    return <div className="p-3 sm:p-4 md:p-6">{t('customer.detail.contract_not_found')}</div>
   }
 
   // initialForForm removed — edit/assign actions are not available in user view
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 sm:space-y-4 md:space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-4xl font-bold text-sky-700">{t('contracts.devices.title')}</h1>

@@ -284,12 +284,12 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
     return (
       <div className="space-y-4 p-6">
         <div className="bg-muted h-8 w-1/4 animate-pulse rounded" />
-        <div className="grid gap-6 lg:grid-cols-12">
-          <div className="col-span-8 space-y-4">
+        <div className="grid grid-cols-1 gap-3 sm:gap-4 md:gap-6 lg:grid-cols-12">
+          <div className="space-y-4 lg:col-span-8">
             <div className="bg-muted h-40 animate-pulse rounded-lg" />
             <div className="bg-muted h-64 animate-pulse rounded-lg" />
           </div>
-          <div className="col-span-4 space-y-4">
+          <div className="space-y-4 lg:col-span-4">
             <div className="bg-muted h-64 animate-pulse rounded-lg" />
           </div>
         </div>
@@ -422,7 +422,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+        <div className="grid grid-cols-1 gap-3 sm:gap-4 md:gap-6 lg:grid-cols-12">
           {/* --- LEFT COLUMN (Main Content) --- */}
           <div className="space-y-6 lg:col-span-8">
             {/* 1. Details Card */}
@@ -451,7 +451,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                         })}
                       </div>
                     </div>
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                       {data.attachments.map((att, idx) => {
                         const url = normalizeAttachmentUrl(att)
                         const isImage = /\.(png|jpe?g|gif|webp|avif)$/i.test(url)
@@ -641,7 +641,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                   {t('service_request.management.title')}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-3 sm:space-y-4 md:space-y-6">
                 {/* Status Section */}
                 <div className="space-y-4">
                   <div className="border-b border-gray-200 pb-3">
@@ -900,7 +900,7 @@ export function ServiceRequestDetailClient({ id, session }: Props) {
                 <CardContent>
                   <div className="rounded-md border bg-slate-50 p-3">
                     <div className="text-sm font-semibold">{data.sla.name}</div>
-                    <div className="mt-2 grid grid-cols-2 gap-2">
+                    <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
                       <div className="text-xs">
                         <span className="text-muted-foreground block">
                           {t('requests.service.detail.response_time')}

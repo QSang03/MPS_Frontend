@@ -72,7 +72,7 @@ export default function KPICards({
 
   if (isLoading || !kpis) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-3 sm:space-y-4 md:space-y-6">
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {[...Array(4)].map((_, i) => (
             <Skeleton key={i} className="h-32" />
@@ -201,7 +201,7 @@ export default function KPICards({
   ]
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 sm:space-y-4 md:space-y-6">
       {/* Critical Metrics Section */}
       <div>
         <div className="mb-4 flex items-center justify-between">

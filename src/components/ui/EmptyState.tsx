@@ -18,19 +18,21 @@ export function EmptyState({ icon: Icon, title, description, action, className }
   return (
     <div
       className={cn(
-        'flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50/50 py-16 text-center dark:border-slate-700 dark:bg-slate-900/50',
+        'flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50/50 px-4 py-8 text-center sm:rounded-2xl sm:py-12 md:py-16 dark:border-slate-700 dark:bg-slate-900/50',
         className
       )}
     >
       {Icon && (
-        <div className="mb-4 rounded-full bg-slate-100 p-4 dark:bg-slate-800">
-          <Icon className="h-8 w-8 text-slate-400" />
+        <div className="mb-3 rounded-full bg-slate-100 p-3 sm:mb-4 sm:p-4 dark:bg-slate-800">
+          <Icon className="h-6 w-6 text-slate-400 sm:h-8 sm:w-8" />
         </div>
       )}
-      <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{title}</h3>
-      <p className="mt-1 max-w-sm text-sm text-slate-500 dark:text-slate-400">{description}</p>
+      <h3 className="text-base font-semibold text-slate-900 sm:text-lg dark:text-white">{title}</h3>
+      <p className="mt-1 max-w-sm text-xs text-slate-500 sm:text-sm dark:text-slate-400">
+        {description}
+      </p>
       {action && (
-        <Button onClick={action.onClick} className="mt-6" variant="default">
+        <Button onClick={action.onClick} className="mt-4 sm:mt-6" variant="default">
           {action.label}
         </Button>
       )}

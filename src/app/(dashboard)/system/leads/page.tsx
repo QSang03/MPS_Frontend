@@ -26,7 +26,7 @@ export default function LeadsPage() {
         }
       />
 
-      <div className="p-6">
+      <div className="p-3 sm:p-4 md:p-6">
         <LeadListClient />
       </div>
     </SystemPageLayout>

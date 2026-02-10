@@ -137,7 +137,7 @@ export function WarehouseDocumentDetailClient({ id }: Props) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+      <div className="grid grid-cols-1 gap-3 sm:gap-4 md:gap-6 lg:grid-cols-12">
         <div className="space-y-6 lg:col-span-8">
           <Card>
             <CardHeader>

@@ -36,7 +36,7 @@ export function CurrencyDetailModal({ currency, open, onOpenChange }: CurrencyDe
           <DialogDescription>{t('currencies.detail.description')}</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-3 sm:space-y-4 md:space-y-6">
           {/* Basic Info */}
           <div className="space-y-4">
             <div className="flex items-center justify-between rounded-lg border p-4">

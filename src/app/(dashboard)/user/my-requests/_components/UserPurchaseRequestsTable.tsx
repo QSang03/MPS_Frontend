@@ -181,7 +181,7 @@ export function UserPurchaseRequestsTable({ defaultCustomerId }: UserPurchaseReq
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 sm:space-y-4 md:space-y-6">
       <FilterSection
         title={t('requests.purchase.filter.title')}
         onReset={handleResetFilters}

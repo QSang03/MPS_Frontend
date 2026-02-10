@@ -210,7 +210,7 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
 
   if (loading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-3 sm:space-y-4 md:space-y-6">
         <Skeleton className="h-10 w-48" />
         <Card>
           <CardHeader>
@@ -228,7 +228,7 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
 
   if (error) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-3 sm:space-y-4 md:space-y-6">
         <Link href={backHref ?? '/user/devices'}>
           <Button variant="outline" className="gap-2">
             <ArrowLeft className="h-4 w-4" /> {t('common.back')}
@@ -248,7 +248,7 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
 
   if (!device) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-3 sm:space-y-4 md:space-y-6">
         <Link href={backHref ?? '/user/devices'}>
           <Button variant="outline" className="gap-2">
             <ArrowLeft className="h-4 w-4" /> {t('common.back')}
@@ -317,7 +317,7 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
   const isHistorical = isHistoricalDevice(device)
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 sm:space-y-4 md:space-y-6">
       {/* Header: use new DeviceHeader component and keep back button above it */}
       <div>
         <div className="mb-2">
@@ -499,8 +499,8 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
         </TabsList>
 
         {/* Overview Tab - align with admin (info cards + usage stats + monthly table) */}
-        <TabsContent value="overview" className="space-y-6">
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <TabsContent value="overview" className="space-y-3 sm:space-y-4 md:space-y-6">
+          <div className="grid grid-cols-1 gap-3 sm:gap-4 md:gap-6 lg:grid-cols-2">
             <InfoCard
               title={t('user_device_detail.info.network')}
               titleIcon={<Wifi className="h-4 w-4 text-[var(--brand-600)]" />}
@@ -953,12 +953,12 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
           </Card>
         </TabsContent>
 
-        <TabsContent value="usage-history" className="space-y-6">
+        <TabsContent value="usage-history" className="space-y-3 sm:space-y-4 md:space-y-6">
           <DeviceUsageHistory deviceId={deviceId} device={device} />
         </TabsContent>
 
         {/* Vật tư Tab */}
-        <TabsContent value="consumables" className="space-y-6">
+        <TabsContent value="consumables" className="space-y-3 sm:space-y-4 md:space-y-6">
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -1274,12 +1274,12 @@ function DeviceDetailClientInner({ deviceId, backHref }: Props) {
         </TabsContent>
 
         {/* Bảo trì Tab */}
-        <TabsContent value="maintenance" className="space-y-6">
+        <TabsContent value="maintenance" className="space-y-3 sm:space-y-4 md:space-y-6">
           <MaintenanceHistoryTab deviceId={deviceId} />
         </TabsContent>
 
         {/* Lịch sử vật tư Tab */}
-        <TabsContent value="history" className="space-y-6">
+        <TabsContent value="history" className="space-y-3 sm:space-y-4 md:space-y-6">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">

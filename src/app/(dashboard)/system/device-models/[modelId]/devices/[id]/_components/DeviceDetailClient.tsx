@@ -474,7 +474,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
 
   if (loading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-3 sm:space-y-4 md:space-y-6">
         <Skeleton className="h-10 w-48" />
         <Card>
           <CardHeader>
@@ -492,7 +492,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
 
   if (error) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-3 sm:space-y-4 md:space-y-6">
         <Tooltip>
           <TooltipTrigger asChild>
             <Link
@@ -524,7 +524,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
 
   if (!device) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-3 sm:space-y-4 md:space-y-6">
         <Tooltip>
           <TooltipTrigger asChild>
             <Link
@@ -606,7 +606,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
   }
 
   const content = (
-    <div className="space-y-6">
+    <div className="space-y-3 sm:space-y-4 md:space-y-6">
       {/* Neutral Header */}
       <div>
         <div className="mb-3 flex items-center justify-between">
@@ -813,8 +813,8 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
         </div>
 
         {/* Overview Tab */}
-        <TabsContent value="overview" className="space-y-6">
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <TabsContent value="overview" className="space-y-3 sm:space-y-4 md:space-y-6">
+          <div className="grid grid-cols-1 gap-3 sm:gap-4 md:gap-6 lg:grid-cols-2">
             <InfoCard
               title={t('user_device_detail.info.network')}
               titleIcon={<Wifi className="h-4 w-4 text-[var(--brand-600)]" />}
@@ -1269,7 +1269,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
             </div>
           }
         >
-          <TabsContent value="consumables" className="space-y-6">
+          <TabsContent value="consumables" className="space-y-3 sm:space-y-4 md:space-y-6">
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -1865,7 +1865,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
             </div>
           }
         >
-          <TabsContent value="maintenance" className="space-y-6">
+          <TabsContent value="maintenance" className="space-y-3 sm:space-y-4 md:space-y-6">
             <MaintenanceHistoryTab deviceId={deviceId} />
           </TabsContent>
         </ActionGuard>
@@ -1880,7 +1880,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
             </div>
           }
         >
-          <TabsContent value="history" className="space-y-6">
+          <TabsContent value="history" className="space-y-3 sm:space-y-4 md:space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -1910,7 +1910,7 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
             </div>
           }
         >
-          <TabsContent value="usage-history" className="space-y-6">
+          <TabsContent value="usage-history" className="space-y-3 sm:space-y-4 md:space-y-6">
             <DeviceUsageHistory deviceId={deviceId} device={device} />
           </TabsContent>
         </ActionGuard>

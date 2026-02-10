@@ -485,7 +485,7 @@ function ContractForm({ initial, onSuccess }: ContractFormProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3 sm:space-y-4 md:space-y-6">
         {/* Progress Bar with Enhanced Design */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}

@@ -482,7 +482,7 @@ export default function DevicesPageClient() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 sm:space-y-4 md:space-y-6">
       <PageHeader
         title={t('page.user_devices.title')}
         subtitle={t('page.user_devices.subtitle')}

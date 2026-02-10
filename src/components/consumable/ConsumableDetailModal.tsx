@@ -179,7 +179,7 @@ export default function ConsumableDetailModal({
           </div>
         </DialogHeader>
 
-        <div className="p-6">
+        <div className="p-3 sm:p-4 md:p-6">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-12">
               <Loader2 className="h-10 w-10 animate-spin text-emerald-600" />
@@ -191,7 +191,7 @@ export default function ConsumableDetailModal({
               <p>{t('consumable.detail.not_found')}</p>
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-3 sm:space-y-4 md:space-y-6">
               {/* Top Summary */}
               <div className="flex flex-col gap-6 md:flex-row">
                 {typedItem?.consumableType?.imageUrl ? (

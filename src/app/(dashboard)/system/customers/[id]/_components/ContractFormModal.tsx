@@ -199,7 +199,7 @@ export function ContractFormModal({
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15, duration: 0.3 }}
-              className="space-y-6"
+              className="space-y-3 sm:space-y-4 md:space-y-6"
             >
               {/* Enhanced Progress Stepper */}
               <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-white to-slate-50/50 p-6 shadow-sm">

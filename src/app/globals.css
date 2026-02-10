@@ -267,9 +267,29 @@
   }
   html {
     scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
   body {
     @apply bg-background text-foreground;
+    -webkit-tap-highlight-color: transparent;
+    overflow-x: hidden;
+  }
+
+  /* Ensure touch targets are at least 44px on mobile */
+  @media (max-width: 767px) {
+    button,
+    a,
+    [role='button'],
+    input,
+    select,
+    textarea {
+      min-height: 44px;
+    }
+    input[type='checkbox'],
+    input[type='radio'] {
+      min-height: auto;
+    }
   }
 }
 
@@ -284,6 +304,14 @@
 *::-webkit-scrollbar {
   width: 10px;
   height: 10px;
+}
+
+/* Thinner scrollbar on mobile */
+@media (max-width: 767px) {
+  *::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
 }
 
 *::-webkit-scrollbar-track {
@@ -334,5 +362,54 @@
 
   .badge-status {
     @apply inline-block rounded-full px-3 py-1 text-sm font-medium;
+  }
+}
+
+/* ============================================
+   MOBILE RESPONSIVE UTILITIES
+   ============================================ */
+
+/* Mobile-friendly page container */
+@layer utilities {
+  .mobile-page-container {
+    @apply px-3 py-3 sm:px-4 sm:py-4 md:px-6 md:py-6;
+  }
+
+  .mobile-card-padding {
+    @apply p-3 sm:p-4 md:p-5;
+  }
+
+  .mobile-section-gap {
+    @apply space-y-3 sm:space-y-4 md:space-y-6;
+  }
+
+  /* Truncate long text on mobile */
+  .mobile-truncate {
+    @apply max-w-full truncate;
+  }
+
+  /* Stack elements on mobile, row on desktop */
+  .mobile-stack {
+    @apply flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3;
+  }
+
+  /* Hide on mobile, show on tablet+ */
+  .mobile-hide {
+    @apply hidden sm:block;
+  }
+
+  /* Show on mobile only */
+  .mobile-only {
+    @apply block sm:hidden;
+  }
+}
+
+/* Safe area insets for notched phones */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
   }
 }

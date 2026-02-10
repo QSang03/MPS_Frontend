@@ -1190,7 +1190,7 @@ export default function CustomerDetailClient({ customerId }: Props) {
         <Tabs
           value={activeTab}
           onValueChange={(value) => setActiveTab(value as 'contracts' | 'inventory' | 'invoices')}
-          className="space-y-6"
+          className="space-y-3 sm:space-y-4 md:space-y-6"
         >
           <div className="mb-6">
             <TabsList className="bg-muted inline-flex h-10 items-center justify-start rounded-lg p-1">

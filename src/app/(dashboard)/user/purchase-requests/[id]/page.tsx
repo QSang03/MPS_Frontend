@@ -248,7 +248,7 @@ export default function UserPurchaseRequestDetailPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+      <div className="grid grid-cols-1 gap-3 sm:gap-4 md:gap-6 lg:grid-cols-12">
         <div className="space-y-6 lg:col-span-8">
           <Card className="overflow-hidden border-none shadow-sm ring-1 ring-slate-200 dark:ring-slate-800">
             <CardHeader className="bg-slate-50/50 pb-3 dark:bg-slate-900/50">

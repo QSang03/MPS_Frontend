@@ -25,7 +25,7 @@ export function PrintPageReportPreview({ report, onBack }: PrintPageReportPrevie
   const { t } = useLocale()
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 sm:space-y-4 md:space-y-6">
       {onBack && (
         <Button variant="ghost" size="sm" onClick={onBack}>
           <ArrowLeft className="mr-2 h-4 w-4" />
@@ -155,7 +155,7 @@ export function PrintPageReportPreview({ report, onBack }: PrintPageReportPrevie
             {/* Totals Row */}
             <div className="mt-4 flex justify-end">
               <div className="bg-muted/50 rounded-lg border p-4">
-                <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
+                <div className="grid grid-cols-1 gap-x-4 gap-y-2 text-sm sm:grid-cols-2 sm:gap-x-8">
                   <span className="text-muted-foreground">
                     {t('print_page_report.total_bw_used')}:
                   </span>

@@ -16,7 +16,7 @@ import { DeviceModelFormModal } from './_components/DeviceModelFormModal'
 const DeviceModelList = dynamic(() => import('./_components/DeviceModelList'), {
   ssr: false,
   loading: () => (
-    <div className="space-y-6">
+    <div className="space-y-3 sm:space-y-4 md:space-y-6">
       <TableSkeleton rows={10} columns={8} />
     </div>
   ),

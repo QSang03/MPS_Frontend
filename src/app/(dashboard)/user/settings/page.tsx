@@ -22,7 +22,7 @@ export default async function SettingsPage() {
   // client component and let it read the search params if present. For now pass profile only.
   return (
     <UserPageLayout>
-      <div className="space-y-6">
+      <div className="space-y-3 sm:space-y-4 md:space-y-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
             <Translated k="page.user_settings.title" />

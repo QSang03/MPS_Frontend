@@ -34,7 +34,7 @@ export function LazyWrapper({ children, fallback, className }: LazyWrapperProps)
  * Specific fallback components for different use cases
  */
 export const FormFallback = () => (
-  <div className="space-y-6">
+  <div className="space-y-3 sm:space-y-4 md:space-y-6">
     <Skeleton className="h-10 w-full" />
     <Skeleton className="h-32 w-full" />
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

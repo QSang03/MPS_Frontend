@@ -138,7 +138,7 @@ export function PolicyListPage({ onEdit, onCreate }: PolicyListPageProps) {
   ]
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 sm:space-y-4 md:space-y-6">
       {/* Filter Section */}
       <FilterSection
         title={t('filters.general')}

@@ -226,7 +226,11 @@ export function DeviceModelFormModal({ mode = 'create', model = null, onSaved, t
           </>
         }
       >
-        <form id="device-model-form" onSubmit={handleSubmit} className="space-y-6">
+        <form
+          id="device-model-form"
+          onSubmit={handleSubmit}
+          className="space-y-3 sm:space-y-4 md:space-y-6"
+        >
           {/* Main Info Section */}
           <div className="space-y-4">
             <div className="flex items-center gap-2 text-sm font-semibold text-[var(--brand-700)]">

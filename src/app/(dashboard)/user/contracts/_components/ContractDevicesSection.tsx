@@ -49,7 +49,7 @@ export default function ContractDevicesSection({ contractId, attachedDevices }: 
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 sm:space-y-4 md:space-y-6">
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-2 text-lg font-bold text-[var(--brand-700)]">
           <MonitorSmartphone className="h-5 w-5" />

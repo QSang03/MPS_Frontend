@@ -153,7 +153,11 @@ export function SlaFormDialog({
         }
       >
         <Form {...form}>
-          <form id="sla-form" onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+          <form
+            id="sla-form"
+            onSubmit={form.handleSubmit(handleSubmit)}
+            className="space-y-3 sm:space-y-4 md:space-y-6"
+          >
             <div className="grid gap-4 md:grid-cols-2">
               <FormField
                 control={form.control}

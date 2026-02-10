@@ -158,7 +158,7 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 sm:space-y-4 md:space-y-6">
       {/* Header with Gradient */}
       <div className="rounded-2xl bg-gradient-to-r from-[var(--brand-500)] via-[var(--brand-600)] to-[var(--brand-700)] p-6 text-white shadow-lg">
         <div className="flex items-center justify-between">
@@ -207,7 +207,7 @@ export default function DevicesForModelClient({ modelIdParam }: Props) {
         </div>
 
         {/* Quick Stats */}
-        <div className="mt-6 grid grid-cols-3 gap-4">
+        <div className="mt-6 grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 md:grid-cols-3 md:gap-4">
           <div className="rounded-lg border border-white/20 bg-white/10 p-3 backdrop-blur-sm">
             <p className="text-sm text-white/80">{t('devices.stats.total_label')}</p>
             <p className="mt-1 text-2xl font-bold">{devices.length}</p>

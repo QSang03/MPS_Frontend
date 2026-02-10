@@ -792,7 +792,7 @@ export default function AnalyticsPageClient() {
 
   return (
     <div
-      className="space-y-6"
+      className="space-y-3 sm:space-y-4 md:space-y-6"
       data-customers-count={customersData.length}
       data-customers-loading={customersLoading ? 'true' : 'false'}
     >
@@ -1006,7 +1006,7 @@ export default function AnalyticsPageClient() {
           </TabsList>
         </div>
 
-        <TabsContent value="profit" className="space-y-6">
+        <TabsContent value="profit" className="space-y-3 sm:space-y-4 md:space-y-6">
           <ActionGuard
             pageId="revenue"
             actionId="view-analytics-profit-enterprise"
@@ -1399,8 +1399,11 @@ export default function AnalyticsPageClient() {
                                 ? formatCurrency(Number(v), currentCurrency)
                                 : String(v ?? '-')
                             return (
-                              <ChartContainer config={chartConfig} className="h-[300px] w-full">
-                                <ResponsiveContainer width="100%" height={300}>
+                              <ChartContainer
+                                config={chartConfig}
+                                className="h-[200px] w-full sm:h-[250px] md:h-[300px]"
+                              >
+                                <ResponsiveContainer width="100%" height="100%">
                                   <BarChart accessibilityLayer data={[single]}>
                                     <CartesianGrid
                                       vertical={false}
@@ -2147,7 +2150,7 @@ export default function AnalyticsPageClient() {
                                   <h3 className="mb-2 text-lg font-semibold">
                                     {customerDetailData.customer.name}
                                   </h3>
-                                  <div className="grid grid-cols-3 gap-4 text-sm">
+                                  <div className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2 sm:gap-3 md:grid-cols-3 md:gap-4">
                                     <div>
                                       <span className="text-muted-foreground">
                                         {t('analytics.customer_detail.revenue')}
@@ -2296,9 +2299,9 @@ export default function AnalyticsPageClient() {
                                         return (
                                           <ChartContainer
                                             config={chartConfig}
-                                            className="h-[300px] w-full"
+                                            className="h-[200px] w-full sm:h-[250px] md:h-[300px]"
                                           >
-                                            <ResponsiveContainer width="100%" height={300}>
+                                            <ResponsiveContainer width="100%" height="100%">
                                               <BarChart accessibilityLayer data={[single]}>
                                                 <CartesianGrid
                                                   vertical={false}
@@ -2463,9 +2466,9 @@ export default function AnalyticsPageClient() {
                                         return (
                                           <ChartContainer
                                             config={chartConfig}
-                                            className="h-[300px] w-full"
+                                            className="h-[200px] w-full sm:h-[250px] md:h-[300px]"
                                           >
-                                            <ResponsiveContainer width="100%" height={300}>
+                                            <ResponsiveContainer width="100%" height="100%">
                                               <BarChart accessibilityLayer data={[single]}>
                                                 <CartesianGrid
                                                   vertical={false}
@@ -2676,9 +2679,9 @@ export default function AnalyticsPageClient() {
                                       return (
                                         <ChartContainer
                                           config={chartConfig}
-                                          className="h-[300px] w-full"
+                                          className="h-[200px] w-full sm:h-[250px] md:h-[300px]"
                                         >
-                                          <ResponsiveContainer width="100%" height={300}>
+                                          <ResponsiveContainer width="100%" height="100%">
                                             <BarChart accessibilityLayer data={transformedData}>
                                               <CartesianGrid
                                                 vertical={false}
@@ -3330,7 +3333,7 @@ export default function AnalyticsPageClient() {
           </ActionGuard>
         </TabsContent>
 
-        <TabsContent value="consumable" className="space-y-6">
+        <TabsContent value="consumable" className="space-y-3 sm:space-y-4 md:space-y-6">
           <ActionGuard
             pageId="revenue"
             actionId="view-analytics-consumables-lifecycle"

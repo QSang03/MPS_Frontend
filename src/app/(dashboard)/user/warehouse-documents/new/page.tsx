@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic'
 export default function NewWarehouseDocumentPage() {
   return (
     <UserPageLayout>
-      <div className="space-y-6">
+      <div className="space-y-3 sm:space-y-4 md:space-y-6">
         <UserNewWarehouseDocumentHeaderClient />
         <Card>
           <UserNewWarehouseDocumentFormHeaderClient />

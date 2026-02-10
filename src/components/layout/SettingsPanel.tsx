@@ -64,7 +64,7 @@ export default function SettingsPanel() {
           <p className="mb-3 text-sm font-medium text-gray-700">
             {t('settings.panel.choose_theme')}
           </p>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3">
             {THEME_PRESETS.map((theme) => (
               <button
                 key={theme.id}
@@ -106,7 +106,7 @@ export default function SettingsPanel() {
         {/* Font selection */}
         <div>
           <p className="mb-2 text-sm font-medium text-gray-700">{t('settings.panel.font')}</p>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4">
             <label className="inline-flex cursor-pointer items-center gap-2">
               <input
                 type="radio"

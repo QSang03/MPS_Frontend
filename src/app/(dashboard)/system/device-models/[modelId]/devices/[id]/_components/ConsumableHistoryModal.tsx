@@ -129,7 +129,7 @@ export function ConsumableUsageHistory({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 sm:space-y-4 md:space-y-6">
       {/* Modern Header with Glassmorphism */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[var(--brand-50)] via-[var(--brand-50)] to-[var(--brand-50)] p-6 backdrop-blur-xl dark:from-[var(--brand-900)] dark:via-[var(--brand-800)] dark:to-[var(--brand-700)]/50">
         <div className="absolute inset-0 bg-white/40 backdrop-blur-sm dark:bg-black/20"></div>

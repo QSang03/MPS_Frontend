@@ -314,7 +314,7 @@ export function SettingsClient({ initialProfile, initialTab = 'account' }: Setti
   ]
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 sm:space-y-4 md:space-y-6">
       {/* Header */}
 
       {/* Message Alert */}
@@ -360,7 +360,7 @@ export function SettingsClient({ initialProfile, initialTab = 'account' }: Setti
       </div>
 
       {/* Tab Content */}
-      <div className="space-y-6">
+      <div className="space-y-3 sm:space-y-4 md:space-y-6">
         {/* Account Settings */}
         {activeTab === 'account' && (
           <Card>
@@ -371,7 +371,7 @@ export function SettingsClient({ initialProfile, initialTab = 'account' }: Setti
               </CardTitle>
               <CardDescription>{t('settings.account.description')}</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-3 sm:space-y-4 md:space-y-6">
               <div className="grid gap-4 md:grid-cols-2">
                 {/* Email removed: email is not editable and will not be shown here */}
 
@@ -442,7 +442,7 @@ export function SettingsClient({ initialProfile, initialTab = 'account' }: Setti
               </CardTitle>
               <CardDescription>{t('settings.password.description')}</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-3 sm:space-y-4 md:space-y-6">
               {/* Current Password */}
               <div className="space-y-2">
                 <Label htmlFor="currentPassword">{t('settings.password.current')}</Label>
@@ -571,7 +571,7 @@ export function SettingsClient({ initialProfile, initialTab = 'account' }: Setti
               </CardTitle>
               <CardDescription>{t('settings.notifications.description')}</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-3 sm:space-y-4 md:space-y-6">
               <div className="space-y-4">
                 {/* Email Notifications */}
                 <div className="flex items-center justify-between rounded-lg border p-4">

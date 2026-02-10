@@ -43,7 +43,11 @@ export function PurchaseStatusButtonGrid({
 
   return (
     <div className="space-y-2">
-      <div className={allowed.length === 1 ? 'grid grid-cols-1 gap-2' : 'grid grid-cols-2 gap-2'}>
+      <div
+        className={
+          allowed.length === 1 ? 'grid grid-cols-1 gap-2' : 'grid grid-cols-1 gap-2 sm:grid-cols-2'
+        }
+      >
         {allowed.map((s) => {
           const disp = PURCHASE_REQUEST_STATUS_DISPLAY[s]
           const enabled = hasPermission

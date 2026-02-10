@@ -89,7 +89,7 @@ export function ProfileClient({ initialProfile }: ProfileClientProps) {
         : true
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 sm:space-y-4 md:space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

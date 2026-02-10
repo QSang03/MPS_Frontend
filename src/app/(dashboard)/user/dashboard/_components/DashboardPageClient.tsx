@@ -545,7 +545,7 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3 lg:gap-8">
         {/* Usage History Chart */}
         <Card className="shadow-card flex flex-col lg:col-span-2" id="usage-chart">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -827,7 +827,7 @@ export default function DashboardPageClient({ month: initialMonth }: { month?: s
 
                       {expanded && (
                         <div className="animate-in fade-in slide-in-from-top-2 mt-4 border-t pt-4 duration-200">
-                          <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-sm">
+                          <div className="grid grid-cols-1 gap-x-4 gap-y-3 text-sm sm:grid-cols-2 sm:gap-x-8">
                             <div className="space-y-1">
                               <div className="text-muted-foreground flex items-center text-xs">
                                 <Wrench className="mr-1.5 h-3 w-3" />

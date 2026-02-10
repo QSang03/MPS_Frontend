@@ -323,7 +323,7 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3 sm:space-y-4 md:space-y-6">
         {serverError || Object.keys(form.formState.errors).length > 0 ? (
           <div className="border-destructive/60 bg-destructive/10 text-destructive rounded border-2 p-3 text-sm">
             {serverError && <div className="mb-1 font-medium">{serverError}</div>}

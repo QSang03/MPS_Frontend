@@ -379,7 +379,7 @@ export function PolicyDraftPanel({
       <Separator className="my-6" />
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-        <div className="space-y-6">
+        <div className="space-y-3 sm:space-y-4 md:space-y-6">
           <section className="rounded-2xl border border-slate-100 bg-white/80 p-5 shadow-sm">
             <div className="flex items-center justify-between">
               <div>

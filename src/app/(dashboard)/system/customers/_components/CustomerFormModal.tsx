@@ -479,7 +479,11 @@ export function CustomerFormModal({ mode = 'create', customer = null, onSaved, t
           </>
         }
       >
-        <form id="customer-form" onSubmit={handleSubmit} className="space-y-6">
+        <form
+          id="customer-form"
+          onSubmit={handleSubmit}
+          className="space-y-3 sm:space-y-4 md:space-y-6"
+        >
           <div className="space-y-4">
             <div className="flex items-center gap-2 text-sm font-semibold text-[var(--brand-700)]">
               <User className="h-4 w-4" />

@@ -1073,7 +1073,7 @@ export function PolicyFormModal({
                   )}
                 />
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
                   <FormField
                     control={form.control}
                     name="effect"
@@ -1195,7 +1195,7 @@ export function PolicyFormModal({
                             Role Configuration
                           </h4>
 
-                          <div className="grid grid-cols-3 gap-4">
+                          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 md:grid-cols-3 md:gap-4">
                             {/* Match By */}
                             <FormField
                               control={form.control}
@@ -1573,7 +1573,7 @@ export function PolicyFormModal({
                             Department Configuration
                           </h4>
 
-                          <div className="grid grid-cols-3 gap-4">
+                          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 md:grid-cols-3 md:gap-4">
                             {/* Match By */}
                             <FormField
                               control={form.control}
@@ -1842,7 +1842,7 @@ export function PolicyFormModal({
                   </h3>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
                   <FormField
                     control={form.control}
                     name="resourceOperator"
@@ -1981,7 +1981,7 @@ export function PolicyFormModal({
                         </div>
 
                         {sel && (
-                          <div className="ml-7 grid grid-cols-2 gap-3">
+                          <div className="ml-7 grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3">
                             <select
                               value={sel.operator || ''}
                               onChange={(e) => setConditionOperator(cid, e.target.value)}

@@ -174,7 +174,7 @@ export function UsagePageUploader() {
           </div>
         ) : null}
 
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid gap-3 sm:gap-4 md:gap-6 lg:grid-cols-2">
           {/* Left column: upload & preview */}
           <div className="flex flex-col gap-4">
             <div

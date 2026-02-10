@@ -416,7 +416,7 @@ export function UserForm({ initialData, mode, onSuccess, customerId }: UserFormP
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3 sm:space-y-4 md:space-y-6">
         {/* Top-level error summary (show server/general + field errors) */}
         {serverError ||
         Object.keys(form.formState.errors).length > 0 ||

@@ -17,7 +17,7 @@ export default async function ProfilePage() {
 
   return (
     <UserPageLayout>
-      <div className="space-y-6">
+      <div className="space-y-3 sm:space-y-4 md:space-y-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Profile</h1>
           <p className="text-muted-foreground">Manage account information and security</p>

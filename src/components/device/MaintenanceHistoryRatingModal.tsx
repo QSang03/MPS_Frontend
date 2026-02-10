@@ -126,7 +126,7 @@ export function MaintenanceHistoryRatingModal({
         variant="edit"
         className="max-w-lg"
       >
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4 md:space-y-6">
           {/* Current rating info */}
           <div className="rounded-lg bg-gray-50 p-4">
             <h4 className="font-medium text-gray-900">

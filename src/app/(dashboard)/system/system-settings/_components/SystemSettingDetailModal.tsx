@@ -127,7 +127,7 @@ export default function SystemSettingDetailModal({ setting, open, onOpenChange }
         icon={Settings}
         variant="view"
       >
-        <div className="space-y-6">
+        <div className="space-y-3 sm:space-y-4 md:space-y-6">
           {/* Setting Key */}
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-sm font-medium text-gray-500">

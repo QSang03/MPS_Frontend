@@ -158,7 +158,7 @@ export default function ToggleActiveModal({
             e.preventDefault()
             handleConfirm()
           }}
-          className="space-y-6"
+          className="space-y-3 sm:space-y-4 md:space-y-6"
         >
           <div>
             <Label className="text-sm font-semibold">{t('toggle_active.device')}</Label>

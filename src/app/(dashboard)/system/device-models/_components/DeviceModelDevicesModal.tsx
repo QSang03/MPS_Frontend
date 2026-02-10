@@ -96,7 +96,7 @@ export default function DeviceModelDevicesModal({
         maxWidth="!max-w-[75vw]"
       >
         {/* Quick Stats */}
-        <div className="mb-4 grid grid-cols-3 gap-3 rounded-lg border border-gray-200 bg-gradient-to-r from-[var(--brand-50)] to-[var(--brand-50)] p-4">
+        <div className="mb-4 grid grid-cols-1 gap-2 rounded-lg border border-gray-200 bg-gradient-to-r from-[var(--brand-50)] to-[var(--brand-50)] p-4 sm:grid-cols-3 sm:gap-3">
           <div className="rounded-lg border border-[var(--brand-200)] bg-white p-2.5">
             <p className="text-xs text-gray-600">{t('device_model.devices.stats.total_label')}</p>
             <p className="mt-1 text-xl font-bold text-[var(--brand-600)]">{devices.length}</p>

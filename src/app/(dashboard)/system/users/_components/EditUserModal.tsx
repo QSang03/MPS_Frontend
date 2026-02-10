@@ -358,7 +358,7 @@ export function EditUserModal({
               )}
             />
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
               <FormField
                 control={form.control}
                 name="phone"
@@ -435,7 +435,7 @@ export function EditUserModal({
             />
 
             {/* Grid: Role + Department */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
               {/* Role Field */}
               <FormField
                 control={form.control}

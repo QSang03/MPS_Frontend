@@ -22,7 +22,7 @@ function ReportsPageContent({ customerId }: { customerId: string }) {
         icon={<FileText className="h-6 w-6" />}
       />
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-3 sm:gap-4 md:gap-6 lg:grid-cols-2">
         {/* Report Generator */}
         <Card>
           <CardHeader>

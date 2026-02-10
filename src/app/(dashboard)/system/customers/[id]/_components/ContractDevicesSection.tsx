@@ -124,7 +124,7 @@ export default function ContractDevicesSection({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 sm:space-y-4 md:space-y-6">
       {/* Header Section */}
       <div className="flex flex-col gap-4 rounded-xl bg-gradient-to-r from-[var(--brand-50)] via-[var(--brand-50)] to-[var(--brand-50)] p-5 shadow-sm md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-3">

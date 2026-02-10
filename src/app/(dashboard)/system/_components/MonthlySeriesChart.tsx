@@ -324,85 +324,87 @@ export function MonthlySeriesChart({
 
           {/* Chart */}
           {transformedData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={400}>
-              <Chart data={transformedData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                <XAxis
-                  dataKey="month"
-                  stroke="var(--muted-foreground)"
-                  fontSize={12}
-                  tickLine={false}
-                  axisLine={false}
-                  dy={10}
-                />
-                <YAxis
-                  stroke="var(--muted-foreground)"
-                  fontSize={12}
-                  tickLine={false}
-                  axisLine={false}
-                  tickFormatter={(value) =>
-                    new Intl.NumberFormat(locale === 'vi' ? 'vi-VN' : 'en-US', {
-                      notation: 'compact',
-                      compactDisplay: 'short',
-                    }).format(value)
-                  }
-                />
-                <Tooltip
-                  content={
-                    <CustomTooltip baseCurrency={baseCurrency} metricConfig={METRIC_CONFIG} />
-                  }
-                />
+            <div className="h-[250px] sm:h-[320px] md:h-[400px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <Chart data={transformedData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                  <XAxis
+                    dataKey="month"
+                    stroke="var(--muted-foreground)"
+                    fontSize={12}
+                    tickLine={false}
+                    axisLine={false}
+                    dy={10}
+                  />
+                  <YAxis
+                    stroke="var(--muted-foreground)"
+                    fontSize={12}
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={(value) =>
+                      new Intl.NumberFormat(locale === 'vi' ? 'vi-VN' : 'en-US', {
+                        notation: 'compact',
+                        compactDisplay: 'short',
+                      }).format(value)
+                    }
+                  />
+                  <Tooltip
+                    content={
+                      <CustomTooltip baseCurrency={baseCurrency} metricConfig={METRIC_CONFIG} />
+                    }
+                  />
 
-                {Object.entries(METRIC_CONFIG).map(([key, config]) => {
-                  if (!visibleMetrics.includes(key)) return null
+                  {Object.entries(METRIC_CONFIG).map(([key, config]) => {
+                    if (!visibleMetrics.includes(key)) return null
 
-                  if (effectiveChartType === 'area') {
+                    if (effectiveChartType === 'area') {
+                      return (
+                        <Area
+                          key={key}
+                          name={config.label}
+                          type="monotone"
+                          dataKey={key}
+                          stroke={config.color}
+                          fill={config.color}
+                          fillOpacity={0.1}
+                          strokeWidth={config.strokeWidth}
+                          animationDuration={800}
+                          connectNulls={false}
+                        />
+                      )
+                    }
+
+                    if (effectiveChartType === 'bar') {
+                      return (
+                        <Bar
+                          key={key}
+                          name={config.label}
+                          dataKey={key}
+                          fill={config.color}
+                          radius={[2, 2, 0, 0]}
+                          animationDuration={800}
+                        />
+                      )
+                    }
+
                     return (
-                      <Area
+                      <Line
                         key={key}
                         name={config.label}
                         type="monotone"
                         dataKey={key}
                         stroke={config.color}
-                        fill={config.color}
-                        fillOpacity={0.1}
                         strokeWidth={config.strokeWidth}
+                        dot={{ fill: config.color, r: 4, strokeWidth: 0 }}
+                        activeDot={{ r: 6, strokeWidth: 0 }}
                         animationDuration={800}
                         connectNulls={false}
                       />
                     )
-                  }
-
-                  if (effectiveChartType === 'bar') {
-                    return (
-                      <Bar
-                        key={key}
-                        name={config.label}
-                        dataKey={key}
-                        fill={config.color}
-                        radius={[2, 2, 0, 0]}
-                        animationDuration={800}
-                      />
-                    )
-                  }
-
-                  return (
-                    <Line
-                      key={key}
-                      name={config.label}
-                      type="monotone"
-                      dataKey={key}
-                      stroke={config.color}
-                      strokeWidth={config.strokeWidth}
-                      dot={{ fill: config.color, r: 4, strokeWidth: 0 }}
-                      activeDot={{ r: 6, strokeWidth: 0 }}
-                      animationDuration={800}
-                      connectNulls={false}
-                    />
-                  )
-                })}
-              </Chart>
-            </ResponsiveContainer>
+                  })}
+                </Chart>
+              </ResponsiveContainer>
+            </div>
           ) : (
             <div className="flex h-[400px] items-center justify-center text-sm text-gray-500">
               {t('empty.no_data')}

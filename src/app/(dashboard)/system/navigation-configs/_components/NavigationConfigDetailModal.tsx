@@ -31,7 +31,7 @@ export default function NavigationConfigDetailModal({ config, open, onOpenChange
         description={t('navigation_config.detail_subtitle')}
         icon={Settings}
       >
-        <div className="space-y-6">
+        <div className="space-y-3 sm:space-y-4 md:space-y-6">
           {/* Basic Info */}
           <div className="space-y-4">
             <div>
@@ -50,7 +50,7 @@ export default function NavigationConfigDetailModal({ config, open, onOpenChange
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
               <div>
                 <label className="text-sm font-medium text-gray-700">
                   {t('navigation_config.fields.customer')}
@@ -99,7 +99,7 @@ export default function NavigationConfigDetailModal({ config, open, onOpenChange
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
               <div>
                 <label className="text-sm font-medium text-gray-700">
                   {t('navigation_config.fields.version')}
@@ -146,7 +146,7 @@ export default function NavigationConfigDetailModal({ config, open, onOpenChange
           <Separator />
 
           {/* Timestamps */}
-          <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2 sm:gap-4">
             <div>
               <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
                 <Calendar className="h-4 w-4" />

@@ -26,13 +26,13 @@ export function DataTablePagination<TData>({ table, totalCount }: DataTablePagin
   const endItem = Math.min(startItem + pageSize - 1, totalCount)
 
   return (
-    <div className="flex items-center justify-between px-2">
-      <div className="text-muted-foreground flex-1 text-sm">
+    <div className="flex flex-col gap-3 px-1 sm:flex-row sm:items-center sm:justify-between sm:px-2">
+      <div className="text-muted-foreground text-center text-xs sm:flex-1 sm:text-left sm:text-sm">
         {t('pagination.showing_range_results', { from: startItem, to: endItem, total: totalCount })}
       </div>
-      <div className="flex items-center space-x-6 lg:space-x-8">
-        <div className="flex items-center space-x-2">
-          <p className="text-sm font-medium">{t('pagination.rows_per_page')}</p>
+      <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4 lg:gap-6 lg:space-x-8">
+        <div className="flex items-center gap-1.5 sm:space-x-2">
+          <p className="hidden text-sm font-medium sm:block">{t('pagination.rows_per_page')}</p>
           <Select
             value={`${pageSize}`}
             onValueChange={(value) => {
@@ -51,7 +51,7 @@ export function DataTablePagination<TData>({ table, totalCount }: DataTablePagin
             </SelectContent>
           </Select>
         </div>
-        <div className="flex w-[100px] items-center justify-center text-sm font-medium">
+        <div className="flex w-auto items-center justify-center text-xs font-medium sm:w-[100px] sm:text-sm">
           {t('pagination.page_of', { page: currentPage, totalPages })}
         </div>
         <div className="flex items-center space-x-2">

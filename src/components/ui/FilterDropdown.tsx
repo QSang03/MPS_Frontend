@@ -31,7 +31,7 @@ export default function FilterDropdown({
   options,
   placeholder,
   className = '',
-  width = 'w-[160px]',
+  width = 'w-full sm:w-[160px]',
 }: Props) {
   const { t } = useLocale()
   const allLabel = placeholder ?? t('placeholder.all')

@@ -467,7 +467,7 @@ export default function MonthlyCostsPage() {
 
         {/* Loading State */}
         {loading ? (
-          <div className="space-y-6">
+          <div className="space-y-3 sm:space-y-4 md:space-y-6">
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
               {[1, 2, 3, 4].map((i) => (
                 <div key={i} className="rounded-xl bg-white p-6 shadow-sm dark:bg-slate-800">
@@ -498,11 +498,11 @@ export default function MonthlyCostsPage() {
             </p>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-3 sm:space-y-4 md:space-y-6">
             {/* KPI Cards */}
             <div className="grid grid-cols-1 gap-6">
               <Card className="border-slate-200 shadow-sm transition-all hover:shadow-md dark:border-slate-700 dark:bg-slate-800">
-                <CardContent className="p-6">
+                <CardContent className="p-3 sm:p-4 md:p-6">
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
@@ -531,7 +531,7 @@ export default function MonthlyCostsPage() {
             {/* Phí chi tiết */}
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
               <Card className="border-slate-200 shadow-sm transition-all hover:shadow-md dark:border-slate-700 dark:bg-slate-800">
-                <CardContent className="p-6">
+                <CardContent className="p-3 sm:p-4 md:p-6">
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
@@ -549,7 +549,7 @@ export default function MonthlyCostsPage() {
               </Card>
 
               <Card className="border-slate-200 shadow-sm transition-all hover:shadow-md dark:border-slate-700 dark:bg-slate-800">
-                <CardContent className="p-6">
+                <CardContent className="p-3 sm:p-4 md:p-6">
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
@@ -567,7 +567,7 @@ export default function MonthlyCostsPage() {
               </Card>
 
               <Card className="border-slate-200 shadow-sm transition-all hover:shadow-md dark:border-slate-700 dark:bg-slate-800">
-                <CardContent className="p-6">
+                <CardContent className="p-3 sm:p-4 md:p-6">
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
@@ -585,7 +585,7 @@ export default function MonthlyCostsPage() {
               </Card>
 
               <Card className="border-slate-200 shadow-sm transition-all hover:shadow-md dark:border-slate-700 dark:bg-slate-800">
-                <CardContent className="p-6">
+                <CardContent className="p-3 sm:p-4 md:p-6">
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-sm font-medium text-slate-600 dark:text-slate-400">

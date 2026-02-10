@@ -254,7 +254,7 @@ export default function SlasClient({ session }: SlasClientProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 sm:space-y-4 md:space-y-6">
       <SystemPageHeader
         title={t('page.slas.title')}
         subtitle={t('page.slas.subtitle')}

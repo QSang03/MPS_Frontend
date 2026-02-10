@@ -207,7 +207,7 @@ export function MaintenanceHistoryFormModal({
         variant={mode === 'create' ? 'create' : 'edit'}
         className="max-w-2xl"
       >
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4 md:space-y-6">
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             {/* Maintenance Date */}
             <div className="space-y-2">

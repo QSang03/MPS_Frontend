@@ -391,7 +391,7 @@ export function ContractForm({ initial, onSuccess }: ContractFormProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3 sm:space-y-4 md:space-y-6">
         {/* Basic Info Section */}
         <div className="space-y-4">
           <div className="flex items-center gap-2">

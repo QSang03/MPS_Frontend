@@ -201,7 +201,11 @@ export default function SystemSettingFormModal({ setting, onSaved }: Props) {
           </>
         }
       >
-        <form id="system-setting-form" onSubmit={handleSubmit} className="space-y-6">
+        <form
+          id="system-setting-form"
+          onSubmit={handleSubmit}
+          className="space-y-3 sm:space-y-4 md:space-y-6"
+        >
           {/* Setting Key (Read-only) */}
           <div className="space-y-3">
             <Label className="flex items-center gap-2 text-sm font-medium text-gray-700">

@@ -118,7 +118,7 @@ export function PrintPageReportDetail() {
   const statusValue = (report as unknown as { status?: PrintPageReportStatus })?.status
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 sm:space-y-4 md:space-y-6">
       {/* Back Button and Actions */}
       <div className="flex items-center justify-between">
         <Button variant="ghost" asChild>

@@ -55,27 +55,31 @@ export function ConfirmDialog({
         {trigger || <Button>{confirmLabelFinal}</Button>}
       </AlertDialogTrigger>
       <AlertDialogContent className="max-w-lg overflow-hidden rounded-lg border p-0 shadow-lg">
-        <div className="px-6 py-5">
+        <div className="px-4 py-3 sm:px-6 sm:py-5">
           <AlertDialogHeader className="space-y-2 text-left">
-            <AlertDialogTitle className="text-lg font-bold">{title}</AlertDialogTitle>
+            <AlertDialogTitle className="text-base font-bold sm:text-lg">{title}</AlertDialogTitle>
             {description ? (
-              <AlertDialogDescription className="text-muted-foreground text-sm">
+              <AlertDialogDescription className="text-muted-foreground text-xs sm:text-sm">
                 {description}
               </AlertDialogDescription>
             ) : null}
           </AlertDialogHeader>
         </div>
 
-        <div className="bg-background px-6 py-5">
-          <p className="text-muted-foreground text-sm">{t('dialog.confirm.prompt')}</p>
+        <div className="bg-background px-4 py-3 sm:px-6 sm:py-5">
+          <p className="text-muted-foreground text-xs sm:text-sm">{t('dialog.confirm.prompt')}</p>
         </div>
 
-        <AlertDialogFooter className="bg-muted/50 border-t px-6 py-4">
-          <AlertDialogCancel disabled={isConfirming} className="min-w-[100px]">
+        <AlertDialogFooter className="bg-muted/50 flex-col gap-2 border-t px-4 py-3 sm:flex-row sm:px-6 sm:py-4">
+          <AlertDialogCancel disabled={isConfirming} className="min-w-0 sm:min-w-[100px]">
             <X className="mr-2 h-4 w-4" />
             {cancelLabelFinal}
           </AlertDialogCancel>
-          <Button onClick={handleConfirm} disabled={isConfirming} className="min-w-[120px]">
+          <Button
+            onClick={handleConfirm}
+            disabled={isConfirming}
+            className="min-w-0 sm:min-w-[120px]"
+          >
             {isConfirming ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
