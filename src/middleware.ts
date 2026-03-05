@@ -4,6 +4,74 @@ import { jwtVerify } from 'jose'
 import { UserRole } from './constants/roles'
 import { ROUTES } from './constants/routes'
 
+// Cookie names (must stay in sync with session.ts)
+const ACCESS_TOKEN_COOKIE = 'access_token'
+const REFRESH_TOKEN_COOKIE = 'refresh_token'
+const IS_SECURE_COOKIES =
+  process.env.NODE_ENV === 'production' && process.env.ALLOW_INSECURE_COOKIES !== 'true'
+
+/**
+ * Proactively refresh the access token inside the middleware response so that
+ * by the time any Server Component renders it always has a valid access token.
+ * This is the only safe place to write cookies outside of Server Actions /
+ * Route Handlers in Next.js 15.
+ */
+async function proactiveTokenRefresh(request: NextRequest, response: NextResponse): Promise<void> {
+  const accessToken = request.cookies.get(ACCESS_TOKEN_COOKIE)?.value
+  if (accessToken) return // already have a token — nothing to do
+
+  const refreshToken = request.cookies.get(REFRESH_TOKEN_COOKIE)?.value
+  if (!refreshToken) return // no refresh token — user must log in
+
+  try {
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL
+    if (!backendUrl) return
+
+    const resp = await fetch(`${backendUrl}/auth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken }),
+    })
+
+    if (!resp.ok) {
+      // Refresh token invalid — clear stale cookies so the auth check below
+      // correctly treats the user as unauthenticated.
+      response.cookies.delete(REFRESH_TOKEN_COOKIE)
+      response.cookies.delete(ACCESS_TOKEN_COOKIE)
+      response.cookies.delete('mps_session')
+      return
+    }
+
+    const data = await resp.json()
+    const newAccessToken: string | undefined =
+      data?.data?.accessToken || data?.accessToken || data?.access_token
+    const newRefreshToken: string | undefined =
+      data?.data?.refreshToken || data?.refreshToken || data?.refresh_token
+
+    if (!newAccessToken) return
+
+    response.cookies.set(ACCESS_TOKEN_COOKIE, newAccessToken, {
+      httpOnly: true,
+      secure: IS_SECURE_COOKIES,
+      sameSite: 'lax',
+      maxAge: 15 * 60, // 15 minutes
+      path: '/',
+    })
+
+    if (newRefreshToken) {
+      response.cookies.set(REFRESH_TOKEN_COOKIE, newRefreshToken, {
+        httpOnly: true,
+        secure: IS_SECURE_COOKIES,
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60, // 7 days
+        path: '/',
+      })
+    }
+  } catch {
+    // Network error — let the request continue; Server Components will handle 401
+  }
+}
+
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production'
 )
@@ -200,6 +268,13 @@ export async function middleware(request: NextRequest) {
       headers: requestHeaders,
     },
   })
+
+  // Proactively refresh the access token so it is available when Server
+  // Components render.  Must be done on the response object so the updated
+  // Set-Cookie headers are sent to the browser AND forwarded to the Node
+  // server for the current render.
+  await proactiveTokenRefresh(request, resp)
+
   resp.headers.set(
     'cache-control',
     'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'

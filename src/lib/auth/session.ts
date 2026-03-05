@@ -244,11 +244,16 @@ async function doRefreshToken(): Promise<string | null> {
     if (!response.ok) {
       console.error('Token refresh failed:', response.status, response.statusText)
 
-      // Clear cookies on failure
-      const cookieStore = await cookies()
-      cookieStore.delete(REFRESH_TOKEN_COOKIE_NAME)
-      cookieStore.delete(ACCESS_TOKEN_COOKIE_NAME)
-      cookieStore.delete(SESSION_COOKIE_NAME)
+      // Clear cookies on failure — guarded because this may be called during
+      // server component rendering where cookie writes are not allowed.
+      try {
+        const cookieStore = await cookies()
+        cookieStore.delete(REFRESH_TOKEN_COOKIE_NAME)
+        cookieStore.delete(ACCESS_TOKEN_COOKIE_NAME)
+        cookieStore.delete(SESSION_COOKIE_NAME)
+      } catch {
+        // Ignore — middleware / route handler will handle cleanup on the next request
+      }
 
       return null
     }
@@ -273,8 +278,16 @@ async function doRefreshToken(): Promise<string | null> {
       return null
     }
 
-    // Update cookies with new tokens
-    await updateTokensInCookies(newAccessToken, newRefreshToken)
+    // Update cookies with new tokens — guarded because this may be called during
+    // server component rendering where cookie writes are not allowed.
+    // The middleware will proactively refresh tokens before the next render, so
+    // returning the new access token here is sufficient for the current request.
+    try {
+      await updateTokensInCookies(newAccessToken, newRefreshToken)
+    } catch {
+      // Ignore — cannot set cookies during server component rendering.
+      // The access token is still returned so the current request can proceed.
+    }
 
     // Return the new access token
     return newAccessToken

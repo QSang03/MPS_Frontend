@@ -55,26 +55,33 @@ export async function ensureValidToken(): Promise<boolean> {
         }
 
         if (newAccessToken) {
-          // Update cookies
-          const cookieStore = await cookies()
-          const isProduction = process.env.NODE_ENV === 'production'
+          // Persist new tokens — guarded because this function may be called during
+          // server component rendering where cookie writes are not allowed.
+          // The middleware handles proactive refresh before rendering, so even if
+          // persistence fails here the current request can proceed with the token.
+          try {
+            const cookieStore = await cookies()
+            const isProduction = process.env.NODE_ENV === 'production'
 
-          cookieStore.set(ACCESS_TOKEN_COOKIE_NAME, newAccessToken, {
-            httpOnly: true,
-            secure: isProduction,
-            sameSite: 'lax',
-            maxAge: 15 * 60, // 15 minutes
-            path: '/',
-          })
-
-          if (newRefreshToken) {
-            cookieStore.set(REFRESH_TOKEN_COOKIE_NAME, newRefreshToken, {
+            cookieStore.set(ACCESS_TOKEN_COOKIE_NAME, newAccessToken, {
               httpOnly: true,
               secure: isProduction,
               sameSite: 'lax',
-              maxAge: 7 * 24 * 60 * 60, // 7 days
+              maxAge: 15 * 60, // 15 minutes
               path: '/',
             })
+
+            if (newRefreshToken) {
+              cookieStore.set(REFRESH_TOKEN_COOKIE_NAME, newRefreshToken, {
+                httpOnly: true,
+                secure: isProduction,
+                sameSite: 'lax',
+                maxAge: 7 * 24 * 60 * 60, // 7 days
+                path: '/',
+              })
+            }
+          } catch {
+            // Ignore — cannot set cookies during server component rendering.
           }
 
           console.log('✅ Token refreshed successfully before page render')
@@ -85,11 +92,15 @@ export async function ensureValidToken(): Promise<boolean> {
       // Refresh failed
       console.error('❌ Token refresh failed before page render')
 
-      // Clear cookies
-      const cookieStore = await cookies()
-      cookieStore.delete(REFRESH_TOKEN_COOKIE_NAME)
-      cookieStore.delete(ACCESS_TOKEN_COOKIE_NAME)
-      cookieStore.delete(SESSION_COOKIE_NAME)
+      // Clear cookies — guarded for the same reason as above.
+      try {
+        const cookieStore = await cookies()
+        cookieStore.delete(REFRESH_TOKEN_COOKIE_NAME)
+        cookieStore.delete(ACCESS_TOKEN_COOKIE_NAME)
+        cookieStore.delete(SESSION_COOKIE_NAME)
+      } catch {
+        // Ignore
+      }
 
       return false
     } catch (error) {
