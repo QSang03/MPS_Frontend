@@ -346,6 +346,16 @@ export function CollectorTable({
         enableSorting: false,
       },
       {
+        accessorKey: 'type',
+        header: t('collectors.agent_type'),
+        cell: ({ row }) => (
+          <Badge variant="outline">
+            {t(`collectors.agent_type_${String(row.original.type || 'COLLECTOR').toLowerCase()}`)}
+          </Badge>
+        ),
+        enableSorting: true,
+      },
+      {
         accessorKey: 'version',
         header: t('collectors.version'),
         cell: ({ row }) => <Badge variant="outline">{row.original.version || 'N/A'}</Badge>,

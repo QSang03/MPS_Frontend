@@ -13,6 +13,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import {
@@ -36,8 +37,10 @@ import { toast } from 'sonner'
 import { useLocale } from '@/components/providers/LocaleProvider'
 import { collectorsClientService } from '@/lib/api/services/collectors-client.service'
 import { customersClientService } from '@/lib/api/services/customers-client.service'
-import type { Collector, CreateCollectorDto } from '@/types/models/collector'
+import { devicesClientService } from '@/lib/api/services/devices-client.service'
+import type { AgentType, Collector, CreateCollectorDto } from '@/types/models/collector'
 import type { Customer } from '@/types/models/customer'
+import type { Device } from '@/types/models/device'
 
 const formSchema = z.object({
   customerId: z.string().min(1, 'Vui lòng chọn khách hàng'),
@@ -45,6 +48,8 @@ const formSchema = z.object({
   address: z.string().min(1, 'Địa chỉ không được để trống'),
   subnets: z.string().min(1, 'Subnets không được để trống'),
   community: z.string().min(1, 'Community không được để trống'),
+  type: z.enum(['COLLECTOR', 'TUNNEL', 'HYBRID']),
+  deviceIds: z.array(z.string()).min(1, 'Vui lòng chọn ít nhất 1 thiết bị'),
 })
 
 type FormValues = z.infer<typeof formSchema>
@@ -60,6 +65,8 @@ export default function CollectorFormModal({ trigger, onSaved }: CollectorFormMo
   const [loading, setLoading] = useState(false)
   const [customers, setCustomers] = useState<Customer[]>([])
   const [loadingCustomers, setLoadingCustomers] = useState(false)
+  const [devices, setDevices] = useState<Device[]>([])
+  const [loadingDevices, setLoadingDevices] = useState(false)
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -69,8 +76,38 @@ export default function CollectorFormModal({ trigger, onSaved }: CollectorFormMo
       address: '',
       subnets: '',
       community: 'public',
+      type: 'COLLECTOR',
+      deviceIds: [],
     },
   })
+
+  const selectedCustomerId = form.watch('customerId')
+
+  useEffect(() => {
+    if (!open || !selectedCustomerId) {
+      setDevices([])
+      form.setValue('deviceIds', [])
+      return
+    }
+
+    setLoadingDevices(true)
+    devicesClientService
+      .getAll({ customerId: selectedCustomerId, limit: 100, page: 1 })
+      .then((res) => {
+        const customerDevices = res.data || []
+        setDevices(customerDevices)
+        form.setValue('deviceIds', [])
+      })
+      .catch((err) => {
+        console.error('Failed to load devices by customer:', err)
+        setDevices([])
+        form.setValue('deviceIds', [])
+        toast.error(t('collectors.load_devices_error'))
+      })
+      .finally(() => {
+        setLoadingDevices(false)
+      })
+  }, [open, selectedCustomerId, form, t])
 
   useEffect(() => {
     if (open) {
@@ -95,6 +132,7 @@ export default function CollectorFormModal({ trigger, onSaved }: CollectorFormMo
     if (customer) {
       form.setValue('customerId', customerId)
       form.setValue('customerName', customer.name)
+      form.setValue('deviceIds', [])
       // Set first address if available
       if (customer.address && customer.address.length > 0 && customer.address[0]) {
         form.setValue('address', customer.address[0])
@@ -103,6 +141,11 @@ export default function CollectorFormModal({ trigger, onSaved }: CollectorFormMo
   }
 
   const onSubmit = async (values: FormValues) => {
+    if (devices.length === 0) {
+      toast.error(t('collectors.no_devices_for_customer'))
+      return
+    }
+
     setLoading(true)
     try {
       const payload: CreateCollectorDto = {
@@ -111,6 +154,8 @@ export default function CollectorFormModal({ trigger, onSaved }: CollectorFormMo
         address: values.address,
         subnets: values.subnets,
         community: values.community,
+        type: values.type as AgentType,
+        deviceIds: values.deviceIds,
       }
       const result = await collectorsClientService.create(payload)
       toast.success(t('collectors.create_success'))
@@ -225,11 +270,96 @@ export default function CollectorFormModal({ trigger, onSaved }: CollectorFormMo
               )}
             />
 
+            <FormField
+              control={form.control}
+              name="type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('collectors.agent_type')}</FormLabel>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder={t('collectors.select_agent_type')} />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="COLLECTOR">
+                        {t('collectors.agent_type_collector')}
+                      </SelectItem>
+                      <SelectItem value="TUNNEL">{t('collectors.agent_type_tunnel')}</SelectItem>
+                      <SelectItem value="HYBRID">{t('collectors.agent_type_hybrid')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>{t('collectors.agent_type_description')}</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="deviceIds"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('collectors.devices')}</FormLabel>
+                  <FormDescription>{t('collectors.select_devices')}</FormDescription>
+
+                  {loadingDevices ? (
+                    <div className="text-muted-foreground flex items-center gap-2 rounded border p-3 text-sm">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      {t('collectors.loading_devices')}
+                    </div>
+                  ) : selectedCustomerId ? (
+                    devices.length > 0 ? (
+                      <div className="max-h-52 space-y-2 overflow-y-auto rounded border p-3">
+                        {devices.map((device) => {
+                          const checked = field.value.includes(device.id)
+                          return (
+                            <label
+                              key={device.id}
+                              className="flex cursor-pointer items-start gap-2 rounded p-1 hover:bg-gray-50"
+                            >
+                              <Checkbox
+                                checked={checked}
+                                onCheckedChange={(nextChecked) => {
+                                  if (nextChecked) {
+                                    field.onChange([...field.value, device.id])
+                                  } else {
+                                    field.onChange(field.value.filter((id) => id !== device.id))
+                                  }
+                                }}
+                              />
+                              <div className="leading-tight">
+                                <div className="text-sm font-medium">{device.serialNumber}</div>
+                                <div className="text-muted-foreground text-xs">
+                                  {device.deviceModel?.name || device.model || '-'}
+                                </div>
+                              </div>
+                            </label>
+                          )
+                        })}
+                      </div>
+                    ) : (
+                      <div className="text-muted-foreground rounded border p-3 text-sm">
+                        {t('collectors.no_devices_for_customer')}
+                      </div>
+                    )
+                  ) : (
+                    <div className="text-muted-foreground rounded border p-3 text-sm">
+                      {t('collectors.select_customer_first')}
+                    </div>
+                  )}
+
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>
                 {t('common.cancel')}
               </Button>
-              <Button type="submit" disabled={loading}>
+              <Button type="submit" disabled={loading || loadingDevices || devices.length === 0}>
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {t('collectors.start_build')}
               </Button>

@@ -5,6 +5,8 @@ import type { Customer } from './customer'
  */
 export type CollectorBuildStatus = 'PENDING' | 'BUILDING' | 'SUCCESS' | 'FAILED'
 
+export type AgentType = 'COLLECTOR' | 'TUNNEL' | 'HYBRID'
+
 /**
  * Collector model
  */
@@ -17,6 +19,7 @@ export interface Collector {
   processorUrl: string
   subnets: string
   community: string
+  type: AgentType
   version: string
   fileKey?: string
   fileSize?: number
@@ -42,6 +45,8 @@ export interface CreateCollectorDto {
   address: string
   subnets: string
   community: string
+  type: AgentType
+  deviceIds: string[]
 }
 
 /**

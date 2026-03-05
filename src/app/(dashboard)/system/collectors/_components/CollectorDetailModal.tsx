@@ -177,6 +177,16 @@ export default function CollectorDetailModal({
                   <span className="text-muted-foreground text-sm">{t('collectors.community')}</span>
                   <p className="font-medium">{collector.community}</p>
                 </div>
+                <div>
+                  <span className="text-muted-foreground text-sm">
+                    {t('collectors.agent_type')}
+                  </span>
+                  <p className="font-medium">
+                    {t(
+                      `collectors.agent_type_${String(collector.type || 'COLLECTOR').toLowerCase()}`
+                    )}
+                  </p>
+                </div>
               </div>
               {collector.processorUrl && (
                 <div className="pl-6">

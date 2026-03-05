@@ -30,6 +30,7 @@ import {
   BarChart3,
   Trash2,
   Settings,
+  ExternalLink,
 } from 'lucide-react'
 import { FilterSection } from '@/components/system/FilterSection'
 import { OwnershipBadge } from '@/components/shared/OwnershipBadge'
@@ -622,21 +623,32 @@ function DevicesTableContent({
         enableSorting: true,
         cell: ({ row }) => (
           <ActionGuard pageId="devices" actionId="read">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <code
-                  role="button"
-                  onClick={() => router.push(`/system/devices/${row.original.id}`)}
-                  className="cursor-pointer rounded bg-[var(--brand-50)] px-2 py-1 text-sm font-semibold text-[var(--brand-700)]"
-                >
-                  {row.original.serialNumber || '—'}
-                </code>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{t('button.view')}</p>
-              </TooltipContent>
-            </Tooltip>
+            <div className="space-y-1">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <code
+                    role="button"
+                    onClick={() => router.push(`/system/devices/${row.original.id}`)}
+                    className="cursor-pointer rounded bg-[var(--brand-50)] px-2 py-1 text-sm font-semibold text-[var(--brand-700)]"
+                  >
+                    {row.original.serialNumber || '—'}
+                  </code>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{t('button.view')}</p>
+                </TooltipContent>
+              </Tooltip>
+              <div className="text-muted-foreground text-xs">{row.original.serialSlug || '—'}</div>
+            </div>
           </ActionGuard>
+        ),
+      },
+      {
+        accessorKey: 'serialSlug',
+        header: t('devices.table.serial_slug'),
+        enableSorting: true,
+        cell: ({ row }) => (
+          <span className="font-mono text-xs">{row.original.serialSlug || '—'}</span>
         ),
       },
       {
@@ -757,6 +769,16 @@ function DevicesTableContent({
               <span className="text-muted-foreground">—</span>
             )}
           </div>
+        ),
+      },
+      {
+        accessorKey: 'tunnelPort',
+        header: t('devices.table.tunnel_port'),
+        enableSorting: true,
+        cell: ({ row }) => (
+          <span className="font-mono text-sm">
+            {typeof row.original.tunnelPort === 'number' ? row.original.tunnelPort : '—'}
+          </span>
         ),
       },
       {
@@ -991,22 +1013,47 @@ function DevicesTableContent({
               )}
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="h-7 w-7 cursor-pointer p-0"
-                    onClick={() => {
-                      setA4HistoryDevice(device)
-                      setA4HistoryOpen(true)
-                    }}
-                  >
-                    <RefreshCw className="h-3.5 w-3.5" />
-                  </Button>
+                  <div>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="h-7 w-7 cursor-pointer p-0"
+                      onClick={() => {
+                        setA4HistoryDevice(device)
+                        setA4HistoryOpen(true)
+                      }}
+                    >
+                      <RefreshCw className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>{t('devices.a4_history.title')}</p>
                 </TooltipContent>
               </Tooltip>
+              {device.serialSlug ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      asChild
+                      variant="secondary"
+                      size="sm"
+                      className="h-7 w-7 cursor-pointer p-0"
+                    >
+                      <a
+                        href={`/printer/${encodeURIComponent(device.serialSlug)}/`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </a>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{t('devices.table.open_web_ui')}</p>
+                  </TooltipContent>
+                </Tooltip>
+              ) : null}
               {!isHistorical && (
                 <ActionGuard pageId="devices" actionId="delete">
                   <Tooltip>

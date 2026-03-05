@@ -24,6 +24,7 @@ import {
   BarChart3,
   FileText,
   Bell,
+  ExternalLink,
 } from 'lucide-react'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { formatPageCount } from '@/lib/utils/formatters'
@@ -122,6 +123,8 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
   const [ipEdit, setIpEdit] = useState('')
   const [macEdit, setMacEdit] = useState('')
   const [firmwareEdit, setFirmwareEdit] = useState('')
+  const [serialSlugEdit, setSerialSlugEdit] = useState('')
+  const [tunnelPortEdit, setTunnelPortEdit] = useState('')
   // device status editing fields
   const [isActiveEdit, setIsActiveEdit] = useState<boolean | null>(null)
   const [statusEdit, setStatusEdit] = useState<string>('ACTIVE')
@@ -374,6 +377,12 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
           setIpEdit(d.ipAddress || '')
           setMacEdit(d.macAddress || '')
           setFirmwareEdit(d.firmware || '')
+          setSerialSlugEdit(d.serialSlug || '')
+          setTunnelPortEdit(
+            typeof d.tunnelPort === 'number' && Number.isFinite(d.tunnelPort)
+              ? String(d.tunnelPort)
+              : ''
+          )
           setIsActiveEdit(
             typeof d.isActive === 'boolean' ? Boolean(d.isActive) : Boolean(d.isActive)
           )
@@ -685,6 +694,30 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                     <p>{t('system_device_detail.a4_snapshot.history_tooltip')}</p>
                   </TooltipContent>
                 </Tooltip>
+                {device?.serialSlug ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        asChild
+                        variant="secondary"
+                        size="sm"
+                        className="ml-2 cursor-pointer gap-2"
+                      >
+                        <a
+                          href={`/printer/${encodeURIComponent(device.serialSlug)}/`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                          {t('devices.table.open_web_ui')}
+                        </a>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{t('devices.table.open_web_ui')}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                ) : null}
                 {Boolean(device?.isActive) ? (
                   <ActionGuard pageId="devices" actionId="update">
                     <Tooltip>
@@ -830,6 +863,14 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                   mono: true,
                 },
                 { label: t('user_device_detail.info.firmware'), value: device.firmware || 'N/A' },
+                {
+                  label: t('device.tunnel_port'),
+                  value:
+                    typeof device.tunnelPort === 'number'
+                      ? String(device.tunnelPort)
+                      : t('user_device_detail.info.not_configured'),
+                  mono: true,
+                },
               ]}
             />
 
@@ -840,6 +881,11 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                 {
                   label: t('user_device_detail.info.serial'),
                   value: device.serialNumber || '-',
+                  mono: true,
+                },
+                {
+                  label: t('device.serial_slug'),
+                  value: device.serialSlug || t('user_device_detail.info.not_configured'),
                   mono: true,
                 },
                 {
@@ -1991,10 +2037,23 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                           ipAddress: ipEdit || undefined,
                           macAddress: macEdit || undefined,
                           firmware: firmwareEdit || undefined,
+                          serialSlug: serialSlugEdit || undefined,
+                          tunnelPort: tunnelPortEdit ? Number(tunnelPortEdit) : undefined,
                           isActive: finalIsActive,
                           status: finalStatus,
                           inactiveReason: chosenReason || undefined,
                           customerId: customerIdEdit || undefined,
+                        }
+
+                        if (
+                          typeof dto.tunnelPort === 'number' &&
+                          (!Number.isInteger(dto.tunnelPort) ||
+                            dto.tunnelPort < 20000 ||
+                            dto.tunnelPort > 25000)
+                        ) {
+                          toast.error(t('device.form.validation.tunnel_port_invalid'))
+                          setEditing(false)
+                          return
                         }
 
                         dto = removeEmpty(dto)
@@ -2061,6 +2120,30 @@ function DeviceDetailClientInner({ deviceId, modelId, backHref, showA4 }: Device
                   placeholder="v1.0.0"
                   className="mt-2 h-11"
                 />
+              </div>
+              <div>
+                <Label className="text-base font-semibold">{t('device.serial_slug')}</Label>
+                <Input
+                  value={serialSlugEdit}
+                  onChange={(e) => setSerialSlugEdit(e.target.value)}
+                  placeholder="may-in-kho-1"
+                  className="mt-2 h-11"
+                />
+              </div>
+              <div>
+                <Label className="text-base font-semibold">{t('device.tunnel_port')}</Label>
+                <Input
+                  type="number"
+                  min={20000}
+                  max={25000}
+                  value={tunnelPortEdit}
+                  onChange={(e) => setTunnelPortEdit(e.target.value)}
+                  placeholder="20001"
+                  className="mt-2 h-11"
+                />
+                <p className="text-muted-foreground mt-1 text-xs">
+                  {t('device.tunnel_port_range_hint')}
+                </p>
               </div>
             </div>
 

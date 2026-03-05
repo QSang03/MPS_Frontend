@@ -71,6 +71,8 @@ interface Props {
 const buildInitialForm = () => ({
   deviceModelId: '',
   serialNumber: '',
+  serialSlug: '',
+  tunnelPort: '',
   customerLocation: '',
   ipAddress: '',
   macAddress: '',
@@ -149,6 +151,11 @@ export default function DeviceFormModal({
       setForm({
         deviceModelId: device.deviceModelId || device.deviceModel?.id || '',
         serialNumber: device.serialNumber || '',
+        serialSlug: device.serialSlug || '',
+        tunnelPort:
+          typeof device.tunnelPort === 'number' && Number.isFinite(device.tunnelPort)
+            ? String(device.tunnelPort)
+            : '',
         customerLocation: device.location || device.customerLocation || '',
         ipAddress: device.ipAddress || '',
         macAddress: device.macAddress || '',
@@ -299,10 +306,27 @@ export default function DeviceFormModal({
         }
       }
 
+      let normalizedTunnelPort: number | undefined
+      if (form.tunnelPort) {
+        const parsedTunnelPort = Number(form.tunnelPort)
+        if (
+          !Number.isInteger(parsedTunnelPort) ||
+          parsedTunnelPort < 20000 ||
+          parsedTunnelPort > 25000
+        ) {
+          toast.error(t('device.form.validation.tunnel_port_invalid'))
+          setSubmitting(false)
+          return
+        }
+        normalizedTunnelPort = parsedTunnelPort
+      }
+
       // Build payload
       let payload: Record<string, unknown> = {
         deviceModelId: form.deviceModelId || undefined,
         serialNumber: String(form.serialNumber ?? '').trim(),
+        serialSlug: form.serialSlug ? String(form.serialSlug).trim() : undefined,
+        tunnelPort: normalizedTunnelPort,
         ipAddress: form.ipAddress || undefined,
         macAddress: form.macAddress || undefined,
         firmware: form.firmware || undefined,
@@ -729,7 +753,43 @@ export default function DeviceFormModal({
               ) : null}
             </div>
 
-            <div className="grid gap-4 md:grid-cols-1">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2 text-base font-semibold">
+                  <Hash className="h-4 w-4 text-indigo-600" />
+                  {t('device.serial_slug')}
+                </Label>
+                <Input
+                  value={form.serialSlug}
+                  onChange={(e) =>
+                    setForm((s: DeviceFormState) => ({ ...s, serialSlug: e.target.value }))
+                  }
+                  placeholder="may-in-kho-1"
+                  className="h-11"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2 text-base font-semibold">
+                  <Settings className="h-4 w-4 text-indigo-600" />
+                  {t('device.tunnel_port')}
+                </Label>
+                <Input
+                  type="number"
+                  min={20000}
+                  max={25000}
+                  value={form.tunnelPort}
+                  onChange={(e) =>
+                    setForm((s: DeviceFormState) => ({ ...s, tunnelPort: e.target.value }))
+                  }
+                  placeholder="20001"
+                  className="h-11"
+                />
+                <p className="text-muted-foreground text-xs">
+                  {t('device.tunnel_port_range_hint')}
+                </p>
+              </div>
+
               <div className="space-y-2">
                 <Label className="flex items-center gap-2 text-base font-semibold">
                   <Settings className="h-4 w-4 text-indigo-600" />

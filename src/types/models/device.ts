@@ -6,6 +6,8 @@ import { DeviceStatus } from '@/constants/status'
 export interface Device {
   id: string
   serialNumber: string
+  serialSlug?: string
+  tunnelPort?: number | null
   // legacy/simple model field used across UI
   model: string
   location: string
@@ -65,6 +67,8 @@ export interface Device {
  */
 export interface CreateDeviceDto {
   serialNumber: string
+  serialSlug?: string
+  tunnelPort?: number | null
   // can provide either model string or deviceModelId referencing a device model
   model?: string
   deviceModelId?: string
