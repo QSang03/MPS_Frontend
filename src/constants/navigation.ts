@@ -1090,32 +1090,9 @@ export const NAVIGATION_PAYLOAD: NavItemPayload[] = [
     descriptionVi: 'Upload ảnh counter, OCR và duyệt số liệu',
     requiredPermissions: withBasicPermissions([
       { resource: 'reports.usage-page.process', action: 'create' },
-      { resource: 'reports.usage-page.approve', action: 'update' },
+      { resource: 'reports.usage-page.approve', action: 'create' },
     ]),
-    actions: [
-      {
-        id: 'process-usage-page',
-        label: 'Upload và xử lý ảnh counter (OCR)',
-        labelEn: 'Upload and process counter images (OCR)',
-        labelVi: 'Upload và xử lý ảnh counter (OCR)',
-        icon: 'Upload',
-        requiredPermissions: {
-          strategy: 'all',
-          resources: [{ resource: 'reports.usage-page.process', action: 'create' }],
-        },
-      },
-      {
-        id: 'approve-usage-page',
-        label: 'Duyệt số liệu trang sử dụng',
-        labelEn: 'Approve usage page data',
-        labelVi: 'Duyệt số liệu trang sử dụng',
-        icon: 'CheckCircle',
-        requiredPermissions: {
-          strategy: 'all',
-          resources: [{ resource: 'reports.usage-page.approve', action: 'update' }],
-        },
-      },
-    ],
+    actions: [],
   },
   {
     id: 'print-page-report',
